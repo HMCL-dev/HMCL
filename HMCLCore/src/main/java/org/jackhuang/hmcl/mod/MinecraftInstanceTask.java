@@ -17,14 +17,15 @@
  */
 package org.jackhuang.hmcl.mod;
 
-import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.CompressingUtils;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.FileUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -41,7 +42,7 @@ public final class MinecraftInstanceTask<T> extends Task {
 
     public MinecraftInstanceTask(File zipFile, String subDirectory, T manifest, String type, File jsonFile) {
         this.zipFile = zipFile;
-        this.subDirectory = subDirectory;
+        this.subDirectory = FileUtils.normalizePath(subDirectory);
         this.manifest = manifest;
         this.jsonFile = jsonFile;
         this.type = type;
@@ -54,18 +55,18 @@ public final class MinecraftInstanceTask<T> extends Task {
     public void execute() throws Exception {
         List<ModpackConfiguration.FileInformation> overrides = new LinkedList<>();
 
-        try (ZipArchiveInputStream zip = new ZipArchiveInputStream(new FileInputStream(zipFile), null, true, true)) {
-            ArchiveEntry entry;
-            while ((entry = zip.getNextEntry()) != null) {
-                String path = entry.getName();
-                if (!path.startsWith(subDirectory) || entry.isDirectory())
-                    continue;
-                path = path.substring(subDirectory.length());
-                if (path.startsWith("/") || path.startsWith("\\"))
-                    path = path.substring(1);
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(zipFile.toPath())) {
+            Path root = fs.getPath(subDirectory);
 
-                overrides.add(new ModpackConfiguration.FileInformation(path, encodeHex(digest("SHA-1", zip))));
-            }
+            if (Files.exists(root))
+                Files.walkFileTree(fs.getPath(subDirectory), new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        String relativePath = root.relativize(file).normalize().toString();
+                        overrides.add(new ModpackConfiguration.FileInformation(relativePath, encodeHex(digest("SHA-1", Files.newInputStream(file)))));
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
         }
 
         FileUtils.writeText(jsonFile, Constants.GSON.toJson(new ModpackConfiguration<>(manifest, type, overrides)));

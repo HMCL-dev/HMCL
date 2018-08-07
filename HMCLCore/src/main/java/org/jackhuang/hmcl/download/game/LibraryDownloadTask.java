@@ -1,6 +1,5 @@
 package org.jackhuang.hmcl.download.game;
 
-import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -10,6 +9,7 @@ import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.IOUtils;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.NetworkUtils;
+import org.tukaani.xz.XZInputStream;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -145,7 +145,7 @@ public final class LibraryDownloadTask extends Task {
             if (!dest.delete())
                 throw new IOException("Unable to delete file " + dest);
 
-        byte[] decompressed = IOUtils.readFullyAsByteArray(new XZCompressorInputStream(new ByteArrayInputStream(src)));
+        byte[] decompressed = IOUtils.readFullyAsByteArray(new XZInputStream(new ByteArrayInputStream(src)));
 
         String end = new String(decompressed, decompressed.length - 4, 4);
         if (!end.equals("SIGN"))

@@ -20,15 +20,13 @@ package org.jackhuang.hmcl.mod;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.IOUtils;
-import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -114,11 +112,11 @@ public final class ForgeModMetadata {
     }
 
     public static ModInfo fromFile(File modFile) throws IOException, JsonParseException {
-        try (ZipFile zipFile = new ZipFile(modFile)) {
-            ZipArchiveEntry entry = zipFile.getEntry("mcmod.info");
-            if (entry == null)
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.toPath())) {
+            Path mcmod = fs.getPath("mcmod.info");
+            if (Files.notExists(mcmod))
                 throw new IOException("File " + modFile + " is not a Forge mod.");
-            List<ForgeModMetadata> modList = Constants.GSON.fromJson(IOUtils.readFullyAsString(zipFile.getInputStream(entry)),
+            List<ForgeModMetadata> modList = Constants.GSON.fromJson(IOUtils.readFullyAsString(Files.newInputStream(mcmod)),
                     new TypeToken<List<ForgeModMetadata>>() {
                     }.getType());
             if (modList == null || modList.isEmpty())

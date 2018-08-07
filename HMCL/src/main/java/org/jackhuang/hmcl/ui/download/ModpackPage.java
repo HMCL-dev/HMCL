@@ -98,6 +98,7 @@ public final class ModpackPage extends StackPane implements WizardPage {
                 txtModpackName.setText(manifest.getName() + (StringUtils.isBlank(manifest.getVersion()) ? "" : "-" + manifest.getVersion()));
             } catch (UnsupportedModpackException e) {
                 txtModpackName.setText(i18n("modpack.task.install.error"));
+                btnInstall.setDisable(true);
             }
         }
     }

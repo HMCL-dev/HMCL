@@ -17,11 +17,11 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -45,6 +45,13 @@ public final class FileUtils {
         return StringUtils.substringAfterLast(file.getName(), '.');
     }
 
+    /**
+     * This method is for normalizing ZipPath since Path.normalize of ZipFileSystem does not work properly.
+     */
+    public static String normalizePath(String path) {
+        return StringUtils.addPrefix(StringUtils.removeSuffix(path, "/", "\\"), "/");
+    }
+
     public static String readText(File file) throws IOException {
         return readText(file, UTF_8);
     }
@@ -54,11 +61,7 @@ public final class FileUtils {
     }
 
     public static byte[] readBytes(File file) throws IOException {
-        try (FileInputStream input = new FileInputStream(file)) {
-            if (file.length() > Integer.MAX_VALUE)
-                throw new OutOfMemoryError("File " + file + " is too big (" + file.length() + " bytes) to fit in memory.");
-            return IOUtils.readFullyAsByteArray(input);
-        }
+        return Files.readAllBytes(file.toPath());
     }
 
     public static void writeText(File file, String text) throws IOException {
@@ -123,16 +126,14 @@ public final class FileUtils {
 
     public static void forceDelete(File file)
             throws IOException {
-        if (file.isDirectory())
+        if (file.isDirectory()) {
             deleteDirectory(file);
-        else {
+        } else {
             boolean filePresent = file.exists();
             if (!file.delete()) {
                 if (!filePresent)
                     throw new FileNotFoundException("File does not exist: " + file);
-                String message = "Unable to delete file: " + file;
-
-                throw new IOException(message);
+                throw new IOException("Unable to delete file: " + file);
             }
         }
     }
@@ -151,10 +152,6 @@ public final class FileUtils {
         }
 
         return !fileInCanonicalDir.getCanonicalFile().equals(fileInCanonicalDir.getAbsoluteFile());
-    }
-
-    public static void copyDirectory(Path src, Path dest) {
-
     }
 
     public static void copyFile(File srcFile, File destFile)

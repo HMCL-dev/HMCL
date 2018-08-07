@@ -137,18 +137,28 @@ public final class StringUtils {
             return str;
     }
 
-    public static String removePrefix(String str, String prefix) {
+    public static String addPrefix(String str, String prefix) {
         if (str.startsWith(prefix))
-            return str.substring(prefix.length(), str.length());
-        else
             return str;
+        else
+            return prefix + str;
     }
 
-    public static String removeSuffix(String str, String suffix) {
-        if (str.endsWith(suffix))
-            return str.substring(0, str.length() - suffix.length());
-        else
-            return str;
+    public static String removePrefix(String str, String... prefixes) {
+        for (String prefix : prefixes)
+            if (str.startsWith(prefix))
+                return str.substring(prefix.length());
+        return str;
+    }
+
+    /**
+     * Remove one suffix of the suffixes of the string.
+     */
+    public static String removeSuffix(String str, String... suffixes) {
+        for (String suffix : suffixes)
+            if (str.endsWith(suffix))
+                return str.substring(0, str.length() - suffix.length());
+        return str;
     }
 
     public static boolean containsOne(Collection<String> patterns, String... targets) {

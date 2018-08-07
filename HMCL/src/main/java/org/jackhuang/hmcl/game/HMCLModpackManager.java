@@ -39,7 +39,7 @@ public final class HMCLModpackManager {
             "pack.json", "launcher.jar", "hmclmc.log", // HMCL
             "manifest.json", "minecraftinstance.json", ".curseclient", // Curse
             "minetweaker.log", // Mods
-            "logs", "versions", "assets", "libraries", "crash-reports", "NVIDIA", "AMD", "screenshots", "natives", "native", "$native", "server-resource-packs", // Minecraft
+            "jars", "logs", "versions", "assets", "libraries", "crash-reports", "NVIDIA", "AMD", "screenshots", "natives", "native", "$native", "server-resource-packs", // Minecraft
             "downloads", // Curse
             "asm", "backups", "TCNodeTracker", "CustomDISkins", "data" // Mods
     );

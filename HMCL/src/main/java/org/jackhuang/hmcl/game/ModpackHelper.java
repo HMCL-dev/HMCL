@@ -86,11 +86,13 @@ public final class ModpackHelper {
         profile.getRepository().markVersionAsModpack(name);
 
         FinalizedCallback finalizeTask = (variables, isDependentsSucceeded) -> {
-            profile.getRepository().refreshVersions();
-            VersionSetting vs = profile.specializeVersionSetting(name);
-            profile.getRepository().undoMark(name);
-            if (vs != null)
-                vs.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
+            if (isDependentsSucceeded) {
+                profile.getRepository().refreshVersions();
+                VersionSetting vs = profile.specializeVersionSetting(name);
+                profile.getRepository().undoMark(name);
+                if (vs != null)
+                    vs.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
+            }
         };
 
         if (modpack.getManifest() instanceof CurseManifest)
@@ -102,7 +104,7 @@ public final class ModpackHelper {
         else if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
             return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name)
                     .finalized(finalizeTask)
-                    .with(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
+                    .then(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
         else throw new IllegalStateException("Unrecognized modpack: " + modpack);
     }
 

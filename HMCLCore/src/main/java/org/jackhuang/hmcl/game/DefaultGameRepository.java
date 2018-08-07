@@ -148,10 +148,10 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public boolean removeVersionFromDisk(String id) {
-        if (!versions.containsKey(id))
-            return true;
         if (EventBus.EVENT_BUS.fireEvent(new RemoveVersionEvent(this, id)) == Event.Result.DENY)
             return false;
+        if (!versions.containsKey(id))
+            return FileUtils.deleteDirectoryQuietly(getVersionRoot(id));
         File file = getVersionRoot(id);
         if (!file.exists())
             return true;

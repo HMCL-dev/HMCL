@@ -17,17 +17,15 @@
  */
 package org.jackhuang.hmcl.mod;
 
-import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.IOUtils;
+import org.jackhuang.hmcl.util.Unzipper;
 
-import java.io.*;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
@@ -56,61 +54,36 @@ public class ModpackInstallTask<T> extends Task {
     @Override
     public void execute() throws Exception {
         Set<String> entries = new HashSet<>();
-        byte[] buf = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
         if (!FileUtils.makeDirectory(dest))
             throw new IOException("Unable to make directory " + dest);
 
-        HashSet<String> files = new HashSet<>();
+        HashMap<String, ModpackConfiguration.FileInformation> files = new HashMap<>();
         for (ModpackConfiguration.FileInformation file : overrides)
-            files.add(file.getPath());
+            files.put(file.getPath(), file);
 
-        try (ZipArchiveInputStream zipStream = new ZipArchiveInputStream(new FileInputStream(modpackFile), null, true, true)) {
-            ArchiveEntry entry;
-            while ((entry = zipStream.getNextEntry()) != null) {
-                String path = entry.getName();
+        new Unzipper(modpackFile, dest)
+                .setSubDirectory(subDirectory)
+                .setTerminateIfSubDirectoryNotExists()
+                .setReplaceExistentFile(true)
+                .setFilter((destPath, isDirectory, zipEntry, entryPath) -> {
+                    if (isDirectory) return true;
+                    entries.add(entryPath);
 
-                if (!path.startsWith(subDirectory))
-                    continue;
-                path = path.substring(subDirectory.length());
-                if (path.startsWith("/") || path.startsWith("\\"))
-                    path = path.substring(1);
-                File entryFile = new File(dest, path);
-
-                if (callback != null)
-                    if (!callback.test(path))
-                        continue;
-
-                if (entry.isDirectory()) {
-                    if (!FileUtils.makeDirectory(entryFile))
-                        throw new IOException("Unable to make directory: " + entryFile);
-                } else {
-                    if (!FileUtils.makeDirectory(entryFile.getAbsoluteFile().getParentFile()))
-                        throw new IOException("Unable to make parent directory for file " + entryFile);
-
-                    entries.add(path);
-
-                    ByteArrayOutputStream os = new ByteArrayOutputStream(IOUtils.DEFAULT_BUFFER_SIZE);
-                    IOUtils.copyTo(zipStream, os, buf);
-                    byte[] data = os.toByteArray();
-
-                    if (files.contains(path) && entryFile.exists()) {
-                        String oldHash = encodeHex(digest("SHA-1", new FileInputStream(entryFile)));
-                        String newHash = encodeHex(digest("SHA-1", new ByteArrayInputStream(data)));
-                        if (!oldHash.equals(newHash)) {
-                            try (FileOutputStream fos = new FileOutputStream(entryFile)) {
-                                IOUtils.copyTo(new ByteArrayInputStream(data), fos, buf);
-                            }
-                        }
-                    } else if (!files.contains(path)) {
-                        try (FileOutputStream fos = new FileOutputStream(entryFile)) {
-                            IOUtils.copyTo(new ByteArrayInputStream(data), fos, buf);
-                        }
+                    if (!files.containsKey(entryPath)) {
+                        // If old modpack does not have this entry, add this entry or override the file that user added.
+                        return true;
+                    } else if (!Files.exists(destPath)) {
+                        // If both old and new modpacks have this entry, but the file is deleted by user, leave it missing.
+                        return false;
+                    } else {
+                        // If user modified this entry file, we will not replace this file since this modified file is that user expects.
+                        String fileHash = encodeHex(digest("SHA-1", Files.newInputStream(destPath)));
+                        String oldHash = files.get(entryPath).getHash();
+                        return Objects.equals(oldHash, fileHash);
                     }
+                }).unzip();
 
-                }
-            }
-        }
-
+        // If old modpack have this entry, and new modpack deleted it. Delete this file.
         for (ModpackConfiguration.FileInformation file : overrides) {
             File original = new File(dest, file.getPath());
             if (original.exists() && !entries.contains(file.getPath()))

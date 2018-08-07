@@ -17,14 +17,17 @@
  */
 package org.jackhuang.hmcl.mod;
 
-import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.CompressingUtils;
+import org.jackhuang.hmcl.util.IOUtils;
+import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.JsonUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 @Immutable
@@ -49,14 +52,14 @@ public final class MultiMCManifest {
         return components;
     }
 
-    public static MultiMCManifest readMultiMCModpackManifest(File f) throws IOException {
-        try (ZipFile zipFile = new ZipFile(f)) {
-            ZipArchiveEntry firstEntry = zipFile.getEntries().nextElement();
-            String name = StringUtils.substringBefore(firstEntry.getName(), '/');
-            ZipArchiveEntry entry = zipFile.getEntry(name + "/mmc-pack.json");
-            if (entry == null)
+    public static MultiMCManifest readMultiMCModpackManifest(File zipFile) throws IOException {
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(zipFile.toPath())) {
+            Path root = Files.list(fs.getPath("/")).filter(Files::isDirectory).findAny()
+                    .orElseThrow(() -> new IOException("Not a valid MultiMC modpack"));
+            Path mmcPack = root.resolve("mmc-pack.json");
+            if (Files.notExists(mmcPack))
                 return null;
-            String json = IOUtils.readFullyAsString(zipFile.getInputStream(entry));
+            String json = IOUtils.readFullyAsString(Files.newInputStream(mmcPack));
             MultiMCManifest manifest = JsonUtils.fromNonNullJson(json, MultiMCManifest.class);
 
             if (manifest != null && manifest.getComponents() == null)

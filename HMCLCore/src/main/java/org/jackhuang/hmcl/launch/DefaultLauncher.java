@@ -229,11 +229,9 @@ public class DefaultLauncher extends Launcher {
         try {
             for (Library library : version.getLibraries())
                 if (library.isNative())
-                    CompressingUtils.unzip(repository.getLibraryFile(version, library),
-                            destination,
-                            "",
-                            library.getExtract()::shouldExtract,
-                            false);
+                    new Unzipper(repository.getLibraryFile(version, library), destination)
+                            .setFilter((destFile, isDirectory, zipEntry, path) -> library.getExtract().shouldExtract(path))
+                            .setReplaceExistentFile(true).unzip();
         } catch (IOException e) {
             throw new NotDecompressingNativesException(e);
         }

@@ -17,8 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.jackhuang.hmcl.util.CompressingUtils;
 import org.jenkinsci.constant_pool_scanner.ConstantPool;
 import org.jenkinsci.constant_pool_scanner.ConstantPoolScanner;
 import org.jenkinsci.constant_pool_scanner.ConstantType;
@@ -26,6 +25,9 @@ import org.jenkinsci.constant_pool_scanner.StringConstant;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -35,8 +37,8 @@ import java.util.stream.StreamSupport;
  * @author huangyuhui
  */
 public final class GameVersion {
-    private static Optional<String> getVersionOfClassMinecraft(ZipFile file, ZipArchiveEntry entry) throws IOException {
-        ConstantPool pool = ConstantPoolScanner.parse(file.getInputStream(entry), ConstantType.STRING);
+    private static Optional<String> getVersionOfClassMinecraft(byte[] bytecode) throws IOException {
+        ConstantPool pool = ConstantPoolScanner.parse(bytecode, ConstantType.STRING);
 
         return StreamSupport.stream(pool.list(StringConstant.class).spliterator(), false)
                 .map(StringConstant::get)
@@ -45,8 +47,8 @@ public final class GameVersion {
                 .findFirst();
     }
 
-    private static Optional<String> getVersionFromClassMinecraftServer(ZipFile file, ZipArchiveEntry entry) throws IOException {
-        ConstantPool pool = ConstantPoolScanner.parse(file.getInputStream(entry), ConstantType.STRING);
+    private static Optional<String> getVersionFromClassMinecraftServer(byte[] bytecode) throws IOException {
+        ConstantPool pool = ConstantPoolScanner.parse(bytecode, ConstantType.STRING);
 
         List<String> list = StreamSupport.stream(pool.list(StringConstant.class).spliterator(), false)
                 .map(StringConstant::get)
@@ -72,16 +74,16 @@ public final class GameVersion {
             return Optional.empty();
 
         try {
-            try (ZipFile gameJar = new ZipFile(file)) {
-                ZipArchiveEntry minecraft = gameJar.getEntry("net/minecraft/client/Minecraft.class");
-                if (minecraft != null) {
-                    Optional<String> result = getVersionOfClassMinecraft(gameJar, minecraft);
+            try (FileSystem gameJar = CompressingUtils.createReadOnlyZipFileSystem(file.toPath())) {
+                Path minecraft = gameJar.getPath("net/minecraft/client/Minecraft.class");
+                if (Files.exists(minecraft)) {
+                    Optional<String> result = getVersionOfClassMinecraft(Files.readAllBytes(minecraft));
                     if (result.isPresent())
                         return result;
                 }
-                ZipArchiveEntry minecraftServer = gameJar.getEntry("net/minecraft/server/MinecraftServer.class");
-                if (minecraftServer != null)
-                    return getVersionFromClassMinecraftServer(gameJar, minecraftServer);
+                Path minecraftServer = gameJar.getPath("net/minecraft/server/MinecraftServer.class");
+                if (Files.exists(minecraftServer))
+                    return getVersionFromClassMinecraftServer(Files.readAllBytes(minecraftServer));
                 return Optional.empty();
             }
         } catch (IOException e) {

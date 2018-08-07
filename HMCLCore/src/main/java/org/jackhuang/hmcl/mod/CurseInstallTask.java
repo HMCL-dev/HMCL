@@ -76,6 +76,10 @@ public final class CurseInstallTask extends Task {
                 builder.version("forge", modLoader.getId().substring("forge-".length()));
         dependents.add(builder.buildAsync());
 
+        onDone().register(event -> {
+            if (event.isFailed()) repository.removeVersionFromDisk(name);
+        });
+
         ModpackConfiguration<CurseManifest> config = null;
         try {
             if (json.exists()) {

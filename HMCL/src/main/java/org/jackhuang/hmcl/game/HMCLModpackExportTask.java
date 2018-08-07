@@ -17,12 +17,11 @@
  */
 package org.jackhuang.hmcl.game;
 
-
 import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.task.TaskResult;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.ZipEngine;
+import org.jackhuang.hmcl.util.Zipper;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -31,38 +30,27 @@ import java.util.List;
 /**
  * Export the game to a mod pack file.
  */
-public class HMCLModpackExportTask extends TaskResult<ZipEngine> {
+public class HMCLModpackExportTask extends Task {
     private final DefaultGameRepository repository;
     private final String version;
     private final List<String> whitelist;
     private final Modpack modpack;
     private final File output;
-    private final String id;
-
-    public HMCLModpackExportTask(DefaultGameRepository repository, String version, List<String> whitelist, Modpack modpack, File output) {
-        this(repository, version, whitelist, modpack, output, ID);
-    }
 
     /**
      * @param output  mod pack file.
      * @param version to locate version.json
      */
-    public HMCLModpackExportTask(DefaultGameRepository repository, String version, List<String> whitelist, Modpack modpack, File output, String id) {
+    public HMCLModpackExportTask(DefaultGameRepository repository, String version, List<String> whitelist, Modpack modpack, File output) {
         this.repository = repository;
         this.version = version;
         this.whitelist = whitelist;
         this.modpack = modpack;
         this.output = output;
-        this.id = id;
 
         onDone().register(event -> {
             if (event.isFailed()) output.delete();
         });
-    }
-
-    @Override
-    public String getId() {
-        return id;
     }
 
     @Override
@@ -71,18 +59,15 @@ public class HMCLModpackExportTask extends TaskResult<ZipEngine> {
         blackList.add(version + ".jar");
         blackList.add(version + ".json");
         Logging.LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
-        try (ZipEngine zip = new ZipEngine(output)) {
-            zip.putDirectory(repository.getRunDirectory(version), (String pathName, Boolean isDirectory) -> {
+        try (Zipper zip = new Zipper(output.toPath())) {
+            zip.putDirectory(repository.getRunDirectory(version).toPath(), "minecraft", path -> {
                 for (String s : blackList)
-                    if (isDirectory) {
-                        if (pathName.startsWith(s + "/"))
-                            return null;
-                    } else if (pathName.equals(s))
-                        return null;
+                    if (path.equals(s))
+                        return false;
                 for (String s : whitelist)
-                    if (pathName.equals(s + (isDirectory ? "/" : "")))
-                        return "minecraft/" + pathName;
-                return null;
+                    if (path.equals(s))
+                        return true;
+                return false;
             });
 
             Version mv = repository.getResolvedVersion(version);
@@ -92,6 +77,4 @@ public class HMCLModpackExportTask extends TaskResult<ZipEngine> {
             zip.putTextFile(Constants.GSON.toJson(modpack.setGameVersion(gameVersion)), "modpack.json"); // Newer HMCL only reads 'gameVersion' field.
         }
     }
-
-    public static final String ID = "zip_engine";
 }

@@ -19,8 +19,6 @@ package org.jackhuang.hmcl.mod;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
@@ -28,13 +26,13 @@ import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.FileUtils;
-import org.jackhuang.hmcl.util.IOUtils;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -98,7 +96,7 @@ public final class MultiMCModpackInstallTask extends Task {
         } catch (JsonParseException | IOException ignore) {
         }
 
-        dependents.add(new ModpackInstallTask<>(zipFile, run, manifest.getName() + "/minecraft/", Constants.truePredicate(), config));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, "/" + manifest.getName() + "/minecraft", Constants.truePredicate(), config));
     }
     
     @Override
@@ -115,26 +113,30 @@ public final class MultiMCModpackInstallTask extends Task {
     public void execute() throws Exception {
         Version version = Objects.requireNonNull(repository.readVersionJson(name));
 
-        try (ZipFile zip = new ZipFile(zipFile)) {
-            for (ZipArchiveEntry entry : Lang.asIterable(zip.getEntries())) {
-                // ensure that this entry is in folder 'patches' and is a json file.
-                if (!entry.isDirectory() && entry.getName().startsWith(manifest.getName() + "/patches/") && entry.getName().endsWith(".json")) {
-                    MultiMCInstancePatch patch = Constants.GSON.fromJson(IOUtils.readFullyAsString(zip.getInputStream(entry)), MultiMCInstancePatch.class);
-                    List<String> newArguments = new LinkedList<>();
-                    for (String arg : patch.getTweakers()) {
-                        newArguments.add("--tweakClass");
-                        newArguments.add(arg);
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(zipFile.toPath())) {
+            Path root = Files.list(fs.getPath("/")).filter(Files::isDirectory).findAny()
+                    .orElseThrow(() -> new IOException("Not a valid MultiMC modpack"));
+            Path patches = root.resolve("patches");
+
+            if (Files.exists(patches))
+                for (Path patchJson : Files.newDirectoryStream(patches)) {
+                    if (patchJson.endsWith(".json")) {
+                        MultiMCInstancePatch patch = Constants.GSON.fromJson(IOUtils.readFullyAsString(Files.newInputStream(patchJson)), MultiMCInstancePatch.class);
+                        List<String> newArguments = new LinkedList<>();
+                        for (String arg : patch.getTweakers()) {
+                            newArguments.add("--tweakClass");
+                            newArguments.add(arg);
+                        }
+                        version = version
+                                .setLibraries(Lang.merge(version.getLibraries(), patch.getLibraries()))
+                                .setMainClass(patch.getMainClass())
+                                .setArguments(version.getArguments().orElseGet(Arguments::new).addGameArguments(newArguments));
                     }
-                    version = version
-                            .setLibraries(Lang.merge(version.getLibraries(), patch.getLibraries()))
-                            .setMainClass(patch.getMainClass())
-                            .setArguments(version.getArguments().orElseGet(Arguments::new).addGameArguments(newArguments));
                 }
-            }
         }
 
         dependencies.add(new VersionJsonSaveTask(repository, version));
-        dependencies.add(new MinecraftInstanceTask<>(zipFile, manifest.getName() + "/minecraft/", manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)));
+        dependencies.add(new MinecraftInstanceTask<>(zipFile, "/" + manifest.getName() + "/minecraft", manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)));
     }
 
     public static final String MODPACK_TYPE = "MultiMC";

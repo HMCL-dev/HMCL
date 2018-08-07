@@ -28,7 +28,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.ZipEngine;
+import org.jackhuang.hmcl.util.Zipper;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -81,7 +81,7 @@ public final class ExportWizardProvider implements WizardProvider {
                     dependency = dependency.then(Task.of(() -> {
                         boolean flag = true;
 
-                        try (ZipEngine zip = new ZipEngine(modpackFile)) {
+                        try (Zipper zip = new Zipper(modpackFile.toPath())) {
                             Config exported = new Config();
                             exported.setBackgroundImageType(config().getBackgroundImageType());
                             exported.setBackgroundImage(config().getBackgroundImage());
@@ -93,7 +93,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
                             File bg = new File("bg").getAbsoluteFile();
                             if (bg.isDirectory())
-                                zip.putDirectory(bg);
+                                zip.putDirectory(bg.toPath(), "bg");
 
                             File background_png = new File("background.png").getAbsoluteFile();
                             if (background_png.isFile())
