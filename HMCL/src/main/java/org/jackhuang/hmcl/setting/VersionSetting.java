@@ -601,7 +601,9 @@ public final class VersionSetting {
         }
 
         private int parseJsonPrimitive(JsonPrimitive primitive, int defaultValue) {
-            if (primitive.isNumber())
+            if (primitive == null)
+                return defaultValue;
+            else if (primitive.isNumber())
                 return primitive.getAsInt();
             else
                 return Lang.parseInt(primitive.getAsString(), defaultValue);

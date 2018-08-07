@@ -19,12 +19,5 @@ package org.jackhuang.hmcl.setting;
 
 public enum EnumBackgroundImage {
     DEFAULT,
-    CUSTOM;
-
-    public static EnumBackgroundImage indexOf(int index) {
-        if (index >= values().length || index < 0)
-            return DEFAULT;
-        else
-            return values()[index];
-    }
+    CUSTOM
 }

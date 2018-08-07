@@ -29,6 +29,7 @@ import java.util.logging.Level;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.util.StringUtils;
 
 public final class ConfigHolder {
 
@@ -78,7 +79,8 @@ public final class ConfigHolder {
                     LOG.info("Config is empty");
                 } else {
                     Map<?, ?> raw = new Gson().fromJson(content, Map.class);
-                    return upgradeConfig(deserialized, raw);
+                    upgradeConfig(deserialized, raw);
+                    return deserialized;
                 }
             } catch (IOException | JsonParseException e) {
                 LOG.log(Level.WARNING, "Something went wrong when loading config.", e);
@@ -99,9 +101,21 @@ public final class ConfigHolder {
         }
     }
 
-    private static Config upgradeConfig(Config deserialized, Map<?, ?> rawJson) {
+    /**
+     * This method is for the compatibility with old HMCL 3.x as well as HMCL 2.x.
+     * @param deserialized deserialized config settings
+     * @param rawJson raw json structure of the config settings without modification
+     * @return {@code deserialized}
+     */
+    private static void upgradeConfig(Config deserialized, Map<?, ?> rawJson) {
+        // Following is for the compatibility with HMCL 2.x
         if (!rawJson.containsKey("commonDirType"))
             deserialized.setCommonDirType(deserialized.getCommonDirectory().equals(Settings.getDefaultCommonDirectory()) ? EnumCommonDirectory.DEFAULT : EnumCommonDirectory.CUSTOM);
-        return deserialized;
+        if (!rawJson.containsKey("backgroundType"))
+            deserialized.setBackgroundImageType(StringUtils.isNotBlank(deserialized.getBackgroundImage()) ? EnumBackgroundImage.CUSTOM : EnumBackgroundImage.DEFAULT);
+        if (!rawJson.containsKey("hasProxy"))
+            deserialized.setHasProxy(StringUtils.isNotBlank(deserialized.getProxyHost()));
+        if (!rawJson.containsKey("hasProxyAuth"))
+            deserialized.setHasProxyAuth(StringUtils.isNotBlank(deserialized.getProxyUser()));
     }
 }

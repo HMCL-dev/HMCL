@@ -104,6 +104,18 @@ public class Theme {
     public static Optional<Theme> getTheme(String name) {
         if (name == null)
             return Optional.empty();
+        else if (name.equalsIgnoreCase("blue"))
+            return Optional.of(custom("#5C6BC0"));
+        else if (name.equalsIgnoreCase("darker_blue"))
+            return Optional.of(custom("#283593"));
+        else if (name.equalsIgnoreCase("green"))
+            return Optional.of(custom("#43A047"));
+        else if (name.equalsIgnoreCase("orange"))
+            return Optional.of(custom("#E67E22"));
+        else if (name.equalsIgnoreCase("purple"))
+            return Optional.of(custom("#9C27B0"));
+        else if (name.equalsIgnoreCase("red"))
+            return Optional.of(custom("#F44336"));
 
         if (name.startsWith("#"))
             try {
