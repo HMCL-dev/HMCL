@@ -218,7 +218,7 @@ public final class LauncherHelper {
         VersionNumber gameVersion = VersionNumber.asVersion(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)).orElse("Unknown"));
         JavaVersion java = setting.getJavaVersion();
         if (java == null) {
-            Controllers.dialog(i18n("launch.wrong_javadir"), i18n("message.error"), MessageBox.WARNING_MESSAGE, onAccept);
+            Controllers.dialog(i18n("launch.wrong_javadir"), i18n("message.warning"), MessageBox.WARNING_MESSAGE, onAccept);
             setting.setJava(null);
             setting.setDefaultJavaPath(null);
             java = JavaVersion.fromCurrentEnvironment();
@@ -232,7 +232,7 @@ public final class LauncherHelper {
                 Controllers.dialog(i18n("launch.advice.java8_1_13"), i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
             } else {
                 // Most mods require Java 8 or later version.
-                Controllers.dialog(i18n("launch.advice.newer_java"), i18n("message.error"), MessageBox.WARNING_MESSAGE, onAccept);
+                Controllers.dialog(i18n("launch.advice.newer_java"), i18n("message.warning"), MessageBox.WARNING_MESSAGE, onAccept);
             }
             flag = true;
         }
@@ -240,7 +240,13 @@ public final class LauncherHelper {
         // LaunchWrapper will crash because of assuming the system class loader is an instance of URLClassLoader.
         // cpw has claimed that he will make MinecraftForge of 1.13 and later versions able to run on Java 9.
         if (!flag && java.getParsedVersion() >= JavaVersion.JAVA_9 && gameVersion.compareTo(VersionNumber.asVersion("1.12.5")) < 0 && version.getMainClass().contains("launchwrapper")) {
-            Controllers.dialog(i18n("launch.advice.java9"), i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
+            Optional<JavaVersion> java8 = JavaVersion.getJREs().stream().filter(javaVersion -> javaVersion.getParsedVersion() == JavaVersion.JAVA_8).findAny();
+            if (java8.isPresent()) {
+                setting.setJavaVersion(java8.get());
+                Controllers.dialog(i18n("launch.advice.java9"), i18n("message.warning"), MessageBox.WARNING_MESSAGE, onAccept);
+            } else {
+                Controllers.dialog(i18n("launch.advice.java9"), i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
+            }
             flag = true;
         }
 
