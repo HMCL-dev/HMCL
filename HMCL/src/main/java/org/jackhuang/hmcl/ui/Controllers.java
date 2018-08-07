@@ -23,6 +23,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -98,7 +99,7 @@ public final class Controllers {
 
         stage.setOnCloseRequest(e -> Launcher.stopApplication());
 
-        decorator = new Decorator(stage, getMainPage(), Launcher.TITLE, false, true);
+        decorator = new Decorator(stage, getMainPage(), Metadata.TITLE, false, true);
         decorator.showPage(null);
         leftPaneController = new LeftPaneController(decorator.getLeftPane());
 
@@ -115,7 +116,7 @@ public final class Controllers {
         stage.setMaxHeight(521);
 
         stage.getIcons().add(new Image("/assets/img/icon.png"));
-        stage.setTitle(Launcher.TITLE);
+        stage.setTitle(Metadata.TITLE);
     }
 
     public static void dialog(Region content) {
@@ -176,12 +177,6 @@ public final class Controllers {
             decorator.showPage(null);
         else
             decorator.showPage(node);
-    }
-
-    public static void showUpdate() {
-        if (stage == null) // shut down
-            return;
-        getLeftPaneController().showUpdate();
     }
 
     public static boolean isStopped() {

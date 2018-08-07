@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.*;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.When;
 import javafx.beans.property.ObjectProperty;
@@ -37,12 +39,15 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.FontComboBox;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+import org.jackhuang.hmcl.upgrade.RemoteVersion;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
@@ -104,6 +109,8 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     private Pane proxyPane;
 
     private ObjectProperty<Proxy.Type> selectedProxyType;
+
+    private InvalidationListener updateListener;
 
     public SettingsPage() {
         FXUtils.loadFXML(this, "/assets/fxml/setting.fxml");
@@ -194,8 +201,29 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
                                 .orElse(i18n("launcher.common_directory.disabled")),
                         config().commonDirectoryProperty(), config().commonDirTypeProperty()));
 
+        // ==== Update ====
         FXUtils.installTooltip(btnUpdate, i18n("update.tooltip"));
-        checkUpdate();
+        updateListener = any -> {
+            btnUpdate.setVisible(UpdateChecker.isOutdated());
+
+            if (UpdateChecker.isOutdated()) {
+                lblUpdateSub.setText(i18n("update.newest_version", UpdateChecker.getLatestVersion().getVersion()));
+                lblUpdateSub.getStyleClass().setAll("update-label");
+
+                lblUpdate.setText(i18n("update.found"));
+                lblUpdate.getStyleClass().setAll("update-label");
+            } else {
+                lblUpdateSub.setText(i18n("update.latest"));
+                lblUpdateSub.getStyleClass().setAll("subtitle-label");
+
+                lblUpdate.setText(i18n("update"));
+                lblUpdate.getStyleClass().setAll();
+            }
+        };
+        UpdateChecker.latestVersionProperty().addListener(new WeakInvalidationListener(updateListener));
+        UpdateChecker.outdatedProperty().addListener(new WeakInvalidationListener(updateListener));
+        updateListener.invalidated(null);
+        // ====
 
         // ==== Background ====
         backgroundItem.loadChildren(Collections.singletonList(
@@ -237,26 +265,12 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         this.title.set(title);
     }
 
-    public void checkUpdate() {
-        btnUpdate.setVisible(Launcher.UPDATE_CHECKER.isOutOfDate());
-
-        if (Launcher.UPDATE_CHECKER.isOutOfDate()) {
-            lblUpdateSub.setText(i18n("update.newest_version", Launcher.UPDATE_CHECKER.getNewVersion().toString()));
-            lblUpdateSub.getStyleClass().setAll("update-label");
-
-            lblUpdate.setText(i18n("update.found"));
-            lblUpdate.getStyleClass().setAll("update-label");
-        } else {
-            lblUpdateSub.setText(i18n("update.latest"));
-            lblUpdateSub.getStyleClass().setAll("subtitle-label");
-
-            lblUpdate.setText(i18n("update"));
-            lblUpdate.getStyleClass().setAll();
-        }
-    }
-
     @FXML
     private void onUpdate() {
-        Launcher.UPDATE_CHECKER.checkOutdate();
+        RemoteVersion target = UpdateChecker.getLatestVersion();
+        if (target == null) {
+            return;
+        }
+        UpdateHandler.updateFrom(target);
     }
 }

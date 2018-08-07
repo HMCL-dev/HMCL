@@ -60,8 +60,6 @@ public class Settings {
             profileEntry.getValue().nameProperty().setChangedListener(this::profileNameChanged);
             profileEntry.getValue().addPropertyChangedListener(e -> ConfigHolder.saveConfig());
         }
-
-        config().addListener(source -> ConfigHolder.saveConfig());
     }
 
     public Font getFont() {
