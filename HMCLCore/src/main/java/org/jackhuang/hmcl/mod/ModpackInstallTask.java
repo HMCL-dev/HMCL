@@ -67,6 +67,7 @@ public class ModpackInstallTask<T> extends Task {
                 .setReplaceExistentFile(true)
                 .setFilter((destPath, isDirectory, zipEntry, entryPath) -> {
                     if (isDirectory) return true;
+                    if (!callback.test(entryPath)) return false;
                     entries.add(entryPath);
 
                     if (!files.containsKey(entryPath)) {

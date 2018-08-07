@@ -154,6 +154,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     private HBox navLeft;
     @FXML
     private ImageView welcomeView;
+    @FXML
+    private Rectangle separator;
 
     public Decorator(Stage primaryStage, Node mainPage, String title) {
         this(primaryStage, mainPage, title, true, true);
@@ -189,6 +191,8 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         refreshNavButton.setGraphic(SVG.refresh(Theme.foregroundFillBinding(), 15, 15));
         closeNavButton.setGraphic(SVG.close(Theme.foregroundFillBinding(), 15, 15));
         backNavButton.setGraphic(SVG.back(Theme.foregroundFillBinding(), 15, 15));
+
+        separator.visibleProperty().bind(refreshNavButton.visibleProperty());
 
         lblTitle.setText(title);
 
