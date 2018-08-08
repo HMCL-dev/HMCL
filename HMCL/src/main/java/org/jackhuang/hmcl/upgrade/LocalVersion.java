@@ -17,47 +17,16 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
-
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.CodeSource;
-import java.util.Optional;
-import java.util.logging.Level;
-
-import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.util.JarUtils;
+
+import java.nio.file.Path;
+import java.util.Optional;
 
 class LocalVersion {
 
     public static Optional<LocalVersion> current() {
-        CodeSource codeSource = Main.class.getProtectionDomain().getCodeSource();
-        if (codeSource == null) {
-            return Optional.empty();
-        }
-
-        URL url = codeSource.getLocation();
-        if (url == null) {
-            return Optional.empty();
-        }
-
-        Path path;
-        try {
-            path = Paths.get(url.toURI());
-        } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException e) {
-            LOG.log(Level.WARNING, "Invalid path: " + url, e);
-            return Optional.empty();
-        }
-
-        if (!Files.isRegularFile(path)) {
-            return Optional.empty();
-        }
-
-        return Optional.of(new LocalVersion(Metadata.VERSION, path));
+        return JarUtils.thisJar().map(path -> new LocalVersion(Metadata.VERSION, path));
     }
 
     private String version;

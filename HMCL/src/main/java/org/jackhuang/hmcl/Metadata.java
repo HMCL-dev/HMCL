@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl;
 
-import java.util.Optional;
+import org.jackhuang.hmcl.util.JarUtils;
 
 /**
  * Stores metadata about this application.
@@ -25,7 +25,7 @@ import java.util.Optional;
 public final class Metadata {
     private Metadata() {}
 
-    public static final String VERSION = System.getProperty("hmcl.version.override", Optional.ofNullable(Metadata.class.getPackage().getImplementationVersion()).orElse("@develop@"));
+    public static final String VERSION = System.getProperty("hmcl.version.override", JarUtils.thisJar().flatMap(JarUtils::getImplementationVersion).orElse("@develop@"));
     public static final String NAME = "HMCL";
     public static final String TITLE = NAME + " " + VERSION;
     

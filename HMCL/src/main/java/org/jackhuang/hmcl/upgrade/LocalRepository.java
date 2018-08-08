@@ -17,7 +17,11 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.util.JarUtils;
+import org.tukaani.xz.XZInputStream;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -25,15 +29,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import java.util.logging.Level;
 
-import org.jackhuang.hmcl.Launcher;
-import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.tukaani.xz.XZInputStream;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 /**
  * A class used to manage the local HMCL repository.
@@ -52,15 +52,9 @@ final class LocalRepository {
         if (!Files.isRegularFile(localStorage)) {
             return Optional.empty();
         }
-        try (JarFile jar = new JarFile(localStorage.toFile())) {
-            Attributes attributes = jar.getManifest().getMainAttributes();
-            String version = Optional.ofNullable(attributes.getValue("Implementation-Version"))
-                    .orElseThrow(() -> new IOException("Missing Implementation-Version"));
-            return Optional.of(new LocalVersion(version, localStorage));
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to read HMCL jar: " + localStorage, e);
-            return Optional.empty();
-        }
+        return Optional.of(localStorage)
+                .flatMap(JarUtils::getImplementationVersion)
+                .map(version -> new LocalVersion(version, localStorage));
     }
 
     private static void writeToStorage(Path source, boolean checkHeaders) throws IOException {
