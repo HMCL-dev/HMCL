@@ -1,122 +1,137 @@
-import org.apache.tools.ant.filters.ReplaceTokens
-
-import java.security.MessageDigest
-import java.util.jar.JarFile
-import java.util.jar.Pack200
-import java.util.zip.GZIPOutputStream
-
-if (!hasProperty('mainClass')) {
-    ext.mainClass = 'org.jackhuang.hmcl.Main'
+plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.4'
 }
 
-def buildnumber = System.getenv("TRAVIS_BUILD_NUMBER")
-if (buildnumber == null)
-    buildnumber = System.getenv("BUILD_NUMBER")
-if (buildnumber == null)
-    buildnumber = "SNAPSHOT"
+import java.nio.file.FileSystems
+import java.security.KeyFactory
+import java.security.MessageDigest
+import java.security.Signature
+import java.security.spec.PKCS8EncodedKeySpec
+import java.util.jar.JarFile
+import java.util.jar.JarOutputStream
+import java.util.jar.Pack200
+import java.util.zip.GZIPOutputStream
+import java.util.zip.ZipFile
+import java.nio.file.Files
 
-def versionroot = System.getenv("VERSION_ROOT")
-if (versionroot == null)
-    versionroot = "3.1"
+import org.tukaani.xz.LZMA2Options
+import org.tukaani.xz.XZOutputStream
 
-String mavenVersion = versionroot + '.' + buildnumber
-version = mavenVersion
+def buildnumber = System.getenv("BUILD_NUMBER") ?: "SNAPSHOT"
+def versionroot = System.getenv("VERSION_ROOT") ?: "3.1"
+version = versionroot + '.' + buildnumber
 
 dependencies {
     compile project(":HMCLCore")
     compile rootProject.files("lib/JFoenix.jar")
 }
 
-task generateSources(type: Sync) {
-    from 'src/main/java'
-    into "$buildDir/generated-src"
-    filter(ReplaceTokens, tokens: [
-            'HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING': mavenVersion
-    ])
+def digest(String algorithm, byte[] bytes) {
+    return MessageDigest.getInstance(algorithm).digest(bytes)
 }
 
-compileJava.setSource "$buildDir/generated-src"
-compileJava.dependsOn generateSources
+def createChecksum(File file) {
+    def algorithm = "SHA-1"
+    def suffix = "sha1"
+    new File(file.parentFile, file.name + "." + suffix).text = digest(algorithm, file.bytes).encodeHex().toString() + "\n"
+}
 
-configurations {
-    coreCompile.extendsFrom compile
-    coreRuntime.extendsFrom runtime
+def attachSignature(File jar) {
+    def keyLocation = System.getenv("HMCL_SIGNATURE_KEY");
+    if (keyLocation == null)
+        return
+    def privatekey = KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(new File(keyLocation).bytes))
+
+    def signer = Signature.getInstance("SHA512withRSA")
+    signer.initSign(privatekey)
+    new ZipFile(jar).withCloseable { zip ->
+        zip.stream()
+                .sorted(Comparator.comparing { it.name })
+                .filter { it.name != "META-INF/hmcl_signature" }
+                .forEach {
+                    signer.update(digest("SHA-512", it.name.getBytes("UTF-8")))
+                    signer.update(digest("SHA-512", zip.getInputStream(it).bytes))
+                }
+    }
+    def signature = signer.sign()
+
+    FileSystems.newFileSystem(URI.create("jar:" + jar.toURI()), [:]).withCloseable { zipfs ->
+        Files.newOutputStream(zipfs.getPath("META-INF/hmcl_signature")).withCloseable { it << signature }
+    }
+}
+
+ext.packer = Pack200.newPacker()
+packer.properties()["pack.effort"] = "9"
+ext.unpacker = Pack200.newUnpacker()
+
+def repack(File file) {
+    def packed = new ByteArrayOutputStream()
+    new JarFile(file).withCloseable { packer.pack(it, packed) }
+    new JarOutputStream(file.newOutputStream()).withCloseable { unpacker.unpack(new ByteArrayInputStream(packed.toByteArray()), it) }
 }
 
 jar {
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-
     manifest {
         attributes 'Created-By': 'Copyright(c) 2013-2018 huangyuhui.',
-                'Main-Class': mainClass,
-                'Multi-Release': "true",
+                'Main-Class': 'org.jackhuang.hmcl.Main',
+                'Multi-Release': 'true',
                 'Implementation-Version': version
+    }
+    finalizedBy shadowJar
+}
+
+shadowJar {
+    classifier = null
+
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/NOTICE.txt'
+    exclude 'META-INF/LICENSE.txt'
+
+    dependencies {
+        exclude(dependency('org.jetbrains:annotations'))
     }
 
     doLast {
-        def messageDigest = MessageDigest.getInstance("SHA1")
-        archivePath.eachByte 1024 * 1024, { byte[] buf, int bytesRead ->
-            messageDigest.update(buf, 0, bytesRead)
+        repack(jar.archivePath)
+        attachSignature(jar.archivePath)
+        createChecksum(jar.archivePath)
+    }
+}
+
+def createExecutable(String suffix, String header) {
+    def output = new File(jar.archivePath.parentFile, jar.archivePath.name[0..-4] + suffix)
+    output.bytes = new File(project.projectDir, header).bytes
+    output << jar.archivePath.bytes
+    createChecksum(output)
+}
+
+task makePack(dependsOn: jar) {
+    ext.outputPath = new File(jar.archivePath.parentFile, jar.archivePath.name[0..-4] + "pack")
+    doLast {
+        outputPath.newOutputStream().withCloseable { out ->
+            new JarFile(jar.archivePath).withCloseable { jarFile -> packer.pack(jarFile, out) }
         }
-        def sha1Hex = new BigInteger(1, messageDigest.digest()).toString(16).padLeft(40, '0')
-        def fileEx = new File(project.buildDir, "libs/" + archivePath.getName() + ".sha1")
-        if (!fileEx.exists()) fileEx.createNewFile()
-        fileEx.append sha1Hex
+        createChecksum(outputPath)
     }
 }
 
-processResources {
-    from(sourceSets.main.resources.srcDirs) {
-        exclude 'icon.icns'
-    }
+task makePackXz(dependsOn: makePack) doLast {
+    def packXz = new File(makePack.outputPath.parentFile, makePack.outputPath.name + ".xz")
+    new XZOutputStream(packXz.newOutputStream(), new LZMA2Options(9)).withCloseable { it << makePack.outputPath.bytes }
+    createChecksum(packXz)
 }
 
-task makePackGZ(dependsOn: jar) doLast {
-    ext {
-        jar.classifier = ''
-        makeExecutableinjar = jar.archivePath
-        jar.classifier = ''
-        makeExecutableoutjar = jar.archivePath
-        jar.classifier = ''
-    }
-    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".pack.gz")
-    def os = new GZIPOutputStream(new FileOutputStream(loc))
-    Pack200.newPacker().pack new JarFile(makeExecutableinjar), os
-    os.close()
-
-    def messageDigest = MessageDigest.getInstance("SHA1")
-    loc.eachByte 1024 * 1024, { byte[] buf, int bytesRead ->
-        messageDigest.update(buf, 0, bytesRead)
-    }
-    def sha1Hex = new BigInteger(1, messageDigest.digest()).toString(16).padLeft(40, '0')
-    def fileEx = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length()-4)+".pack.gz.sha1")
-    if (!fileEx.exists()) fileEx.createNewFile()
-    fileEx.append sha1Hex
+task makePackGz(dependsOn: makePack) doLast {
+    def packGz = new File(makePack.outputPath.parentFile, makePack.outputPath.name + ".gz")
+    new GZIPOutputStream(packGz.newOutputStream()).withCloseable { it << makePack.outputPath.bytes }
+    createChecksum(packGz)
 }
 
-task makeExecutable(dependsOn: jar) doLast {
-    ext {
-        jar.classifier = ''
-        makeExecutableinjar = jar.archivePath
-        jar.classifier = ''
-        makeExecutableoutjar = jar.archivePath
-        jar.classifier = ''
-    }
-    def loc = new File(project.buildDir, "libs/" + makeExecutableoutjar.getName().substring(0, makeExecutableoutjar.getName().length() - 4) + ".exe")
-    def fos = new FileOutputStream(loc)
-    def is = new FileInputStream(new File(project.buildDir, '../HMCLauncher.exe'))
-    int read
-    def bytes = new byte[8192]
-    while((read = is.read(bytes)) != -1)
-        fos.write(bytes, 0, read)
-    is.close()
-    is = new FileInputStream(makeExecutableoutjar)
-    while((read = is.read(bytes)) != -1)
-        fos.write(bytes, 0, read)
-    is.close()
-    fos.close()
 
+task makeExecutables(dependsOn: jar) doLast {
+    createExecutable("exe", "src/main/resources/assets/HMCLauncher.exe")
 }
 
-build.dependsOn makePackGZ
-build.dependsOn makeExecutable
+build.dependsOn makePackXz
+build.dependsOn makePackGz
+build.dependsOn makeExecutables

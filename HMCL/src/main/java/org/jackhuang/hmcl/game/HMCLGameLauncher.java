@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
@@ -46,8 +46,8 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     @Override
     protected Map<String, String> getConfigurations() {
         Map<String, String> res = super.getConfigurations();
-        res.put("${launcher_name}", Launcher.NAME);
-        res.put("${launcher_version}", Launcher.VERSION);
+        res.put("${launcher_name}", Metadata.NAME);
+        res.put("${launcher_version}", Metadata.VERSION);
         return res;
     }
 }

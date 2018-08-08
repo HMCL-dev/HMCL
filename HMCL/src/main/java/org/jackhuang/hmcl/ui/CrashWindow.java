@@ -30,7 +30,8 @@ import javafx.stage.Stage;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
 
 /**
  * @author huangyuhui
@@ -39,7 +40,7 @@ public class CrashWindow extends Stage {
 
     public CrashWindow(String text) {
         Label lblCrash = new Label();
-        if (Launcher.UPDATE_CHECKER.isOutOfDate())
+        if (UpdateChecker.isOutdated())
             lblCrash.setText(i18n("launcher.crash_out_dated"));
         else
             lblCrash.setText(i18n("launcher.crash"));
@@ -51,7 +52,7 @@ public class CrashWindow extends Stage {
 
         Button btnContact = new Button();
         btnContact.setText(i18n("launcher.contact"));
-        btnContact.setOnMouseClicked(event -> FXUtils.openLink(Launcher.CONTACT));
+        btnContact.setOnMouseClicked(event -> FXUtils.openLink(Metadata.CONTACT_URL));
         HBox box = new HBox();
         box.setStyle("-fx-padding: 8px;");
         box.getChildren().add(btnContact);

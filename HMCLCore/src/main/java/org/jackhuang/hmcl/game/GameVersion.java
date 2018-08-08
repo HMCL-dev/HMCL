@@ -73,19 +73,17 @@ public final class GameVersion {
         if (file == null || !file.exists() || !file.isFile() || !file.canRead())
             return Optional.empty();
 
-        try {
-            try (FileSystem gameJar = CompressingUtils.createReadOnlyZipFileSystem(file.toPath())) {
-                Path minecraft = gameJar.getPath("net/minecraft/client/Minecraft.class");
-                if (Files.exists(minecraft)) {
-                    Optional<String> result = getVersionOfClassMinecraft(Files.readAllBytes(minecraft));
-                    if (result.isPresent())
-                        return result;
-                }
-                Path minecraftServer = gameJar.getPath("net/minecraft/server/MinecraftServer.class");
-                if (Files.exists(minecraftServer))
-                    return getVersionFromClassMinecraftServer(Files.readAllBytes(minecraftServer));
-                return Optional.empty();
+        try (FileSystem gameJar = CompressingUtils.createReadOnlyZipFileSystem(file.toPath())) {
+            Path minecraft = gameJar.getPath("net/minecraft/client/Minecraft.class");
+            if (Files.exists(minecraft)) {
+                Optional<String> result = getVersionOfClassMinecraft(Files.readAllBytes(minecraft));
+                if (result.isPresent())
+                    return result;
             }
+            Path minecraftServer = gameJar.getPath("net/minecraft/server/MinecraftServer.class");
+            if (Files.exists(minecraftServer))
+                return getVersionFromClassMinecraftServer(Files.readAllBytes(minecraftServer));
+            return Optional.empty();
         } catch (IOException e) {
             return Optional.empty();
         }

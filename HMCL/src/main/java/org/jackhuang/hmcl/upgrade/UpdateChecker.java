@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -17,144 +17,93 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
-import com.google.gson.JsonSyntaxException;
-import org.jackhuang.hmcl.Launcher;
-import org.jackhuang.hmcl.event.Event;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.OutOfDateEvent;
-import org.jackhuang.hmcl.task.GetTask;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
-import org.jackhuang.hmcl.ui.construct.MessageBox;
-import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.NetworkUtils;
-import org.jackhuang.hmcl.util.VersionNumber;
-import static org.jackhuang.hmcl.util.Logging.LOG;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.VersionNumber.asVersion;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.logging.Level;
 
-/**
- *
- * @author huangyuhui
- */
+import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.util.NetworkUtils;
+
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableBooleanValue;
+
 public final class UpdateChecker {
+    private UpdateChecker() {}
 
-    private volatile boolean outOfDate = false;
-    private final VersionNumber base;
-    private String versionString;
-    private Map<String, String> download_link = null;
+    public static final String CHANNEL_STABLE = "stable";
+    public static final String CHANNEL_DEV = "dev";
 
-    public UpdateChecker(VersionNumber base) {
-        this.base = base;
-    }
+    private static StringProperty updateChannel = new SimpleStringProperty(CHANNEL_STABLE);
 
-    private VersionNumber value;
-
-    public boolean isOutOfDate() {
-        return outOfDate;
-    }
-
-    /**
-     * Download the version number synchronously. When you execute this method
-     * first, should leave "showMessage" false.
-     *
-     * @param showMessage If it is requested to warn the user that there is a
-     *                    new version.
-     *
-     * @return the process observable.
-     */
-    public TaskResult<VersionNumber> process(final boolean showMessage) {
-        return new TaskResult<VersionNumber>() {
-            GetTask http = new GetTask(NetworkUtils.toURL(Launcher.UPDATE_SERVER + "/hmcl/update.php?version=" + Launcher.VERSION));
-
-            @Override
-            public Collection<? extends Task> getDependents() {
-                return value == null ? Collections.singleton(http) : Collections.emptyList();
-            }
-
-            @Override
-            public void execute() throws Exception {
-                if (isDevelopmentVersion(Launcher.VERSION)) {
-                    LOG.info("Current version is a development version, skip updating");
-                    return;
+    private static ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
+    private static BooleanBinding outdated = Bindings.createBooleanBinding(
+            () -> {
+                RemoteVersion latest = latestVersion.get();
+                if (latest == null || isDevelopmentVersion(Metadata.VERSION)) {
+                    return false;
+                } else {
+                    return asVersion(latest.getVersion()).compareTo(asVersion(Metadata.VERSION)) > 0;
                 }
+            },
+            latestVersion);
 
-                if (value == null) {
-                    versionString = http.getResult();
-                    value = VersionNumber.asVersion(versionString);
-                }
-
-                if (value == null) {
-                    LOG.warning("Unable to check update...");
-                    if (showMessage)
-                        MessageBox.show(i18n("update.failed"));
-                } else if (base.compareTo(value) < 0)
-                    outOfDate = true;
-                if (outOfDate)
-                    setResult(value);
-            }
-
-            @Override
-            public String getId() {
-                return "update_checker.process";
-            }
-        };
+    public static String getUpdateChannel() {
+        return updateChannel.get();
     }
 
-    private boolean isDevelopmentVersion(String version) {
-        return version.contains("@") || // eg. @HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@
+    public static void setUpdateChannel(String updateChannel) {
+        UpdateChecker.updateChannel.set(updateChannel);
+    }
+
+    public static StringProperty updateChannelProperty() {
+        return updateChannel;
+    }
+
+    public static RemoteVersion getLatestVersion() {
+        return latestVersion.get();
+    }
+
+    public static ReadOnlyObjectProperty<RemoteVersion> latestVersionProperty() {
+        return latestVersion;
+    }
+
+    public static boolean isOutdated() {
+        return outdated.get();
+    }
+
+    public static ObservableBooleanValue outdatedProperty() {
+        return outdated;
+    }
+
+    public static void checkUpdate() throws IOException {
+        if (!IntegrityChecker.isSelfVerified()) {
+            return;
+        }
+
+        String channel = getUpdateChannel();
+        String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
+                pair("version", Metadata.VERSION),
+                pair("channel", channel)));
+
+        RemoteVersion fetched = RemoteVersion.fetch(url);
+        Platform.runLater(() -> {
+            if (channel.equals(getUpdateChannel())) {
+                latestVersion.set(fetched);
+            }
+        });
+    }
+
+    private static boolean isDevelopmentVersion(String version) {
+        return version.contains("@") || // eg. @develop@
                 version.contains("SNAPSHOT"); // eg. 3.1.SNAPSHOT
-    }
-
-    /**
-     * Get the <b>cached</b> newest version number, use "process" method to
-     * download!
-     *
-     * @return the newest version number
-     *
-     * @see #process(boolean)
-     */
-    public VersionNumber getNewVersion() {
-        return value;
-    }
-
-    /**
-     * Get the download links.
-     *
-     * @return a JSON, which contains the server response.
-     */
-    public synchronized TaskResult<Map<String, String>> requestDownloadLink() {
-        return new TaskResult<Map<String, String>>() {
-            @Override
-            public void execute() {
-                if (download_link == null) {
-                    try {
-                        download_link = Constants.GSON.<Map<String, String>>fromJson(NetworkUtils.doGet(NetworkUtils.toURL(Launcher.UPDATE_SERVER + "/hmcl/update_link.php")), Map.class);
-                    } catch (JsonSyntaxException | IOException e) {
-                        LOG.log(Level.SEVERE, "Failed to get update link.", e);
-                    }
-                }
-                setResult(download_link);
-            }
-
-            @Override
-            public String getId() {
-                return "update_checker.request_download_link";
-            }
-        };
-    }
-
-    public static final String REQUEST_DOWNLOAD_LINK_ID = "update_checker.request_download_link";
-
-    public void checkOutdate() {
-        if (outOfDate)
-            if (EventBus.EVENT_BUS.fireEvent(new OutOfDateEvent(this, getNewVersion())) != Event.Result.DENY) {
-                Launcher.UPGRADER.download(this, getNewVersion());
-            }
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -17,29 +17,36 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
-import org.jackhuang.hmcl.util.VersionNumber;
+import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.util.JarUtils;
 
-import java.util.List;
+import java.nio.file.Path;
+import java.util.Optional;
 
-/**
- *
- * @author huangyuhui
- */
-public abstract class IUpgrader {
+class LocalVersion {
 
-    /**
-     * Paring arguments to decide on whether the upgrade is needed.
-     *
-     * @param nowVersion now launcher version
-     * @param args       Application CommandLine Arguments
-     */
-    public abstract void parseArguments(VersionNumber nowVersion, List<String> args);
+    public static Optional<LocalVersion> current() {
+        return JarUtils.thisJar().map(path -> new LocalVersion(Metadata.VERSION, path));
+    }
 
-    /**
-     * Just download the new app.
-     *
-     * @param checker Should be VersionChecker
-     * @param version the newest version
-     */
-    public abstract void download(UpdateChecker checker, VersionNumber version);
+    private String version;
+    private Path location;
+
+    public LocalVersion(String version, Path location) {
+        this.version = version;
+        this.location = location;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public Path getLocation() {
+        return location;
+    }
+
+    @Override
+    public String toString() {
+        return "[" + version + " at " + location + "]";
+    }
 }

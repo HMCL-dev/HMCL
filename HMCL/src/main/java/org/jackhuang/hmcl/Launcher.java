@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl;
 
+import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 import com.jfoenix.concurrency.JFXUtilities;
@@ -25,22 +26,20 @@ import javafx.application.Platform;
 import javafx.stage.Stage;
 
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.upgrade.AppDataUpgrader;
-import org.jackhuang.hmcl.upgrade.IUpgrader;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 public final class Launcher extends Application {
 
@@ -56,12 +55,13 @@ public final class Launcher extends Application {
             primaryStage.setResizable(false);
             primaryStage.setScene(Controllers.getScene());
 
-            UPDATE_CHECKER.process(false)
-                    .then(Task.of(Schedulers.javafx(), () -> {
-                        if (UPDATE_CHECKER.isOutOfDate())
-                            Controllers.showUpdate();
-                    }))
-                    .start();
+            thread(() -> {
+                try {
+                    UpdateChecker.checkUpdate();
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to check for update", e);
+                }
+            });
 
             primaryStage.show();
         } catch (Throwable e) {
@@ -80,9 +80,8 @@ public final class Launcher extends Application {
 
             // NetworkUtils.setUserAgentSupplier(() -> "Hello Minecraft! Launcher");
             Constants.UI_THREAD_SCHEDULER = Constants.JAVAFX_UI_THREAD_SCHEDULER;
-            UPGRADER.parseArguments(VersionNumber.asVersion(VERSION), Arrays.asList(args));
 
-            LOG.info("*** " + TITLE + " ***");
+            LOG.info("*** " + Metadata.TITLE + " ***");
             LOG.info("Operating System: " + System.getProperty("os.name") + ' ' + OperatingSystem.SYSTEM_VERSION);
             LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
             LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
@@ -146,14 +145,5 @@ public final class Launcher extends Application {
     public static final File HMCL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
     public static final File LOG_DIRECTORY = new File(Launcher.HMCL_DIRECTORY, "logs");
 
-    public static final String VERSION = System.getProperty("hmcl.version.override", "@HELLO_MINECRAFT_LAUNCHER_VERSION_FOR_GRADLE_REPLACING@");
-    public static final String NAME = "HMCL";
-    public static final String TITLE = NAME + " " + VERSION;
-    public static final UpdateChecker UPDATE_CHECKER = new UpdateChecker(VersionNumber.asVersion(VERSION));
-    public static final IUpgrader UPGRADER = new AppDataUpgrader();
     public static final CrashReporter CRASH_REPORTER = new CrashReporter();
-
-    public static final String UPDATE_SERVER = "https://www.huangyuhui.net";
-    public static final String CONTACT = UPDATE_SERVER + "/hmcl.php";
-    public static final String PUBLISH = "http://www.mcbbs.net/thread-142335-1-1.html";
 }

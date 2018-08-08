@@ -19,14 +19,17 @@
 group 'org.jackhuang'
 version '3.0'
 
-repositories {
-    mavenCentral()
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'org.tukaani:xz:1.8'
+    }
 }
 
-allprojects {
-    group 'org.jackhuang'
-    version '3.0'
 
+subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
 

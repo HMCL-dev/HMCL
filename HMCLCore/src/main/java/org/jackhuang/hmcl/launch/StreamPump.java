@@ -49,17 +49,15 @@ final class StreamPump implements Runnable {
 
     @Override
     public void run() {
-        try {
-            try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, Constants.SYSTEM_CHARSET))) {
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    if (Thread.currentThread().isInterrupted()) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
-
-                    callback.accept(line);
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, Constants.SYSTEM_CHARSET))) {
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                if (Thread.currentThread().isInterrupted()) {
+                    Thread.currentThread().interrupt();
+                    break;
                 }
+
+                callback.accept(line);
             }
         } catch (IOException e) {
             Logging.LOG.log(Level.SEVERE, "An error occurred when reading stream", e);
