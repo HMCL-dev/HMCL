@@ -33,7 +33,7 @@ import java.util.jar.Manifest;
 public final class JarUtils {
 
     public static Optional<Path> thisJar() {
-        CodeSource codeSource = FileUtils.class.getProtectionDomain().getCodeSource();
+        CodeSource codeSource = JarUtils.class.getProtectionDomain().getCodeSource();
         if (codeSource == null) {
             return Optional.empty();
         }
