@@ -21,8 +21,8 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -43,13 +43,17 @@ public final class Main {
         checkJavaFX();
         checkDirectoryPath();
         checkDSTRootCAX3();
-        checkConfigPermission();
 
         if (UpdateHandler.processArguments(args)) {
             return;
         }
 
-        ConfigHolder.init();
+        try {
+            ConfigHolder.init();
+        } catch (IOException e) {
+            showErrorAndExit(i18n("fatal.config_loading_failure", Paths.get("").toAbsolutePath().normalize()));
+        }
+
         Launcher.main(args);
     }
 
@@ -90,22 +94,6 @@ public final class Main {
             }
         }
         showWarningAndContinue(i18n("fatal.missing_dst_root_ca_x3"));
-    }
-
-    private static void checkConfigPermission() {
-        Path config = ConfigHolder.CONFIG_PATH;
-        if (Files.exists(config)) {
-            if (Files.isReadable(config) && Files.isWritable(config)) {
-                // we are able to read & write the existent config
-                return;
-            }
-        } else {
-            if (Files.isWritable(config.getParent())) {
-                // we are able to create a new config
-                return;
-            }
-        }
-        showErrorAndExit(i18n("fatal.config_access_denied", config));
     }
 
     /**

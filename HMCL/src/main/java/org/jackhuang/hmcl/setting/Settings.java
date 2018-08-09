@@ -58,7 +58,7 @@ public class Settings {
         for (Map.Entry<String, Profile> profileEntry : getProfileMap().entrySet()) {
             profileEntry.getValue().setName(profileEntry.getKey());
             profileEntry.getValue().nameProperty().setChangedListener(this::profileNameChanged);
-            profileEntry.getValue().addPropertyChangedListener(e -> ConfigHolder.saveConfig());
+            profileEntry.getValue().addPropertyChangedListener(e -> ConfigHolder.markConfigDirty());
         }
     }
 
