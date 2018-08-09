@@ -29,6 +29,8 @@ import java.util.logging.Level;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+
+import org.jackhuang.hmcl.util.OperatingSystem;
 import org.jackhuang.hmcl.util.StringUtils;
 
 public final class ConfigHolder {
@@ -36,8 +38,9 @@ public final class ConfigHolder {
     private ConfigHolder() {}
 
     public static final String CONFIG_FILENAME = "hmcl.json";
-    public static final Path CONFIG_PATH = Paths.get(CONFIG_FILENAME).toAbsolutePath();
+    public static final String CONFIG_FILENAME_LINUX = ".hmcl.json";
 
+    private static Path configLocation;
     private static Config configInstance;
     private static boolean newlyCreated;
 
@@ -55,25 +58,54 @@ public final class ConfigHolder {
         return newlyCreated;
     }
 
-    public synchronized static void init() {
+    public synchronized static void init() throws IOException {
         if (configInstance != null) {
             throw new IllegalStateException("Configuration is already loaded");
         }
 
+        configLocation = locateConfig();
         configInstance = loadConfig();
-        configInstance.addListener(source -> saveConfig());
+        configInstance.addListener(source -> markConfigDirty());
 
         Settings.init();
 
         if (newlyCreated) {
             saveConfig();
+
+            // hide the config file on windows
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                try {
+                    Files.setAttribute(configLocation, "dos:hidden", true);
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to set hidden attribute of " + configLocation, e);
+                }
+            }
+        }
+
+        if (!Files.isWritable(configLocation)) {
+            // the config cannot be saved
+            // throw up the error now to prevent further data loss
+            throw new IOException("Config at " + configLocation + " is not writable");
         }
     }
 
-    private static Config loadConfig() {
-        if (Files.exists(CONFIG_PATH)) {
+    private static Path locateConfig() {
+        Path config = Paths.get(CONFIG_FILENAME);
+        if (Files.isRegularFile(config))
+            return config;
+
+        Path dotConfig = Paths.get(CONFIG_FILENAME_LINUX);
+        if (Files.isRegularFile(dotConfig))
+            return dotConfig;
+
+        // create new
+        return OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? config : dotConfig;
+    }
+
+    private static Config loadConfig() throws IOException {
+        if (Files.exists(configLocation)) {
             try {
-                String content = new String(Files.readAllBytes(CONFIG_PATH), UTF_8);
+                String content = new String(Files.readAllBytes(configLocation), UTF_8);
                 Config deserialized = Config.fromJson(content);
                 if (deserialized == null) {
                     LOG.info("Config is empty");
@@ -82,8 +114,8 @@ public final class ConfigHolder {
                     upgradeConfig(deserialized, raw);
                     return deserialized;
                 }
-            } catch (IOException | JsonParseException e) {
-                LOG.log(Level.WARNING, "Something went wrong when loading config.", e);
+            } catch (JsonParseException e) {
+                LOG.log(Level.WARNING, "Malformed config.", e);
             }
         }
 
@@ -92,12 +124,22 @@ public final class ConfigHolder {
         return new Config();
     }
 
-    static void saveConfig() {
+    private static void saveConfig() throws IOException {
         LOG.info("Saving config");
         try {
-            Files.write(CONFIG_PATH, configInstance.toJson().getBytes(UTF_8));
-        } catch (IOException ex) {
-            LOG.log(Level.SEVERE, "Failed to save config", ex);
+            Files.write(configLocation, configInstance.toJson().getBytes(UTF_8));
+        } catch (IOException e) {
+            LOG.log(Level.SEVERE, "Failed to save config", e);
+            throw e;
+        }
+    }
+
+    static void markConfigDirty() {
+        // TODO: change this to async
+        try {
+            saveConfig();
+        } catch (IOException ignored) {
+            // ignore it as it has been logged
         }
     }
 
