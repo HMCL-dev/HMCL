@@ -22,8 +22,8 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -38,7 +38,7 @@ import java.util.stream.Stream;
  *
  * @author huangyuhui
  */
-public final class JavaVersion implements Serializable {
+public final class JavaVersion {
 
     private final File binary;
     private final String longVersion;
@@ -71,8 +71,6 @@ public final class JavaVersion implements Serializable {
      * @see org.jackhuang.hmcl.util.JavaVersion#JAVA_9
      * @see org.jackhuang.hmcl.util.JavaVersion#JAVA_8
      * @see org.jackhuang.hmcl.util.JavaVersion#JAVA_7
-     * @see org.jackhuang.hmcl.util.JavaVersion#JAVA_6
-     * @see org.jackhuang.hmcl.util.JavaVersion#JAVA_5
      * @see org.jackhuang.hmcl.util.JavaVersion#UNKNOWN
      */
     public int getParsedVersion() {
@@ -82,52 +80,44 @@ public final class JavaVersion implements Serializable {
     private static final Pattern REGEX = Pattern.compile("version \"(?<version>(.*?))\"");
 
     public static final int UNKNOWN = -1;
-    public static final int JAVA_5 = 50;
-    public static final int JAVA_6 = 60;
     public static final int JAVA_7 = 70;
     public static final int JAVA_8 = 80;
     public static final int JAVA_9 = 90;
-    public static final int JAVA_X = 100;
+    public static final int JAVA_10 = 100;
+    public static final int JAVA_11 = 110;
 
     private static int parseVersion(String version) {
-        if (version.startsWith("10") || version.startsWith("X"))
-            return JAVA_X;
-        else if (version.contains("1.9.") || version.startsWith("9"))
+        if (version.startsWith("11"))
+            return JAVA_11;
+        else if (version.startsWith("10"))
+            return JAVA_10;
+        else if (version.startsWith("9"))
             return JAVA_9;
         else if (version.contains("1.8"))
             return JAVA_8;
         else if (version.contains("1.7"))
             return JAVA_7;
-        else if (version.contains("1.6"))
-            return JAVA_6;
-        else if (version.contains("1.5"))
-            return JAVA_5;
         else
             return UNKNOWN;
     }
 
     public static JavaVersion fromExecutable(File executable) throws IOException {
-        File actualFile = executable;
         Platform platform = Platform.BIT_32;
         String version = null;
 
-        if ("javaw".equals(FileUtils.getNameWithoutExtension(actualFile)))
-            actualFile = new File(actualFile.getAbsoluteFile().getParentFile(), "java");
+        // javaw is only used on windows
+        if ("javaw.exe".equalsIgnoreCase(executable.getName()))
+            executable = new File(executable.getAbsoluteFile().getParentFile(), "java.exe");
 
-        try {
-            Process process = new ProcessBuilder(actualFile.getAbsolutePath(), "-version").start();
-            process.waitFor();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-                for (String line; (line = reader.readLine()) != null; ) {
-                    Matcher m = REGEX.matcher(line);
-                    if (m.find())
-                        version = m.group("version");
-                    if (line.contains("64-Bit"))
-                        platform = Platform.BIT_64;
-                }
+        Process process = new ProcessBuilder(executable.getAbsolutePath(), "-version").start();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+            for (String line; (line = reader.readLine()) != null;) {
+                Matcher m = REGEX.matcher(line);
+                if (m.find())
+                    version = m.group("version");
+                if (line.contains("64-Bit"))
+                    platform = Platform.BIT_64;
             }
-        } catch (InterruptedException e) {
-            throw new IOException("Interrupted scanning the java version.", e);
         }
 
         if (version == null)
@@ -135,24 +125,20 @@ public final class JavaVersion implements Serializable {
 
         if (parseVersion(version) == UNKNOWN)
             throw new IOException("Unrecognized Java version " + version);
-        return new JavaVersion(actualFile, version, platform);
-    }
 
-    private static JavaVersion fromKnownExecutable(File file, String version) {
-        return new JavaVersion(file, version, Platform.UNKNOWN);
+        return new JavaVersion(executable, version, platform);
     }
 
     public static JavaVersion fromJavaHome(File home) throws IOException {
-        return fromExecutable(getJavaFile(home));
+        return fromExecutable(getExecutable(home));
     }
 
-    private static File getJavaFile(File home) {
-        File path = new File(home, "bin");
-        File javaw = new File(path, "javae.exe");
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && javaw.isFile())
-            return javaw;
-        else
-            return new File(path, "java"); // Both linux and windows allow this.
+    private static File getExecutable(File javaHome) {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            return new File(javaHome, "bin/java.exe");
+        } else {
+            return new File(javaHome, "bin/java");
+        }
     }
 
     public static JavaVersion fromCurrentEnvironment() {
@@ -160,7 +146,7 @@ public final class JavaVersion implements Serializable {
     }
 
     public static final JavaVersion THIS_JAVA = new JavaVersion(
-            getJavaFile(new File(System.getProperty("java.home"))),
+            getExecutable(new File(System.getProperty("java.home"))),
             System.getProperty("java.version"),
             Platform.PLATFORM
     );
@@ -194,7 +180,7 @@ public final class JavaVersion implements Serializable {
                 javaVersions = queryMacintosh();
                 break;
             default:
-                javaVersions = Collections.emptyList();
+                javaVersions = new ArrayList<>();
                 break;
         }
 
@@ -214,6 +200,7 @@ public final class JavaVersion implements Serializable {
         LATCH.countDown();
     }
 
+    // ==== Linux ====
     private static List<JavaVersion> queryLinux() throws IOException {
         Path jvmDir = Paths.get("/usr/lib/jvm");
         if (Files.isDirectory(jvmDir)) {
@@ -234,9 +221,11 @@ public final class JavaVersion implements Serializable {
             return Collections.emptyList();
         }
     }
+    // ====
 
+    // ==== OSX ====
     private static List<JavaVersion> queryMacintosh() throws IOException {
-        LinkedList<JavaVersion> res = new LinkedList<>();
+        List<JavaVersion> res = new ArrayList<>();
 
         File currentJRE = new File("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home");
         if (currentJRE.exists())
@@ -248,9 +237,11 @@ public final class JavaVersion implements Serializable {
 
         return res;
     }
+    // ====
 
+    // ==== Windows ====
     private static List<JavaVersion> queryWindows() {
-        LinkedList<JavaVersion> res = new LinkedList<>();
+        List<JavaVersion> res = new ArrayList<>();
         Lang.ignoringException(() -> res.addAll(queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\")));
         Lang.ignoringException(() -> res.addAll(queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\")));
         Lang.ignoringException(() -> res.addAll(queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JRE\\")));
@@ -259,7 +250,7 @@ public final class JavaVersion implements Serializable {
     }
 
     private static List<String> querySubFolders(String location) throws IOException, InterruptedException {
-        List<String> res = new LinkedList<>();
+        List<String> res = new ArrayList<>();
         String[] cmd = new String[] { "cmd", "/c", "reg", "query", location };
         Process process = Runtime.getRuntime().exec(cmd);
         process.waitFor();
@@ -273,7 +264,7 @@ public final class JavaVersion implements Serializable {
     }
 
     private static List<JavaVersion> queryRegisterKey(String location) throws IOException, InterruptedException {
-        List<JavaVersion> res = new LinkedList<>();
+        List<JavaVersion> res = new ArrayList<>();
         for (String java : querySubFolders(location)) {
             String home = queryRegisterValue(java, "JavaHome");
             if (home != null)
@@ -306,4 +297,5 @@ public final class JavaVersion implements Serializable {
         }
         return null;
     }
+    // ====
 }
