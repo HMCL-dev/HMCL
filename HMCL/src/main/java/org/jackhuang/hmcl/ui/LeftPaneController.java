@@ -49,11 +49,7 @@ import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
-import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
-import org.jackhuang.hmcl.ui.construct.ClassTitle;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.IconedItem;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.MappedObservableList;
@@ -127,7 +123,7 @@ public final class LeftPaneController {
 
         // ==== Accounts ====
         // Missing account item
-        VersionListItem missingAccountItem = new VersionListItem(i18n("account.missing"), i18n("message.unknown"));
+        AdvancedListItem missingAccountItem = new AdvancedListItem(i18n("account.missing"), i18n("message.unknown"));
         RipplerContainer missingAccountRippler = new RipplerContainer(missingAccountItem);
         missingAccountItem.setOnSettingsButtonClicked(e -> addNewAccount());
         missingAccountRippler.setOnMouseClicked(e -> addNewAccount());
@@ -162,7 +158,7 @@ public final class LeftPaneController {
     }
 
     private RipplerContainer createAccountItem(Account account) {
-        VersionListItem item = new VersionListItem(account.getCharacter(), accountSubtitle(account));
+        AdvancedListItem item = new AdvancedListItem(account.getCharacter(), accountSubtitle(account));
         RipplerContainer rippler = new RipplerContainer(item);
         item.setOnSettingsButtonClicked(e -> {
             AccountPage accountPage = new AccountPage(account, item);
@@ -219,7 +215,7 @@ public final class LeftPaneController {
                 if (node instanceof RipplerContainer && node.getProperties().get("profile") instanceof String) {
                     boolean current = Objects.equals(node.getProperties().get("profile"), profile.getName());
                     ((RipplerContainer) node).setSelected(current);
-                    ((VersionListItem) ((RipplerContainer) node).getContainer()).setGameVersion(current ? i18n("profile.selected") : "");
+                    ((AdvancedListItem) ((RipplerContainer) node).getContainer()).setSubtitle(current ? i18n("profile.selected") : "");
                 }
             }
         });
@@ -228,7 +224,7 @@ public final class LeftPaneController {
     private void onProfilesLoading() {
         LinkedList<RipplerContainer> list = new LinkedList<>();
         for (Profile profile : Settings.instance().getProfiles()) {
-            VersionListItem item = new VersionListItem(Profiles.getProfileDisplayName(profile));
+            AdvancedListItem item = new AdvancedListItem(Profiles.getProfileDisplayName(profile));
             RipplerContainer ripplerContainer = new RipplerContainer(item);
             item.setOnSettingsButtonClicked(e -> Controllers.getDecorator().showPage(new ProfilePage(profile)));
             ripplerContainer.setOnMouseClicked(e -> Settings.instance().setSelectedProfile(profile));

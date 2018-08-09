@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 
@@ -49,7 +50,7 @@ import java.util.Optional;
 public class AccountPage extends StackPane implements DecoratorPage {
     private final StringProperty title;
     private final ObjectProperty<Runnable> onDelete = new SimpleObjectProperty<>(this, "onDelete");
-    private final VersionListItem item;
+    private final AdvancedListItem item;
     private final Account account;
 
     @FXML
@@ -73,7 +74,7 @@ public class AccountPage extends StackPane implements DecoratorPage {
     @FXML
     private JFXProgressBar progressBar;
 
-    public AccountPage(Account account, VersionListItem item) {
+    public AccountPage(Account account, AdvancedListItem item) {
         this.account = account;
         this.item = item;
 

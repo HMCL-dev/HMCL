@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui;
+package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.event.EventHandler;
@@ -26,27 +26,28 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.ui.FXUtils;
 
-public final class VersionListItem extends StackPane {
+public final class AdvancedListItem extends StackPane {
     @FXML
     private StackPane imageViewContainer;
     @FXML
-    private Label lblVersionName;
+    private Label lblTitle;
     @FXML
-    private Label lblGameVersion;
+    private Label lblSubtitle;
     @FXML
     private ImageView imageView;
     @FXML private JFXButton btnSettings;
 
-    public VersionListItem(String versionName) {
-        this(versionName, "");
+    public AdvancedListItem(String title) {
+        this(title, "");
     }
 
-    public VersionListItem(String versionName, String gameVersion) {
-        FXUtils.loadFXML(this, "/assets/fxml/version-list-item.fxml");
+    public AdvancedListItem(String title, String subtitle) {
+        FXUtils.loadFXML(this, "/assets/fxml/advanced-list-item.fxml");
 
-        lblVersionName.setText(versionName);
-        lblGameVersion.setText(gameVersion);
+        lblTitle.setText(title);
+        lblSubtitle.setText(subtitle);
 
         FXUtils.limitSize(imageView, 32, 32);
     }
@@ -55,12 +56,12 @@ public final class VersionListItem extends StackPane {
         btnSettings.setOnMouseClicked(handler);
     }
 
-    public void setVersionName(String versionName) {
-        lblVersionName.setText(versionName);
+    public void setTitle(String title) {
+        lblTitle.setText(title);
     }
 
-    public void setGameVersion(String gameVersion) {
-        lblGameVersion.setText(gameVersion);
+    public void setSubtitle(String subtitle) {
+        lblSubtitle.setText(subtitle);
     }
 
     public void setImage(Image image, Rectangle2D viewport) {
