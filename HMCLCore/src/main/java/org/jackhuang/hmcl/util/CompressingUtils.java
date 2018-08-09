@@ -19,11 +19,10 @@ package org.jackhuang.hmcl.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -34,6 +33,11 @@ import java.util.Optional;
  * @author huangyuhui
  */
 public final class CompressingUtils {
+
+    private static final FileSystemProvider ZIPFS_PROVIDER = FileSystemProvider.installedProviders().stream()
+            .filter(it -> "jar".equalsIgnoreCase(it.getScheme()))
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("Zipfs not supported"));
 
     private CompressingUtils() {
     }
@@ -62,7 +66,7 @@ public final class CompressingUtils {
             env.put("encoding", encoding);
         if (useTempFile)
             env.put("useTempFile", true);
-        return FileSystems.newFileSystem(URI.create("jar:" + zipFile.toUri()), env);
+        return ZIPFS_PROVIDER.newFileSystem(zipFile, env);
     }
 
     /**
