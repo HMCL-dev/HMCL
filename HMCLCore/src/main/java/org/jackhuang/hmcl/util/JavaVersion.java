@@ -22,8 +22,8 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -194,7 +194,7 @@ public final class JavaVersion implements Serializable {
                 javaVersions = queryMacintosh();
                 break;
             default:
-                javaVersions = Collections.emptyList();
+                javaVersions = new ArrayList<>();
                 break;
         }
 
@@ -214,6 +214,7 @@ public final class JavaVersion implements Serializable {
         LATCH.countDown();
     }
 
+    // ==== Linux ====
     private static List<JavaVersion> queryLinux() throws IOException {
         Path jvmDir = Paths.get("/usr/lib/jvm");
         if (Files.isDirectory(jvmDir)) {
@@ -234,9 +235,11 @@ public final class JavaVersion implements Serializable {
             return Collections.emptyList();
         }
     }
+    // ====
 
+    // ==== OSX ====
     private static List<JavaVersion> queryMacintosh() throws IOException {
-        LinkedList<JavaVersion> res = new LinkedList<>();
+        List<JavaVersion> res = new ArrayList<>();
 
         File currentJRE = new File("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home");
         if (currentJRE.exists())
@@ -248,9 +251,11 @@ public final class JavaVersion implements Serializable {
 
         return res;
     }
+    // ====
 
+    // ==== Windows ====
     private static List<JavaVersion> queryWindows() {
-        LinkedList<JavaVersion> res = new LinkedList<>();
+        List<JavaVersion> res = new ArrayList<>();
         Lang.ignoringException(() -> res.addAll(queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\")));
         Lang.ignoringException(() -> res.addAll(queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\")));
         Lang.ignoringException(() -> res.addAll(queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JRE\\")));
@@ -259,7 +264,7 @@ public final class JavaVersion implements Serializable {
     }
 
     private static List<String> querySubFolders(String location) throws IOException, InterruptedException {
-        List<String> res = new LinkedList<>();
+        List<String> res = new ArrayList<>();
         String[] cmd = new String[] { "cmd", "/c", "reg", "query", location };
         Process process = Runtime.getRuntime().exec(cmd);
         process.waitFor();
@@ -273,7 +278,7 @@ public final class JavaVersion implements Serializable {
     }
 
     private static List<JavaVersion> queryRegisterKey(String location) throws IOException, InterruptedException {
-        List<JavaVersion> res = new LinkedList<>();
+        List<JavaVersion> res = new ArrayList<>();
         for (String java : querySubFolders(location)) {
             String home = queryRegisterValue(java, "JavaHome");
             if (home != null)
@@ -306,4 +311,5 @@ public final class JavaVersion implements Serializable {
         }
         return null;
     }
+    // ====
 }
