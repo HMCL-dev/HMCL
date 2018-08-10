@@ -66,7 +66,7 @@ public final class Profile {
         return globalProperty.get();
     }
 
-    public void setGlobal(VersionSetting global) {
+    private void setGlobal(VersionSetting global) {
         if (global == null)
             global = new VersionSetting();
         globalProperty.set(global);
@@ -175,6 +175,7 @@ public final class Profile {
         globalProperty.addListener(listener);
         gameDirProperty.addListener(listener);
         useRelativePathProperty.addListener(listener);
+        globalProperty.get().addPropertyChangedListener(listener);
     }
 
     public static final class Serializer implements JsonSerializer<Profile>, JsonDeserializer<Profile> {
