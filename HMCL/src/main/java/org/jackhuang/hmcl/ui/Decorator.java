@@ -171,14 +171,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
 
         onCloseButtonAction = new SimpleObjectProperty<>(this, "onCloseButtonAction", Launcher::stopApplication);
 
-        switch (OperatingSystem.CURRENT_OS) {
-            case OSX:
-                titleContainer.setRight(null);
-                break;
-            default:
-                primaryStage.initStyle(StageStyle.UNDECORATED);
-                break;
-        }
+        primaryStage.initStyle(StageStyle.UNDECORATED);
         btnClose.setGraphic(close);
         btnMin.setGraphic(minus);
         btnMax.setGraphic(resizeMax);
@@ -310,11 +303,22 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
         }
         return Optional.empty();
     }
+
+    private boolean isMaximized() {
+        switch (OperatingSystem.CURRENT_OS) {
+            case OSX:
+                Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+                return primaryStage.getWidth() >= bounds.getWidth() && primaryStage.getHeight() >= bounds.getHeight();
+            default:
+                return primaryStage.isMaximized();
+        }
+    }
+
     // ====
 
     @FXML
     private void onMouseMoved(MouseEvent mouseEvent) {
-        if (!primaryStage.isMaximized() && !primaryStage.isFullScreen() && !maximized) {
+        if (!isMaximized() && !primaryStage.isFullScreen() && !maximized) {
             if (!primaryStage.isResizable())
                 updateInitMouseValues(mouseEvent);
             else {
@@ -363,7 +367,7 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     private void onMouseDragged(MouseEvent mouseEvent) {
         this.isDragging = true;
         if (mouseEvent.isPrimaryButtonDown() && (this.xOffset != -1.0 || this.yOffset != -1.0)) {
-            if (!this.primaryStage.isFullScreen() && !mouseEvent.isStillSincePress() && !this.primaryStage.isMaximized() && !this.maximized) {
+            if (!this.primaryStage.isFullScreen() && !mouseEvent.isStillSincePress() && !isMaximized() && !this.maximized) {
                 this.newX = mouseEvent.getScreenX();
                 this.newY = mouseEvent.getScreenY();
                 double deltaX = this.newX - this.initX;
