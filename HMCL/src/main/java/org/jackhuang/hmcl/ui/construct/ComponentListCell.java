@@ -27,6 +27,8 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
@@ -75,31 +77,47 @@ public class ComponentListCell extends StackPane {
             content.getStyleClass().remove("options-list");
             content.getStyleClass().add("options-sublist");
 
-            StackPane groupNode = new StackPane();
+            BorderPane groupNode = new BorderPane();
             groupNode.getStyleClass().add("options-list-item-header");
 
             Node expandIcon = SVG.expand(Theme.blackFillBinding(), 10, 10);
             JFXButton expandButton = new JFXButton();
             expandButton.setGraphic(expandIcon);
             expandButton.getStyleClass().add("options-list-item-expand-button");
-            StackPane.setAlignment(expandButton, Pos.CENTER_RIGHT);
 
             VBox labelVBox = new VBox();
-            Label label = new Label();
-            label.textProperty().bind(list.titleProperty());
-            label.setMouseTransparent(true);
-            labelVBox.getChildren().add(label);
 
-            if (list.isHasSubtitle()) {
-                Label subtitleLabel = new Label();
-                subtitleLabel.textProperty().bind(list.subtitleProperty());
-                subtitleLabel.setMouseTransparent(true);
-                subtitleLabel.getStyleClass().add("subtitle-label");
-                labelVBox.getChildren().add(subtitleLabel);
+            if (list instanceof ComponentSublist) {
+                Node leftNode = ((ComponentSublist) list).getHeaderLeft();
+                if (leftNode != null)
+                    labelVBox.getChildren().setAll(leftNode);
+            } else {
+                Label label = new Label();
+                label.textProperty().bind(list.titleProperty());
+                label.setMouseTransparent(true);
+                labelVBox.getChildren().add(label);
+
+                if (list.isHasSubtitle()) {
+                    Label subtitleLabel = new Label();
+                    subtitleLabel.textProperty().bind(list.subtitleProperty());
+                    subtitleLabel.setMouseTransparent(true);
+                    subtitleLabel.getStyleClass().add("subtitle-label");
+                    labelVBox.getChildren().add(subtitleLabel);
+                }
             }
 
-            StackPane.setAlignment(labelVBox, Pos.CENTER_LEFT);
-            groupNode.getChildren().setAll(labelVBox, expandButton);
+            groupNode.setLeft(labelVBox);
+
+            HBox right = new HBox();
+            if (list instanceof ComponentSublist) {
+                Node rightNode = ((ComponentSublist) list).getHeaderRight();
+                if (rightNode != null)
+                    right.getChildren().add(rightNode);
+            }
+            right.getChildren().add(expandButton);
+            groupNode.setRight(right);
+            labelVBox.setAlignment(Pos.CENTER_LEFT);
+            right.setAlignment(Pos.CENTER_RIGHT);
 
             VBox container = new VBox();
             container.setStyle("-fx-padding: 8 0 0 0;");

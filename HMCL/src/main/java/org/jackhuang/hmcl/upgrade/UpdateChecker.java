@@ -23,17 +23,15 @@ import static org.jackhuang.hmcl.util.VersionNumber.asVersion;
 
 import java.io.IOException;
 
+import com.jfoenix.concurrency.JFXUtilities;
+import javafx.beans.property.*;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.util.ImmediateStringProperty;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableBooleanValue;
 
 public final class UpdateChecker {
@@ -42,7 +40,7 @@ public final class UpdateChecker {
     public static final String CHANNEL_STABLE = "stable";
     public static final String CHANNEL_DEV = "dev";
 
-    private static StringProperty updateChannel = new SimpleStringProperty(CHANNEL_STABLE);
+    private static StringProperty updateChannel = new ImmediateStringProperty(null, "updateChannel", CHANNEL_STABLE);
 
     private static ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
     private static BooleanBinding outdated = Bindings.createBooleanBinding(
@@ -55,6 +53,7 @@ public final class UpdateChecker {
                 }
             },
             latestVersion);
+    private static ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
 
     public static String getUpdateChannel() {
         return updateChannel.get();
@@ -84,22 +83,39 @@ public final class UpdateChecker {
         return outdated;
     }
 
+    public static boolean isCheckingUpdate() {
+        return checkingUpdate.get();
+    }
+
+    public static ReadOnlyBooleanProperty checkingUpdateProperty() {
+        return checkingUpdate.getReadOnlyProperty();
+    }
+
     public static void checkUpdate() throws IOException {
         if (!IntegrityChecker.isSelfVerified()) {
             return;
         }
 
-        String channel = getUpdateChannel();
-        String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
-                pair("version", Metadata.VERSION),
-                pair("channel", channel)));
-
-        RemoteVersion fetched = RemoteVersion.fetch(url);
-        Platform.runLater(() -> {
-            if (channel.equals(getUpdateChannel())) {
-                latestVersion.set(fetched);
-            }
+        JFXUtilities.runInFXAndWait(() -> {
+            checkingUpdate.set(true);
         });
+
+        try {
+
+            String channel = getUpdateChannel();
+            String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
+                    pair("version", Metadata.VERSION),
+                    pair("channel", channel)));
+
+            RemoteVersion fetched = RemoteVersion.fetch(url);
+            Platform.runLater(() -> {
+                if (channel.equals(getUpdateChannel())) {
+                    latestVersion.set(fetched);
+                }
+            });
+        } finally {
+            Platform.runLater(() -> checkingUpdate.set(false));
+        }
     }
 
     private static boolean isDevelopmentVersion(String version) {

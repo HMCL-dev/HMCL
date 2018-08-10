@@ -23,8 +23,10 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 import com.jfoenix.concurrency.JFXUtilities;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.stage.Stage;
 
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
@@ -55,13 +57,24 @@ public final class Launcher extends Application {
             primaryStage.setResizable(false);
             primaryStage.setScene(Controllers.getScene());
 
-            thread(() -> {
-                try {
-                    UpdateChecker.checkUpdate();
-                } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to check for update", e);
-                }
+            UpdateChecker.updateChannelProperty().addListener(observable -> {
+                thread(() -> {
+                    try {
+                        UpdateChecker.checkUpdate();
+                    } catch (IOException e) {
+                        LOG.log(Level.WARNING, "Failed to check for update", e);
+                    }
+                });
             });
+
+            UpdateChecker.updateChannelProperty().bind(Bindings.createStringBinding(() -> {
+                switch (ConfigHolder.config().getUpdateChannel()) {
+                    case DEVELOPMENT:
+                        return UpdateChecker.CHANNEL_DEV;
+                    default:
+                        return UpdateChecker.CHANNEL_STABLE;
+                }
+            }, ConfigHolder.config().updateChannelProperty()));
 
             primaryStage.show();
         } catch (Throwable e) {

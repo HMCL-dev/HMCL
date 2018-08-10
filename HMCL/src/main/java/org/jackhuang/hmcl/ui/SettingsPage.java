@@ -39,6 +39,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.FontComboBox;
@@ -87,6 +88,12 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     private Label lblUpdate;
     @FXML
     private Label lblUpdateSub;
+    @FXML
+    private Text lblUpdateNote;
+    @FXML
+    private JFXRadioButton chkUpdateStable;
+    @FXML
+    private JFXRadioButton chkUpdateDev;
     @FXML
     private JFXButton btnUpdate;
     @FXML
@@ -212,6 +219,12 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
 
                 lblUpdate.setText(i18n("update.found"));
                 lblUpdate.getStyleClass().setAll("update-label");
+            } else if (UpdateChecker.isCheckingUpdate()) {
+                lblUpdateSub.setText(i18n("update.checking"));
+                lblUpdateSub.getStyleClass().setAll("subtitle-label");
+
+                lblUpdate.setText(i18n("update"));
+                lblUpdate.getStyleClass().setAll();
             } else {
                 lblUpdateSub.setText(i18n("update.latest"));
                 lblUpdateSub.getStyleClass().setAll("subtitle-label");
@@ -222,7 +235,32 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         };
         UpdateChecker.latestVersionProperty().addListener(new WeakInvalidationListener(updateListener));
         UpdateChecker.outdatedProperty().addListener(new WeakInvalidationListener(updateListener));
+        UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
         updateListener.invalidated(null);
+
+        lblUpdateNote.setWrappingWidth(470);
+
+        ObjectProperty<EnumUpdateChannel> updateChannel = new SimpleObjectProperty<EnumUpdateChannel>() {
+            @Override
+            protected void invalidated() {
+                EnumUpdateChannel updateChannel = Objects.requireNonNull(get());
+                chkUpdateDev.setSelected(updateChannel == EnumUpdateChannel.DEVELOPMENT);
+                chkUpdateStable.setSelected(updateChannel == EnumUpdateChannel.STABLE);
+            }
+        };
+
+        ToggleGroup updateChannelGroup = new ToggleGroup();
+        chkUpdateDev.setToggleGroup(updateChannelGroup);
+        chkUpdateDev.setUserData(EnumUpdateChannel.DEVELOPMENT);
+        chkUpdateStable.setToggleGroup(updateChannelGroup);
+        chkUpdateStable.setUserData(EnumUpdateChannel.STABLE);
+        updateChannelGroup.getToggles().forEach(
+                toggle -> toggle.selectedProperty().addListener((observable, oldValue, newValue) -> {
+                    if (newValue) {
+                        updateChannel.set((EnumUpdateChannel) toggle.getUserData());
+                    }
+                }));
+        updateChannel.bindBidirectional(ConfigHolder.config().updateChannelProperty());
         // ====
 
         // ==== Background ====

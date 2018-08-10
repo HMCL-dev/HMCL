@@ -149,6 +149,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("authlibInjectorServers")
     private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList();
 
+    @SerializedName("updateChannel")
+    private ObjectProperty<EnumUpdateChannel> updateChannel = new SimpleObjectProperty<>(EnumUpdateChannel.STABLE);
+
     @SerializedName("_version")
     private IntegerProperty configVersion = new SimpleIntegerProperty(0);
 
@@ -435,4 +438,15 @@ public final class Config implements Cloneable, Observable {
         return authlibInjectorServers;
     }
 
+    public EnumUpdateChannel getUpdateChannel() {
+        return updateChannel.get();
+    }
+
+    public ObjectProperty<EnumUpdateChannel> updateChannelProperty() {
+        return updateChannel;
+    }
+
+    public void setUpdateChannel(EnumUpdateChannel updateChannel) {
+        this.updateChannel.set(updateChannel);
+    }
 }

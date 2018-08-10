@@ -50,10 +50,6 @@ public class ComponentList extends StackPane {
     }
 
     public void addChildren(Node node) {
-        if (node instanceof ComponentList) {
-            node.getProperties().put("title", ((ComponentList) node).getTitle());
-            node.getProperties().put("subtitle", ((ComponentList) node).getSubtitle());
-        }
         StackPane child = new StackPane();
         child.getChildren().add(new ComponentListCell(node));
         if (vbox.getChildren().isEmpty())

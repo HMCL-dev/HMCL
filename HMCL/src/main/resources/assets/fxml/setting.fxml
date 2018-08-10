@@ -6,6 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import org.jackhuang.hmcl.ui.construct.*?>
 <?import org.jackhuang.hmcl.ui.FXUtils?>
+<?import javafx.scene.text.Text?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
@@ -15,21 +16,28 @@
         <VBox fx:id="rootPane" style="-fx-padding: 20;">
             <ComponentList fx:id="settingsPane">
 
-                <BorderPane> <!-- Update -->
-                    <left>
+                <ComponentSublist fx:id="updatePane" title="%update" hasSubtitle="true">
+                    <headerLeft>
                         <VBox>
                             <Label fx:id="lblUpdate" text="%update" BorderPane.alignment="CENTER_LEFT"/>
                             <Label fx:id="lblUpdateSub" styleClass="subtitle-label"/>
                         </VBox>
-                    </left>
-                    <right>
+                    </headerLeft>
+                    <headerRight>
                         <JFXButton fx:id="btnUpdate" onMouseClicked="#onUpdate" styleClass="toggle-icon4">
                             <graphic>
                                 <fx:include source="/assets/svg/update.fxml" />
                             </graphic>
                         </JFXButton>
-                    </right>
-                </BorderPane>
+                    </headerRight>
+                    <VBox spacing="8">
+                        <JFXRadioButton fx:id="chkUpdateStable" text="%update.channel.stable" />
+                        <JFXRadioButton fx:id="chkUpdateDev" text="%update.channel.dev" />
+                        <VBox style="-fx-padding: 10 0 0 0;">
+                            <Text fx:id="lblUpdateNote" text="%update.note" />
+                        </VBox>
+                    </VBox>
+                </ComponentSublist>
 
                 <MultiFileItem fx:id="fileCommonLocation" title="%launcher.common_directory" directory="true" chooserTitle="%launcher.common_directory.choose" hasSubtitle="true"  customText="%settings.custom" />
 
