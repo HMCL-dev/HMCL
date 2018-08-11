@@ -56,11 +56,11 @@ public class LibrariesUniqueTask extends TaskResult<Version> {
             String serialized = Constants.GSON.toJson(library);
 
             if (multimap.containsKey(id)) {
-                boolean hasEqualRule = false;
+                boolean duplicate = false;
                 for (Library otherLibrary : multimap.get(id)) {
                     VersionNumber otherNumber = VersionNumber.asVersion(otherLibrary.getVersion());
                     if (CompatibilityRule.equals(library.getRules(), otherLibrary.getRules())) { // rules equal, ignore older version.
-                        hasEqualRule = true;
+                        boolean flag = true;
                         if (number.compareTo(otherNumber) > 0) { // if this library is newer
                             multimap.removeValue(otherLibrary);
                             multimap.put(id, library);
@@ -76,12 +76,20 @@ public class LibrariesUniqueTask extends TaskResult<Version> {
                                     multimap.put(id, library);
                                     break;
                                 }
+                            } else {
+                                // for text2speech, which have same library id as well as version number,
+                                // but its library and native library does not equal
+                                flag = false;
                             }
+                        }
+                        if (flag) {
+                            duplicate = true;
+                            break;
                         }
                     }
                 }
 
-                if (!hasEqualRule) {
+                if (!duplicate) {
                     multimap.put(id, library);
                 }
             } else {
