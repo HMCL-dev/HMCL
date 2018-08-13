@@ -396,7 +396,7 @@ public final class LauncherHelper {
                 Platform.runLater(() -> logWindow.logLine(log, level));
             }
 
-            if (!lwjgl && log.contains("LWJGL Version: ") || !detectWindow) {
+            if (!lwjgl && (log.contains("LWJGL Version: ") || !detectWindow)) {
                 lwjgl = true;
                 switch (visibility) {
                     case HIDE_AND_REOPEN:
