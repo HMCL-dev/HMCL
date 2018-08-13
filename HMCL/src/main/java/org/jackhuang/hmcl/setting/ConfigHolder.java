@@ -31,7 +31,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 
 import org.jackhuang.hmcl.util.OperatingSystem;
-import org.jackhuang.hmcl.util.StringUtils;
 
 public final class ConfigHolder {
 
@@ -111,7 +110,7 @@ public final class ConfigHolder {
                     LOG.info("Config is empty");
                 } else {
                     Map<?, ?> raw = new Gson().fromJson(content, Map.class);
-                    upgradeConfig(deserialized, raw);
+                    ConfigUpgrader.upgradeConfig(deserialized, raw);
                     return deserialized;
                 }
             } catch (JsonParseException e) {
@@ -141,23 +140,5 @@ public final class ConfigHolder {
         } catch (IOException ignored) {
             // ignore it as it has been logged
         }
-    }
-
-    /**
-     * This method is for the compatibility with old HMCL 3.x as well as HMCL 2.x.
-     * @param deserialized deserialized config settings
-     * @param rawJson raw json structure of the config settings without modification
-     * @return {@code deserialized}
-     */
-    private static void upgradeConfig(Config deserialized, Map<?, ?> rawJson) {
-        // Following is for the compatibility with HMCL 2.x
-        if (!rawJson.containsKey("commonDirType"))
-            deserialized.setCommonDirType(deserialized.getCommonDirectory().equals(Settings.getDefaultCommonDirectory()) ? EnumCommonDirectory.DEFAULT : EnumCommonDirectory.CUSTOM);
-        if (!rawJson.containsKey("backgroundType"))
-            deserialized.setBackgroundImageType(StringUtils.isNotBlank(deserialized.getBackgroundImage()) ? EnumBackgroundImage.CUSTOM : EnumBackgroundImage.DEFAULT);
-        if (!rawJson.containsKey("hasProxy"))
-            deserialized.setHasProxy(StringUtils.isNotBlank(deserialized.getProxyHost()));
-        if (!rawJson.containsKey("hasProxyAuth"))
-            deserialized.setHasProxyAuth(StringUtils.isNotBlank(deserialized.getProxyUser()));
     }
 }

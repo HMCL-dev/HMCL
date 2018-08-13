@@ -87,7 +87,7 @@ public final class Accounts {
         return type2factory.get(accountType(account));
     }
 
-    private static String accountId(Account account) {
+    static String accountId(Account account) {
         return account.getUsername() + ":" + account.getCharacter();
     }
 
@@ -138,20 +138,19 @@ public final class Accounts {
         accounts.addListener(onInvalidating(Accounts::updateAccountStorages));
     }
 
+    static Map<Object, Object> getAccountStorage(Account account) {
+        Map<Object, Object> storage = account.toStorage();
+        storage.put("type", accountType(account));
+        return storage;
+    }
+
     private static void updateAccountStorages() {
         // don't update the underlying storage before data loading is completed
         // otherwise it might cause data loss
         if (!initialized)
             return;
         // update storage
-        config().getAccountStorages().setAll(
-                accounts.stream()
-                        .map(account -> {
-                            Map<Object, Object> storage = account.toStorage();
-                            storage.put("type", accountType(account));
-                            return storage;
-                        })
-                        .collect(toList()));
+        config().getAccountStorages().setAll(accounts.stream().map(Accounts::getAccountStorage).collect(toList()));
     }
 
     /**
