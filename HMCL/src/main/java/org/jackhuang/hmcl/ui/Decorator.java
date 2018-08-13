@@ -615,18 +615,20 @@ public final class Decorator extends StackPane implements TaskExecutorDialogWiza
     }
 
     @SuppressWarnings("unchecked")
-    public void closeDialog(Node node) {
+    private void closeDialog(Node node) {
         FXUtils.checkFxUserThread();
 
         Optional.ofNullable(node.getProperties().get(PROPERTY_DIALOG_CLOSE_HANDLER))
                 .ifPresent(handler -> node.removeEventHandler(DialogCloseEvent.CLOSE, (EventHandler<DialogCloseEvent>) handler));
 
-        dialogPane.pop(node);
+        if (dialog != null) {
+            dialogPane.pop(node);
 
-        if (dialogPane.getChildren().isEmpty()) {
-            dialog.close();
-            dialog = null;
-            dialogPane = null;
+            if (dialogPane.getChildren().isEmpty()) {
+                dialog.close();
+                dialog = null;
+                dialogPane = null;
+            }
         }
     }
 

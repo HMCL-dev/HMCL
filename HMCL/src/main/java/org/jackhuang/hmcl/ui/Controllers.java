@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -161,15 +160,6 @@ public final class Controllers {
         pane.setExecutor(executor);
         dialog(pane);
         return pane;
-    }
-
-    /**
-     * Use {@link DialogCloseEvent}
-     */
-    public static void closeDialog(Region content) {
-        if (stage == null) // shut down
-            return;
-        decorator.closeDialog(content);
     }
 
     public static void navigate(Node node) {
