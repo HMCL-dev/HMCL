@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.upgrade;
 
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.JarUtils;
 import org.tukaani.xz.XZInputStream;
 
@@ -28,6 +30,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
@@ -44,6 +48,7 @@ final class LocalRepository {
     private LocalRepository() {}
 
     private static Path localStorage = Launcher.HMCL_DIRECTORY.toPath().resolve("hmcl.jar");
+    private static Path hmclVersionJson = Launcher.HMCL_DIRECTORY.toPath().resolve("hmclver.json");
 
     /**
      * Gets the current stored executable in local repository.
@@ -64,6 +69,14 @@ final class LocalRepository {
             ExecutableHeaderHelper.copyWithoutHeader(source, localStorage);
         } else {
             Files.copy(source, localStorage, StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        Optional<LocalVersion> stored = getStored();
+        if (stored.isPresent()) {
+            Map<String, String> json = new HashMap<>();
+            json.put("ver", stored.get().getVersion());
+            json.put("loc", stored.get().getLocation().toString());
+            FileUtils.writeText(hmclVersionJson.toFile(), Constants.GSON.toJson(json));
         }
     }
 
