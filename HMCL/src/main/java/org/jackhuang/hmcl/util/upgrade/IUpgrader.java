@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.upgrade;
 
+import java.util.List;
 import org.jackhuang.hmcl.api.event.SimpleEvent;
 import org.jackhuang.hmcl.api.VersionNumber;
 import org.jackhuang.hmcl.api.func.Consumer;
@@ -35,7 +36,7 @@ public abstract class IUpgrader implements Consumer<SimpleEvent<VersionNumber>> 
      * @param nowVersion now launcher version
      * @param args       Application CommandLine Arguments
      */
-    public abstract void parseArguments(VersionNumber nowVersion, String[] args);
+    public abstract void parseArguments(VersionNumber nowVersion, List<String> args);
 
     /**
      * Just download the new app.

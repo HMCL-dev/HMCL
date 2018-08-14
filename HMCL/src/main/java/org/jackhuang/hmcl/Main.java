@@ -26,6 +26,7 @@ import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -142,7 +143,7 @@ public final class Main {
                 }
             };
 
-            HMCLApi.HMCL_VERSION = VersionNumber.check(LAUNCHER_VERSION);
+            HMCLApi.HMCL_VERSION = VersionNumber.asVersion(LAUNCHER_VERSION);
 
             PluginManager.getPlugin(DefaultPlugin.class);
             for (String s : args)
@@ -161,7 +162,7 @@ public final class Main {
                 }
             PluginManager.loadPlugins();
 
-            IUpgrader.NOW_UPGRADER.parseArguments(HMCLApi.HMCL_VERSION, args);
+            IUpgrader.NOW_UPGRADER.parseArguments(HMCLApi.HMCL_VERSION, Arrays.asList(args));
 
             System.setProperty("awt.useSystemAAFontSettings", "on");
             System.setProperty("swing.aatext", "true");
@@ -231,32 +232,12 @@ public final class Main {
                     });
             }
             
-            try {
-                unpackDefaultLog4jConfiguration();
-            } catch(IOException e) {
-                HMCLog.err("Failed to unpack log4j.xml, log window will not work well.", e);
-            }
-
             MainFrame.showMainFrame();
         }
     }
 
     public static void invokeUpdate() {
         MainFrame.INSTANCE.invokeUpdate();
-    }
-    
-    public static final File LOG4J_FILE = new File(MCUtils.getWorkingDirectory("hmcl"), "log4j.xml");
-    
-    public static void unpackDefaultLog4jConfiguration() throws IOException {
-        LOG4J_FILE.getParentFile().mkdirs();
-        if (LOG4J_FILE.exists()) return;
-        LOG4J_FILE.createNewFile();
-        try (InputStream is = Main.class.getResourceAsStream("/org/jackhuang/hmcl/log4j.xml");
-                FileOutputStream fos = new FileOutputStream(LOG4J_FILE)) {
-            int b;
-            while ((b = is.read()) != -1)
-                fos.write(b);
-        }
     }
 
     public static ImageIcon getIcon(String path) {

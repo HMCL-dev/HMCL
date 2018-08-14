@@ -17,100 +17,85 @@
  */
 package org.jackhuang.hmcl.api;
 
+import java.util.*;
+
 /**
+ * The formatted version number represents a version string.
  *
  * @author huangyuhui
  */
-public final class VersionNumber implements Comparable<VersionNumber> {
+public abstract class VersionNumber implements Comparable<VersionNumber> {
 
-    public final byte firstVer, secondVer, thirdVer;
-    public final String version;
-
-    public VersionNumber(byte a, byte b, byte c) {
-        this(a, b, c, null);
+    public static VersionNumber asVersion(String version) {
+        Objects.requireNonNull(version);
+        if (ComposedVersionNumber.isComposedVersionNumber(version))
+            return new ComposedVersionNumber(version);
+        else if (IntVersionNumber.isIntVersionNumber(version))
+            return new IntVersionNumber(version);
+        else
+            return new StringVersionNumber(version);
     }
 
-    public VersionNumber(byte a, byte b, byte c, String version) {
-        firstVer = a;
-        secondVer = b;
-        thirdVer = c;
-        this.version = version;
-    }
-
-    @Override
-    public String toString() {
-        return "" + firstVer + '.' + secondVer + '.' + thirdVer;
-    }
-
-    public static VersionNumber check(String data) {
-        while (!data.isEmpty() && ((data.charAt(0) < '0' || data.charAt(0) > '9') && data.charAt(0) != '.'))
-            data = data.substring(1);
-        if (data.isEmpty())
-            return null;
-        VersionNumber ur;
-        String[] ver = data.split("\\.");
-        if (ver.length >= 3) {
-            byte v1, v2, v3;
-            try {
-                v1 = Byte.parseByte(ver[0]);
-                v2 = Byte.parseByte(ver[1]);
-                v3 = Byte.parseByte(ver[2]);
-                ur = new VersionNumber(v1, v2, v3, data);
-                return ur;
-            } catch (Exception e) {
-                HMCLog.warn("Failed to parse the version", e);
-            }
-        }
-        return null;
-    }
-
-    public static boolean isOlder(VersionNumber a, VersionNumber b) {
-        if (a.firstVer < b.firstVer)
-            return true;
-        else if (a.firstVer == b.firstVer)
-            if (a.secondVer < b.secondVer)
-                return true;
-            else if (a.secondVer == b.secondVer)
-                if (a.thirdVer < b.thirdVer)
-                    return true;
-        return false;
+    public static Optional<String> parseVersion(String str) {
+        if (IntVersionNumber.isIntVersionNumber(str))
+            return Optional.of(new IntVersionNumber(str).toString());
+        else
+            return Optional.empty();
     }
 
     @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 83 * hash + this.firstVer;
-        hash = 83 * hash + this.secondVer;
-        hash = 83 * hash + this.thirdVer;
-        return hash;
+    public int compareTo(VersionNumber o) {
+        return COMPARATOR.compare(this, o);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        final VersionNumber other = (VersionNumber) obj;
-        if (this.firstVer != other.firstVer)
-            return false;
-        if (this.secondVer != other.secondVer)
-            return false;
-        if (this.thirdVer != other.thirdVer)
-            return false;
-        return true;
-    }
-    
-    @Override
-    public int compareTo(VersionNumber o) {
-        if (isOlder(this, o))
-            return -1;
-        else if (isOlder(o, this))
-            return 1;
-        else
-            return 0;
+        if (obj == null) return false;
+        else return toString().equals(obj.toString());
     }
 
+    private static <T extends Comparable<T>> int compareTo(List<T> a, List<T> b) {
+        int i;
+        for (i = 0; i < a.size() && i < b.size(); ++i) {
+            int res = a.get(i).compareTo(b.get(i));
+            if (res != 0)
+                return res;
+        }
+        if (i < a.size()) return 1;
+        else if (i < b.size()) return -1;
+        else return 0;
+    }
+
+    public static final Comparator<VersionNumber> COMPARATOR = new Comparator<VersionNumber>() {
+        @Override
+        public int compare(VersionNumber a, VersionNumber b) {
+            if (a == null || b == null)
+                return 0;
+            else {
+                if (a instanceof ComposedVersionNumber) {
+                    if (b instanceof ComposedVersionNumber)
+                        return compareTo(((ComposedVersionNumber) a).composed, ((ComposedVersionNumber) b).composed);
+                    else
+                        return compare(((ComposedVersionNumber) a).composed.get(0), b);
+                } else if (a instanceof IntVersionNumber) {
+                    if (b instanceof ComposedVersionNumber)
+                        return -compare(b, a);
+                    else if (b instanceof IntVersionNumber)
+                        return compareTo(((IntVersionNumber) a).version, ((IntVersionNumber) b).version);
+                    else if (b instanceof StringVersionNumber)
+                        return a.toString().compareTo(b.toString());
+                } else if (a instanceof StringVersionNumber) {
+                    if (b instanceof ComposedVersionNumber)
+                        return -compare(b, a);
+                    else if (b instanceof StringVersionNumber)
+                        return a.toString().compareTo(b.toString());
+                    else if (b instanceof IntVersionNumber)
+                        return a.toString().compareTo(b.toString());
+                }
+
+                throw new IllegalArgumentException("Unrecognized VersionNumber " + a + " and " + b);
+            }
+        }
+
+    };
 }

@@ -17,20 +17,19 @@
  */
 package org.jackhuang.hmcl.util.upgrade;
 
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -45,13 +44,13 @@ import org.jackhuang.hmcl.core.MCUtils;
 import org.jackhuang.hmcl.util.task.Task;
 import org.jackhuang.hmcl.util.task.TaskWindow;
 import org.jackhuang.hmcl.util.net.FileDownloadTask;
-import org.jackhuang.hmcl.util.ArrayUtils;
 import org.jackhuang.hmcl.util.ui.MessageBox;
 import org.jackhuang.hmcl.util.Utils;
 import org.jackhuang.hmcl.api.VersionNumber;
 import org.jackhuang.hmcl.util.StrUtils;
 import org.jackhuang.hmcl.util.sys.FileUtils;
 import org.jackhuang.hmcl.util.sys.IOUtils;
+import org.jackhuang.hmcl.util.sys.Java;
 import org.jackhuang.hmcl.util.sys.OS;
 
 /**
@@ -60,45 +59,49 @@ import org.jackhuang.hmcl.util.sys.OS;
  */
 public class AppDataUpgrader extends IUpgrader {
 
-    private boolean launchNewerVersion(String[] args, File jar) throws IOException, PrivilegedActionException {
+    private void launchNewerVersion(List<String> args, File jar) throws IOException, ReflectiveOperationException {
         try (JarFile jarFile = new JarFile(jar)) {
             String mainClass = jarFile.getManifest().getMainAttributes().getValue("Main-Class");
-            if (mainClass != null) {
-                ArrayList<String> al = new ArrayList<>(Arrays.asList(args));
-                al.add("--noupdate");
-                AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
-                    new URLClassLoader(new URL[] { jar.toURI().toURL() },
-                            URLClassLoader.getSystemClassLoader().getParent()).loadClass(mainClass)
-                            .getMethod("main", String[].class).invoke(null, new Object[] { al.toArray(new String[0]) });
-                    return null;
-                });
-                return true;
+            if (mainClass == null)
+                throw new ClassNotFoundException("Main-Class not found in manifest");
+            ArrayList<String> al = new ArrayList<>(args);
+            al.add("--noupdate");
+            ClassLoader pre = Thread.currentThread().getContextClassLoader();
+            try {
+                ClassLoader now = new URLClassLoader(new URL[] { jar.toURI().toURL() }, ClassLoader.getSystemClassLoader().getParent());
+                Thread.currentThread().setContextClassLoader(now);
+                now.loadClass(mainClass).getMethod("main", String[].class).invoke(null, new Object[] { al.toArray(new String[0]) });
+            } finally {
+                Thread.currentThread().setContextClassLoader(pre);
             }
         }
-        return false;
     }
 
     @Override
-    public void parseArguments(VersionNumber nowVersion, String[] args) {
+    public void parseArguments(VersionNumber nowVersion, List<String> args) {
         File f = AppDataUpgraderPackGzTask.HMCL_VER_FILE;
-        if (!ArrayUtils.contains(args, "--noupdate"))
+        if (!args.contains("--noupdate"))
             try {
                 if (f.exists()) {
-                    Map<String, String> m = C.GSON.fromJson(FileUtils.read(f), Map.class);
+                    Map<String, String> m = C.GSON.fromJson(FileUtils.read(f), new TypeToken<Map<String, String>>() {
+                    }.getType());
                     String s = m.get("ver");
-                    if (s != null && VersionNumber.check(s).compareTo(nowVersion) > 0) {
+                    if (s != null && VersionNumber.asVersion(s).compareTo(nowVersion) > 0) {
                         String j = m.get("loc");
                         if (j != null) {
                             File jar = new File(j);
-                            if (jar.exists() && launchNewerVersion(args, jar))
+                            if (jar.exists()) {
+                                launchNewerVersion(args, jar);
                                 System.exit(0);
+                            }
                         }
                     }
                 }
-            } catch (JsonSyntaxException ex) {
+            } catch (JsonParseException ex) {
                 f.delete();
-            } catch (IOException | PrivilegedActionException t) {
-                HMCLog.err("Failed to execute newer version application", t);
+            } catch (IOException | ReflectiveOperationException t) {
+                HMCLog.err("Unable to execute newer version application", t);
+                AppDataUpgraderPackGzTask.HMCL_VER_FILE.delete(); // delete version json, let HMCL re-download the newer version.
             }
     }
 
@@ -106,32 +109,48 @@ public class AppDataUpgrader extends IUpgrader {
     public void accept(SimpleEvent<VersionNumber> event) {
         final VersionNumber version = event.getValue();
         ((UpdateChecker) event.getSource()).requestDownloadLink().reg(map -> {
-            if (MessageBox.show(C.i18n("update.newest_version") + version.firstVer + "." + version.secondVer + "." + version.thirdVer + "\n"
+            boolean flag = false;
+            for (Java java : Java.JAVA)
+                if (java.getName().startsWith("1.8") || java.getName().startsWith("9") || java.getName().startsWith("10")) {
+                    flag = true;
+                    break;
+                }
+            if (!flag) {
+                MessageBox.show("请安装 Java 8");
+                try {
+                    java.awt.Desktop.getDesktop().browse(new URI("https://java.com"));
+                } catch (URISyntaxException | IOException e) {
+                    Utils.setClipboard("https://java.com");
+                    MessageBox.show(C.i18n("update.no_browser"));
+                }
+            }
+
+            if (MessageBox.show(C.i18n("update.newest_version") + version.toString() + "\n"
                     + C.i18n("update.should_open_link"),
                     MessageBox.YES_NO_OPTION) == MessageBox.YES_OPTION)
-                if (map != null && map.containsKey("jar") && !StrUtils.isBlank(map.get("jar")))
-                    try {
-                        String hash = null;
-                        if (map.containsKey("jarsha1"))
-                            hash = map.get("jarsha1");
-                        if (TaskWindow.factory().append(new AppDataUpgraderJarTask(map.get("jar"), version.version, hash)).execute()) {
-                            new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderJarTask.getSelf(version.version).getAbsolutePath() }).directory(new File("").getAbsoluteFile()).start();
-                            System.exit(0);
-                        }
-                    } catch (IOException ex) {
-                        Main.LOGGER.log(Level.SEVERE, "Failed to create upgrader", ex);
-                    }
-                else if (map != null && map.containsKey("pack") && !StrUtils.isBlank(map.get("pack")))
+                if (map != null && map.containsKey("pack") && !StrUtils.isBlank(map.get("pack")))
                     try {
                         String hash = null;
                         if (map.containsKey("packsha1"))
                             hash = map.get("packsha1");
-                        if (TaskWindow.factory().append(new AppDataUpgraderPackGzTask(map.get("pack"), version.version, hash)).execute()) {
-                            new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderPackGzTask.getSelf(version.version).getAbsolutePath() }).directory(new File("").getAbsoluteFile()).start();
+                        if (TaskWindow.factory().append(new AppDataUpgraderPackGzTask(map.get("pack"), version.toString(), hash)).execute()) {
+                            new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderPackGzTask.getSelf(version.toString()).getAbsolutePath() }).directory(new File("").getAbsoluteFile()).start();
                             System.exit(0);
                         }
                     } catch (IOException ex) {
                         HMCLog.err("Failed to create upgrader", ex);
+                    }
+                else if (map != null && map.containsKey("jar") && !StrUtils.isBlank(map.get("jar")))
+                    try {
+                        String hash = null;
+                        if (map.containsKey("jarsha1"))
+                            hash = map.get("jarsha1");
+                        if (TaskWindow.factory().append(new AppDataUpgraderJarTask(map.get("jar"), version.toString(), hash)).execute()) {
+                            new ProcessBuilder(new String[] { IOUtils.getJavaDir(), "-jar", AppDataUpgraderJarTask.getSelf(version.toString()).getAbsolutePath() }).directory(new File("").getAbsoluteFile()).start();
+                            System.exit(0);
+                        }
+                    } catch (IOException ex) {
+                        Main.LOGGER.log(Level.SEVERE, "Failed to create upgrader", ex);
                     }
                 else {
                     String url = C.URL_PUBLISH;
@@ -152,6 +171,8 @@ public class AppDataUpgrader extends IUpgrader {
                 }
         }).execute();
     }
+
+    ;
 
     public static class AppDataUpgraderPackGzTask extends Task {
 
@@ -174,7 +195,7 @@ public class AppDataUpgrader extends IUpgrader {
 
         @Override
         public Collection<Task> getDependTasks() {
-            return Arrays.asList(new FileDownloadTask(downloadLink, tempFile, expectedHash));
+            return Collections.singleton(new FileDownloadTask(downloadLink, tempFile, expectedHash));
         }
 
         @Override
@@ -193,8 +214,9 @@ public class AppDataUpgrader extends IUpgrader {
             if (!f.createNewFile())
                 throw new IOException("Failed to create new file: " + f);
 
-            try (JarOutputStream jos = new JarOutputStream(FileUtils.openOutputStream(f))) {
-                Pack200.newUnpacker().unpack(new GZIPInputStream(FileUtils.openInputStream(tempFile)), jos);
+            try (GZIPInputStream in = new GZIPInputStream(FileUtils.openInputStream(tempFile));
+                    JarOutputStream jos = new JarOutputStream(FileUtils.openOutputStream(f))) {
+                Pack200.newUnpacker().unpack(in, jos);
             }
             json.put("ver", newestVersion);
             json.put("loc", f.getAbsolutePath());
@@ -230,7 +252,7 @@ public class AppDataUpgrader extends IUpgrader {
 
         @Override
         public Collection<Task> getDependTasks() {
-            return Arrays.asList(new FileDownloadTask(downloadLink, tempFile, expectedHash));
+            return Collections.singleton(new FileDownloadTask(downloadLink, tempFile, expectedHash));
         }
 
         @Override

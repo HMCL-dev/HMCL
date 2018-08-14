@@ -25,6 +25,7 @@ import com.google.gson.JsonSyntaxException;
 import java.io.IOException;
 import org.jackhuang.hmcl.api.HMCLog;
 import java.util.Map;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.api.HMCLApi;
 import org.jackhuang.hmcl.api.event.SimpleEvent;
 import org.jackhuang.hmcl.api.event.OutOfDateEvent;
@@ -61,15 +62,15 @@ public final class UpdateChecker implements IUpdateChecker {
             @Override
             protected void work() throws Exception {
                 if (value == null) {
-                    versionString = NetUtils.get("http://huangyuhui.duapp.com/info.php?type=" + type);
-                    value = VersionNumber.check(versionString);
+                    versionString = NetUtils.get("http://hmcl.huangyuhui.net/api/update?version=" + Main.LAUNCHER_VERSION);
+                    value = VersionNumber.asVersion(versionString);
                 }
 
                 if (value == null) {
                     HMCLog.warn("Failed to check update...");
                     if (showMessage)
                         MessageBox.show(C.i18n("update.failed"));
-                } else if (VersionNumber.isOlder(base, value))
+                } else if (base.compareTo(value) < 0)
                     outOfDate = true;
                 if (outOfDate)
                     publish(value);
@@ -89,7 +90,7 @@ public final class UpdateChecker implements IUpdateChecker {
             protected void work() throws Exception {
                 if (download_link == null)
                     try {
-                        download_link = C.GSON.<Map<String, String>>fromJson(NetUtils.get("http://huangyuhui.duapp.com/update_link.php?type=" + type), Map.class);
+                        download_link = C.GSON.<Map<String, String>>fromJson(NetUtils.get("http://hmcl.huangyuhui.net/api/update_link?version=" + Main.LAUNCHER_VERSION), Map.class);
                     } catch (JsonSyntaxException | IOException e) {
                         HMCLog.warn("Failed to get update link.", e);
                     }

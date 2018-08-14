@@ -390,7 +390,7 @@ update.no_browser=无法打开浏览器，网址已经复制到剪贴板了，�
 update.should_open_link=是否更新？
 update.newest_version=最新版本为：
 update.failed=检查更新失败
-update.found=(发现更新!)
+update.found=(点击此处更新)
 
 logwindow.terminate_game=结束游戏进程
 logwindow.title=日志
