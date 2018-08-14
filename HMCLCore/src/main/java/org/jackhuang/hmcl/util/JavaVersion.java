@@ -25,7 +25,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -67,7 +66,8 @@ public final class JavaVersion {
     /**
      * The major version of Java installation.
      *
-     * @see org.jackhuang.hmcl.util.JavaVersion#JAVA_X
+     * @see org.jackhuang.hmcl.util.JavaVersion#JAVA_11
+     * @see org.jackhuang.hmcl.util.JavaVersion#JAVA_10
      * @see org.jackhuang.hmcl.util.JavaVersion#JAVA_9
      * @see org.jackhuang.hmcl.util.JavaVersion#JAVA_8
      * @see org.jackhuang.hmcl.util.JavaVersion#JAVA_7
@@ -154,10 +154,6 @@ public final class JavaVersion {
     private static List<JavaVersion> JAVAS;
     private static final CountDownLatch LATCH = new CountDownLatch(1);
 
-    public static Optional<List<JavaVersion>> getJREsImmediately() {
-        return Optional.ofNullable(JAVAS);
-    }
-
     public static List<JavaVersion> getJREs() throws InterruptedException {
         if (JAVAS != null)
             return JAVAS;
@@ -242,13 +238,25 @@ public final class JavaVersion {
     // ==== Windows ====
     private static List<JavaVersion> queryWindows() {
         List<JavaVersion> res = new ArrayList<>();
-        Lang.ignoringException(() -> res.addAll(queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\")));
-        Lang.ignoringException(() -> res.addAll(queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\")));
-        Lang.ignoringException(() -> res.addAll(queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JRE\\")));
-        Lang.ignoringException(() -> res.addAll(queryRegisterKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JDK\\")));
+        Lang.ignoringException(() -> res.addAll(queryJavaInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\")));
+        Lang.ignoringException(() -> res.addAll(queryJavaInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\")));
+        Lang.ignoringException(() -> res.addAll(queryJavaInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JRE\\")));
+        Lang.ignoringException(() -> res.addAll(queryJavaInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JDK\\")));
         return res;
     }
 
+    private static List<JavaVersion> queryJavaInRegistryKey(String location) throws IOException, InterruptedException {
+        List<JavaVersion> res = new ArrayList<>();
+        for (String java : querySubFolders(location)) {
+            if (!querySubFolders(java).contains(java + "\\MSI")) continue;
+            String home = queryRegisterValue(java, "JavaHome");
+            if (home != null)
+                res.add(fromJavaHome(new File(home)));
+        }
+        return res;
+    }
+
+    // Registry utilities
     private static List<String> querySubFolders(String location) throws IOException, InterruptedException {
         List<String> res = new ArrayList<>();
         String[] cmd = new String[] { "cmd", "/c", "reg", "query", location };
@@ -259,16 +267,6 @@ public final class JavaVersion {
             for (String line; (line = reader.readLine()) != null; )
                 if (line.startsWith(location) && !line.equals(location))
                     res.add(line);
-        }
-        return res;
-    }
-
-    private static List<JavaVersion> queryRegisterKey(String location) throws IOException, InterruptedException {
-        List<JavaVersion> res = new ArrayList<>();
-        for (String java : querySubFolders(location)) {
-            String home = queryRegisterValue(java, "JavaHome");
-            if (home != null)
-                res.add(fromJavaHome(new File(home)));
         }
         return res;
     }
