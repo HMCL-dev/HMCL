@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.api;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * If a version string formats x.x.x.x, a {@code IntVersionNumber}

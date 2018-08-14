@@ -38,11 +38,11 @@ def buildnumber = System.getenv("TRAVIS_BUILD_NUMBER")
 if (buildnumber == null)
 buildnumber = System.getenv("BUILD_NUMBER")
 if (buildnumber == null)
-buildnumber = "52"
+buildnumber = "60"
     
 def versionroot = System.getenv("VERSION_ROOT")
 if (versionroot == null)
-versionroot = "2.7.9"
+versionroot = "2.7.10"
 
 String mavenGroupId = 'HMCL'
 String mavenVersion = versionroot + '.' + buildnumber

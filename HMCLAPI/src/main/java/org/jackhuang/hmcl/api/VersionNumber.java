@@ -36,13 +36,6 @@ public abstract class VersionNumber implements Comparable<VersionNumber> {
             return new StringVersionNumber(version);
     }
 
-    public static Optional<String> parseVersion(String str) {
-        if (IntVersionNumber.isIntVersionNumber(str))
-            return Optional.of(new IntVersionNumber(str).toString());
-        else
-            return Optional.empty();
-    }
-
     @Override
     public int compareTo(VersionNumber o) {
         return COMPARATOR.compare(this, o);

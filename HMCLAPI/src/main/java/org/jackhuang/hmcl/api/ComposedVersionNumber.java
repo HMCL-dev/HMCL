@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.api;
 
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -38,9 +39,9 @@ public final class ComposedVersionNumber extends VersionNumber {
     }
 
     ComposedVersionNumber(String version) {
-        composed = Arrays.stream(version.split("-"))
-                .map(VersionNumber::asVersion)
-                .collect(Collectors.toList());
+        String slice[] = version.split("-");
+        composed = new LinkedList<>();
+        for (String str : slice) composed.add(VersionNumber.asVersion(str));
     }
 
     @Override
@@ -50,6 +51,9 @@ public final class ComposedVersionNumber extends VersionNumber {
 
     @Override
     public String toString() {
-        return composed.stream().map(VersionNumber::toString).collect(Collectors.joining("-"));
+        List<String> seq = new LinkedList<>();
+        for (VersionNumber str : composed)
+            seq.add(str.toString());
+        return String.join("-", seq);
     }
 }
