@@ -88,8 +88,6 @@ public class Theme {
         }
 
         return new String[]{
-                Theme.class.getResource("/css/jfoenix-fonts.css").toExternalForm(),
-                Theme.class.getResource("/css/jfoenix-design.css").toExternalForm(),
                 css,
                 Theme.class.getResource("/assets/css/root.css").toExternalForm()
         };

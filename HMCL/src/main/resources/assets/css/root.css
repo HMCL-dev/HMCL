@@ -1,11 +1,4 @@
-/*
- *	Apply google Roboto font to all UI components
- *  #5264AE
- */
-
 .root {
-    -fx-base-font-family: "微软雅黑", "Microsoft YaHei", "Roboto";
-    -fx-font-family: -fx-base-font-family;
 }
 
 .disabled Label {
