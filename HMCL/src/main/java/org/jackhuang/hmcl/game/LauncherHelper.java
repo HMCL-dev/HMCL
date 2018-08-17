@@ -388,10 +388,13 @@ public final class LauncherHelper {
                 logs.removeFirst();
 
             if (setting.isShowLogs()) {
-                Lang.invoke(() -> {
+                try {
                     latch.await();
                     logWindow.waitForLoaded();
-                });
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
 
                 Platform.runLater(() -> logWindow.logLine(log, level));
             }
