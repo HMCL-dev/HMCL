@@ -75,8 +75,6 @@ public final class GameAssetDownloadTask extends Task {
     
     @Override
     public void execute() throws Exception {
-        int size = refreshTask.getResult().size();
-        int downloaded = 0;
         for (Map.Entry<File, AssetObject> entry : refreshTask.getResult()) {
             if (Thread.interrupted())
                 throw new InterruptedException();
@@ -88,29 +86,11 @@ public final class GameAssetDownloadTask extends Task {
                 Logging.LOG.log(Level.SEVERE, "Unable to create new file " + file + ", because parent directory cannot be created");
                 continue;
             }
-            if (file.isDirectory())
+            if (file.isDirectory() || file.isFile() && file.exists())
                 continue;
-            boolean flag = true;
-            try {
-                // check the checksum of file to ensure that the file is not need to re-download.
-                if (file.exists()) {
-                    String sha1 = encodeHex(digest("SHA-1", FileUtils.readBytes(file)));
-                    if (sha1.equals(assetObject.getHash())) {
-                        ++downloaded;
-                        Logging.LOG.finest("File $file has been downloaded successfully, skipped downloading");
-                        updateProgress(downloaded, size);
-                        continue;
-                    }
-                }
-            } catch (IOException e) {
-                Logging.LOG.log(Level.WARNING, "Unable to get hash code of file " + file, e);
-                flag = !file.exists();
-            }
-            if (flag) {
-                FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(url), file, new IntegrityCheck("SHA-1", assetObject.getHash()));
-                task.setName(assetObject.getHash());
-                dependencies.add(task);
-            }
+            FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(url), file, new IntegrityCheck("SHA-1", assetObject.getHash()));
+            task.setName(assetObject.getHash());
+            dependencies.add(task);
         }
     }
     
