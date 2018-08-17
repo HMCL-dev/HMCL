@@ -152,14 +152,20 @@ public final class ModInfo implements Comparable<ModInfo> {
                 try {
                     return ForgeModMetadata.fromFile(modFile);
                 } catch (Exception ignore) {
-                    description = "May be Forge mod";
                 }
+
+                try {
+                    return RiftModMetadata.fromFile(modFile);
+                } catch (Exception ignore) {
+                }
+
+                description = "";
                 break;
             case "litemod":
                 try {
                     return LiteModMetadata.fromFile(modFile);
                 } catch (Exception ignore) {
-                    description = "May be LiteLoader mod";
+                    description = "LiteLoader Mod";
                 }
                 break;
             default:
