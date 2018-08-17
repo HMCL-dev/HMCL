@@ -95,7 +95,7 @@ public final class CommandBuilder {
     }
 
     private static String parseWindows(String s) {
-        String escape = " \t^&<>|";
+        String escape = " \t\"^&<>|";
         if (StringUtils.containsOne(s, escape.toCharArray()))
             // The argument has not been quoted, add quotes.
             return '"' + s
