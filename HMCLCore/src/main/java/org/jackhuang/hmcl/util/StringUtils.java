@@ -176,6 +176,13 @@ public final class StringUtils {
         return false;
     }
 
+    public static boolean containsOne(String pattern, char... targets) {
+        for (char target : targets)
+            if (pattern.toLowerCase().indexOf(Character.toLowerCase(target)) >= 0)
+                return true;
+        return false;
+    }
+
     public static List<String> tokenize(String str) {
         if (str == null)
             return new LinkedList<>();

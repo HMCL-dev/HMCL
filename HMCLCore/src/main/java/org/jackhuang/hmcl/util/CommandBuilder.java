@@ -41,6 +41,12 @@ public final class CommandBuilder {
         }
     }
 
+    /**
+     * Parsing will ignore your manual escaping
+     *
+     * @param args commands
+     * @return this
+     */
     public CommandBuilder add(String... args) {
         for (String s : args)
             raw.add(new Item(s, true));
@@ -89,35 +95,27 @@ public final class CommandBuilder {
     }
 
     private static String parseWindows(String s) {
-        if (s.indexOf(' ') >= 0 || s.indexOf('\t') >= 0)
-            if (s.charAt(0) != '"') {
-                // The argument has not been quoted, add quotes.
-                return '"' + s.replace("\\", "\\\\").replace("\"", "\"\"") + '"';
-            } else if (s.endsWith("\"")) {
-                // The argument has already been quoted.
-                return s;
-            } else {
-                // Unmatched quote for the argument.
-                throw new IllegalArgumentException();
-            }
+        String escape = " \t^&<>|";
+        if (StringUtils.containsOne(s, escape.toCharArray()))
+            // The argument has not been quoted, add quotes.
+            return '"' + s
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\"\"")
+                    + '"';
         else {
             return s;
         }
     }
 
     private static String parseBash(String s) {
-        if (s.indexOf(' ') >= 0 || s.indexOf('\t') >= 0)
-            if (s.charAt(0) != '"') {
-                // The argument has not been quoted, add quotes.
-                return '"' + s.replace("\"", "\\\"") + '"';
-            } else if (s.endsWith("\"")) {
-                // The argument has already been quoted.
-                return s;
-            } else {
-                // Unmatched quote for the argument.
-                throw new IllegalArgumentException();
-            }
-        else
+        String escaping = " \t\"!#$&'()*,;<=>?[\\]^`{|}~";
+        String escaped = "\"$&`";
+        if (s.indexOf(' ') >= 0 || s.indexOf('\t') >= 0 || StringUtils.containsOne(s, escaping.toCharArray())) {
+            // The argument has not been quoted, add quotes.
+            for (char ch : escaped.toCharArray())
+                s = s.replace("" + ch, "\\" + ch);
+            return '"' + s + '"';
+        } else
             return s;
     }
 }
