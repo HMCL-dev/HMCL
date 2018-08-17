@@ -26,6 +26,8 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.zip.ZipError;
+import java.util.zip.ZipException;
 
 /**
  * Utilities of compressing
@@ -66,7 +68,12 @@ public final class CompressingUtils {
             env.put("encoding", encoding);
         if (useTempFile)
             env.put("useTempFile", true);
-        return ZIPFS_PROVIDER.newFileSystem(zipFile, env);
+        try {
+            return ZIPFS_PROVIDER.newFileSystem(zipFile, env);
+        } catch (ZipError error) {
+            // Since Java 8 throws ZipError stupidly
+            throw new ZipException(error.getMessage());
+        }
     }
 
     /**
