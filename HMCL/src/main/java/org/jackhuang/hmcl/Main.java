@@ -40,6 +40,8 @@ import org.jackhuang.hmcl.upgrade.UpdateHandler;
 public final class Main {
 
     public static void main(String[] args) {
+        System.setProperty("java.net.useSystemProxies", "true");
+
         checkJavaFX();
         checkDirectoryPath();
         checkDSTRootCAX3();

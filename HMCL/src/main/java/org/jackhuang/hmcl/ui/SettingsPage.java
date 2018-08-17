@@ -103,7 +103,7 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
     @FXML
     private StackPane themeColorPickerContainer;
     @FXML
-    private JFXCheckBox chkEnableProxy;
+    private JFXCheckBox chkDisableProxy;
     @FXML
     private JFXRadioButton chkProxyHttp;
     @FXML
@@ -160,10 +160,12 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         txtProxyUsername.textProperty().bindBidirectional(config().proxyUserProperty());
         txtProxyPassword.textProperty().bindBidirectional(config().proxyPassProperty());
 
-        proxyPane.disableProperty().bind(chkEnableProxy.selectedProperty().not());
+        proxyPane.disableProperty().bind(chkDisableProxy.selectedProperty());
         authPane.disableProperty().bind(chkProxyAuthentication.selectedProperty().not());
 
-        chkEnableProxy.selectedProperty().bindBidirectional(config().hasProxyProperty());
+        chkDisableProxy.setSelected(!config().hasProxy());
+        chkDisableProxy.selectedProperty().addListener(o -> config().setHasProxy(!chkDisableProxy.isSelected()));
+        config().hasProxyProperty().addListener(o -> chkDisableProxy.setSelected(!config().hasProxy()));
         chkProxyAuthentication.selectedProperty().bindBidirectional(config().hasProxyAuthProperty());
 
         selectedProxyType = new SimpleObjectProperty<Proxy.Type>(Proxy.Type.HTTP) {

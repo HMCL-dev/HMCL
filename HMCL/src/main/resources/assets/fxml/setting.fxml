@@ -63,7 +63,7 @@
 
                 <ComponentList title="%settings.launcher.proxy"> <!-- proxy -->
                     <VBox spacing="10">
-                        <JFXCheckBox fx:id="chkEnableProxy" text="%settings.launcher.proxy.enable" />
+                        <JFXCheckBox fx:id="chkDisableProxy" text="%settings.launcher.proxy.disable" />
                         <VBox fx:id="proxyPane" style="-fx-padding: 0 0 0 30;">
                             <HBox>
                                 <JFXRadioButton fx:id="chkProxyHttp" text="%settings.launcher.proxy.http" />
