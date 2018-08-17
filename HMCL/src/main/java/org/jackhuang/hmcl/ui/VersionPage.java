@@ -147,7 +147,7 @@ public final class VersionPage extends StackPane implements DecoratorPage {
                 sub = "saves";
                 break;
             default:
-                throw new RuntimeException();
+                return;
         }
         FXUtils.openFolder(new File(profile.getRepository().getRunDirectory(version), sub));
     }
