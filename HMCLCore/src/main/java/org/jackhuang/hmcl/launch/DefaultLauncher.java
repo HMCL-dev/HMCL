@@ -258,7 +258,7 @@ public class DefaultLauncher extends Launcher {
         File nativeFolder = Files.createTempDirectory("minecraft").toFile();
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
-        List<String> rawCommandLine = generateCommandLine(nativeFolder, true).asList();
+        List<String> rawCommandLine = generateCommandLine(nativeFolder, isEnablingLoggingInfo()).asList();
 
         decompressNatives(nativeFolder);
 
@@ -316,14 +316,17 @@ public class DefaultLauncher extends Launcher {
             throw new PermissionException();
     }
 
+    protected boolean isEnablingLoggingInfo() {
+        return version.getLogging() != null && version.getLogging().containsKey(DownloadType.CLIENT)
+                && !"net.minecraft.launchwrapper.Launch".equals(version.getMainClass());
+    }
+
     private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener) {
         startMonitors(managedProcess, processListener, true);
     }
 
     private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon) {
-        boolean enablesLoggingInfo = version.getLogging() != null && version.getLogging().containsKey(DownloadType.CLIENT)
-                && !"net.minecraft.launchwrapper.Launch".equals(version.getMainClass());
-        if (enablesLoggingInfo)
+        if (isEnablingLoggingInfo())
             startMonitorsWithLoggingInfo(managedProcess, processListener, isDaemon);
         else
             startMonitorsWithoutLoggingInfo(managedProcess, processListener, isDaemon);
