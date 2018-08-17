@@ -65,6 +65,8 @@ public final class LauncherHelper {
         if (account == null)
             throw new IllegalArgumentException("No account");
 
+        Logging.LOG.info("Launching game version: " + selectedVersion);
+
         GameRepository repository = profile.getRepository();
 
         Version version = repository.getResolvedVersion(selectedVersion);
