@@ -120,7 +120,7 @@ public final class MultiMCModpackInstallTask extends Task {
 
             if (Files.exists(patches))
                 for (Path patchJson : Files.newDirectoryStream(patches)) {
-                    if (patchJson.endsWith(".json")) {
+                    if (patchJson.toString().endsWith(".json")) {
                         MultiMCInstancePatch patch = Constants.GSON.fromJson(IOUtils.readFullyAsString(Files.newInputStream(patchJson)), MultiMCInstancePatch.class);
                         List<String> newArguments = new LinkedList<>();
                         for (String arg : patch.getTweakers()) {

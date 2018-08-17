@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.util.CompressingUtils;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -268,7 +269,7 @@ public final class MultiMCInstanceConfiguration {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modpackFile.toPath())) {
             Path root = Files.list(fs.getPath("/")).filter(Files::isDirectory).findAny()
                     .orElseThrow(() -> new IOException("Not a valid MultiMC modpack"));
-            String name = root.normalize().getFileName().toString();
+            String name = StringUtils.removeSuffix(root.normalize().getFileName().toString(), "/");
 
             Path instancePath = root.resolve("instance.cfg");
             if (Files.notExists(instancePath))
