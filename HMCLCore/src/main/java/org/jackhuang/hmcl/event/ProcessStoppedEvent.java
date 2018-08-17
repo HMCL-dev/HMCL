@@ -45,12 +45,4 @@ public class ProcessStoppedEvent extends Event {
     public ManagedProcess getProcess() {
         return process;
     }
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder(this)
-                .append("source", source)
-                .append("process", process)
-                .toString();
-    }
 }
