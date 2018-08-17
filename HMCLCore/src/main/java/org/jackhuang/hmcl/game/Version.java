@@ -151,8 +151,9 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     protected Version resolve(VersionProvider provider, Set<String> resolvedSoFar) throws VersionNotFoundException {
-        if (inheritsFrom == null)
-            return this;
+        if (inheritsFrom == null) {
+            return this.jar == null ? this.setJar(id) : this;
+        }
 
         // To maximize the compatibility.
         if (!resolvedSoFar.add(id)) {
