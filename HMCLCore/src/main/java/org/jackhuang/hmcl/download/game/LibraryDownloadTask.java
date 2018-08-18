@@ -74,10 +74,10 @@ public final class LibraryDownloadTask extends Task {
                     throw new LibraryDownloadException(library, t);
             }
         } else {
-            if (xz) {
-                unpackLibrary(jar, FileUtils.readBytes(xzFile));
-                if (!checksumValid(jar, library.getChecksums()))
-                    throw new IOException("Checksum failed for " + library);
+            if (xz) unpackLibrary(jar, FileUtils.readBytes(xzFile));
+            if (!checksumValid(jar, library.getChecksums())) {
+                jar.delete();
+                throw new IOException("Checksum failed for " + library);
             }
         }
     }
@@ -121,14 +121,15 @@ public final class LibraryDownloadTask extends Task {
 
     private static boolean checksumValid(File libPath, List<String> checksums) {
         try {
-            if ((checksums == null) || (checksums.isEmpty())) {
+            if (checksums == null || checksums.isEmpty()) {
                 return true;
             }
             byte[] fileData = FileUtils.readBytes(libPath);
             boolean valid = checksums.contains(encodeHex(digest("SHA-1", fileData)));
-            if ((!valid) && (libPath.getName().endsWith(".jar"))) {
+            if (!valid && libPath.getName().endsWith(".jar")) {
+                valid = validateJar(fileData, checksums);
             }
-            return validateJar(fileData, checksums);
+            return valid;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -152,8 +153,8 @@ public final class LibraryDownloadTask extends Task {
         }
         jar.close();
         if (hashes != null) {
-            boolean passed = !checksums.contains(files.get("checksums.sha1"));
-            if (passed) {
+            boolean failed = !checksums.contains(files.get("checksums.sha1"));
+            if (!failed) {
                 for (String hash : hashes) {
                     if ((!hash.trim().equals("")) && (hash.contains(" "))) {
                         String[] e = hash.split(" ");
@@ -162,17 +163,17 @@ public final class LibraryDownloadTask extends Task {
                         String checksum = files.get(target);
                         if ((!files.containsKey(target)) || (checksum == null)) {
                             Logging.LOG.warning("    " + target + " : missing");
-                            passed = false;
+                            failed = true;
                             break;
                         } else if (!checksum.equals(validChecksum)) {
                             Logging.LOG.warning("    " + target + " : failed (" + checksum + ", " + validChecksum + ")");
-                            passed = false;
+                            failed = true;
                             break;
                         }
                     }
                 }
             }
-            return passed;
+            return !failed;
         }
         return false;
     }
