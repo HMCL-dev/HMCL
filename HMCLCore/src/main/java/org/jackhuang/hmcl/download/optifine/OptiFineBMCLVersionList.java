@@ -33,11 +33,16 @@ import java.util.*;
  *
  * @author huangyuhui
  */
-public final class OptiFineBMCLVersionList extends VersionList<Void> {
+public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVersion> {
 
     public static final OptiFineBMCLVersionList INSTANCE = new OptiFineBMCLVersionList();
 
     private OptiFineBMCLVersionList() {
+    }
+
+    @Override
+    public boolean hasType() {
+        return true;
     }
 
     @Override
@@ -57,16 +62,16 @@ public final class OptiFineBMCLVersionList extends VersionList<Void> {
                 }.getType());
                 for (OptiFineVersion element : root) {
                     String version = element.getType() + "_" + element.getPatch();
-                    if (element.getType() == null || "pre".equals(element.getPatch()))
-                        continue;
                     String mirror = "http://bmclapi2.bangbang93.com/optifine/" + element.getGameVersion() + "/" + element.getType() + "/" + element.getPatch();
                     if (!duplicates.add(mirror))
                         continue;
 
+                    boolean isPre = element.getPatch() != null && (element.getPatch().equals("pre") || element.getPatch().startsWith("alpha"));
+
                     if (StringUtils.isBlank(element.getGameVersion()))
                         continue;
                     VersionNumber.parseVersion(element.getGameVersion())
-                            .ifPresent(gameVersion -> versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, () -> mirror)));
+                            .ifPresent(gameVersion -> versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, () -> mirror, isPre)));
                 }
             }
         };

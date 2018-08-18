@@ -22,7 +22,9 @@ import org.jackhuang.hmcl.game.Library;
 
 import java.util.Collection;
 
-public class LiteLoaderRemoteVersion extends RemoteVersion<LiteLoaderRemoteVersionTag> {
+public class LiteLoaderRemoteVersion extends RemoteVersion {
+    private final String tweakClass;
+    private final Collection<Library> libraries;
     /**
      * Constructor.
      *
@@ -31,6 +33,18 @@ public class LiteLoaderRemoteVersion extends RemoteVersion<LiteLoaderRemoteVersi
      * @param url         the installer or universal jar URL.
      */
     LiteLoaderRemoteVersion(String gameVersion, String selfVersion, String url, String tweakClass, Collection<Library> libraries) {
-        super(gameVersion, selfVersion, url, new LiteLoaderRemoteVersionTag(tweakClass, libraries));
+        super(gameVersion, selfVersion, url);
+
+        this.tweakClass = tweakClass;
+        this.libraries = libraries;
     }
+
+    public Collection<Library> getLibraries() {
+        return libraries;
+    }
+
+    public String getTweakClass() {
+        return tweakClass;
+    }
+
 }

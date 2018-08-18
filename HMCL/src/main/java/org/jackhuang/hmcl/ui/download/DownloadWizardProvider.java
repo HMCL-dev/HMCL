@@ -49,16 +49,16 @@ public final class DownloadWizardProvider implements WizardProvider {
         GameBuilder builder = profile.getDependency().gameBuilder();
 
         builder.name((String) settings.get("name"));
-        builder.gameVersion(((RemoteVersion<?>) settings.get("game")).getGameVersion());
+        builder.gameVersion(((RemoteVersion) settings.get("game")).getGameVersion());
 
         if (settings.containsKey("forge"))
-            builder.version((RemoteVersion<?>) settings.get("forge"));
+            builder.version((RemoteVersion) settings.get("forge"));
 
         if (settings.containsKey("liteloader"))
-            builder.version((RemoteVersion<?>) settings.get("liteloader"));
+            builder.version((RemoteVersion) settings.get("liteloader"));
 
         if (settings.containsKey("optifine"))
-            builder.version((RemoteVersion<?>) settings.get("optifine"));
+            builder.version((RemoteVersion) settings.get("optifine"));
 
         return builder.buildAsync().finalized((a, b) -> profile.getRepository().refreshVersions());
     }

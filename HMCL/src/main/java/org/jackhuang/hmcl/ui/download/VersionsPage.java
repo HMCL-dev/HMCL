@@ -27,9 +27,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.download.game.GameRemoteVersionTag;
-import org.jackhuang.hmcl.download.game.GameVersionList;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -79,7 +78,7 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
 
         FXUtils.loadFXML(this, "/assets/fxml/download/versions.fxml");
 
-        if (versionList instanceof GameVersionList) {
+        if (versionList.hasType()) {
             centrePane.getChildren().setAll(checkPane, list);
         } else
             centrePane.getChildren().setAll(list);
@@ -99,21 +98,21 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
     }
 
     private List<VersionsPageItem> loadVersions() {
-        boolean isGameVersionList = versionList instanceof GameVersionList;
         return versionList.getVersions(gameVersion).stream()
                 .filter(it -> {
-                    if (isGameVersionList)
-                        switch (((GameRemoteVersionTag) it.getTag()).getType()) {
-                            case RELEASE:
-                                return chkRelease.isSelected();
-                            case SNAPSHOT:
-                                return chkSnapshot.isSelected();
-                            default:
-                                return chkOld.isSelected();
-                        }
-                    else return true;
+                    if (it.getVersionType() == null)
+                        return true;
+                    switch (it.getVersionType()) {
+                        case RELEASE:
+                            return chkRelease.isSelected();
+                        case SNAPSHOT:
+                            return chkSnapshot.isSelected();
+                        case OLD:
+                            return chkOld.isSelected();
+                        default:
+                            return true;
+                    }
                 })
-                .filter(Objects::nonNull)
                 .sorted()
                 .map(VersionsPageItem::new).collect(Collectors.toList());
     }

@@ -67,7 +67,7 @@ public interface DependencyManager {
      * @param libraryVersion the remote version of being installed library.
      * @return the task to install the specific library.
      */
-    Task installLibraryAsync(Version version, RemoteVersion<?> libraryVersion);
+    Task installLibraryAsync(Version version, RemoteVersion libraryVersion);
 
     /**
      * Get registered version list.

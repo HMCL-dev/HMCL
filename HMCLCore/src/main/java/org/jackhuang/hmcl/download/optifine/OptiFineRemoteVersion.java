@@ -21,11 +21,11 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 
 import java.util.function.Supplier;
 
-public class OptiFineRemoteVersion extends RemoteVersion<Void> {
+public class OptiFineRemoteVersion extends RemoteVersion {
     private final Supplier<String> url;
 
-    public OptiFineRemoteVersion(String gameVersion, String selfVersion, Supplier<String> url) {
-        super(gameVersion, selfVersion, "", null);
+    public OptiFineRemoteVersion(String gameVersion, String selfVersion, Supplier<String> url, boolean snapshot) {
+        super(gameVersion, selfVersion, "", snapshot ? Type.SNAPSHOT : Type.RELEASE);
 
         this.url = url;
     }

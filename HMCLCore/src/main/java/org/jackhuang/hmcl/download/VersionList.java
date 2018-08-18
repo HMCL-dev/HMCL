@@ -26,18 +26,18 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * The remote version list.
  *
- * @param <T> The type of {@code RemoteVersion<T>}, the type of tags.
+ * @param <T> The subclass of {@code RemoteVersion}, the type of RemoteVersion.
  *
  * @author huangyuhui
  */
-public abstract class VersionList<T> {
+public abstract class VersionList<T extends RemoteVersion> {
 
     /**
      * the remote version list.
      * key: game version.
      * values: corresponding remote versions.
      */
-    protected final SimpleMultimap<String, RemoteVersion<T>> versions = new SimpleMultimap<String, RemoteVersion<T>>(HashMap::new, TreeSet::new);
+    protected final SimpleMultimap<String, T> versions = new SimpleMultimap<String, T>(HashMap::new, TreeSet::new);
 
     /**
      * True if the version list has been loaded.
@@ -45,6 +45,8 @@ public abstract class VersionList<T> {
     public boolean isLoaded() {
         return !versions.isEmpty();
     }
+
+    public abstract boolean hasType();
 
     protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -68,10 +70,10 @@ public abstract class VersionList<T> {
         });
     }
 
-    private Collection<RemoteVersion<T>> getVersionsImpl(String gameVersion) {
+    private Collection<T> getVersionsImpl(String gameVersion) {
         lock.readLock().lock();
         try {
-            Collection<RemoteVersion<T>> ans = versions.get(gameVersion);
+            Collection<T> ans = versions.get(gameVersion);
             return ans.isEmpty() ? versions.values() : ans;
         } finally {
             lock.readLock().unlock();
@@ -84,7 +86,7 @@ public abstract class VersionList<T> {
      * @param gameVersion the Minecraft version that remote versions belong to
      * @return the collection of specific remote versions
      */
-    public final Collection<RemoteVersion<T>> getVersions(String gameVersion) {
+    public final Collection<T> getVersions(String gameVersion) {
         return Collections.unmodifiableCollection(getVersionsImpl(gameVersion));
     }
 
@@ -95,11 +97,11 @@ public abstract class VersionList<T> {
      * @param remoteVersion the version of the remote version.
      * @return the specific remote version, null if it is not found.
      */
-    public final Optional<RemoteVersion<T>> getVersion(String gameVersion, String remoteVersion) {
+    public final Optional<T> getVersion(String gameVersion, String remoteVersion) {
         lock.readLock().lock();
         try {
-            RemoteVersion<T> result = null;
-            for (RemoteVersion<T> it : versions.get(gameVersion))
+            T result = null;
+            for (T it : versions.get(gameVersion))
                 if (remoteVersion.equals(it.getSelfVersion()))
                     result = it;
             return Optional.ofNullable(result);

@@ -39,11 +39,16 @@ import java.util.Optional;
  *
  * @author huangyuhui
  */
-public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemoteVersionTag> {
+public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemoteVersion> {
 
     public static final LiteLoaderBMCLVersionList INSTANCE = new LiteLoaderBMCLVersionList();
 
     private LiteLoaderBMCLVersionList() {
+    }
+
+    @Override
+    public boolean hasType() {
+        return false;
     }
 
     @Override

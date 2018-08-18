@@ -77,7 +77,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public Task installLibraryAsync(Version version, RemoteVersion<?> libraryVersion) {
+    public Task installLibraryAsync(Version version, RemoteVersion libraryVersion) {
         if (libraryVersion instanceof ForgeRemoteVersion)
             return new ForgeInstallTask(this, version, (ForgeRemoteVersion) libraryVersion)
                     .then(variables -> new LibrariesUniqueTask(variables.get("version")))

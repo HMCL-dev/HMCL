@@ -32,11 +32,16 @@ import java.util.Collections;
  *
  * @author huangyuhui
  */
-public final class GameVersionList extends VersionList<GameRemoteVersionTag> {
+public final class GameVersionList extends VersionList<GameRemoteVersion> {
 
     public static final GameVersionList INSTANCE = new GameVersionList();
 
     private GameVersionList() {
+    }
+
+    @Override
+    public boolean hasType() {
+        return true;
     }
 
     @Override
@@ -56,12 +61,12 @@ public final class GameVersionList extends VersionList<GameRemoteVersionTag> {
                     versions.clear();
 
                     GameRemoteVersions root = Constants.GSON.fromJson(task.getResult(), GameRemoteVersions.class);
-                    for (GameRemoteVersion remoteVersion : root.getVersions()) {
-                        versions.put(remoteVersion.getGameVersion(), new RemoteVersionGame(
+                    for (GameRemoteVersionInfo remoteVersion : root.getVersions()) {
+                        versions.put(remoteVersion.getGameVersion(), new GameRemoteVersion(
                                 remoteVersion.getGameVersion(),
                                 remoteVersion.getGameVersion(),
                                 remoteVersion.getUrl(),
-                                new GameRemoteVersionTag(remoteVersion.getType(), remoteVersion.getReleaseTime()))
+                                remoteVersion.getType(), remoteVersion.getReleaseTime())
                         );
                     }
                 } finally {
@@ -69,16 +74,5 @@ public final class GameVersionList extends VersionList<GameRemoteVersionTag> {
                 }
             }
         };
-    }
-
-    private static class RemoteVersionGame extends RemoteVersion<GameRemoteVersionTag> {
-        public RemoteVersionGame(String gameVersion, String selfVersion, String url, GameRemoteVersionTag tag) {
-            super(gameVersion, selfVersion, url, tag);
-        }
-
-        @Override
-        public int compareTo(RemoteVersion<GameRemoteVersionTag> o) {
-            return o.getTag().getTime().compareTo(getTag().getTime());
-        }
     }
 }

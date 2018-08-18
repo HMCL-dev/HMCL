@@ -32,11 +32,16 @@ import java.util.*;
  *
  * @author huangyuhui
  */
-public final class ForgeVersionList extends VersionList<Void> {
+public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
 
     public static final ForgeVersionList INSTANCE = new ForgeVersionList();
 
     private ForgeVersionList() {
+    }
+
+    @Override
+    public boolean hasType() {
+        return false;
     }
 
     @Override

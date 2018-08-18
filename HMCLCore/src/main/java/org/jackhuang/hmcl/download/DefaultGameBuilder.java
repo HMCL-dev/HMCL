@@ -67,7 +67,7 @@ public class DefaultGameBuilder extends GameBuilder {
             if (toolVersions.containsKey("optifine"))
                 result = result.then(libraryTaskHelper(gameVersion, "optifine"));
 
-            for (RemoteVersion<?> remoteVersion : remoteVersions)
+            for (RemoteVersion remoteVersion : remoteVersions)
                 result = result.then(var -> dependencyManager.installLibraryAsync(var.get("version"), remoteVersion));
 
             return result;

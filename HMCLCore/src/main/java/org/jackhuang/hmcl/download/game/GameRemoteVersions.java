@@ -31,7 +31,7 @@ import java.util.List;
 public final class GameRemoteVersions {
 
     @SerializedName("versions")
-    private final List<GameRemoteVersion> versions;
+    private final List<GameRemoteVersionInfo> versions;
 
     @SerializedName("latest")
     private final GameRemoteLatestVersions latest;
@@ -44,7 +44,7 @@ public final class GameRemoteVersions {
         this(Collections.emptyList(), null);
     }
 
-    public GameRemoteVersions(List<GameRemoteVersion> versions, GameRemoteLatestVersions latest) {
+    public GameRemoteVersions(List<GameRemoteVersionInfo> versions, GameRemoteLatestVersions latest) {
         this.versions = versions;
         this.latest = latest;
     }
@@ -53,7 +53,7 @@ public final class GameRemoteVersions {
         return latest;
     }
 
-    public List<GameRemoteVersion> getVersions() {
+    public List<GameRemoteVersionInfo> getVersions() {
         return versions;
     }
 

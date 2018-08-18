@@ -74,7 +74,7 @@ public class InstallersPage extends StackPane implements WizardPage {
 
         FXUtils.loadFXML(this, "/assets/fxml/download/installers.fxml");
 
-        String gameVersion = ((RemoteVersion<?>) controller.getSettings().get("game")).getGameVersion();
+        String gameVersion = ((RemoteVersion) controller.getSettings().get("game")).getGameVersion();
         Validator hasVersion = new Validator(s -> !repository.hasVersion(s) && StringUtils.isNotBlank(s));
         hasVersion.setMessage(i18n("install.new_game.already_exists"));
         txtName.getValidators().add(hasVersion);
@@ -103,7 +103,7 @@ public class InstallersPage extends StackPane implements WizardPage {
     }
 
     private String getVersion(String id) {
-        return ((RemoteVersion<?>) controller.getSettings().get(id)).getSelfVersion();
+        return ((RemoteVersion) controller.getSettings().get(id)).getSelfVersion();
     }
 
     @Override

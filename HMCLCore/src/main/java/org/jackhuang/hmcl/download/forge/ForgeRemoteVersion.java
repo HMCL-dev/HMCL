@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.RemoteVersion;
 
-public class ForgeRemoteVersion extends RemoteVersion<Void> {
+public class ForgeRemoteVersion extends RemoteVersion {
     /**
      * Constructor.
      *
@@ -28,6 +28,6 @@ public class ForgeRemoteVersion extends RemoteVersion<Void> {
      * @param url         the installer or universal jar URL.
      */
     public ForgeRemoteVersion(String gameVersion, String selfVersion, String url) {
-        super(gameVersion, selfVersion, url, null);
+        super(gameVersion, selfVersion, url);
     }
 }

@@ -103,7 +103,7 @@ class AdditionalInstallersPage extends StackPane implements WizardPage {
     }
 
     private String getVersion(String id) {
-        return Optional.ofNullable(controller.getSettings().get(id)).map(it -> (RemoteVersion<?>) it).map(RemoteVersion::getSelfVersion).orElse(null);
+        return Optional.ofNullable(controller.getSettings().get(id)).map(it -> (RemoteVersion) it).map(RemoteVersion::getSelfVersion).orElse(null);
     }
 
     @Override

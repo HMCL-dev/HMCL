@@ -17,12 +17,9 @@
  */
 package org.jackhuang.hmcl.download.game;
 
-import com.google.gson.JsonParseException;
-import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.ReleaseType;
-import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.Validation;
+import org.jackhuang.hmcl.util.Immutable;
 
 import java.util.Date;
 
@@ -30,64 +27,31 @@ import java.util.Date;
  *
  * @author huangyuhui
  */
-public final class GameRemoteVersion implements Validation {
+@Immutable
+public final class GameRemoteVersion extends RemoteVersion {
 
-    @SerializedName("id")
-    private final String gameVersion;
-
-    @SerializedName("time")
+    private final ReleaseType type;
     private final Date time;
 
-    @SerializedName("releaseTime")
-    private final Date releaseTime;
-
-    @SerializedName("type")
-    private final ReleaseType type;
-
-    @SerializedName("url")
-    private final String url;
-
-    public GameRemoteVersion() {
-        this("", new Date(), new Date(), ReleaseType.UNKNOWN);
-    }
-
-    public GameRemoteVersion(String gameVersion, Date time, Date releaseTime, ReleaseType type) {
-        this(gameVersion, time, releaseTime, type, Constants.DEFAULT_LIBRARY_URL + gameVersion + "/" + gameVersion + ".json");
-    }
-
-    public GameRemoteVersion(String gameVersion, Date time, Date releaseTime, ReleaseType type, String url) {
-        this.gameVersion = gameVersion;
-        this.time = time;
-        this.releaseTime = releaseTime;
+    public GameRemoteVersion(String gameVersion, String selfVersion, String url, ReleaseType type, Date time) {
+        super(gameVersion, selfVersion, url);
         this.type = type;
-        this.url = url;
-    }
-
-    public String getGameVersion() {
-        return gameVersion;
+        this.time = time;
     }
 
     public Date getTime() {
         return time;
     }
 
-    public Date getReleaseTime() {
-        return releaseTime;
-    }
-
     public ReleaseType getType() {
         return type;
     }
 
-    public String getUrl() {
-        return url;
-    }
-    
     @Override
-    public void validate() throws JsonParseException {
-        if (StringUtils.isBlank(gameVersion))
-            throw new JsonParseException("GameRemoteVersion id cannot be blank");
-        if (StringUtils.isBlank(url))
-            throw new JsonParseException("GameRemoteVersion url cannot be blank");
+    public int compareTo(RemoteVersion o) {
+        if (!(o instanceof GameRemoteVersion))
+            return 0;
+
+        return ((GameRemoteVersion) o).getTime().compareTo(getTime());
     }
 }
