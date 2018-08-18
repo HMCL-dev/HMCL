@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.download;
 import org.jackhuang.hmcl.download.forge.ForgeVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList;
-import org.jackhuang.hmcl.download.optifine.OptiFineVersionList;
+import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 
 /**
  * @see <a href="http://wiki.vg">http://wiki,vg</a>
@@ -48,7 +48,7 @@ public class MojangDownloadProvider implements DownloadProvider {
             case "liteloader":
                 return LiteLoaderVersionList.INSTANCE;
             case "optifine":
-                return OptiFineVersionList.INSTANCE;
+                return OptiFineBMCLVersionList.INSTANCE;
             default:
                 throw new IllegalArgumentException("Unrecognized version list id: " + id);
         }
