@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -153,6 +150,14 @@ public final class NetworkUtils {
             new URL(str);
             return true;
         } catch (MalformedURLException e) {
+            return false;
+        }
+    }
+
+    public static boolean URLExists(URL url) throws IOException {
+        try (InputStream stream = url.openStream()) {
+            return true;
+        } catch (FileNotFoundException e) {
             return false;
         }
     }

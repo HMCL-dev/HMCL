@@ -108,7 +108,7 @@ public abstract class Task {
         return true;
     }
 
-    private String name = getClass().toString();
+    private String name = getClass().getName();
 
     public String getName() {
         return name;

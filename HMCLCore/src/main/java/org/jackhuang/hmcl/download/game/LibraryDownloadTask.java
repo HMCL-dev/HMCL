@@ -12,7 +12,10 @@ import org.jackhuang.hmcl.util.NetworkUtils;
 import org.tukaani.xz.XZInputStream;
 
 import java.io.*;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -23,15 +26,15 @@ import static org.jackhuang.hmcl.util.DigestUtils.digest;
 import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
 public final class LibraryDownloadTask extends Task {
-    private final FileDownloadTask xzTask;
-    private final FileDownloadTask task;
+    private final LibraryDownloadTaskHelper helperTask;
     private final File jar;
     private final File xzFile;
     private final Library library;
-
-    private boolean downloaded = false;
+    private boolean xz;
 
     public LibraryDownloadTask(AbstractDependencyManager dependencyManager, File file, Library library) {
+        setSignificance(TaskSignificance.MODERATE);
+
         if (library.is("net.minecraftforge", "forge"))
             library = library.setClassifier("universal");
 
@@ -42,20 +45,12 @@ public final class LibraryDownloadTask extends Task {
 
         xzFile = new File(file.getAbsoluteFile().getParentFile(), file.getName() + ".pack.xz");
 
-        xzTask = new FileDownloadTask(NetworkUtils.toURL(url + ".pack.xz"),
-                xzFile, null, 1);
-        xzTask.setSignificance(TaskSignificance.MINOR);
-
-        setSignificance(TaskSignificance.MODERATE);
-
-        task = new FileDownloadTask(NetworkUtils.toURL(url),
-                file,
-                library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
+        helperTask = new LibraryDownloadTaskHelper(file, url);
     }
 
     @Override
     public Collection<? extends Task> getDependents() {
-        return library.getChecksums() != null ? Collections.singleton(xzTask) : Collections.singleton(task);
+        return Collections.singleton(helperTask);
     }
 
     @Override
@@ -66,19 +61,61 @@ public final class LibraryDownloadTask extends Task {
     @Override
     public void execute() throws Exception {
         if (!isDependentsSucceeded()) {
-            // Since FileDownloadTask wraps the actual exception with another IOException.
-            // We should extract it letting the error message clearer.
-            Throwable t = library.getChecksums() != null ? xzTask.getLastException() : task.getLastException();
-            if (t.getCause() != null && t.getCause() != t)
-                throw new LibraryDownloadException(library, t.getCause());
-            else
-                throw new LibraryDownloadException(library, t);
+            if (helperTask.task == null) {
+                // NetworkUtils.URLExists failed.
+                throw new LibraryDownloadException(library, helperTask.getLastException());
+            } else {
+                // Since FileDownloadTask wraps the actual exception with another IOException.
+                // We should extract it letting the error message clearer.
+                Throwable t = helperTask.task.getLastException();
+                if (t.getCause() != null && t.getCause() != t)
+                    throw new LibraryDownloadException(library, t.getCause());
+                else
+                    throw new LibraryDownloadException(library, t);
+            }
+        } else {
+            if (xz) {
+                unpackLibrary(jar, FileUtils.readBytes(xzFile));
+                if (!checksumValid(jar, library.getChecksums()))
+                    throw new IOException("Checksum failed for " + library);
+            }
+        }
+    }
+
+    private class LibraryDownloadTaskHelper extends Task {
+        private FileDownloadTask task;
+        private final File file;
+        private final String url;
+
+        public LibraryDownloadTaskHelper(File file, String url) {
+            this.file = file;
+            this.url = url;
+
+            setName(library.getName());
         }
 
-        if (library.getChecksums() != null) {
-            unpackLibrary(jar, FileUtils.readBytes(xzFile));
-            if (!checksumValid(jar, library.getChecksums()))
-                throw new IOException("Checksum failed for " + library);
+        @Override
+        public boolean isRelyingOnDependencies() {
+            return true;
+        }
+
+        @Override
+        public Collection<? extends Task> getDependencies() {
+            return Collections.singleton(task);
+        }
+
+        @Override
+        public void execute() throws Exception {
+            URL packXz = NetworkUtils.toURL(url + ".pack.xz");
+            if (NetworkUtils.URLExists(packXz)) {
+                task = new FileDownloadTask(packXz, xzFile, null);
+                xz = true;
+            } else {
+                task = new FileDownloadTask(NetworkUtils.toURL(url),
+                        file,
+                        library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
+                xz = false;
+            }
         }
     }
 

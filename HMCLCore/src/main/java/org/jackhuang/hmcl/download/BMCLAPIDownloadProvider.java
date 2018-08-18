@@ -64,8 +64,8 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
         return baseURL
                 .replace("https://launchermeta.mojang.com", "https://bmclapi2.bangbang93.com")
                 .replace("https://launcher.mojang.com", "https://bmclapi2.bangbang93.com")
-                .replace("https://libraries.minecraft.net", "https://bmclapi2.bangbang93.com/libraries")
-                .replaceFirst("https?://files\\.minecraftforge\\.net/maven", "https://bmclapi2.bangbang93.com/maven")
+                .replace("https://libraries.minecraft.net", "http://bmclapi2.bangbang93.com/libraries")
+                .replaceFirst("https?://files\\.minecraftforge\\.net/maven", "http://bmclapi2.bangbang93.com/maven")
                 .replace("http://dl.liteloader.com/versions/versions.json", "https://bmclapi2.bangbang93.com/maven/com/mumfrey/liteloader/versions.json")
                 .replace("http://dl.liteloader.com/versions", "https://bmclapi2.bangbang93.com/maven")
                 .replace("https://authlib-injector.yushi.moe", "https://bmclapi2.bangbang93.com/mirrors/authlib-injector");
