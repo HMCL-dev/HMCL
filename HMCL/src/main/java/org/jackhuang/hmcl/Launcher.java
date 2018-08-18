@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -101,6 +102,9 @@ public final class Launcher extends Application {
             LOG.info("Java Home: " + System.getProperty("java.home"));
             LOG.info("Current Directory: " + Paths.get("").toAbsolutePath());
             LOG.info("HMCL Directory: " + HMCL_DIRECTORY);
+            LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");
+            ManagementFactory.getMemoryPoolMXBeans().stream().filter(bean -> bean.getName().equals("Metaspace")).findAny()
+                    .ifPresent(bean -> LOG.info("Metaspace: " + bean.getUsage().getUsed() / 1024 / 1024 + "MB"));
 
             launch(args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
