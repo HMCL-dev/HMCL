@@ -28,6 +28,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.layout.StackPane;
 
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
+import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
@@ -186,7 +187,8 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     }
 
     public static void deleteVersion(Profile profile, String version) {
-        Controllers.confirmDialog(i18n("version.manage.remove.confirm", version), i18n("message.confirm"), () -> {
+        boolean isIndependent = profile.getVersionSetting(version).getGameDirType() == EnumGameDirectory.VERSION_FOLDER;
+        Controllers.confirmDialog(i18n(isIndependent ? "version.manage.remove.confirm.independent" : "version.manage.remove.confirm", version), i18n("message.confirm"), () -> {
             if (profile.getRepository().removeVersionFromDisk(version)) {
                 profile.getRepository().refreshVersionsAsync().start();
                 Controllers.navigate(null);
