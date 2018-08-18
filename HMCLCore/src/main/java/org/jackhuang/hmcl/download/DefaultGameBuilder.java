@@ -68,7 +68,7 @@ public class DefaultGameBuilder extends GameBuilder {
                 result = result.then(libraryTaskHelper(gameVersion, "optifine"));
 
             for (RemoteVersion remoteVersion : remoteVersions)
-                result = result.then(var -> dependencyManager.installLibraryAsync(var.get("version"), remoteVersion));
+                result = result.then(dependencyManager.installLibraryAsync(remoteVersion));
 
             return result;
         }).finalized((variables, isDependentsSucceeded) -> {

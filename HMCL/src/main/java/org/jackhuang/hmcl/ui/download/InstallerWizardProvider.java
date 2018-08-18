@@ -85,16 +85,16 @@ public final class InstallerWizardProvider implements WizardProvider {
         settings.put("success_message", i18n("install.success"));
         settings.put("failure_message", i18n("install.failed"));
 
-        Task ret = Task.empty();
+        Task ret = Task.ofResult("version", () -> version);
 
         if (settings.containsKey("forge"))
-            ret = ret.then(profile.getDependency().installLibraryAsync(version, (RemoteVersion) settings.get("forge")));
+            ret = ret.then(profile.getDependency().installLibraryAsync((RemoteVersion) settings.get("forge")));
 
         if (settings.containsKey("liteloader"))
-            ret = ret.then(profile.getDependency().installLibraryAsync(version, (RemoteVersion) settings.get("liteloader")));
+            ret = ret.then(profile.getDependency().installLibraryAsync((RemoteVersion) settings.get("liteloader")));
 
         if (settings.containsKey("optifine"))
-            ret = ret.then(profile.getDependency().installLibraryAsync(version, (RemoteVersion) settings.get("optifine")));
+            ret = ret.then(profile.getDependency().installLibraryAsync((RemoteVersion) settings.get("optifine")));
 
         return ret.then(profile.getRepository().refreshVersionsAsync());
     }

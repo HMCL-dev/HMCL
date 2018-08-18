@@ -28,6 +28,8 @@ import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.ParallelTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.AutoTypingMap;
+import org.jackhuang.hmcl.util.ExceptionalFunction;
 
 /**
  * Note: This class has no state.
@@ -97,4 +99,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             throw new IllegalArgumentException("Remote library " + libraryVersion + " is unrecognized.");
     }
 
+
+    public ExceptionalFunction<AutoTypingMap<String>, Task, ?> installLibraryAsync(RemoteVersion libraryVersion) {
+        return var -> installLibraryAsync(var.get("version"), libraryVersion);
+    }
 }
