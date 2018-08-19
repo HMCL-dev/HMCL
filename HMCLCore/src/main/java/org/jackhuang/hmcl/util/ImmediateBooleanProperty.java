@@ -21,13 +21,11 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 
-import java.util.Objects;
-import java.util.function.Consumer;
-
 /**
- *
  * @author huangyuhui
+ * @deprecated Use SimpleBooleanProperty instead
  */
+@Deprecated
 public class ImmediateBooleanProperty extends SimpleBooleanProperty {
 
     @Override
@@ -48,31 +46,9 @@ public class ImmediateBooleanProperty extends SimpleBooleanProperty {
         super.unbind();
     }
 
-    private Consumer<Boolean> consumer = null;
-    private ChangeListener<Boolean> listener = null;
-
-    public void setChangedListener(Consumer<Boolean> consumer) {
-        this.consumer = Objects.requireNonNull(consumer);
-        this.listener = null;
-    }
-
-    public void setChangedListener(ChangeListener<Boolean> listener) {
-        this.consumer = null;
-        this.listener = Objects.requireNonNull(listener);
-    }
-
-    public void setChangedListenerAndOperate(Consumer<Boolean> listener) {
-        setChangedListener(listener);
-        listener.accept(get());
-    }
-
     public ImmediateBooleanProperty(Object bean, String name, boolean initialValue) {
         super(bean, name, initialValue);
         ChangeListener<Boolean> changeListener = (a, b, newValue) -> {
-            if (consumer != null)
-                consumer.accept(newValue);
-            if (listener != null)
-                listener.changed(a, b, newValue);
         };
         addListener(changeListener);
     }

@@ -21,13 +21,11 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 
-import java.util.Objects;
-import java.util.function.Consumer;
-
 /**
- *
  * @author huangyuhui
+ * @deprecated Use SimpleIntegerProperty instead
  */
+@Deprecated
 public class ImmediateIntegerProperty extends SimpleIntegerProperty {
 
     @Override
@@ -48,31 +46,9 @@ public class ImmediateIntegerProperty extends SimpleIntegerProperty {
         super.unbind();
     }
 
-    private Consumer<Integer> consumer = null;
-    private ChangeListener<Number> listener = null;
-
-    public void setChangedListener(Consumer<Integer> consumer) {
-        this.consumer = Objects.requireNonNull(consumer);
-        this.listener = null;
-    }
-
-    public void setChangedListener(ChangeListener<Number> listener) {
-        this.consumer = null;
-        this.listener = Objects.requireNonNull(listener);
-    }
-
-    public void setChangedListenerAndOperate(Consumer<Integer> listener) {
-        setChangedListener(listener);
-        listener.accept(get());
-    }
-
     public ImmediateIntegerProperty(Object bean, String name, int initialValue) {
         super(bean, name, initialValue);
         ChangeListener<Number> changeListener = (a, b, newValue) -> {
-            if (consumer != null)
-                consumer.accept(newValue.intValue());
-            if (listener != null)
-                listener.changed(a, b, newValue);
         };
         addListener(changeListener);
     }
