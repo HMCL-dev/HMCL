@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,9 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.setting;
+package org.jackhuang.hmcl.upgrade;
 
-public enum EnumUpdateChannel {
-    STABLE,
-    DEVELOPMENT
+public enum UpdateChannel {
+    STABLE("stable"),
+    DEVELOPMENT("dev");
+
+    public final String channelName;
+
+    UpdateChannel(String channelName) {
+        this.channelName = channelName;
+    }
 }

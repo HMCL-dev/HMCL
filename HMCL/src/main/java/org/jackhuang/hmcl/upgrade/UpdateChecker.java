@@ -17,16 +17,20 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Lang.thread;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.VersionNumber.asVersion;
 
 import java.io.IOException;
+import java.util.logging.Level;
 
-import com.jfoenix.concurrency.JFXUtilities;
 import javafx.beans.property.*;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.util.ImmediateStringProperty;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import javafx.application.Platform;
@@ -36,11 +40,6 @@ import javafx.beans.value.ObservableBooleanValue;
 
 public final class UpdateChecker {
     private UpdateChecker() {}
-
-    public static final String CHANNEL_STABLE = "stable";
-    public static final String CHANNEL_DEV = "dev";
-
-    private static StringProperty updateChannel = new ImmediateStringProperty(null, "updateChannel", CHANNEL_STABLE);
 
     private static ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
     private static BooleanBinding outdated = Bindings.createBooleanBinding(
@@ -55,16 +54,9 @@ public final class UpdateChecker {
             latestVersion);
     private static ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
 
-    public static String getUpdateChannel() {
-        return updateChannel.get();
-    }
-
-    public static void setUpdateChannel(String updateChannel) {
-        UpdateChecker.updateChannel.set(updateChannel);
-    }
-
-    public static StringProperty updateChannelProperty() {
-        return updateChannel;
+    public static void init() {
+        ConfigHolder.config().updateChannelProperty().addListener(onInvalidating(UpdateChecker::requestCheckUpdate));
+        requestCheckUpdate();
     }
 
     public static RemoteVersion getLatestVersion() {
@@ -91,35 +83,53 @@ public final class UpdateChecker {
         return checkingUpdate.getReadOnlyProperty();
     }
 
-    public static void checkUpdate() throws IOException {
+    private static RemoteVersion checkUpdate(UpdateChannel channel) throws IOException {
         if (!IntegrityChecker.isSelfVerified()) {
-            return;
+            throw new IOException("Self verification failed");
         }
 
-        JFXUtilities.runInFXAndWait(() -> {
-            checkingUpdate.set(true);
-        });
+        String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
+                pair("version", Metadata.VERSION),
+                pair("channel", channel.channelName)));
 
-        try {
-
-            String channel = getUpdateChannel();
-            String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
-                    pair("version", Metadata.VERSION),
-                    pair("channel", channel)));
-
-            RemoteVersion fetched = RemoteVersion.fetch(url);
-            Platform.runLater(() -> {
-                if (channel.equals(getUpdateChannel())) {
-                    latestVersion.set(fetched);
-                }
-            });
-        } finally {
-            Platform.runLater(() -> checkingUpdate.set(false));
-        }
+        return RemoteVersion.fetch(url);
     }
 
     private static boolean isDevelopmentVersion(String version) {
         return version.contains("@") || // eg. @develop@
                 version.contains("SNAPSHOT"); // eg. 3.1.SNAPSHOT
+    }
+
+    public static void requestCheckUpdate() {
+        Platform.runLater(() -> {
+            if (isCheckingUpdate())
+                return;
+            checkingUpdate.set(true);
+            UpdateChannel channel = config().getUpdateChannel();
+
+            thread(() -> {
+                RemoteVersion result = null;
+                try {
+                    result = checkUpdate(channel);
+                    LOG.info("Latest version (" + channel + ") is " + result);
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to check for update", e);
+                }
+
+                RemoteVersion finalResult = result;
+                Platform.runLater(() -> {
+                    checkingUpdate.set(false);
+                    if (finalResult != null) {
+                        if (channel.equals(config().getUpdateChannel())) {
+                            latestVersion.set(finalResult);
+                        } else {
+                            // the channel has been changed during the period
+                            // check update again
+                            requestCheckUpdate();
+                        }
+                    }
+                });
+            });
+        });
     }
 }

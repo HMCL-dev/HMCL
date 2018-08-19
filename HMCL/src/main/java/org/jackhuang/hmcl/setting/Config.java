@@ -30,6 +30,7 @@ import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.util.EnumOrdinalDeserializer;
 import org.jackhuang.hmcl.util.FileTypeAdapter;
 import org.jackhuang.hmcl.util.ObservableHelper;
@@ -150,7 +151,7 @@ public final class Config implements Cloneable, Observable {
     private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList();
 
     @SerializedName("updateChannel")
-    private ObjectProperty<EnumUpdateChannel> updateChannel = new SimpleObjectProperty<>(EnumUpdateChannel.STABLE);
+    private ObjectProperty<UpdateChannel> updateChannel = new SimpleObjectProperty<>(UpdateChannel.STABLE);
 
     @SerializedName("_version")
     private IntegerProperty configVersion = new SimpleIntegerProperty(0);
@@ -438,15 +439,15 @@ public final class Config implements Cloneable, Observable {
         return authlibInjectorServers;
     }
 
-    public EnumUpdateChannel getUpdateChannel() {
+    public UpdateChannel getUpdateChannel() {
         return updateChannel.get();
     }
 
-    public ObjectProperty<EnumUpdateChannel> updateChannelProperty() {
+    public ObjectProperty<UpdateChannel> updateChannelProperty() {
         return updateChannel;
     }
 
-    public void setUpdateChannel(EnumUpdateChannel updateChannel) {
+    public void setUpdateChannel(UpdateChannel updateChannel) {
         this.updateChannel.set(updateChannel);
     }
 }
