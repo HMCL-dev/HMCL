@@ -21,13 +21,11 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 
-import java.util.Objects;
-import java.util.function.Consumer;
-
 /**
- *
  * @author huangyuhui
+ * @deprecated Use SimpleObjectProperty instead
  */
+@Deprecated
 public class ImmediateObjectProperty<T> extends SimpleObjectProperty<T> {
 
     @Override
@@ -48,31 +46,9 @@ public class ImmediateObjectProperty<T> extends SimpleObjectProperty<T> {
         super.unbind();
     }
 
-    private Consumer<T> consumer = null;
-    private ChangeListener<T> listener = null;
-
-    public void setChangedListener(Consumer<T> consumer) {
-        this.consumer = Objects.requireNonNull(consumer);
-        this.listener = null;
-    }
-
-    public void setChangedListener(ChangeListener<T> listener) {
-        this.consumer = null;
-        this.listener = Objects.requireNonNull(listener);
-    }
-
-    public void setChangedListenerAndOperate(Consumer<T> listener) {
-        setChangedListener(listener);
-        listener.accept(get());
-    }
-
     public ImmediateObjectProperty(Object bean, String name, T initialValue) {
         super(bean, name, initialValue);
         ChangeListener<T> changeListener = (a, b, newValue) -> {
-            if (consumer != null)
-                consumer.accept(newValue);
-            if (listener != null)
-                listener.changed(a, b, newValue);
         };
         addListener(changeListener);
     }

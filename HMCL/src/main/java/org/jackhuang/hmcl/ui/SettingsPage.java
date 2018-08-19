@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.ui.construct.FontComboBox;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
@@ -242,24 +243,24 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
 
         lblUpdateNote.setWrappingWidth(470);
 
-        ObjectProperty<EnumUpdateChannel> updateChannel = new SimpleObjectProperty<EnumUpdateChannel>() {
+        ObjectProperty<UpdateChannel> updateChannel = new SimpleObjectProperty<UpdateChannel>() {
             @Override
             protected void invalidated() {
-                EnumUpdateChannel updateChannel = Objects.requireNonNull(get());
-                chkUpdateDev.setSelected(updateChannel == EnumUpdateChannel.DEVELOPMENT);
-                chkUpdateStable.setSelected(updateChannel == EnumUpdateChannel.STABLE);
+                UpdateChannel updateChannel = Objects.requireNonNull(get());
+                chkUpdateDev.setSelected(updateChannel == UpdateChannel.DEVELOPMENT);
+                chkUpdateStable.setSelected(updateChannel == UpdateChannel.STABLE);
             }
         };
 
         ToggleGroup updateChannelGroup = new ToggleGroup();
         chkUpdateDev.setToggleGroup(updateChannelGroup);
-        chkUpdateDev.setUserData(EnumUpdateChannel.DEVELOPMENT);
+        chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);
         chkUpdateStable.setToggleGroup(updateChannelGroup);
-        chkUpdateStable.setUserData(EnumUpdateChannel.STABLE);
+        chkUpdateStable.setUserData(UpdateChannel.STABLE);
         updateChannelGroup.getToggles().forEach(
                 toggle -> toggle.selectedProperty().addListener((observable, oldValue, newValue) -> {
                     if (newValue) {
-                        updateChannel.set((EnumUpdateChannel) toggle.getUserData());
+                        updateChannel.set((UpdateChannel) toggle.getUserData());
                     }
                 }));
         updateChannel.bindBidirectional(ConfigHolder.config().updateChannelProperty());

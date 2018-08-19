@@ -25,9 +25,10 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
- *
  * @author huangyuhui
+ * @deprecated Use SimpleStringProperty instead
  */
+@Deprecated
 public class ImmediateStringProperty extends SimpleStringProperty {
 
     @Override
