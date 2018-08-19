@@ -46,7 +46,7 @@ public final class ModInfo implements Comparable<ModInfo> {
     }
 
     public ModInfo(File file, String name, String description) {
-        this(file, name, description, "unknown", "unknown", "unknown", "");
+        this(file, name, description, "", "", "", "");
     }
 
     public ModInfo(File file, String name, String description, String authors, String version, String gameVersion, String url) {
