@@ -31,6 +31,12 @@ public final class IOUtils {
 
     public static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
 
+    public static byte[] readFullyWithoutClosing(InputStream stream) throws IOException {
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        copyTo(stream, result);
+        return result.toByteArray();
+    }
+
     public static ByteArrayOutputStream readFully(InputStream stream) throws IOException {
         try (InputStream is = stream) {
             ByteArrayOutputStream result = new ByteArrayOutputStream();
