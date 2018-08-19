@@ -100,8 +100,6 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
     private List<VersionsPageItem> loadVersions() {
         return versionList.getVersions(gameVersion).stream()
                 .filter(it -> {
-                    if (it.getVersionType() == null)
-                        return true;
                     switch (it.getVersionType()) {
                         case RELEASE:
                             return chkRelease.isSelected();

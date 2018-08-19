@@ -34,7 +34,7 @@ public final class GameRemoteVersion extends RemoteVersion {
     private final Date time;
 
     public GameRemoteVersion(String gameVersion, String selfVersion, String url, ReleaseType type, Date time) {
-        super(gameVersion, selfVersion, url);
+        super(gameVersion, selfVersion, url, getReleaseType(type));
         this.type = type;
         this.time = time;
     }
@@ -53,5 +53,19 @@ public final class GameRemoteVersion extends RemoteVersion {
             return 0;
 
         return ((GameRemoteVersion) o).getTime().compareTo(getTime());
+    }
+
+    private static Type getReleaseType(ReleaseType type) {
+        if (type == null) return Type.UNCATEGORIZED;
+        switch (type) {
+            case RELEASE:
+                return Type.RELEASE;
+            case SNAPSHOT:
+                return Type.SNAPSHOT;
+            case UNKNOWN:
+                return Type.UNCATEGORIZED;
+            default:
+                return Type.OLD;
+        }
     }
 }

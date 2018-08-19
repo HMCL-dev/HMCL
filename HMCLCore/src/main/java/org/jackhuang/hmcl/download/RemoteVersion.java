@@ -42,7 +42,7 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
      * @param url         the installer or universal jar URL.
      */
     public RemoteVersion(String gameVersion, String selfVersion, String url) {
-        this(gameVersion, selfVersion, url, null);
+        this(gameVersion, selfVersion, url, Type.UNCATEGORIZED);
     }
 
     /**
@@ -56,7 +56,7 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
         this.gameVersion = Objects.requireNonNull(gameVersion);
         this.selfVersion = Objects.requireNonNull(selfVersion);
         this.url = Objects.requireNonNull(url);
-        this.type = type;
+        this.type = Objects.requireNonNull(type);
     }
 
     public String getGameVersion() {
@@ -100,6 +100,7 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
     }
 
     public enum Type {
+        UNCATEGORIZED,
         RELEASE,
         SNAPSHOT,
         OLD
