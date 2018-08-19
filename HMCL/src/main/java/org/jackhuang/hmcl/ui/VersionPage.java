@@ -26,16 +26,16 @@ import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.StackPane;
-
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.FileUtils;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VersionPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", null);
@@ -188,7 +188,11 @@ public final class VersionPage extends StackPane implements DecoratorPage {
 
     public static void deleteVersion(Profile profile, String version) {
         boolean isIndependent = profile.getVersionSetting(version).getGameDirType() == EnumGameDirectory.VERSION_FOLDER;
-        Controllers.confirmDialog(i18n(isIndependent ? "version.manage.remove.confirm.independent" : "version.manage.remove.confirm", version), i18n("message.confirm"), () -> {
+        boolean isMovingToTrashSupported = FileUtils.isMovingToTrashSupported();
+        String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
+                isMovingToTrashSupported ? i18n("version.manage.remove.confirm.trash", version, version + "_removed") :
+                        i18n("version.manage.remove.confirm", version);
+        Controllers.confirmDialog(message, i18n("message.confirm"), () -> {
             if (profile.getRepository().removeVersionFromDisk(version)) {
                 profile.getRepository().refreshVersionsAsync().start();
                 Controllers.navigate(null);

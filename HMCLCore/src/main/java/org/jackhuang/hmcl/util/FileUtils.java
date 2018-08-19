@@ -20,8 +20,10 @@ package org.jackhuang.hmcl.util;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.charset.Charset;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -93,6 +95,30 @@ public final class FileUtils {
 
     public static boolean deleteDirectoryQuietly(File directory) {
         return Lang.test(() -> deleteDirectory(directory));
+    }
+
+    public static boolean moveToTrash(File file) {
+        try {
+            java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
+            Method moveToTrash = desktop.getClass().getMethod("moveToTrash", File.class);
+            moveToTrash.invoke(desktop, file);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if {@code java.awt.Desktop.moveToTrash} exists.
+     * @return true if the method exists.
+     */
+    public static boolean isMovingToTrashSupported() {
+        try {
+            java.awt.Desktop.class.getMethod("moveToTrash", File.class);
+            return true;
+        } catch (ReflectiveOperationException e) {
+            return false;
+        }
     }
 
     public static void cleanDirectory(File directory)

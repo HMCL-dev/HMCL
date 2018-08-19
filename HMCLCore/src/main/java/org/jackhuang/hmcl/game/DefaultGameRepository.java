@@ -160,14 +160,18 @@ public class DefaultGameRepository implements GameRepository {
         if (!file.renameTo(removedFile))
             return false;
 
+        versions.remove(id);
+
+        if (FileUtils.isMovingToTrashSupported()) {
+            return FileUtils.moveToTrash(removedFile);
+        }
+
         // remove json files first to ensure HMCL will not recognize this folder as a valid version.
         List<File> jsons = FileUtils.listFilesByExtension(removedFile, "json");
         jsons.forEach(f -> {
             if (!f.delete())
                 Logging.LOG.warning("Unable to delete file " + f);
         });
-
-        versions.remove(id);
         // remove the version from version list regardless of whether the directory was removed successfully or not.
         try {
             FileUtils.deleteDirectory(removedFile);
