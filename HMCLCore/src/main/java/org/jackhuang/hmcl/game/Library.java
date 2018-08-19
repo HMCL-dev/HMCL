@@ -223,6 +223,7 @@ public class Library implements Comparable<Library> {
             obj.addProperty("name", src.getName());
             obj.addProperty("url", src.url);
             obj.add("downloads", context.serialize(src.downloads));
+            obj.add("checksums", context.serialize(src.getChecksums()));
             obj.add("extract", context.serialize(src.extract));
             obj.add("natives", context.serialize(src.natives, new TypeToken<Map<OperatingSystem, String>>() {
             }.getType()));
