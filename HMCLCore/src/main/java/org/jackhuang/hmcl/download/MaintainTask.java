@@ -94,7 +94,9 @@ public class MaintainTask extends TaskResult<Version> {
             args.add("optifine.OptiFineForgeTweaker");
         }
 
-        return version.setMinecraftArguments(new CommandBuilder().addAll(args).toString());
+        // Since $ will be escaped in linux, and our maintain of minecraftArgument will not cause escaping,
+        // so we regenerate the minecraftArgument without escaping.
+        return version.setMinecraftArguments(new CommandBuilder().addAllWithoutParsing(args).toString());
     }
 
     @Override
