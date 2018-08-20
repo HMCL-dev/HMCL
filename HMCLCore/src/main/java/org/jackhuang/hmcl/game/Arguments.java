@@ -82,7 +82,7 @@ public final class Arguments {
     }
 
     public static List<String> parseStringArguments(List<String> arguments, Map<String, String> keys) {
-        return arguments.stream().map(str -> keys.getOrDefault(str, str)).collect(Collectors.toList());
+        return arguments.stream().flatMap(str -> new StringArgument(str).toString(keys, Collections.emptyMap()).stream()).collect(Collectors.toList());
     }
 
     public static List<String> parseArguments(List<Argument> arguments, Map<String, String> keys) {

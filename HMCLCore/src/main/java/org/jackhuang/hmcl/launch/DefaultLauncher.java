@@ -153,14 +153,6 @@ public class DefaultLauncher extends Launcher {
 
         res.addAll(Arguments.parseStringArguments(version.getMinecraftArguments().map(StringUtils::tokenize).orElseGet(LinkedList::new), configuration));
 
-        // Optional Minecraft arguments
-        if (options.getHeight() != null && options.getHeight() != 0 && options.getWidth() != null && options.getWidth() != 0) {
-            res.add("--height");
-            res.add(options.getHeight().toString());
-            res.add("--width");
-            res.add(options.getWidth().toString());
-        }
-
         if (StringUtils.isNotBlank(options.getServerIp())) {
             String[] args = options.getServerIp().split(":");
             res.add("--server");
@@ -249,7 +241,9 @@ public class DefaultLauncher extends Launcher {
                 pair("${game_directory}", repository.getRunDirectory(version.getId()).getAbsolutePath()),
                 pair("${user_type}", "mojang"),
                 pair("${assets_index_name}", version.getAssetIndex().getId()),
-                pair("${user_properties}", authInfo.getUserProperties())
+                pair("${user_properties}", authInfo.getUserProperties()),
+                pair("${resolution_width}", options.getWidth().toString()),
+                pair("${resolution_height}", options.getHeight().toString())
         );
     }
 

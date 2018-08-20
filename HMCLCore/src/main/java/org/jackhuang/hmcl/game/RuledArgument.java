@@ -65,7 +65,7 @@ public class RuledArgument implements Argument {
 
     @Override
     public List<String> toString(Map<String, String> keys, Map<String, Boolean> features) {
-        if (CompatibilityRule.appliesToCurrentEnvironment(rules) && value != null)
+        if (CompatibilityRule.appliesToCurrentEnvironment(rules, features) && value != null)
             return value.stream()
                     .map(StringArgument::new)
                     .map(str -> str.toString(keys, features).get(0))
