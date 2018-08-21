@@ -70,7 +70,7 @@ public abstract class VersionList<T extends RemoteVersion> {
         });
     }
 
-    private Collection<T> getVersionsImpl(String gameVersion) {
+    protected Collection<T> getVersionsImpl(String gameVersion) {
         lock.readLock().lock();
         try {
             return versions.get(gameVersion);

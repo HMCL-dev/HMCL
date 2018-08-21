@@ -45,6 +45,16 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
     }
 
     @Override
+    protected Collection<GameRemoteVersion> getVersionsImpl(String gameVersion) {
+        lock.readLock().lock();
+        try {
+            return versions.values();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
     public Task refreshAsync(DownloadProvider downloadProvider) {
         GetTask task = new GetTask(NetworkUtils.toURL(downloadProvider.getVersionListURL()));
         return new Task() {
