@@ -227,29 +227,50 @@ public final class LauncherHelper {
             flag = true;
         }
 
-        if (!flag && java.getParsedVersion() < JavaVersion.JAVA_8) {
-            if (gameVersion.compareTo(VersionNumber.asVersion("1.13")) >= 0) {
-                // Minecraft 1.13 and later versions only support Java 8 or later.
-                // Terminate launching operation.
-                Controllers.dialog(i18n("launch.advice.java8_1_13"), i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
+        // Game later than 1.7.2 accepts Java 8.
+        if (!flag && java.getParsedVersion() < JavaVersion.JAVA_8 && gameVersion.compareTo(VersionNumber.asVersion("1.7.2")) > 0) {
+            Optional<JavaVersion> java8 = JavaVersion.getJREs().stream()
+                    .filter(javaVersion -> javaVersion.getParsedVersion() >= JavaVersion.JAVA_8)
+                    .max(Comparator.comparing(JavaVersion::getVersionNumber));
+            if (java8.isPresent()) {
+                setting.setJavaVersion(java8.get());
             } else {
-                // Most mods require Java 8 or later version.
-                Controllers.dialog(i18n("launch.advice.newer_java"), i18n("message.warning"), MessageBox.WARNING_MESSAGE, onAccept);
+                if (gameVersion.compareTo(VersionNumber.asVersion("1.13")) >= 0) {
+                    // Minecraft 1.13 and later versions only support Java 8 or later.
+                    // Terminate launching operation.
+                    Controllers.dialog(i18n("launch.advice.java8_1_13"), i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
+                } else {
+                    // Most mods require Java 8 or later version.
+                    Controllers.dialog(i18n("launch.advice.newer_java"), i18n("message.warning"), MessageBox.WARNING_MESSAGE, onAccept);
+                }
+                flag = true;
             }
-            flag = true;
         }
 
         // LaunchWrapper will crash because of assuming the system class loader is an instance of URLClassLoader.
         // cpw has claimed that he will make MinecraftForge of 1.13 and later versions able to run on Java 9.
-        if (!flag && java.getParsedVersion() >= JavaVersion.JAVA_9 && gameVersion.compareTo(VersionNumber.asVersion("1.12.5")) < 0 && version.getMainClass().contains("launchwrapper")) {
+        if (!flag && java.getParsedVersion() >= JavaVersion.JAVA_9 && gameVersion.compareTo(VersionNumber.asVersion("1.13")) < 0 && version.getMainClass().contains("launchwrapper")) {
             Optional<JavaVersion> java8 = JavaVersion.getJREs().stream().filter(javaVersion -> javaVersion.getParsedVersion() == JavaVersion.JAVA_8).findAny();
             if (java8.isPresent()) {
                 setting.setJavaVersion(java8.get());
-                Controllers.dialog(i18n("launch.advice.java9"), i18n("message.warning"), MessageBox.WARNING_MESSAGE, onAccept);
             } else {
                 Controllers.dialog(i18n("launch.advice.java9"), i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
+                flag = true;
             }
-            flag = true;
+        }
+
+        // Minecraft 1.13 may crash when generating world on Java 8 earlier than 1.8.0_51
+        VersionNumber JAVA_8 = VersionNumber.asVersion("1.8.0.51");
+        if (!flag && gameVersion.compareTo(VersionNumber.asVersion("1.13")) >= 0 && java.getParsedVersion() == JavaVersion.JAVA_8 && java.getVersionNumber().compareTo(JAVA_8) < 0) {
+            Optional<JavaVersion> java8 = JavaVersion.getJREs().stream()
+                    .filter(javaVersion -> javaVersion.getVersionNumber().compareTo(JAVA_8) >= 0)
+                    .max(Comparator.comparing(JavaVersion::getVersionNumber));
+            if (java8.isPresent()) {
+                setting.setJavaVersion(java8.get());
+            } else {
+                Controllers.dialog(i18n("launch.advice.java8_51_1_13"), i18n("message.warning"), MessageBox.WARNING_MESSAGE, onAccept);
+                flag = true;
+            }
         }
 
         if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
@@ -257,6 +278,7 @@ public final class LauncherHelper {
             Controllers.dialog(i18n("launch.advice.different_platform"), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
             flag = true;
         }
+
         if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
                 setting.getMaxMemory() > 1.5 * 1024) {
             // 1.5 * 1024 is an inaccurate number.
@@ -264,6 +286,7 @@ public final class LauncherHelper {
             Controllers.dialog(i18n("launch.advice.too_large_memory_for_32bit"), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
             flag = true;
         }
+        
         if (!flag && OperatingSystem.TOTAL_MEMORY > 0 && OperatingSystem.TOTAL_MEMORY < setting.getMaxMemory()) {
             Controllers.dialog(i18n("launch.advice.not_enough_space", OperatingSystem.TOTAL_MEMORY), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
             flag = true;

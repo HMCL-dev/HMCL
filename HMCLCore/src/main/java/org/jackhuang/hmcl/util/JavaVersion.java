@@ -63,6 +63,10 @@ public final class JavaVersion {
         return platform;
     }
 
+    public VersionNumber getVersionNumber() {
+        return VersionNumber.asVersion(longVersion.replace('_',  '.'));
+    }
+
     /**
      * The major version of Java installation.
      *
