@@ -73,8 +73,7 @@ public abstract class VersionList<T extends RemoteVersion> {
     private Collection<T> getVersionsImpl(String gameVersion) {
         lock.readLock().lock();
         try {
-            Collection<T> ans = versions.get(gameVersion);
-            return ans.isEmpty() ? versions.values() : ans;
+            return versions.get(gameVersion);
         } finally {
             lock.readLock().unlock();
         }

@@ -47,6 +47,7 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
     private final DownloadProvider downloadProvider;
     private final String libraryId;
     private final String title;
+    private final Runnable callback;
 
     @FXML
     private JFXListView<VersionsPageItem> list;
@@ -54,6 +55,8 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
     private JFXSpinner spinner;
     @FXML
     private StackPane failedPane;
+    @FXML
+    private StackPane emptyPane;
     @FXML
     private JFXCheckBox chkRelease;
     @FXML
@@ -74,6 +77,7 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
         this.gameVersion = gameVersion;
         this.downloadProvider = downloadProvider;
         this.libraryId = libraryId;
+        this.callback = callback;
         this.versionList = downloadProvider.getVersionListById(libraryId);
 
         FXUtils.loadFXML(this, "/assets/fxml/download/versions.fxml");
@@ -123,8 +127,12 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
                 List<VersionsPageItem> items = loadVersions();
 
                 Platform.runLater(() -> {
-                    list.getItems().setAll(items);
-                    transitionHandler.setContent(centrePane, ContainerAnimations.FADE.getAnimationProducer());
+                    if (items.isEmpty()) {
+                        transitionHandler.setContent(emptyPane, ContainerAnimations.FADE.getAnimationProducer());
+                    } else {
+                        list.getItems().setAll(items);
+                        transitionHandler.setContent(centrePane, ContainerAnimations.FADE.getAnimationProducer());
+                    }
                 });
             } else {
                 Platform.runLater(() -> {
@@ -150,4 +158,7 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
     private void onRefresh() {
         refresh();
     }
+
+    @FXML
+    private void onBack() { callback.run(); }
 }

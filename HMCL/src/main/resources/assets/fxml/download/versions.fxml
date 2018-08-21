@@ -20,4 +20,7 @@
     <StackPane fx:id="failedPane">
         <Label onMouseClicked="#onRefresh" style="-fx-text-fill: #0079FF; -fx-font-size: 20;" text="%download.failed.refresh" />
     </StackPane>
+    <StackPane fx:id="emptyPane">
+        <Label onMouseClicked="#onBack" style="-fx-text-fill: #0079FF; -fx-font-size: 20;" text="%download.failed.empty" />
+    </StackPane>
 </fx:root>
