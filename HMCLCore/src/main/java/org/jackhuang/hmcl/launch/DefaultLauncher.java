@@ -47,7 +47,7 @@ public class DefaultLauncher extends Launcher {
         super(repository, versionId, authInfo, options, listener, daemon);
     }
 
-    private CommandBuilder generateCommandLine(File nativeFolder, boolean enableLoggingInfo) throws IOException {
+    private CommandBuilder generateCommandLine(File nativeFolder) throws IOException {
         CommandBuilder res = new CommandBuilder();
 
         // Executable
@@ -68,16 +68,6 @@ public class DefaultLauncher extends Launcher {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                 res.add("-Xdock:name=Minecraft " + version.getId());
                 res.add("-Xdock:icon=" + repository.getAssetObject(version.getId(), version.getAssetIndex().getId(), "icons/minecraft.icns").getAbsolutePath());
-            }
-
-            Map<DownloadType, LoggingInfo> logging = version.getLogging();
-            if (logging != null && enableLoggingInfo) {
-                LoggingInfo loggingInfo = logging.get(DownloadType.CLIENT);
-                if (loggingInfo != null) {
-                    File loggingFile = repository.getLoggingObject(version.getId(), version.getAssetIndex().getId(), loggingInfo);
-                    if (loggingFile.exists())
-                        res.add(loggingInfo.getArgument().replace("${path}", loggingFile.getAbsolutePath()));
-                }
             }
 
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
@@ -252,7 +242,7 @@ public class DefaultLauncher extends Launcher {
         File nativeFolder = Files.createTempDirectory("minecraft").toFile();
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
-        List<String> rawCommandLine = generateCommandLine(nativeFolder, isEnablingLoggingInfo()).asList();
+        List<String> rawCommandLine = generateCommandLine(nativeFolder).asList();
 
         decompressNatives(nativeFolder);
 
@@ -304,15 +294,10 @@ public class DefaultLauncher extends Launcher {
                 writer.write(options.getPreLaunchCommand());
                 writer.newLine();
             }
-            writer.write(generateCommandLine(nativeFolder, false).toString());
+            writer.write(generateCommandLine(nativeFolder).toString());
         }
         if (!scriptFile.setExecutable(true))
             throw new PermissionException();
-    }
-
-    protected boolean isEnablingLoggingInfo() {
-        return version.getLogging() != null && version.getLogging().containsKey(DownloadType.CLIENT)
-                && !"net.minecraft.launchwrapper.Launch".equals(version.getMainClass());
     }
 
     private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener) {
@@ -320,34 +305,6 @@ public class DefaultLauncher extends Launcher {
     }
 
     private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon) {
-        if (isEnablingLoggingInfo())
-            startMonitorsWithLoggingInfo(managedProcess, processListener, isDaemon);
-        else
-            startMonitorsWithoutLoggingInfo(managedProcess, processListener, isDaemon);
-    }
-
-    private void startMonitorsWithLoggingInfo(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon) {
-        processListener.setProcess(managedProcess);
-        Log4jHandler logHandler = new Log4jHandler((line, level) -> {
-            processListener.onLog(line, level);
-            managedProcess.addLine(line);
-        });
-        logHandler.start();
-        managedProcess.addRelatedThread(logHandler);
-        Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), logHandler::newLine), "stdout-pump", isDaemon);
-        managedProcess.addRelatedThread(stdout);
-        Thread stderr = Lang.thread(new StreamPump(managedProcess.getProcess().getErrorStream(), it -> {
-            processListener.onLog(it + OperatingSystem.LINE_SEPARATOR, Log4jLevel.ERROR);
-            managedProcess.addLine(it);
-        }), "stderr-pump", isDaemon);
-        managedProcess.addRelatedThread(stderr);
-        managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), (exitCode, exitType) -> {
-            logHandler.onStopped();
-            processListener.onExit(exitCode, exitType);
-        }), "exit-waiter", isDaemon));
-    }
-
-    private void startMonitorsWithoutLoggingInfo(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
             processListener.onLog(it + OperatingSystem.LINE_SEPARATOR, Optional.ofNullable(Log4jLevel.guessLevel(it)).orElse(Log4jLevel.INFO));

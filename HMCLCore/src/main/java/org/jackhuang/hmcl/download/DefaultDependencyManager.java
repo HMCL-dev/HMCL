@@ -65,7 +65,6 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     public Task checkGameCompletionAsync(Version version) {
         return new ParallelTask(
                 new GameAssetDownloadTask(this, version),
-                new GameLoggingDownloadTask(this, version),
                 new GameLibrariesTask(this, version)
         );
     }
