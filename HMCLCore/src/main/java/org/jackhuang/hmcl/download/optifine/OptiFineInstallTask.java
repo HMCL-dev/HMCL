@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -82,34 +81,12 @@ public final class OptiFineInstallTask extends TaskResult<Version> {
         List<Library> libraries = new LinkedList<>();
         libraries.add(library);
 
-        boolean hasFMLTweaker = false;
-        if (version.getMinecraftArguments().isPresent() && version.getMinecraftArguments().get().contains("FMLTweaker"))
-            hasFMLTweaker = true;
-        if (version.getArguments().isPresent()) {
-            List<Argument> game = version.getArguments().get().getGame();
-            if (game.stream().anyMatch(arg -> arg.toString(Collections.emptyMap(), Collections.emptyMap()).contains("FMLTweaker")))
-                hasFMLTweaker = true;
-        }
-
-        /*Arguments arguments = Lang.get(version.getArguments());
-
-        if (!hasFMLTweaker)
-            arguments = Arguments.addGameArguments(arguments, "--tweakClass", "optifine.OptiFineTweaker");
-            */
-        String minecraftArguments = version.getMinecraftArguments().orElse("");
-        if (!hasFMLTweaker)
-            minecraftArguments = minecraftArguments + " --tweakClass optifine.OptiFineTweaker";
-        else
-            minecraftArguments = minecraftArguments + " --tweakClass optifine.OptiFineForgeTweaker";
-
         if (version.getMainClass() == null || !version.getMainClass().startsWith("net.minecraft.launchwrapper."))
             libraries.add(0, new Library("net.minecraft", "launchwrapper", "1.12"));
 
         setResult(version
-                        .setLibraries(Lang.merge(version.getLibraries(), libraries))
-                        .setMainClass("net.minecraft.launchwrapper.Launch")
-                        .setMinecraftArguments(minecraftArguments)
-                //.setArguments(arguments)
+                .setLibraries(Lang.merge(version.getLibraries(), libraries))
+                .setMainClass("net.minecraft.launchwrapper.Launch")
         );
 
         dependencies.add(new GameLibrariesTask(dependencyManager, version.setLibraries(libraries)));

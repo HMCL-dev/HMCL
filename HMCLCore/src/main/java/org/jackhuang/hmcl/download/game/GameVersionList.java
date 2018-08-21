@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.NetworkUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -48,7 +49,7 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
     protected Collection<GameRemoteVersion> getVersionsImpl(String gameVersion) {
         lock.readLock().lock();
         try {
-            return versions.values();
+            return StringUtils.isBlank(gameVersion) ? versions.values() : versions.get(gameVersion);
         } finally {
             lock.readLock().unlock();
         }

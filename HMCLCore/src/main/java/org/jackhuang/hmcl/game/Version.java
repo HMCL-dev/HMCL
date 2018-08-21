@@ -139,10 +139,6 @@ public class Version implements Comparable<Version>, Validation {
         return CompatibilityRule.appliesToCurrentEnvironment(compatibilityRules);
     }
 
-    public boolean install(String id) {
-        return false;
-    }
-
     /**
      * Resolve given version
      */

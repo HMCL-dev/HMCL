@@ -19,10 +19,7 @@ package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.LibraryDownloadInfo;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.Lang;
@@ -76,16 +73,10 @@ public final class LiteLoaderInstallTask extends TaskResult<Version> {
 
         Version tempVersion = version.setLibraries(Lang.merge(remote.getLibraries(), Collections.singleton(library)));
 
-        String mcArg = version.getMinecraftArguments().orElse("");
-        if (mcArg.contains("--tweakClass optifine.OptiFineTweaker"))
-            mcArg = mcArg.replace("--tweakClass optifine.OptiFineTweaker", "");
-
         setResult(version
                 .setMainClass("net.minecraft.launchwrapper.Launch")
                 .setLibraries(Lang.merge(tempVersion.getLibraries(), version.getLibraries()))
                 .setLogging(Collections.emptyMap())
-                .setMinecraftArguments(mcArg + " --tweakClass " + remote.getTweakClass())
-                //.setArguments(Arguments.addGameArguments(Lang.get(version.getArguments()), "--tweakClass", remote.getTag().getTweakClass()))
         );
 
         dependencies.add(new GameLibrariesTask(dependencyManager, tempVersion));
