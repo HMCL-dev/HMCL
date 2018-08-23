@@ -48,7 +48,6 @@ final class LocalRepository {
     private LocalRepository() {}
 
     private static Path localStorage = Launcher.HMCL_DIRECTORY.toPath().resolve("hmcl.jar");
-    private static Path hmclVersionJson = Launcher.HMCL_DIRECTORY.toPath().resolve("hmclver.json");
 
     /**
      * Gets the current stored executable in local repository.
@@ -69,14 +68,6 @@ final class LocalRepository {
             ExecutableHeaderHelper.copyWithoutHeader(source, localStorage);
         } else {
             Files.copy(source, localStorage, StandardCopyOption.REPLACE_EXISTING);
-        }
-
-        Optional<LocalVersion> stored = getStored();
-        if (stored.isPresent()) {
-            Map<String, String> json = new HashMap<>();
-            json.put("ver", stored.get().getVersion());
-            json.put("loc", stored.get().getLocation().toString());
-            FileUtils.writeText(hmclVersionJson.toFile(), Constants.GSON.toJson(json));
         }
     }
 
