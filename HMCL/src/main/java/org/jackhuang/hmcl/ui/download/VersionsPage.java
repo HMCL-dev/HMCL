@@ -127,10 +127,16 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
                 List<VersionsPageItem> items = loadVersions();
 
                 Platform.runLater(() -> {
-                    if (items.isEmpty()) {
+                    if (versionList.getVersions(gameVersion).isEmpty()) {
                         transitionHandler.setContent(emptyPane, ContainerAnimations.FADE.getAnimationProducer());
                     } else {
-                        list.getItems().setAll(items);
+                        if (items.isEmpty()) {
+                            chkRelease.setSelected(true);
+                            chkSnapshot.setSelected(true);
+                            chkOld.setSelected(true);
+                        } else {
+                            list.getItems().setAll(items);
+                        }
                         transitionHandler.setContent(centrePane, ContainerAnimations.FADE.getAnimationProducer());
                     }
                 });
