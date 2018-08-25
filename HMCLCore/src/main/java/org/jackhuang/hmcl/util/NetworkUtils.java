@@ -37,7 +37,7 @@ public final class NetworkUtils {
     private NetworkUtils() {
     }
 
-    private static Supplier<String> userAgentSupplier = RandomUserAgent::randomUserAgent;
+    private static Supplier<String> userAgentSupplier = () -> "HMCLCore";
 
     public static String getUserAgent() {
         return userAgentSupplier.get();
