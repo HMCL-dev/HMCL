@@ -17,11 +17,10 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.ui.FXUtils.checkFxUserThread;
-import static org.jackhuang.hmcl.util.IntVersionNumber.isIntVersionNumber;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
-import static org.jackhuang.hmcl.util.VersionNumber.asVersion;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.IOException;
@@ -30,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -45,8 +45,11 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
+import org.jackhuang.hmcl.util.JarUtils;
 import org.jackhuang.hmcl.util.JavaVersion;
 import org.jackhuang.hmcl.util.StringUtils;
+
+import com.google.gson.Gson;
 
 import javafx.application.Platform;
 import javafx.scene.layout.Region;
@@ -58,9 +61,7 @@ public final class UpdateHandler {
      * @return whether to exit
      */
     public static boolean processArguments(String[] args) {
-        if (!isIntVersionNumber(Metadata.VERSION)) {
-            return false;
-        }
+        breakForceUpdateFeature();
 
         if (isNestedApplication()) {
             // updated from old versions
@@ -88,60 +89,74 @@ public final class UpdateHandler {
             return true;
         }
 
-        Optional<LocalVersion> local = LocalRepository.getStored();
-        if (local.isPresent()) {
-            int difference = asVersion(local.get().getVersion()).compareTo(asVersion(Metadata.VERSION));
+        return false;
+    }
 
-            if (difference < 0) {
-                LocalRepository.downloadFromCurrent();
+    public static void updateFrom(RemoteVersion version) {
+        checkFxUserThread();
 
-            } else if (difference > 0) {
-                Optional<LocalVersion> current = LocalVersion.current();
-                if (current.isPresent() && IntegrityChecker.isSelfVerified()) {
-                    try {
-                        requestUpdate(local.get().getLocation(), current.get().getLocation());
-                    } catch (IOException e) {
-                        LOG.log(Level.WARNING, "Failed to update from local repository", e);
-                        return false;
-                    }
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-
-        } else {
-            LocalRepository.downloadFromCurrent();
+        Path downloaded;
+        try {
+            downloaded = Files.createTempFile("hmcl-update-", ".jar");
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to create temp file", e);
+            return;
         }
 
-        return false;
+        Task task = new HMCLDownloadTask(version, downloaded);
+
+        TaskExecutor executor = task.executor();
+        Region dialog = Controllers.taskDialog(executor, i18n("message.downloading"), "", null);
+        thread(() -> {
+            boolean success = executor.test();
+            Platform.runLater(() -> dialog.fireEvent(new DialogCloseEvent()));
+
+            if (success) {
+                try {
+                    if (!IntegrityChecker.isSelfVerified()) {
+                        throw new IOException("Current JAR is not verified");
+                    }
+
+                    requestUpdate(downloaded, getCurrentLocation());
+                    System.exit(0);
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to update to " + version, e);
+                    Platform.runLater(() -> Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageBox.ERROR_MESSAGE));
+                    return;
+                }
+
+            } else {
+                Throwable e = task.getLastException();
+                LOG.log(Level.WARNING, "Failed to update to " + version, e);
+                Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageBox.ERROR_MESSAGE));
+            }
+        });
+    }
+
+    private static void applyUpdate(Path target) throws IOException {
+        LOG.info("Applying update to " + target);
+
+        Path self = getCurrentLocation();
+        IntegrityChecker.requireVerifiedJar(self);
+        ExecutableHeaderHelper.copyWithHeader(self, target);
+
+        Optional<Path> newFilename = tryRename(target, Metadata.VERSION);
+        if (newFilename.isPresent()) {
+            LOG.info("Move " + target + " to " + newFilename.get());
+            try {
+                Files.move(target, newFilename.get());
+                target = newFilename.get();
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to move target", e);
+            }
+        }
+
+        startJava(target);
     }
 
     private static void requestUpdate(Path updateTo, Path self) throws IOException {
         IntegrityChecker.requireVerifiedJar(updateTo);
         startJava(updateTo, "--apply-to", self.toString());
-    }
-
-    private static void applyUpdate(Path target) throws IOException {
-        LocalRepository.applyTo(target);
-
-        Optional<String> newVersion = LocalRepository.getStored().map(LocalVersion::getVersion);
-        if (newVersion.isPresent()) {
-            Optional<Path> newFilename = tryRename(target, newVersion.get());
-            if (newFilename.isPresent()) {
-                LOG.info("Move " + target + " to " + newFilename.get());
-                try {
-                    Files.move(target, newFilename.get());
-                    target = newFilename.get();
-                } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to move target", e);
-                }
-            }
-        } else {
-            LOG.warning("Failed to find local repository");
-        }
-
-        startJava(target);
     }
 
     private static void startJava(Path jar, String... appArgs) throws IOException {
@@ -159,49 +174,6 @@ public final class UpdateHandler {
                 .start();
     }
 
-    public static void updateFrom(RemoteVersion version) {
-        checkFxUserThread();
-
-        Task task;
-        try {
-            task = LocalRepository.downloadFromRemote(version);
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to create upgrade download task", e);
-            return;
-        }
-        TaskExecutor executor = task.executor();
-        Region dialog = Controllers.taskDialog(executor, i18n("message.downloading"), "", null);
-        thread(() -> {
-            boolean success = executor.test();
-            Platform.runLater(() -> dialog.fireEvent(new DialogCloseEvent()));
-            if (success) {
-                try {
-                    Optional<LocalVersion> current = LocalVersion.current();
-                    Optional<LocalVersion> stored = LocalRepository.getStored();
-                    if (!current.isPresent()) {
-                        throw new IOException("Failed to find current HMCL location");
-                    }
-                    if (!stored.isPresent()) {
-                        throw new IOException("Failed to find local repository, this shouldn't happen");
-                    }
-                    if (!IntegrityChecker.isSelfVerified()) {
-                        throw new IOException("Current JAR is not verified");
-                    }
-                    requestUpdate(stored.get().getLocation(), current.get().getLocation());
-                    System.exit(0);
-                } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to update to " + version, e);
-                    Platform.runLater(() -> Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageBox.ERROR_MESSAGE));
-                    return;
-                }
-            } else {
-                Throwable e = task.getLastException();
-                LOG.log(Level.WARNING, "Failed to update to " + version, e);
-                Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageBox.ERROR_MESSAGE));
-            }
-        });
-    }
-
     private static Optional<Path> tryRename(Path path, String newVersion) {
         String filename = path.getFileName().toString();
         Matcher matcher = Pattern.compile("^(?<prefix>[hH][mM][cC][lL][.-])(?<version>\\d+(?:\\.\\d+)*)(?<suffix>\\.[^.]+)$").matcher(filename);
@@ -214,6 +186,10 @@ public final class UpdateHandler {
         return Optional.empty();
     }
 
+    private static Path getCurrentLocation() throws IOException {
+        return JarUtils.thisJar().orElseThrow(() -> new IOException("Failed to find current HMCL location"));
+    }
+
     // ==== support for old versions ===
     private static void performMigration() throws IOException {
         LOG.info("Migrating from old versions");
@@ -221,17 +197,7 @@ public final class UpdateHandler {
         Path location = getParentApplicationLocation()
                 .orElseThrow(() -> new IOException("Failed to get parent application location"));
 
-        Optional<LocalVersion> local = LocalRepository.getStored();
-        if (!local.isPresent() ||
-                asVersion(local.get().getVersion()).compareTo(asVersion(Metadata.VERSION)) < 0) {
-            LocalRepository.downloadFromCurrent();
-        }
-        local = LocalRepository.getStored();
-        if (!local.isPresent()) {
-            throw new IOException("Failed to find local repository");
-        }
-
-        requestUpdate(local.get().getLocation(), location);
+        requestUpdate(getCurrentLocation(), location);
     }
 
     /**
@@ -265,7 +231,7 @@ public final class UpdateHandler {
     }
 
     private static boolean isFirstLaunchAfterUpgrade() {
-        Optional<Path> currentPath = LocalVersion.current().map(LocalVersion::getLocation);
+        Optional<Path> currentPath = JarUtils.thisJar();
         if (currentPath.isPresent()) {
             Path updated = Launcher.HMCL_DIRECTORY.toPath().resolve("HMCL-" + Metadata.VERSION + ".jar");
             if (currentPath.get().toAbsolutePath().equals(updated.toAbsolutePath())) {
@@ -273,6 +239,22 @@ public final class UpdateHandler {
             }
         }
         return false;
+    }
+
+    private static void breakForceUpdateFeature() {
+        try {
+            Path hmclVersionJson = Launcher.HMCL_DIRECTORY.toPath().resolve("hmclver.json");
+            if (Files.isRegularFile(hmclVersionJson)) {
+                Map<?, ?> content = new Gson().fromJson(new String(Files.readAllBytes(hmclVersionJson), UTF_8), Map.class);
+                Object ver = content.get("ver");
+                if (ver instanceof String && ((String) ver).startsWith("3.")) {
+                    Files.delete(hmclVersionJson);
+                    LOG.info("Successfully broke the force update feature");
+                }
+            }
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to break the force update feature", e);
+        }
     }
     // ====
 }

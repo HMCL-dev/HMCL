@@ -37,6 +37,7 @@ import java.util.zip.ZipFile;
 
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.IOUtils;
+import org.jackhuang.hmcl.util.JarUtils;
 
 /**
  * A class that checks the integrity of HMCL.
@@ -123,8 +124,7 @@ public final class IntegrityChecker {
     }
 
     private static void verifySelf() throws IOException {
-        Path self = LocalVersion.current().orElseThrow(() -> new IOException("Failed to find myself"))
-                .getLocation();
+        Path self = JarUtils.thisJar().orElseThrow(() -> new IOException("Failed to find current HMCL location"));
         requireVerifiedJar(self);
     }
 }
