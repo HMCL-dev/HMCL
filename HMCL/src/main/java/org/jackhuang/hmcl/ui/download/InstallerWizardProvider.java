@@ -21,7 +21,9 @@ import javafx.scene.Node;
 
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Task;
@@ -40,16 +42,14 @@ public final class InstallerWizardProvider implements WizardProvider {
     private final String optiFine;
 
     public InstallerWizardProvider(Profile profile, String gameVersion, Version version) {
-        this(profile, gameVersion, version, null, null, null);
-    }
-
-    public InstallerWizardProvider(Profile profile, String gameVersion, Version version, String forge, String liteLoader, String optiFine) {
         this.profile = profile;
         this.gameVersion = gameVersion;
         this.version = version;
-        this.forge = forge;
-        this.liteLoader = liteLoader;
-        this.optiFine = optiFine;
+
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
+        forge = analyzer.getForge().map(Library::getVersion).orElse(null);
+        liteLoader = analyzer.getLiteLoader().map(Library::getVersion).orElse(null);
+        optiFine = analyzer.getOptiFine().map(Library::getVersion).orElse(null);
     }
 
     public Profile getProfile() {

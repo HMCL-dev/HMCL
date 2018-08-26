@@ -50,8 +50,16 @@ public final class Arguments {
         return game == null ? Collections.emptyList() : Collections.unmodifiableList(game);
     }
 
+    public Arguments withGame(List<Argument> game) {
+        return new Arguments(game, jvm);
+    }
+
     public List<Argument> getJvm() {
         return jvm == null ? Collections.emptyList() : Collections.unmodifiableList(jvm);
+    }
+
+    public Arguments withJvm(List<Argument> jvm) {
+        return new Arguments(game, jvm);
     }
 
     public Arguments addGameArguments(String... gameArguments) {

@@ -21,6 +21,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
 import org.jackhuang.hmcl.game.GameVersion;
@@ -35,6 +36,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import java.util.LinkedList;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class InstallerController {
     private Profile profile;
@@ -43,9 +45,6 @@ public class InstallerController {
     @FXML
     private ScrollPane scrollPane;
     @FXML private VBox contentPane;
-    private String forge;
-    private String liteLoader;
-    private String optiFine;
 
     @FXML
     private void initialize() {
@@ -58,32 +57,22 @@ public class InstallerController {
         this.version = profile.getRepository().getResolvedVersion(versionId);
 
         contentPane.getChildren().clear();
-        forge = liteLoader = optiFine = null;
 
-        for (Library library : version.getLibraries()) {
-            Consumer<InstallerItem> removeAction = x -> {
-                LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
-                newList.remove(library);
-                new MaintainTask(version.setLibraries(newList))
-                        .then(variables -> new VersionJsonSaveTask(profile.getRepository(), variables.get(MaintainTask.ID)))
-                        .with(profile.getRepository().refreshVersionsAsync())
-                        .with(Task.of(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId)))
-                        .start();
-            };
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
 
-            if (library.getGroupId().equalsIgnoreCase("net.minecraftforge") && library.getArtifactId().equalsIgnoreCase("forge")) {
-                contentPane.getChildren().add(new InstallerItem("Forge", library.getVersion(), removeAction));
-                forge = library.getVersion();
-            }
-            if (library.getGroupId().equalsIgnoreCase("com.mumfrey") && library.getArtifactId().equalsIgnoreCase("liteloader")) {
-                contentPane.getChildren().add(new InstallerItem("LiteLoader", library.getVersion(), removeAction));
-                liteLoader = library.getVersion();
-            }
-            if (library.getGroupId().equalsIgnoreCase("net.optifine") && library.getArtifactId().equalsIgnoreCase("optifine")) {
-                contentPane.getChildren().add(new InstallerItem("OptiFine", library.getVersion(), removeAction));
-                optiFine = library.getVersion();
-            }
-        }
+        Function<Library, Consumer<InstallerItem>> removeAction = library -> x -> {
+            LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
+            newList.remove(library);
+            new MaintainTask(version.setLibraries(newList))
+                    .then(variables -> new VersionJsonSaveTask(profile.getRepository(), variables.get(MaintainTask.ID)))
+                    .with(profile.getRepository().refreshVersionsAsync())
+                    .with(Task.of(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId)))
+                    .start();
+        };
+
+        analyzer.getForge().ifPresent(library -> contentPane.getChildren().add(new InstallerItem("Forge", library.getVersion(), removeAction.apply(library))));
+        analyzer.getLiteLoader().ifPresent(library -> contentPane.getChildren().add(new InstallerItem("LiteLoader", library.getVersion(), removeAction.apply(library))));
+        analyzer.getOptiFine().ifPresent(library -> contentPane.getChildren().add(new InstallerItem("OptiFine", library.getVersion(), removeAction.apply(library))));
     }
 
     @FXML
@@ -93,6 +82,6 @@ public class InstallerController {
         if (!gameVersion.isPresent())
             Controllers.dialog(i18n("version.cannot_read"));
         else
-            Controllers.getDecorator().startWizard(new InstallerWizardProvider(profile, gameVersion.get(), version, forge, liteLoader, optiFine));
+            Controllers.getDecorator().startWizard(new InstallerWizardProvider(profile, gameVersion.get(), version));
     }
 }

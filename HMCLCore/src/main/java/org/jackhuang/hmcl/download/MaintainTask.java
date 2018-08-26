@@ -17,14 +17,12 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.CommandBuilder;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class MaintainTask extends TaskResult<Version> {
 
@@ -46,57 +44,41 @@ public class MaintainTask extends TaskResult<Version> {
     }
 
     public static Version maintain(Version version) {
-        Library forge = null, liteLoader = null, optiFine = null;
-        List<String> args = new ArrayList<>(StringUtils.tokenize(version.getMinecraftArguments().orElse("")));
+        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
+        List<String> mcArgs = version.getMinecraftArguments().map(StringUtils::tokenize).map(ArrayList::new).orElse(null);
+        List<Argument> game = version.getArguments().map(Arguments::getGame).map(ArrayList::new).orElseGet(ArrayList::new);
+        boolean useMcArgs = mcArgs != null;
 
-        for (Library library : version.getLibraries()) {
-            if (library.getGroupId().equalsIgnoreCase("net.minecraftforge") && library.getArtifactId().equalsIgnoreCase("forge"))
-                forge = library;
-
-            if (library.getGroupId().equalsIgnoreCase("com.mumfrey") && library.getArtifactId().equalsIgnoreCase("liteloader"))
-                liteLoader = library;
-
-            if (library.getGroupId().equalsIgnoreCase("net.optifine") && library.getArtifactId().equalsIgnoreCase("optifine"))
-                optiFine = library;
-
-        }
-
-        if (forge == null) {
-            removeTweakClass(args, "forge");
+        if (!libraryAnalyzer.hasForge()) {
+            removeTweakClass(useMcArgs, mcArgs, game, "forge");
         }
 
         // Installing Forge will override the Minecraft arguments in json, so LiteLoader and OptiFine Tweaker are being re-added.
 
-        if (liteLoader == null) {
-            removeTweakClass(args, "liteloader");
+        removeTweakClass(useMcArgs, mcArgs, game, "liteloader");
+        if (libraryAnalyzer.hasLiteLoader()) {
+            addArgument(useMcArgs, mcArgs, game, "--tweakClass", "com.mumfrey.liteloader.launch.LiteLoaderTweaker");
+        }
+
+        removeTweakClass(useMcArgs, mcArgs, game, "optifine");
+        if (libraryAnalyzer.hasOptiFine()) {
+            if (!libraryAnalyzer.hasLiteLoader() && !libraryAnalyzer.hasForge()) {
+                addArgument(useMcArgs, mcArgs, game, "--tweakClass", "optifine.OptiFineTweaker");
+            } else {
+                // If forge or LiteLoader installed, OptiFine Forge Tweaker is needed.
+                addArgument(useMcArgs, mcArgs, game, "--tweakClass", "optifine.OptiFineForgeTweaker");
+            }
+        }
+
+        Version result;
+        if (useMcArgs) {
+            // Since $ will be escaped in linux, and our maintain of minecraftArgument will not cause escaping,
+            // so we regenerate the minecraftArgument without escaping.
+            result = version.setMinecraftArguments(new CommandBuilder().addAllWithoutParsing(mcArgs).toString());
         } else {
-            if (!StringUtils.containsOne(args, "LiteLoaderTweaker")) {
-                args.add("--tweakClass");
-                args.add("com.mumfrey.liteloader.launch.LiteLoaderTweaker");
-            }
+            result = version.setArguments(version.getArguments().map(args -> args.withGame(game)).orElse(new Arguments(game, Collections.emptyList())));
         }
-
-        if (optiFine == null) {
-            removeTweakClass(args, "optifine");
-        }
-
-        if (liteLoader == null && forge == null && optiFine != null) {
-            if (!StringUtils.containsOne(args, "optifine.OptiFineTweaker")) {
-                args.add("--tweakClass");
-                args.add("optifine.OptiFineTweaker");
-            }
-        }
-
-        if ((liteLoader != null || forge != null) && optiFine != null) {
-            // If forge or LiteLoader installed, OptiFine Forge Tweaker is needed.
-            removeTweakClass(args, "optifine");
-            args.add("--tweakClass");
-            args.add("optifine.OptiFineForgeTweaker");
-        }
-
-        // Since $ will be escaped in linux, and our maintain of minecraftArgument will not cause escaping,
-        // so we regenerate the minecraftArgument without escaping.
-        return version.setMinecraftArguments(new CommandBuilder().addAllWithoutParsing(args).toString());
+        return result;
     }
 
     @Override
@@ -104,15 +86,41 @@ public class MaintainTask extends TaskResult<Version> {
         return id;
     }
 
-    private static void removeTweakClass(List<String> args, String target) {
-        for (int i = 0; i < args.size(); ++i) {
-            if (args.get(i).toLowerCase().contains(target)) {
-                if (i > 0 && args.get(i - 1).equals("--tweakClass")) {
-                    args.remove(i - 1);
-                    args.remove(i - 1);
-                    i -= 2;
+    private static void removeTweakClass(boolean useMcArgs, List<String> mcArgs, List<Argument> game, String target) {
+        if (useMcArgs) {
+            for (int i = 0; i + 1 < mcArgs.size(); ++i) {
+                String arg0Str = mcArgs.get(i);
+                String arg1Str = mcArgs.get(i + 1);
+                if (arg0Str.equals("--tweakClass") && arg1Str.toLowerCase().contains(target)) {
+                    mcArgs.remove(i);
+                    mcArgs.remove(i);
+                    --i;
                 }
             }
+        } else {
+            for (int i = 0; i + 1 < game.size(); ++i) {
+                Argument arg0 = game.get(i);
+                Argument arg1 = game.get(i + 1);
+                if (arg0 instanceof StringArgument && arg1 instanceof StringArgument) {
+                    // We need to preserve the tokens
+                    String arg0Str = arg0.toString();
+                    String arg1Str = arg1.toString();
+                    if (arg0Str.equals("--tweakClass") && arg1Str.toLowerCase().contains(target)) {
+                        game.remove(i);
+                        game.remove(i);
+                        --i;
+                    }
+                }
+            }
+        }
+    }
+
+    private static void addArgument(boolean useMcArgs, List<String> mcArgs, List<Argument> game, String... args) {
+        if (useMcArgs) {
+            mcArgs.addAll(Arrays.asList(args));
+        } else {
+            for (String arg : args)
+                game.add(new StringArgument(arg));
         }
     }
 

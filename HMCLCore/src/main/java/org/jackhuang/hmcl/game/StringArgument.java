@@ -54,4 +54,8 @@ public final class StringArgument implements Argument {
         return Collections.singletonList(res);
     }
 
+    @Override
+    public String toString() {
+        return argument;
+    }
 }

@@ -69,12 +69,12 @@ public final class OptiFineInstallTask extends TaskResult<Version> {
 
     @Override
     public void execute() {
-        String remoteVersion = remote.getGameVersion() + "-" + remote.getSelfVersion();
+        String remoteVersion = remote.getGameVersion() + "_" + remote.getSelfVersion();
 
         Library library = new Library(
-                "net.optifine", "optifine", remoteVersion, null, null,
+                "optifine", "OptiFine", remoteVersion, null, null,
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(
-                        "net/optifine/optifine/" + remoteVersion + "/optifine-" + remoteVersion + ".jar",
+                        "optifine/OptiFine/" + remoteVersion + "/OptiFine-" + remoteVersion + ".jar",
                         remote.getUrl()))
         );
 
