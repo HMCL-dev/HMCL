@@ -230,6 +230,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private void loadVersions(HMCLGameRepository repository) {
         List<Node> children = repository.getVersions().parallelStream()
+                .filter(version -> !version.isHidden())
                 .sorted((a, b) -> VersionNumber.COMPARATOR.compare(VersionNumber.asVersion(a.getId()), VersionNumber.asVersion(b.getId())))
                 .map(version -> buildNode(repository, version, () -> GameVersion.minecraftVersion(repository.getVersionJar(version.getId())).orElse("Unknown")))
                 .collect(Collectors.toList());

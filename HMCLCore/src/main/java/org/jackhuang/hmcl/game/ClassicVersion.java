@@ -32,7 +32,7 @@ public class ClassicVersion extends Version {
         super(true, "Classic", "${auth_player_name} ${auth_session} --workDir ${game_directory}",
                 null, "net.minecraft.client.Minecraft", null, null, null, null,
                 Arrays.asList(new ClassicLibrary("lwjgl"), new ClassicLibrary("jinput"), new ClassicLibrary("lwjgl_util")),
-                null, null, null, ReleaseType.UNKNOWN, new Date(), new Date(), 0);
+                null, null, null, ReleaseType.UNKNOWN, new Date(), new Date(), 0, false);
     }
 
     private static class ClassicLibrary extends Library {
