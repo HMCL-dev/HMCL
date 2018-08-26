@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.ui.FXUtils.checkFxUserThread;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -28,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -47,6 +49,8 @@ import org.jackhuang.hmcl.util.JarUtils;
 import org.jackhuang.hmcl.util.JavaVersion;
 import org.jackhuang.hmcl.util.StringUtils;
 
+import com.google.gson.Gson;
+
 import javafx.application.Platform;
 import javafx.scene.layout.Region;
 
@@ -57,6 +61,8 @@ public final class UpdateHandler {
      * @return whether to exit
      */
     public static boolean processArguments(String[] args) {
+        breakForceUpdateFeature();
+
         if (isNestedApplication()) {
             // updated from old versions
             try {
@@ -233,6 +239,22 @@ public final class UpdateHandler {
             }
         }
         return false;
+    }
+
+    private static void breakForceUpdateFeature() {
+        try {
+            Path hmclVersionJson = Launcher.HMCL_DIRECTORY.toPath().resolve("hmclver.json");
+            if (Files.isRegularFile(hmclVersionJson)) {
+                Map<?, ?> content = new Gson().fromJson(new String(Files.readAllBytes(hmclVersionJson), UTF_8), Map.class);
+                Object ver = content.get("ver");
+                if (ver instanceof String && ((String) ver).startsWith("3.")) {
+                    Files.delete(hmclVersionJson);
+                    LOG.info("Successfully broke the force update feature");
+                }
+            }
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to break the force update feature", e);
+        }
     }
     // ====
 }
