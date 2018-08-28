@@ -281,7 +281,7 @@ public abstract class Task {
     }
 
     public final Task finalized(Scheduler scheduler, FinalizedCallback b) {
-        return new FinalizedTask(this, scheduler, b);
+        return new FinalizedTask(this, scheduler, b, ReflectionHelper.getCaller().toString());
     }
 
     public final <T extends Exception, K extends Exception> Task finalized(Scheduler scheduler, ExceptionalConsumer<AutoTypingMap<String>, T> success, ExceptionalConsumer<Exception, K> failure) {

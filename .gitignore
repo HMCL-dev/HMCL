@@ -4,7 +4,6 @@
 hs_err_pid*
 
 .gradle
-.idea
 
 *.lck
 *.1
@@ -19,7 +18,12 @@ NVIDIA
 /HMCL/build/
 /HMCLCore/build/
 
-# idea output
+# idea
+.idea
 /out/
 /HMCL/out/
 /HMCLCore/out/
+
+# eclipse
+.classpath
+.project
