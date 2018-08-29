@@ -24,11 +24,10 @@ import javafx.scene.control.ListCell;
 import javafx.scene.text.Font;
 
 public class FontComboBox extends JFXComboBox<String> {
+    private boolean loaded = false;
 
     public FontComboBox(@NamedArg(value = "fontSize", defaultValue = "12.0") double fontSize,
                         @NamedArg(value = "enableStyle", defaultValue = "false") boolean enableStyle) {
-        super(FXCollections.observableArrayList(Font.getFamilies()));
-
         valueProperty().addListener((a, b, newValue) -> {
             if (enableStyle)
                 setStyle("-fx-font-family: \"" + newValue + "\";");
@@ -44,5 +43,15 @@ public class FontComboBox extends JFXComboBox<String> {
                 }
             }
         });
+
+        setOnMouseClicked(e -> {
+            if (loaded) return;
+            getItems().setAll(Font.getFamilies());
+        });
+    }
+
+    public void initValue(Font font) {
+        getItems().setAll(font.getFamily());
+        getSelectionModel().select(font.getFamily());
     }
 }

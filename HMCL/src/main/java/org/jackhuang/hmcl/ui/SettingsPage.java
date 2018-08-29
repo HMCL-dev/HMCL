@@ -30,20 +30,11 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import org.jackhuang.hmcl.setting.*;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.construct.FontComboBox;
-import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
@@ -75,7 +66,7 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
         cboDownloadSource.getSelectionModel().select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.instance().getDownloadProvider()));
         cboDownloadSource.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.instance().setDownloadProvider(DownloadProviders.getDownloadProvider(newValue.intValue())));
 
-        cboFont.getSelectionModel().select(Settings.instance().getFont().getFamily());
+        cboFont.initValue(Settings.instance().getFont());
         cboFont.valueProperty().addListener((a, b, newValue) -> {
             Font font = Font.font(newValue, Settings.instance().getFont().getSize());
             Settings.instance().setFont(font);
