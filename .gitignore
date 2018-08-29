@@ -27,3 +27,6 @@ NVIDIA
 # eclipse
 .classpath
 .project
+
+# netbeans
+.nb-gradle

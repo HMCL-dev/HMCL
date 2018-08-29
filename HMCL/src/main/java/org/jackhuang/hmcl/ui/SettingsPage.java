@@ -62,67 +62,14 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 
-public final class SettingsPage extends StackPane implements DecoratorPage {
+public final class SettingsPage extends SettingsView implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", i18n("settings.launcher"));
-
-    @FXML
-    private JFXTextField txtProxyHost;
-    @FXML
-    private JFXTextField txtProxyPort;
-    @FXML
-    private JFXTextField txtProxyUsername;
-    @FXML
-    private JFXPasswordField txtProxyPassword;
-    @FXML
-    private JFXTextField txtFontSize;
-    @FXML
-    private JFXComboBox<Label> cboLanguage;
-    @FXML
-    private JFXComboBox<?> cboDownloadSource;
-    @FXML
-    private FontComboBox cboFont;
-    @FXML
-    private MultiFileItem<EnumCommonDirectory> fileCommonLocation;
-    @FXML
-    private Label lblDisplay;
-    @FXML
-    private Label lblUpdate;
-    @FXML
-    private Label lblUpdateSub;
-    @FXML
-    private Text lblUpdateNote;
-    @FXML
-    private JFXRadioButton chkUpdateStable;
-    @FXML
-    private JFXRadioButton chkUpdateDev;
-    @FXML
-    private JFXButton btnUpdate;
-    @FXML
-    private ScrollPane scroll;
-    @FXML
-    private MultiFileItem<EnumBackgroundImage> backgroundItem;
-    @FXML
-    private StackPane themeColorPickerContainer;
-    @FXML
-    private JFXCheckBox chkDisableProxy;
-    @FXML
-    private JFXRadioButton chkProxyHttp;
-    @FXML
-    private JFXRadioButton chkProxySocks;
-    @FXML
-    private JFXCheckBox chkProxyAuthentication;
-    @FXML
-    private GridPane authPane;
-    @FXML
-    private Pane proxyPane;
 
     private ObjectProperty<Proxy.Type> selectedProxyType;
 
     private InvalidationListener updateListener;
 
     public SettingsPage() {
-        FXUtils.loadFXML(this, "/assets/fxml/setting.fxml");
-
         FXUtils.smoothScrolling(scroll);
 
         cboDownloadSource.getSelectionModel().select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.instance().getDownloadProvider()));
@@ -306,8 +253,8 @@ public final class SettingsPage extends StackPane implements DecoratorPage {
         this.title.set(title);
     }
 
-    @FXML
-    private void onUpdate() {
+    @Override
+    protected void onUpdate() {
         RemoteVersion target = UpdateChecker.getLatestVersion();
         if (target == null) {
             return;
