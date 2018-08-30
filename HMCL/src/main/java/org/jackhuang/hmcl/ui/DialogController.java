@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.task.SilentException;
+import org.jackhuang.hmcl.ui.account.AccountLoginPane;
 
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;

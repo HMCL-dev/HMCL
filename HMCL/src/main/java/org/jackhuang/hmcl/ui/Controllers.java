@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.ui.account.AuthlibInjectorServersPage;
 import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
