@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
+import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.FileUtils;
 
@@ -114,12 +115,12 @@ public final class VersionPage extends StackPane implements DecoratorPage {
 
     @FXML
     private void onDelete() {
-        deleteVersion(profile, version);
+        Versions.deleteVersion(profile, version);
     }
 
     @FXML
     private void onExport() {
-        exportVersion(profile, version);
+        Versions.exportVersion(profile, version);
     }
 
     @FXML
@@ -157,10 +158,10 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     private void onManagement() {
         switch (managementList.getSelectionModel().getSelectedIndex()) {
             case 0: // rename a version
-                renameVersion(profile, version);
+                Versions.renameVersion(profile, version);
                 break;
             case 1: // remove a version
-                deleteVersion(profile, version);
+                Versions.deleteVersion(profile, version);
                 break;
             case 2: // redownload asset index
                 new GameAssetIndexDownloadTask(profile.getDependency(), profile.getRepository().getResolvedVersion(version)).start();
@@ -184,35 +185,5 @@ public final class VersionPage extends StackPane implements DecoratorPage {
 
     public void setTitle(String title) {
         this.title.set(title);
-    }
-
-    public static void deleteVersion(Profile profile, String version) {
-        boolean isIndependent = profile.getVersionSetting(version).getGameDirType() == EnumGameDirectory.VERSION_FOLDER;
-        boolean isMovingToTrashSupported = FileUtils.isMovingToTrashSupported();
-        String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
-                isMovingToTrashSupported ? i18n("version.manage.remove.confirm.trash", version, version + "_removed") :
-                        i18n("version.manage.remove.confirm", version);
-        Controllers.confirmDialog(message, i18n("message.confirm"), () -> {
-            if (profile.getRepository().removeVersionFromDisk(version)) {
-                profile.getRepository().refreshVersionsAsync().start();
-                Controllers.navigate(null);
-            }
-        }, null);
-    }
-
-    public static void renameVersion(Profile profile, String version) {
-        Controllers.inputDialog(i18n("version.manage.rename.message"), (res, resolve, reject) -> {
-            if (profile.getRepository().renameVersion(version, res)) {
-                profile.getRepository().refreshVersionsAsync().start();
-                Controllers.navigate(null);
-                resolve.run();
-            } else {
-                reject.accept(i18n("version.manage.rename.fail"));
-            }
-        }).setInitialText(version);
-    }
-
-    public static void exportVersion(Profile profile, String version) {
-        Controllers.getDecorator().startWizard(new ExportWizardProvider(profile, version), i18n("modpack.wizard"));
     }
 }
