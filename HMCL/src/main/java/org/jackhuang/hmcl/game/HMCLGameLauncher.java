@@ -21,9 +21,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
-import org.jackhuang.hmcl.util.CommandBuilder;
 
-import java.util.List;
 import java.util.Map;
 
 /**

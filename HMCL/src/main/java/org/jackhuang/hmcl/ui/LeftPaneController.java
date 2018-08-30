@@ -26,7 +26,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 
-import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
@@ -46,7 +45,6 @@ import org.jackhuang.hmcl.util.Lang;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -54,7 +52,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class LeftPaneController {
     private final AdvancedListBox leftPane;
     private final VBox profilePane = new VBox();
-    private final VBox accountPane = new VBox();
 
     public LeftPaneController(AdvancedListBox leftPane) {
         this.leftPane = leftPane;
@@ -98,11 +95,6 @@ public final class LeftPaneController {
     }
 
     // ==== Accounts ====
-    private Optional<Account> getAccountFromItem(RipplerContainer accountItem) {
-        return Optional.ofNullable(accountItem.getProperties().get("account"))
-                .map(Account.class::cast);
-    }
-
     public void checkAccount() {
         if (Accounts.getAccounts().isEmpty())
             addNewAccount();

@@ -20,14 +20,11 @@ package org.jackhuang.hmcl.ui.animation;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
-import javafx.scene.Node;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.util.Lang;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 

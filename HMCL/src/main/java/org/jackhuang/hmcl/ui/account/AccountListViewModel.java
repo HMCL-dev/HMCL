@@ -26,10 +26,7 @@ import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.MappedObservableList;
-
-import java.util.Comparator;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 

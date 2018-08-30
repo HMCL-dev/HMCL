@@ -34,8 +34,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-
 public class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
     private final Map<String, VersionSetting> versionSettings = new HashMap<>();
@@ -81,7 +79,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     public File getLibraryFile(Version version, Library lib) {
-        VersionSetting vs = profile.getVersionSetting(version.getId());
         File self = super.getLibraryFile(version, lib);
         if (Settings.instance().isCommonDirectoryDisabled() || self.exists())
             return self;

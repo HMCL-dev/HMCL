@@ -79,8 +79,6 @@ public final class ExportWizardProvider implements WizardProvider {
 
                 if (includeLauncher) {
                     dependency = dependency.then(Task.of(() -> {
-                        boolean flag = true;
-
                         try (Zipper zip = new Zipper(modpackFile.toPath())) {
                             Config exported = new Config();
                             exported.setBackgroundImageType(config().getBackgroundImageType());

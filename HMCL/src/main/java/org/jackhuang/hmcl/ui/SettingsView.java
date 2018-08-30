@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
-import javafx.fxml.FXML;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
@@ -31,7 +30,6 @@ import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 public abstract class SettingsView extends StackPane {

@@ -101,10 +101,6 @@ public final class AccountHelper {
         private final boolean refresh;
         private final List<Task> dependencies = new LinkedList<>();
 
-        public SkinLoadTask(YggdrasilAccount account) {
-            this(account, false);
-        }
-
         public SkinLoadTask(YggdrasilAccount account, boolean refresh) {
             this.account = account;
             this.refresh = refresh;

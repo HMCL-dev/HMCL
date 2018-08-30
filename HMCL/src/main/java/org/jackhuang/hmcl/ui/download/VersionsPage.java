@@ -27,7 +27,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -39,7 +38,6 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class VersionsPage extends StackPane implements WizardPage, Refreshable {
