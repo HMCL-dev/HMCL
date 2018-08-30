@@ -47,6 +47,7 @@ public class FontComboBox extends JFXComboBox<String> {
         setOnMouseClicked(e -> {
             if (loaded) return;
             getItems().setAll(Font.getFamilies());
+            loaded = true;
         });
     }
 
