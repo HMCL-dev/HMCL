@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 
 public abstract class AdvancedListItemViewModel {
@@ -26,6 +27,10 @@ public abstract class AdvancedListItemViewModel {
     public abstract void action();
 
     public abstract ObjectProperty<Image> imageProperty();
+
+    public ObjectProperty<Rectangle2D> viewportProperty() {
+        return null;
+    }
 
     public abstract StringProperty titleProperty();
 

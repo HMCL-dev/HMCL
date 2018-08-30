@@ -29,6 +29,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
 import org.jackhuang.hmcl.setting.Theme;
 
+import java.util.Optional;
+
 public class AdvancedListItem2 extends StackPane {
 
     public AdvancedListItem2(AdvancedListItemViewModel viewModel) {
@@ -47,6 +49,8 @@ public class AdvancedListItem2 extends StackPane {
         FXUtils.limitSize(imageView, 32, 32);
         imageView.setPreserveRatio(true);
         imageView.imageProperty().bind(viewModel.imageProperty());
+        Optional.ofNullable(viewModel.viewportProperty())
+                .ifPresent(imageView.viewportProperty()::bind);
         imageViewContainer.getChildren().setAll(imageView);
 
         VBox vbox = new VBox();

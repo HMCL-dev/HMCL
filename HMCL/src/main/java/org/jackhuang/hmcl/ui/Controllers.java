@@ -27,6 +27,8 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.ui.account.AccountListView;
+import org.jackhuang.hmcl.ui.account.AccountListViewModel;
 import org.jackhuang.hmcl.ui.account.AuthlibInjectorServersPage;
 import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
@@ -49,6 +51,7 @@ public final class Controllers {
     private static SettingsPage settingsPage = null;
     private static VersionPage versionPage = null;
     private static GameListView gameListView = null;
+    private static AccountListView accountListView = null;
     private static AuthlibInjectorServersPage serversPage = null;
     private static LeftPaneController leftPaneController;
     private static Decorator decorator;
@@ -73,6 +76,13 @@ public final class Controllers {
         if (gameListView == null)
             gameListView = new GameListView(new GameListViewModel());
         return gameListView;
+    }
+
+    // FXThread
+    public static AccountListView getAccountListView() {
+        if (accountListView == null)
+            accountListView = new AccountListView(new AccountListViewModel());
+        return accountListView;
     }
 
     // FXThread
@@ -192,5 +202,7 @@ public final class Controllers {
         decorator = null;
         stage = null;
         scene = null;
+        gameListView = null;
+        accountListView = null;
     }
 }

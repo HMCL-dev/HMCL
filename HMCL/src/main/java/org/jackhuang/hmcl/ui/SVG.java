@@ -18,8 +18,10 @@
 package org.jackhuang.hmcl.ui;
 
 import javafx.beans.binding.ObjectBinding;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
 
@@ -33,8 +35,11 @@ public final class SVG {
         path.setContent(d);
         path.fillProperty().bind(fill);
 
-        if (width < 0 || height < 0)
-            return path;
+        if (width < 0 || height < 0) {
+            StackPane pane = new StackPane(path);
+            pane.setAlignment(Pos.CENTER);
+            return pane;
+        }
 
         Group svg = new Group(path);
         double scale = Math.min(width / svg.getBoundsInParent().getWidth(), height / svg.getBoundsInParent().getHeight());

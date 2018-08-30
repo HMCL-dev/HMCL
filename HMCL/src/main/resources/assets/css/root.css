@@ -52,7 +52,7 @@
 }
 
 .advanced-list-box-item {
-    -fx-padding: 10 16 10 16;
+    -fx-padding: 0 16 0 16;
 }
 
 .advanced-list-box-content {
