@@ -294,9 +294,39 @@
     -jfx-rippler-fill: WHITE;
 }
 
+.jfx-tool-bar-second {
+    -fx-padding: 2 2 2 2;
+    -fx-background-color: -fx-base-check-color;
+}
+
+.jfx-tool-bar-second .jfx-rippler {
+    -jfx-rippler-fill: WHITE;
+}
+
+.jfx-tool-bar-button {
+    -fx-toggle-icon4-size: 35px;
+    -fx-pref-height: -fx-toggle-icon4-size;
+    -fx-max-height: -fx-toggle-icon4-size;
+    -fx-min-height: -fx-toggle-icon4-size;
+    -fx-background-radius: 5px;
+    -fx-background-color: transparent;
+    -jfx-toggle-color: white;
+    -jfx-untoggle-color: transparent;
+}
+
+.jfx-tool-bar-button .icon {
+    -fx-fill: rgb(204.0, 204.0, 51.0);
+    -fx-padding: 10.0;
+}
+
+.jfx-tool-bar-button .jfx-rippler {
+    -jfx-rippler-fill: white;
+    -jfx-mask-type: CIRCLE;
+}
+
 .jfx-decorator-button {
     -fx-max-width: 35px;
-    -fx-background-radius: 40px;
+    -fx-background-radius: 5px;
     -fx-max-height: 35px;
     -fx-background-color: transparent;
     -jfx-toggle-color: rgba(128, 128, 255, 0.2);

@@ -31,6 +31,8 @@ import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import org.jackhuang.hmcl.ui.versions.GameListView;
+import org.jackhuang.hmcl.ui.versions.GameListViewModel;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.JavaVersion;
 
@@ -45,6 +47,7 @@ public final class Controllers {
     private static MainPage mainPage = null;
     private static SettingsPage settingsPage = null;
     private static VersionPage versionPage = null;
+    private static GameListView gameListView = null;
     private static AuthlibInjectorServersPage serversPage = null;
     private static LeftPaneController leftPaneController;
     private static Decorator decorator;
@@ -62,6 +65,13 @@ public final class Controllers {
         if (settingsPage == null)
             settingsPage = new SettingsPage();
         return settingsPage;
+    }
+
+    // FXThread
+    public static GameListView getGameListView() {
+        if (gameListView == null)
+            gameListView = new GameListView(new GameListViewModel());
+        return gameListView;
     }
 
     // FXThread

@@ -78,6 +78,7 @@ public class GameAdvancedListItemViewModel extends AdvancedListItemViewModel {
 
     @Override
     public void action() {
+        Controllers.navigate(Controllers.getGameListView());
     }
 
     @Override

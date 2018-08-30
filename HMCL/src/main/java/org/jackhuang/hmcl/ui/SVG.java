@@ -33,6 +33,9 @@ public final class SVG {
         path.setContent(d);
         path.fillProperty().bind(fill);
 
+        if (width < 0 || height < 0)
+            return path;
+
         Group svg = new Group(path);
         double scale = Math.min(width / svg.getBoundsInParent().getWidth(), height / svg.getBoundsInParent().getHeight());
         svg.setScaleX(scale);
@@ -127,4 +130,7 @@ public final class SVG {
         return createSVGPath("M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z", fill, width, height);
     }
 
+    public static Node importIcon(ObjectBinding<? extends Paint> fill, double width, double height) {
+        return createSVGPath("M14,12L10,8V11H2V13H10V16M20,18V6C20,4.89 19.1,4 18,4H6A2,2 0 0,0 4,6V9H6V6H18V18H6V15H4V18A2,2 0 0,0 6,20H18A2,2 0 0,0 20,18Z", fill, width, height);
+    }
 }
