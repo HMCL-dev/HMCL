@@ -300,10 +300,6 @@ public class DefaultLauncher extends Launcher {
             throw new PermissionException();
     }
 
-    private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener) {
-        startMonitors(managedProcess, processListener, true);
-    }
-
     private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {

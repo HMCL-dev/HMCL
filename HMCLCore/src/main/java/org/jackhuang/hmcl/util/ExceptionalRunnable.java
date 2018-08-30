@@ -34,7 +34,7 @@ public interface ExceptionalRunnable<E extends Exception> {
         };
     }
 
-    static ExceptionalRunnable fromRunnable(Runnable r) {
+    static ExceptionalRunnable<?> fromRunnable(Runnable r) {
         return r::run;
     }
 
