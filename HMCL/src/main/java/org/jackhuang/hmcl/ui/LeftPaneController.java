@@ -69,6 +69,7 @@ public final class LeftPaneController {
     private final VBox profilePane = new VBox();
     private final VBox accountPane = new VBox();
     private final IconedItem launcherSettingsItem;
+    private final AdvancedListItem2 gameListItem;
 
     private ListProperty<RipplerContainer> accountItems = new SimpleListProperty<>();
     private ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<Account>() {
@@ -101,8 +102,10 @@ public final class LeftPaneController {
                         .then(Color.RED)
                         .otherwise(Color.BLACK));
 
-        launcherSettingsItem.prefWidthProperty().bind(leftPane.widthProperty());
+        launcherSettingsItem.maxWidthProperty().bind(leftPane.widthProperty());
         launcherSettingsItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
+
+        gameListItem = new AdvancedListItem2(new GameAdvancedListItemViewModel());
 
         leftPane
                 .add(new ClassTitle(i18n("account").toUpperCase(), Lang.apply(new JFXButton(), button -> {
@@ -112,6 +115,7 @@ public final class LeftPaneController {
                 })))
                 .add(accountPane)
                 .startCategory(i18n("launcher").toUpperCase())
+                .add(gameListItem)
                 .add(launcherSettingsItem)
                 .add(new ClassTitle(i18n("profile.title").toUpperCase(), Lang.apply(new JFXButton(), button -> {
                     button.setGraphic(SVG.plus(Theme.blackFillBinding(), 10, 10));
