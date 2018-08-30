@@ -25,6 +25,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
 import org.jackhuang.hmcl.setting.Theme;
 
@@ -48,15 +49,16 @@ public class AdvancedListItem2 extends StackPane {
         imageView.imageProperty().bind(viewModel.imageProperty());
         imageViewContainer.getChildren().setAll(imageView);
 
-        BorderPane borderPane = new BorderPane();
-        borderPane.setPadding(new Insets(0, 0, 0, 10));
+        VBox vbox = new VBox();
+        vbox.setAlignment(Pos.CENTER_LEFT);
+        vbox.setPadding(new Insets(0, 0, 0, 10));
 
         Label title = new Label();
         title.textProperty().bind(viewModel.titleProperty());
         title.setMaxWidth(90);
         title.setStyle("-fx-font-size: 15;");
         title.setTextAlignment(TextAlignment.JUSTIFY);
-        borderPane.setTop(title);
+        vbox.getChildren().add(title);
 
         if (viewModel.subtitleProperty() != null) {
             Label subtitle = new Label();
@@ -64,12 +66,10 @@ public class AdvancedListItem2 extends StackPane {
             subtitle.setMaxWidth(90);
             subtitle.setStyle("-fx-font-size: 10;");
             subtitle.setTextAlignment(TextAlignment.JUSTIFY);
-            borderPane.setBottom(subtitle);
-        } else {
-            title.setWrapText(true);
+            vbox.getChildren().add(subtitle);
         }
 
-        left.getChildren().setAll(imageViewContainer, borderPane);
+        left.getChildren().setAll(imageViewContainer, vbox);
         root.setLeft(left);
 
         HBox right = new HBox();
