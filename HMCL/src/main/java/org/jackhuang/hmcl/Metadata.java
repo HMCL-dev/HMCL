@@ -30,6 +30,6 @@ public final class Metadata {
     public static final String TITLE = NAME + " " + VERSION;
     
     public static final String UPDATE_URL = System.getProperty("hmcl.update_source.override", "https://hmcl.huangyuhui.net/api/update_link");
-    public static final String CONTACT_URL = "https://www.huangyuhui.net/hmcl.php";
+    public static final String CONTACT_URL = "https://hmcl.huangyuhui.net/contact";
     public static final String PUBLISH_URL = "http://www.mcbbs.net/thread-142335-1-1.html";
 }
