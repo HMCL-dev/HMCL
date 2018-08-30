@@ -90,7 +90,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             this.profile = event.getProfile();
         });
 
-        btnAdd.setOnMouseClicked(e -> Controllers.getDecorator().startWizard(new DownloadWizardProvider(), i18n("install")));
+        btnAdd.setOnMouseClicked(e -> Controllers.getDecorator().startWizard(new DownloadWizardProvider(0), i18n("install")));
         FXUtils.installTooltip(btnAdd, i18n("install"));
         btnRefresh.setOnMouseClicked(e -> Settings.instance().getSelectedProfile().getRepository().refreshVersionsAsync().start());
         FXUtils.installTooltip(btnRefresh, i18n("button.refresh"));
