@@ -17,27 +17,36 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ObjectPropertyBase;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
+import org.jackhuang.hmcl.game.AccountHelper;
 
-public abstract class AdvancedListItem2 extends Control {
+public class AdvancedListItem2 extends Control {
+    private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
+    private final ObjectProperty<Rectangle2D> viewport = new SimpleObjectProperty<>();
+    private final StringProperty title = new SimpleStringProperty();
+    private final StringProperty subtitle = new SimpleStringProperty();
 
-    public abstract ObjectProperty<Image> imageProperty();
-
-    public ObjectProperty<Rectangle2D> viewportProperty() {
-        return null;
+    public ObjectProperty<Image> imageProperty() {
+        return image;
     }
 
-    public abstract StringProperty titleProperty();
+    public ObjectProperty<Rectangle2D> viewportProperty() {
+        return viewport;
+    }
 
-    public abstract StringProperty subtitleProperty();
+    public StringProperty titleProperty() {
+        return title;
+    }
+
+    public StringProperty subtitleProperty() {
+        return subtitle;
+    }
 
     public final ObjectProperty<EventHandler<ActionEvent>> onActionProperty() {
         return onAction;

@@ -32,60 +32,41 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.AdvancedListItem2;
 import org.jackhuang.hmcl.ui.FXUtils;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AccountAdvancedListItem extends AdvancedListItem2 {
-    private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
-    private final ObjectProperty<Rectangle2D> viewport = new SimpleObjectProperty<>(AccountHelper.getViewport(4));
-    private final StringProperty title = new SimpleStringProperty();
-    private final StringProperty subtitle = new SimpleStringProperty();
+    private ObjectProperty<Account> account = new SimpleObjectProperty<Account>() {
 
-    public AccountAdvancedListItem() {
-
-        FXUtils.onChangeAndOperate(Accounts.selectedAccountProperty(), account -> {
+        @Override
+        protected void invalidated() {
+            Account account = get();
             if (account == null) {
-                title.set(i18n("account.missing"));
-                subtitle.set(i18n("account.missing.add"));
-                image.set(new Image("/assets/img/craft_table.png"));
+                titleProperty().set(i18n("account.missing"));
+                subtitleProperty().set(i18n("account.missing.add"));
+                imageProperty().set(new Image("/assets/img/craft_table.png"));
             } else {
-                title.set(account.getCharacter());
-                subtitle.set(accountSubtitle(account));
+                titleProperty().set(account.getCharacter());
+                subtitleProperty().set(accountSubtitle(account));
 
-                this.image.set(AccountHelper.getDefaultSkin(account.getUUID(), 4));
+                imageProperty().set(AccountHelper.getDefaultSkin(account.getUUID(), 4));
 
                 if (account instanceof YggdrasilAccount) {
                     AccountHelper.loadSkinAsync((YggdrasilAccount) account).subscribe(Schedulers.javafx(), () -> {
                         Image image = AccountHelper.getSkin((YggdrasilAccount) account, 4);
-                        this.image.set(image);
+                        imageProperty().set(image);
                     });
                 }
             }
-        });
+        }
+    };
+
+    public AccountAdvancedListItem() {
+        viewportProperty().set(AccountHelper.getViewport(4));
     }
 
-    @Override
-    protected void layoutChildren() {
-        super.layoutChildren();
-    }
-
-    @Override
-    public ObjectProperty<Image> imageProperty() {
-        return image;
-    }
-
-    @Override
-    public ObjectProperty<Rectangle2D> viewportProperty() {
-        return viewport;
-    }
-
-    @Override
-    public StringProperty titleProperty() {
-        return title;
-    }
-
-    @Override
-    public StringProperty subtitleProperty() {
-        return subtitle;
+    public ObjectProperty<Account> accountProperty() {
+        return account;
     }
 
     private static String accountSubtitle(Account account) {

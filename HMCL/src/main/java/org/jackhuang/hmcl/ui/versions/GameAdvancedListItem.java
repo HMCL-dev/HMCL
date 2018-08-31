@@ -35,8 +35,6 @@ import org.jackhuang.hmcl.ui.WeakListenerHelper;
 import java.io.File;
 
 public class GameAdvancedListItem extends AdvancedListItem2 {
-    private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
-    private final StringProperty title = new SimpleStringProperty();
     private final WeakListenerHelper helper = new WeakListenerHelper();
 
     private Profile profile;
@@ -69,25 +67,10 @@ public class GameAdvancedListItem extends AdvancedListItem2 {
         String version = profile.getSelectedVersion();
         File iconFile = profile.getRepository().getVersionIcon(version);
         if (iconFile.exists())
-            image.set(new Image("file:" + iconFile.getAbsolutePath()));
+            imageProperty().set(new Image("file:" + iconFile.getAbsolutePath()));
         else
-            image.set(new Image("/assets/img/grass.png"));
+            imageProperty().set(new Image("/assets/img/grass.png"));
 
-        title.set(version);
-    }
-
-    @Override
-    public ObjectProperty<Image> imageProperty() {
-        return image;
-    }
-
-    @Override
-    public StringProperty titleProperty() {
-        return title;
-    }
-
-    @Override
-    public StringProperty subtitleProperty() {
-        return null;
+        titleProperty().set(version);
     }
 }

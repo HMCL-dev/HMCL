@@ -58,8 +58,9 @@ public final class LeftPaneController {
     public LeftPaneController(AdvancedListBox leftPane) {
         this.leftPane = leftPane;
 
-        AdvancedListItem2 accountListItem = new AccountAdvancedListItem();
+        AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
         accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
+        accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
         AdvancedListItem2 gameListItem = new GameAdvancedListItem();
         gameListItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
 

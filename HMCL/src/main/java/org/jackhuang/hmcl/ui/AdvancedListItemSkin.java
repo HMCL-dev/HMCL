@@ -54,8 +54,7 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem2> {
         FXUtils.limitSize(imageView, 32, 32);
         imageView.setPreserveRatio(true);
         imageView.imageProperty().bind(skinnable.imageProperty());
-        Optional.ofNullable(skinnable.viewportProperty())
-                .ifPresent(imageView.viewportProperty()::bind);
+        imageView.viewportProperty().bind(skinnable.viewportProperty());
         imageViewContainer.getChildren().setAll(imageView);
 
         VBox vbox = new VBox();
@@ -69,14 +68,17 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem2> {
         title.setTextAlignment(TextAlignment.JUSTIFY);
         vbox.getChildren().add(title);
 
-        if (skinnable.subtitleProperty() != null) {
-            Label subtitle = new Label();
-            subtitle.textProperty().bind(skinnable.subtitleProperty());
-            subtitle.setMaxWidth(90);
-            subtitle.setStyle("-fx-font-size: 10;");
-            subtitle.setTextAlignment(TextAlignment.JUSTIFY);
-            vbox.getChildren().add(subtitle);
-        }
+        Label subtitle = new Label();
+        subtitle.textProperty().bind(skinnable.subtitleProperty());
+        subtitle.setMaxWidth(90);
+        subtitle.setStyle("-fx-font-size: 10;");
+        subtitle.setTextAlignment(TextAlignment.JUSTIFY);
+        vbox.getChildren().add(subtitle);
+
+        FXUtils.onChangeAndOperate(skinnable.subtitleProperty(), subtitleString -> {
+            if (subtitleString == null) vbox.getChildren().setAll(title);
+            else vbox.getChildren().setAll(title, subtitle);
+        });
 
         left.getChildren().setAll(imageViewContainer, vbox);
         root.setLeft(left);
