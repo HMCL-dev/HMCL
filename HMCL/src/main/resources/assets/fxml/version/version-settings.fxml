@@ -25,7 +25,7 @@
                 <MultiFileItem fx:id="javaItem" title="%settings.game.java_directory" chooserTitle="%settings.game.java_directory.choose"
                                hasSubtitle="true" customText="%settings.custom" directory="false" />
 
-                <MultiFileItem fx:id="gameDirItem" title="%settings.game.run_directory" chooserTitle="%settings.game.run_directory.choose"
+                <MultiFileItem fx:id="gameDirItem" title="%settings.game.working_directory" chooserTitle="%settings.game.working_directory.choose"
                                hasSubtitle="true" customText="%settings.custom" directory="true" />
 
                 <BorderPane> <!-- Max Memory -->
