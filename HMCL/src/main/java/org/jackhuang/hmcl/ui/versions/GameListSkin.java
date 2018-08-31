@@ -79,13 +79,13 @@ public class GameListSkin extends SkinBase<GameList> {
             btnRefresh.setOnMouseClicked(e -> skinnable.refresh());
             toolbar.getChildren().add(btnRefresh);
 
-            JFXButton btnModify = new JFXButton();
-            btnModify.getStyleClass().add("jfx-tool-bar-button");
-            btnModify.textFillProperty().bind(Theme.foregroundFillBinding());
-            btnModify.setGraphic(wrap(SVG.gear(Theme.foregroundFillBinding(), -1, -1)));
-            btnModify.setText(I18n.i18n("settings.type.global.manage"));
-            btnModify.setOnMouseClicked(e -> skinnable.modifyGlobalGameSettings());
-            toolbar.getChildren().add(btnModify);
+//            JFXButton btnModify = new JFXButton();
+//            btnModify.getStyleClass().add("jfx-tool-bar-button");
+//            btnModify.textFillProperty().bind(Theme.foregroundFillBinding());
+//            btnModify.setGraphic(wrap(SVG.gear(Theme.foregroundFillBinding(), -1, -1)));
+//            btnModify.setText(I18n.i18n("settings.type.global.manage"));
+//            btnModify.setOnMouseClicked(e -> skinnable.modifyGlobalGameSettings());
+//            toolbar.getChildren().add(btnModify);
 
             root.setTop(toolbar);
         }

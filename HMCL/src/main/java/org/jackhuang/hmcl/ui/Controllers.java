@@ -24,8 +24,6 @@ import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountList;
@@ -34,6 +32,7 @@ import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import org.jackhuang.hmcl.ui.profile.ProfileList;
 import org.jackhuang.hmcl.ui.versions.GameList;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.JavaVersion;
@@ -51,6 +50,7 @@ public final class Controllers {
     private static VersionPage versionPage = null;
     private static GameList gameListPage = null;
     private static AccountList accountListPage = null;
+    private static ProfileList profileListPage = null;
     private static AuthlibInjectorServersPage serversPage = null;
     private static LeftPaneController leftPaneController;
     private static Decorator decorator;
@@ -82,6 +82,13 @@ public final class Controllers {
         if (accountListPage == null)
             accountListPage = new AccountList();
         return accountListPage;
+    }
+
+    // FXThread
+    public static ProfileList getProfileListPage() {
+        if (profileListPage == null)
+            profileListPage = new ProfileList();
+        return profileListPage;
     }
 
     // FXThread
@@ -202,5 +209,6 @@ public final class Controllers {
         scene = null;
         gameListPage = null;
         accountListPage = null;
+        profileListPage = null;
     }
 }

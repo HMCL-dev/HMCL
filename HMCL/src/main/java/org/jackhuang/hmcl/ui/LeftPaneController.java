@@ -18,12 +18,8 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.concurrency.JFXUtilities;
-import com.jfoenix.controls.JFXButton;
-import javafx.application.Platform;
 import javafx.beans.binding.When;
-import javafx.scene.Node;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
@@ -38,30 +34,26 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.account.AddAccountPane;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.profile.ProfileAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
-import org.jackhuang.hmcl.util.Lang;
 
 import java.io.File;
-import java.util.LinkedList;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class LeftPaneController {
-    private final AdvancedListBox leftPane;
-    private final VBox profilePane = new VBox();
 
     public LeftPaneController(AdvancedListBox leftPane) {
-        this.leftPane = leftPane;
-
         AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
         accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
         accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
-        AdvancedListItem2 gameListItem = new GameAdvancedListItem();
+        GameAdvancedListItem gameListItem = new GameAdvancedListItem();
         gameListItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
+        ProfileAdvancedListItem profileListItem = new ProfileAdvancedListItem();
+        profileListItem.setOnAction(e -> Controllers.navigate(Controllers.getProfileListPage()));
+        profileListItem.profileProperty().bind(Profiles.selectedProfileProperty());
 
         IconedItem launcherSettingsItem = new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20));
 
@@ -83,18 +75,11 @@ public final class LeftPaneController {
                 .add(accountListItem)
                 .startCategory(i18n("version").toUpperCase())
                 .add(gameListItem)
+                .startCategory(i18n("profile.title").toUpperCase())
+                .add(profileListItem)
                 .startCategory(i18n("launcher").toUpperCase())
-                .add(launcherSettingsItem)
-                .add(new ClassTitle(i18n("profile.title").toUpperCase(), Lang.apply(new JFXButton(), button -> {
-                    button.setGraphic(SVG.plus(Theme.blackFillBinding(), 10, 10));
-                    button.getStyleClass().add("toggle-icon-tiny");
-                    button.setOnMouseClicked(e ->
-                            Controllers.getDecorator().showPage(new ProfilePage(null)));
-                })))
-                .add(profilePane);
+                .add(launcherSettingsItem);
 
-        FXUtils.onChangeAndOperate(Profiles.profilesProperty(), a -> onProfilesLoading());
-        FXUtils.onChangeAndOperate(Profiles.selectedProfileProperty(), this::onProfileChanged);
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(event -> onRefreshedVersions((HMCLGameRepository) event.getSource()));
         if (Profiles.selectedProfileProperty().get().getRepository().isLoaded())
             onRefreshedVersions(Profiles.selectedProfileProperty().get().getRepository());
@@ -110,32 +95,6 @@ public final class LeftPaneController {
         Controllers.dialog(new AddAccountPane());
     }
     // ====
-
-    private void onProfileChanged(Profile profile) {
-        Platform.runLater(() -> {
-            for (Node node : profilePane.getChildren()) {
-                if (node instanceof RipplerContainer && node.getProperties().get("profile") instanceof String) {
-                    boolean current = Objects.equals(node.getProperties().get("profile"), profile.getName());
-                    ((RipplerContainer) node).setSelected(current);
-                    ((AdvancedListItem) ((RipplerContainer) node).getContainer()).setSubtitle(current ? i18n("profile.selected") : "");
-                }
-            }
-        });
-    }
-
-    private void onProfilesLoading() {
-        LinkedList<RipplerContainer> list = new LinkedList<>();
-        for (Profile profile : Profiles.getProfiles()) {
-            AdvancedListItem item = new AdvancedListItem(Profiles.getProfileDisplayName(profile));
-            RipplerContainer ripplerContainer = new RipplerContainer(item);
-            item.setOnSettingsButtonClicked(e -> Controllers.getDecorator().showPage(new ProfilePage(profile)));
-            ripplerContainer.setOnMouseClicked(e -> Profiles.setSelectedProfile(profile));
-            ripplerContainer.getProperties().put("profile", profile.getName());
-            ripplerContainer.maxWidthProperty().bind(leftPane.widthProperty());
-            list.add(ripplerContainer);
-        }
-        Platform.runLater(() -> profilePane.getChildren().setAll(list));
-    }
 
     private boolean checkedModpack = false;
     private static boolean showNewAccount = true;

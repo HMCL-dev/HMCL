@@ -15,14 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui.account;
+package org.jackhuang.hmcl.ui.profile;
 
-import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -32,11 +32,9 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.TwoLineListItem;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
 
-public class AccountListItemSkin extends SkinBase<AccountListItem> {
-
-    public AccountListItemSkin(AccountListItem skinnable) {
+    public ProfileListItemSkin(ProfileListItem skinnable) {
         super(skinnable);
 
         BorderPane root = new BorderPane();
@@ -58,8 +56,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
 
         ImageView imageView = new ImageView();
         FXUtils.limitSize(imageView, 32, 32);
-        imageView.imageProperty().bind(skinnable.imageProperty());
-        imageView.viewportProperty().bind(skinnable.viewportProperty());
+        imageView.imageProperty().set(new Image("/assets/img/craft_table.png"));
         imageViewContainer.getChildren().setAll(imageView);
 
         TwoLineListItem item = new TwoLineListItem();
@@ -69,19 +66,12 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
-        JFXButton btnRefresh = new JFXButton();
-        btnRefresh.setOnMouseClicked(e -> skinnable.refresh());
-        btnRefresh.getStyleClass().add("toggle-icon4");
-        btnRefresh.setGraphic(SVG.refresh(Theme.blackFillBinding(), -1, -1));
-        JFXUtilities.runInFX(() -> FXUtils.installTooltip(btnRefresh, i18n("button.refresh")));
-        right.getChildren().add(btnRefresh);
 
         JFXButton btnRemove = new JFXButton();
         btnRemove.setOnMouseClicked(e -> skinnable.remove());
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
         btnRemove.setGraphic(SVG.delete(Theme.blackFillBinding(), -1, -1));
-        JFXUtilities.runInFX(() -> FXUtils.installTooltip(btnRemove, i18n("button.delete")));
         right.getChildren().add(btnRemove);
         root.setRight(right);
 
