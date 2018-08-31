@@ -24,6 +24,7 @@ import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -121,7 +122,7 @@ public final class Controllers {
         decorator.showPage(null);
         leftPaneController = new LeftPaneController(decorator.getLeftPane());
 
-        Settings.instance().onProfileLoading();
+        Profiles.onProfileLoading();
         Task.of(JavaVersion::initialize).start();
 
         decorator.setCustomMaximize(false);

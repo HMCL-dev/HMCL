@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
@@ -62,7 +63,7 @@ public class GameList extends Control implements DecoratorPage {
             this.profile = event.getProfile();
         });
 
-        profile = Settings.instance().getSelectedProfile();
+        profile = Profiles.getSelectedProfile();
         if (profile.getRepository().isLoaded())
             loadVersions(profile.getRepository());
         else

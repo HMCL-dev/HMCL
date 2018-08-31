@@ -52,14 +52,7 @@ public class Settings {
     private Settings() {
         ProxyManager.init();
         Accounts.init();
-
-        checkProfileMap();
-
-        for (Map.Entry<String, Profile> profileEntry : getProfileMap().entrySet()) {
-            profileEntry.getValue().setName(profileEntry.getKey());
-            profileEntry.getValue().nameProperty().setChangedListener(this::profileNameChanged);
-            profileEntry.getValue().addPropertyChangedListener(e -> ConfigHolder.markConfigDirty());
-        }
+        Profiles.init();
     }
 
     public Font getFont() {
@@ -113,96 +106,5 @@ public class Settings {
         if (index == -1)
             throw new IllegalArgumentException("Unknown download provider: " + downloadProvider);
         config().setDownloadType(index);
-    }
-
-    /****************************************
-     *               PROFILES               *
-     ****************************************/
-
-    public Profile getSelectedProfile() {
-        checkProfileMap();
-
-        if (!hasProfile(config().getSelectedProfile())) {
-            getProfileMap().keySet().stream().findFirst().ifPresent(selectedProfile -> {
-                config().setSelectedProfile(selectedProfile);
-            });
-            Schedulers.computation().schedule(this::onProfileChanged);
-        }
-        return getProfile(config().getSelectedProfile());
-    }
-
-    public void setSelectedProfile(Profile selectedProfile) {
-        if (hasProfile(selectedProfile.getName()) && !Objects.equals(selectedProfile.getName(), config().getSelectedProfile())) {
-            config().setSelectedProfile(selectedProfile.getName());
-            Schedulers.computation().schedule(this::onProfileChanged);
-        }
-    }
-
-    public Profile getProfile(String name) {
-        checkProfileMap();
-
-        Optional<Profile> p = name == null ? getProfileMap().values().stream().findFirst() : Optional.ofNullable(getProfileMap().get(name));
-        return p.orElse(null);
-    }
-
-    public boolean hasProfile(String name) {
-        return getProfileMap().containsKey(name);
-    }
-
-    public Map<String, Profile> getProfileMap() {
-        return config().getConfigurations();
-    }
-
-    public Collection<Profile> getProfiles() {
-        return getProfileMap().values().stream().filter(t -> StringUtils.isNotBlank(t.getName())).collect(Collectors.toList());
-    }
-
-    public void putProfile(Profile ver) {
-        if (StringUtils.isBlank(ver.getName()))
-            throw new IllegalArgumentException("Profile's name is empty");
-
-        getProfileMap().put(ver.getName(), ver);
-        Schedulers.computation().schedule(this::onProfileLoading);
-
-        ver.nameProperty().setChangedListener(this::profileNameChanged);
-    }
-
-    public void deleteProfile(Profile profile) {
-        deleteProfile(profile.getName());
-    }
-
-    public void deleteProfile(String profileName) {
-        getProfileMap().remove(profileName);
-        checkProfileMap();
-        Schedulers.computation().schedule(this::onProfileLoading);
-    }
-
-    private void checkProfileMap() {
-        if (getProfileMap().isEmpty()) {
-            Profile current = new Profile(Profiles.DEFAULT_PROFILE);
-            current.setUseRelativePath(true);
-            getProfileMap().put(Profiles.DEFAULT_PROFILE, current);
-
-            Profile home = new Profile(Profiles.HOME_PROFILE, Launcher.MINECRAFT_DIRECTORY);
-            getProfileMap().put(Profiles.HOME_PROFILE, home);
-        }
-    }
-
-    private void onProfileChanged() {
-        EventBus.EVENT_BUS.fireEvent(new ProfileChangedEvent(this, getSelectedProfile()));
-        getSelectedProfile().getRepository().refreshVersionsAsync().start();
-    }
-
-    private void profileNameChanged(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
-        getProfileMap().put(newValue, getProfileMap().remove(oldValue));
-    }
-
-    /**
-     * Start profiles loading process.
-     * Invoked by loading GUI phase.
-     */
-    public void onProfileLoading() {
-        EventBus.EVENT_BUS.fireEvent(new ProfileLoadingEvent(this, getProfiles()));
-        onProfileChanged();
     }
 }

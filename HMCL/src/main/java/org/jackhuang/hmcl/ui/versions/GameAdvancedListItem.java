@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.ProfileChangedEvent;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.AdvancedListItem2;
 import org.jackhuang.hmcl.ui.WeakListenerHelper;
@@ -50,7 +51,7 @@ public class GameAdvancedListItem extends AdvancedListItem2 {
                     loadVersion();
             });
         }));
-        loadProfile(Settings.instance().getSelectedProfile());
+        loadProfile(Profiles.getSelectedProfile());
     }
 
     private void loadProfile(Profile newProfile) {
@@ -66,11 +67,14 @@ public class GameAdvancedListItem extends AdvancedListItem2 {
         if (profile == null || !profile.getRepository().isLoaded()) return;
         String version = profile.getSelectedVersion();
         File iconFile = profile.getRepository().getVersionIcon(version);
-        if (iconFile.exists())
-            imageProperty().set(new Image("file:" + iconFile.getAbsolutePath()));
-        else
-            imageProperty().set(new Image("/assets/img/grass.png"));
+        
+        JFXUtilities.runInFX(() -> {
+            if (iconFile.exists())
+                imageProperty().set(new Image("file:" + iconFile.getAbsolutePath()));
+            else
+                imageProperty().set(new Image("/assets/img/grass.png"));
 
-        titleProperty().set(version);
+            titleProperty().set(version);
+        });
     }
 }

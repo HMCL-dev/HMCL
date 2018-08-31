@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -92,7 +93,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         btnAdd.setOnMouseClicked(e -> Controllers.getDecorator().startWizard(new DownloadWizardProvider(0), i18n("install")));
         FXUtils.installTooltip(btnAdd, i18n("install"));
-        btnRefresh.setOnMouseClicked(e -> Settings.instance().getSelectedProfile().getRepository().refreshVersionsAsync().start());
+        btnRefresh.setOnMouseClicked(e -> Profiles.getSelectedProfile().getRepository().refreshVersionsAsync().start());
         FXUtils.installTooltip(btnRefresh, i18n("button.refresh"));
     }
 

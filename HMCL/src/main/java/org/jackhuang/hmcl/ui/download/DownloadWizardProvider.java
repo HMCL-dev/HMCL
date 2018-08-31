@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -45,7 +46,7 @@ public final class DownloadWizardProvider implements WizardProvider {
 
     @Override
     public void start(Map<String, Object> settings) {
-        profile = Settings.instance().getSelectedProfile();
+        profile = Profiles.getSelectedProfile();
         settings.put(PROFILE, profile);
     }
 

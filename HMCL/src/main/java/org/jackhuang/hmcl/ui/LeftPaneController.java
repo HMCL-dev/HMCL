@@ -126,11 +126,11 @@ public final class LeftPaneController {
 
     private void onProfilesLoading() {
         LinkedList<RipplerContainer> list = new LinkedList<>();
-        for (Profile profile : Settings.instance().getProfiles()) {
+        for (Profile profile : Profiles.getProfiles()) {
             AdvancedListItem item = new AdvancedListItem(Profiles.getProfileDisplayName(profile));
             RipplerContainer ripplerContainer = new RipplerContainer(item);
             item.setOnSettingsButtonClicked(e -> Controllers.getDecorator().showPage(new ProfilePage(profile)));
-            ripplerContainer.setOnMouseClicked(e -> Settings.instance().setSelectedProfile(profile));
+            ripplerContainer.setOnMouseClicked(e -> Profiles.setSelectedProfile(profile));
             ripplerContainer.getProperties().put("profile", profile.getName());
             ripplerContainer.maxWidthProperty().bind(leftPane.widthProperty());
             list.add(ripplerContainer);
