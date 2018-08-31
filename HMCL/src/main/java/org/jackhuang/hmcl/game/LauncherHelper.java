@@ -247,9 +247,12 @@ public final class LauncherHelper {
             }
         }
 
-        // LaunchWrapper will crash because of assuming the system class loader is an instance of URLClassLoader.
-        // cpw has claimed that he will make MinecraftForge of 1.13 and later versions able to run on Java 9.
-        if (!flag && java.getParsedVersion() >= JavaVersion.JAVA_9 && gameVersion.compareTo(VersionNumber.asVersion("1.13")) < 0 && version.getMainClass().contains("launchwrapper")) {
+        // LaunchWrapper 1.12 will crash because of assuming the system class loader is an instance of URLClassLoader.
+        if (!flag && java.getParsedVersion() >= JavaVersion.JAVA_9
+                && version.getMainClass().contains("launchwrapper")
+                && version.getLibraries().stream()
+                .filter(library -> "launchwrapper".equals(library.getArtifactId()))
+                .anyMatch(library -> VersionNumber.asVersion(library.getVersion()).compareTo(VersionNumber.asVersion("1.13")) < 0)) {
             Optional<JavaVersion> java8 = JavaVersion.getJREs().stream().filter(javaVersion -> javaVersion.getParsedVersion() == JavaVersion.JAVA_8).findAny();
             if (java8.isPresent()) {
                 setting.setJavaVersion(java8.get());
