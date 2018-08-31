@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXScrollPane;
 import com.jfoenix.controls.JFXSpinner;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
@@ -106,6 +107,7 @@ public class GameListSkin extends SkinBase<GameList> {
             Bindings.bindContent(gameList.getChildren(), skinnable.itemsProperty());
 
             scrollPane.setContent(gameList);
+            JFXScrollPane.smoothScrolling(scrollPane);
 
             FXUtils.onChangeAndOperate(skinnable.loadingProperty(),
                     loading -> center.getChildren().setAll(loading ? spinner : scrollPane));

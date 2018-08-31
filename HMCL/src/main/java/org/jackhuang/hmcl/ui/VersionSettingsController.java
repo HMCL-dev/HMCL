@@ -250,7 +250,7 @@ public final class VersionSettingsController {
         if (iconFile.exists())
             iconPickerItem.setImage(new Image("file:" + iconFile.getAbsolutePath()));
         else
-            iconPickerItem.setImage(Constants.DEFAULT_ICON.get());
+            iconPickerItem.setImage(new Image("/assets/img/grass.png"));
         FXUtils.limitSize(iconPickerItem.getImageView(), 32, 32);
     }
 }

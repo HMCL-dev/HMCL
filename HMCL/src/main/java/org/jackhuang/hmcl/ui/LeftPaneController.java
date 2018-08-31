@@ -26,8 +26,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.ProfileChangedEvent;
-import org.jackhuang.hmcl.event.ProfileLoadingEvent;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
@@ -49,6 +47,7 @@ import java.util.LinkedList;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class LeftPaneController {
@@ -94,9 +93,11 @@ public final class LeftPaneController {
                 })))
                 .add(profilePane);
 
-        EventBus.EVENT_BUS.channel(ProfileLoadingEvent.class).register(this::onProfilesLoading);
-        EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(this::onProfileChanged);
-        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(this::onRefreshedVersions);
+        FXUtils.onChangeAndOperate(Profiles.profilesProperty(), a -> onProfilesLoading());
+        FXUtils.onChangeAndOperate(Profiles.selectedProfileProperty(), this::onProfileChanged);
+        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(event -> onRefreshedVersions((HMCLGameRepository) event.getSource()));
+        if (Profiles.selectedProfileProperty().get().getRepository().isLoaded())
+            onRefreshedVersions(Profiles.selectedProfileProperty().get().getRepository());
     }
 
     // ==== Accounts ====
@@ -110,9 +111,7 @@ public final class LeftPaneController {
     }
     // ====
 
-    private void onProfileChanged(ProfileChangedEvent event) {
-        Profile profile = event.getProfile();
-
+    private void onProfileChanged(Profile profile) {
         Platform.runLater(() -> {
             for (Node node : profilePane.getChildren()) {
                 if (node instanceof RipplerContainer && node.getProperties().get("profile") instanceof String) {
@@ -141,9 +140,8 @@ public final class LeftPaneController {
     private boolean checkedModpack = false;
     private static boolean showNewAccount = true;
 
-    private void onRefreshedVersions(RefreshedVersionsEvent event) {
+    private void onRefreshedVersions(HMCLGameRepository repository) {
         JFXUtilities.runInFX(() -> {
-            HMCLGameRepository repository = (HMCLGameRepository) event.getSource();
             if (!checkedModpack) {
                 checkedModpack = true;
 

@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
+import com.jfoenix.concurrency.JFXUtilities;
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.*;
 
 import org.jackhuang.hmcl.event.EventBus;
@@ -28,20 +30,19 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.ui.WeakListenerHelper;
-import org.jackhuang.hmcl.util.ImmediateObjectProperty;
-import org.jackhuang.hmcl.util.ImmediateStringProperty;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
 import java.lang.reflect.Type;
 import java.util.Optional;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
+
 /**
  *
  * @author huangyuhui
  */
-public final class Profile {
+public final class Profile implements Observable {
     private final WeakListenerHelper helper = new WeakListenerHelper();
     private final HMCLGameRepository repository;
     private final ModManager modManager;
@@ -131,6 +132,8 @@ public final class Profile {
         gameDir.addListener((a, b, newValue) -> repository.changeDirectory(newValue));
         selectedVersion.addListener(o -> checkSelectedVersion());
         helper.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion()));
+
+        addPropertyChangedListener(onInvalidating(this::invalidate));
     }
 
     private void checkSelectedVersion() {
@@ -202,13 +205,29 @@ public final class Profile {
                 .toString();
     }
 
-    public void addPropertyChangedListener(InvalidationListener listener) {
+    private void addPropertyChangedListener(InvalidationListener listener) {
         name.addListener(listener);
         global.addListener(listener);
         gameDir.addListener(listener);
         useRelativePath.addListener(listener);
         global.get().addPropertyChangedListener(listener);
         selectedVersion.addListener(listener);
+    }
+
+    private ObservableHelper observableHelper = new ObservableHelper(this);
+
+    @Override
+    public void addListener(InvalidationListener listener) {
+        observableHelper.addListener(listener);
+    }
+
+    @Override
+    public void removeListener(InvalidationListener listener) {
+        observableHelper.removeListener(listener);
+    }
+
+    protected void invalidate() {
+        JFXUtilities.runInFX(observableHelper::invalidate);
     }
 
     public static final class Serializer implements JsonSerializer<Profile>, JsonDeserializer<Profile> {

@@ -112,16 +112,6 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     }
 
     @FXML
-    private void onDelete() {
-        Versions.deleteVersion(profile, version);
-    }
-
-    @FXML
-    private void onExport() {
-        Versions.exportVersion(profile, version);
-    }
-
-    @FXML
     private void onBrowse() {
         String sub;
         switch (browseList.getSelectionModel().getSelectedIndex()) {

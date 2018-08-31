@@ -17,21 +17,16 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import javafx.beans.value.ObservableValue;
+import javafx.beans.Observable;
+import javafx.beans.property.*;
+import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Launcher;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.ProfileChangedEvent;
-import org.jackhuang.hmcl.event.ProfileLoadingEvent;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.StringUtils;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.HashSet;
 
+import static javafx.collections.FXCollections.observableArrayList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Profiles {
@@ -53,104 +48,103 @@ public final class Profiles {
         }
     }
 
-    /****************************************
-     *               PROFILES               *
-     ****************************************/
+    private static final ObservableList<Profile> profiles = observableArrayList(profile -> new Observable[] { profile });
+    private static final ReadOnlyListWrapper<Profile> profilesWrapper = new ReadOnlyListWrapper<>(profiles);
 
-    public static Profile getSelectedProfile() {
-        checkProfileMap();
-
-        if (!hasProfile(config().getSelectedProfile())) {
-            getProfileMap().keySet().stream().findFirst().ifPresent(selectedProfile -> {
-                config().setSelectedProfile(selectedProfile);
-            });
-            Schedulers.computation().schedule(Profiles::onProfileChanged);
+    private static ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<Profile>() {
+        {
+            profiles.addListener(onInvalidating(this::invalidated));
         }
-        return getProfile(config().getSelectedProfile());
-    }
 
-    public static void setSelectedProfile(Profile selectedProfile) {
-        if (hasProfile(selectedProfile.getName()) && !Objects.equals(selectedProfile.getName(), config().getSelectedProfile())) {
-            config().setSelectedProfile(selectedProfile.getName());
-            Schedulers.computation().schedule(Profiles::onProfileChanged);
+        @Override
+        protected void invalidated() {
+            Profile profile = get();
+            if (profiles.isEmpty()) {
+                if (profile != null) {
+                    set(null);
+                    return;
+                }
+            } else {
+                if (!profiles.contains(profile)) {
+                    set(profiles.get(0));
+                    return;
+                }
+            }
+
+            if (!initialized)
+                return;
+            config().setSelectedProfile(profile == null ? "" : profile.getName());
         }
-    }
+    };
 
-    public static Profile getProfile(String name) {
-        checkProfileMap();
-
-        Optional<Profile> p = name == null ? getProfileMap().values().stream().findFirst() : Optional.ofNullable(getProfileMap().get(name));
-        return p.orElse(null);
-    }
-
-    public static boolean hasProfile(String name) {
-        return getProfileMap().containsKey(name);
-    }
-
-    public static Map<String, Profile> getProfileMap() {
-        return config().getConfigurations();
-    }
-
-    public static Collection<Profile> getProfiles() {
-        return getProfileMap().values().stream().filter(t -> StringUtils.isNotBlank(t.getName())).collect(Collectors.toList());
-    }
-
-    public static void putProfile(Profile ver) {
-        if (StringUtils.isBlank(ver.getName()))
-            throw new IllegalArgumentException("Profile's name is empty");
-
-        getProfileMap().put(ver.getName(), ver);
-        Schedulers.computation().schedule(Profiles::onProfileLoading);
-
-        ver.nameProperty().setChangedListener(Profiles::profileNameChanged);
-    }
-
-    public static void deleteProfile(Profile profile) {
-        deleteProfile(profile.getName());
-    }
-
-    public static void deleteProfile(String profileName) {
-        getProfileMap().remove(profileName);
-        checkProfileMap();
-        Schedulers.computation().schedule(Profiles::onProfileLoading);
-    }
-
-    private static void checkProfileMap() {
-        if (getProfileMap().isEmpty()) {
+    private static void checkProfiles() {
+        if (profiles.isEmpty()) {
             Profile current = new Profile(Profiles.DEFAULT_PROFILE);
             current.setUseRelativePath(true);
-            getProfileMap().put(Profiles.DEFAULT_PROFILE, current);
 
             Profile home = new Profile(Profiles.HOME_PROFILE, Launcher.MINECRAFT_DIRECTORY);
-            getProfileMap().put(Profiles.HOME_PROFILE, home);
+
+            profiles.addAll(current, home);
         }
-    }
-
-    private static void onProfileChanged() {
-        EventBus.EVENT_BUS.fireEvent(new ProfileChangedEvent(new Object(), getSelectedProfile()));
-        getSelectedProfile().getRepository().refreshVersionsAsync().start();
-    }
-
-    private static void profileNameChanged(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
-        getProfileMap().put(newValue, getProfileMap().remove(oldValue));
     }
 
     /**
-     * Start profiles loading process.
-     * Invoked by loading GUI phase.
+     * True if {@link #init()} hasn't been called.
      */
-    public static void onProfileLoading() {
-        EventBus.EVENT_BUS.fireEvent(new ProfileLoadingEvent(new Object(), getProfiles()));
-        onProfileChanged();
+    private static boolean initialized = false;
+
+    static {
+        profiles.addListener(onInvalidating(ConfigHolder::markConfigDirty));
+
+        profiles.addListener(onInvalidating(Profiles::checkProfiles));
+
+        selectedProfile.addListener((a, b, newValue) -> {
+            if (newValue != null)
+                newValue.getRepository().refreshVersionsAsync().start();
+        });
     }
 
+    /**
+     * Called when it's ready to load profiles from {@link ConfigHolder#config()}.
+     */
     static void init() {
-        checkProfileMap();
+        if (initialized)
+            throw new IllegalStateException("Already initialized");
 
-        for (Map.Entry<String, Profile> profileEntry : getProfileMap().entrySet()) {
-            profileEntry.getValue().setName(profileEntry.getKey());
-            profileEntry.getValue().nameProperty().setChangedListener(Profiles::profileNameChanged);
-            profileEntry.getValue().addPropertyChangedListener(e -> ConfigHolder.markConfigDirty());
-        }
+        HashSet<String> names = new HashSet<>();
+        config().getConfigurations().forEach((name, profile) -> {
+            if (!names.add(name)) return;
+            profile.setName(name);
+            profiles.add(profile);
+        });
+        checkProfiles();
+
+        initialized = true;
+
+        selectedProfile.set(
+                profiles.stream()
+                        .filter(it -> it.getName().equals(config().getSelectedProfile()))
+                        .findFirst()
+                        .get());
+    }
+
+    public static ObservableList<Profile> getProfiles() {
+        return profiles;
+    }
+
+    public static ReadOnlyListProperty<Profile> profilesProperty() {
+        return profilesWrapper.getReadOnlyProperty();
+    }
+
+    public static Profile getSelectedProfile() {
+        return selectedProfile.get();
+    }
+
+    public static void setSelectedProfile(Profile profile) {
+        selectedProfile.set(profile);
+    }
+
+    public static ObjectProperty<Profile> selectedProfileProperty() {
+        return selectedProfile;
     }
 }

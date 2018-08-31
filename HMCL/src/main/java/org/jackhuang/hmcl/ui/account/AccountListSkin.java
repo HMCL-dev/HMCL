@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXScrollPane;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -48,6 +49,7 @@ public class AccountListSkin extends SkinBase<AccountList> {
             Bindings.bindContent(accountList.getChildren(), skinnable.itemsProperty());
 
             scrollPane.setContent(accountList);
+            JFXScrollPane.smoothScrolling(scrollPane);
         }
 
         VBox vBox = new VBox();

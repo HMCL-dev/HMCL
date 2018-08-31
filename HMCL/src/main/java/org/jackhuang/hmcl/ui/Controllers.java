@@ -122,7 +122,6 @@ public final class Controllers {
         decorator.showPage(null);
         leftPaneController = new LeftPaneController(decorator.getLeftPane());
 
-        Profiles.onProfileLoading();
         Task.of(JavaVersion::initialize).start();
 
         decorator.setCustomMaximize(false);

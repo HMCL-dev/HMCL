@@ -19,17 +19,11 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import javafx.beans.InvalidationListener;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.ProfileChangedEvent;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.AdvancedListItem2;
 import org.jackhuang.hmcl.ui.WeakListenerHelper;
 
@@ -42,8 +36,8 @@ public class GameAdvancedListItem extends AdvancedListItem2 {
     private InvalidationListener listener = o -> loadVersion();
 
     public GameAdvancedListItem() {
-        helper.add(EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).registerWeak(event -> {
-            JFXUtilities.runInFX(() -> loadProfile(event.getProfile()));
+        Profiles.selectedProfileProperty().addListener(helper.weak((a, b, newValue) -> {
+            JFXUtilities.runInFX(() -> loadProfile(newValue));
         }));
         helper.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
             JFXUtilities.runInFX(() -> {
@@ -67,7 +61,7 @@ public class GameAdvancedListItem extends AdvancedListItem2 {
         if (profile == null || !profile.getRepository().isLoaded()) return;
         String version = profile.getSelectedVersion();
         File iconFile = profile.getRepository().getVersionIcon(version);
-        
+
         JFXUtilities.runInFX(() -> {
             if (iconFile.exists())
                 imageProperty().set(new Image("file:" + iconFile.getAbsolutePath()));

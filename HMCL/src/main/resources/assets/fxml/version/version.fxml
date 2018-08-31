@@ -23,18 +23,6 @@
         </JFXTabPane>
 
         <HBox alignment="TOP_RIGHT" style="-fx-padding: 2 2 2 2;" spacing="3" pickOnBounds="false">
-            <JFXButton fx:id="btnDelete" maxHeight="40.0" minHeight="40.0" onMouseClicked="#onDelete"
-                       styleClass="toggle-icon3">
-                <graphic>
-                    <fx:include source="/assets/svg/delete-white.fxml"/>
-                </graphic>
-            </JFXButton>
-            <JFXButton fx:id="btnExport" maxHeight="40.0" minHeight="40.0" onMouseClicked="#onExport"
-                       styleClass="toggle-icon3">
-                <graphic>
-                    <fx:include source="/assets/svg/export.fxml"/>
-                </graphic>
-            </JFXButton>
             <JFXButton fx:id="btnBrowseMenu" maxHeight="40.0" minHeight="40.0" onMouseClicked="#onBrowseMenu"
                        styleClass="toggle-icon3">
                 <graphic>

@@ -92,7 +92,7 @@ public final class Accounts {
     }
 
     private static ObservableList<Account> accounts = observableArrayList(account -> new Observable[] { account });
-    private static ReadOnlyListProperty<Account> accountsWrapper = new ReadOnlyListWrapper<>(accounts);
+    private static ReadOnlyListWrapper<Account> accountsWrapper = new ReadOnlyListWrapper<>(accounts);
 
     private static ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<Account>() {
         {
@@ -194,7 +194,7 @@ public final class Accounts {
     }
 
     public static ReadOnlyListProperty<Account> accountsProperty() {
-        return accountsWrapper;
+        return accountsWrapper.getReadOnlyProperty();
     }
 
     public static Account getSelectedAccount() {

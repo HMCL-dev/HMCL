@@ -24,13 +24,11 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.ProfileChangedEvent;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
 import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
@@ -59,9 +57,7 @@ public class GameList extends Control implements DecoratorPage {
             if (event.getSource() == profile.getRepository())
                 JFXUtilities.runInFX(() -> loading.set(true));
         });
-        EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).register(event -> {
-            this.profile = event.getProfile();
-        });
+        Profiles.selectedProfileProperty().addListener((a, b, newValue) -> profile = newValue);
 
         profile = Profiles.getSelectedProfile();
         if (profile.getRepository().isLoaded())
