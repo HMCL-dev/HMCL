@@ -25,8 +25,10 @@ import javafx.scene.Node;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-
-import org.jackhuang.hmcl.event.*;
+import org.jackhuang.hmcl.event.EventBus;
+import org.jackhuang.hmcl.event.ProfileChangedEvent;
+import org.jackhuang.hmcl.event.ProfileLoadingEvent;
+import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
@@ -35,10 +37,10 @@ import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
-import org.jackhuang.hmcl.ui.account.AccountAdvancedListItemViewModel;
+import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.account.AddAccountPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.ui.versions.GameAdvancedListItemViewModel;
+import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
 
@@ -56,8 +58,10 @@ public final class LeftPaneController {
     public LeftPaneController(AdvancedListBox leftPane) {
         this.leftPane = leftPane;
 
-        AdvancedListItem2 accountListItem = new AdvancedListItem2(new AccountAdvancedListItemViewModel());
-        AdvancedListItem2 gameListItem = new AdvancedListItem2(new GameAdvancedListItemViewModel());
+        AdvancedListItem2 accountListItem = new AccountAdvancedListItem();
+        accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
+        AdvancedListItem2 gameListItem = new GameAdvancedListItem();
+        gameListItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
 
         IconedItem launcherSettingsItem = new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20));
 

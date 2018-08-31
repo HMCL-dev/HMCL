@@ -19,25 +19,23 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SkinBase;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
-import org.jackhuang.hmcl.util.MappedObservableList;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+public class AccountListSkin extends SkinBase<AccountList> {
 
-public class AccountListView extends StackPane implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty(i18n("account.manage"));
+    public AccountListSkin(AccountList skinnable) {
+        super(skinnable);
 
-    public AccountListView(AccountListViewModel viewModel) {
+        StackPane root = new StackPane();
+
         ScrollPane scrollPane = new ScrollPane();
         {
             scrollPane.setFitToWidth(true);
@@ -47,8 +45,7 @@ public class AccountListView extends StackPane implements DecoratorPage {
             accountList.setSpacing(10);
             accountList.setStyle("-fx-padding: 10 10 10 10;");
 
-            Bindings.bindContent(accountList.getChildren(),
-                    MappedObservableList.create(viewModel.itemsProperty(), AccountListItemView::new));
+            Bindings.bindContent(accountList.getChildren(), skinnable.itemsProperty());
 
             scrollPane.setContent(accountList);
         }
@@ -66,16 +63,13 @@ public class AccountListView extends StackPane implements DecoratorPage {
             btnAdd.getStyleClass().setAll("jfx-button-raised-round");
             btnAdd.setButtonType(JFXButton.ButtonType.RAISED);
             btnAdd.setGraphic(SVG.plus(Theme.whiteFillBinding(), -1, -1));
-            btnAdd.setOnMouseClicked(e -> viewModel.addNewAccount());
+            btnAdd.setOnMouseClicked(e -> skinnable.addNewAccount());
 
             vBox.getChildren().setAll(btnAdd);
         }
 
-        getChildren().setAll(scrollPane, vBox);
-    }
+        root.getChildren().setAll(scrollPane, vBox);
 
-    @Override
-    public StringProperty titleProperty() {
-        return title;
+        getChildren().setAll(root);
     }
 }

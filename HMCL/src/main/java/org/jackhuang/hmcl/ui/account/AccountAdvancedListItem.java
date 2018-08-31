@@ -29,19 +29,18 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.ui.AdvancedListItemViewModel;
-import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.AdvancedListItem2;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class AccountAdvancedListItemViewModel extends AdvancedListItemViewModel {
+public class AccountAdvancedListItem extends AdvancedListItem2 {
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
     private final ObjectProperty<Rectangle2D> viewport = new SimpleObjectProperty<>(AccountHelper.getViewport(4));
     private final StringProperty title = new SimpleStringProperty();
     private final StringProperty subtitle = new SimpleStringProperty();
 
-    public AccountAdvancedListItemViewModel() {
+    public AccountAdvancedListItem() {
 
         FXUtils.onChangeAndOperate(Accounts.selectedAccountProperty(), account -> {
             if (account == null) {
@@ -65,8 +64,8 @@ public class AccountAdvancedListItemViewModel extends AdvancedListItemViewModel 
     }
 
     @Override
-    public void action() {
-        Controllers.navigate(Controllers.getAccountListView());
+    protected void layoutChildren() {
+        super.layoutChildren();
     }
 
     @Override

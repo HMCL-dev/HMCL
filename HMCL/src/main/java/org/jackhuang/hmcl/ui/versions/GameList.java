@@ -18,11 +18,10 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.concurrency.JFXUtilities;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ListProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
+import javafx.scene.control.Control;
+import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.ProfileChangedEvent;
@@ -33,21 +32,24 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
+import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.VersionNumber;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class GameListViewModel {
+public class GameList extends Control implements DecoratorPage {
+    private final StringProperty title = new SimpleStringProperty(I18n.i18n("version.manage"));
     private final BooleanProperty loading = new SimpleBooleanProperty(true);
-    private final ListProperty<GameListItemViewModel> items = new SimpleListProperty<>(FXCollections.observableArrayList());
+    private final ListProperty<GameListItem> items = new SimpleListProperty<>(FXCollections.observableArrayList());
 
     private Profile profile;
     private ToggleGroup toggleGroup;
 
-    public GameListViewModel() {
+    public GameList() {
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(event -> {
             if (event.getSource() == profile.getRepository())
                 loadVersions((HMCLGameRepository) event.getSource());
@@ -69,22 +71,27 @@ public class GameListViewModel {
 
     private void loadVersions(HMCLGameRepository repository) {
         toggleGroup = new ToggleGroup();
-        List<GameListItemViewModel> children = repository.getVersions().parallelStream()
+        List<GameListItem> children = repository.getVersions().parallelStream()
                 .filter(version -> !version.isHidden())
                 .sorted((a, b) -> VersionNumber.COMPARATOR.compare(VersionNumber.asVersion(a.getId()), VersionNumber.asVersion(b.getId())))
-                .map(version -> new GameListItemViewModel(toggleGroup, profile, version.getId()))
+                .map(version -> new GameListItem(toggleGroup, profile, version.getId()))
                 .collect(Collectors.toList());
         JFXUtilities.runInFX(() -> {
             if (profile == repository.getProfile()) {
                 loading.set(false);
                 items.setAll(children);
-                children.forEach(GameListItemViewModel::checkSelection);
+                children.forEach(GameListItem::checkSelection);
             }
             toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {
-                GameListItemViewModel model = (GameListItemViewModel) toggle.getUserData();
+                GameListItem model = (GameListItem) toggle.getUserData();
                 model.getProfile().setSelectedVersion(model.getVersion());
             });
         });
+    }
+
+    @Override
+    protected Skin<?> createDefaultSkin() {
+        return new GameListSkin(this);
     }
 
     public void addNewGame() {
@@ -103,11 +110,16 @@ public class GameListViewModel {
         // Controllers.navigate();
     }
 
+    @Override
+    public StringProperty titleProperty() {
+        return title;
+    }
+
     public BooleanProperty loadingProperty() {
         return loading;
     }
 
-    public ListProperty<GameListItemViewModel> itemsProperty() {
+    public ListProperty<GameListItem> itemsProperty() {
         return items;
     }
 }

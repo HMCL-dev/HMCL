@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import javafx.beans.property.*;
+import javafx.scene.control.Control;
+import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -31,7 +33,7 @@ import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class GameListItemViewModel {
+public class GameListItem extends Control {
     private final Profile profile;
     private final String version;
     private final boolean isModpack;
@@ -41,7 +43,7 @@ public class GameListItemViewModel {
     private final BooleanProperty selected = new SimpleBooleanProperty();
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
 
-    public GameListItemViewModel(ToggleGroup toggleGroup, Profile profile, String id) {
+    public GameListItem(ToggleGroup toggleGroup, Profile profile, String id) {
         this.profile = profile;
         this.version = id;
         this.toggleGroup = toggleGroup;
@@ -64,6 +66,11 @@ public class GameListItemViewModel {
             image.set(new Image("file:" + iconFile.getAbsolutePath()));
         else
             image.set(new Image("/assets/img/grass.png"));
+    }
+
+    @Override
+    protected Skin<?> createDefaultSkin() {
+        return new GameListItemSkin(this);
     }
 
     public ToggleGroup getToggleGroup() {

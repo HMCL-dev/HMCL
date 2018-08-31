@@ -21,6 +21,7 @@ import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.*;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
+import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -32,15 +33,19 @@ import org.jackhuang.hmcl.ui.TwoLineListItem;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class GameListItemView extends BorderPane {
+public class GameListItemSkin extends SkinBase<GameListItem> {
 
-    public GameListItemView(GameListItemViewModel viewModel) {
+    public GameListItemSkin(GameListItem skinnable) {
+        super(skinnable);
+
+        BorderPane root = new BorderPane();
+
         JFXRadioButton chkSelected = new JFXRadioButton();
         BorderPane.setAlignment(chkSelected, Pos.CENTER);
-        chkSelected.setUserData(viewModel);
-        chkSelected.selectedProperty().bindBidirectional(viewModel.selectedProperty());
-        chkSelected.setToggleGroup(viewModel.getToggleGroup());
-        setLeft(chkSelected);
+        chkSelected.setUserData(skinnable);
+        chkSelected.selectedProperty().bindBidirectional(skinnable.selectedProperty());
+        chkSelected.setToggleGroup(skinnable.getToggleGroup());
+        root.setLeft(chkSelected);
 
         HBox center = new HBox();
         center.setSpacing(8);
@@ -52,13 +57,13 @@ public class GameListItemView extends BorderPane {
 
         ImageView imageView = new ImageView();
         FXUtils.limitSize(imageView, 32, 32);
-        imageView.imageProperty().bind(viewModel.imageProperty());
+        imageView.imageProperty().bind(skinnable.imageProperty());
         imageViewContainer.getChildren().setAll(imageView);
 
         TwoLineListItem item = new TwoLineListItem();
         BorderPane.setAlignment(item, Pos.CENTER);
         center.getChildren().setAll(imageView, item);
-        setCenter(center);
+        root.setCenter(center);
 
         JFXListView<String> menu = new JFXListView<>();
         menu.getItems().setAll(
@@ -74,34 +79,34 @@ public class GameListItemView extends BorderPane {
             popup.hide();
             switch (menu.getSelectionModel().getSelectedIndex()) {
                 case 0:
-                    viewModel.modifyGameSettings();
+                    skinnable.modifyGameSettings();
                     break;
                 case 1:
-                    viewModel.rename();
+                    skinnable.rename();
                     break;
                 case 2:
-                    viewModel.remove();
+                    skinnable.remove();
                     break;
                 case 3:
-                    viewModel.export();
+                    skinnable.export();
                     break;
                 case 4:
-                    viewModel.browse();
+                    skinnable.browse();
                     break;
                 case 5:
-                    viewModel.launch();
+                    skinnable.launch();
                     break;
                 case 6:
-                    viewModel.generateLaunchScript();
+                    skinnable.generateLaunchScript();
                     break;
             }
         });
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
-        if (viewModel.canUpdate()) {
+        if (skinnable.canUpdate()) {
             JFXButton btnUpgrade = new JFXButton();
-            btnUpgrade.setOnMouseClicked(e -> viewModel.update());
+            btnUpgrade.setOnMouseClicked(e -> skinnable.update());
             btnUpgrade.getStyleClass().add("toggle-icon4");
             btnUpgrade.setGraphic(SVG.update(Theme.blackFillBinding(), -1, -1));
             JFXUtilities.runInFX(() -> FXUtils.installTooltip(btnUpgrade, i18n("version.update")));
@@ -111,17 +116,19 @@ public class GameListItemView extends BorderPane {
         JFXButton btnManage = new JFXButton();
         btnManage.setOnMouseClicked(e -> {
             menu.getSelectionModel().select(-1);
-            popup.show(this, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, this.getHeight());
+            popup.show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
         });
         btnManage.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnManage, Pos.CENTER);
         btnManage.setGraphic(SVG.dotsVertical(Theme.blackFillBinding(), -1, -1));
         right.getChildren().add(btnManage);
-        setRight(right);
+        root.setRight(right);
 
-        setStyle("-fx-background-color: white; -fx-padding: 8 8 8 0;");
-        JFXDepthManager.setDepth(this, 1);
-        item.titleProperty().bind(viewModel.titleProperty());
-        item.subtitleProperty().bind(viewModel.subtitleProperty());
+        root.setStyle("-fx-background-color: white; -fx-padding: 8 8 8 0;");
+        JFXDepthManager.setDepth(root, 1);
+        item.titleProperty().bind(skinnable.titleProperty());
+        item.subtitleProperty().bind(skinnable.subtitleProperty());
+
+        getChildren().setAll(root);
     }
 }

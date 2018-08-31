@@ -29,13 +29,12 @@ import org.jackhuang.hmcl.event.ProfileChangedEvent;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Settings;
-import org.jackhuang.hmcl.ui.AdvancedListItemViewModel;
-import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.AdvancedListItem2;
 import org.jackhuang.hmcl.ui.WeakListenerHelper;
 
 import java.io.File;
 
-public class GameAdvancedListItemViewModel extends AdvancedListItemViewModel {
+public class GameAdvancedListItem extends AdvancedListItem2 {
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
     private final StringProperty title = new SimpleStringProperty();
     private final WeakListenerHelper helper = new WeakListenerHelper();
@@ -43,7 +42,7 @@ public class GameAdvancedListItemViewModel extends AdvancedListItemViewModel {
     private Profile profile;
     private InvalidationListener listener = o -> loadVersion();
 
-    public GameAdvancedListItemViewModel() {
+    public GameAdvancedListItem() {
         helper.add(EventBus.EVENT_BUS.channel(ProfileChangedEvent.class).registerWeak(event -> {
             JFXUtilities.runInFX(() -> loadProfile(event.getProfile()));
         }));
@@ -75,11 +74,6 @@ public class GameAdvancedListItemViewModel extends AdvancedListItemViewModel {
             image.set(new Image("/assets/img/grass.png"));
 
         title.set(version);
-    }
-
-    @Override
-    public void action() {
-        Controllers.navigate(Controllers.getGameListView());
     }
 
     @Override

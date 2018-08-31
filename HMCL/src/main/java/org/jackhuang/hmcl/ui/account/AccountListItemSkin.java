@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
+import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -33,15 +34,19 @@ import org.jackhuang.hmcl.ui.TwoLineListItem;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class AccountListItemView extends BorderPane {
+public class AccountListItemSkin extends SkinBase<AccountListItem> {
 
-    public AccountListItemView(AccountListItemViewModel viewModel) {
+    public AccountListItemSkin(AccountListItem skinnable) {
+        super(skinnable);
+
+        BorderPane root = new BorderPane();
+
         JFXRadioButton chkSelected = new JFXRadioButton();
         BorderPane.setAlignment(chkSelected, Pos.CENTER);
-        chkSelected.setUserData(viewModel);
-        chkSelected.selectedProperty().bindBidirectional(viewModel.selectedProperty());
-        chkSelected.setToggleGroup(viewModel.getToggleGroup());
-        setLeft(chkSelected);
+        chkSelected.setUserData(skinnable);
+        chkSelected.selectedProperty().bindBidirectional(skinnable.selectedProperty());
+        chkSelected.setToggleGroup(skinnable.getToggleGroup());
+        root.setLeft(chkSelected);
 
         HBox center = new HBox();
         center.setSpacing(8);
@@ -53,36 +58,38 @@ public class AccountListItemView extends BorderPane {
 
         ImageView imageView = new ImageView();
         FXUtils.limitSize(imageView, 32, 32);
-        imageView.imageProperty().bind(viewModel.imageProperty());
-        imageView.viewportProperty().bind(viewModel.viewportProperty());
+        imageView.imageProperty().bind(skinnable.imageProperty());
+        imageView.viewportProperty().bind(skinnable.viewportProperty());
         imageViewContainer.getChildren().setAll(imageView);
 
         TwoLineListItem item = new TwoLineListItem();
         BorderPane.setAlignment(item, Pos.CENTER);
         center.getChildren().setAll(imageView, item);
-        setCenter(center);
+        root.setCenter(center);
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
         JFXButton btnRefresh = new JFXButton();
-        btnRefresh.setOnMouseClicked(e -> viewModel.refresh());
+        btnRefresh.setOnMouseClicked(e -> skinnable.refresh());
         btnRefresh.getStyleClass().add("toggle-icon4");
         btnRefresh.setGraphic(SVG.refresh(Theme.blackFillBinding(), -1, -1));
         JFXUtilities.runInFX(() -> FXUtils.installTooltip(btnRefresh, i18n("button.refresh")));
         right.getChildren().add(btnRefresh);
 
         JFXButton btnRemove = new JFXButton();
-        btnRemove.setOnMouseClicked(e -> viewModel.remove());
+        btnRemove.setOnMouseClicked(e -> skinnable.remove());
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
         btnRemove.setGraphic(SVG.delete(Theme.blackFillBinding(), -1, -1));
         JFXUtilities.runInFX(() -> FXUtils.installTooltip(btnRefresh, i18n("button.delete")));
         right.getChildren().add(btnRemove);
-        setRight(right);
+        root.setRight(right);
 
-        setStyle("-fx-background-color: white; -fx-padding: 8 8 8 0;");
-        JFXDepthManager.setDepth(this, 1);
-        item.titleProperty().bind(viewModel.titleProperty());
-        item.subtitleProperty().bind(viewModel.subtitleProperty());
+        root.setStyle("-fx-background-color: white; -fx-padding: 8 8 8 0;");
+        JFXDepthManager.setDepth(root, 1);
+        item.titleProperty().bind(skinnable.titleProperty());
+        item.subtitleProperty().bind(skinnable.subtitleProperty());
+
+        getChildren().setAll(root);
     }
 }

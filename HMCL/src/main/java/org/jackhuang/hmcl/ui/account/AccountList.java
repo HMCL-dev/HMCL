@@ -17,21 +17,23 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
-import javafx.beans.property.ListProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleListProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
+import javafx.scene.control.Control;
+import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.MappedObservableList;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class AccountListViewModel {
-    private final ListProperty<AccountListItemViewModel> items = new SimpleListProperty<>(FXCollections.observableArrayList());
+public class AccountList extends Control implements DecoratorPage {
+    private final StringProperty title = new SimpleStringProperty(i18n("account.manage"));
+    private final ListProperty<AccountListItem> items = new SimpleListProperty<>(FXCollections.observableArrayList());
     private ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<Account>() {
         {
             items.addListener(onInvalidating(this::invalidated));
@@ -46,25 +48,35 @@ public class AccountListViewModel {
 
     private ToggleGroup toggleGroup;
 
-    public AccountListViewModel() {
+    public AccountList() {
         toggleGroup = new ToggleGroup();
 
         items.bindContent(MappedObservableList.create(
                 Accounts.accountsProperty(),
-                account -> new AccountListItemViewModel(toggleGroup, account)));
+                account -> new AccountListItem(toggleGroup, account)));
 
         selectedAccount.bindBidirectional(Accounts.selectedAccountProperty());
         toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {
             if (toggle == null || toggle.getUserData() == null) return;
-            selectedAccount.set(((AccountListItemViewModel) toggle.getUserData()).getAccount());
+            selectedAccount.set(((AccountListItem) toggle.getUserData()).getAccount());
         });
+    }
+
+    @Override
+    protected Skin<?> createDefaultSkin() {
+        return new AccountListSkin(this);
     }
 
     public void addNewAccount() {
         Controllers.dialog(new AddAccountPane());
     }
 
-    public ListProperty<AccountListItemViewModel> itemsProperty() {
+    public ListProperty<AccountListItem> itemsProperty() {
         return items;
+    }
+
+    @Override
+    public StringProperty titleProperty() {
+        return title;
     }
 }

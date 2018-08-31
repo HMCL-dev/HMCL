@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.account;
 
 import javafx.beans.property.*;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.control.Control;
+import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.auth.Account;
@@ -32,7 +34,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class AccountListItemViewModel {
+public class AccountListItem extends Control {
     private final Account account;
     private final ToggleGroup toggleGroup;
     private final StringProperty title = new SimpleStringProperty();
@@ -41,7 +43,7 @@ public class AccountListItemViewModel {
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
     private final ObjectProperty<Rectangle2D> viewport = new SimpleObjectProperty<>();
 
-    public AccountListItemViewModel(ToggleGroup toggleGroup, Account account) {
+    public AccountListItem(ToggleGroup toggleGroup, Account account) {
         this.account = account;
         this.toggleGroup = toggleGroup;
 
@@ -65,6 +67,11 @@ public class AccountListItemViewModel {
         } else {
             this.image.set(AccountHelper.getDefaultSkin(account.getUUID(), 4));
         }
+    }
+
+    @Override
+    protected Skin<?> createDefaultSkin() {
+        return new AccountListItemSkin(this);
     }
 
     public ToggleGroup getToggleGroup() {

@@ -17,80 +17,59 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXButton;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.Label;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.text.TextAlignment;
-import org.jackhuang.hmcl.setting.Theme;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ObjectPropertyBase;
+import javafx.beans.property.StringProperty;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.control.Control;
+import javafx.scene.control.Skin;
+import javafx.scene.image.Image;
 
-import java.util.Optional;
+public abstract class AdvancedListItem2 extends Control {
 
-public class AdvancedListItem2 extends StackPane {
+    public abstract ObjectProperty<Image> imageProperty();
 
-    public AdvancedListItem2(AdvancedListItemViewModel viewModel) {
-        BorderPane root = new BorderPane();
-        root.setPickOnBounds(false);
+    public ObjectProperty<Rectangle2D> viewportProperty() {
+        return null;
+    }
 
-        HBox left = new HBox();
-        left.setAlignment(Pos.CENTER);
-        left.setMouseTransparent(true);
+    public abstract StringProperty titleProperty();
 
-        StackPane imageViewContainer = new StackPane();
-        FXUtils.setLimitWidth(imageViewContainer, 32);
-        FXUtils.setLimitHeight(imageViewContainer, 32);
+    public abstract StringProperty subtitleProperty();
 
-        ImageView imageView = new ImageView();
-        FXUtils.limitSize(imageView, 32, 32);
-        imageView.setPreserveRatio(true);
-        imageView.imageProperty().bind(viewModel.imageProperty());
-        Optional.ofNullable(viewModel.viewportProperty())
-                .ifPresent(imageView.viewportProperty()::bind);
-        imageViewContainer.getChildren().setAll(imageView);
+    public final ObjectProperty<EventHandler<ActionEvent>> onActionProperty() {
+        return onAction;
+    }
 
-        VBox vbox = new VBox();
-        vbox.setAlignment(Pos.CENTER_LEFT);
-        vbox.setPadding(new Insets(0, 0, 0, 10));
+    public final void setOnAction(EventHandler<ActionEvent> value) {
+        onActionProperty().set(value);
+    }
 
-        Label title = new Label();
-        title.textProperty().bind(viewModel.titleProperty());
-        title.setMaxWidth(90);
-        title.setStyle("-fx-font-size: 15;");
-        title.setTextAlignment(TextAlignment.JUSTIFY);
-        vbox.getChildren().add(title);
+    public final EventHandler<ActionEvent> getOnAction() {
+        return onActionProperty().get();
+    }
 
-        if (viewModel.subtitleProperty() != null) {
-            Label subtitle = new Label();
-            subtitle.textProperty().bind(viewModel.subtitleProperty());
-            subtitle.setMaxWidth(90);
-            subtitle.setStyle("-fx-font-size: 10;");
-            subtitle.setTextAlignment(TextAlignment.JUSTIFY);
-            vbox.getChildren().add(subtitle);
+    private ObjectProperty<EventHandler<ActionEvent>> onAction = new ObjectPropertyBase<EventHandler<ActionEvent>>() {
+        @Override
+        protected void invalidated() {
+            setEventHandler(ActionEvent.ACTION, get());
         }
 
-        left.getChildren().setAll(imageViewContainer, vbox);
-        root.setLeft(left);
+        @Override
+        public Object getBean() {
+            return AdvancedListItem2.this;
+        }
 
-        HBox right = new HBox();
-        right.setAlignment(Pos.CENTER);
-        right.setPickOnBounds(false);
+        @Override
+        public String getName() {
+            return "onAction";
+        }
+    };
 
-        JFXButton settings = new JFXButton();
-        FXUtils.setLimitWidth(settings, 40);
-        settings.setOnMouseClicked(e -> viewModel.action());
-        settings.getStyleClass().setAll("toggle-icon4");
-        settings.setGraphic(SVG.gear(Theme.blackFillBinding(), -1, -1));
-        right.getChildren().setAll(settings);
-        root.setRight(right);
-
-        setStyle("-fx-padding: 10 16 10 16;");
-        getStyleClass().setAll("transparent");
-        setPickOnBounds(false);
-        getChildren().setAll(root);
+    @Override
+    protected Skin<?> createDefaultSkin() {
+        return new AdvancedListItemSkin(this);
     }
 }

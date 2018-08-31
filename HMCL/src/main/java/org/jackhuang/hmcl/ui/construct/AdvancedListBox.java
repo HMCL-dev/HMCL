@@ -23,6 +23,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.ui.AdvancedListItem2;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public class AdvancedListBox extends ScrollPane {
@@ -42,7 +43,7 @@ public class AdvancedListBox extends ScrollPane {
     }
 
     public AdvancedListBox add(Node child) {
-        if (child instanceof Pane)
+        if (child instanceof Pane || child instanceof AdvancedListItem2)
             container.getChildren().add(child);
         else {
             StackPane pane = new StackPane();
