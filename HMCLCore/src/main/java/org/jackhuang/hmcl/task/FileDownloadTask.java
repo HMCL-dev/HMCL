@@ -260,7 +260,7 @@ public class FileDownloadTask extends Task {
         }
 
         if (exception != null)
-            throw new IOException("Unable to download file " + currentURL, exception);
+            throw new IOException("Unable to download file " + currentURL + ". " + exception.getMessage(), exception);
     }
 
 }
