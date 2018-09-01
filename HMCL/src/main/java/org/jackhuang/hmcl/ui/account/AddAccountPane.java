@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.account;
 import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.*;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.fxml.FXML;
@@ -90,6 +91,9 @@ public class AddAccountPane extends StackPane {
         cboType.setConverter(stringConverter(Accounts::getAccountTypeName));
         cboType.getSelectionModel().select(0);
 
+        cboServers.getItems().addListener(onInvalidating(this::checkIfNoServer));
+        checkIfNoServer();
+
         ReadOnlyObjectProperty<AccountFactory<?>> loginType = cboType.getSelectionModel().selectedItemProperty();
 
         txtPassword.visibleProperty().bind(loginType.isNotEqualTo(Accounts.FACTORY_OFFLINE));
@@ -120,6 +124,13 @@ public class AddAccountPane extends StackPane {
         if (!cboServers.getItems().isEmpty() && cboServers.getSelectionModel().isEmpty()) {
             cboServers.getSelectionModel().select(0);
         }
+    }
+
+    private void checkIfNoServer() {
+        if (cboServers.getItems().isEmpty())
+            cboServers.getStyleClass().setAll("jfx-combo-box-warning");
+        else
+            cboServers.getStyleClass().setAll("jfx-combo-box");
     }
 
     /**
