@@ -53,11 +53,10 @@ public class DefaultGameBuilder extends GameBuilder {
             Version version = Constants.GSON.fromJson(variables.<String>get(VersionJsonDownloadTask.ID), Version.class);
             version = version.setId(name).setJar(null);
             variables.set("version", version);
-            Task result = new ParallelTask(
+            Task result = downloadGameAsync(gameVersion, version).then(new ParallelTask(
                     new GameAssetDownloadTask(dependencyManager, version),
-                    downloadGameAsync(gameVersion, version),
                     new GameLibrariesTask(dependencyManager, version) // Game libraries will be downloaded for multiple times partly, this time is for vanilla libraries.
-            ).with(new VersionJsonSaveTask(dependencyManager.getGameRepository(), version)); // using [with] because download failure here are tolerant.
+            ).with(new VersionJsonSaveTask(dependencyManager.getGameRepository(), version))); // using [with] because download failure here are tolerant.
 
             if (toolVersions.containsKey("forge"))
                 result = result.then(libraryTaskHelper(gameVersion, "forge"));
