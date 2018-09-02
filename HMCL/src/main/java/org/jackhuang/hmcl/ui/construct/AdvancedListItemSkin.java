@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui;
+package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.geometry.Insets;
@@ -29,12 +29,12 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 
-import java.util.Optional;
+public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
 
-public class AdvancedListItemSkin extends SkinBase<AdvancedListItem2> {
-
-    public AdvancedListItemSkin(AdvancedListItem2 skinnable) {
+    public AdvancedListItemSkin(AdvancedListItem skinnable) {
         super(skinnable);
 
         StackPane stackPane = new StackPane();

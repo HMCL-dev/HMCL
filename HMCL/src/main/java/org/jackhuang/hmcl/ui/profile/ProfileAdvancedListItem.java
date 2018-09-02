@@ -19,24 +19,14 @@ package org.jackhuang.hmcl.ui.profile;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.offline.OfflineAccount;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.game.AccountHelper;
-import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.ui.AdvancedListItem2;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ProfileAdvancedListItem extends AdvancedListItem2 {
+public class ProfileAdvancedListItem extends AdvancedListItem {
     private ObjectProperty<Profile> profile = new SimpleObjectProperty<Profile>() {
 
         @Override

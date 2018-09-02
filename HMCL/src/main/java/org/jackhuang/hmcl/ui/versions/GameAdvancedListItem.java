@@ -24,12 +24,12 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.ui.AdvancedListItem2;
+import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.WeakListenerHelper;
 
 import java.io.File;
 
-public class GameAdvancedListItem extends AdvancedListItem2 {
+public class GameAdvancedListItem extends AdvancedListItem {
     private final WeakListenerHelper helper = new WeakListenerHelper();
 
     private Profile profile;

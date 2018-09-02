@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
- * 
+ * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -17,55 +17,57 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXButton;
+import javafx.beans.property.*;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.control.Label;
+import javafx.scene.control.Control;
+import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.ui.FXUtils;
 
-public final class AdvancedListItem extends StackPane {
-    @FXML
-    private StackPane imageViewContainer;
-    @FXML
-    private Label lblTitle;
-    @FXML
-    private Label lblSubtitle;
-    @FXML
-    private ImageView imageView;
-    @FXML private JFXButton btnSettings;
+public class AdvancedListItem extends Control {
+    private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
+    private final ObjectProperty<Rectangle2D> viewport = new SimpleObjectProperty<>();
+    private final StringProperty title = new SimpleStringProperty();
+    private final StringProperty subtitle = new SimpleStringProperty();
 
-    public AdvancedListItem(String title) {
-        this(title, "");
+    public ObjectProperty<Image> imageProperty() {
+        return image;
     }
 
-    public AdvancedListItem(String title, String subtitle) {
-        FXUtils.loadFXML(this, "/assets/fxml/advanced-list-item.fxml");
-
-        lblTitle.setText(title);
-        lblSubtitle.setText(subtitle);
-
-        FXUtils.limitSize(imageView, 32, 32);
+    public ObjectProperty<Rectangle2D> viewportProperty() {
+        return viewport;
     }
 
-    public void setOnSettingsButtonClicked(EventHandler<? super MouseEvent> handler) {
-        btnSettings.setOnMouseClicked(handler);
+    public StringProperty titleProperty() {
+        return title;
     }
 
-    public void setTitle(String title) {
-        lblTitle.setText(title);
+    public StringProperty subtitleProperty() {
+        return subtitle;
     }
 
-    public void setSubtitle(String subtitle) {
-        lblSubtitle.setText(subtitle);
+    public final ObjectProperty<EventHandler<ActionEvent>> onActionProperty() {
+        return onAction;
     }
 
-    public void setImage(Image image, Rectangle2D viewport) {
-        imageView.setImage(image);
-        imageView.setViewport(viewport);
+    public final void setOnAction(EventHandler<ActionEvent> value) {
+        onActionProperty().set(value);
+    }
+
+    public final EventHandler<ActionEvent> getOnAction() {
+        return onActionProperty().get();
+    }
+
+    private ObjectProperty<EventHandler<ActionEvent>> onAction = new SimpleObjectProperty<EventHandler<ActionEvent>>(this, "onAction") {
+        @Override
+        protected void invalidated() {
+            setEventHandler(ActionEvent.ACTION, get());
+        }
+    };
+
+    @Override
+    protected Skin<?> createDefaultSkin() {
+        return new AdvancedListItemSkin(this);
     }
 }
