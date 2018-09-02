@@ -36,7 +36,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.construct.Validator;
-import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;

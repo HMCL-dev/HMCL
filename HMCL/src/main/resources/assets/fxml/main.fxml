@@ -2,9 +2,7 @@
 
 <?import com.jfoenix.controls.JFXButton?>
 <?import javafx.scene.layout.StackPane?>
-<fx:root
-        maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
-        type="StackPane" pickOnBounds="false" style="-fx-padding: 25;"
+<fx:root type="StackPane" pickOnBounds="false" style="-fx-padding: 25;"
         xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
     <JFXButton prefWidth="150" prefHeight="50" buttonType="RAISED" styleClass="jfx-button-raised"
                style="-fx-font-size: 15;" onMouseClicked="#launch"

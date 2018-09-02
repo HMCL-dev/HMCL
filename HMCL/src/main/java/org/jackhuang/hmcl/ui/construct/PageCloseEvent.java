@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
- * 
+ * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,13 +15,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui.wizard;
+package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.property.StringProperty;
+import javafx.event.Event;
+import javafx.event.EventTarget;
+import javafx.event.EventType;
 
-public interface DecoratorPage {
-    StringProperty titleProperty();
+/**
+ * Indicates a close operation on the navigator page.
+ *
+ * @author huangyuhui
+ */
+public class PageCloseEvent extends Event {
 
-    default void onClose() {
+    public static final EventType<PageCloseEvent> CLOSE = new EventType<>("PAGE_CLOSE");
+
+    public PageCloseEvent() {
+        super(CLOSE);
     }
+
+    public PageCloseEvent(Object source, EventTarget target) {
+        super(source, target, CLOSE);
+    }
+
 }

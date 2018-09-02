@@ -23,18 +23,17 @@ import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
-import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class MainPage extends StackPane implements DecoratorPage {
 
     private final StringProperty title = new SimpleStringProperty(this, "title", i18n("main_page"));
 
-
     {
         FXUtils.loadFXML(this, "/assets/fxml/main.fxml");
-
     }
 
     @FXML

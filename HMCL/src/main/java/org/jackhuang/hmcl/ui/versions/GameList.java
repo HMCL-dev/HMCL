@@ -31,7 +31,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
-import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.VersionNumber;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
@@ -78,6 +78,13 @@ public class GameList extends Control implements DecoratorPage {
                 loading.set(false);
                 items.setAll(children);
                 children.forEach(GameListItem::checkSelection);
+
+                profile.selectedVersionProperty().addListener((a, b, newValue) -> {
+                    toggleGroup.getToggles().stream()
+                            .filter(it -> ((GameListItem) it.getUserData()).getVersion().equals(newValue))
+                            .findFirst()
+                            .ifPresent(it -> it.setSelected(true));
+                });
             }
             toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {
                 GameListItem model = (GameListItem) toggle.getUserData();

@@ -127,7 +127,7 @@ public class GameListItem extends Control {
 
     public void modifyGameSettings() {
         Controllers.getVersionPage().load(version, profile);
-        Controllers.getDecorator().showPage(Controllers.getVersionPage());
+        Controllers.navigate(Controllers.getVersionPage());
     }
 
     public void generateLaunchScript() {

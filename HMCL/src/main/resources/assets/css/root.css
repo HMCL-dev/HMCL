@@ -1062,6 +1062,10 @@
 .jfx-decorator-drawer {
 }
 
+.jfx-decorator-title {
+    -fx-text-fill: -fx-base-text-fill; -fx-font-size: 15;
+}
+
 .resize-border {
     -fx-border-color: -fx-base-color;
     -fx-border-width: 0 2 2 2;

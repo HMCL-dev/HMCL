@@ -22,7 +22,7 @@
             maxWidth="800">
         <center>
             <StackPane fx:id="drawerWrapper" styleClass="jfx-decorator-drawer" FXUtils.overflowHidden="true">
-                <BorderPane>
+                <BorderPane fx:id="drawer">
                     <left>
                         <StackPane minWidth="200" maxWidth="200" styleClass="jfx-decorator-content-container">
                             <BorderPane fx:id="leftRootPane">

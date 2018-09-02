@@ -43,9 +43,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class LeftPaneController {
+public final class LeftPaneController extends AdvancedListBox {
 
-    public LeftPaneController(AdvancedListBox leftPane) {
+    public LeftPaneController() {
+
         AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
         accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
         accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
@@ -67,10 +68,10 @@ public final class LeftPaneController {
                         .then(Color.RED)
                         .otherwise(Color.BLACK));
 
-        launcherSettingsItem.maxWidthProperty().bind(leftPane.widthProperty());
+        launcherSettingsItem.maxWidthProperty().bind(widthProperty());
         launcherSettingsItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
 
-        leftPane
+        this
                 .startCategory(i18n("account").toUpperCase())
                 .add(accountListItem)
                 .startCategory(i18n("version").toUpperCase())

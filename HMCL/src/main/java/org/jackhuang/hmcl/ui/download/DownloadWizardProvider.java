@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
@@ -53,7 +54,8 @@ public final class DownloadWizardProvider implements WizardProvider {
     private Task finishVersionDownloadingAsync(Map<String, Object> settings) {
         GameBuilder builder = profile.getDependency().gameBuilder();
 
-        builder.name((String) settings.get("name"));
+        String name = (String) settings.get("name");
+        builder.name(name);
         builder.gameVersion(((RemoteVersion) settings.get("game")).getGameVersion());
 
         if (settings.containsKey("forge"))
@@ -65,7 +67,8 @@ public final class DownloadWizardProvider implements WizardProvider {
         if (settings.containsKey("optifine"))
             builder.version((RemoteVersion) settings.get("optifine"));
 
-        return builder.buildAsync().finalized((a, b) -> profile.getRepository().refreshVersions());
+        return builder.buildAsync().finalized((a, b) -> profile.getRepository().refreshVersions())
+                .then(Task.of(Schedulers.javafx(), () -> profile.setSelectedVersion(name)));
     }
 
     private Task finishModpackInstallingAsync(Map<String, Object> settings) {
@@ -77,7 +80,8 @@ public final class DownloadWizardProvider implements WizardProvider {
         String name = tryCast(settings.get(ModpackPage.MODPACK_NAME), String.class).orElse(null);
         if (selected == null || modpack == null || name == null) return null;
 
-        return ModpackHelper.getInstallTask(profile, selected, name, modpack);
+        return ModpackHelper.getInstallTask(profile, selected, name, modpack)
+                .then(Task.of(Schedulers.javafx(), () -> profile.setSelectedVersion(name)));
     }
 
     @Override

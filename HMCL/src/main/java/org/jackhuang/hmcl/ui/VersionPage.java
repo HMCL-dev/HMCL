@@ -28,8 +28,8 @@ import javafx.scene.control.Tab;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
-import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
 import org.jackhuang.hmcl.util.FileUtils;
 
 import java.io.File;

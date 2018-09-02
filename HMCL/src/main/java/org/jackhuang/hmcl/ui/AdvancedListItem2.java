@@ -60,20 +60,10 @@ public class AdvancedListItem2 extends Control {
         return onActionProperty().get();
     }
 
-    private ObjectProperty<EventHandler<ActionEvent>> onAction = new ObjectPropertyBase<EventHandler<ActionEvent>>() {
+    private ObjectProperty<EventHandler<ActionEvent>> onAction = new SimpleObjectProperty<EventHandler<ActionEvent>>(this, "onAction") {
         @Override
         protected void invalidated() {
             setEventHandler(ActionEvent.ACTION, get());
-        }
-
-        @Override
-        public Object getBean() {
-            return AdvancedListItem2.this;
-        }
-
-        @Override
-        public String getName() {
-            return "onAction";
         }
     };
 

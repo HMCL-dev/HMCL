@@ -25,7 +25,7 @@ import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.MappedObservableList;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;

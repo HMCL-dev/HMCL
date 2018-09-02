@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import org.jackhuang.hmcl.ui.decorator.DecoratorController;
 import org.jackhuang.hmcl.ui.profile.ProfileList;
 import org.jackhuang.hmcl.ui.versions.GameList;
 import org.jackhuang.hmcl.util.FutureCallback;
@@ -53,7 +54,7 @@ public final class Controllers {
     private static ProfileList profileListPage = null;
     private static AuthlibInjectorServersPage serversPage = null;
     private static LeftPaneController leftPaneController;
-    private static Decorator decorator;
+    private static DecoratorController decorator;
 
     public static Scene getScene() {
         return scene;
@@ -106,7 +107,7 @@ public final class Controllers {
     }
 
     // FXThread
-    public static Decorator getDecorator() {
+    public static DecoratorController getDecorator() {
         return decorator;
     }
 
@@ -125,20 +126,14 @@ public final class Controllers {
 
         stage.setOnCloseRequest(e -> Launcher.stopApplication());
 
-        decorator = new Decorator(stage, getMainPage(), Metadata.TITLE, false, true);
-        decorator.showPage(null);
-        leftPaneController = new LeftPaneController(decorator.getLeftPane());
+        decorator = new DecoratorController(stage, getMainPage());
+        leftPaneController = new LeftPaneController();
+        decorator.getDecorator().drawerProperty().setAll(leftPaneController);
 
         Task.of(JavaVersion::initialize).start();
 
-        decorator.setCustomMaximize(false);
-
-        scene = new Scene(decorator, 804, 521);
+        scene = new Scene(decorator.getDecorator(), 800, 519);
         scene.getStylesheets().setAll(config().getTheme().getStylesheets());
-        stage.setMinWidth(804);
-        stage.setMaxWidth(804);
-        stage.setMinHeight(521);
-        stage.setMaxHeight(521);
 
         stage.getIcons().add(new Image("/assets/img/icon.png"));
         stage.setTitle(Metadata.TITLE);
@@ -189,10 +184,7 @@ public final class Controllers {
     }
 
     public static void navigate(Node node) {
-        if (decorator.getNowPage() == node)
-            decorator.showPage(null);
-        else
-            decorator.showPage(node);
+        decorator.getNavigator().navigate(node);
     }
 
     public static boolean isStopped() {
