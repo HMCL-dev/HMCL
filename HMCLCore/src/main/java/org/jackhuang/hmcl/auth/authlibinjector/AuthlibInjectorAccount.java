@@ -29,17 +29,12 @@ import org.jackhuang.hmcl.util.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
-import java.util.Base64;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.io.IOException;
+import java.util.*;
 import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Logging.LOG;
-
-import java.io.IOException;
 
 public class AuthlibInjectorAccount extends YggdrasilAccount {
     private AuthlibInjectorServer server;

@@ -20,13 +20,12 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextInputDialog;
-
 import org.jackhuang.hmcl.ui.FXUtils;
+
 import javax.swing.*;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
-import java.util.Optional;
 
 public final class MessageBox {
     private MessageBox() {

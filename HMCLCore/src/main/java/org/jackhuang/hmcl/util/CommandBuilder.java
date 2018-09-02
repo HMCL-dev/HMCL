@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 

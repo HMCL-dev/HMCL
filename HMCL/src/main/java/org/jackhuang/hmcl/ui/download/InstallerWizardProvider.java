@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
-
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
@@ -28,9 +27,10 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.Map;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class InstallerWizardProvider implements WizardProvider {
     private final Profile profile;

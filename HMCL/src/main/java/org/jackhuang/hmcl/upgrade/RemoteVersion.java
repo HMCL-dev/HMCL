@@ -17,16 +17,15 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
-import java.io.IOException;
-import java.util.Optional;
-
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.util.JsonUtils;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
+import java.io.IOException;
+import java.util.Optional;
 
 public class RemoteVersion {
 

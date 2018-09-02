@@ -39,9 +39,9 @@ import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.JavaVersion;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-
 import java.util.function.Consumer;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public final class Controllers {
 

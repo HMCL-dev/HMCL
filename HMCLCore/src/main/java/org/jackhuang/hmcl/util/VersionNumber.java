@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * The formatted version number represents a version string.

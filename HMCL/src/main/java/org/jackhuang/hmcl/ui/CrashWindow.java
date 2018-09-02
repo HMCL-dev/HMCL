@@ -27,11 +27,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
  * @author huangyuhui

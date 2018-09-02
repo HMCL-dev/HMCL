@@ -17,10 +17,13 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
-import static org.jackhuang.hmcl.ui.FXUtils.loadFXML;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
-import java.io.IOException;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.JFXTextField;
+import javafx.beans.binding.Bindings;
+import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -30,16 +33,11 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXTextField;
-
-import javafx.beans.binding.Bindings;
-import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
+import java.io.IOException;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.ui.FXUtils.loadFXML;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AddAuthlibInjectorServerPane extends StackPane {
 

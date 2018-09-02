@@ -17,15 +17,15 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.util.Optional;
-import java.util.function.Consumer;
-
 import javafx.event.EventHandler;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * @author yushijinhun

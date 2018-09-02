@@ -33,12 +33,13 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModpackInfoPage extends StackPane implements WizardPage {
     private final WizardController controller;

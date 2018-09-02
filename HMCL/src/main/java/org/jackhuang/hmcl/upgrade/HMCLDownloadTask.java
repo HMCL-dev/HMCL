@@ -17,16 +17,16 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.util.NetworkUtils;
+import org.tukaani.xz.XZInputStream;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
-
-import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.util.NetworkUtils;
-import org.tukaani.xz.XZInputStream;
 
 class HMCLDownloadTask extends FileDownloadTask {
 

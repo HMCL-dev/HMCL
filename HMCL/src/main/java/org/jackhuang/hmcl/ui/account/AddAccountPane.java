@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.*;
-
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.fxml.FXML;
@@ -31,7 +30,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
@@ -43,12 +41,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.IconedItem;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
 
@@ -58,9 +51,7 @@ import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.jfxListCellFactory;
-import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
-import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
+import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AddAccountPane extends StackPane {

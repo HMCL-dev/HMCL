@@ -24,8 +24,8 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.WeakListenerHelper;
+import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 
 import java.io.File;
 

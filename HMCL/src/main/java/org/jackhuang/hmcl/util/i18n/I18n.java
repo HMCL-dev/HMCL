@@ -17,14 +17,14 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 
-import org.jackhuang.hmcl.setting.ConfigHolder;
-import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class I18n {
 

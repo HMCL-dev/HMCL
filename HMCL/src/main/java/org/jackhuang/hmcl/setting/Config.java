@@ -17,13 +17,17 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import java.io.File;
-import java.lang.reflect.Modifier;
-import java.net.Proxy;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.stream.Stream;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
+import com.google.gson.annotations.SerializedName;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
+import javafx.collections.ObservableSet;
 import org.hildan.fxgson.creators.ObservableListCreator;
 import org.hildan.fxgson.creators.ObservableMapCreator;
 import org.hildan.fxgson.creators.ObservableSetCreator;
@@ -37,27 +41,12 @@ import org.jackhuang.hmcl.util.ObservableHelper;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
-import com.google.gson.annotations.SerializedName;
-
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
-import javafx.collections.ObservableSet;
+import java.io.File;
+import java.lang.reflect.Modifier;
+import java.net.Proxy;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Stream;
 
 public final class Config implements Cloneable, Observable {
 

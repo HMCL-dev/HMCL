@@ -17,26 +17,9 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.ui.FXUtils.checkFxUserThread;
-import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.Logging.LOG;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.swing.JOptionPane;
-
+import com.google.gson.Gson;
+import javafx.application.Platform;
+import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
@@ -49,10 +32,24 @@ import org.jackhuang.hmcl.util.JarUtils;
 import org.jackhuang.hmcl.util.JavaVersion;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import com.google.gson.Gson;
+import javax.swing.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import javafx.application.Platform;
-import javafx.scene.layout.Region;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.jackhuang.hmcl.ui.FXUtils.checkFxUserThread;
+import static org.jackhuang.hmcl.util.Lang.thread;
+import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class UpdateHandler {
     private UpdateHandler() {}

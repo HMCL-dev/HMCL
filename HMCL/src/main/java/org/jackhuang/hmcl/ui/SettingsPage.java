@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXColorPicker;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -37,21 +37,21 @@ import javafx.scene.text.Font;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
+import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.i18n.Locales;
-
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.net.Proxy;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class SettingsPage extends SettingsView implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", i18n("settings.launcher"));

@@ -18,11 +18,9 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
-import com.jfoenix.concurrency.JFXUtilities;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
-
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLDependencyManager;

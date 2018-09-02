@@ -19,7 +19,10 @@ package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.LibraryDownloadInfo;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.Lang;

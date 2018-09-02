@@ -17,11 +17,11 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Helper class for implementing {@link Observable}.

@@ -25,7 +25,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
@@ -37,10 +36,11 @@ import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.StringUtils;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
 import java.util.Map;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModpackPage extends StackPane implements WizardPage {
     private final WizardController controller;

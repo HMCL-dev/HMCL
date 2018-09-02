@@ -25,7 +25,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-
 import org.jackhuang.hmcl.game.ModAdviser;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -34,6 +33,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.StringUtils;
+
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;

@@ -23,7 +23,6 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.GameRepository;
@@ -32,9 +31,10 @@ import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.StringUtils;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.Map;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class InstallersPage extends StackPane implements WizardPage {
     private final WizardController controller;

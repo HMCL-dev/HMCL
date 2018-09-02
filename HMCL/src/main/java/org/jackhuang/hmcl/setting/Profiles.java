@@ -18,7 +18,10 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.beans.Observable;
-import javafx.beans.property.*;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyListProperty;
+import javafx.beans.property.ReadOnlyListWrapper;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Launcher;
 

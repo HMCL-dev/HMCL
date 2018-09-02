@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
 import javafx.beans.InvalidationListener;
-
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.util.*;

@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
-
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.RemoteVersion;
@@ -26,11 +25,11 @@ import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+
 import java.io.File;
 import java.util.Map;
 

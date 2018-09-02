@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
@@ -24,15 +26,12 @@ import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.IOUtils;
 import org.jackhuang.hmcl.util.Logging;
 
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public class Theme {
     public static final Theme BLUE = new Theme("blue", "#5C6BC0");

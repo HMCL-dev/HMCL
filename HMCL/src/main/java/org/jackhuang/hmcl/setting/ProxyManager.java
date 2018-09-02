@@ -17,7 +17,11 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
+import javafx.beans.value.ObservableObjectValue;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.net.Authenticator;
 import java.net.InetSocketAddress;
@@ -25,12 +29,7 @@ import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.Proxy.Type;
 
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
-
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ObjectBinding;
-import javafx.beans.value.ObservableObjectValue;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public final class ProxyManager {
     private ProxyManager() {

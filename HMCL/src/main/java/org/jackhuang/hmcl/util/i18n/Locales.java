@@ -17,10 +17,9 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
-import org.jackhuang.hmcl.util.Lang;
-
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import org.jackhuang.hmcl.util.Lang;
 
 import java.io.IOException;
 import java.util.List;

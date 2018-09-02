@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.JFXToggleButton;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -31,7 +34,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -43,9 +45,10 @@ import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.ImagePickerItem;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.Versions;
-import org.jackhuang.hmcl.util.*;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import org.jackhuang.hmcl.util.FileUtils;
+import org.jackhuang.hmcl.util.JavaVersion;
+import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,6 +57,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VersionSettingsPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty();

@@ -17,23 +17,18 @@
  */
 package org.jackhuang.hmcl.util;
 
-import static java.util.stream.Collectors.toCollection;
-import static javafx.collections.FXCollections.unmodifiableObservableList;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.IdentityHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.WeakListChangeListener;
+
+import java.util.*;
+import java.util.function.Function;
+
+import static java.util.stream.Collectors.toCollection;
+import static javafx.collections.FXCollections.unmodifiableObservableList;
 
 /**
  * @author yushijinhun

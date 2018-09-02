@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
-
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -28,18 +27,17 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
-
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
-import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class FileItem extends BorderPane {
     private final Label lblPath = new Label();

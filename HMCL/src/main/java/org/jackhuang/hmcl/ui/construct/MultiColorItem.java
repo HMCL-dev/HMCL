@@ -13,13 +13,13 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-
 import org.jackhuang.hmcl.ui.FXUtils;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Consumer;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class MultiColorItem extends ComponentList {
     private final StringProperty customTitle = new SimpleStringProperty(this, "customTitle", i18n("selector.custom"));

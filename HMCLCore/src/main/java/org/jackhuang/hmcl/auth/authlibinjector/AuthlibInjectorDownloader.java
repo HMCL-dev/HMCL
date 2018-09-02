@@ -17,7 +17,13 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import com.google.gson.JsonParseException;
+import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
+import org.jackhuang.hmcl.util.JsonUtils;
+import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.IOException;
 import java.net.URL;
@@ -30,14 +36,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
 
-import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
-import org.jackhuang.hmcl.util.JsonUtils;
-import org.jackhuang.hmcl.util.NetworkUtils;
-
-import com.google.gson.JsonParseException;
-import com.google.gson.annotations.SerializedName;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class AuthlibInjectorDownloader {
 

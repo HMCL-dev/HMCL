@@ -34,11 +34,11 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
-
 import org.jackhuang.hmcl.setting.Theme;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.Optional;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VersionItem extends StackPane {
     @FXML

@@ -17,9 +17,13 @@
  */
 package org.jackhuang.hmcl;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.upgrade.UpdateHandler;
 
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -29,13 +33,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.logging.Level;
 
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
-import javax.swing.JOptionPane;
-
-import org.jackhuang.hmcl.setting.ConfigHolder;
-import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Main {
 

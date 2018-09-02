@@ -17,6 +17,12 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import javafx.beans.Observable;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyListProperty;
+import javafx.beans.property.ReadOnlyListWrapper;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
@@ -29,13 +35,6 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.MojangYggdrasilProvider;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
-
-import javafx.beans.Observable;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyListProperty;
-import javafx.beans.property.ReadOnlyListWrapper;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.ObservableList;
 
 import java.io.IOException;
 import java.util.Map;

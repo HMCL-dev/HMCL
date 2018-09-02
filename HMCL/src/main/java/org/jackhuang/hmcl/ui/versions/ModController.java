@@ -26,7 +26,6 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-
 import org.jackhuang.hmcl.mod.ModInfo;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -36,7 +35,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ModItem;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Logging;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,6 +44,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModController {
     @FXML

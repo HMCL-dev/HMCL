@@ -17,13 +17,10 @@
  */
 package org.jackhuang.hmcl;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
-
 import com.jfoenix.concurrency.JFXUtilities;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
-
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
@@ -38,6 +35,8 @@ import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class Launcher extends Application {
 

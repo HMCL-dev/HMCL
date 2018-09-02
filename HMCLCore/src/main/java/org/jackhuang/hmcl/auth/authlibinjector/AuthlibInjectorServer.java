@@ -17,17 +17,16 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
-import static org.jackhuang.hmcl.util.Lang.tryCast;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import org.jackhuang.hmcl.util.JsonUtils;
+import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.IOException;
 import java.util.Optional;
 
-import org.jackhuang.hmcl.util.JsonUtils;
-import org.jackhuang.hmcl.util.NetworkUtils;
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
+import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 public class AuthlibInjectorServer {
 

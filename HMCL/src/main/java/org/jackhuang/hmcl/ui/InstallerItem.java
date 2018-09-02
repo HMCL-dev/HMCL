@@ -22,9 +22,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
 import java.util.function.Consumer;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
  * @author huangyuhui

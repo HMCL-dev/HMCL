@@ -17,24 +17,15 @@
  */
 package org.jackhuang.hmcl.ui.profile;
 
-import javafx.beans.property.*;
-import javafx.geometry.Rectangle2D;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.image.Image;
-import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.auth.offline.OfflineAccount;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.game.AccountHelper;
-import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.task.Schedulers;
-
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class ProfileListItem extends Control {
     private final Profile profile;

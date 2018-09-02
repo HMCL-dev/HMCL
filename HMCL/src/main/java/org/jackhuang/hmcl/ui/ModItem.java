@@ -23,15 +23,14 @@ import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
 import javafx.scene.layout.BorderPane;
-
 import org.jackhuang.hmcl.mod.ModInfo;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
 import java.util.function.Consumer;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModItem extends BorderPane {
 

@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.versions;
 import javafx.fxml.FXML;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
-
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
@@ -34,12 +33,13 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.download.InstallerWizardProvider;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.LinkedList;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class InstallerController {
     private Profile profile;

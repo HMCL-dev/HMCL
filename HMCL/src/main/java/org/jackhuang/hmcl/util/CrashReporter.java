@@ -18,16 +18,11 @@
 package org.jackhuang.hmcl.util;
 
 import javafx.application.Platform;
-
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.CrashWindow;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
-
-import static java.util.Collections.newSetFromMap;
-import static org.jackhuang.hmcl.util.Logging.LOG;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -37,6 +32,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+
+import static java.util.Collections.newSetFromMap;
+import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
  * @author huangyuhui

@@ -17,12 +17,11 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import org.jackhuang.hmcl.ui.Controllers;
-
 import javafx.event.Event;
 import javafx.event.EventTarget;
 import javafx.event.EventType;
 import javafx.scene.layout.Region;
+import org.jackhuang.hmcl.ui.Controllers;
 
 /**
  * Indicates a close operation on the dialog.

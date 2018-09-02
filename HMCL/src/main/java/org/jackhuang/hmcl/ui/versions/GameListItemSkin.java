@@ -18,7 +18,10 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.concurrency.JFXUtilities;
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXPopup;
+import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;

@@ -23,7 +23,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameAssetRefreshTask;
@@ -35,10 +34,11 @@ import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class TaskListPane extends StackPane {
     private final AdvancedListBox listBox = new AdvancedListBox();

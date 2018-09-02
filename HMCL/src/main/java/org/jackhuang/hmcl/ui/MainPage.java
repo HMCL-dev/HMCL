@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;

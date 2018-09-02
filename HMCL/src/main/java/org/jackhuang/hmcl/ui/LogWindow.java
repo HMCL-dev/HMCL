@@ -30,7 +30,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
-
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.game.LauncherHelper;
@@ -43,10 +42,10 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import java.util.concurrent.CountDownLatch;
+
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
-import java.util.concurrent.CountDownLatch;
 
 /**
  *

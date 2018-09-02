@@ -15,12 +15,11 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 @DefaultProperty("image")
 public final class ImagePickerItem extends BorderPane {

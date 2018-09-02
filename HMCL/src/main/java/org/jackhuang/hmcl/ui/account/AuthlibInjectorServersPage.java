@@ -17,15 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
-import static org.jackhuang.hmcl.ui.FXUtils.loadFXML;
-import static org.jackhuang.hmcl.ui.FXUtils.smoothScrolling;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.MappedObservableList;
-
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -34,8 +25,15 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.MappedObservableList;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.ui.FXUtils.loadFXML;
+import static org.jackhuang.hmcl.ui.FXUtils.smoothScrolling;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AuthlibInjectorServersPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", i18n("account.injector.manage.title"));

@@ -19,16 +19,16 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import javafx.beans.property.StringProperty;
-
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.wizard.AbstractWizardDisplayer;
 import org.jackhuang.hmcl.util.StringUtils;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.Map;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplayer {
 

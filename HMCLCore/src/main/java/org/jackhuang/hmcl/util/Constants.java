@@ -19,11 +19,9 @@ package org.jackhuang.hmcl.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.scene.image.Image;
-
 import org.jackhuang.hmcl.game.Argument;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.RuledArgument;

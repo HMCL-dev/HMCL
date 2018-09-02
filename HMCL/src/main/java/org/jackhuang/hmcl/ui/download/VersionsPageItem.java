@@ -23,16 +23,16 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.ui.FXUtils;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import java.util.Objects;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
  * @author huangyuhui

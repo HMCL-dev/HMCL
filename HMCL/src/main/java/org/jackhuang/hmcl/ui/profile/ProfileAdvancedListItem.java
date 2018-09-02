@@ -24,8 +24,6 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
 public class ProfileAdvancedListItem extends AdvancedListItem {
     private ObjectProperty<Profile> profile = new SimpleObjectProperty<Profile>() {
 

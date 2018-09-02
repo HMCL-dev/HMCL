@@ -17,8 +17,9 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.IOUtils;
+import org.jackhuang.hmcl.util.JarUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,14 +31,13 @@ import java.security.Signature;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Level;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.IOUtils;
-import org.jackhuang.hmcl.util.JarUtils;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 /**
  * A class that checks the integrity of HMCL.

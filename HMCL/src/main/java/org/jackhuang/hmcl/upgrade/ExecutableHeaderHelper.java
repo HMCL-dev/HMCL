@@ -17,12 +17,7 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
-import static java.nio.file.StandardOpenOption.CREATE;
-import static java.nio.file.StandardOpenOption.READ;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
-import static java.nio.file.StandardOpenOption.WRITE;
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Pair.pair;
+import org.jackhuang.hmcl.util.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,7 +30,9 @@ import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import org.jackhuang.hmcl.util.IOUtils;
+import static java.nio.file.StandardOpenOption.*;
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
  * Helper class for adding/removing executable header from HMCL file.

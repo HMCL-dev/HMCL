@@ -17,12 +17,11 @@
  */
 package org.jackhuang.hmcl.auth;
 
-import org.jackhuang.hmcl.util.ObservableHelper;
-import org.jackhuang.hmcl.util.ToStringBuilder;
-
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import org.jackhuang.hmcl.util.ObservableHelper;
+import org.jackhuang.hmcl.util.ToStringBuilder;
 
 import java.util.Map;
 import java.util.Optional;

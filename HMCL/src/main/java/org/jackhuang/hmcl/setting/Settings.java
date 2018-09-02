@@ -17,17 +17,9 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import javafx.beans.value.ObservableValue;
 import javafx.scene.text.Font;
-
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.event.*;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.*;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
