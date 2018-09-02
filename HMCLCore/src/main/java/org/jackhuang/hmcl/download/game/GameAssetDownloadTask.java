@@ -28,15 +28,11 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-
-import static org.jackhuang.hmcl.util.DigestUtils.digest;
-import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
 /**
  *

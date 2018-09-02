@@ -15,19 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui;
+package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.JFXCheckBox;
-import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXTextField;
-import com.jfoenix.controls.JFXToggleButton;
+import com.jfoenix.controls.*;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Toggle;
 import javafx.scene.image.Image;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
@@ -36,9 +37,13 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.ImagePickerItem;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
+import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -50,11 +55,14 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-public final class VersionSettingsController {
+public final class VersionSettingsPage extends StackPane implements DecoratorPage {
+    private final StringProperty title = new SimpleStringProperty();
+
     private VersionSetting lastVersionSetting = null;
     private Profile profile;
     private String versionId;
     private boolean javaItemsLoaded;
+    private InvalidationListener specificSettingsListener;
 
     @FXML private VBox rootPane;
     @FXML private ScrollPane scroll;
@@ -68,16 +76,22 @@ public final class VersionSettingsController {
     @FXML private JFXTextField txtPrecallingCommand;
     @FXML private JFXTextField txtServerIP;
     @FXML private ComponentList advancedSettingsPane;
+    @FXML private ComponentList componentList;
     @FXML private JFXComboBox<?> cboLauncherVisibility;
     @FXML private JFXCheckBox chkFullscreen;
     @FXML private Label lblPhysicalMemory;
     @FXML private JFXToggleButton chkNoJVMArgs;
     @FXML private JFXToggleButton chkNoGameCheck;
-    @FXML private MultiFileItem<Boolean> globalItem;
     @FXML private MultiFileItem<JavaVersion> javaItem;
     @FXML private MultiFileItem<EnumGameDirectory> gameDirItem;
     @FXML private JFXToggleButton chkShowLogs;
     @FXML private ImagePickerItem iconPickerItem;
+    @FXML private JFXCheckBox chkEnableSpecificSettings;
+    @FXML private BorderPane settingsTypePane;
+
+    public VersionSettingsPage() {
+        FXUtils.loadFXML(this, "/assets/fxml/version/version-settings.fxml");
+    }
 
     @FXML
     private void initialize() {
@@ -106,20 +120,42 @@ public final class VersionSettingsController {
                 gameDirItem.createChildren(i18n("settings.advanced.game_dir.independent"), EnumGameDirectory.VERSION_FOLDER)
         ));
 
-        globalItem.loadChildren(Arrays.asList(
-                globalItem.createChildren(i18n("settings.type.global"), true),
-                globalItem.createChildren(i18n("settings.type.special"), false)
-        ));
+        chkEnableSpecificSettings.selectedProperty().addListener((a, b, newValue) -> {
+            if (versionId == null) return;
+
+            // do not call versionSettings.setUsesGlobal(true/false)
+            // because versionSettings can be the global one.
+            // global versionSettings.usesGlobal is always true.
+            if (newValue)
+                profile.specializeVersionSetting(versionId);
+            else
+                profile.globalizeVersionSetting(versionId);
+
+            Platform.runLater(() -> loadVersionSetting(profile, versionId));
+        });
+
+        specificSettingsListener = o -> {
+            chkEnableSpecificSettings.setSelected(!lastVersionSetting.isUsesGlobal());
+        };
+
+        componentList.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
+        advancedSettingsPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
     }
 
     public void loadVersionSetting(Profile profile, String versionId) {
         this.profile = profile;
         this.versionId = versionId;
 
+        if (versionId == null) {
+            componentList.removeChild(iconPickerItem);
+            rootPane.getChildren().remove(settingsTypePane);
+            chkEnableSpecificSettings.setSelected(true);
+        }
+
         VersionSetting versionSetting = profile.getVersionSetting(versionId);
 
-        gameDirItem.setDisable(profile.getRepository().isModpack(versionId));
-        globalItem.setDisable(profile.getRepository().isModpack(versionId));
+        gameDirItem.setDisable(versionId != null && profile.getRepository().isModpack(versionId));
+        settingsTypePane.setDisable(versionId != null && profile.getRepository().isModpack(versionId));
 
         // unbind data fields
         if (lastVersionSetting != null) {
@@ -140,14 +176,13 @@ public final class VersionSettingsController {
             FXUtils.unbindBoolean(chkShowLogs, lastVersionSetting.showLogsProperty());
             FXUtils.unbindEnum(cboLauncherVisibility);
 
-            globalItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.usesGlobalProperty());
+            lastVersionSetting.usesGlobalProperty().removeListener(specificSettingsListener);
 
             gameDirItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.gameDirTypeProperty());
             gameDirItem.subtitleProperty().unbind();
         }
 
         // unbind data fields
-        globalItem.setToggleSelectedListener(null);
         javaItem.setToggleSelectedListener(null);
 
         // bind new data fields
@@ -168,6 +203,10 @@ public final class VersionSettingsController {
         FXUtils.bindBoolean(chkShowLogs, versionSetting.showLogsProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
 
+        versionSetting.usesGlobalProperty().addListener(specificSettingsListener);
+        if (versionId != null)
+            chkEnableSpecificSettings.setSelected(!versionSetting.isUsesGlobal());
+
         javaItem.setToggleSelectedListener(newValue -> {
             if (javaItem.isCustomToggle(newValue)) {
                 versionSetting.setUsesCustomJavaDir();
@@ -179,21 +218,6 @@ public final class VersionSettingsController {
         versionSetting.javaDirProperty().setChangedListener(it -> initJavaSubtitle(versionSetting));
         versionSetting.javaProperty().setChangedListener(it -> initJavaSubtitle(versionSetting));
         initJavaSubtitle(versionSetting);
-
-        globalItem.selectedDataProperty().bindBidirectional(versionSetting.usesGlobalProperty());
-        globalItem.subtitleProperty().bind(Bindings.createStringBinding(() -> i18n(versionSetting.isUsesGlobal() ? "settings.type.global" : "settings.type.special"),
-                versionSetting.usesGlobalProperty()));
-        globalItem.setToggleSelectedListener(newValue -> {
-            // do not call versionSettings.setUsesGlobal(true/false)
-            // because versionSettings can be the global one.
-            // global versionSettings.usesGlobal is always true.
-            if ((Boolean) newValue.getUserData())
-                profile.globalizeVersionSetting(versionId);
-            else
-                profile.specializeVersionSetting(versionId);
-
-            Platform.runLater(() -> loadVersionSetting(profile, versionId));
-        });
 
         gameDirItem.selectedDataProperty().bindBidirectional(versionSetting.gameDirTypeProperty());
         gameDirItem.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath()).normalize().toString(),
@@ -231,7 +255,15 @@ public final class VersionSettingsController {
     }
 
     @FXML
+    private void editGlobalSettings() {
+        Versions.modifyGlobalSettings(profile);
+    }
+
+    @FXML
     private void onExploreIcon() {
+        if (versionId == null)
+            return;
+
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png"));
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());
@@ -247,11 +279,21 @@ public final class VersionSettingsController {
     }
 
     private void loadIcon() {
+        if (versionId == null) {
+            iconPickerItem.setImage(new Image("/assets/img/grass.png"));
+            return;
+        }
+
         File iconFile = profile.getRepository().getVersionIcon(versionId);
         if (iconFile.exists())
             iconPickerItem.setImage(new Image("file:" + iconFile.getAbsolutePath()));
         else
-            iconPickerItem.setImage(Constants.DEFAULT_ICON.get());
+            iconPickerItem.setImage(new Image("/assets/img/grass.png"));
         FXUtils.limitSize(iconPickerItem.getImageView(), 32, 32);
+    }
+
+    @Override
+    public StringProperty titleProperty() {
+        return title;
     }
 }

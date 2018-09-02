@@ -52,7 +52,7 @@
 }
 
 .advanced-list-box-item {
-    -fx-padding: 10 16 10 16;
+    -fx-padding: 0 16 0 16;
 }
 
 .advanced-list-box-content {
@@ -294,9 +294,39 @@
     -jfx-rippler-fill: WHITE;
 }
 
+.jfx-tool-bar-second {
+    -fx-padding: 2 2 2 2;
+    -fx-background-color: -fx-base-check-color;
+}
+
+.jfx-tool-bar-second .jfx-rippler {
+    -jfx-rippler-fill: WHITE;
+}
+
+.jfx-tool-bar-button {
+    -fx-toggle-icon4-size: 35px;
+    -fx-pref-height: -fx-toggle-icon4-size;
+    -fx-max-height: -fx-toggle-icon4-size;
+    -fx-min-height: -fx-toggle-icon4-size;
+    -fx-background-radius: 5px;
+    -fx-background-color: transparent;
+    -jfx-toggle-color: white;
+    -jfx-untoggle-color: transparent;
+}
+
+.jfx-tool-bar-button .icon {
+    -fx-fill: rgb(204.0, 204.0, 51.0);
+    -fx-padding: 10.0;
+}
+
+.jfx-tool-bar-button .jfx-rippler {
+    -jfx-rippler-fill: white;
+    -jfx-mask-type: CIRCLE;
+}
+
 .jfx-decorator-button {
     -fx-max-width: 35px;
-    -fx-background-radius: 40px;
+    -fx-background-radius: 5px;
     -fx-max-height: 35px;
     -fx-background-color: transparent;
     -jfx-toggle-color: rgba(128, 128, 255, 0.2);
@@ -977,6 +1007,15 @@
     -jfx-focus-color: -fx-base-check-color;
 }
 
+.jfx-combo-box-warning {
+    -jfx-focus-color: #D34336;
+    -jfx-unfocus-color: #D34336;
+}
+
+.jfx-combo-box-warning .text {
+    -fx-fill: #D34336;
+}
+
 .combo-box-popup .list-view .jfx-list-cell .label,
 .combo-box-popup .list-view .jfx-list-cell:filled:hover .label {
     -fx-text-fill: BLACK;
@@ -1021,6 +1060,10 @@
 }
 
 .jfx-decorator-drawer {
+}
+
+.jfx-decorator-title {
+    -fx-text-fill: -fx-base-text-fill; -fx-font-size: 15;
 }
 
 .resize-border {

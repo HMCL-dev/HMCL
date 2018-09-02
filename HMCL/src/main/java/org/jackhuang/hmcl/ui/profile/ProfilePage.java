@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui;
+package org.jackhuang.hmcl.ui.profile;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
@@ -27,9 +27,10 @@ import javafx.scene.layout.StackPane;
 
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.FileItem;
-import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -80,7 +81,7 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
     @FXML
     private void onDelete() {
         if (profile != null) {
-            Settings.instance().deleteProfile(profile);
+            Profiles.getProfiles().remove(profile);
             Controllers.navigate(null);
         }
     }
@@ -99,10 +100,9 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
             }
             Profile newProfile = new Profile(txtProfileName.getText(), new File(getLocation()));
             newProfile.setUseRelativePath(toggleUseRelativePath.isSelected());
-            Settings.instance().putProfile(newProfile);
+            Profiles.getProfiles().add(newProfile);
         }
 
-        Settings.instance().onProfileLoading();
         Controllers.navigate(null);
     }
 

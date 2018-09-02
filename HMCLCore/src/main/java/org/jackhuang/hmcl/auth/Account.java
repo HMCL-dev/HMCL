@@ -54,7 +54,7 @@ public abstract class Account implements Observable {
      *
      * @throws CredentialExpiredException when the stored credentials has expired, in which case a password login will be performed
      */
-    public abstract AuthInfo logIn() throws CredentialExpiredException, AuthenticationException;
+    public abstract AuthInfo logIn() throws AuthenticationException;
 
     /**
      * Login with specified password.

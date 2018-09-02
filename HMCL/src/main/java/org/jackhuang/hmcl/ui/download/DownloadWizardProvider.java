@@ -25,11 +25,12 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Settings;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.Lang;
 import java.io.File;
 import java.util.Map;
 
@@ -38,17 +39,23 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class DownloadWizardProvider implements WizardProvider {
     private Profile profile;
+    private final int type;
+
+    public DownloadWizardProvider(int type) {
+        this.type = type;
+    }
 
     @Override
     public void start(Map<String, Object> settings) {
-        profile = Settings.instance().getSelectedProfile();
+        profile = Profiles.getSelectedProfile();
         settings.put(PROFILE, profile);
     }
 
     private Task finishVersionDownloadingAsync(Map<String, Object> settings) {
         GameBuilder builder = profile.getDependency().gameBuilder();
 
-        builder.name((String) settings.get("name"));
+        String name = (String) settings.get("name");
+        builder.name(name);
         builder.gameVersion(((RemoteVersion) settings.get("game")).getGameVersion());
 
         if (settings.containsKey("forge"))
@@ -60,7 +67,8 @@ public final class DownloadWizardProvider implements WizardProvider {
         if (settings.containsKey("optifine"))
             builder.version((RemoteVersion) settings.get("optifine"));
 
-        return builder.buildAsync().finalized((a, b) -> profile.getRepository().refreshVersions());
+        return builder.buildAsync().finalized((a, b) -> profile.getRepository().refreshVersions())
+                .then(Task.of(Schedulers.javafx(), () -> profile.setSelectedVersion(name)));
     }
 
     private Task finishModpackInstallingAsync(Map<String, Object> settings) {
@@ -72,7 +80,8 @@ public final class DownloadWizardProvider implements WizardProvider {
         String name = tryCast(settings.get(ModpackPage.MODPACK_NAME), String.class).orElse(null);
         if (selected == null || modpack == null || name == null) return null;
 
-        return ModpackHelper.getInstallTask(profile, selected, name, modpack);
+        return ModpackHelper.getInstallTask(profile, selected, name, modpack)
+                .then(Task.of(Schedulers.javafx(), () -> profile.setSelectedVersion(name)));
     }
 
     @Override
@@ -80,7 +89,7 @@ public final class DownloadWizardProvider implements WizardProvider {
         settings.put("success_message", i18n("install.success"));
         settings.put("failure_message", i18n("install.failed"));
 
-        switch (Lang.parseInt(settings.get(InstallTypePage.INSTALL_TYPE), -1)) {
+        switch (type) {
             case 0: return finishVersionDownloadingAsync(settings);
             case 1: return finishModpackInstallingAsync(settings);
             default: return null;
@@ -92,16 +101,13 @@ public final class DownloadWizardProvider implements WizardProvider {
         DownloadProvider provider = profile.getDependency().getDownloadProvider();
         switch (step) {
             case 0:
-                return new InstallTypePage(controller);
-            case 1:
-                int subStep = Lang.parseInt(settings.get(InstallTypePage.INSTALL_TYPE), -1);
-                switch (subStep) {
+                switch (type) {
                     case 0:
                         return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.game")), "", provider, "game", () -> controller.onNext(new InstallersPage(controller, profile.getRepository(), provider)));
                     case 1:
                         return new ModpackPage(controller);
                     default:
-                        throw new IllegalStateException("Error step " + step + ", subStep " + subStep + ", settings: " + settings + ", pages: " + controller.getPages());
+                        throw new IllegalStateException("Error step " + step + ", subStep " + type + ", settings: " + settings + ", pages: " + controller.getPages());
                 }
             default:
                 throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());

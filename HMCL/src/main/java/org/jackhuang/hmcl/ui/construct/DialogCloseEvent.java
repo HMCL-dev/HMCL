@@ -32,7 +32,7 @@ import javafx.scene.layout.Region;
  */
 public class DialogCloseEvent extends Event {
 
-    public static final EventType<DialogCloseEvent> CLOSE = new EventType<>("CLOSE");
+    public static final EventType<DialogCloseEvent> CLOSE = new EventType<>("DIALOG_CLOSE");
 
     public DialogCloseEvent() {
         super(CLOSE);

@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
-import javafx.fxml.FXML;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
@@ -31,7 +30,6 @@ import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 public abstract class SettingsView extends StackPane {
@@ -60,17 +58,17 @@ public abstract class SettingsView extends StackPane {
     protected final JFXCheckBox chkProxyAuthentication;
     protected final GridPane authPane;
     protected final Pane proxyPane;
+    protected final JFXToggleButton chkEnableGameList;
 
     public SettingsView() {
         scroll = new ScrollPane();
         getChildren().setAll(scroll);
-        scroll.setStyle("-fx-font-size: 14; -fx-pref-width: 100%;");
-        scroll.setFitToHeight(true);
+        scroll.setStyle("-fx-font-size: 14;");
         scroll.setFitToWidth(true);
 
         {
             VBox rootPane = new VBox();
-            rootPane.setStyle("-fx-padding: 20;");
+            rootPane.setStyle("-fx-padding: 18;");
             {
                 ComponentList settingsPane = new ComponentList();
                 {
@@ -135,6 +133,21 @@ public abstract class SettingsView extends StackPane {
                     backgroundItem.setCustomText(I18n.i18n("settings.custom"));
 
                     settingsPane.addChildren(backgroundItem);
+                }
+
+                {
+                    BorderPane borderPane = new BorderPane();
+
+                    Label left = new Label(I18n.i18n("settings.launcher.enable_game_list"));
+                    BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                    borderPane.setLeft(left);
+
+                    chkEnableGameList = new JFXToggleButton();
+                    chkEnableGameList.setSize(8);
+                    FXUtils.setLimitHeight(chkEnableGameList, 20);
+                    borderPane.setRight(chkEnableGameList);
+
+                    settingsPane.addChildren(borderPane);
                 }
 
                 {

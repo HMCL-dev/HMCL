@@ -4,6 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
+<?import org.jackhuang.hmcl.ui.versions.VersionSettingsPage?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          fx:id="rootPane"
@@ -12,7 +13,7 @@
     <StackPane fx:id="contentPane">
         <JFXTabPane fx:id="tabPane">
             <Tab text="%settings">
-                <fx:include source="version-settings.fxml" fx:id="versionSettings"/>
+                <VersionSettingsPage fx:id="versionSettings" />
             </Tab>
             <Tab fx:id="modTab" text="%mods">
                 <fx:include source="mod.fxml" fx:id="mod"/>
@@ -23,18 +24,6 @@
         </JFXTabPane>
 
         <HBox alignment="TOP_RIGHT" style="-fx-padding: 2 2 2 2;" spacing="3" pickOnBounds="false">
-            <JFXButton fx:id="btnDelete" maxHeight="40.0" minHeight="40.0" onMouseClicked="#onDelete"
-                       styleClass="toggle-icon3">
-                <graphic>
-                    <fx:include source="/assets/svg/delete-white.fxml"/>
-                </graphic>
-            </JFXButton>
-            <JFXButton fx:id="btnExport" maxHeight="40.0" minHeight="40.0" onMouseClicked="#onExport"
-                       styleClass="toggle-icon3">
-                <graphic>
-                    <fx:include source="/assets/svg/export.fxml"/>
-                </graphic>
-            </JFXButton>
             <JFXButton fx:id="btnBrowseMenu" maxHeight="40.0" minHeight="40.0" onMouseClicked="#onBrowseMenu"
                        styleClass="toggle-icon3">
                 <graphic>

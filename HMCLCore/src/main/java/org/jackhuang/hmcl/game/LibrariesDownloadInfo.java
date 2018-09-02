@@ -47,7 +47,7 @@ public final class LibrariesDownloadInfo {
     }
 
     public Map<String, LibraryDownloadInfo> getClassifiers() {
-        return classifiers == null ? Collections.EMPTY_MAP : Collections.unmodifiableMap(classifiers);
+        return classifiers == null ? Collections.emptyMap() : Collections.unmodifiableMap(classifiers);
     }
 
 }

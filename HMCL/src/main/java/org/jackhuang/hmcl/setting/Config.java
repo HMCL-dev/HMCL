@@ -153,6 +153,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("updateChannel")
     private ObjectProperty<UpdateChannel> updateChannel = new SimpleObjectProperty<>(UpdateChannel.STABLE);
 
+    @SerializedName("enableMainPageGameList")
+    private BooleanProperty enableMainPageGameList = new SimpleBooleanProperty(false);
+
     @SerializedName("_version")
     private IntegerProperty configVersion = new SimpleIntegerProperty(0);
 
@@ -449,5 +452,17 @@ public final class Config implements Cloneable, Observable {
 
     public void setUpdateChannel(UpdateChannel updateChannel) {
         this.updateChannel.set(updateChannel);
+    }
+
+    public boolean isEnableMainPageGameList() {
+        return enableMainPageGameList.get();
+    }
+
+    public BooleanProperty enableMainPageGameListProperty() {
+        return enableMainPageGameList;
+    }
+
+    public void setEnableMainPageGameList(boolean enableMainPageGameList) {
+        this.enableMainPageGameList.set(enableMainPageGameList);
     }
 }

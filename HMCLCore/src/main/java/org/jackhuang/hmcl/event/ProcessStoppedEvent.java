@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.event;
 
 import org.jackhuang.hmcl.util.ManagedProcess;
-import org.jackhuang.hmcl.util.ToStringBuilder;
 
 /**
  * This event gets fired when minecraft process exited successfully and the exit code is 0.

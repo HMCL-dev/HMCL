@@ -36,7 +36,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.construct.Validator;
-import org.jackhuang.hmcl.ui.wizard.DecoratorPage;
+import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
@@ -62,6 +62,8 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
 
     public SettingsPage() {
         FXUtils.smoothScrolling(scroll);
+
+        chkEnableGameList.selectedProperty().bindBidirectional(config().enableMainPageGameListProperty());
 
         cboDownloadSource.getSelectionModel().select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.instance().getDownloadProvider()));
         cboDownloadSource.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.instance().setDownloadProvider(DownloadProviders.getDownloadProvider(newValue.intValue())));

@@ -28,22 +28,22 @@ public final class AccountBuilder<T extends Account> {
     public AccountBuilder() {
     }
 
-    public AccountBuilder setSelector(CharacterSelector selector) {
+    public AccountBuilder<T> setSelector(CharacterSelector selector) {
         this.selector = Objects.requireNonNull(selector);
         return this;
     }
 
-    public AccountBuilder setUsername(String username) {
+    public AccountBuilder<T> setUsername(String username) {
         this.username = Objects.requireNonNull(username);
         return this;
     }
 
-    public AccountBuilder setPassword(String password) {
+    public AccountBuilder<T> setPassword(String password) {
         this.password = password;
         return this;
     }
 
-    public AccountBuilder setAdditionalData(Object additionalData) {
+    public AccountBuilder<T> setAdditionalData(Object additionalData) {
         this.additionalData = additionalData;
         return this;
     }

@@ -42,7 +42,7 @@ public class AdvancedListBox extends ScrollPane {
     }
 
     public AdvancedListBox add(Node child) {
-        if (child instanceof Pane)
+        if (child instanceof Pane || child instanceof AdvancedListItem)
             container.getChildren().add(child);
         else {
             StackPane pane = new StackPane();

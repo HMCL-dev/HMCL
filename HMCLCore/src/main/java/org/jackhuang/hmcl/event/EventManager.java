@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.event;
 
 import org.jackhuang.hmcl.util.SimpleMultimap;
 
+import java.lang.ref.WeakReference;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.function.Consumer;
@@ -31,8 +32,16 @@ public final class EventManager<T extends Event> {
 
     private final SimpleMultimap<EventPriority, Consumer<T>> handlers
             = new SimpleMultimap<>(() -> new EnumMap<>(EventPriority.class), HashSet::new);
-    private final SimpleMultimap<EventPriority, Runnable> handlers2
-            = new SimpleMultimap<>(() -> new EnumMap<>(EventPriority.class), HashSet::new);
+
+    public Consumer<T> registerWeak(Consumer<T> consumer) {
+        register(new WeakListener(consumer));
+        return consumer;
+    }
+
+    public Consumer<T> registerWeak(Consumer<T> consumer, EventPriority priority) {
+        register(new WeakListener(consumer), priority);
+        return consumer;
+    }
 
     public void register(Consumer<T> consumer) {
         register(consumer, EventPriority.NORMAL);
@@ -44,28 +53,17 @@ public final class EventManager<T extends Event> {
     }
 
     public void register(Runnable runnable) {
-        register(runnable, EventPriority.NORMAL);
+        register(t -> runnable.run());
     }
 
     public void register(Runnable runnable, EventPriority priority) {
-        if (!handlers2.get(priority).contains(runnable))
-            handlers2.put(priority, runnable);
-    }
-
-    public void unregister(Consumer<T> consumer) {
-        handlers.removeValue(consumer);
-    }
-
-    public void unregister(Runnable runnable) {
-        handlers2.removeValue(runnable);
+        register(t -> runnable.run(), priority);
     }
 
     public Event.Result fireEvent(T event) {
         for (EventPriority priority : EventPriority.values()) {
             for (Consumer<T> handler : handlers.get(priority))
                 handler.accept(event);
-            for (Runnable runnable : handlers2.get(priority))
-                runnable.run();
         }
 
         if (event.hasResult())
@@ -74,4 +72,21 @@ public final class EventManager<T extends Event> {
             return Event.Result.DEFAULT;
     }
 
+    private class WeakListener implements Consumer<T> {
+        private final WeakReference<Consumer<T>> ref;
+
+        public WeakListener(Consumer<T> listener) {
+            this.ref = new WeakReference<>(listener);
+        }
+
+        @Override
+        public void accept(T t) {
+            Consumer<T> listener = ref.get();
+            if (listener == null) {
+                handlers.removeValue(this);
+            } else {
+                listener.accept(t);
+            }
+        }
+    }
 }

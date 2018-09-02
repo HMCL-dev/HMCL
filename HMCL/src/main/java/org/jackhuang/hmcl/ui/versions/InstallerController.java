@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui;
+package org.jackhuang.hmcl.ui.versions;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.ScrollPane;
@@ -30,6 +30,9 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.download.InstallerWizardProvider;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 

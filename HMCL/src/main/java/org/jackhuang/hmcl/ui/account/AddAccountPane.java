@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui;
+package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.*;
@@ -41,6 +41,9 @@ import org.jackhuang.hmcl.game.AccountHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
@@ -87,6 +90,9 @@ public class AddAccountPane extends StackPane {
         cboType.setConverter(stringConverter(Accounts::getAccountTypeName));
         cboType.getSelectionModel().select(0);
 
+        cboServers.getItems().addListener(onInvalidating(this::checkIfNoServer));
+        checkIfNoServer();
+
         ReadOnlyObjectProperty<AccountFactory<?>> loginType = cboType.getSelectionModel().selectedItemProperty();
 
         txtPassword.visibleProperty().bind(loginType.isNotEqualTo(Accounts.FACTORY_OFFLINE));
@@ -117,6 +123,13 @@ public class AddAccountPane extends StackPane {
         if (!cboServers.getItems().isEmpty() && cboServers.getSelectionModel().isEmpty()) {
             cboServers.getSelectionModel().select(0);
         }
+    }
+
+    private void checkIfNoServer() {
+        if (cboServers.getItems().isEmpty())
+            cboServers.getStyleClass().setAll("jfx-combo-box-warning");
+        else
+            cboServers.getStyleClass().setAll("jfx-combo-box");
     }
 
     /**

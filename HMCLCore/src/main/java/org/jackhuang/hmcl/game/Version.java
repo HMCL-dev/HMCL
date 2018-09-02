@@ -116,15 +116,15 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     public Map<DownloadType, LoggingInfo> getLogging() {
-        return logging == null ? Collections.EMPTY_MAP : Collections.unmodifiableMap(logging);
+        return logging == null ? Collections.emptyMap() : Collections.unmodifiableMap(logging);
     }
 
     public List<Library> getLibraries() {
-        return libraries == null ? Collections.EMPTY_LIST : Collections.unmodifiableList(libraries);
+        return libraries == null ? Collections.emptyList() : Collections.unmodifiableList(libraries);
     }
 
     public List<CompatibilityRule> getCompatibilityRules() {
-        return compatibilityRules == null ? Collections.EMPTY_LIST : Collections.unmodifiableList(compatibilityRules);
+        return compatibilityRules == null ? Collections.emptyList() : Collections.unmodifiableList(compatibilityRules);
     }
 
     public DownloadInfo getDownloadInfo() {
@@ -247,14 +247,14 @@ public class Version implements Comparable<Version>, Validation {
         if (StringUtils.isBlank(id))
             throw new JsonParseException("Version ID cannot be blank");
         if (downloads != null)
-            for (Map.Entry entry : downloads.entrySet()) {
+            for (Map.Entry<DownloadType, DownloadInfo> entry : downloads.entrySet()) {
                 if (!(entry.getKey() instanceof DownloadType))
                     throw new JsonParseException("Version downloads key must be DownloadType");
                 if (!(entry.getValue() instanceof DownloadInfo))
                     throw new JsonParseException("Version downloads value must be DownloadInfo");
             }
         if (logging != null)
-            for (Map.Entry entry : logging.entrySet()) {
+            for (Map.Entry<DownloadType, LoggingInfo> entry : logging.entrySet()) {
                 if (!(entry.getKey() instanceof DownloadType))
                     throw new JsonParseException("Version logging key must be DownloadType");
                 if (!(entry.getValue() instanceof LoggingInfo))

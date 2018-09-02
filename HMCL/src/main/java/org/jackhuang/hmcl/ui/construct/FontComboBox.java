@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXComboBox;
 import javafx.beans.NamedArg;
-import javafx.collections.FXCollections;
 import javafx.scene.control.ListCell;
 import javafx.scene.text.Font;
 
@@ -47,6 +46,7 @@ public class FontComboBox extends JFXComboBox<String> {
         setOnMouseClicked(e -> {
             if (loaded) return;
             getItems().setAll(Font.getFamilies());
+            loaded = true;
         });
     }
 

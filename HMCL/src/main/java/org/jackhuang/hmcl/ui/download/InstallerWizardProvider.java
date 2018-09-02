@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
 
-import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;

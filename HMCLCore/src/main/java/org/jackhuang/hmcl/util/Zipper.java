@@ -67,8 +67,6 @@ public final class Zipper implements Closeable {
      * @param filter  returns false if you do not want that file or directory
      */
     public void putDirectory(Path source, String targetDir, Predicate<String> filter) throws IOException {
-        File[] files = null;
-
         Path root = fs.getPath(targetDir);
         Files.createDirectories(root);
         Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
