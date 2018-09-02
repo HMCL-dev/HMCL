@@ -40,7 +40,7 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty(this, "title", null);
 
     @FXML
-    private VersionSettingsController versionSettingsController;
+    private VersionSettingsPage versionSettings;
     @FXML
     private Tab modTab;
     @FXML
@@ -92,7 +92,7 @@ public final class VersionPage extends StackPane implements DecoratorPage {
 
         title.set(i18n("settings.game") + " - " + id);
 
-        versionSettingsController.loadVersionSetting(profile, id);
+        versionSettings.loadVersionSetting(profile, id);
         modController.setParentTab(tabPane);
         modTab.setUserData(modController);
         modController.loadMods(profile.getModManager(), id);

@@ -4,6 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
+<?import org.jackhuang.hmcl.ui.VersionSettingsPage?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          fx:id="rootPane"
@@ -12,7 +13,7 @@
     <StackPane fx:id="contentPane">
         <JFXTabPane fx:id="tabPane">
             <Tab text="%settings">
-                <fx:include source="version-settings.fxml" fx:id="versionSettings"/>
+                <VersionSettingsPage fx:id="versionSettings" />
             </Tab>
             <Tab fx:id="modTab" text="%mods">
                 <fx:include source="mod.fxml" fx:id="mod"/>

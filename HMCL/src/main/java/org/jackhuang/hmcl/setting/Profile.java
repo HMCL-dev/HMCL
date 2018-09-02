@@ -75,20 +75,14 @@ public final class Profile implements Observable {
         this.gameDir.set(gameDir);
     }
 
-    private final ObjectProperty<VersionSetting> global = new ImmediateObjectProperty<>(this, "global", new VersionSetting());
+    private final ReadOnlyObjectWrapper<VersionSetting> global = new ReadOnlyObjectWrapper<>(this, "global");
 
-    public ObjectProperty<VersionSetting> globalProperty() {
-        return global;
+    public ReadOnlyObjectProperty<VersionSetting> globalProperty() {
+        return global.getReadOnlyProperty();
     }
 
     public VersionSetting getGlobal() {
         return global.get();
-    }
-
-    private void setGlobal(VersionSetting global) {
-        if (global == null)
-            global = new VersionSetting();
-        this.global.set(global);
     }
 
     private final ImmediateStringProperty name;
@@ -124,10 +118,15 @@ public final class Profile implements Observable {
     }
 
     public Profile(String name, File initialGameDir) {
+        this(name, initialGameDir, new VersionSetting());
+    }
+
+    public Profile(String name, File initialGameDir, VersionSetting global) {
         this.name = new ImmediateStringProperty(this, "name", name);
         gameDir = new ImmediateObjectProperty<>(this, "gameDir", initialGameDir);
         repository = new HMCLGameRepository(this, initialGameDir);
         modManager = new ModManager(repository);
+        this.global.set(global == null ? new VersionSetting() : global);
 
         gameDir.addListener((a, b, newValue) -> repository.changeDirectory(newValue));
         selectedVersion.addListener(o -> checkSelectedVersion());
@@ -227,7 +226,7 @@ public final class Profile implements Observable {
     }
 
     protected void invalidate() {
-        JFXUtilities.runInFX(observableHelper::invalidate);
+        observableHelper.invalidate();
     }
 
     public static final class Serializer implements JsonSerializer<Profile>, JsonDeserializer<Profile> {
@@ -256,8 +255,7 @@ public final class Profile implements Observable {
             JsonObject obj = (JsonObject) json;
             String gameDir = Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse("");
 
-            Profile profile = new Profile("Default", new File(gameDir));
-            profile.setGlobal(context.deserialize(obj.get("global"), VersionSetting.class));
+            Profile profile = new Profile("Default", new File(gameDir), context.deserialize(obj.get("global"), VersionSetting.class));
             profile.setSelectedVersion(Optional.ofNullable(obj.get("selectedMinecraftVersion")).map(JsonElement::getAsString).orElse(""));
             profile.setUseRelativePath(Optional.ofNullable(obj.get("useRelativePath")).map(JsonElement::getAsBoolean).orElse(false));
             return profile;

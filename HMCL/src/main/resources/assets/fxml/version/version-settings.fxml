@@ -8,15 +8,24 @@
 <?import javafx.scene.layout.*?>
 <?import org.jackhuang.hmcl.ui.construct.*?>
 <?import org.jackhuang.hmcl.ui.*?>
-<StackPane xmlns="http://javafx.com/javafx"
-           xmlns:fx="http://javafx.com/fxml"
-           fx:controller="org.jackhuang.hmcl.ui.VersionSettingsController">
+<fx:root xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         type="StackPane">
     <ScrollPane fx:id="scroll" fitToHeight="true" fitToWidth="true" vbarPolicy="ALWAYS">
-        <VBox fx:id="rootPane" style="-fx-padding: 20;">
+        <VBox fx:id="rootPane" style="-fx-padding: 20;" spacing="8">
 
-            <ComponentList depth="1">
+            <BorderPane fx:id="settingsTypePane">
+                <left>
+                    <JFXCheckBox BorderPane.alignment="CENTER_RIGHT" fx:id="chkEnableSpecificSettings" text="%settings.type.special.enable" />
+                </left>
+                <right>
+                    <JFXButton BorderPane.alignment="CENTER_RIGHT" onMouseClicked="#editGlobalSettings"
+                               buttonType="RAISED" styleClass="jfx-button-raised"
+                               text="%settings.type.global.edit" disable="${chkEnableSpecificSettings.selected}" />
+                </right>
+            </BorderPane>
 
-                <MultiFileItem fx:id="globalItem" title="%settings.type" hasSubtitle="true" hasCustom="false" />
+            <ComponentList fx:id="componentList" depth="1">
 
                 <ImagePickerItem fx:id="iconPickerItem" title="%settings.icon" onSelectButtonClicked="#onExploreIcon">
                     <Image url="/assets/img/icon.png"/>
@@ -104,7 +113,7 @@
                     </right>
                 </BorderPane>
             </ComponentList>
-            <HBox alignment="CENTER_LEFT" style="-fx-padding: 20 0 12 0;">
+            <HBox alignment="CENTER_LEFT" style="-fx-padding: 12 0 4 0;">
                 <Label text="%settings.advanced" style="-fx-text-fill: #616161;" />
             </HBox>
             <ComponentList fx:id="advancedSettingsPane" depth="1">
@@ -150,4 +159,4 @@
             </ComponentList>
         </VBox>
     </ScrollPane>
-</StackPane>
+</fx:root>

@@ -60,7 +60,7 @@ public class ComponentList extends StackPane {
         vbox.getChildren().add(child);
     }
 
-    public void removeChildren(Node node) {
+    public void removeChild(Node node) {
         vbox.getChildren().removeIf(node1 -> node1.getProperties().get("node") == node);
     }
 

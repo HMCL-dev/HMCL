@@ -27,11 +27,13 @@ import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.VersionSettingsPage;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
@@ -129,5 +131,12 @@ public class Versions {
             Controllers.getLeftPaneController().checkAccount();
         else
             LauncherHelper.INSTANCE.launch(profile, Accounts.getSelectedAccount(), id, null);
+    }
+
+    public static void modifyGlobalSettings(Profile profile) {
+        VersionSettingsPage page = new VersionSettingsPage();
+        page.loadVersionSetting(profile, null);
+        page.titleProperty().set(Profiles.getProfileDisplayName(profile) + " - " + i18n("settings.type.global.manage"));
+        Controllers.navigate(page);
     }
 }
