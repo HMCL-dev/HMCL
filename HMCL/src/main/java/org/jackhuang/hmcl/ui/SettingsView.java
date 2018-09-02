@@ -62,13 +62,12 @@ public abstract class SettingsView extends StackPane {
     public SettingsView() {
         scroll = new ScrollPane();
         getChildren().setAll(scroll);
-        scroll.setStyle("-fx-font-size: 14; -fx-pref-width: 100%;");
-        scroll.setFitToHeight(true);
+        scroll.setStyle("-fx-font-size: 14;");
         scroll.setFitToWidth(true);
 
         {
             VBox rootPane = new VBox();
-            rootPane.setStyle("-fx-padding: 20;");
+            rootPane.setStyle("-fx-padding: 18;");
             {
                 ComponentList settingsPane = new ComponentList();
                 {
