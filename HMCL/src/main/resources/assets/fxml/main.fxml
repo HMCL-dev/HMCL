@@ -2,9 +2,11 @@
 
 <?import com.jfoenix.controls.JFXButton?>
 <?import javafx.scene.layout.StackPane?>
-<fx:root type="StackPane" pickOnBounds="false" style="-fx-padding: 25;"
-        xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
-    <JFXButton prefWidth="150" prefHeight="50" buttonType="RAISED" styleClass="jfx-button-raised"
-               style="-fx-font-size: 15;" onMouseClicked="#launch"
-               text="%version.launch" StackPane.alignment="BOTTOM_RIGHT" />
+<fx:root type="StackPane" pickOnBounds="false"
+         xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
+    <StackPane fx:id="main" style="-fx-padding: 25;">
+        <JFXButton prefWidth="150" prefHeight="50" buttonType="RAISED" styleClass="jfx-button-raised"
+                   style="-fx-font-size: 15;" onMouseClicked="#launch"
+                   text="%version.launch" StackPane.alignment="BOTTOM_RIGHT"/>
+    </StackPane>
 </fx:root>

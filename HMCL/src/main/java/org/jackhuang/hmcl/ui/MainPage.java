@@ -17,10 +17,12 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -32,8 +34,18 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private final StringProperty title = new SimpleStringProperty(this, "title", i18n("main_page"));
 
+    @FXML
+    private StackPane main;
+
     {
         FXUtils.loadFXML(this, "/assets/fxml/main.fxml");
+
+        FXUtils.onChangeAndOperate(ConfigHolder.config().enableMainPageGameListProperty(), newValue -> {
+            if (newValue)
+                getChildren().setAll(new GameVersionListPage());
+            else
+                getChildren().setAll(main);
+        });
     }
 
     @FXML
