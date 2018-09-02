@@ -30,7 +30,7 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
 public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
 

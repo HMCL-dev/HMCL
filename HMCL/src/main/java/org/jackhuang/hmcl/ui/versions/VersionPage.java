@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui;
+package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
@@ -28,8 +28,8 @@ import javafx.scene.control.Tab;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.FileUtils;
 
 import java.io.File;

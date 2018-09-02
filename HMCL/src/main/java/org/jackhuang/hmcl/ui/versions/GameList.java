@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.VersionSettingsPage;
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.VersionNumber;

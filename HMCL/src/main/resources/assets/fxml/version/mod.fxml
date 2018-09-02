@@ -8,7 +8,7 @@
 <StackPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
            fx:id="rootPane"
-           fx:controller="org.jackhuang.hmcl.ui.ModController">
+           fx:controller="org.jackhuang.hmcl.ui.versions.ModController">
     <JFXSpinner fx:id="spinner" style="-fx-radius:16" styleClass="materialDesign-purple, first-spinner" />
     <StackPane fx:id="contentPane">
         <ScrollPane fx:id="scrollPane" fitToWidth="true" fitToHeight="true">

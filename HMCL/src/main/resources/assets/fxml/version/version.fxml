@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
-<?import org.jackhuang.hmcl.ui.VersionSettingsPage?>
+<?import org.jackhuang.hmcl.ui.versions.VersionSettingsPage?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          fx:id="rootPane"
