@@ -106,7 +106,7 @@ public class MultiFileItem<T> extends ComponentList {
 
         if (hasCustom)
             pane.getChildren().add(custom);
-        addChildren(pane);
+        getContent().add(pane);
 
         group.selectedToggleProperty().addListener((a, b, newValue) -> {
             if (toggleSelectedListener != null)

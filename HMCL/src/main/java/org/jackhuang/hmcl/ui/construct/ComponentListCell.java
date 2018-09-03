@@ -40,13 +40,13 @@ import org.jackhuang.hmcl.ui.SVG;
 /**
  * @author huangyuhui
  */
-public class ComponentListCell extends StackPane {
+class ComponentListCell extends StackPane {
     private final Node content;
     private Animation expandAnimation;
     private Rectangle clipRect;
     private final BooleanProperty expanded = new SimpleBooleanProperty(this, "expanded", false);
 
-    public ComponentListCell(Node content) {
+    ComponentListCell(Node content) {
         this.content = content;
 
         updateLayout();

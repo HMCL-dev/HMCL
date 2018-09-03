@@ -152,7 +152,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         this.versionId = versionId;
 
         if (versionId == null) {
-            componentList.removeChild(iconPickerItem);
+            componentList.getContent().remove(iconPickerItem);
             rootPane.getChildren().remove(settingsTypePane);
             chkEnableSpecificSettings.setSelected(true);
         }

@@ -109,9 +109,9 @@ public abstract class SettingsView extends StackPane {
 
                         content.getChildren().setAll(chkUpdateStable, chkUpdateDev, noteWrapper);
 
-                        updatePane.addChildren(content);
+                        updatePane.getContent().add(content);
                     }
-                    settingsPane.addChildren(updatePane);
+                    settingsPane.getContent().add(updatePane);
                 }
 
                 {
@@ -122,7 +122,7 @@ public abstract class SettingsView extends StackPane {
                     fileCommonLocation.setHasSubtitle(true);
                     fileCommonLocation.setCustomText("settings.custom");
 
-                    settingsPane.addChildren(fileCommonLocation);
+                    settingsPane.getContent().add(fileCommonLocation);
                 }
 
                 {
@@ -132,7 +132,7 @@ public abstract class SettingsView extends StackPane {
                     backgroundItem.setHasSubtitle(true);
                     backgroundItem.setCustomText(I18n.i18n("settings.custom"));
 
-                    settingsPane.addChildren(backgroundItem);
+                    settingsPane.getContent().add(backgroundItem);
                 }
 
                 {
@@ -169,7 +169,7 @@ public abstract class SettingsView extends StackPane {
                         );
                         downloadSourcePane.setRight(cboDownloadSource);
                     }
-                    settingsPane.addChildren(downloadSourcePane);
+                    settingsPane.getContent().add(downloadSourcePane);
                 }
 
                 {
@@ -183,7 +183,7 @@ public abstract class SettingsView extends StackPane {
                     FXUtils.setLimitWidth(cboLanguage, 400);
                     languagePane.setRight(cboLanguage);
 
-                    settingsPane.addChildren(languagePane);
+                    settingsPane.getContent().add(languagePane);
                 }
 
                 {
@@ -309,8 +309,8 @@ public abstract class SettingsView extends StackPane {
                         }
                         proxyWrapper.getChildren().add(proxyPane);
                     }
-                    proxyList.addChildren(proxyWrapper);
-                    settingsPane.addChildren(proxyList);
+                    proxyList.getContent().add(proxyWrapper);
+                    settingsPane.getContent().add(proxyList);
                 }
 
                 {
@@ -324,13 +324,13 @@ public abstract class SettingsView extends StackPane {
                     themeColorPickerContainer.setMinHeight(30);
                     themePane.setRight(themeColorPickerContainer);
 
-                    settingsPane.addChildren(themePane);
+                    settingsPane.getContent().add(themePane);
                 }
 
                 {
                     VBox fontPane = new VBox();
                     fontPane.setSpacing(5);
-                    settingsPane.addChildren(fontPane);
+                    settingsPane.getContent().add(fontPane);
 
                     {
                         BorderPane borderPane = new BorderPane();
@@ -462,7 +462,7 @@ public abstract class SettingsView extends StackPane {
                         gridPane.getChildren().add(label);
                     }
                     aboutPane.getChildren().setAll(gridPane);
-                    settingsPane.addChildren(aboutPane);
+                    settingsPane.getContent().add(aboutPane);
                 }
                 rootPane.getChildren().add(settingsPane);
             }

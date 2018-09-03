@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.DefaultProperty;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -26,12 +27,15 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.control.Control;
+import javafx.scene.control.Skin;
+import javafx.scene.control.SkinBase;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.util.MappedObservableList;
 
 @DefaultProperty("content")
-public class ComponentList extends StackPane {
-    private final VBox vbox = new VBox();
+public class ComponentList extends Control {
     private final StringProperty title = new SimpleStringProperty(this, "title", "Group");
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle", "");
     private final IntegerProperty depth = new SimpleIntegerProperty(this, "depth", 0);
@@ -39,29 +43,7 @@ public class ComponentList extends StackPane {
     public final ObservableList<Node> content = FXCollections.observableArrayList();
 
     public ComponentList() {
-        getChildren().setAll(vbox);
-        content.addListener((ListChangeListener<? super Node>) change -> {
-            while (change.next()) {
-                for (int i = change.getFrom(); i < change.getTo(); ++i)
-                    addChildren(change.getList().get(i));
-            }
-        });
         getStyleClass().add("options-list");
-    }
-
-    public void addChildren(Node node) {
-        StackPane child = new StackPane();
-        child.getChildren().add(new ComponentListCell(node));
-        if (vbox.getChildren().isEmpty())
-            child.getStyleClass().add("options-list-item-ahead");
-        else
-            child.getStyleClass().add("options-list-item");
-        child.getProperties().put("node", node);
-        vbox.getChildren().add(child);
-    }
-
-    public void removeChild(Node node) {
-        vbox.getChildren().removeIf(node1 -> node1.getProperties().get("node") == node);
     }
 
     public String getTitle() {
@@ -110,5 +92,29 @@ public class ComponentList extends StackPane {
 
     public ObservableList<Node> getContent() {
         return content;
+    }
+
+    @Override
+    protected javafx.scene.control.Skin<?> createDefaultSkin() {
+        return new Skin(this);
+    }
+
+    protected static class Skin extends SkinBase<ComponentList> {
+
+        protected Skin(ComponentList control) {
+            super(control);
+
+            VBox vbox = new VBox();
+            Bindings.bindContent(vbox.getChildren(),
+                    MappedObservableList.create(control.getContent(), this::mapper));
+            getChildren().setAll(vbox);
+        }
+
+        private Node mapper(Node node) {
+            StackPane child = new StackPane();
+            child.getChildren().add(new ComponentListCell(node));
+            child.getStyleClass().add("options-list-item");
+            return child;
+        }
     }
 }
