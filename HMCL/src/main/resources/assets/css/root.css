@@ -59,14 +59,14 @@
     -fx-padding: 20 0 20 0;
 }
 
-.iconed-item {
+.iconed-item .iconed-item-container {
     -fx-padding: 10 16 10 16;
     -fx-spacing: 10;
     -fx-font-size: 14;
     -fx-alignment: CENTER_LEFT;
 }
 
-.menu-iconed-item {
+.iconed-menu-item .iconed-item-container {
     -fx-padding: 10 16 10 16;
     -fx-spacing: 10;
     -fx-font-size: 12;

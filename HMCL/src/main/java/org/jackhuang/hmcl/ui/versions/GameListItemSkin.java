@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
+import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
 import java.util.function.Consumer;
@@ -91,13 +92,13 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         };
 
         menu.getChildren().setAll(
-                new IconedItem(limitWidth.apply(SVG.gear(Theme.blackFillBinding(), 14, 14)), i18n("settings"), "menu-iconed-item").setClickedAction(wrap.apply(skinnable::modifyGameSettings)),
-                new IconedItem(limitWidth.apply(SVG.pencil(Theme.blackFillBinding(), 14, 14)), i18n("version.manage.rename"), "menu-iconed-item").setClickedAction(wrap.apply(skinnable::rename)),
-                new IconedItem(limitWidth.apply(SVG.delete(Theme.blackFillBinding(), 14, 14)), i18n("version.manage.remove"), "menu-iconed-item").setClickedAction(wrap.apply(skinnable::remove)),
-                new IconedItem(limitWidth.apply(SVG.export(Theme.blackFillBinding(), 14, 14)), i18n("modpack.export"), "menu-iconed-item").setClickedAction(wrap.apply(skinnable::export)),
-                new IconedItem(limitWidth.apply(SVG.folderOpen(Theme.blackFillBinding(), 14, 14)), i18n("folder.game"), "menu-iconed-item").setClickedAction(wrap.apply(skinnable::browse)),
-                new IconedItem(limitWidth.apply(SVG.launch(Theme.blackFillBinding(), 14, 14)), i18n("version.launch"), "menu-iconed-item").setClickedAction(wrap.apply(skinnable::launch)),
-                new IconedItem(limitWidth.apply(SVG.script(Theme.blackFillBinding(), 14, 14)), i18n("version.launch_script"), "menu-iconed-item").setClickedAction(wrap.apply(skinnable::generateLaunchScript)));
+                new IconedMenuItem(limitWidth.apply(SVG.gear(Theme.blackFillBinding(), 14, 14)), i18n("settings"), wrap.apply(skinnable::modifyGameSettings)),
+                new IconedMenuItem(limitWidth.apply(SVG.pencil(Theme.blackFillBinding(), 14, 14)), i18n("version.manage.rename"), wrap.apply(skinnable::rename)),
+                new IconedMenuItem(limitWidth.apply(SVG.delete(Theme.blackFillBinding(), 14, 14)), i18n("version.manage.remove"), wrap.apply(skinnable::remove)),
+                new IconedMenuItem(limitWidth.apply(SVG.export(Theme.blackFillBinding(), 14, 14)), i18n("modpack.export"), wrap.apply(skinnable::export)),
+                new IconedMenuItem(limitWidth.apply(SVG.folderOpen(Theme.blackFillBinding(), 14, 14)), i18n("folder.game"), wrap.apply(skinnable::browse)),
+                new IconedMenuItem(limitWidth.apply(SVG.launch(Theme.blackFillBinding(), 14, 14)), i18n("version.launch"), wrap.apply(skinnable::launch)),
+                new IconedMenuItem(limitWidth.apply(SVG.script(Theme.blackFillBinding(), 14, 14)), i18n("version.launch_script"), wrap.apply(skinnable::generateLaunchScript)));
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);

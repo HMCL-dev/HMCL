@@ -26,19 +26,20 @@ public class IconedItem extends RipplerContainer {
 
     private Label label;
 
-    public IconedItem(Node icon, String text, String styleClass) {
-        this(icon, styleClass);
+    public IconedItem(Node icon, String text) {
+        this(icon);
         label.setText(text);
     }
 
-    public IconedItem(Node icon, String styleClass) {
-        super(createHBox(icon, styleClass));
+    public IconedItem(Node icon) {
+        super(createHBox(icon));
         label = ((Label) lookup("#label"));
+        getStyleClass().setAll("iconed-item");
     }
 
-    private static HBox createHBox(Node icon, String styleClass) {
+    private static HBox createHBox(Node icon) {
         HBox hBox = new HBox();
-        hBox.getStyleClass().setAll(styleClass);
+        hBox.getStyleClass().setAll("iconed-item-container");
         icon.setMouseTransparent(true);
         Label textLabel = new Label();
         textLabel.setId("label");
@@ -49,10 +50,5 @@ public class IconedItem extends RipplerContainer {
 
     public Label getLabel() {
         return label;
-    }
-
-    public IconedItem setClickedAction(Runnable r) {
-        setOnMouseClicked(e -> r.run());
-        return this;
     }
 }
