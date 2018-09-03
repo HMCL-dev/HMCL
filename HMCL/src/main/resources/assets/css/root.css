@@ -59,6 +59,20 @@
     -fx-padding: 20 0 20 0;
 }
 
+.iconed-item {
+    -fx-padding: 10 16 10 16;
+    -fx-spacing: 10;
+    -fx-font-size: 14;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.menu-iconed-item {
+    -fx-padding: 10 16 10 16;
+    -fx-spacing: 10;
+    -fx-font-size: 12;
+    -fx-alignment: CENTER_LEFT;
+}
+
 /*******************************************************************************
  *                                                                             *
  * JFX Tab Pane                                                                *

@@ -56,7 +56,6 @@ public class Versions {
         Controllers.confirmDialog(message, i18n("message.confirm"), () -> {
             if (profile.getRepository().removeVersionFromDisk(version)) {
                 profile.getRepository().refreshVersionsAsync().start();
-                Controllers.navigate(null);
             }
         }, null);
     }
@@ -65,7 +64,6 @@ public class Versions {
         Controllers.inputDialog(i18n("version.manage.rename.message"), (res, resolve, reject) -> {
             if (profile.getRepository().renameVersion(version, res)) {
                 profile.getRepository().refreshVersionsAsync().start();
-                Controllers.navigate(null);
                 resolve.run();
             } else {
                 reject.accept(i18n("version.manage.rename.fail"));

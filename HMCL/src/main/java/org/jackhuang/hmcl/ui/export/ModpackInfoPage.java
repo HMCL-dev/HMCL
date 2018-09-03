@@ -87,7 +87,7 @@ public final class ModpackInfoPage extends StackPane implements WizardPage {
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
         File file = fileChooser.showSaveDialog(Controllers.getStage());
         if (file == null) {
-            Controllers.navigate(null);
+            controller.onEnd();
             return;
         }
         controller.getSettings().put(MODPACK_NAME, txtModpackName.getText());

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui.construct;
+package org.jackhuang.hmcl.ui.wizard;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import javafx.beans.property.StringProperty;
@@ -23,7 +23,9 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.wizard.AbstractWizardDisplayer;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
+import org.jackhuang.hmcl.ui.construct.MessageBox;
+import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.Map;
@@ -36,7 +38,7 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
     default void handleTask(Map<String, Object> settings, Task task) {
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(it -> {
             it.fireEvent(new DialogCloseEvent());
-            Controllers.navigate(null);
+            onEnd();
         });
 
         pane.setTitle(i18n("message.doing"));
@@ -65,17 +67,17 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
                         pane.fireEvent(new DialogCloseEvent());
                         if (success) {
                             if (settings.containsKey("success_message") && settings.get("success_message") instanceof String)
-                                Controllers.dialog((String) settings.get("success_message"), null, MessageBox.FINE_MESSAGE, () -> Controllers.navigate(null));
+                                Controllers.dialog((String) settings.get("success_message"), null, MessageBox.FINE_MESSAGE, () -> onEnd());
                             else if (!settings.containsKey("forbid_success_message"))
-                                Controllers.dialog(i18n("message.success"), null, MessageBox.FINE_MESSAGE, () -> Controllers.navigate(null));
+                                Controllers.dialog(i18n("message.success"), null, MessageBox.FINE_MESSAGE, () -> onEnd());
                         } else {
                             if (executor.getLastException() == null)
                                 return;
                             String appendix = StringUtils.getStackTrace(executor.getLastException());
                             if (settings.containsKey("failure_message") && settings.get("failure_message") instanceof String)
-                                Controllers.dialog(appendix, (String) settings.get("failure_message"), MessageBox.ERROR_MESSAGE, () -> Controllers.navigate(null));
+                                Controllers.dialog(appendix, (String) settings.get("failure_message"), MessageBox.ERROR_MESSAGE, () -> onEnd());
                             else if (!settings.containsKey("forbid_failure_message"))
-                                Controllers.dialog(appendix, i18n("wizard.failed"), MessageBox.ERROR_MESSAGE, () -> Controllers.navigate(null));
+                                Controllers.dialog(appendix, i18n("wizard.failed"), MessageBox.ERROR_MESSAGE, () -> onEnd());
                         }
 
                     });

@@ -45,10 +45,6 @@
         </VBox>
     </ScrollPane>
     <BorderPane pickOnBounds="false" style="-fx-padding: 20;">
-        <left>
-            <JFXButton BorderPane.alignment="BOTTOM_LEFT" fx:id="btnDelete" onMouseClicked="#onDelete" prefWidth="100" prefHeight="40"
-                       buttonType="RAISED" text="%button.delete" styleClass="jfx-button-raised" />
-        </left>
         <right>
             <JFXButton BorderPane.alignment="BOTTOM_RIGHT" fx:id="btnSave" onMouseClicked="#onSave" prefWidth="100" prefHeight="40"
                        buttonType="RAISED" text="%button.save" styleClass="jfx-button-raised"/>

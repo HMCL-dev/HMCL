@@ -25,7 +25,6 @@ import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
-import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogWizardDisplayer;
 import org.jackhuang.hmcl.ui.wizard.*;
 
 import java.util.Queue;

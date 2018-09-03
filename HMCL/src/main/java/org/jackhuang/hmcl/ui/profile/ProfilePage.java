@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.FileItem;
+import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 
@@ -79,14 +80,6 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
     }
 
     @FXML
-    private void onDelete() {
-        if (profile != null) {
-            Profiles.getProfiles().remove(profile);
-            Controllers.navigate(null);
-        }
-    }
-
-    @FXML
     private void onSave() {
         if (profile != null) {
             profile.setName(txtProfileName.getText());
@@ -103,7 +96,7 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
             Profiles.getProfiles().add(newProfile);
         }
 
-        Controllers.navigate(null);
+        fireEvent(new PageCloseEvent());
     }
 
     public String getTitle() {

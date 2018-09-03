@@ -109,7 +109,6 @@ public class DefaultWizardDisplayer extends StackPane implements AbstractWizardD
     @FXML
     private void close() {
         wizardController.onCancel();
-        Controllers.navigate(null);
     }
 
     @FXML
