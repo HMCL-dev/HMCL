@@ -91,6 +91,10 @@ public final class SVG {
         return createSVGPath("M1008 6.286q18.857 13.714 15.429 36.571l-146.286 877.714q-2.857 16.571-18.286 25.714-8 4.571-17.714 4.571-6.286 0-13.714-2.857l-258.857-105.714-138.286 168.571q-10.286 13.143-28 13.143-7.429 0-12.571-2.286-10.857-4-17.429-13.429t-6.571-20.857v-199.429l493.714-605.143-610.857 528.571-225.714-92.571q-21.143-8-22.857-31.429-1.143-22.857 18.286-33.714l950.857-548.571q8.571-5.143 18.286-5.14311.429 0 20.571 6.286z", fill, width, height);
     }
 
+    public static Node launch2(ObjectBinding<? extends Paint> fill, double width, double height) {
+        return createSVGPath("M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z", fill, width, height);
+    }
+
     public static Node script(ObjectBinding<? extends Paint> fill, double width, double height) {
         return createSVGPath("M14,20A2,2 0 0,0 16,18V5H9A1,1 0 0,0 8,6V16H5V5A3,3 0 0,1 8,2H19A3,3 0 0,1 22,5V6H18V18L18,19A3,3 0 0,1 15,22H5A3,3 0 0,1 2,19V18H12A2,2 0 0,0 14,20Z", fill, width, height);
     }
@@ -137,5 +141,9 @@ public final class SVG {
 
     public static Node importIcon(ObjectBinding<? extends Paint> fill, double width, double height) {
         return createSVGPath("M14,12L10,8V11H2V13H10V16M20,18V6C20,4.89 19.1,4 18,4H6A2,2 0 0,0 4,6V9H6V6H18V18H6V15H4V18A2,2 0 0,0 6,20H18A2,2 0 0,0 20,18Z", fill, width, height);
+    }
+
+    public static Node export(ObjectBinding<? extends Paint> fill, double width, double height) {
+        return createSVGPath("M23,12L19,8V11H10V13H19V16M1,18V6C1,4.89 1.9,4 3,4H15A2,2 0 0,1 17,6V9H15V6H3V18H15V15H17V18A2,2 0 0,1 15,20H3A2,2 0 0,1 1,18Z", fill, width, height);
     }
 }

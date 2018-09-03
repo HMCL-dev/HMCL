@@ -60,7 +60,7 @@ public final class LeftPaneController extends AdvancedListBox {
         profileListItem.setOnAction(e -> Controllers.navigate(Controllers.getProfileListPage()));
         profileListItem.profileProperty().bind(Profiles.selectedProfileProperty());
 
-        IconedItem launcherSettingsItem = new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20));
+        IconedItem launcherSettingsItem = new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20), "iconed-item");
 
         launcherSettingsItem.getLabel().textProperty().bind(
                 new When(UpdateChecker.outdatedProperty())
@@ -72,7 +72,6 @@ public final class LeftPaneController extends AdvancedListBox {
                         .then(Color.RED)
                         .otherwise(Color.BLACK));
 
-        launcherSettingsItem.maxWidthProperty().bind(widthProperty());
         launcherSettingsItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
 
         this

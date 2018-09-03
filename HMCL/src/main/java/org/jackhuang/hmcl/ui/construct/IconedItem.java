@@ -26,30 +26,33 @@ public class IconedItem extends RipplerContainer {
 
     private Label label;
 
-    public IconedItem(Node icon, String text) {
-        this(icon);
+    public IconedItem(Node icon, String text, String styleClass) {
+        this(icon, styleClass);
         label.setText(text);
     }
 
-    public IconedItem(Node icon) {
-        super(createHBox(icon));
+    public IconedItem(Node icon, String styleClass) {
+        super(createHBox(icon, styleClass));
         label = ((Label) lookup("#label"));
     }
 
-    private static HBox createHBox(Node icon) {
+    private static HBox createHBox(Node icon, String styleClass) {
         HBox hBox = new HBox();
+        hBox.getStyleClass().setAll(styleClass);
         icon.setMouseTransparent(true);
         Label textLabel = new Label();
         textLabel.setId("label");
-        textLabel.setAlignment(Pos.CENTER);
         textLabel.setMouseTransparent(true);
         hBox.getChildren().addAll(icon, textLabel);
-        hBox.setStyle("-fx-padding: 10 16 10 16; -fx-spacing: 10; -fx-font-size: 14;");
-        hBox.setAlignment(Pos.CENTER_LEFT);
         return hBox;
     }
 
     public Label getLabel() {
         return label;
+    }
+
+    public IconedItem setClickedAction(Runnable r) {
+        setOnMouseClicked(e -> r.run());
+        return this;
     }
 }

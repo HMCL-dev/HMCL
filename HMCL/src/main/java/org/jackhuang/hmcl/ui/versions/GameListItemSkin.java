@@ -24,15 +24,21 @@ import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -68,42 +74,30 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         center.getChildren().setAll(imageView, item);
         root.setCenter(center);
 
-        JFXListView<String> menu = new JFXListView<>();
-        menu.getItems().setAll(
-                i18n("settings"),
-                i18n("version.manage.rename"),
-                i18n("version.manage.remove"),
-                i18n("modpack.export"),
-                i18n("folder.game"),
-                i18n("version.launch"),
-                i18n("version.launch_script"));
+        VBox menu = new VBox();
         JFXPopup popup = new JFXPopup(menu);
-        menu.setOnMouseClicked(e -> {
+
+        Function<Runnable, Runnable> wrap = r -> () -> {
+            r.run();
             popup.hide();
-            switch (menu.getSelectionModel().getSelectedIndex()) {
-                case 0:
-                    skinnable.modifyGameSettings();
-                    break;
-                case 1:
-                    skinnable.rename();
-                    break;
-                case 2:
-                    skinnable.remove();
-                    break;
-                case 3:
-                    skinnable.export();
-                    break;
-                case 4:
-                    skinnable.browse();
-                    break;
-                case 5:
-                    skinnable.launch();
-                    break;
-                case 6:
-                    skinnable.generateLaunchScript();
-                    break;
-            }
-        });
+        };
+
+        Function<Node, Node> limitWidth = node -> {
+            StackPane pane = new StackPane(node);
+            pane.setAlignment(Pos.CENTER);
+            FXUtils.setLimitWidth(pane, 14);
+            FXUtils.setLimitHeight(pane, 14);
+            return pane;
+        };
+
+        menu.getChildren().setAll(
+                new IconedItem(limitWidth.apply(SVG.gear(Theme.blackFillBinding(), 14, 14)), i18n("settings"), "menu-iconed-item").setClickedAction(wrap.apply(skinnable::modifyGameSettings)),
+                new IconedItem(limitWidth.apply(SVG.pencil(Theme.blackFillBinding(), 14, 14)), i18n("version.manage.rename"), "menu-iconed-item").setClickedAction(wrap.apply(skinnable::rename)),
+                new IconedItem(limitWidth.apply(SVG.delete(Theme.blackFillBinding(), 14, 14)), i18n("version.manage.remove"), "menu-iconed-item").setClickedAction(wrap.apply(skinnable::remove)),
+                new IconedItem(limitWidth.apply(SVG.export(Theme.blackFillBinding(), 14, 14)), i18n("modpack.export"), "menu-iconed-item").setClickedAction(wrap.apply(skinnable::export)),
+                new IconedItem(limitWidth.apply(SVG.folderOpen(Theme.blackFillBinding(), 14, 14)), i18n("folder.game"), "menu-iconed-item").setClickedAction(wrap.apply(skinnable::browse)),
+                new IconedItem(limitWidth.apply(SVG.launch(Theme.blackFillBinding(), 14, 14)), i18n("version.launch"), "menu-iconed-item").setClickedAction(wrap.apply(skinnable::launch)),
+                new IconedItem(limitWidth.apply(SVG.script(Theme.blackFillBinding(), 14, 14)), i18n("version.launch_script"), "menu-iconed-item").setClickedAction(wrap.apply(skinnable::generateLaunchScript)));
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
@@ -118,7 +112,6 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
 
         JFXButton btnManage = new JFXButton();
         btnManage.setOnMouseClicked(e -> {
-            menu.getSelectionModel().select(-1);
             popup.show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
         });
         btnManage.getStyleClass().add("toggle-icon4");
