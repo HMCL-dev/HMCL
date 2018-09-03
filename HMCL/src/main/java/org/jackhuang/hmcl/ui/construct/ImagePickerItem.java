@@ -25,11 +25,10 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class ImagePickerItem extends BorderPane {
 
     private final ImageView imageView;
-    private final JFXButton selectButton;
-    private final Label label;
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
     private final ObjectProperty<EventHandler<? super MouseEvent>> onSelectButtonClicked = new SimpleObjectProperty<>(this, "onSelectButtonClicked");
+    private final ObjectProperty<EventHandler<? super MouseEvent>> onDeleteButtonClicked = new SimpleObjectProperty<>(this, "onDeleteButtonClicked");
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>(this, "image");
 
     public ImagePickerItem() {
@@ -37,21 +36,26 @@ public final class ImagePickerItem extends BorderPane {
         imageView.setSmooth(false);
         imageView.setPreserveRatio(true);
 
-        selectButton = new JFXButton();
+        JFXButton selectButton = new JFXButton();
         selectButton.setGraphic(SVG.pencil(Theme.blackFillBinding(), 15, 15));
         selectButton.onMouseClickedProperty().bind(onSelectButtonClicked);
         selectButton.getStyleClass().add("toggle-icon4");
 
+        JFXButton deleteButton = new JFXButton();
+        deleteButton.setGraphic(SVG.close(Theme.blackFillBinding(), 15, 15));
+        deleteButton.onMouseClickedProperty().bind(onDeleteButtonClicked);
+        deleteButton.getStyleClass().add("toggle-icon4");
+
         FXUtils.installTooltip(selectButton, i18n("button.edit"));
 
         HBox hBox = new HBox();
-        hBox.getChildren().setAll(imageView, selectButton);
+        hBox.getChildren().setAll(imageView, selectButton, deleteButton);
         hBox.setAlignment(Pos.CENTER_RIGHT);
         hBox.setSpacing(8);
         setRight(hBox);
 
         VBox vBox = new VBox();
-        label = new Label();
+        Label label = new Label();
         label.textProperty().bind(title);
         vBox.getChildren().setAll(label);
         vBox.setAlignment(Pos.CENTER_LEFT);
@@ -82,6 +86,18 @@ public final class ImagePickerItem extends BorderPane {
 
     public void setOnSelectButtonClicked(EventHandler<? super MouseEvent> onSelectButtonClicked) {
         this.onSelectButtonClicked.set(onSelectButtonClicked);
+    }
+
+    public EventHandler<? super MouseEvent> getOnDeleteButtonClicked() {
+        return onDeleteButtonClicked.get();
+    }
+
+    public ObjectProperty<EventHandler<? super MouseEvent>> onDeleteButtonClickedProperty() {
+        return onDeleteButtonClicked;
+    }
+
+    public void setOnDeleteButtonClicked(EventHandler<? super MouseEvent> onDeleteButtonClicked) {
+        this.onDeleteButtonClicked.set(onDeleteButtonClicked);
     }
 
     public Image getImage() {

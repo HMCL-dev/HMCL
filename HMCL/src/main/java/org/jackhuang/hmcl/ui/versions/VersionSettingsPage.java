@@ -82,6 +82,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     @FXML private JFXTextField txtServerIP;
     @FXML private ComponentList advancedSettingsPane;
     @FXML private ComponentList componentList;
+    @FXML private ComponentList iconPickerItemWrapper;
     @FXML private JFXComboBox<?> cboLauncherVisibility;
     @FXML private JFXCheckBox chkFullscreen;
     @FXML private Label lblPhysicalMemory;
@@ -152,7 +153,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         this.versionId = versionId;
 
         if (versionId == null) {
-            componentList.getContent().remove(iconPickerItem);
+            rootPane.getChildren().remove(iconPickerItemWrapper);
             rootPane.getChildren().remove(settingsTypePane);
             chkEnableSpecificSettings.setSelected(true);
         }
@@ -281,6 +282,17 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 Logging.LOG.log(Level.SEVERE, "Failed to copy icon file from " + selectedFile + " to " + iconFile, e);
             }
         }
+    }
+
+    @FXML
+    private void onDeleteIcon() {
+        if (versionId == null)
+            return;
+
+        File iconFile = profile.getRepository().getVersionIcon(versionId);
+        if (iconFile.exists())
+            iconFile.delete();
+        loadIcon();
     }
 
     private void loadIcon() {

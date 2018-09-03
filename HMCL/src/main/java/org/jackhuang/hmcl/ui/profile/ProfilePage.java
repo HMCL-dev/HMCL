@@ -46,7 +46,6 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
     @FXML private JFXTextField txtProfileName;
     @FXML private FileItem gameDir;
     @FXML private JFXButton btnSave;
-    @FXML private JFXButton btnDelete;
     @FXML private JFXCheckBox toggleUseRelativePath;
 
     /**
@@ -72,9 +71,7 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
             btnSave.setDisable(!txtProfileName.validate() || StringUtils.isBlank(getLocation()));
         });
         gameDir.convertToRelativePathProperty().bind(toggleUseRelativePath.selectedProperty());
-        if (profile == null) {
-            btnDelete.setVisible(false);
-        } else {
+        if (profile != null) {
             toggleUseRelativePath.setSelected(profile.isUseRelativePath());
         }
     }

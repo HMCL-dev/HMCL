@@ -12,7 +12,13 @@
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
     <ScrollPane fx:id="scroll" fitToHeight="true" fitToWidth="true" vbarPolicy="ALWAYS">
-        <VBox fx:id="rootPane" style="-fx-padding: 20;" spacing="8">
+        <VBox fx:id="rootPane" style="-fx-padding: 20;" spacing="12">
+
+            <ComponentList fx:id="iconPickerItemWrapper">
+                <ImagePickerItem fx:id="iconPickerItem" title="%settings.icon" onSelectButtonClicked="#onExploreIcon" onDeleteButtonClicked="#onDeleteIcon">
+                    <Image url="/assets/img/icon.png"/>
+                </ImagePickerItem>
+            </ComponentList>
 
             <BorderPane fx:id="settingsTypePane">
                 <left>
@@ -26,10 +32,6 @@
             </BorderPane>
 
             <ComponentList fx:id="componentList" depth="1">
-
-                <ImagePickerItem fx:id="iconPickerItem" title="%settings.icon" onSelectButtonClicked="#onExploreIcon">
-                    <Image url="/assets/img/icon.png"/>
-                </ImagePickerItem>
 
                 <MultiFileItem fx:id="javaItem" title="%settings.game.java_directory" chooserTitle="%settings.game.java_directory.choose"
                                hasSubtitle="true" customText="%settings.custom" directory="false" />
@@ -113,7 +115,7 @@
                     </right>
                 </BorderPane>
             </ComponentList>
-            <HBox alignment="CENTER_LEFT" style="-fx-padding: 12 0 4 0;">
+            <HBox alignment="CENTER_LEFT" style="-fx-padding: 8 0 0 0;">
                 <Label text="%settings.advanced" style="-fx-text-fill: #616161;" />
             </HBox>
             <ComponentList fx:id="advancedSettingsPane" depth="1">
