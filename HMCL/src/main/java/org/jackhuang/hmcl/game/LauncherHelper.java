@@ -214,6 +214,8 @@ public final class LauncherHelper {
 
     private static void checkGameState(Profile profile, VersionSetting setting, Version version, Runnable onAccept) throws InterruptedException {
         boolean flag = false;
+        boolean java8required = false;
+        boolean newJavaRequired = false;
 
         // Without onAccept called, the launching operation will be terminated.
 
@@ -233,6 +235,7 @@ public final class LauncherHelper {
                     .filter(javaVersion -> javaVersion.getParsedVersion() >= JavaVersion.JAVA_8)
                     .max(Comparator.comparing(JavaVersion::getVersionNumber));
             if (java8.isPresent()) {
+                newJavaRequired = true;
                 setting.setJavaVersion(java8.get());
             } else {
                 if (gameVersion.compareTo(VersionNumber.asVersion("1.13")) >= 0) {
@@ -255,6 +258,7 @@ public final class LauncherHelper {
                 .anyMatch(library -> VersionNumber.asVersion(library.getVersion()).compareTo(VersionNumber.asVersion("1.13")) < 0)) {
             Optional<JavaVersion> java8 = JavaVersion.getJREs().stream().filter(javaVersion -> javaVersion.getParsedVersion() == JavaVersion.JAVA_8).findAny();
             if (java8.isPresent()) {
+                java8required = true;
                 setting.setJavaVersion(java8.get());
             } else {
                 Controllers.dialog(i18n("launch.advice.java9"), i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
@@ -269,6 +273,7 @@ public final class LauncherHelper {
                     .filter(javaVersion -> javaVersion.getVersionNumber().compareTo(JAVA_8) >= 0)
                     .max(Comparator.comparing(JavaVersion::getVersionNumber));
             if (java8.isPresent()) {
+                newJavaRequired = true;
                 setting.setJavaVersion(java8.get());
             } else {
                 Controllers.dialog(i18n("launch.advice.java8_51_1_13"), i18n("message.warning"), MessageBox.WARNING_MESSAGE, onAccept);
@@ -278,8 +283,34 @@ public final class LauncherHelper {
 
         if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
                 org.jackhuang.hmcl.util.Platform.IS_64_BIT) {
-            Controllers.dialog(i18n("launch.advice.different_platform"), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
-            flag = true;
+            final JavaVersion java32 = java;
+
+            // First find if same java version but whose platform is 64-bit installed.
+            Optional<JavaVersion> java64 = JavaVersion.getJREs().stream()
+                    .filter(javaVersion -> javaVersion.getPlatform() == org.jackhuang.hmcl.util.Platform.PLATFORM)
+                    .filter(javaVersion -> javaVersion.getParsedVersion() == java32.getParsedVersion())
+                    .max(Comparator.comparing(JavaVersion::getVersionNumber));
+
+            if (!java64.isPresent()) {
+                final boolean java8requiredFinal = java8required, newJavaRequiredFinal = newJavaRequired;
+
+                // Then find if other java version which satisfies requirements installed.
+                java64 = JavaVersion.getJREs().stream()
+                        .filter(javaVersion -> javaVersion.getPlatform() == org.jackhuang.hmcl.util.Platform.PLATFORM)
+                        .filter(javaVersion -> {
+                            if (java8requiredFinal) return javaVersion.getParsedVersion() == JavaVersion.JAVA_8;
+                            if (newJavaRequiredFinal) return javaVersion.getParsedVersion() >= JavaVersion.JAVA_8;
+                            return true;
+                        })
+                        .max(Comparator.comparing(JavaVersion::getVersionNumber));
+            }
+
+            if (java64.isPresent()) {
+                setting.setJavaVersion(java64.get());
+            } else {
+                Controllers.dialog(i18n("launch.advice.different_platform"), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+                flag = true;
+            }
         }
 
         if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
