@@ -128,6 +128,8 @@ public class Versions {
     public static void launch(Profile profile, String id) {
         if (Accounts.getSelectedAccount() == null)
             Controllers.getLeftPaneController().checkAccount();
+        else if (id == null)
+            Controllers.dialog(i18n("version.empty.launch"));
         else
             LauncherHelper.INSTANCE.launch(profile, Accounts.getSelectedAccount(), id, null);
     }

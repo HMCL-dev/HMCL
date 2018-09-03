@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.concurrency.JFXUtilities;
+import javafx.application.Platform;
 import javafx.beans.binding.When;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
@@ -92,7 +93,7 @@ public final class LeftPaneController extends AdvancedListBox {
     // ==== Accounts ====
     public void checkAccount() {
         if (Accounts.getAccounts().isEmpty())
-            addNewAccount();
+            Platform.runLater(this::addNewAccount);
     }
 
     private void addNewAccount() {

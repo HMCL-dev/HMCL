@@ -281,6 +281,8 @@ public class DecoratorController {
             dialogPane = new StackContainerPane();
 
             dialog.setContent(dialogPane);
+            if (decorator.getDrawerWrapper() == null)
+                throw new IllegalStateException("Decorator has not been initialized");
             dialog.setDialogContainer(decorator.getDrawerWrapper());
             dialog.setOverlayClose(false);
             dialog.show();

@@ -29,6 +29,8 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 
 import java.io.File;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+
 public class GameAdvancedListItem extends AdvancedListItem {
     private final WeakListenerHelper helper = new WeakListenerHelper();
 
@@ -68,7 +70,13 @@ public class GameAdvancedListItem extends AdvancedListItem {
             else
                 imageProperty().set(new Image("/assets/img/grass.png"));
 
-            titleProperty().set(version);
+            if (version != null) {
+                titleProperty().set(version);
+                subtitleProperty().set(null);
+            } else {
+                titleProperty().set(i18n("version.empty"));
+                subtitleProperty().set(i18n("version.empty.add"));
+            }
         });
     }
 }
