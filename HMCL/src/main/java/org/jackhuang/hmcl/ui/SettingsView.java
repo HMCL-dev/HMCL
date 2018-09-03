@@ -147,7 +147,9 @@ public abstract class SettingsView extends StackPane {
                     FXUtils.setLimitHeight(chkEnableGameList, 20);
                     borderPane.setRight(chkEnableGameList);
 
-                    settingsPane.addChildren(borderPane);
+                    // Do not uncomment this line,
+                    // since option for user to enable game list in main page is unnecessary
+                    // settingsPane.addChildren(borderPane);
                 }
 
                 {
