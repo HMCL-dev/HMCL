@@ -54,7 +54,8 @@ public class GameAdvancedListItem extends AdvancedListItem {
         if (profile != null)
             profile.selectedVersionProperty().removeListener(listener);
         profile = newProfile;
-        profile.selectedVersionProperty().addListener(listener);
+        if (profile != null)
+            profile.selectedVersionProperty().addListener(listener);
         loadVersion();
     }
 

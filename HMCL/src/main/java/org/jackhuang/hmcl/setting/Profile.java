@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
@@ -120,14 +121,20 @@ public final class Profile implements Observable {
     }
 
     public Profile(String name, File initialGameDir, VersionSetting global) {
+        this(name, initialGameDir, global, null, false);
+    }
+
+    public Profile(String name, File initialGameDir, VersionSetting global, String selectedVersion, boolean useRelativePath) {
         this.name = new ImmediateStringProperty(this, "name", name);
         gameDir = new ImmediateObjectProperty<>(this, "gameDir", initialGameDir);
         repository = new HMCLGameRepository(this, initialGameDir);
         modManager = new ModManager(repository);
         this.global.set(global == null ? new VersionSetting() : global);
+        this.selectedVersion.set(selectedVersion);
+        this.useRelativePath.set(useRelativePath);
 
         gameDir.addListener((a, b, newValue) -> repository.changeDirectory(newValue));
-        selectedVersion.addListener(o -> checkSelectedVersion());
+        this.selectedVersion.addListener(o -> checkSelectedVersion());
         helper.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion()));
 
         addPropertyChangedListener(onInvalidating(this::invalidate));
@@ -224,7 +231,7 @@ public final class Profile implements Observable {
     }
 
     protected void invalidate() {
-        observableHelper.invalidate();
+        Platform.runLater(observableHelper::invalidate);
     }
 
     public static final class Serializer implements JsonSerializer<Profile>, JsonDeserializer<Profile> {
@@ -253,10 +260,11 @@ public final class Profile implements Observable {
             JsonObject obj = (JsonObject) json;
             String gameDir = Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse("");
 
-            Profile profile = new Profile("Default", new File(gameDir), context.deserialize(obj.get("global"), VersionSetting.class));
-            profile.setSelectedVersion(Optional.ofNullable(obj.get("selectedMinecraftVersion")).map(JsonElement::getAsString).orElse(""));
-            profile.setUseRelativePath(Optional.ofNullable(obj.get("useRelativePath")).map(JsonElement::getAsBoolean).orElse(false));
-            return profile;
+            return new Profile("Default",
+                    new File(gameDir),
+                    context.deserialize(obj.get("global"), VersionSetting.class),
+                    Optional.ofNullable(obj.get("selectedMinecraftVersion")).map(JsonElement::getAsString).orElse(""),
+                    Optional.ofNullable(obj.get("useRelativePath")).map(JsonElement::getAsBoolean).orElse(false));
         }
 
     }

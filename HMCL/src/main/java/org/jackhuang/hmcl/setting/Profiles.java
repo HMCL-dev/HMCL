@@ -25,6 +25,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Launcher;
 
+import java.io.File;
 import java.util.HashSet;
 
 import static javafx.collections.FXCollections.observableArrayList;
@@ -82,11 +83,8 @@ public final class Profiles {
 
     private static void checkProfiles() {
         if (profiles.isEmpty()) {
-            Profile current = new Profile(Profiles.DEFAULT_PROFILE);
-            current.setUseRelativePath(true);
-
+            Profile current = new Profile(Profiles.DEFAULT_PROFILE, new File(".minecraft"), new VersionSetting(), null, true);
             Profile home = new Profile(Profiles.HOME_PROFILE, Launcher.MINECRAFT_DIRECTORY);
-
             profiles.addAll(current, home);
         }
     }

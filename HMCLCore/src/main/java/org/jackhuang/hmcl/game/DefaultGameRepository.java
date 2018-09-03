@@ -57,7 +57,7 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public boolean hasVersion(String id) {
-        return versions.containsKey(id);
+        return id != null && versions.containsKey(id);
     }
 
     @Override
