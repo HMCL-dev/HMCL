@@ -128,7 +128,7 @@ public final class Profiles {
                 profiles.stream()
                         .filter(it -> it.getName().equals(config().getSelectedProfile()))
                         .findFirst()
-                        .get());
+                        .orElse(profiles.get(0)));
     }
 
     public static ObservableList<Profile> getProfiles() {
