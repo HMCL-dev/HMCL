@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.profile;
 
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleGroup;
@@ -47,13 +48,16 @@ public class ProfileList extends Control implements DecoratorPage {
     };
 
     private ToggleGroup toggleGroup;
+    private final ObservableList<ProfileListItem> profileItems;
 
     public ProfileList() {
         toggleGroup = new ToggleGroup();
 
-        items.bindContent(MappedObservableList.create(
+        profileItems = MappedObservableList.create(
                 Profiles.profilesProperty(),
-                profile -> new ProfileListItem(toggleGroup, profile)));
+                profile -> new ProfileListItem(toggleGroup, profile));
+
+        items.bindContent(profileItems);
 
         selectedProfile.bindBidirectional(Profiles.selectedProfileProperty());
         toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {

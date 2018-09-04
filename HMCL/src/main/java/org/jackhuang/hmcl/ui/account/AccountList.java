@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.account;
 
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleGroup;
@@ -47,13 +48,16 @@ public class AccountList extends Control implements DecoratorPage {
     };
 
     private ToggleGroup toggleGroup;
+    private final ObservableList<AccountListItem> accountItems;
 
     public AccountList() {
         toggleGroup = new ToggleGroup();
 
-        items.bindContent(MappedObservableList.create(
+        accountItems = MappedObservableList.create(
                 Accounts.accountsProperty(),
-                account -> new AccountListItem(toggleGroup, account)));
+                account -> new AccountListItem(toggleGroup, account));
+
+        items.bindContent(accountItems);
 
         selectedAccount.bindBidirectional(Accounts.selectedAccountProperty());
         toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {
