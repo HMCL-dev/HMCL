@@ -135,7 +135,6 @@ public class Versions {
     public static void modifyGlobalSettings(Profile profile) {
         VersionSettingsPage page = new VersionSettingsPage();
         page.loadVersionSetting(profile, null);
-        page.titleProperty().set(Profiles.getProfileDisplayName(profile) + " - " + i18n("settings.type.global.manage"));
         Controllers.navigate(page);
     }
 }

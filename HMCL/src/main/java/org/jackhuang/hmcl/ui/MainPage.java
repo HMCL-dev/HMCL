@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.setting.ConfigHolder;
@@ -31,7 +31,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class MainPage extends StackPane implements DecoratorPage {
 
-    private final StringProperty title = new SimpleStringProperty(this, "title", i18n("main_page"));
+    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(this, "title", i18n("main_page"));
 
     @FXML
     private StackPane main;
@@ -58,8 +58,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     @Override
-    public StringProperty titleProperty() {
-        return title;
+    public ReadOnlyStringProperty titleProperty() {
+        return title.getReadOnlyProperty();
     }
 
     public void setTitle(String title) {

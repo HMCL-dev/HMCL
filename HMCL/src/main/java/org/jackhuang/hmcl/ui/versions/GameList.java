@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameList extends Control implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty(I18n.i18n("version.manage"));
+    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(I18n.i18n("version.manage"));
     private final BooleanProperty loading = new SimpleBooleanProperty(true);
     private final ListProperty<GameListItem> items = new SimpleListProperty<>(FXCollections.observableArrayList());
 
@@ -115,8 +115,8 @@ public class GameList extends Control implements DecoratorPage {
     }
 
     @Override
-    public StringProperty titleProperty() {
-        return title;
+    public ReadOnlyStringProperty titleProperty() {
+        return title.getReadOnlyProperty();
     }
 
     public BooleanProperty loadingProperty() {

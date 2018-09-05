@@ -24,10 +24,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.When;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
@@ -54,7 +51,7 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class SettingsPage extends SettingsView implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty(this, "title", i18n("settings.launcher"));
+    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(this, "title", i18n("settings.launcher"));
 
     private ObjectProperty<Proxy.Type> selectedProxyType;
 
@@ -238,8 +235,8 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
     }
 
     @Override
-    public StringProperty titleProperty() {
-        return title;
+    public ReadOnlyStringProperty titleProperty() {
+        return title.getReadOnlyProperty();
     }
 
     public void setTitle(String title) {

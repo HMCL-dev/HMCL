@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.ui.profile;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXTextField;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
@@ -39,7 +41,7 @@ import java.util.Optional;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ProfilePage extends StackPane implements DecoratorPage {
-    private final StringProperty title;
+    private final ReadOnlyStringWrapper title;
     private final StringProperty location;
     private final Profile profile;
 
@@ -55,7 +57,7 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
         this.profile = profile;
         String profileDisplayName = Optional.ofNullable(profile).map(Profiles::getProfileDisplayName).orElse("");
 
-        title = new SimpleStringProperty(this, "title",
+        title = new ReadOnlyStringWrapper(this, "title",
                 profile == null ? i18n("profile.new") : i18n("profile") + " - " + profileDisplayName);
         location = new SimpleStringProperty(this, "location",
                 Optional.ofNullable(profile).map(Profile::getGameDir).map(File::getAbsolutePath).orElse(""));
@@ -101,8 +103,8 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
     }
 
     @Override
-    public StringProperty titleProperty() {
-        return title;
+    public ReadOnlyStringProperty titleProperty() {
+        return title.getReadOnlyProperty();
     }
 
     public void setTitle(String title) {

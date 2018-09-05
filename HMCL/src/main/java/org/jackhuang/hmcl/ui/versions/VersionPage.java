@@ -21,8 +21,8 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXTabPane;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.StackPane;
@@ -37,7 +37,7 @@ import java.io.File;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VersionPage extends StackPane implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty(this, "title", null);
+    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(this, "title", null);
 
     @FXML
     private VersionSettingsPage versionSettings;
@@ -167,8 +167,8 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     }
 
     @Override
-    public StringProperty titleProperty() {
-        return title;
+    public ReadOnlyStringProperty titleProperty() {
+        return title.getReadOnlyProperty();
     }
 
     public void setTitle(String title) {

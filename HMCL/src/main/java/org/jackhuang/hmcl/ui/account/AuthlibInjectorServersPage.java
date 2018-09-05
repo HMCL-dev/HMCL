@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.ui.account;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ScrollPane;
@@ -36,7 +36,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.smoothScrolling;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AuthlibInjectorServersPage extends StackPane implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty(this, "title", i18n("account.injector.manage.title"));
+    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(this, "title", i18n("account.injector.manage.title"));
 
     @FXML private ScrollPane scrollPane;
     @FXML private VBox listPane;
@@ -67,8 +67,8 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
     }
 
     @Override
-    public StringProperty titleProperty() {
-        return title;
+    public ReadOnlyStringProperty titleProperty() {
+        return title.getReadOnlyProperty();
     }
 
     public void setTitle(String title) {

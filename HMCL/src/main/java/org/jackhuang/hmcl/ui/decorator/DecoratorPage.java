@@ -17,10 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.decorator;
 
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
 
 public interface DecoratorPage {
-    StringProperty titleProperty();
+    ReadOnlyStringProperty titleProperty();
 
     default boolean canForceToClose() {
         return false;

@@ -24,8 +24,8 @@ import com.jfoenix.controls.JFXToggleButton;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -36,6 +36,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -61,7 +62,7 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VersionSettingsPage extends StackPane implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty();
+    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper();
 
     private VersionSetting lastVersionSetting = null;
     private Profile profile;
@@ -156,6 +157,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             rootPane.getChildren().remove(iconPickerItemWrapper);
             rootPane.getChildren().remove(settingsTypePane);
             chkEnableSpecificSettings.setSelected(true);
+            title.set(Profiles.getProfileDisplayName(profile) + " - " + i18n("settings.type.global.manage"));
         }
 
         VersionSetting versionSetting = profile.getVersionSetting(versionId);
@@ -310,7 +312,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     }
 
     @Override
-    public StringProperty titleProperty() {
+    public ReadOnlyStringProperty titleProperty() {
         return title;
     }
 }

@@ -32,7 +32,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AccountList extends Control implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty(i18n("account.manage"));
+    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(i18n("account.manage"));
     private final ListProperty<AccountListItem> items = new SimpleListProperty<>(FXCollections.observableArrayList());
     private ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<Account>() {
         {
@@ -87,7 +87,7 @@ public class AccountList extends Control implements DecoratorPage {
     }
 
     @Override
-    public StringProperty titleProperty() {
-        return title;
+    public ReadOnlyStringProperty titleProperty() {
+        return title.getReadOnlyProperty();
     }
 }
