@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
-import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
@@ -231,7 +230,7 @@ public final class Profile implements Observable {
     }
 
     protected void invalidate() {
-        Platform.runLater(observableHelper::invalidate);
+        observableHelper.invalidate();
     }
 
     public static final class Serializer implements JsonSerializer<Profile>, JsonDeserializer<Profile> {

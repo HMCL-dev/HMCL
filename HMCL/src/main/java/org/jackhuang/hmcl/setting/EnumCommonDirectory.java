@@ -19,10 +19,6 @@ package org.jackhuang.hmcl.setting;
 
 public enum EnumCommonDirectory {
     /**
-     * same to game directory
-     */
-    DISABLED,
-    /**
      * %appdata%/.minecraft or ~/.minecraft
      */
     DEFAULT,

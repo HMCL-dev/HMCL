@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.SimpleVersionProvider;
 import org.jackhuang.hmcl.game.Version;
@@ -114,7 +113,7 @@ public final class ForgeInstallTask extends TaskResult<Version> {
                     .resolve(provider).setJar(null)
                     .setId(version.getId()).setLogging(Collections.emptyMap()));
             
-            dependencies.add(new GameLibrariesTask(dependencyManager, installProfile.getVersionInfo()));
+            dependencies.add(dependencyManager.checkLibraryCompletionAsync(installProfile.getVersionInfo()));
         }
         
         if (!installer.delete())

@@ -138,7 +138,6 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
         // ====
 
         fileCommonLocation.loadChildren(Arrays.asList(
-                fileCommonLocation.createChildren(i18n("launcher.common_directory.disabled"), EnumCommonDirectory.DISABLED),
                 fileCommonLocation.createChildren(i18n("launcher.common_directory.default"), EnumCommonDirectory.DEFAULT)
         ), EnumCommonDirectory.CUSTOM);
         fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());

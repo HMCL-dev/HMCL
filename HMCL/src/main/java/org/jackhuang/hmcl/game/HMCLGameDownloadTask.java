@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
@@ -28,6 +27,9 @@ import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -51,7 +53,7 @@ public class HMCLGameDownloadTask extends Task {
     }
 
     @Override
-    public List<Task> getDependencies() {
+    public Collection<Task> getDependencies() {
         return dependencies;
     }
 
@@ -59,24 +61,26 @@ public class HMCLGameDownloadTask extends Task {
     public void execute() {
         File jar = profile.getRepository().getVersionJar(version);
 
-        // Force using common directory will not affect the behaviour that repository acts
-        // Since we always copy the downloaded jar to .minecraft/versions/<version>/
-        File cache = new File(Optional.ofNullable(Settings.instance().getCommonDirectory())
-                .orElse(Settings.getDefaultCommonDirectory()),
-                "jars/" + gameVersion + ".jar");
-        if (cache.exists())
+        Optional<Path> path = HMCLLocalRepository.REPOSITORY.getVersion(gameVersion, version);
+        if (path.isPresent()) {
             try {
-                FileUtils.copyFile(cache, jar);
+                FileUtils.copyFile(path.get().toFile(), jar);
                 return;
             } catch (IOException e) {
-                Logging.LOG.log(Level.SEVERE, "Unable to copy cached Minecraft jar from " + cache + " to " + jar, e);
+                Logging.LOG.log(Level.SEVERE, "Unable to copy cached Minecraft jar from " + path.get() + " to " + jar, e);
             }
+        }
 
-        dependencies.add(new FileDownloadTask(
-                NetworkUtils.toURL(profile.getDependency().getDownloadProvider().injectURL(version.getDownloadInfo().getUrl())),
-                cache,
-                new IntegrityCheck("SHA-1", version.getDownloadInfo().getSha1())
-        ).then(Task.of(v -> FileUtils.copyFile(cache, jar))));
+        URL url = NetworkUtils.toURL(profile.getDependency().getDownloadProvider().injectURL(version.getDownloadInfo().getUrl()));
+
+        if (version.getDownloadInfo().getSha1() == null) {
+            // We do not know jar's hash, then we will not cache it.
+            dependencies.add(new FileDownloadTask(url, jar));
+        } else {
+            dependencies.add(new FileDownloadTask(url, jar,
+                    new IntegrityCheck("SHA-1", version.getDownloadInfo().getSha1())
+            ).then(Task.of(v -> HMCLLocalRepository.REPOSITORY.cacheVersion(version, jar.toPath()))));
+        }
     }
 
 }

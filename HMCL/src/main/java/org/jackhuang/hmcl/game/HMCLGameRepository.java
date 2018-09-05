@@ -56,7 +56,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     public File getAssetDirectory(String version, String assetId) {
-        if (Settings.instance().isCommonDirectoryDisabled() || useSelf(assetId))
+        if (useSelf(assetId))
             return super.getAssetDirectory(version, assetId);
         else
             return new File(Settings.instance().getCommonDirectory(), "assets");
@@ -76,16 +76,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
             }
         }
     }
-
-    @Override
-    public File getLibraryFile(Version version, Library lib) {
-        File self = super.getLibraryFile(version, lib);
-        if (Settings.instance().isCommonDirectoryDisabled() || self.exists())
-            return self;
-        else
-            return new File(Settings.instance().getCommonDirectory(), "libraries/" + lib.getPath());
-    }
-
 
     @Override
     protected void refreshVersionsImpl() {

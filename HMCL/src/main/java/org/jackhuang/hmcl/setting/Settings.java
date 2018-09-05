@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.setting;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.HMCLLocalRepository;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
@@ -45,6 +46,8 @@ public class Settings {
         ProxyManager.init();
         Accounts.init();
         Profiles.init();
+
+        HMCLLocalRepository.REPOSITORY.directoryProperty().bind(config().commonDirectoryProperty());
     }
 
     public Font getFont() {
@@ -64,18 +67,12 @@ public class Settings {
         config().setLogLines(logLines);
     }
 
-    public boolean isCommonDirectoryDisabled() {
-        return config().getCommonDirType() == EnumCommonDirectory.DISABLED;
-    }
-
     public static String getDefaultCommonDirectory() {
         return Launcher.MINECRAFT_DIRECTORY.getAbsolutePath();
     }
 
     public String getCommonDirectory() {
         switch (config().getCommonDirType()) {
-            case DISABLED:
-                return null;
             case DEFAULT:
                 return getDefaultCommonDirectory();
             case CUSTOM:

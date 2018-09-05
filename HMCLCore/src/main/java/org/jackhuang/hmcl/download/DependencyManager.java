@@ -36,11 +36,19 @@ public interface DependencyManager {
 
     /**
      * Check if the game is complete.
-     * Check libraries, assets, logging files and so on.
+     * Check libraries, assets files and so on.
      *
      * @return the task to check game completion.
      */
     Task checkGameCompletionAsync(Version version);
+
+    /**
+     * Check if the game is complete.
+     * Check libraries, assets files and so on.
+     *
+     * @return the task to check game completion.
+     */
+    Task checkLibraryCompletionAsync(Version version);
 
     /**
      * The builder to build a brand new game then libraries such as Forge, LiteLoader and OptiFine.

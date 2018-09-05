@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download.optifine;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.LibraryDownloadInfo;
@@ -92,7 +91,7 @@ public final class OptiFineInstallTask extends TaskResult<Version> {
                 .setMainClass("net.minecraft.launchwrapper.Launch")
         );
 
-        dependencies.add(new GameLibrariesTask(dependencyManager, version.setLibraries(libraries)));
+        dependencies.add(dependencyManager.checkLibraryCompletionAsync(version.setLibraries(libraries)));
     }
 
 }

@@ -82,7 +82,7 @@ public final class LiteLoaderInstallTask extends TaskResult<Version> {
                 .setLogging(Collections.emptyMap())
         );
 
-        dependencies.add(new GameLibrariesTask(dependencyManager, tempVersion));
+        dependencies.add(dependencyManager.checkLibraryCompletionAsync(tempVersion));
     }
 
 }

@@ -73,6 +73,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
+    public Task checkLibraryCompletionAsync(Version version) {
+        return new GameLibrariesTask(this, version);
+    }
+
+    @Override
     public Task installLibraryAsync(String gameVersion, Version version, String libraryId, String libraryVersion) {
         VersionList<?> versionList = getVersionList(libraryId);
         return versionList.loadAsync(getDownloadProvider())
