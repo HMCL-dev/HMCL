@@ -23,12 +23,13 @@ import java.util.jar.Pack200;
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
 import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
-public final class LibraryDownloadTask extends Task {
-    private final LibraryDownloadTaskHelper helperTask;
-    private final File jar;
+public class LibraryDownloadTask extends Task {
+    private FileDownloadTask task;
+    protected final File jar;
     private final File xzFile;
-    private final Library library;
-    private boolean xz;
+    protected final Library library;
+    protected final String url;
+    protected boolean xz;
 
     public LibraryDownloadTask(AbstractDependencyManager dependencyManager, File file, Library library) {
         setSignificance(TaskSignificance.MODERATE);
@@ -38,17 +39,15 @@ public final class LibraryDownloadTask extends Task {
 
         this.library = library;
 
-        String url = dependencyManager.getDownloadProvider().injectURL(library.getDownload().getUrl());
+        url = dependencyManager.getDownloadProvider().injectURL(library.getDownload().getUrl());
         jar = file;
 
         xzFile = new File(file.getAbsoluteFile().getParentFile(), file.getName() + ".pack.xz");
-
-        helperTask = new LibraryDownloadTaskHelper(file, url);
     }
 
     @Override
     public Collection<? extends Task> getDependents() {
-        return Collections.singleton(helperTask);
+        return Collections.singleton(task);
     }
 
     @Override
@@ -59,18 +58,13 @@ public final class LibraryDownloadTask extends Task {
     @Override
     public void execute() throws Exception {
         if (!isDependentsSucceeded()) {
-            if (helperTask.task == null) {
-                // NetworkUtils.URLExists failed.
-                throw new LibraryDownloadException(library, helperTask.getLastException());
-            } else {
-                // Since FileDownloadTask wraps the actual exception with another IOException.
-                // We should extract it letting the error message clearer.
-                Throwable t = helperTask.task.getLastException();
-                if (t.getCause() != null && t.getCause() != t)
-                    throw new LibraryDownloadException(library, t.getCause());
-                else
-                    throw new LibraryDownloadException(library, t);
-            }
+            // Since FileDownloadTask wraps the actual exception with another IOException.
+            // We should extract it letting the error message clearer.
+            Throwable t = task.getLastException();
+            if (t.getCause() != null)
+                throw new LibraryDownloadException(library, t.getCause());
+            else
+                throw new LibraryDownloadException(library, t);
         } else {
             if (xz) unpackLibrary(jar, FileUtils.readBytes(xzFile));
             if (!checksumValid(jar, library.getChecksums())) {
@@ -80,44 +74,25 @@ public final class LibraryDownloadTask extends Task {
         }
     }
 
-    private class LibraryDownloadTaskHelper extends Task {
-        private FileDownloadTask task;
-        private final File file;
-        private final String url;
-
-        public LibraryDownloadTaskHelper(File file, String url) {
-            this.file = file;
-            this.url = url;
-
-            setName(library.getName());
-        }
-
-        @Override
-        public boolean isRelyingOnDependencies() {
-            return true;
-        }
-
-        @Override
-        public Collection<? extends Task> getDependencies() {
-            return Collections.singleton(task);
-        }
-
-        @Override
-        public void execute() throws Exception {
+    @Override
+    public void preExecute() throws Exception {
+        try {
             URL packXz = NetworkUtils.toURL(url + ".pack.xz");
             if (NetworkUtils.URLExists(packXz)) {
                 task = new FileDownloadTask(packXz, xzFile, null);
                 xz = true;
             } else {
                 task = new FileDownloadTask(NetworkUtils.toURL(url),
-                        file,
+                        jar,
                         library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
                 xz = false;
             }
+        } catch (IOException e) {
+            throw new LibraryDownloadException(library, e);
         }
     }
 
-    private static boolean checksumValid(File libPath, List<String> checksums) {
+    public static boolean checksumValid(File libPath, List<String> checksums) {
         try {
             if (checksums == null || checksums.isEmpty()) {
                 return true;

@@ -141,14 +141,23 @@ public final class TaskExecutor {
         boolean flag = false;
 
         try {
+            task.setVariables(variables);
+
+            try {
+                task.getScheduler().schedule(task::preExecute).get();
+            } catch (ExecutionException e) {
+                if (e.getCause() instanceof Exception)
+                    throw (Exception) e.getCause();
+                else
+                    throw e;
+            }
+
             boolean doDependentsSucceeded = executeTasks(task.getDependents());
             if (!doDependentsSucceeded && task.isRelyingOnDependents() || canceled)
                 throw new SilentException();
 
             if (doDependentsSucceeded)
                 task.setDependentsSucceeded();
-
-            task.setVariables(variables);
 
             task.setState(Task.TaskState.RUNNING);
 
@@ -172,6 +181,15 @@ public final class TaskExecutor {
             if (!executeTasks(task.getDependencies()) && task.isRelyingOnDependencies()) {
                 Logging.LOG.severe("Subtasks failed for " + task.getName());
                 throw new SilentException();
+            }
+
+            try {
+                task.getScheduler().schedule(task::postExecute).get();
+            } catch (ExecutionException e) {
+                if (e.getCause() instanceof Exception)
+                    throw (Exception) e.getCause();
+                else
+                    throw e;
             }
 
             flag = true;

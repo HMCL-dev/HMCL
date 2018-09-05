@@ -133,7 +133,20 @@ public abstract class Task {
      * @throws InterruptedException if current thread is interrupted
      * @see Thread#isInterrupted
      */
+    public void preExecute() throws Exception {}
+
+    /**
+     * @throws InterruptedException if current thread is interrupted
+     * @see Thread#isInterrupted
+     */
     public abstract void execute() throws Exception;
+
+    /**
+     * @throws InterruptedException if current thread is interrupted
+     * @see Thread#isInterrupted
+     */
+    public void postExecute() throws Exception {}
+
 
     /**
      * The collection of sub-tasks that should execute **before** this task running.
