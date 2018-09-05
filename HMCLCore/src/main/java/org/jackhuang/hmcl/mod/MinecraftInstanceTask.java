@@ -63,7 +63,7 @@ public final class MinecraftInstanceTask<T> extends Task {
                     @Override
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                         String relativePath = root.relativize(file).normalize().toString();
-                        overrides.add(new ModpackConfiguration.FileInformation(relativePath, encodeHex(digest("SHA-1", Files.newInputStream(file)))));
+                        overrides.add(new ModpackConfiguration.FileInformation(relativePath, encodeHex(digest("SHA-1", file))));
                         return FileVisitResult.CONTINUE;
                     }
                 });

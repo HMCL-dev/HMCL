@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -49,6 +51,12 @@ public final class DigestUtils {
 
     public static byte[] digest(String algorithm, byte[] data) {
         return getDigest(algorithm).digest(data);
+    }
+
+    public static byte[] digest(String algorithm, Path path) throws IOException {
+        try (InputStream is = Files.newInputStream(path)) {
+            return digest(algorithm, is);
+        }
     }
 
     public static byte[] digest(String algorithm, InputStream data) throws IOException {
