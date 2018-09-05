@@ -24,6 +24,8 @@ import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountList;
@@ -81,15 +83,21 @@ public final class Controllers {
 
     // FXThread
     public static AccountList getAccountListPage() {
-        if (accountListPage == null)
+        if (accountListPage == null) {
             accountListPage = new AccountList();
+            accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
+            accountListPage.accountsProperty().bindContent(Accounts.accountsProperty());
+        }
         return accountListPage;
     }
 
     // FXThread
     public static ProfileList getProfileListPage() {
-        if (profileListPage == null)
+        if (profileListPage == null) {
             profileListPage = new ProfileList();
+            profileListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
+            profileListPage.profilesProperty().bindContent(Profiles.profilesProperty());
+        }
         return profileListPage;
     }
 

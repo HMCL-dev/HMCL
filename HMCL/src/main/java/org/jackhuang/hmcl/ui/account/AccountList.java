@@ -24,7 +24,6 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.MappedObservableList;
@@ -46,6 +45,7 @@ public class AccountList extends Control implements DecoratorPage {
             items.forEach(item -> item.selectedProperty().set(item.getAccount() == selected));
         }
     };
+    private final ListProperty<Account> accounts = new SimpleListProperty<>(FXCollections.observableArrayList());
 
     private ToggleGroup toggleGroup;
     private final ObservableList<AccountListItem> accountItems;
@@ -54,16 +54,23 @@ public class AccountList extends Control implements DecoratorPage {
         toggleGroup = new ToggleGroup();
 
         accountItems = MappedObservableList.create(
-                Accounts.accountsProperty(),
+                accountsProperty(),
                 account -> new AccountListItem(toggleGroup, account));
 
         items.bindContent(accountItems);
 
-        selectedAccount.bindBidirectional(Accounts.selectedAccountProperty());
         toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {
             if (toggle == null || toggle.getUserData() == null) return;
             selectedAccount.set(((AccountListItem) toggle.getUserData()).getAccount());
         });
+    }
+
+    public ObjectProperty<Account> selectedAccountProperty() {
+        return selectedAccount;
+    }
+
+    public ListProperty<Account> accountsProperty() {
+        return accounts;
     }
 
     @Override

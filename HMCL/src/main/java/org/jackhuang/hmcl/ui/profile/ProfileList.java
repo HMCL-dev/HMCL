@@ -24,7 +24,6 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.MappedObservableList;
@@ -46,6 +45,7 @@ public class ProfileList extends Control implements DecoratorPage {
             items.forEach(item -> item.selectedProperty().set(item.getProfile() == selected));
         }
     };
+    private final ListProperty<Profile> profiles = new SimpleListProperty<>(FXCollections.observableArrayList());
 
     private ToggleGroup toggleGroup;
     private final ObservableList<ProfileListItem> profileItems;
@@ -54,16 +54,23 @@ public class ProfileList extends Control implements DecoratorPage {
         toggleGroup = new ToggleGroup();
 
         profileItems = MappedObservableList.create(
-                Profiles.profilesProperty(),
+                profilesProperty(),
                 profile -> new ProfileListItem(toggleGroup, profile));
 
         items.bindContent(profileItems);
 
-        selectedProfile.bindBidirectional(Profiles.selectedProfileProperty());
         toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {
             if (toggle == null || toggle.getUserData() == null) return;
             selectedProfile.set(((ProfileListItem) toggle.getUserData()).getProfile());
         });
+    }
+
+    public ObjectProperty<Profile> selectedProfileProperty() {
+        return selectedProfile;
+    }
+
+    public ListProperty<Profile> profilesProperty() {
+        return profiles;
     }
 
     @Override
