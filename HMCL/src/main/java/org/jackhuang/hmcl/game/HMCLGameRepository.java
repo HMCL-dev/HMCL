@@ -50,18 +50,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
         return profile;
     }
 
-    private boolean useSelf(String assetId) {
-        return new File(getBaseDirectory(), "assets/indexes/" + assetId + ".json").exists();
-    }
-
-    @Override
-    public File getAssetDirectory(String version, String assetId) {
-        if (useSelf(assetId))
-            return super.getAssetDirectory(version, assetId);
-        else
-            return new File(Settings.instance().getCommonDirectory(), "assets");
-    }
-
     @Override
     public File getRunDirectory(String id) {
         if (beingModpackVersions.contains(id) || isModpack(id))

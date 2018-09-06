@@ -28,10 +28,7 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 
 /**
@@ -43,7 +40,6 @@ public final class GameAssetDownloadTask extends Task {
     private final AbstractDependencyManager dependencyManager;
     private final Version version;
     private final GameAssetRefreshTask refreshTask;
-    private final List<Task> dependents = new LinkedList<>();
     private final List<Task> dependencies = new LinkedList<>();
 
     /**
@@ -56,16 +52,15 @@ public final class GameAssetDownloadTask extends Task {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.refreshTask = new GameAssetRefreshTask(dependencyManager, version);
-        this.dependents.add(refreshTask);
     }
 
     @Override
     public Collection<Task> getDependents() {
-        return dependents;
+        return Collections.singleton(refreshTask);
     }
 
     @Override
-    public List<Task> getDependencies() {
+    public Collection<Task> getDependencies() {
         return dependencies;
     }
     

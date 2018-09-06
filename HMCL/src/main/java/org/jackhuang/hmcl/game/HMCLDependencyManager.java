@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
-import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.ParallelTask;
 import org.jackhuang.hmcl.task.Task;
@@ -45,7 +44,7 @@ public class HMCLDependencyManager extends DefaultDependencyManager {
     @Override
     public Task checkGameCompletionAsync(Version version) {
         return new ParallelTask(
-                new GameAssetDownloadTask(this, version),
+                new HMCLGameAssetDownloadTask(this, version),
                 new HMCLGameLibrariesTask(this, version)
         );
     }

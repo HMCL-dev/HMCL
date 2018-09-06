@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
- * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
- * 
+ * Copyright (C) 2017  huangyuhui <huanghongxun2008@126.com>
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,29 +15,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.download.game;
+package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.download.AbstractDependencyManager;
-import org.jackhuang.hmcl.game.AssetIndexInfo;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
-import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
-/**
- * This task is to download asset index file provided in minecraft.json.
- *
- * @author huangyuhui
- */
-public final class GameAssetIndexDownloadTask extends Task {
+public class HMCLGameAssetIndexDownloadTask extends Task {
 
-    private final AbstractDependencyManager dependencyManager;
+    private final HMCLDependencyManager dependencyManager;
     private final Version version;
     private final List<Task> dependencies = new LinkedList<>();
 
@@ -47,7 +41,7 @@ public final class GameAssetIndexDownloadTask extends Task {
      * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
      * @param version the <b>resolved</b> version
      */
-    public GameAssetIndexDownloadTask(AbstractDependencyManager dependencyManager, Version version) {
+    public HMCLGameAssetIndexDownloadTask(HMCLDependencyManager dependencyManager, Version version) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         setSignificance(TaskSignificance.MODERATE);
@@ -61,17 +55,19 @@ public final class GameAssetIndexDownloadTask extends Task {
     @Override
     public void execute() throws Exception {
         AssetIndexInfo assetIndexInfo = version.getAssetIndex();
-        File assetDir = dependencyManager.getGameRepository().getAssetDirectory(version.getId(), assetIndexInfo.getId());
-        if (!FileUtils.makeDirectory(assetDir))
-            throw new IOException("Cannot create directory: " + assetDir);
         File assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
 
-        // We should not check the hash code of asset index file since this file is not consistent
-        // And Mojang will modify this file anytime. So assetIndex.hash might be outdated.
-        dependencies.add(new FileDownloadTask(
-                NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(assetIndexInfo.getUrl())),
-                assetIndexFile
-        ));
+        Optional<Path> path = HMCLLocalRepository.REPOSITORY.getAssetIndex(assetIndexInfo);
+        if (path.isPresent()) {
+            FileUtils.copyFile(path.get().toFile(), assetIndexFile);
+        } else {
+            URL url = NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(assetIndexInfo.getUrl()));
+            dependencies.add(new FileDownloadTask(url, assetIndexFile)
+                    .finalized((v, succ) -> {
+                        if (succ)
+                            HMCLLocalRepository.REPOSITORY.cacheAssetIndex(assetIndexInfo, assetIndexFile.toPath());
+                    }));
+        }
     }
 
 }

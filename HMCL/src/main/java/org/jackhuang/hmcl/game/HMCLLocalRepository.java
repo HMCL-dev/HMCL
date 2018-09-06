@@ -28,16 +28,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class HMCLLocalRepository {
     private final StringProperty directory = new SimpleStringProperty();
 
+    private Path commonDir;
     private Path cacheDir;
     private Path librariesDir;
     private Path jarsDir;
+    private Path assetObjectsDir;
     private Path indexFile;
 
     private Index index = null;
@@ -59,9 +60,11 @@ public class HMCLLocalRepository {
     }
 
     private void changeDirectory(Path commonDir) {
+        this.commonDir = commonDir;
         cacheDir = commonDir.resolve("cache");
         librariesDir = commonDir.resolve("libraries");
         jarsDir = commonDir.resolve("jars");
+        assetObjectsDir = commonDir.resolve("assets").resolve("objects");
         indexFile = cacheDir.resolve("index.json");
 
         try {
@@ -81,6 +84,14 @@ public class HMCLLocalRepository {
         return Files.exists(getFile(algorithm, hash));
     }
 
+    /**
+     * Try to cache the library given.
+     * This library will be cached only if it is verified.
+     * If cannot be verified, the library will not be cached.
+     *
+     * @param library the library being cached
+     * @param jar the file of library
+     */
     public void tryCacheLibrary(Library library, Path jar) {
         if (index.getLibraries().stream().anyMatch(it -> library.getName().equals(it.getName())))
             return;
@@ -103,6 +114,12 @@ public class HMCLLocalRepository {
         }
     }
 
+    /**
+     * Get the path of cached library, empty if not cached
+     *
+     * @param library the library we check if cached.
+     * @return the cached path if exists, otherwise empty
+     */
     public synchronized Optional<Path> getLibrary(Library library) {
         LibraryDownloadInfo info = library.getDownload();
         String hash = info.getSha1();
@@ -146,6 +163,15 @@ public class HMCLLocalRepository {
         return Optional.empty();
     }
 
+    /**
+     * Caches the library file to repository.
+     *
+     * @param library the library to cache
+     * @param path the file being cached, must be verified
+     * @param forge true if this library is provided by Forge
+     * @return cached file location
+     * @throws IOException if failed to calculate hash code of {@code path} or copy the file to cache
+     */
     public synchronized Path cacheLibrary(Library library, Path path, boolean forge) throws IOException {
         String hash = library.getDownload().getSha1();
         if (hash == null)
@@ -157,6 +183,56 @@ public class HMCLLocalRepository {
         LibraryIndex libIndex = new LibraryIndex(library.getName(), hash, forge ? LibraryIndex.TYPE_FORGE : LibraryIndex.TYPE_JAR);
         index.getLibraries().add(libIndex);
         saveIndex();
+
+        return cache;
+    }
+
+    /**
+     * Get the path of cached asset index file, empty if not cached
+     *
+     * @param info the asset index info
+     * @return the cached path if exists, otherwise empty
+     */
+    public synchronized Optional<Path> getAssetIndex(AssetIndexInfo info) {
+        String hash = info.getSha1();
+
+        if (fileExists(SHA1, hash))
+            return Optional.of(getFile(SHA1, hash));
+
+        // check old common directory
+        Path file = commonDir.resolve("assets").resolve("indexes").resolve(info.getId() + ".json");
+        if (Files.exists(file)) {
+            try {
+                if (hash != null) {
+                    String checksum = Hex.encodeHex(DigestUtils.digest("SHA-1", file));
+                    if (hash.equalsIgnoreCase(checksum))
+                        return Optional.of(restore(file, () -> cacheAssetIndex(info, file)));
+                } else {
+                    return Optional.of(file);
+                }
+            } catch (IOException e) {
+                // we cannot check the hashcode or unable to move file.
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Caches the asset index file to repository.
+     *
+     * @param assetIndexInfo the asset index of
+     * @param path the file being cached, must be verified
+     * @return cached file location
+     * @throws IOException if failed to calculate hash code of {@code path} or copy the file to cache
+     */
+    public synchronized Path cacheAssetIndex(AssetIndexInfo assetIndexInfo, Path path) throws IOException {
+        String hash = assetIndexInfo.getSha1();
+        if (hash == null)
+            hash = Hex.encodeHex(DigestUtils.digest(SHA1, path));
+
+        Path cache = getFile(SHA1, hash);
+        FileUtils.copyFile(path.toFile(), cache.toFile());
 
         return cache;
     }
@@ -201,6 +277,48 @@ public class HMCLLocalRepository {
         return cache;
     }
 
+    public synchronized Optional<Path> getAssetObject(AssetObject assetObject) {
+        String hash = assetObject.getHash();
+
+        if (fileExists(SHA1, hash))
+            return Optional.of(getFile(SHA1, hash));
+
+        // check old common directory, but we will no longer maintain it.
+        Path file = assetObjectsDir.resolve(assetObject.getLocation());
+        if (Files.exists(file)) {
+            if (hash != null) {
+                try {
+                    String checksum = Hex.encodeHex(DigestUtils.digest("SHA-1", file));
+                    if (!checksum.equalsIgnoreCase(hash)) {
+                        // The file is not the one we want
+                        return Optional.empty();
+                    } else {
+                        return Optional.of(restore(file, () -> cacheAssetObject(assetObject, file)));
+                    }
+                } catch (IOException e) {
+                    // we cannot check the hashcode.
+                    return Optional.empty();
+                }
+            } else {
+                return Optional.of(file);
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    public synchronized Path cacheAssetObject(AssetObject assetObject, Path path) throws IOException {
+        Path cache = getFile(SHA1, assetObject.getHash());
+        FileUtils.copyFile(path.toFile(), cache.toFile());
+        return cache;
+    }
+
+    public synchronized void tryCacheAssetObject(AssetObject assetObject, Path path) throws IOException {
+        Path cache = getFile(SHA1, assetObject.getHash());
+        if (Files.exists(cache)) return;
+        FileUtils.copyFile(path.toFile(), cache.toFile());
+    }
+
     private Path restore(Path original, ExceptionalSupplier<Path, ? extends IOException> cacheSupplier) throws IOException {
         Path cache = cacheSupplier.get();
         Files.delete(original);
@@ -236,7 +354,7 @@ public class HMCLLocalRepository {
      *             "hash": "..."
      *         }
      *     ]
-     *     // we don't cache asset objects in our repository which are already stored in a cache repository.
+     *     // assets and versions will not be included in index.
      * }
      */
     private class Index {
