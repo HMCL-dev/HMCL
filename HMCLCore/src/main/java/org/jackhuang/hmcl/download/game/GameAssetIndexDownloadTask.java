@@ -22,11 +22,10 @@ import org.jackhuang.hmcl.game.AssetIndexInfo;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.FileUtils;
+import org.jackhuang.hmcl.util.LocalRepository;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -61,9 +60,6 @@ public final class GameAssetIndexDownloadTask extends Task {
     @Override
     public void execute() throws Exception {
         AssetIndexInfo assetIndexInfo = version.getAssetIndex();
-        File assetDir = dependencyManager.getGameRepository().getAssetDirectory(version.getId(), assetIndexInfo.getId());
-        if (!FileUtils.makeDirectory(assetDir))
-            throw new IOException("Cannot create directory: " + assetDir);
         File assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
 
         // We should not check the hash code of asset index file since this file is not consistent
@@ -71,7 +67,9 @@ public final class GameAssetIndexDownloadTask extends Task {
         dependencies.add(new FileDownloadTask(
                 NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(assetIndexInfo.getUrl())),
                 assetIndexFile
-        ));
+        ).setCaching(true)
+                .setCandidate(LocalRepository.getInstance().getCommonDirectory()
+                        .resolve("assets").resolve("indexes").resolve(assetIndexInfo.getId() + ".json")));
     }
 
 }

@@ -80,7 +80,7 @@ public class DefaultGameBuilder extends GameBuilder {
     }
 
     protected Task downloadGameAsync(String gameVersion, Version version) {
-        return new GameDownloadTask(dependencyManager, version);
+        return new GameDownloadTask(dependencyManager, gameVersion, version);
     }
 
 }

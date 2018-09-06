@@ -31,14 +31,10 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-public class HMCLLocalRepository {
+public class HMCLLocalRepository extends LocalRepository {
     private final StringProperty directory = new SimpleStringProperty();
 
-    private Path commonDir;
-    private Path cacheDir;
     private Path librariesDir;
-    private Path jarsDir;
-    private Path assetObjectsDir;
     private Path indexFile;
 
     private Index index = null;
@@ -59,13 +55,12 @@ public class HMCLLocalRepository {
         this.directory.set(directory);
     }
 
-    private void changeDirectory(Path commonDir) {
-        this.commonDir = commonDir;
-        cacheDir = commonDir.resolve("cache");
+    @Override
+    protected void changeDirectory(Path commonDir) {
+        super.changeDirectory(commonDir);
+
         librariesDir = commonDir.resolve("libraries");
-        jarsDir = commonDir.resolve("jars");
-        assetObjectsDir = commonDir.resolve("assets").resolve("objects");
-        indexFile = cacheDir.resolve("index.json");
+        indexFile = getCacheDirectory().resolve("index.json");
 
         try {
             index = Constants.GSON.fromJson(FileUtils.readText(indexFile.toFile()), Index.class);
@@ -73,15 +68,6 @@ public class HMCLLocalRepository {
             Logging.LOG.log(Level.WARNING, "Unable to read index file", e);
             index = new Index();
         }
-    }
-
-    private Path getFile(String algorithm, String hash) {
-        return cacheDir.resolve(algorithm).resolve(hash.substring(0, 2)).resolve(hash);
-    }
-
-    private boolean fileExists(String algorithm, String hash) {
-        if (hash == null) return false;
-        return Files.exists(getFile(algorithm, hash));
     }
 
     /**
@@ -184,145 +170,6 @@ public class HMCLLocalRepository {
         index.getLibraries().add(libIndex);
         saveIndex();
 
-        return cache;
-    }
-
-    /**
-     * Get the path of cached asset index file, empty if not cached
-     *
-     * @param info the asset index info
-     * @return the cached path if exists, otherwise empty
-     */
-    public synchronized Optional<Path> getAssetIndex(AssetIndexInfo info) {
-        String hash = info.getSha1();
-
-        if (fileExists(SHA1, hash))
-            return Optional.of(getFile(SHA1, hash));
-
-        // check old common directory
-        Path file = commonDir.resolve("assets").resolve("indexes").resolve(info.getId() + ".json");
-        if (Files.exists(file)) {
-            try {
-                if (hash != null) {
-                    String checksum = Hex.encodeHex(DigestUtils.digest("SHA-1", file));
-                    if (hash.equalsIgnoreCase(checksum))
-                        return Optional.of(restore(file, () -> cacheAssetIndex(info, file)));
-                } else {
-                    return Optional.of(file);
-                }
-            } catch (IOException e) {
-                // we cannot check the hashcode or unable to move file.
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    /**
-     * Caches the asset index file to repository.
-     *
-     * @param assetIndexInfo the asset index of
-     * @param path the file being cached, must be verified
-     * @return cached file location
-     * @throws IOException if failed to calculate hash code of {@code path} or copy the file to cache
-     */
-    public synchronized Path cacheAssetIndex(AssetIndexInfo assetIndexInfo, Path path) throws IOException {
-        String hash = assetIndexInfo.getSha1();
-        if (hash == null)
-            hash = Hex.encodeHex(DigestUtils.digest(SHA1, path));
-
-        Path cache = getFile(SHA1, hash);
-        FileUtils.copyFile(path.toFile(), cache.toFile());
-
-        return cache;
-    }
-
-    public synchronized Optional<Path> getVersion(String gameVersion, Version version) {
-        DownloadInfo info = version.getDownloadInfo();
-        String hash = info.getSha1();
-
-        if (fileExists(SHA1, hash))
-            return Optional.of(getFile(SHA1, hash));
-
-        // check old common directory, but we will no longer maintain it.
-        Path jar = jarsDir.resolve(gameVersion + ".jar");
-        if (Files.exists(jar)) {
-            if (hash != null) {
-                try {
-                    String checksum = Hex.encodeHex(DigestUtils.digest("SHA-1", jar));
-                    if (!checksum.equalsIgnoreCase(hash)) {
-                        // The file is not the one we want
-                        return Optional.empty();
-                    } else {
-                        return Optional.of(restore(jar, () -> cacheVersion(version, jar)));
-                    }
-                } catch (IOException e) {
-                    // we cannot check the hashcode.
-                    return Optional.empty();
-                }
-            } else {
-                return Optional.of(jar);
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    public synchronized Path cacheVersion(Version version, Path path) throws IOException {
-        if (version.getDownloadInfo().getSha1() == null)
-            throw new IllegalStateException();
-
-        Path cache = getFile(SHA1, version.getDownloadInfo().getSha1());
-        FileUtils.copyFile(path.toFile(), cache.toFile());
-        return cache;
-    }
-
-    public synchronized Optional<Path> getAssetObject(AssetObject assetObject) {
-        String hash = assetObject.getHash();
-
-        if (fileExists(SHA1, hash))
-            return Optional.of(getFile(SHA1, hash));
-
-        // check old common directory, but we will no longer maintain it.
-        Path file = assetObjectsDir.resolve(assetObject.getLocation());
-        if (Files.exists(file)) {
-            if (hash != null) {
-                try {
-                    String checksum = Hex.encodeHex(DigestUtils.digest("SHA-1", file));
-                    if (!checksum.equalsIgnoreCase(hash)) {
-                        // The file is not the one we want
-                        return Optional.empty();
-                    } else {
-                        return Optional.of(restore(file, () -> cacheAssetObject(assetObject, file)));
-                    }
-                } catch (IOException e) {
-                    // we cannot check the hashcode.
-                    return Optional.empty();
-                }
-            } else {
-                return Optional.of(file);
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    public synchronized Path cacheAssetObject(AssetObject assetObject, Path path) throws IOException {
-        Path cache = getFile(SHA1, assetObject.getHash());
-        FileUtils.copyFile(path.toFile(), cache.toFile());
-        return cache;
-    }
-
-    public synchronized void tryCacheAssetObject(AssetObject assetObject, Path path) throws IOException {
-        Path cache = getFile(SHA1, assetObject.getHash());
-        if (Files.exists(cache)) return;
-        FileUtils.copyFile(path.toFile(), cache.toFile());
-    }
-
-    private Path restore(Path original, ExceptionalSupplier<Path, ? extends IOException> cacheSupplier) throws IOException {
-        Path cache = cacheSupplier.get();
-        Files.delete(original);
-        Files.createLink(original, cache);
         return cache;
     }
 

@@ -18,18 +18,21 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
+import org.jackhuang.hmcl.game.AssetIndex;
+import org.jackhuang.hmcl.game.AssetIndexInfo;
 import org.jackhuang.hmcl.game.AssetObject;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.FileUtils;
-import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.LocalRepository;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
-import java.util.*;
-import java.util.logging.Level;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  *
@@ -39,7 +42,9 @@ public final class GameAssetDownloadTask extends Task {
     
     private final AbstractDependencyManager dependencyManager;
     private final Version version;
-    private final GameAssetRefreshTask refreshTask;
+    private final AssetIndexInfo assetIndexInfo;
+    private final File assetIndexFile;
+    private final List<Task> dependents = new LinkedList<>();
     private final List<Task> dependencies = new LinkedList<>();
 
     /**
@@ -51,12 +56,16 @@ public final class GameAssetDownloadTask extends Task {
     public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, Version version) {
         this.dependencyManager = dependencyManager;
         this.version = version;
-        this.refreshTask = new GameAssetRefreshTask(dependencyManager, version);
+        this.assetIndexInfo = version.getAssetIndex();
+        this.assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
+
+        if (!assetIndexFile.exists())
+            dependents.add(new GameAssetIndexDownloadTask(dependencyManager, version));
     }
 
     @Override
     public Collection<Task> getDependents() {
-        return Collections.singleton(refreshTask);
+        return dependents;
     }
 
     @Override
@@ -66,23 +75,28 @@ public final class GameAssetDownloadTask extends Task {
     
     @Override
     public void execute() throws Exception {
-        for (Map.Entry<File, AssetObject> entry : refreshTask.getResult()) {
-            if (Thread.interrupted())
-                throw new InterruptedException();
+        AssetIndex index = Constants.GSON.fromJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
+        int progress = 0;
+        if (index != null)
+            for (AssetObject assetObject : index.getObjects().values()) {
+                if (Thread.interrupted())
+                    throw new InterruptedException();
 
-            File file = entry.getKey();
-            AssetObject assetObject = entry.getValue();
-            String url = dependencyManager.getDownloadProvider().getAssetBaseURL() + assetObject.getLocation();
-            if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile())) {
-                Logging.LOG.log(Level.SEVERE, "Unable to create new file " + file + ", because parent directory cannot be created");
-                continue;
+                File file = dependencyManager.getGameRepository().getAssetObject(version.getId(), assetIndexInfo.getId(), assetObject);
+                if (file.isFile())
+                    LocalRepository.getInstance().tryCacheFile(file.toPath(), LocalRepository.SHA1, assetObject.getHash());
+                else {
+                    String url = dependencyManager.getDownloadProvider().getAssetBaseURL() + assetObject.getLocation();
+                    FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(url), file, new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.getHash()));
+                    task.setName(assetObject.getHash());
+                    dependencies.add(task
+                            .setCaching(true)
+                            .setCandidate(LocalRepository.getInstance().getCommonDirectory()
+                                    .resolve("assets").resolve("objects").resolve(assetObject.getLocation())));
+                }
+
+                updateProgress(++progress, index.getObjects().size());
             }
-            if (file.isDirectory() || file.isFile() && file.exists())
-                continue;
-            FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(url), file, new IntegrityCheck("SHA-1", assetObject.getHash()));
-            task.setName(assetObject.getHash());
-            dependencies.add(task);
-        }
     }
     
 }

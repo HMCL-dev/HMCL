@@ -21,6 +21,7 @@ import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.HMCLLocalRepository;
+import org.jackhuang.hmcl.util.LocalRepository;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
@@ -47,6 +48,7 @@ public class Settings {
         Accounts.init();
         Profiles.init();
 
+        LocalRepository.setInstance(HMCLLocalRepository.REPOSITORY);
         HMCLLocalRepository.REPOSITORY.directoryProperty().bind(config().commonDirectoryProperty());
     }
 

@@ -24,9 +24,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
+import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
-import org.jackhuang.hmcl.game.HMCLGameAssetDownloadTask;
 import org.jackhuang.hmcl.game.HMCLModpackExportTask;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
 import org.jackhuang.hmcl.mod.*;
@@ -61,7 +61,7 @@ public final class TaskListPane extends StackPane {
                 if (!task.getSignificance().shouldShow())
                     return;
 
-                if (task instanceof HMCLGameAssetDownloadTask) {
+                if (task instanceof GameAssetDownloadTask) {
                     task.setName(i18n("assets.download_all"));
                 } else if (task instanceof ForgeInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));

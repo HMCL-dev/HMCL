@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.LocalRepository;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
@@ -34,11 +35,13 @@ import java.util.List;
  */
 public final class GameDownloadTask extends Task {
     private final DefaultDependencyManager dependencyManager;
+    private final String gameVersion;
     private final Version version;
     private final List<Task> dependencies = new LinkedList<>();
 
-    public GameDownloadTask(DefaultDependencyManager dependencyManager, Version version) {
+    public GameDownloadTask(DefaultDependencyManager dependencyManager, String gameVersion, Version version) {
         this.dependencyManager = dependencyManager;
+        this.gameVersion = gameVersion;
         this.version = version;
 
         setSignificance(TaskSignificance.MODERATE);
@@ -56,8 +59,9 @@ public final class GameDownloadTask extends Task {
         dependencies.add(new FileDownloadTask(
                 NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(version.getDownloadInfo().getUrl())),
                 jar,
-                new IntegrityCheck("SHA-1", version.getDownloadInfo().getSha1())
-        ));
+                IntegrityCheck.of(LocalRepository.SHA1, version.getDownloadInfo().getSha1()))
+                .setCaching(true)
+                .setCandidate(LocalRepository.getInstance().getCommonDirectory().resolve("jars").resolve(gameVersion + ".jar")));
     }
     
 }

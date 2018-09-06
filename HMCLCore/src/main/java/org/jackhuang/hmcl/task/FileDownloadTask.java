@@ -28,7 +28,9 @@ import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.util.Optional;
 import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;
@@ -48,6 +50,11 @@ public class FileDownloadTask extends Task {
         public IntegrityCheck(String algorithm, String checksum) {
             this.algorithm = requireNonNull(algorithm);
             this.checksum = requireNonNull(checksum);
+        }
+
+        public static IntegrityCheck of(String algorithm, String checksum) {
+            if (checksum == null) return null;
+            else return new IntegrityCheck(algorithm, checksum);
         }
 
         public String getAlgorithm() {
@@ -75,6 +82,8 @@ public class FileDownloadTask extends Task {
     private final IntegrityCheck integrityCheck;
     private final int retry;
     private final EventManager<FailedEvent<URL>> onFailed = new EventManager<>();
+    private Path candidate;
+    private boolean caching;
     private RandomAccessFile rFile;
     private InputStream stream;
 
@@ -146,9 +155,35 @@ public class FileDownloadTask extends Task {
         return file;
     }
 
+    public FileDownloadTask setCandidate(Path candidate) {
+        this.candidate = candidate;
+        return this;
+    }
+
+    public FileDownloadTask setCaching(boolean caching) {
+        this.caching = caching;
+        return this;
+    }
+
     @Override
     public void execute() throws Exception {
         URL currentURL = url;
+
+        // Check cache
+        if (integrityCheck != null && caching) {
+            Optional<Path> cache = LocalRepository.getInstance()
+                    .checkExistentFile(candidate, integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
+            if (cache.isPresent()) {
+                try {
+                    FileUtils.copyFile(cache.get().toFile(), file);
+                    Logging.LOG.log(Level.FINER, "Successfully verified file " + file + " from " + currentURL);
+                    return;
+                } catch (IOException e) {
+                    Logging.LOG.log(Level.WARNING, "Failed to copy cache files", e);
+                }
+            }
+        }
+
         Logging.LOG.log(Level.FINER, "Downloading " + currentURL + " to " + file);
         Exception exception = null;
 
@@ -257,6 +292,17 @@ public class FileDownloadTask extends Task {
 
         if (exception != null)
             throw new IOException("Unable to download file " + currentURL + ". " + exception.getMessage(), exception);
+
+        if (caching) {
+            try {
+                if (integrityCheck == null)
+                    LocalRepository.getInstance().cacheFile(file.toPath(), LocalRepository.SHA1, Hex.encodeHex(DigestUtils.digest(LocalRepository.SHA1, file.toPath())));
+                else
+                    LocalRepository.getInstance().cacheFile(file.toPath(), integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
+            } catch (IOException e) {
+                Logging.LOG.log(Level.WARNING, "Failed to cache file", e);
+            }
+        }
     }
 
 }
