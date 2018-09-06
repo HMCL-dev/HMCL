@@ -20,29 +20,27 @@ package org.jackhuang.hmcl.ui.profile;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.Control;
-import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.ListPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.MappedObservableList;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ProfileList extends Control implements DecoratorPage {
+public class ProfileList extends ListPage<ProfileListItem> implements DecoratorPage {
     private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(i18n("profile.manage"));
-    private final ListProperty<ProfileListItem> items = new SimpleListProperty<>(FXCollections.observableArrayList());
     private ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<Profile>() {
         {
-            items.addListener(onInvalidating(this::invalidated));
+            itemsProperty().addListener(onInvalidating(this::invalidated));
         }
 
         @Override
         protected void invalidated() {
             Profile selected = get();
-            items.forEach(item -> item.selectedProperty().set(item.getProfile() == selected));
+            itemsProperty().forEach(item -> item.selectedProperty().set(item.getProfile() == selected));
         }
     };
     private final ListProperty<Profile> profiles = new SimpleListProperty<>(FXCollections.observableArrayList());
@@ -57,7 +55,7 @@ public class ProfileList extends Control implements DecoratorPage {
                 profilesProperty(),
                 profile -> new ProfileListItem(toggleGroup, profile));
 
-        items.bindContent(profileItems);
+        itemsProperty().bindContent(profileItems);
 
         toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {
             if (toggle == null || toggle.getUserData() == null) return;
@@ -74,16 +72,8 @@ public class ProfileList extends Control implements DecoratorPage {
     }
 
     @Override
-    protected Skin<?> createDefaultSkin() {
-        return new ProfileListSkin(this);
-    }
-
-    public void addNewProfile() {
+    public void add() {
         Controllers.navigate(new ProfilePage(null));
-    }
-
-    public ListProperty<ProfileListItem> itemsProperty() {
-        return items;
     }
 
     @Override

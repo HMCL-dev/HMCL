@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.ui.profile;
+package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXScrollPane;
@@ -27,12 +27,10 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Theme;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
 
-public class ProfileListSkin extends SkinBase<ProfileList> {
+public class ListPageSkin extends SkinBase<ListPage> {
 
-    public ProfileListSkin(ProfileList skinnable) {
+    public ListPageSkin(ListPage<?> skinnable) {
         super(skinnable);
 
         StackPane root = new StackPane();
@@ -65,7 +63,7 @@ public class ProfileListSkin extends SkinBase<ProfileList> {
             btnAdd.getStyleClass().setAll("jfx-button-raised-round");
             btnAdd.setButtonType(JFXButton.ButtonType.RAISED);
             btnAdd.setGraphic(SVG.plus(Theme.whiteFillBinding(), -1, -1));
-            btnAdd.setOnMouseClicked(e -> skinnable.addNewProfile());
+            btnAdd.setOnMouseClicked(e -> skinnable.add());
 
             vBox.getChildren().setAll(btnAdd);
         }

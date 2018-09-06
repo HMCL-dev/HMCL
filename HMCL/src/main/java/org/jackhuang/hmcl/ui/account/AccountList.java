@@ -20,29 +20,27 @@ package org.jackhuang.hmcl.ui.account;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.Control;
-import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.ListPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.MappedObservableList;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class AccountList extends Control implements DecoratorPage {
+public class AccountList extends ListPage<AccountListItem> implements DecoratorPage {
     private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(i18n("account.manage"));
-    private final ListProperty<AccountListItem> items = new SimpleListProperty<>(FXCollections.observableArrayList());
     private ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<Account>() {
         {
-            items.addListener(onInvalidating(this::invalidated));
+            itemsProperty().addListener(onInvalidating(this::invalidated));
         }
 
         @Override
         protected void invalidated() {
             Account selected = get();
-            items.forEach(item -> item.selectedProperty().set(item.getAccount() == selected));
+            itemsProperty().forEach(item -> item.selectedProperty().set(item.getAccount() == selected));
         }
     };
     private final ListProperty<Account> accounts = new SimpleListProperty<>(FXCollections.observableArrayList());
@@ -57,7 +55,7 @@ public class AccountList extends Control implements DecoratorPage {
                 accountsProperty(),
                 account -> new AccountListItem(toggleGroup, account));
 
-        items.bindContent(accountItems);
+        itemsProperty().bindContent(accountItems);
 
         toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {
             if (toggle == null || toggle.getUserData() == null) return;
@@ -74,16 +72,8 @@ public class AccountList extends Control implements DecoratorPage {
     }
 
     @Override
-    protected Skin<?> createDefaultSkin() {
-        return new AccountListSkin(this);
-    }
-
-    public void addNewAccount() {
+    public void add() {
         Controllers.dialog(new AddAccountPane());
-    }
-
-    public ListProperty<AccountListItem> itemsProperty() {
-        return items;
     }
 
     @Override
