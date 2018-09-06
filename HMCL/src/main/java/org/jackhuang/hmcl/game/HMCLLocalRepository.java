@@ -28,6 +28,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -36,7 +39,7 @@ public class HMCLLocalRepository extends LocalRepository {
 
     private Path librariesDir;
     private Path indexFile;
-
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private Index index = null;
 
     public HMCLLocalRepository() {
@@ -62,11 +65,14 @@ public class HMCLLocalRepository extends LocalRepository {
         librariesDir = commonDir.resolve("libraries");
         indexFile = getCacheDirectory().resolve("index.json");
 
+        lock.writeLock().lock();
         try {
             index = Constants.GSON.fromJson(FileUtils.readText(indexFile.toFile()), Index.class);
         } catch (IOException e) {
             Logging.LOG.log(Level.WARNING, "Unable to read index file", e);
             index = new Index();
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
@@ -79,8 +85,13 @@ public class HMCLLocalRepository extends LocalRepository {
      * @param jar the file of library
      */
     public void tryCacheLibrary(Library library, Path jar) {
-        if (index.getLibraries().stream().anyMatch(it -> library.getName().equals(it.getName())))
-            return;
+        lock.readLock().lock();
+        try {
+            if (index.getLibraries().stream().anyMatch(it -> library.getName().equals(it.getName())))
+                return;
+        } finally {
+            lock.readLock().unlock();
+        }
 
         try {
             LibraryDownloadInfo info = library.getDownload();
@@ -106,25 +117,32 @@ public class HMCLLocalRepository extends LocalRepository {
      * @param library the library we check if cached.
      * @return the cached path if exists, otherwise empty
      */
-    public synchronized Optional<Path> getLibrary(Library library) {
+    public Optional<Path> getLibrary(Library library) {
         LibraryDownloadInfo info = library.getDownload();
         String hash = info.getSha1();
 
         if (fileExists(SHA1, hash))
             return Optional.of(getFile(SHA1, hash));
 
-        // check if this library is from Forge
-        List<LibraryIndex> libraries = index.getLibraries().stream()
-                .filter(it -> it.getName().equals(library.getName()))
-                .collect(Collectors.toList());
-        for (LibraryIndex libIndex : libraries) {
-            if (fileExists(SHA1, libIndex.getHash())) {
-                Path file = getFile(SHA1, libIndex.getHash());
-                if (libIndex.getType().equalsIgnoreCase(LibraryIndex.TYPE_FORGE)) {
-                    if (LibraryDownloadTask.checksumValid(file.toFile(), library.getChecksums()))
-                        return Optional.of(file);
+        Lock readLock = lock.readLock();
+        readLock.lock();
+
+        try {
+            // check if this library is from Forge
+            List<LibraryIndex> libraries = index.getLibraries().stream()
+                    .filter(it -> it.getName().equals(library.getName()))
+                    .collect(Collectors.toList());
+            for (LibraryIndex libIndex : libraries) {
+                if (fileExists(SHA1, libIndex.getHash())) {
+                    Path file = getFile(SHA1, libIndex.getHash());
+                    if (libIndex.getType().equalsIgnoreCase(LibraryIndex.TYPE_FORGE)) {
+                        if (LibraryDownloadTask.checksumValid(file.toFile(), library.getChecksums()))
+                            return Optional.of(file);
+                    }
                 }
             }
+        } finally {
+            readLock.unlock();
         }
 
         // check old common directory
@@ -158,7 +176,7 @@ public class HMCLLocalRepository extends LocalRepository {
      * @return cached file location
      * @throws IOException if failed to calculate hash code of {@code path} or copy the file to cache
      */
-    public synchronized Path cacheLibrary(Library library, Path path, boolean forge) throws IOException {
+    public Path cacheLibrary(Library library, Path path, boolean forge) throws IOException {
         String hash = library.getDownload().getSha1();
         if (hash == null)
             hash = Hex.encodeHex(DigestUtils.digest(SHA1, path));
@@ -166,9 +184,15 @@ public class HMCLLocalRepository extends LocalRepository {
         Path cache = getFile(SHA1, hash);
         FileUtils.copyFile(path.toFile(), cache.toFile());
 
-        LibraryIndex libIndex = new LibraryIndex(library.getName(), hash, forge ? LibraryIndex.TYPE_FORGE : LibraryIndex.TYPE_JAR);
-        index.getLibraries().add(libIndex);
-        saveIndex();
+        Lock writeLock = lock.writeLock();
+        writeLock.lock();
+        try {
+            LibraryIndex libIndex = new LibraryIndex(library.getName(), hash, forge ? LibraryIndex.TYPE_FORGE : LibraryIndex.TYPE_JAR);
+            index.getLibraries().add(libIndex);
+            saveIndex();
+        } finally {
+            writeLock.unlock();
+        }
 
         return cache;
     }
