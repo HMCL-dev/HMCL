@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.concurrency.JFXUtilities;
+import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.scene.control.Control;
@@ -30,6 +31,7 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.WeakListenerHelper;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
 import org.jackhuang.hmcl.util.VersionNumber;
@@ -68,6 +70,8 @@ public class GameList extends Control implements DecoratorPage {
 
     private void loadVersions(HMCLGameRepository repository) {
         toggleGroup = new ToggleGroup();
+        WeakListenerHelper helper = new WeakListenerHelper();
+        toggleGroup.getProperties().put("ReferenceHolder", helper);
         List<GameListItem> children = repository.getVersions().parallelStream()
                 .filter(version -> !version.isHidden())
                 .sorted((a, b) -> VersionNumber.COMPARATOR.compare(VersionNumber.asVersion(a.getId()), VersionNumber.asVersion(b.getId())))
@@ -79,14 +83,18 @@ public class GameList extends Control implements DecoratorPage {
                 items.setAll(children);
                 children.forEach(GameListItem::checkSelection);
 
-                profile.selectedVersionProperty().addListener((a, b, newValue) -> {
-                    toggleGroup.getToggles().stream()
-                            .filter(it -> ((GameListItem) it.getUserData()).getVersion().equals(newValue))
-                            .findFirst()
-                            .ifPresent(it -> it.setSelected(true));
-                });
+                profile.selectedVersionProperty().addListener(helper.weak((a, b, newValue) -> {
+                    Platform.runLater(() -> {
+                        children.forEach(it -> it.selectedProperty().set(false));
+                        children.stream()
+                                .filter(it -> it.getVersion().equals(newValue))
+                                .findFirst()
+                                .ifPresent(it -> it.selectedProperty().set(true));
+                    });
+                }));
             }
             toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {
+                if (toggle == null) return;
                 GameListItem model = (GameListItem) toggle.getUserData();
                 model.getProfile().setSelectedVersion(model.getVersion());
             });
