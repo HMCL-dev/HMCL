@@ -27,7 +27,9 @@ import org.jackhuang.hmcl.Launcher;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
 import static javafx.collections.FXCollections.observableArrayList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
@@ -95,14 +97,23 @@ public final class Profiles {
     private static boolean initialized = false;
 
     static {
-        profiles.addListener(onInvalidating(ConfigHolder::markConfigDirty));
-
+        profiles.addListener(onInvalidating(Profiles::updateProfileStorages));
         profiles.addListener(onInvalidating(Profiles::checkProfiles));
 
         selectedProfile.addListener((a, b, newValue) -> {
             if (newValue != null)
                 newValue.getRepository().refreshVersionsAsync().start();
         });
+    }
+
+    private static void updateProfileStorages() {
+        // don't update the underlying storage before data loading is completed
+        // otherwise it might cause data loss
+        if (!initialized)
+            return;
+        // update storage
+        config().getConfigurations().clear();
+        config().getConfigurations().putAll(profiles.stream().collect(Collectors.toMap(Profile::getName, it -> it)));
     }
 
     /**
