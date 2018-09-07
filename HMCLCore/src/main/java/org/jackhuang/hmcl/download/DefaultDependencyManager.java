@@ -43,10 +43,12 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     private final DefaultGameRepository repository;
     private final DownloadProvider downloadProvider;
+    private final DefaultCacheRepository cacheRepository;
 
-    public DefaultDependencyManager(DefaultGameRepository repository, DownloadProvider downloadProvider) {
+    public DefaultDependencyManager(DefaultGameRepository repository, DownloadProvider downloadProvider, DefaultCacheRepository cacheRepository) {
         this.repository = repository;
         this.downloadProvider = downloadProvider;
+        this.cacheRepository = cacheRepository;
     }
 
     @Override
@@ -57,6 +59,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     @Override
     public DownloadProvider getDownloadProvider() {
         return downloadProvider;
+    }
+
+    @Override
+    public DefaultCacheRepository getCacheRepository() {
+        return cacheRepository;
     }
 
     @Override

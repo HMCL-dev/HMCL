@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.LocalRepository;
+import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
@@ -59,9 +59,10 @@ public final class GameDownloadTask extends Task {
         dependencies.add(new FileDownloadTask(
                 NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(version.getDownloadInfo().getUrl())),
                 jar,
-                IntegrityCheck.of(LocalRepository.SHA1, version.getDownloadInfo().getSha1()))
+                IntegrityCheck.of(CacheRepository.SHA1, version.getDownloadInfo().getSha1()))
                 .setCaching(true)
-                .setCandidate(LocalRepository.getInstance().getCommonDirectory().resolve("jars").resolve(gameVersion + ".jar")));
+                .setCacheRepository(dependencyManager.getCacheRepository())
+                .setCandidate(dependencyManager.getCacheRepository().getCommonDirectory().resolve("jars").resolve(gameVersion + ".jar")));
     }
     
 }

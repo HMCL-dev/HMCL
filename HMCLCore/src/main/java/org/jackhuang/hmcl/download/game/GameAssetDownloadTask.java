@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.FileUtils;
-import org.jackhuang.hmcl.util.LocalRepository;
+import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
@@ -84,14 +84,15 @@ public final class GameAssetDownloadTask extends Task {
 
                 File file = dependencyManager.getGameRepository().getAssetObject(version.getId(), assetIndexInfo.getId(), assetObject);
                 if (file.isFile())
-                    LocalRepository.getInstance().tryCacheFile(file.toPath(), LocalRepository.SHA1, assetObject.getHash());
+                    dependencyManager.getCacheRepository().tryCacheFile(file.toPath(), CacheRepository.SHA1, assetObject.getHash());
                 else {
                     String url = dependencyManager.getDownloadProvider().getAssetBaseURL() + assetObject.getLocation();
                     FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(url), file, new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.getHash()));
                     task.setName(assetObject.getHash());
                     dependencies.add(task
+                            .setCacheRepository(dependencyManager.getCacheRepository())
                             .setCaching(true)
-                            .setCandidate(LocalRepository.getInstance().getCommonDirectory()
+                            .setCandidate(dependencyManager.getCacheRepository().getCommonDirectory()
                                     .resolve("assets").resolve("objects").resolve(assetObject.getLocation())));
                 }
 

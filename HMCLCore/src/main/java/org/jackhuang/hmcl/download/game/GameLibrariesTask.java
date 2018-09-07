@@ -61,6 +61,8 @@ public final class GameLibrariesTask extends Task {
             File file = dependencyManager.getGameRepository().getLibraryFile(version, library);
             if (!file.exists())
                 dependencies.add(new LibraryDownloadTask(dependencyManager, file, library));
+            else
+                dependencyManager.getCacheRepository().tryCacheLibrary(library, file.toPath());
         });
     }
 

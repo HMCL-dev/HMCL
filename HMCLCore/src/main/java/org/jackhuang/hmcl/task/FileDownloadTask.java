@@ -84,6 +84,7 @@ public class FileDownloadTask extends Task {
     private final EventManager<FailedEvent<URL>> onFailed = new EventManager<>();
     private Path candidate;
     private boolean caching;
+    private CacheRepository repository = CacheRepository.getInstance();
     private RandomAccessFile rFile;
     private InputStream stream;
 
@@ -165,14 +166,18 @@ public class FileDownloadTask extends Task {
         return this;
     }
 
+    public FileDownloadTask setCacheRepository(CacheRepository repository) {
+        this.repository = repository;
+        return this;
+    }
+
     @Override
     public void execute() throws Exception {
         URL currentURL = url;
 
         // Check cache
         if (integrityCheck != null && caching) {
-            Optional<Path> cache = LocalRepository.getInstance()
-                    .checkExistentFile(candidate, integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
+            Optional<Path> cache = repository.checkExistentFile(candidate, integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
             if (cache.isPresent()) {
                 try {
                     FileUtils.copyFile(cache.get().toFile(), file);
@@ -296,9 +301,9 @@ public class FileDownloadTask extends Task {
         if (caching) {
             try {
                 if (integrityCheck == null)
-                    LocalRepository.getInstance().cacheFile(file.toPath(), LocalRepository.SHA1, Hex.encodeHex(DigestUtils.digest(LocalRepository.SHA1, file.toPath())));
+                    repository.cacheFile(file.toPath(), CacheRepository.SHA1, Hex.encodeHex(DigestUtils.digest(CacheRepository.SHA1, file.toPath())));
                 else
-                    LocalRepository.getInstance().cacheFile(file.toPath(), integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
+                    repository.cacheFile(file.toPath(), integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
             } catch (IOException e) {
                 Logging.LOG.log(Level.WARNING, "Failed to cache file", e);
             }

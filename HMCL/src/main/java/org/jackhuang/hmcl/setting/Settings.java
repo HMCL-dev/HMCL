@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.setting;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.game.HMCLLocalRepository;
-import org.jackhuang.hmcl.util.LocalRepository;
+import org.jackhuang.hmcl.game.HMCLCacheRepository;
+import org.jackhuang.hmcl.util.CacheRepository;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
@@ -48,8 +48,8 @@ public class Settings {
         Accounts.init();
         Profiles.init();
 
-        LocalRepository.setInstance(HMCLLocalRepository.REPOSITORY);
-        HMCLLocalRepository.REPOSITORY.directoryProperty().bind(config().commonDirectoryProperty());
+        CacheRepository.setInstance(HMCLCacheRepository.REPOSITORY);
+        HMCLCacheRepository.REPOSITORY.directoryProperty().bind(config().commonDirectoryProperty());
     }
 
     public Font getFont() {

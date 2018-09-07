@@ -21,9 +21,10 @@ import com.google.gson.*;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
-import org.jackhuang.hmcl.game.HMCLDependencyManager;
+import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -159,8 +160,8 @@ public final class Profile implements Observable {
         return modManager;
     }
 
-    public HMCLDependencyManager getDependency() {
-        return new HMCLDependencyManager(this, Settings.instance().getDownloadProvider());
+    public DefaultDependencyManager getDependency() {
+        return new DefaultDependencyManager(repository, Settings.instance().getDownloadProvider(), HMCLCacheRepository.REPOSITORY);
     }
 
     public VersionSetting getVersionSetting(String id) {

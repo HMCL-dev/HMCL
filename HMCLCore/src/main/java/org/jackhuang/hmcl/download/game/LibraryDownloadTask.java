@@ -1,6 +1,7 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
+import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
@@ -14,11 +15,13 @@ import org.tukaani.xz.XZInputStream;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
+import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
 import static org.jackhuang.hmcl.util.Hex.encodeHex;
@@ -26,10 +29,12 @@ import static org.jackhuang.hmcl.util.Hex.encodeHex;
 public class LibraryDownloadTask extends Task {
     private FileDownloadTask task;
     protected final File jar;
+    protected final DefaultCacheRepository cacheRepository;
     private final File xzFile;
     protected final Library library;
     protected final String url;
     protected boolean xz;
+    private boolean cached = false;
 
     public LibraryDownloadTask(AbstractDependencyManager dependencyManager, File file, Library library) {
         setSignificance(TaskSignificance.MODERATE);
@@ -38,6 +43,7 @@ public class LibraryDownloadTask extends Task {
             library = library.setClassifier("universal");
 
         this.library = library;
+        this.cacheRepository = dependencyManager.getCacheRepository();
 
         url = dependencyManager.getDownloadProvider().injectURL(library.getDownload().getUrl());
         jar = file;
@@ -47,7 +53,8 @@ public class LibraryDownloadTask extends Task {
 
     @Override
     public Collection<? extends Task> getDependents() {
-        return Collections.singleton(task);
+        if (cached) return Collections.emptyList();
+        else return Collections.singleton(task);
     }
 
     @Override
@@ -57,6 +64,8 @@ public class LibraryDownloadTask extends Task {
 
     @Override
     public void execute() throws Exception {
+        if (cached) return;
+
         if (!isDependentsSucceeded()) {
             // Since FileDownloadTask wraps the actual exception with another IOException.
             // We should extract it letting the error message clearer.
@@ -76,6 +85,19 @@ public class LibraryDownloadTask extends Task {
 
     @Override
     public void preExecute() throws Exception {
+        Optional<Path> libPath = cacheRepository.getLibrary(library);
+        if (libPath.isPresent()) {
+            try {
+                FileUtils.copyFile(libPath.get().toFile(), jar);
+                cached = true;
+                return;
+            } catch (IOException e) {
+                Logging.LOG.log(Level.WARNING, "Failed to copy file from cache", e);
+                // We cannot copy cached file to current location
+                // so we try to download a new one.
+            }
+        }
+
         try {
             URL packXz = NetworkUtils.toURL(url + ".pack.xz");
             if (NetworkUtils.URLExists(packXz)) {
@@ -90,6 +112,12 @@ public class LibraryDownloadTask extends Task {
         } catch (IOException e) {
             throw new LibraryDownloadException(library, e);
         }
+    }
+
+    @Override
+    public void postExecute() throws Exception {
+        if (!cached)
+            cacheRepository.cacheLibrary(library, jar.toPath(), xz);
     }
 
     public static boolean checksumValid(File libPath, List<String> checksums) {

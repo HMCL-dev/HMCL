@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.game.AssetIndexInfo;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.LocalRepository;
+import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.NetworkUtils;
 
 import java.io.File;
@@ -68,7 +68,8 @@ public final class GameAssetIndexDownloadTask extends Task {
                 NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(assetIndexInfo.getUrl())),
                 assetIndexFile
         ).setCaching(true)
-                .setCandidate(LocalRepository.getInstance().getCommonDirectory()
+                .setCacheRepository(dependencyManager.getCacheRepository())
+                .setCandidate(dependencyManager.getCacheRepository().getCommonDirectory()
                         .resolve("assets").resolve("indexes").resolve(assetIndexInfo.getId() + ".json")));
     }
 

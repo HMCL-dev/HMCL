@@ -15,18 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.game;
+package org.jackhuang.hmcl.download;
 
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import org.jackhuang.hmcl.download.game.LibraryDownloadTask;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.LibraryDownloadInfo;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -34,32 +32,22 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-public class HMCLLocalRepository extends LocalRepository {
-    private final StringProperty directory = new SimpleStringProperty();
-
+public class DefaultCacheRepository extends CacheRepository {
     private Path librariesDir;
     private Path indexFile;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private Index index = null;
 
-    public HMCLLocalRepository() {
-        FXUtils.onChange(directory, t -> changeDirectory(Paths.get(t)));
+    public DefaultCacheRepository() {
+        this(OperatingSystem.getWorkingDirectory("minecraft").toPath());
     }
 
-    public String getDirectory() {
-        return directory.get();
-    }
-
-    public StringProperty directoryProperty() {
-        return directory;
-    }
-
-    public void setDirectory(String directory) {
-        this.directory.set(directory);
+    public DefaultCacheRepository(Path commonDirectory) {
+        changeDirectory(commonDirectory);
     }
 
     @Override
-    protected void changeDirectory(Path commonDir) {
+    public void changeDirectory(Path commonDir) {
         super.changeDirectory(commonDir);
 
         librariesDir = commonDir.resolve("libraries");
@@ -206,9 +194,6 @@ public class HMCLLocalRepository extends LocalRepository {
         }
     }
 
-    private static final String SHA1 = "SHA-1";
-    public static final HMCLLocalRepository REPOSITORY = new HMCLLocalRepository();
-
     /**
      * {
      *     "libraries": {
@@ -218,13 +203,7 @@ public class HMCLLocalRepository extends LocalRepository {
      *             "hash": "blablabla",
      *             "type": "forge"
      *         ]
-     *     },
-     *     "indexes": [
-     *         {
-     *             "name": "1.7.10",
-     *             "hash": "..."
-     *         }
-     *     ]
+     *     }
      *     // assets and versions will not be included in index.
      * }
      */

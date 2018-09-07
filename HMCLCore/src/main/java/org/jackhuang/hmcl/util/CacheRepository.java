@@ -22,11 +22,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class LocalRepository {
+public class CacheRepository {
     private Path commonDirectory;
     private Path cacheDirectory;
 
-    protected void changeDirectory(Path commonDir) {
+    public void changeDirectory(Path commonDir) {
         commonDirectory = commonDir;
         cacheDirectory = commonDir.resolve("cache");
     }
@@ -97,14 +97,14 @@ public class LocalRepository {
         return cache;
     }
 
-    private static LocalRepository instance = new LocalRepository();
+    private static CacheRepository instance = new CacheRepository();
 
-    public static LocalRepository getInstance() {
+    public static CacheRepository getInstance() {
         return instance;
     }
 
-    public static void setInstance(LocalRepository instance) {
-        LocalRepository.instance = instance;
+    public static void setInstance(CacheRepository instance) {
+        CacheRepository.instance = instance;
     }
 
     public static final String SHA1 = "SHA-1";

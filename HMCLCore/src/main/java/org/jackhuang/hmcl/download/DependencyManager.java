@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.CacheRepository;
 
 /**
  * Do everything that will connect to Internet.
@@ -33,6 +34,11 @@ public interface DependencyManager {
      * The relied game repository.
      */
     GameRepository getGameRepository();
+
+    /**
+     * The cache repository
+     */
+    CacheRepository getCacheRepository();
 
     /**
      * Check if the game is complete.
