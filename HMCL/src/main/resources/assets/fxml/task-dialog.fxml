@@ -25,9 +25,10 @@
             </VBox>
         </center>
         <bottom>
-            <HBox alignment="CENTER_RIGHT" style="-fx-padding: 0 8px 8px 0;">
-                <JFXButton fx:id="btnCancel" text="%button.cancel" />
-            </HBox>
+            <StackPane style="-fx-padding: 0 8px 8px 8px;">
+                <Label StackPane.alignment="CENTER_LEFT" fx:id="lblProgress" />
+                <JFXButton StackPane.alignment="CENTER_RIGHT" fx:id="btnCancel" text="%button.cancel" />
+            </StackPane>
         </bottom>
     </BorderPane>
 </fx:root>

@@ -159,11 +159,12 @@ public final class TaskExecutor {
             if (doDependentsSucceeded)
                 task.setDependentsSucceeded();
 
-            task.setState(Task.TaskState.RUNNING);
-
-            taskListeners.forEach(it -> it.onRunning(task));
             try {
-                task.getScheduler().schedule(task::execute).get();
+                task.getScheduler().schedule(() -> {
+                    task.setState(Task.TaskState.RUNNING);
+                    taskListeners.forEach(it -> it.onRunning(task));
+                    task.execute();
+                }).get();
             } catch (ExecutionException e) {
                 if (e.getCause() instanceof Exception)
                     throw (Exception) e.getCause();

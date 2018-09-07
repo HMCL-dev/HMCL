@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXProgressBar;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
@@ -42,6 +44,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class TaskListPane extends StackPane {
     private final AdvancedListBox listBox = new AdvancedListBox();
     private final Map<Task, ProgressListNode> nodes = new HashMap<>();
+    private final ReadOnlyIntegerWrapper finishedTasks = new ReadOnlyIntegerWrapper();
+    private final ReadOnlyIntegerWrapper totTasks = new ReadOnlyIntegerWrapper();
 
     public TaskListPane() {
         listBox.setSpacing(0);
@@ -49,11 +53,28 @@ public final class TaskListPane extends StackPane {
         getChildren().setAll(listBox);
     }
 
+    public ReadOnlyIntegerProperty finishedTasksProperty() {
+        return finishedTasks.getReadOnlyProperty();
+    }
+
+    public ReadOnlyIntegerProperty totTasksProperty() {
+        return totTasks.getReadOnlyProperty();
+    }
+
     public void setExecutor(TaskExecutor executor) {
         executor.addTaskListener(new TaskListener() {
             @Override
             public void onStart() {
-                Platform.runLater(listBox::clear);
+                Platform.runLater(() -> {
+                    listBox.clear();
+                    finishedTasks.set(0);
+                    totTasks.set(0);
+                });
+            }
+
+            @Override
+            public void onReady(Task task) {
+                Platform.runLater(() -> totTasks.set(totTasks.getValue() + 1));
             }
 
             @Override
@@ -97,7 +118,10 @@ public final class TaskListPane extends StackPane {
                 if (node == null)
                     return;
                 node.unbind();
-                Platform.runLater(() -> listBox.remove(node));
+                Platform.runLater(() -> {
+                    listBox.remove(node);
+                    finishedTasks.set(finishedTasks.getValue() + 1);
+                });
             }
 
             @Override
@@ -105,7 +129,10 @@ public final class TaskListPane extends StackPane {
                 ProgressListNode node = nodes.remove(task);
                 if (node == null)
                     return;
-                Platform.runLater(() -> node.setThrowable(throwable));
+                Platform.runLater(() -> {
+                    node.setThrowable(throwable);
+                    finishedTasks.set(finishedTasks.getValue() + 1);
+                });
             }
         });
     }

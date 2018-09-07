@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXProgressBar;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -42,6 +43,8 @@ public class TaskExecutorDialogPane extends StackPane {
     @FXML
     private Label lblSubtitle;
     @FXML
+    private Label lblProgress;
+    @FXML
     private JFXButton btnCancel;
     @FXML
     private TaskListPane taskListPane;
@@ -55,6 +58,11 @@ public class TaskExecutorDialogPane extends StackPane {
             Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
             onCancel.accept(this);
         });
+
+        lblProgress.textProperty().bind(Bindings.createStringBinding(
+                () -> taskListPane.finishedTasksProperty().get() + "/" + taskListPane.totTasksProperty().get(),
+                taskListPane.finishedTasksProperty(), taskListPane.totTasksProperty()
+        ));
     }
 
     public void setExecutor(TaskExecutor executor) {
