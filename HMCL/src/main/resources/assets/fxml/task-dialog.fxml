@@ -9,7 +9,7 @@
 <?import org.jackhuang.hmcl.ui.FXUtils?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
-         type="StackPane" FXUtils.limitWidth="400" FXUtils.limitHeight="200">
+         type="StackPane" FXUtils.limitWidth="500" FXUtils.limitHeight="300">
     <BorderPane>
         <top>
             <JFXProgressBar fx:id="progressBar" StackPane.alignment="TOP_CENTER" />
