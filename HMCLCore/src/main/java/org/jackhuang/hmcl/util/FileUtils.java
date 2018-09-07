@@ -22,8 +22,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -52,6 +52,10 @@ public final class FileUtils {
      */
     public static String normalizePath(String path) {
         return StringUtils.addPrefix(StringUtils.removeSuffix(path, "/", "\\"), "/");
+    }
+
+    public static String getName(Path path) {
+        return StringUtils.removeSuffix(path.getFileName().toString(), "/", "\\");
     }
 
     public static String readText(File file) throws IOException {
@@ -95,6 +99,26 @@ public final class FileUtils {
 
     public static boolean deleteDirectoryQuietly(File directory) {
         return Lang.test(() -> deleteDirectory(directory));
+    }
+
+    public static void copyDirectory(Path src, Path dest) throws IOException {
+        Files.walkFileTree(src, new SimpleFileVisitor<Path>(){
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Path destFile = dest.resolve(src.relativize(file));
+                Files.copy(file, destFile);
+
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                Path destDir = dest.resolve(src.relativize(dir));
+                Files.createDirectory(destDir);
+
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     public static boolean moveToTrash(File file) {

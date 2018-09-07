@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ListProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
@@ -26,11 +28,16 @@ import javafx.scene.control.Skin;
 
 public abstract class ListPage<T extends Node> extends Control {
     private final ListProperty<T> items = new SimpleListProperty<>(FXCollections.observableArrayList());
+    private final BooleanProperty loading = new SimpleBooleanProperty(false);
 
     public abstract void add();
 
     public ListProperty<T> itemsProperty() {
         return items;
+    }
+
+    public BooleanProperty loadingProperty() {
+        return loading;
     }
 
     @Override

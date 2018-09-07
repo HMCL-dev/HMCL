@@ -18,13 +18,8 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.concurrency.JFXUtilities;
-import com.jfoenix.controls.JFXSpinner;
 import com.jfoenix.controls.JFXTabPane;
-import javafx.fxml.FXML;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.ModInfo;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -32,6 +27,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.ListPage;
 import org.jackhuang.hmcl.ui.ModItem;
 import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Logging;
@@ -47,32 +43,20 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class ModController {
-    @FXML
-    private ScrollPane scrollPane;
-
-    @FXML private StackPane rootPane;
-
-    @FXML private VBox modPane;
-
-    @FXML private StackPane contentPane;
-    @FXML private JFXSpinner spinner;
+public final class ModListPage extends ListPage<ModItem> {
 
     private JFXTabPane parentTab;
     private ModManager modManager;
     private String versionId;
 
-    @FXML
-    private void initialize() {
-        FXUtils.smoothScrolling(scrollPane);
-
-        rootPane.setOnDragOver(event -> {
-            if (event.getGestureSource() != rootPane && event.getDragboard().hasFiles())
+    public ModListPage() {
+        setOnDragOver(event -> {
+            if (event.getGestureSource() != this && event.getDragboard().hasFiles())
                 event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
             event.consume();
         });
 
-        rootPane.setOnDragDropped(event -> {
+        setOnDragDropped(event -> {
             List<File> files = event.getDragboard().getFiles();
             if (files != null) {
                 Collection<File> mods = files.stream()
@@ -98,11 +82,8 @@ public final class ModController {
         this.modManager = modManager;
         this.versionId = versionId;
         Task.of(variables -> {
-            synchronized (ModController.this) {
-                JFXUtilities.runInFX(() -> {
-                    rootPane.getChildren().remove(contentPane);
-                    spinner.setVisible(true);
-                });
+            synchronized (ModListPage.this) {
+                JFXUtilities.runInFX(() -> loadingProperty().set(true));
 
                 modManager.refreshMods(versionId);
 
@@ -130,18 +111,17 @@ public final class ModController {
                 variables.set("list", list);
             }
         }).finalized(Schedulers.javafx(), (variables, isDependentsSucceeded) -> {
-            rootPane.getChildren().add(contentPane);
-            spinner.setVisible(false);
+            loadingProperty().set(false);
             if (isDependentsSucceeded)
                 FXUtils.onWeakChangeAndOperate(parentTab.getSelectionModel().selectedItemProperty(), newValue -> {
-                    if (newValue != null && newValue.getUserData() == ModController.this)
-                        modPane.getChildren().setAll(variables.<List<ModItem>>get("list"));
+                    if (newValue != null && newValue.getUserData() == ModListPage.this)
+                        itemsProperty().setAll(variables.<List<ModItem>>get("list"));
                 });
         }).start();
     }
 
-    @FXML
-    private void onAdd() {
+    @Override
+    public void add() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("mods.choose_mod"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"));

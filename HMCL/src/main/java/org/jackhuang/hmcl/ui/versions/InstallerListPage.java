@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.fxml.FXML;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
@@ -30,8 +27,8 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.InstallerItem;
+import org.jackhuang.hmcl.ui.ListPage;
 import org.jackhuang.hmcl.ui.download.InstallerWizardProvider;
 
 import java.util.LinkedList;
@@ -41,25 +38,15 @@ import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class InstallerController {
+public class InstallerListPage extends ListPage<InstallerItem> {
     private Profile profile;
     private String versionId;
     private Version version;
-    @FXML
-    private ScrollPane scrollPane;
-    @FXML private VBox contentPane;
-
-    @FXML
-    private void initialize() {
-        FXUtils.smoothScrolling(scrollPane);
-    }
 
     public void loadVersion(Profile profile, String versionId) {
         this.profile = profile;
         this.versionId = versionId;
         this.version = profile.getRepository().getResolvedVersion(versionId);
-
-        contentPane.getChildren().clear();
 
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
 
@@ -73,13 +60,13 @@ public class InstallerController {
                     .start();
         };
 
-        analyzer.getForge().ifPresent(library -> contentPane.getChildren().add(new InstallerItem("Forge", library.getVersion(), removeAction.apply(library))));
-        analyzer.getLiteLoader().ifPresent(library -> contentPane.getChildren().add(new InstallerItem("LiteLoader", library.getVersion(), removeAction.apply(library))));
-        analyzer.getOptiFine().ifPresent(library -> contentPane.getChildren().add(new InstallerItem("OptiFine", library.getVersion(), removeAction.apply(library))));
+        analyzer.getForge().ifPresent(library -> itemsProperty().add(new InstallerItem("Forge", library.getVersion(), removeAction.apply(library))));
+        analyzer.getLiteLoader().ifPresent(library -> itemsProperty().add(new InstallerItem("LiteLoader", library.getVersion(), removeAction.apply(library))));
+        analyzer.getOptiFine().ifPresent(library -> itemsProperty().add(new InstallerItem("OptiFine", library.getVersion(), removeAction.apply(library))));
     }
 
-    @FXML
-    private void onAdd() {
+    @Override
+    public void add() {
         Optional<String> gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version));
 
         if (!gameVersion.isPresent())

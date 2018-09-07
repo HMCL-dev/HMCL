@@ -44,9 +44,9 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     @FXML
     private Tab modTab;
     @FXML
-    private ModController modController;
+    private ModListPage mod;
     @FXML
-    private InstallerController installerController;
+    private InstallerListPage installer;
     @FXML
     private JFXListView<?> browseList;
     @FXML
@@ -93,10 +93,10 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         title.set(i18n("settings.game") + " - " + id);
 
         versionSettings.loadVersionSetting(profile, id);
-        modController.setParentTab(tabPane);
-        modTab.setUserData(modController);
-        modController.loadMods(profile.getModManager(), id);
-        installerController.loadVersion(profile, id);
+        mod.setParentTab(tabPane);
+        modTab.setUserData(mod);
+        mod.loadMods(profile.getModManager(), id);
+        installer.loadVersion(profile, id);
     }
 
     @FXML

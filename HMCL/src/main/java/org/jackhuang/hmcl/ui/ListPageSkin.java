@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXScrollPane;
+import com.jfoenix.controls.JFXSpinner;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -33,43 +34,57 @@ public class ListPageSkin extends SkinBase<ListPage> {
     public ListPageSkin(ListPage<?> skinnable) {
         super(skinnable);
 
-        StackPane root = new StackPane();
+        StackPane rootPane = new StackPane();
 
-        ScrollPane scrollPane = new ScrollPane();
+        JFXSpinner spinner = new JFXSpinner();
+        spinner.setRadius(16);
+        spinner.getStyleClass().setAll("materialDesign-purple", "first-spinner");
+
+        StackPane contentPane = new StackPane();
         {
-            scrollPane.setFitToWidth(true);
+            ScrollPane scrollPane = new ScrollPane();
+            {
+                scrollPane.setFitToWidth(true);
 
-            VBox accountList = new VBox();
-            accountList.maxWidthProperty().bind(scrollPane.widthProperty());
-            accountList.setSpacing(10);
-            accountList.setStyle("-fx-padding: 10 10 10 10;");
+                VBox accountList = new VBox();
+                accountList.maxWidthProperty().bind(scrollPane.widthProperty());
+                accountList.setSpacing(10);
+                accountList.setStyle("-fx-padding: 10 10 10 10;");
 
-            Bindings.bindContent(accountList.getChildren(), skinnable.itemsProperty());
+                Bindings.bindContent(accountList.getChildren(), skinnable.itemsProperty());
 
-            scrollPane.setContent(accountList);
-            JFXScrollPane.smoothScrolling(scrollPane);
+                scrollPane.setContent(accountList);
+                JFXScrollPane.smoothScrolling(scrollPane);
+            }
+
+            VBox vBox = new VBox();
+            {
+                vBox.setAlignment(Pos.BOTTOM_RIGHT);
+                vBox.setPickOnBounds(false);
+                vBox.setPadding(new Insets(15));
+                vBox.setSpacing(15);
+
+                JFXButton btnAdd = new JFXButton();
+                FXUtils.setLimitWidth(btnAdd, 40);
+                FXUtils.setLimitHeight(btnAdd, 40);
+                btnAdd.getStyleClass().setAll("jfx-button-raised-round");
+                btnAdd.setButtonType(JFXButton.ButtonType.RAISED);
+                btnAdd.setGraphic(SVG.plus(Theme.whiteFillBinding(), -1, -1));
+                btnAdd.setOnMouseClicked(e -> skinnable.add());
+
+                vBox.getChildren().setAll(btnAdd);
+            }
+
+            contentPane.getChildren().setAll(scrollPane, vBox);
         }
 
-        VBox vBox = new VBox();
-        {
-            vBox.setAlignment(Pos.BOTTOM_RIGHT);
-            vBox.setPickOnBounds(false);
-            vBox.setPadding(new Insets(15));
-            vBox.setSpacing(15);
+        rootPane.getChildren().setAll(contentPane);
 
-            JFXButton btnAdd = new JFXButton();
-            FXUtils.setLimitWidth(btnAdd, 40);
-            FXUtils.setLimitHeight(btnAdd, 40);
-            btnAdd.getStyleClass().setAll("jfx-button-raised-round");
-            btnAdd.setButtonType(JFXButton.ButtonType.RAISED);
-            btnAdd.setGraphic(SVG.plus(Theme.whiteFillBinding(), -1, -1));
-            btnAdd.setOnMouseClicked(e -> skinnable.add());
+        skinnable.loadingProperty().addListener((a, b, newValue) -> {
+            if (newValue) rootPane.getChildren().setAll(spinner);
+            else rootPane.getChildren().setAll(contentPane);
+        });
 
-            vBox.getChildren().setAll(btnAdd);
-        }
-
-        root.getChildren().setAll(scrollPane, vBox);
-
-        getChildren().setAll(root);
+        getChildren().setAll(rootPane);
     }
 }

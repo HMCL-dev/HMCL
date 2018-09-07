@@ -5,6 +5,8 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import org.jackhuang.hmcl.ui.versions.VersionSettingsPage?>
+<?import org.jackhuang.hmcl.ui.versions.ModListPage?>
+<?import org.jackhuang.hmcl.ui.versions.InstallerListPage?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          fx:id="rootPane"
@@ -16,10 +18,10 @@
                 <VersionSettingsPage fx:id="versionSettings" />
             </Tab>
             <Tab fx:id="modTab" text="%mods">
-                <fx:include source="mod.fxml" fx:id="mod"/>
+                <ModListPage fx:id="mod" />
             </Tab>
             <Tab text="%settings.tabs.installers">
-                <fx:include source="installer.fxml" fx:id="installer"/>
+                <InstallerListPage fx:id="installer" />
             </Tab>
         </JFXTabPane>
 
