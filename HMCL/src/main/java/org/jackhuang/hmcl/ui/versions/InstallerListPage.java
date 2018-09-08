@@ -60,6 +60,7 @@ public class InstallerListPage extends ListPage<InstallerItem> {
                     .start();
         };
 
+        itemsProperty().clear();
         analyzer.getForge().ifPresent(library -> itemsProperty().add(new InstallerItem("Forge", library.getVersion(), removeAction.apply(library))));
         analyzer.getLiteLoader().ifPresent(library -> itemsProperty().add(new InstallerItem("LiteLoader", library.getVersion(), removeAction.apply(library))));
         analyzer.getOptiFine().ifPresent(library -> itemsProperty().add(new InstallerItem("OptiFine", library.getVersion(), removeAction.apply(library))));
