@@ -108,10 +108,10 @@
 
                 <BorderPane>
                     <left>
-                        <Label text="%settings.show_log"/>
+                        <Label BorderPane.alignment="CENTER_LEFT" text="%settings.show_log"/>
                     </left>
                     <right>
-                        <JFXToggleButton fx:id="chkShowLogs" size="8" FXUtils.limitHeight="10" />
+                        <JFXToggleButton fx:id="chkShowLogs" size="8" FXUtils.limitHeight="20" />
                     </right>
                 </BorderPane>
             </ComponentList>
@@ -144,18 +144,18 @@
                               fx:id="txtServerIP" StackPane.margin="$insets"/>
                 <BorderPane>
                     <left>
-                        <Label text="%settings.advanced.no_jvm_args"/>
+                        <Label BorderPane.alignment="CENTER_LEFT" text="%settings.advanced.no_jvm_args"/>
                     </left>
                     <right>
-                        <JFXToggleButton fx:id="chkNoJVMArgs" size="7" FXUtils.limitHeight="10" />
+                        <JFXToggleButton fx:id="chkNoJVMArgs" size="8" FXUtils.limitHeight="20" />
                     </right>
                 </BorderPane>
                 <BorderPane>
                     <left>
-                        <Label text="%settings.advanced.dont_check_game_completeness"/>
+                        <Label BorderPane.alignment="CENTER_LEFT" text="%settings.advanced.dont_check_game_completeness"/>
                     </left>
                     <right>
-                        <JFXToggleButton fx:id="chkNoGameCheck" size="7" FXUtils.limitHeight="10" />
+                        <JFXToggleButton fx:id="chkNoGameCheck" size="8" FXUtils.limitHeight="20" />
                     </right>
                 </BorderPane>
             </ComponentList>
