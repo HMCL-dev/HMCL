@@ -18,6 +18,8 @@ import org.tukaani.xz.LZMA2Options
 import org.tukaani.xz.XZOutputStream
 
 def buildnumber = System.getenv("BUILD_NUMBER") ?: "SNAPSHOT"
+if (System.getenv("BUILD_NUMBER") != null && System.getenv("BUILD_NUMBER_OFFSET") != null)
+    buildnumber = (Integer.parseInt(System.getenv("BUILD_NUMBER")) - Integer.parseInt(System.getenv("BUILD_NUMBER_OFFSET"))).toString()
 def versionroot = System.getenv("VERSION_ROOT") ?: "3.1"
 version = versionroot + '.' + buildnumber
 
