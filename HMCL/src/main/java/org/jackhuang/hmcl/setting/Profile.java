@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
@@ -28,8 +29,6 @@ import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.ModManager;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHelper;
 import org.jackhuang.hmcl.util.*;
 
@@ -206,8 +205,8 @@ public final class Profile implements Observable {
         observableHelper.removeListener(listener);
     }
 
-    protected void invalidate() {
-        Schedulers.computation().schedule(observableHelper::invalidate);
+    private void invalidate() {
+        Platform.runLater(observableHelper::invalidate);
     }
 
     public static final class Serializer implements JsonSerializer<Profile>, JsonDeserializer<Profile> {

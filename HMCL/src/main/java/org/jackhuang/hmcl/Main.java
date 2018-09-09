@@ -49,12 +49,6 @@ public final class Main {
             return;
         }
 
-        try {
-            ConfigHolder.init();
-        } catch (IOException e) {
-            showErrorAndExit(i18n("fatal.config_loading_failure", Paths.get("").toAbsolutePath().normalize()));
-        }
-
         Launcher.main(args);
     }
 
@@ -100,7 +94,7 @@ public final class Main {
     /**
      * Indicates that a fatal error has occurred, and that the application cannot start.
      */
-    private static void showErrorAndExit(String message) {
+    static void showErrorAndExit(String message) {
         System.err.println(message);
         System.err.println("A fatal error has occurred, forcibly exiting.");
         JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
@@ -110,7 +104,7 @@ public final class Main {
     /**
      * Indicates that potential issues have been detected, and that the application may not function properly (but it can still run).
      */
-    private static void showWarningAndContinue(String message) {
+    static void showWarningAndContinue(String message) {
         System.err.println(message);
         System.err.println("Potential issues have been detected.");
         JOptionPane.showMessageDialog(null, message, "Warning", JOptionPane.WARNING_MESSAGE);
