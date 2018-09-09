@@ -134,9 +134,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             // because versionSettings can be the global one.
             // global versionSettings.usesGlobal is always true.
             if (newValue)
-                profile.specializeVersionSetting(versionId);
+                profile.getRepository().specializeVersionSetting(versionId);
             else
-                profile.globalizeVersionSetting(versionId);
+                profile.getRepository().globalizeVersionSetting(versionId);
 
             Platform.runLater(() -> loadVersionSetting(profile, versionId));
         });

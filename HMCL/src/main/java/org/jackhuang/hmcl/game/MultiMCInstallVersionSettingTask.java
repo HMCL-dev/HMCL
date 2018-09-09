@@ -44,7 +44,7 @@ public final class MultiMCInstallVersionSettingTask extends Task {
 
     @Override
     public void execute() {
-        VersionSetting vs = Objects.requireNonNull(profile.specializeVersionSetting(version));
+        VersionSetting vs = Objects.requireNonNull(profile.getRepository().specializeVersionSetting(version));
         ModpackHelper.toVersionSetting(manifest, vs);
     }
 }

@@ -28,6 +28,8 @@ import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHelper;
 import org.jackhuang.hmcl.util.*;
 
@@ -174,32 +176,6 @@ public final class Profile implements Observable {
             return vs;
     }
 
-    public boolean isVersionGlobal(String id) {
-        VersionSetting vs = repository.getVersionSetting(id);
-        return vs == null || vs.isUsesGlobal();
-    }
-
-    /**
-     * Make version use self version settings instead of the global one.
-     * @param id the version id.
-     * @return specialized version setting, null if given version does not exist.
-     */
-    public VersionSetting specializeVersionSetting(String id) {
-        VersionSetting vs = repository.getVersionSetting(id);
-        if (vs == null)
-            vs = repository.createVersionSetting(id);
-        if (vs == null)
-            return null;
-        vs.setUsesGlobal(false);
-        return vs;
-    }
-
-    public void globalizeVersionSetting(String id) {
-        VersionSetting vs = repository.getVersionSetting(id);
-        if (vs != null)
-            vs.setUsesGlobal(true);
-    }
-
     @Override
     public String toString() {
         return new ToStringBuilder(this)
@@ -231,7 +207,7 @@ public final class Profile implements Observable {
     }
 
     protected void invalidate() {
-        observableHelper.invalidate();
+        Schedulers.computation().schedule(observableHelper::invalidate);
     }
 
     public static final class Serializer implements JsonSerializer<Profile>, JsonDeserializer<Profile> {

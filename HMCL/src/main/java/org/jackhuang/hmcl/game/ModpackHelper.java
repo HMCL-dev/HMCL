@@ -87,9 +87,10 @@ public final class ModpackHelper {
 
         FinalizedCallback finalizeTask = (variables, isDependentsSucceeded) -> {
             if (isDependentsSucceeded) {
-                profile.getRepository().refreshVersions();
-                VersionSetting vs = profile.specializeVersionSetting(name);
-                profile.getRepository().undoMark(name);
+                HMCLGameRepository repository = profile.getRepository();
+                repository.refreshVersions();
+                VersionSetting vs = repository.specializeVersionSetting(name);
+                repository.undoMark(name);
                 if (vs != null)
                     vs.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
             }

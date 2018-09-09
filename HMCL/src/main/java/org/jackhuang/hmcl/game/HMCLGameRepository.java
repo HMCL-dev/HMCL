@@ -164,6 +164,27 @@ public class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
+    /**
+     * Make version use self version settings instead of the global one.
+     * @param id the version id.
+     * @return specialized version setting, null if given version does not exist.
+     */
+    public VersionSetting specializeVersionSetting(String id) {
+        VersionSetting vs = getVersionSetting(id);
+        if (vs == null)
+            vs = createVersionSetting(id);
+        if (vs == null)
+            return null;
+        vs.setUsesGlobal(false);
+        return vs;
+    }
+
+    public void globalizeVersionSetting(String id) {
+        VersionSetting vs = getVersionSetting(id);
+        if (vs != null)
+            vs.setUsesGlobal(true);
+    }
+
     public boolean forbidsVersion(String id) {
         return FORBIDDEN.contains(id);
     }
