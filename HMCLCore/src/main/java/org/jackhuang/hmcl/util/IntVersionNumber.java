@@ -33,8 +33,17 @@ public final class IntVersionNumber extends VersionNumber {
     final List<Integer> version;
 
     public static boolean isIntVersionNumber(String version) {
-        return version.chars().noneMatch(ch -> ch != '.' && (ch < '0' || ch > '9'))
-                && !version.contains("..") && StringUtils.isNotBlank(version);
+        if (version.chars().noneMatch(ch -> ch != '.' && (ch < '0' || ch > '9'))
+                && !version.contains("..") && StringUtils.isNotBlank(version)) {
+            String[] arr = version.split("\\.");
+            for (String str : arr)
+                if (str.length() > 9)
+                    // Numbers which are larger than 1e9 cannot be stored as integer.
+                    return false;
+            return true;
+        } else {
+            return false;
+        }
     }
 
     IntVersionNumber(String version) {
