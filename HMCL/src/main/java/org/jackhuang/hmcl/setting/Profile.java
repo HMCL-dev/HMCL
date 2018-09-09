@@ -147,7 +147,7 @@ public final class Profile implements Observable {
             Optional<String> version = repository.getVersions().stream().findFirst().map(Version::getId);
             if (version.isPresent())
                 selectedVersion.setValue(version.get());
-            else if (StringUtils.isNotBlank(newValue))
+            else if (newValue != null)
                 selectedVersion.setValue(null);
         }
     }
