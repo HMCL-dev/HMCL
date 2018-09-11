@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyListProperty;
@@ -87,7 +88,7 @@ public final class Profiles {
         if (profiles.isEmpty()) {
             Profile current = new Profile(Profiles.DEFAULT_PROFILE, new File(".minecraft"), new VersionSetting(), null, true);
             Profile home = new Profile(Profiles.HOME_PROFILE, Launcher.MINECRAFT_DIRECTORY);
-            profiles.addAll(current, home);
+            Platform.runLater(() -> profiles.addAll(current, home));
         }
     }
 
