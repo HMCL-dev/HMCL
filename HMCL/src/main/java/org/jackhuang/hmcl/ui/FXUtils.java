@@ -55,6 +55,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 public final class FXUtils {
@@ -249,11 +250,15 @@ public final class FXUtils {
                 }
                 break;
             default:
-                try {
-                    java.awt.Desktop.getDesktop().open(file);
-                } catch (Throwable e) {
-                    Logging.LOG.log(Level.SEVERE, "Unable to open " + path + " by java.awt.Desktop.getDesktop()::open", e);
-                }
+                thread(() -> {
+                    if (java.awt.Desktop.isDesktopSupported()) {
+                        try {
+                            java.awt.Desktop.getDesktop().open(file);
+                        } catch (Throwable e) {
+                            Logging.LOG.log(Level.SEVERE, "Unable to open " + path + " by java.awt.Desktop.getDesktop()::open", e);
+                        }
+                    }
+                });
         }
     }
 
@@ -265,17 +270,21 @@ public final class FXUtils {
     public static void openLink(String link) {
         if (link == null)
             return;
-        try {
-            java.awt.Desktop.getDesktop().browse(new URI(link));
-        } catch (Throwable e) {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+        thread(() -> {
+            if (java.awt.Desktop.isDesktopSupported()) {
                 try {
-                    Runtime.getRuntime().exec(new String[] { "/usr/bin/open", link });
-                } catch (IOException ex) {
-                    Logging.LOG.log(Level.WARNING, "Unable to open link: " + link, ex);
+                    java.awt.Desktop.getDesktop().browse(new URI(link));
+                } catch (Throwable e) {
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+                        try {
+                            Runtime.getRuntime().exec(new String[]{"/usr/bin/open", link});
+                        } catch (IOException ex) {
+                            Logging.LOG.log(Level.WARNING, "Unable to open link: " + link, ex);
+                        }
+                    Logging.LOG.log(Level.WARNING, "Failed to open link: " + link, e);
                 }
-            Logging.LOG.log(Level.WARNING, "Failed to open link: " + link, e);
-        }
+            }
+        });
     }
 
     public static void bindInt(JFXTextField textField, Property<Number> property) {
