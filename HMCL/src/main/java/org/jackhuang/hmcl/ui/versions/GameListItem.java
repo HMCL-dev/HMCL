@@ -59,7 +59,7 @@ public class GameListItem extends Control {
 
         title.set(id);
         subtitle.set(libraries.toString());
-        selected.set(profile.getSelectedVersion().equals(id));
+        selected.set(id.equals(profile.getSelectedVersion()));
 
         File iconFile = profile.getRepository().getVersionIcon(version);
         if (iconFile.exists())
