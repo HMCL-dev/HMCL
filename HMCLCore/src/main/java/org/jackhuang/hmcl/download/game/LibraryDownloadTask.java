@@ -15,6 +15,7 @@ import org.tukaani.xz.XZInputStream;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.jar.JarEntry;
@@ -75,7 +76,7 @@ public class LibraryDownloadTask extends Task {
             else
                 throw new LibraryDownloadException(library, t);
         } else {
-            if (xz) unpackLibrary(jar, FileUtils.readBytes(xzFile));
+            if (xz) unpackLibrary(jar, Files.readAllBytes(xzFile.toPath()));
             if (!checksumValid(jar, library.getChecksums())) {
                 jar.delete();
                 throw new IOException("Checksum failed for " + library);
@@ -125,7 +126,7 @@ public class LibraryDownloadTask extends Task {
             if (checksums == null || checksums.isEmpty()) {
                 return true;
             }
-            byte[] fileData = FileUtils.readBytes(libPath);
+            byte[] fileData = Files.readAllBytes(libPath.toPath());
             boolean valid = checksums.contains(encodeHex(digest("SHA-1", fileData)));
             if (!valid && libPath.getName().endsWith(".jar")) {
                 valid = validateJar(fileData, checksums);

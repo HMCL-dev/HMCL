@@ -1,0 +1,185 @@
+package org.jackhuang.hmcl.mod;
+
+import com.google.gson.JsonParseException;
+import com.google.gson.annotations.SerializedName;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import org.jackhuang.hmcl.util.*;
+
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+
+public class Datapack {
+    private final Path path;
+    private final List<Pack> info;
+
+    private Datapack(Path path, List<Pack> info) {
+        this.path = path;
+        this.info = Collections.unmodifiableList(info);
+
+        for (Pack pack : info) {
+            pack.datapack = this;
+        }
+    }
+
+    public Path getPath() {
+        return path;
+    }
+
+    public List<Pack> getInfo() {
+        return info;
+    }
+
+    public void installTo(Path worldPath) throws IOException {
+        Path datapacks = worldPath.resolve("datapacks");
+
+        Set<String> packs = new HashSet<>();
+        for (Pack pack : info) packs.add(pack.getId());
+
+        for (Path datapack : Files.newDirectoryStream(datapacks)) {
+            if (packs.contains(FileUtils.getName(datapack)))
+                FileUtils.deleteDirectory(datapack.toFile());
+        }
+
+        new Unzipper(path, worldPath).setReplaceExistentFile(true).unzip();
+    }
+
+    public static Datapack fromZip(Path path) throws IOException {
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(path)) {
+            Datapack datapack = fromDir(fs.getPath("/datapacks/"));
+            return new Datapack(path, datapack.info);
+        }
+    }
+
+    /**
+     *
+     * @param dir
+     * @return
+     * @throws IOException
+     */
+    public static Datapack fromDir(Path dir) throws IOException {
+        List<Pack> info = new LinkedList<>();
+
+        for (Path subDir : Files.newDirectoryStream(dir)) {
+            Path mcmeta = subDir.resolve("pack.mcmeta");
+
+            if (!Files.exists(mcmeta))
+                continue;
+
+            PackMcMeta pack = JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class);
+            info.add(new Pack(mcmeta, FileUtils.getName(subDir), pack.getPackInfo().getDescription()));
+        }
+        return new Datapack(dir, info);
+    }
+
+    public static class Pack {
+        private Path packMcMeta;
+        private final BooleanProperty active;
+        private final String id;
+        private final String description;
+        private Datapack datapack;
+
+        public Pack(Path packMcMeta, String id, String description) {
+            this.packMcMeta = packMcMeta;
+            this.id = id;
+            this.description = description;
+
+            active = new SimpleBooleanProperty(this, "active", !DISABLED_EXT.equals(FileUtils.getExtension(packMcMeta))) {
+                @Override
+                protected void invalidated() {
+                    Path f = Pack.this.packMcMeta.toAbsolutePath(), newF;
+                    if (DISABLED_EXT.equals(FileUtils.getExtension(f)))
+                        newF = f.getParent().resolve(FileUtils.getNameWithoutExtension(f));
+                    else
+                        newF = f.getParent().resolve(FileUtils.getName(f) + DISABLED_EXT);
+
+                    try {
+                        Files.move(f, newF);
+                        Pack.this.packMcMeta = newF;
+                    } catch (IOException e) {
+                        // Mod file is occupied.
+                        Logging.LOG.warning("Unable to rename file " + f + " to " + newF);
+                    }
+                }
+            };
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public Datapack getDatapack() {
+            return datapack;
+        }
+
+        public BooleanProperty activeProperty() {
+            return active;
+        }
+
+        public boolean isActive() {
+            return active.get();
+        }
+
+        public void setActive(boolean active) {
+            this.active.set(active);
+        }
+    }
+
+    private static class PackMcMeta implements Validation {
+
+        @SerializedName("pack")
+        private final PackInfo pack;
+
+        public PackMcMeta() {
+            this(new PackInfo());
+        }
+
+        public PackMcMeta(PackInfo packInfo) {
+            this.pack = packInfo;
+        }
+
+        public PackInfo getPackInfo() {
+            return pack;
+        }
+
+        @Override
+        public void validate() throws JsonParseException {
+            if (pack == null)
+                throw new JsonParseException("pack cannot be null");
+        }
+
+        public static class PackInfo {
+            @SerializedName("pack_format")
+            private final int packFormat;
+
+            @SerializedName("description")
+            private final String description;
+
+            public PackInfo() {
+                this(0, "");
+            }
+
+            public PackInfo(int packFormat, String description) {
+                this.packFormat = packFormat;
+                this.description = description;
+            }
+
+            public int getPackFormat() {
+                return packFormat;
+            }
+
+            public String getDescription() {
+                return description;
+            }
+        }
+    }
+
+    private static final String DISABLED_EXT = ".disabled";
+}

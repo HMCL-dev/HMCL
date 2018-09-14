@@ -43,8 +43,16 @@ public final class FileUtils {
         return StringUtils.substringBeforeLast(file.getName(), '.');
     }
 
+    public static String getNameWithoutExtension(Path file) {
+        return StringUtils.substringBeforeLast(getName(file), '.');
+    }
+
     public static String getExtension(File file) {
         return StringUtils.substringAfterLast(file.getName(), '.');
+    }
+
+    public static String getExtension(Path file) {
+        return StringUtils.substringAfterLast(getName(file), '.');
     }
 
     /**
@@ -63,11 +71,15 @@ public final class FileUtils {
     }
 
     public static String readText(File file, Charset charset) throws IOException {
-        return new String(readBytes(file), charset);
+        return new String(Files.readAllBytes(file.toPath()), charset);
     }
 
-    public static byte[] readBytes(File file) throws IOException {
-        return Files.readAllBytes(file.toPath());
+    public static String readText(Path file) throws IOException {
+        return readText(file, UTF_8);
+    }
+
+    public static String readText(Path file, Charset charset) throws IOException {
+        return new String(Files.readAllBytes(file), charset);
     }
 
     public static void writeText(File file, String text) throws IOException {
