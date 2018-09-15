@@ -35,20 +35,7 @@ public final class ProxyManager {
     private ProxyManager() {
     }
 
-    private static ObjectBinding<Proxy> proxyProperty = Bindings.createObjectBinding(
-            () -> {
-                String host = config().getProxyHost();
-                Integer port = Lang.toIntOrNull(config().getProxyPort());
-                if (!config().hasProxy() || StringUtils.isBlank(host) || port == null || config().getProxyType() == Proxy.Type.DIRECT) {
-                    return Proxy.NO_PROXY;
-                } else {
-                    return new Proxy(config().getProxyType(), new InetSocketAddress(host, port));
-                }
-            },
-            config().proxyTypeProperty(),
-            config().proxyHostProperty(),
-            config().proxyPortProperty(),
-            config().hasProxyProperty());
+    private static ObjectBinding<Proxy> proxyProperty;
 
     public static Proxy getProxy() {
         return proxyProperty.get();
@@ -59,12 +46,25 @@ public final class ProxyManager {
     }
 
     static void init() {
-        proxyProperty.addListener(observable -> updateSystemProxy());
+        proxyProperty = Bindings.createObjectBinding(
+                () -> {
+                    String host = config().getProxyHost();
+                    Integer port = Lang.toIntOrNull(config().getProxyPort());
+                    if (!config().hasProxy() || StringUtils.isBlank(host) || port == null || config().getProxyType() == Proxy.Type.DIRECT) {
+                        return Proxy.NO_PROXY;
+                    } else {
+                        return new Proxy(config().getProxyType(), new InetSocketAddress(host, port));
+                    }
+                },
+                config().proxyTypeProperty(),
+                config().proxyHostProperty(),
+                config().proxyPortProperty(),
+                config().hasProxyProperty());
 
+        proxyProperty.addListener(any -> updateSystemProxy());
         updateSystemProxy();
 
         Authenticator.setDefault(new Authenticator() {
-
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 if (config().hasProxyAuth()) {
