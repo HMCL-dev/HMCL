@@ -28,11 +28,6 @@ import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
  */
 public class BMCLAPIDownloadProvider implements DownloadProvider {
 
-    public static final BMCLAPIDownloadProvider INSTANCE = new BMCLAPIDownloadProvider();
-
-    private BMCLAPIDownloadProvider() {
-    }
-
     @Override
     public String getVersionListURL() {
         return "https://bmclapi2.bangbang93.com/mc/game/version_manifest.json";

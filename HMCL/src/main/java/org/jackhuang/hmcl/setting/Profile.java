@@ -162,7 +162,7 @@ public final class Profile implements Observable {
     }
 
     public DefaultDependencyManager getDependency() {
-        return new DefaultDependencyManager(repository, Settings.instance().getDownloadProvider(), HMCLCacheRepository.REPOSITORY);
+        return new DefaultDependencyManager(repository, DownloadProviders.getDownloadProvider(), HMCLCacheRepository.REPOSITORY);
     }
 
     public VersionSetting getVersionSetting(String id) {

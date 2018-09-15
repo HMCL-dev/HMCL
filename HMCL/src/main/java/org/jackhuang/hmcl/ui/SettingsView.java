@@ -26,6 +26,11 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+
+import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
+
+import java.util.function.Function;
+
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
@@ -39,7 +44,7 @@ public abstract class SettingsView extends StackPane {
     protected final JFXPasswordField txtProxyPassword;
     protected final JFXTextField txtFontSize;
     protected final JFXComboBox<Label> cboLanguage;
-    protected final JFXComboBox<Label> cboDownloadSource;
+    protected final JFXComboBox<String> cboDownloadSource;
     protected final FontComboBox cboFont;
     protected final MultiFileItem<EnumCommonDirectory> fileCommonLocation;
     protected final Label lblDisplay;
@@ -162,11 +167,9 @@ public abstract class SettingsView extends StackPane {
 
                     {
                         cboDownloadSource = new JFXComboBox<>();
-                        FXUtils.setLimitWidth(cboDownloadSource, 400);
-                        cboDownloadSource.getItems().setAll(
-                                new Label(I18n.i18n("download.mojang")),
-                                new Label(I18n.i18n("download.BMCL"))
-                        );
+                        Function<String, String> nameConverter = key -> I18n.i18n("download.provider." + key);
+                        cboDownloadSource.setCellFactory(FXUtils.jfxListCellFactory(nameConverter.andThen(Label::new)));
+                        cboDownloadSource.setConverter(stringConverter(nameConverter));
                         downloadSourcePane.setRight(cboDownloadSource);
                     }
                     settingsPane.getContent().add(downloadSourcePane);

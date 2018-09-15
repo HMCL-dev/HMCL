@@ -60,10 +60,13 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
     public SettingsPage() {
         FXUtils.smoothScrolling(scroll);
 
-        chkEnableGameList.selectedProperty().bindBidirectional(config().enableMainPageGameListProperty());
+        // ==== Download sources ====
+        cboDownloadSource.getItems().setAll(DownloadProviders.providersById.keySet());
+        cboDownloadSource.getSelectionModel().select(config().getDownloadType());
+        cboDownloadSource.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> config().setDownloadType(newValue));
+        // ====
 
-        cboDownloadSource.getSelectionModel().select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.instance().getDownloadProvider()));
-        cboDownloadSource.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.instance().setDownloadProvider(DownloadProviders.getDownloadProvider(newValue.intValue())));
+        chkEnableGameList.selectedProperty().bindBidirectional(config().enableMainPageGameListProperty());
 
         cboFont.initValue(Settings.instance().getFont());
         cboFont.valueProperty().addListener((a, b, newValue) -> {

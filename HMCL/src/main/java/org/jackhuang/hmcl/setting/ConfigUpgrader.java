@@ -86,5 +86,17 @@ final class ConfigUpgrader {
             deserialized.setHasProxy(StringUtils.isNotBlank(deserialized.getProxyHost()));
         if (!rawJson.containsKey("hasProxyAuth"))
             deserialized.setHasProxyAuth(StringUtils.isNotBlank(deserialized.getProxyUser()));
+
+        if (!rawJson.containsKey("downloadType")) {
+            tryCast(rawJson.get("downloadtype"), Number.class)
+                    .map(Number::intValue)
+                    .ifPresent(id -> {
+                        if (id == 0) {
+                            deserialized.setDownloadType("mojang");
+                        } else if (id == 1) {
+                            deserialized.setDownloadType("bmclapi");
+                        }
+                    });
+        }
     }
 }

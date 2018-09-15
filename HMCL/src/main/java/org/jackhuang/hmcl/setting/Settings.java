@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.setting;
 
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Launcher;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.util.CacheRepository;
 
@@ -44,6 +43,7 @@ public class Settings {
     }
 
     private Settings() {
+        DownloadProviders.init();
         ProxyManager.init();
         Accounts.init();
         Profiles.init();
@@ -82,20 +82,5 @@ public class Settings {
             default:
                 return null;
         }
-    }
-
-    /****************************************
-     *        DOWNLOAD PROVIDERS            *
-     ****************************************/
-
-    public DownloadProvider getDownloadProvider() {
-        return DownloadProviders.getDownloadProvider(config().getDownloadType());
-    }
-
-    public void setDownloadProvider(DownloadProvider downloadProvider) {
-        int index = DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(downloadProvider);
-        if (index == -1)
-            throw new IllegalArgumentException("Unknown download provider: " + downloadProvider);
-        config().setDownloadType(index);
     }
 }

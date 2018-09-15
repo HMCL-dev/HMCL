@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 
 /**
- * @see <a href="http://wiki.vg">http://wiki,vg</a>
+ * @see <a href="http://wiki.vg">http://wiki.vg</a>
  * @author huangyuhui
  */
 public class MojangDownloadProvider implements DownloadProvider {
@@ -56,6 +56,6 @@ public class MojangDownloadProvider implements DownloadProvider {
 
     @Override
     public String injectURL(String baseURL) {
-            return baseURL;
+        return baseURL;
     }
 }

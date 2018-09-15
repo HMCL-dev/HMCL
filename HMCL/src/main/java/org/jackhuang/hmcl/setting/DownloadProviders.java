@@ -17,20 +17,44 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
+
+import java.util.Map;
+import java.util.Optional;
+
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
-import org.jackhuang.hmcl.download.CurseCDNDownloadProvider;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
-import org.jackhuang.hmcl.util.Lang;
 
-import java.util.List;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
+import javafx.beans.value.ObservableObjectValue;
 
 public final class DownloadProviders {
     private DownloadProviders() {}
 
-    public static final List<DownloadProvider> DOWNLOAD_PROVIDERS = Lang.immutableListOf(new MojangDownloadProvider(), BMCLAPIDownloadProvider.INSTANCE, CurseCDNDownloadProvider.INSTANCE);
+    public static final Map<String, DownloadProvider> providersById = mapOf(
+            pair("mojang", new MojangDownloadProvider()),
+            pair("bmclapi", new BMCLAPIDownloadProvider()));
 
-    public static DownloadProvider getDownloadProvider(int index) {
-        return Lang.get(DOWNLOAD_PROVIDERS, index).orElse(DOWNLOAD_PROVIDERS.get(0));
+    public static final String DEFAULT_PROVIDER_ID = "bmclapi";
+
+    private static ObjectBinding<DownloadProvider> downloadProviderProperty;
+
+    static void init() {
+        downloadProviderProperty = Bindings.createObjectBinding(
+                () -> Optional.ofNullable(providersById.get(config().getDownloadType()))
+                        .orElse(providersById.get(DEFAULT_PROVIDER_ID)),
+                config().downloadTypeProperty());
+    }
+
+    public static DownloadProvider getDownloadProvider() {
+        return downloadProviderProperty.get();
+    }
+
+    public static ObservableObjectValue<DownloadProvider> downloadProviderProperty() {
+        return downloadProviderProperty;
     }
 }
