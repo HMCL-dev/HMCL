@@ -27,15 +27,15 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
-
-import java.util.function.Function;
 
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 public abstract class SettingsView extends StackPane {
     protected final JFXTextField txtProxyHost;
@@ -43,7 +43,7 @@ public abstract class SettingsView extends StackPane {
     protected final JFXTextField txtProxyUsername;
     protected final JFXPasswordField txtProxyPassword;
     protected final JFXTextField txtFontSize;
-    protected final JFXComboBox<Label> cboLanguage;
+    protected final JFXComboBox<SupportedLocale> cboLanguage;
     protected final JFXComboBox<String> cboDownloadSource;
     protected final FontComboBox cboFont;
     protected final MultiFileItem<EnumCommonDirectory> fileCommonLocation;
@@ -167,9 +167,7 @@ public abstract class SettingsView extends StackPane {
 
                     {
                         cboDownloadSource = new JFXComboBox<>();
-                        Function<String, String> nameConverter = key -> I18n.i18n("download.provider." + key);
-                        cboDownloadSource.setCellFactory(FXUtils.jfxListCellFactory(nameConverter.andThen(Label::new)));
-                        cboDownloadSource.setConverter(stringConverter(nameConverter));
+                        cboDownloadSource.setConverter(stringConverter(key -> I18n.i18n("download.provider." + key)));
                         downloadSourcePane.setRight(cboDownloadSource);
                     }
                     settingsPane.getContent().add(downloadSourcePane);
@@ -183,6 +181,7 @@ public abstract class SettingsView extends StackPane {
                     languagePane.setLeft(left);
 
                     cboLanguage = new JFXComboBox<>();
+                    cboLanguage.setConverter(stringConverter(locale -> locale.getName(config().getLocalization().getResourceBundle())));
                     FXUtils.setLimitWidth(cboLanguage, 400);
                     languagePane.setRight(cboLanguage);
 
