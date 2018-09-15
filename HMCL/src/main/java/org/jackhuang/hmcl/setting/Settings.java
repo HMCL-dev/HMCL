@@ -61,14 +61,6 @@ public class Settings {
         config().setFontSize(font.getSize());
     }
 
-    public int getLogLines() {
-        return Math.max(config().getLogLines(), 100);
-    }
-
-    public void setLogLines(int logLines) {
-        config().setLogLines(logLines);
-    }
-
     public static String getDefaultCommonDirectory() {
         return Launcher.MINECRAFT_DIRECTORY.getAbsolutePath();
     }
