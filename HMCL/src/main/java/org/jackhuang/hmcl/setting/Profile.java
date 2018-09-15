@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.ModManager;
-import org.jackhuang.hmcl.ui.WeakListenerHelper;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.File;
@@ -43,7 +43,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
  * @author huangyuhui
  */
 public final class Profile implements Observable {
-    private final WeakListenerHelper helper = new WeakListenerHelper();
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private final HMCLGameRepository repository;
     private final ModManager modManager;
 
@@ -136,7 +136,7 @@ public final class Profile implements Observable {
 
         gameDir.addListener((a, b, newValue) -> repository.changeDirectory(newValue));
         this.selectedVersion.addListener(o -> checkSelectedVersion());
-        helper.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion()));
+        listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion()));
 
         addPropertyChangedListener(onInvalidating(this::invalidate));
     }

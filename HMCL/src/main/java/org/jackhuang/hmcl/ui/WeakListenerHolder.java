@@ -27,10 +27,10 @@ import javafx.collections.WeakListChangeListener;
 import java.util.LinkedList;
 import java.util.List;
 
-public class WeakListenerHelper {
-    List<Object> refs = new LinkedList<>();
+public class WeakListenerHolder {
+    private List<Object> refs = new LinkedList<>();
 
-    public WeakListenerHelper() {
+    public WeakListenerHolder() {
     }
 
     public WeakInvalidationListener weak(InvalidationListener listener) {

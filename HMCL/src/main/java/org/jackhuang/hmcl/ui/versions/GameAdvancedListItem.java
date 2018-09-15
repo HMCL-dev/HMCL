@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.ui.WeakListenerHelper;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 
 import java.io.File;
@@ -32,16 +32,16 @@ import java.io.File;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameAdvancedListItem extends AdvancedListItem {
-    private final WeakListenerHelper helper = new WeakListenerHelper();
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
     private Profile profile;
     private InvalidationListener listener = o -> loadVersion();
 
     public GameAdvancedListItem() {
-        Profiles.selectedProfileProperty().addListener(helper.weak((a, b, newValue) -> {
+        Profiles.selectedProfileProperty().addListener(listenerHolder.weak((a, b, newValue) -> {
             JFXUtilities.runInFX(() -> loadProfile(newValue));
         }));
-        helper.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
+        listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
             JFXUtilities.runInFX(() -> {
                 if (profile != null && profile.getRepository() == event.getSource())
                     loadVersion();
