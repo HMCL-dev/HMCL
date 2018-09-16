@@ -100,13 +100,15 @@ public class ComponentList extends Control {
     }
 
     protected static class Skin extends SkinBase<ComponentList> {
+        private final ObservableList<Node> list;
 
         protected Skin(ComponentList control) {
             super(control);
 
+            list = MappedObservableList.create(control.getContent(), this::mapper);
+
             VBox vbox = new VBox();
-            Bindings.bindContent(vbox.getChildren(),
-                    MappedObservableList.create(control.getContent(), this::mapper));
+            Bindings.bindContent(vbox.getChildren(), list);
             getChildren().setAll(vbox);
         }
 

@@ -7,8 +7,10 @@ import javafx.scene.image.Image;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 
 import java.io.File;
+import java.util.Date;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -20,6 +22,9 @@ public class WorldListItem extends Control {
 
     public WorldListItem(World world) {
         this.world = world;
+
+        title.set(world.getWorldName());
+        subtitle.set(i18n("world.description", world.getFileName(), new Date(world.getLastPlayed()).toString(), world.getGameVersion()));
     }
 
     @Override
@@ -43,14 +48,16 @@ public class WorldListItem extends Control {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("world.export.title"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
+        fileChooser.setInitialFileName(world.getWorldName());
         File file = fileChooser.showSaveDialog(Controllers.getStage());
         if (file == null) {
             return;
         }
 
-
+        Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller -> new WorldExportPage(world, file.toPath(), controller::onFinish)));
     }
 
     public void manageDatapacks() {
+        Controllers.navigate(new DatapackListPage(world.getWorldName(), world.getFile()));
     }
 }

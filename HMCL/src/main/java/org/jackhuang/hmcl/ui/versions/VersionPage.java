@@ -48,6 +48,8 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     @FXML
     private InstallerListPage installer;
     @FXML
+    private WorldListPage world;
+    @FXML
     private JFXListView<?> browseList;
     @FXML
     private JFXListView<?> managementList;
@@ -90,13 +92,14 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         this.version = id;
         this.profile = profile;
 
-        title.set(i18n("settings.game") + " - " + id);
+        title.set(i18n("version.manage.manage") + " - " + id);
 
         versionSettings.loadVersionSetting(profile, id);
         mod.setParentTab(tabPane);
         modTab.setUserData(mod);
         mod.loadMods(profile.getModManager(), id);
         installer.loadVersion(profile, id);
+        world.loadVersion(profile, id);
     }
 
     @FXML

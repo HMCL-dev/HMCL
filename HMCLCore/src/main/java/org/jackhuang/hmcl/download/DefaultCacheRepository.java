@@ -55,7 +55,10 @@ public class DefaultCacheRepository extends CacheRepository {
 
         lock.writeLock().lock();
         try {
-            index = Constants.GSON.fromJson(FileUtils.readText(indexFile.toFile()), Index.class);
+            if (Files.isRegularFile(indexFile))
+                index = Constants.GSON.fromJson(FileUtils.readText(indexFile.toFile()), Index.class);
+            else
+                index = new Index();
         } catch (IOException e) {
             Logging.LOG.log(Level.WARNING, "Unable to read index file", e);
             index = new Index();

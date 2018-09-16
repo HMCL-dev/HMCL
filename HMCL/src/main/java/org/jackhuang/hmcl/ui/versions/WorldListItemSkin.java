@@ -28,7 +28,6 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
 
         BorderPane root = new BorderPane();
 
-
         HBox center = new HBox();
         center.setSpacing(8);
         center.setAlignment(Pos.CENTER_LEFT);

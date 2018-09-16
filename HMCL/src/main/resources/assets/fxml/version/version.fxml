@@ -7,6 +7,7 @@
 <?import org.jackhuang.hmcl.ui.versions.VersionSettingsPage?>
 <?import org.jackhuang.hmcl.ui.versions.ModListPage?>
 <?import org.jackhuang.hmcl.ui.versions.InstallerListPage?>
+<?import org.jackhuang.hmcl.ui.versions.WorldListPage?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          fx:id="rootPane"
@@ -22,6 +23,9 @@
             </Tab>
             <Tab text="%settings.tabs.installers">
                 <InstallerListPage fx:id="installer" />
+            </Tab>
+            <Tab text="%world">
+                <WorldListPage fx:id="world" />
             </Tab>
         </JFXTabPane>
 

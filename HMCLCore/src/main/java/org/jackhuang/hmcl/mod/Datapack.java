@@ -2,8 +2,11 @@ package org.jackhuang.hmcl.mod;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.IOException;
@@ -11,25 +14,21 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.logging.Level;
 
 public class Datapack {
     private final Path path;
-    private final List<Pack> info;
+    private final ObservableList<Pack> info = FXCollections.observableArrayList();
 
-    private Datapack(Path path, List<Pack> info) {
+    public Datapack(Path path) {
         this.path = path;
-        this.info = Collections.unmodifiableList(info);
-
-        for (Pack pack : info) {
-            pack.datapack = this;
-        }
     }
 
     public Path getPath() {
         return path;
     }
 
-    public List<Pack> getInfo() {
+    public ObservableList<Pack> getInfo() {
         return info;
     }
 
@@ -39,40 +38,53 @@ public class Datapack {
         Set<String> packs = new HashSet<>();
         for (Pack pack : info) packs.add(pack.getId());
 
-        for (Path datapack : Files.newDirectoryStream(datapacks)) {
-            if (packs.contains(FileUtils.getName(datapack)))
-                FileUtils.deleteDirectory(datapack.toFile());
-        }
+        if (Files.isDirectory(datapacks))
+            for (Path datapack : Files.newDirectoryStream(datapacks)) {
+                if (packs.contains(FileUtils.getName(datapack)))
+                    FileUtils.deleteDirectory(datapack.toFile());
+            }
 
         new Unzipper(path, worldPath).setReplaceExistentFile(true).unzip();
     }
 
-    public static Datapack fromZip(Path path) throws IOException {
+    public void deletePack(String pack) throws IOException {
+        FileUtils.deleteDirectory(path.resolve(pack).toFile());
+        Platform.runLater(() -> info.removeIf(p -> p.getId().equals(pack)));
+    }
+
+    public void loadFromZip() throws IOException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(path)) {
-            Datapack datapack = fromDir(fs.getPath("/datapacks/"));
-            return new Datapack(path, datapack.info);
+            loadFromDir(fs.getPath("/datapacks/"));
         }
     }
 
-    /**
-     *
-     * @param dir
-     * @return
-     * @throws IOException
-     */
-    public static Datapack fromDir(Path dir) throws IOException {
-        List<Pack> info = new LinkedList<>();
-
-        for (Path subDir : Files.newDirectoryStream(dir)) {
-            Path mcmeta = subDir.resolve("pack.mcmeta");
-
-            if (!Files.exists(mcmeta))
-                continue;
-
-            PackMcMeta pack = JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class);
-            info.add(new Pack(mcmeta, FileUtils.getName(subDir), pack.getPackInfo().getDescription()));
+    public void loadFromDir() {
+        try {
+            loadFromDir(path);
+        } catch (IOException e) {
+            Logging.LOG.log(Level.WARNING, "Failed to read datapacks " + path, e);
         }
-        return new Datapack(dir, info);
+    }
+
+    private void loadFromDir(Path dir) throws IOException {
+        List<Pack> info = new ArrayList<>();
+
+        if (Files.isDirectory(dir))
+            for (Path subDir : Files.newDirectoryStream(dir)) {
+                Path mcmeta = subDir.resolve("pack.mcmeta");
+
+                if (!Files.exists(mcmeta))
+                    continue;
+
+                try {
+                    PackMcMeta pack = JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class);
+                    info.add(new Pack(mcmeta, FileUtils.getName(subDir), pack.getPackInfo().getDescription(), this));
+                } catch (IOException e) {
+                    Logging.LOG.log(Level.WARNING, "Failed to read datapack " + subDir, e);
+                }
+            }
+
+        this.info.setAll(info);
     }
 
     public static class Pack {
@@ -80,12 +92,13 @@ public class Datapack {
         private final BooleanProperty active;
         private final String id;
         private final String description;
-        private Datapack datapack;
+        private final Datapack datapack;
 
-        public Pack(Path packMcMeta, String id, String description) {
+        public Pack(Path packMcMeta, String id, String description, Datapack datapack) {
             this.packMcMeta = packMcMeta;
             this.id = id;
             this.description = description;
+            this.datapack = datapack;
 
             active = new SimpleBooleanProperty(this, "active", !DISABLED_EXT.equals(FileUtils.getExtension(packMcMeta))) {
                 @Override

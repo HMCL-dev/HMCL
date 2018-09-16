@@ -92,7 +92,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         };
 
         menu.getChildren().setAll(
-                new IconedMenuItem(limitWidth.apply(SVG.gear(Theme.blackFillBinding(), 14, 14)), i18n("settings"), wrap.apply(skinnable::modifyGameSettings)),
+                new IconedMenuItem(limitWidth.apply(SVG.gear(Theme.blackFillBinding(), 14, 14)), i18n("version.manage.manage"), wrap.apply(skinnable::modifyGameSettings)),
                 new IconedMenuItem(limitWidth.apply(SVG.pencil(Theme.blackFillBinding(), 14, 14)), i18n("version.manage.rename"), wrap.apply(skinnable::rename)),
                 new IconedMenuItem(limitWidth.apply(SVG.delete(Theme.blackFillBinding(), 14, 14)), i18n("version.manage.remove"), wrap.apply(skinnable::remove)),
                 new IconedMenuItem(limitWidth.apply(SVG.export(Theme.blackFillBinding(), 14, 14)), i18n("modpack.export"), wrap.apply(skinnable::export)),

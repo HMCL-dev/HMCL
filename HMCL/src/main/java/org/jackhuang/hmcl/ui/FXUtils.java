@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.*;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
@@ -210,27 +211,29 @@ public final class FXUtils {
     }
 
     public static void installTooltip(Node node, double openDelay, double visibleDelay, double closeDelay, Tooltip tooltip) {
-        try {
-            // Java 8
-            Class<?> behaviorClass = Class.forName("javafx.scene.control.Tooltip$TooltipBehavior");
-            Constructor<?> behaviorConstructor = behaviorClass.getDeclaredConstructor(Duration.class, Duration.class, Duration.class, boolean.class);
-            behaviorConstructor.setAccessible(true);
-            Object behavior = behaviorConstructor.newInstance(new Duration(openDelay), new Duration(visibleDelay), new Duration(closeDelay), false);
-            Method installMethod = behaviorClass.getDeclaredMethod("install", Node.class, Tooltip.class);
-            installMethod.setAccessible(true);
-            installMethod.invoke(behavior, node, tooltip);
-        } catch (ReflectiveOperationException e) {
+        JFXUtilities.runInFX(() -> {
             try {
-                // Java 9
-                Tooltip.class.getMethod("setShowDelay", Duration.class).invoke(tooltip, new Duration(openDelay));
-                Tooltip.class.getMethod("setShowDuration", Duration.class).invoke(tooltip, new Duration(visibleDelay));
-                Tooltip.class.getMethod("setHideDelay", Duration.class).invoke(tooltip, new Duration(closeDelay));
-            } catch (ReflectiveOperationException e2) {
-                e.addSuppressed(e2);
-                Logging.LOG.log(Level.SEVERE, "Cannot install tooltip", e);
+                // Java 8
+                Class<?> behaviorClass = Class.forName("javafx.scene.control.Tooltip$TooltipBehavior");
+                Constructor<?> behaviorConstructor = behaviorClass.getDeclaredConstructor(Duration.class, Duration.class, Duration.class, boolean.class);
+                behaviorConstructor.setAccessible(true);
+                Object behavior = behaviorConstructor.newInstance(new Duration(openDelay), new Duration(visibleDelay), new Duration(closeDelay), false);
+                Method installMethod = behaviorClass.getDeclaredMethod("install", Node.class, Tooltip.class);
+                installMethod.setAccessible(true);
+                installMethod.invoke(behavior, node, tooltip);
+            } catch (ReflectiveOperationException e) {
+                try {
+                    // Java 9
+                    Tooltip.class.getMethod("setShowDelay", Duration.class).invoke(tooltip, new Duration(openDelay));
+                    Tooltip.class.getMethod("setShowDuration", Duration.class).invoke(tooltip, new Duration(visibleDelay));
+                    Tooltip.class.getMethod("setHideDelay", Duration.class).invoke(tooltip, new Duration(closeDelay));
+                } catch (ReflectiveOperationException e2) {
+                    e.addSuppressed(e2);
+                    Logging.LOG.log(Level.SEVERE, "Cannot install tooltip", e);
+                }
+                Tooltip.install(node, tooltip);
             }
-            Tooltip.install(node, tooltip);
-        }
+        });
     }
 
     public static void openFolder(File file) {

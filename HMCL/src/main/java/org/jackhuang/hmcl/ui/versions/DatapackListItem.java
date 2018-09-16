@@ -1,6 +1,5 @@
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.effects.JFXDepthManager;
@@ -18,7 +17,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DatapackListItem extends BorderPane {
 
-    public DatapackListItem(Datapack root, Datapack.Pack info, Consumer<DatapackListItem> deleteCallback) {
+    public DatapackListItem(Datapack.Pack info, Consumer<DatapackListItem> deleteCallback) {
         JFXCheckBox chkEnabled = new JFXCheckBox();
         BorderPane.setAlignment(chkEnabled, Pos.CENTER);
         setLeft(chkEnabled);
@@ -28,9 +27,7 @@ public class DatapackListItem extends BorderPane {
         setCenter(modItem);
 
         JFXButton btnRemove = new JFXButton();
-        JFXUtilities.runInFX(() -> {
-            FXUtils.installTooltip(btnRemove, i18n("mods.remove"));
-        });
+        FXUtils.installTooltip(btnRemove, i18n("datapack.remove"));
         btnRemove.setOnMouseClicked(e -> deleteCallback.accept(this));
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
