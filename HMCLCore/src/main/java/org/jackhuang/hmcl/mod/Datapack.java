@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.logging.Level;
 
 public class Datapack {
+    private boolean isMultiple;
     private final Path path;
     private final ObservableList<Pack> info = FXCollections.observableArrayList();
 
@@ -44,7 +45,11 @@ public class Datapack {
                     FileUtils.deleteDirectory(datapack.toFile());
             }
 
-        new Unzipper(path, worldPath).setReplaceExistentFile(true).unzip();
+        if (isMultiple) {
+            new Unzipper(path, worldPath).setReplaceExistentFile(true).unzip();
+        } else {
+            new Unzipper(path, worldPath.resolve("datapacks").resolve(FileUtils.getNameWithoutExtension(path))).unzip();
+        }
     }
 
     public void deletePack(String pack) throws IOException {
@@ -54,7 +59,22 @@ public class Datapack {
 
     public void loadFromZip() throws IOException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(path)) {
-            loadFromDir(fs.getPath("/datapacks/"));
+            Path datapacks = fs.getPath("/datapacks/");
+            Path mcmeta = fs.getPath("pack.mcmeta");
+            if (Files.exists(datapacks)) { // multiple datapacks
+                isMultiple = true;
+                loadFromDir(datapacks);
+            } else if (Files.exists(mcmeta)) { // single datapack
+                isMultiple = false;
+                try {
+                    PackMcMeta pack = JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class);
+                    info.add(new Pack(mcmeta, FileUtils.getNameWithoutExtension(path), pack.getPackInfo().getDescription(), this));
+                } catch (IOException e) {
+                    Logging.LOG.log(Level.WARNING, "Failed to read datapack " + path, e);
+                }
+            } else {
+                throw new IOException("Malformed datapack zip");
+            }
         }
     }
 
@@ -72,13 +92,17 @@ public class Datapack {
         if (Files.isDirectory(dir))
             for (Path subDir : Files.newDirectoryStream(dir)) {
                 Path mcmeta = subDir.resolve("pack.mcmeta");
+                Path mcmetaDisabled = subDir.resolve("pack.mcmeta.disabled");
 
-                if (!Files.exists(mcmeta))
+                if (!Files.exists(mcmeta) && !Files.exists(mcmetaDisabled))
                     continue;
 
+                boolean enabled = Files.exists(mcmeta);
+
                 try {
-                    PackMcMeta pack = JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class);
-                    info.add(new Pack(mcmeta, FileUtils.getName(subDir), pack.getPackInfo().getDescription(), this));
+                    PackMcMeta pack = enabled ? JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class)
+                            : JsonUtils.fromNonNullJson(FileUtils.readText(mcmetaDisabled), PackMcMeta.class);
+                    info.add(new Pack(enabled ? mcmeta : mcmetaDisabled, FileUtils.getName(subDir), pack.getPackInfo().getDescription(), this));
                 } catch (IOException e) {
                     Logging.LOG.log(Level.WARNING, "Failed to read datapack " + subDir, e);
                 }
@@ -107,7 +131,7 @@ public class Datapack {
                     if (DISABLED_EXT.equals(FileUtils.getExtension(f)))
                         newF = f.getParent().resolve(FileUtils.getNameWithoutExtension(f));
                     else
-                        newF = f.getParent().resolve(FileUtils.getName(f) + DISABLED_EXT);
+                        newF = f.getParent().resolve(FileUtils.getName(f) + "." + DISABLED_EXT);
 
                     try {
                         Files.move(f, newF);
@@ -194,5 +218,5 @@ public class Datapack {
         }
     }
 
-    private static final String DISABLED_EXT = ".disabled";
+    private static final String DISABLED_EXT = "disabled";
 }

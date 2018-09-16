@@ -65,7 +65,7 @@ public final class ModInfo implements Comparable<ModInfo> {
                 if (DISABLED_EXTENSION.equals(FileUtils.getExtension(f)))
                     newF = new File(f.getParentFile(), FileUtils.getNameWithoutExtension(f));
                 else
-                    newF = new File(f.getParentFile(), f.getName() + ".disabled");
+                    newF = new File(f.getParentFile(), f.getName() + "." + DISABLED_EXTENSION);
 
                 if (f.renameTo(newF))
                     ModInfo.this.file = newF;
