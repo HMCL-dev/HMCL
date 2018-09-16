@@ -29,6 +29,7 @@ import javafx.scene.text.TextAlignment;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
@@ -78,12 +79,12 @@ public abstract class SettingsView extends StackPane {
                 ComponentList settingsPane = new ComponentList();
                 {
                     ComponentSublist updatePane = new ComponentSublist();
-                    updatePane.setTitle(I18n.i18n("update"));
+                    updatePane.setTitle(i18n("update"));
                     updatePane.setHasSubtitle(true);
                     {
                         VBox headerLeft = new VBox();
 
-                        lblUpdate = new Label(I18n.i18n("update"));
+                        lblUpdate = new Label(i18n("update"));
                         lblUpdateSub = new Label();
                         lblUpdateSub.getStyleClass().setAll("subtitle-label");
 
@@ -104,12 +105,12 @@ public abstract class SettingsView extends StackPane {
                         VBox content = new VBox();
                         content.setSpacing(8);
 
-                        chkUpdateStable = new JFXRadioButton(I18n.i18n("update.channel.stable"));
-                        chkUpdateDev = new JFXRadioButton(I18n.i18n("update.channel.dev"));
+                        chkUpdateStable = new JFXRadioButton(i18n("update.channel.stable"));
+                        chkUpdateDev = new JFXRadioButton(i18n("update.channel.dev"));
 
                         VBox noteWrapper = new VBox();
                         noteWrapper.setStyle("-fx-padding: 10 0 0 0;");
-                        lblUpdateNote = new Text(I18n.i18n("update.note"));
+                        lblUpdateNote = new Text(i18n("update.note"));
                         noteWrapper.getChildren().setAll(lblUpdateNote);
 
                         content.getChildren().setAll(chkUpdateStable, chkUpdateDev, noteWrapper);
@@ -120,10 +121,34 @@ public abstract class SettingsView extends StackPane {
                 }
 
                 {
+                    BorderPane updatePane = new BorderPane();
+                    {
+                        VBox headerLeft = new VBox();
+
+                        Label help = new Label(i18n("help"));
+                        Label helpSubtitle = new Label(i18n("help.detail"));
+                        helpSubtitle.getStyleClass().setAll("subtitle-label");
+
+                        headerLeft.getChildren().setAll(help, helpSubtitle);
+                        updatePane.setLeft(headerLeft);
+                    }
+
+                    {
+                        JFXButton btnExternal = new JFXButton();
+                        btnExternal.setOnMouseClicked(e -> onHelp());
+                        btnExternal.getStyleClass().setAll("toggle-icon4");
+                        btnExternal.setGraphic(SVG.openInNew(Theme.blackFillBinding(), -1, -1));
+
+                        updatePane.setRight(btnExternal);
+                    }
+                    settingsPane.getContent().add(updatePane);
+                }
+
+                {
                     fileCommonLocation = new MultiFileItem<>(true);
-                    fileCommonLocation.setTitle(I18n.i18n("launcher.common_directory"));
+                    fileCommonLocation.setTitle(i18n("launcher.common_directory"));
                     fileCommonLocation.setDirectory(true);
-                    fileCommonLocation.setChooserTitle(I18n.i18n("launcher.common_directory.choose"));
+                    fileCommonLocation.setChooserTitle(i18n("launcher.common_directory.choose"));
                     fileCommonLocation.setHasSubtitle(true);
                     fileCommonLocation.setCustomText("settings.custom");
 
@@ -132,10 +157,10 @@ public abstract class SettingsView extends StackPane {
 
                 {
                     backgroundItem = new MultiFileItem<>(true);
-                    backgroundItem.setTitle(I18n.i18n("launcher.background"));
-                    backgroundItem.setChooserTitle(I18n.i18n("launcher.background.choose"));
+                    backgroundItem.setTitle(i18n("launcher.background"));
+                    backgroundItem.setChooserTitle(i18n("launcher.background.choose"));
                     backgroundItem.setHasSubtitle(true);
-                    backgroundItem.setCustomText(I18n.i18n("settings.custom"));
+                    backgroundItem.setCustomText(i18n("settings.custom"));
 
                     settingsPane.getContent().add(backgroundItem);
                 }
@@ -143,7 +168,7 @@ public abstract class SettingsView extends StackPane {
                 {
                     BorderPane borderPane = new BorderPane();
 
-                    Label left = new Label(I18n.i18n("settings.launcher.enable_game_list"));
+                    Label left = new Label(i18n("settings.launcher.enable_game_list"));
                     BorderPane.setAlignment(left, Pos.CENTER_LEFT);
                     borderPane.setLeft(left);
 
@@ -160,14 +185,14 @@ public abstract class SettingsView extends StackPane {
                 {
                     BorderPane downloadSourcePane = new BorderPane();
                     {
-                        Label label = new Label(I18n.i18n("settings.launcher.download_source"));
+                        Label label = new Label(i18n("settings.launcher.download_source"));
                         BorderPane.setAlignment(label, Pos.CENTER_LEFT);
                         downloadSourcePane.setLeft(label);
                     }
 
                     {
                         cboDownloadSource = new JFXComboBox<>();
-                        cboDownloadSource.setConverter(stringConverter(key -> I18n.i18n("download.provider." + key)));
+                        cboDownloadSource.setConverter(stringConverter(key -> i18n("download.provider." + key)));
                         downloadSourcePane.setRight(cboDownloadSource);
                     }
                     settingsPane.getContent().add(downloadSourcePane);
@@ -176,7 +201,7 @@ public abstract class SettingsView extends StackPane {
                 {
                     BorderPane languagePane = new BorderPane();
 
-                    Label left = new Label(I18n.i18n("settings.launcher.language"));
+                    Label left = new Label(i18n("settings.launcher.language"));
                     BorderPane.setAlignment(left, Pos.CENTER_LEFT);
                     languagePane.setLeft(left);
 
@@ -190,13 +215,13 @@ public abstract class SettingsView extends StackPane {
 
                 {
                     ComponentList proxyList = new ComponentList();
-                    proxyList.setTitle(I18n.i18n("settings.launcher.proxy"));
+                    proxyList.setTitle(i18n("settings.launcher.proxy"));
 
                     VBox proxyWrapper = new VBox();
                     proxyWrapper.setSpacing(10);
 
                     {
-                        chkDisableProxy = new JFXCheckBox(I18n.i18n("settings.launcher.proxy.disable"));
+                        chkDisableProxy = new JFXCheckBox(i18n("settings.launcher.proxy.disable"));
                         proxyWrapper.getChildren().add(chkDisableProxy);
                     }
 
@@ -209,8 +234,8 @@ public abstract class SettingsView extends StackPane {
 
                         {
                             HBox hBox = new HBox();
-                            chkProxyHttp = new JFXRadioButton(I18n.i18n("settings.launcher.proxy.http"));
-                            chkProxySocks = new JFXRadioButton(I18n.i18n("settings.launcher.proxy.socks"));
+                            chkProxyHttp = new JFXRadioButton(i18n("settings.launcher.proxy.http"));
+                            chkProxySocks = new JFXRadioButton(i18n("settings.launcher.proxy.socks"));
                             hBox.getChildren().setAll(chkProxyHttp, chkProxySocks);
                             proxyPane.getChildren().add(hBox);
                         }
@@ -224,7 +249,7 @@ public abstract class SettingsView extends StackPane {
                             gridPane.getRowConstraints().setAll(new RowConstraints(), new RowConstraints());
 
                             {
-                                Label host = new Label(I18n.i18n("settings.launcher.proxy.host"));
+                                Label host = new Label(i18n("settings.launcher.proxy.host"));
                                 GridPane.setRowIndex(host, 1);
                                 GridPane.setColumnIndex(host, 0);
                                 GridPane.setHalignment(host, HPos.RIGHT);
@@ -240,7 +265,7 @@ public abstract class SettingsView extends StackPane {
                             }
 
                             {
-                                Label port = new Label(I18n.i18n("settings.launcher.proxy.port"));
+                                Label port = new Label(i18n("settings.launcher.proxy.port"));
                                 GridPane.setRowIndex(port, 2);
                                 GridPane.setColumnIndex(port, 0);
                                 GridPane.setHalignment(port, HPos.RIGHT);
@@ -253,7 +278,7 @@ public abstract class SettingsView extends StackPane {
                                 GridPane.setRowIndex(txtProxyPort, 2);
                                 GridPane.setColumnIndex(txtProxyPort, 1);
                                 FXUtils.setValidateWhileTextChanged(txtProxyPort, true);
-                                txtProxyHost.getValidators().setAll(new NumberValidator(I18n.i18n("input.number"), false));
+                                txtProxyHost.getValidators().setAll(new NumberValidator(i18n("input.number"), false));
                                 gridPane.getChildren().add(txtProxyPort);
                             }
                             proxyPane.getChildren().add(gridPane);
@@ -263,7 +288,7 @@ public abstract class SettingsView extends StackPane {
                             VBox vBox = new VBox();
                             vBox.setStyle("-fx-padding: 20 0 20 5;");
 
-                            chkProxyAuthentication = new JFXCheckBox(I18n.i18n("settings.launcher.proxy.authentication"));
+                            chkProxyAuthentication = new JFXCheckBox(i18n("settings.launcher.proxy.authentication"));
                             vBox.getChildren().setAll(chkProxyAuthentication);
 
                             proxyPane.getChildren().add(vBox);
@@ -278,7 +303,7 @@ public abstract class SettingsView extends StackPane {
                             authPane.getRowConstraints().setAll(new RowConstraints(), new RowConstraints());
 
                             {
-                                Label username = new Label(I18n.i18n("settings.launcher.proxy.username"));
+                                Label username = new Label(i18n("settings.launcher.proxy.username"));
                                 GridPane.setRowIndex(username, 0);
                                 GridPane.setColumnIndex(username, 0);
                                 authPane.getChildren().add(username);
@@ -293,7 +318,7 @@ public abstract class SettingsView extends StackPane {
                             }
 
                             {
-                                Label password = new Label(I18n.i18n("settings.launcher.proxy.password"));
+                                Label password = new Label(i18n("settings.launcher.proxy.password"));
                                 GridPane.setRowIndex(password, 1);
                                 GridPane.setColumnIndex(password, 0);
                                 authPane.getChildren().add(password);
@@ -318,7 +343,7 @@ public abstract class SettingsView extends StackPane {
                 {
                     BorderPane themePane = new BorderPane();
 
-                    Label left = new Label(I18n.i18n("settings.launcher.theme"));
+                    Label left = new Label(i18n("settings.launcher.theme"));
                     BorderPane.setAlignment(left, Pos.CENTER_LEFT);
                     themePane.setLeft(left);
 
@@ -338,7 +363,7 @@ public abstract class SettingsView extends StackPane {
                         BorderPane borderPane = new BorderPane();
                         fontPane.getChildren().add(borderPane);
                         {
-                            Label left = new Label(I18n.i18n("settings.launcher.log_font"));
+                            Label left = new Label(i18n("settings.launcher.log_font"));
                             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
                             borderPane.setLeft(left);
                         }
@@ -385,65 +410,65 @@ public abstract class SettingsView extends StackPane {
                     gridPane.getRowConstraints().setAll(row, row, row, row, row, row);
 
                     {
-                        Label label = new Label(I18n.i18n("about.copyright"));
+                        Label label = new Label(i18n("about.copyright"));
                         GridPane.setRowIndex(label, 0);
                         GridPane.setColumnIndex(label, 0);
                         gridPane.getChildren().add(label);
                     }
                     {
-                        Label label = new Label(I18n.i18n("about.copyright.statement"));
+                        Label label = new Label(i18n("about.copyright.statement"));
                         label.setWrapText(true);
                         GridPane.setRowIndex(label, 0);
                         GridPane.setColumnIndex(label, 1);
                         gridPane.getChildren().add(label);
                     }
                     {
-                        Label label = new Label(I18n.i18n("about.author"));
+                        Label label = new Label(i18n("about.author"));
                         GridPane.setRowIndex(label, 1);
                         GridPane.setColumnIndex(label, 0);
                         gridPane.getChildren().add(label);
                     }
                     {
-                        Label label = new Label(I18n.i18n("about.author.statement"));
+                        Label label = new Label(i18n("about.author.statement"));
                         label.setWrapText(true);
                         GridPane.setRowIndex(label, 1);
                         GridPane.setColumnIndex(label, 1);
                         gridPane.getChildren().add(label);
                     }
                     {
-                        Label label = new Label(I18n.i18n("about.thanks_to"));
+                        Label label = new Label(i18n("about.thanks_to"));
                         GridPane.setRowIndex(label, 2);
                         GridPane.setColumnIndex(label, 0);
                         gridPane.getChildren().add(label);
                     }
                     {
-                        Label label = new Label(I18n.i18n("about.thanks_to.statement"));
+                        Label label = new Label(i18n("about.thanks_to.statement"));
                         label.setWrapText(true);
                         GridPane.setRowIndex(label, 2);
                         GridPane.setColumnIndex(label, 1);
                         gridPane.getChildren().add(label);
                     }
                     {
-                        Label label = new Label(I18n.i18n("about.dependency"));
+                        Label label = new Label(i18n("about.dependency"));
                         GridPane.setRowIndex(label, 3);
                         GridPane.setColumnIndex(label, 0);
                         gridPane.getChildren().add(label);
                     }
                     {
-                        Label label = new Label(I18n.i18n("about.dependency.statement"));
+                        Label label = new Label(i18n("about.dependency.statement"));
                         label.setWrapText(true);
                         GridPane.setRowIndex(label, 3);
                         GridPane.setColumnIndex(label, 1);
                         gridPane.getChildren().add(label);
                     }
                     {
-                        Label label = new Label(I18n.i18n("about.claim"));
+                        Label label = new Label(i18n("about.claim"));
                         GridPane.setRowIndex(label, 4);
                         GridPane.setColumnIndex(label, 0);
                         gridPane.getChildren().add(label);
                     }
                     {
-                        Label label = new Label(I18n.i18n("about.claim.statement"));
+                        Label label = new Label(i18n("about.claim.statement"));
                         label.setWrapText(true);
                         label.setTextAlignment(TextAlignment.JUSTIFY);
                         GridPane.setRowIndex(label, 4);
@@ -451,13 +476,13 @@ public abstract class SettingsView extends StackPane {
                         gridPane.getChildren().add(label);
                     }
                     {
-                        Label label = new Label(I18n.i18n("about.open_source"));
+                        Label label = new Label(i18n("about.open_source"));
                         GridPane.setRowIndex(label, 5);
                         GridPane.setColumnIndex(label, 0);
                         gridPane.getChildren().add(label);
                     }
                     {
-                        Label label = new Label(I18n.i18n("about.open_source.statement"));
+                        Label label = new Label(i18n("about.open_source.statement"));
                         label.setWrapText(true);
                         GridPane.setRowIndex(label, 5);
                         GridPane.setColumnIndex(label, 1);
@@ -473,4 +498,5 @@ public abstract class SettingsView extends StackPane {
     }
 
     protected abstract void onUpdate();
+    protected abstract void onHelp();
 }
