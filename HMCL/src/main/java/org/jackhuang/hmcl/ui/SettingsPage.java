@@ -25,9 +25,6 @@ import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.When;
 import javafx.beans.property.*;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.scene.control.Label;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -48,6 +45,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.SelectionModelSelectedItemProperty.selectedItemPropertyFor;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class SettingsPage extends SettingsView implements DecoratorPage {
@@ -60,10 +58,12 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
     public SettingsPage() {
         FXUtils.smoothScrolling(scroll);
 
-        chkEnableGameList.selectedProperty().bindBidirectional(config().enableMainPageGameListProperty());
+        // ==== Download sources ====
+        cboDownloadSource.getItems().setAll(DownloadProviders.providersById.keySet());
+        selectedItemPropertyFor(cboDownloadSource).bindBidirectional(config().downloadTypeProperty());
+        // ====
 
-        cboDownloadSource.getSelectionModel().select(DownloadProviders.DOWNLOAD_PROVIDERS.indexOf(Settings.instance().getDownloadProvider()));
-        cboDownloadSource.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> Settings.instance().setDownloadProvider(DownloadProviders.getDownloadProvider(newValue.intValue())));
+        chkEnableGameList.selectedProperty().bindBidirectional(config().enableMainPageGameListProperty());
 
         cboFont.initValue(Settings.instance().getFont());
         cboFont.valueProperty().addListener((a, b, newValue) -> {
@@ -84,13 +84,10 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
 
         lblDisplay.setStyle("-fx-font: " + Settings.instance().getFont().getSize() + " \"" + Settings.instance().getFont().getFamily() + "\";");
 
-        ObservableList<Label> list = FXCollections.observableArrayList();
-        for (Locales.SupportedLocale locale : Locales.LOCALES)
-            list.add(new Label(locale.getName(config().getLocalization().getResourceBundle())));
-
-        cboLanguage.setItems(list);
-        cboLanguage.getSelectionModel().select(Locales.LOCALES.indexOf(config().getLocalization()));
-        cboLanguage.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) -> config().setLocalization(Locales.getLocale(newValue.intValue())));
+        // ==== Languages ====
+        cboLanguage.getItems().setAll(Locales.LOCALES);
+        selectedItemPropertyFor(cboLanguage).bindBidirectional(config().localizationProperty());
+        // ====
 
         // ==== Proxy ====
         txtProxyHost.textProperty().bindBidirectional(config().proxyHostProperty());

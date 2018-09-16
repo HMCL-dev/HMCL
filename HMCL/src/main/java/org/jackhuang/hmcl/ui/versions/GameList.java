@@ -31,7 +31,7 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.WeakListenerHelper;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
 import org.jackhuang.hmcl.util.VersionNumber;
@@ -70,8 +70,8 @@ public class GameList extends Control implements DecoratorPage {
 
     private void loadVersions(HMCLGameRepository repository) {
         toggleGroup = new ToggleGroup();
-        WeakListenerHelper helper = new WeakListenerHelper();
-        toggleGroup.getProperties().put("ReferenceHolder", helper);
+        WeakListenerHolder listenerHolder = new WeakListenerHolder();
+        toggleGroup.getProperties().put("ReferenceHolder", listenerHolder);
         List<GameListItem> children = repository.getVersions().parallelStream()
                 .filter(version -> !version.isHidden())
                 .sorted((a, b) -> VersionNumber.COMPARATOR.compare(VersionNumber.asVersion(a.getId()), VersionNumber.asVersion(b.getId())))
@@ -83,7 +83,7 @@ public class GameList extends Control implements DecoratorPage {
                 items.setAll(children);
                 children.forEach(GameListItem::checkSelection);
 
-                profile.selectedVersionProperty().addListener(helper.weak((a, b, newValue) -> {
+                profile.selectedVersionProperty().addListener(listenerHolder.weak((a, b, newValue) -> {
                     Platform.runLater(() -> {
                         children.forEach(it -> it.selectedProperty().set(false));
                         children.stream()

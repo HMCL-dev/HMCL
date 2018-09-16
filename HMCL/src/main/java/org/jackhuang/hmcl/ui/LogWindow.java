@@ -181,7 +181,7 @@ public final class LogWindow extends Stage {
                 if (newValue == Worker.State.SUCCEEDED) {
                     document = engine.getDocument();
                     body = document.getElementsByTagName("body").item(0);
-                    engine.executeScript("limitedLogs=" + Settings.instance().getLogLines());
+                    engine.executeScript("limitedLogs=" + config().getLogLines());
                     latch.countDown();
                     onDone.fireEvent(new Event(LogWindow.this));
                 }
@@ -189,14 +189,14 @@ public final class LogWindow extends Stage {
 
             boolean flag = false;
             for (String i : cboLines.getItems())
-                if (Integer.toString(Settings.instance().getLogLines()).equals(i)) {
+                if (Integer.toString(config().getLogLines()).equals(i)) {
                     cboLines.getSelectionModel().select(i);
                     flag = true;
                 }
 
             cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
-                Settings.instance().setLogLines(newValue == null ? 100 : Integer.parseInt(newValue));
-                engine.executeScript("limitedLogs=" + Settings.instance().getLogLines());
+                config().setLogLines(newValue == null ? 100 : Integer.parseInt(newValue));
+                engine.executeScript("limitedLogs=" + config().getLogLines());
             });
 
             if (!flag)

@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.mod.CurseCompletionTask;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -50,6 +49,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -443,7 +443,7 @@ public final class LauncherHelper {
                 System.out.print(log);
 
             logs.add(pair(log, level));
-            if (logs.size() > Settings.instance().getLogLines())
+            if (logs.size() > config().getLogLines())
                 logs.removeFirst();
 
             if (setting.isShowLogs()) {

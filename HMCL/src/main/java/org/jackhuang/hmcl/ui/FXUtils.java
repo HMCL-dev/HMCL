@@ -328,8 +328,10 @@ public final class FXUtils {
      * @param comboBox the combo box being bound with {@code property}.
      * @param property the property being bound with {@code combo box}.
      * @see #unbindEnum(JFXComboBox)
+     * @deprecated Use {@link SelectionModelSelectedItemProperty#selectedItemPropertyFor(ComboBox)}
      */
     @SuppressWarnings("unchecked")
+    @Deprecated
     public static void bindEnum(JFXComboBox<?> comboBox, Property<? extends Enum> property) {
         unbindEnum(comboBox);
         ChangeListener<Number> listener = (a, b, newValue) ->
@@ -346,6 +348,7 @@ public final class FXUtils {
      * @see #bindEnum(JFXComboBox, Property)
      */
     @SuppressWarnings("unchecked")
+    @Deprecated
     public static void unbindEnum(JFXComboBox<?> comboBox) {
         ChangeListener listener = tryCast(comboBox.getProperties().get("FXUtils.bindEnum.listener"), ChangeListener.class).orElse(null);
         if (listener == null) return;
