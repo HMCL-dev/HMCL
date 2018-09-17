@@ -127,18 +127,22 @@ public final class Profiles {
         HashSet<String> names = new HashSet<>();
         config().getConfigurations().forEach((name, profile) -> {
             if (!names.add(name)) return;
-            profile.setName(name);
             profiles.add(profile);
+            profile.setName(name);
         });
         checkProfiles();
 
-        initialized = true;
+        // Platform.runLater is necessary or profiles will be empty
+        // since checkProfiles adds 2 base profile later.
+        Platform.runLater(() -> {
+            selectedProfile.set(
+                    profiles.stream()
+                            .filter(it -> it.getName().equals(config().getSelectedProfile()))
+                            .findFirst()
+                            .orElse(profiles.get(0)));
 
-        selectedProfile.set(
-                profiles.stream()
-                        .filter(it -> it.getName().equals(config().getSelectedProfile()))
-                        .findFirst()
-                        .orElse(profiles.get(0)));
+            initialized = true;
+        });
     }
 
     public static ObservableList<Profile> getProfiles() {
