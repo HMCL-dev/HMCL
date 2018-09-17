@@ -22,6 +22,7 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -277,12 +278,17 @@ public class DecoratorController {
         FXUtils.checkFxUserThread();
 
         if (dialog == null) {
+            if (decorator.getDrawerWrapper() == null) {
+                // Sometimes showDialog will be invoked before decorator was initialized.
+                // Keep trying again.
+                Platform.runLater(() -> showDialog(node));
+                return;
+            }
+
             dialog = new JFXDialog();
             dialogPane = new StackContainerPane();
 
             dialog.setContent(dialogPane);
-            if (decorator.getDrawerWrapper() == null)
-                throw new IllegalStateException("Decorator has not been initialized");
             dialog.setDialogContainer(decorator.getDrawerWrapper());
             dialog.setOverlayClose(false);
             dialog.show();
