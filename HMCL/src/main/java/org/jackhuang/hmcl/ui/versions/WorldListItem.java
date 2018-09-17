@@ -8,6 +8,8 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
+import org.jackhuang.hmcl.util.IntVersionNumber;
+import org.jackhuang.hmcl.util.VersionNumber;
 
 import java.io.File;
 import java.util.Date;
@@ -24,7 +26,7 @@ public class WorldListItem extends Control {
         this.world = world;
 
         title.set(world.getWorldName());
-        subtitle.set(i18n("world.description", world.getFileName(), new Date(world.getLastPlayed()).toString(), world.getGameVersion()));
+        subtitle.set(i18n("world.description", world.getFileName(), new Date(world.getLastPlayed()).toString(), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
     }
 
     @Override
@@ -58,6 +60,12 @@ public class WorldListItem extends Control {
     }
 
     public void manageDatapacks() {
+        if (world.getGameVersion() == null || // old game will not write game version to level.dat
+                (IntVersionNumber.isIntVersionNumber(world.getGameVersion()) // we don't parse snapshot version
+                        && VersionNumber.asVersion(world.getGameVersion()).compareTo(VersionNumber.asVersion("1.13")) < 0)) {
+            Controllers.dialog(i18n("world.datapack.1_13"));
+            return;
+        }
         Controllers.navigate(new DatapackListPage(world.getWorldName(), world.getFile()));
     }
 }

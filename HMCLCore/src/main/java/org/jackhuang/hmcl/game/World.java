@@ -5,18 +5,18 @@ import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.opennbt.tag.builtin.LongTag;
 import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
-import org.jackhuang.hmcl.util.CompressingUtils;
-import org.jackhuang.hmcl.util.FileUtils;
-import org.jackhuang.hmcl.util.Unzipper;
-import org.jackhuang.hmcl.util.Zipper;
+import org.jackhuang.hmcl.util.*;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -27,7 +27,7 @@ public class World {
     private String fileName;
     private String worldName;
     private String gameVersion;
-    private long lastPlayed, seed;
+    private long lastPlayed;
 
     public World(Path file) throws IOException {
         this.file = file;
@@ -62,10 +62,6 @@ public class World {
         return lastPlayed;
     }
 
-    public long getSeed() {
-        return seed;
-    }
-
     public String getGameVersion() {
         return gameVersion;
     }
@@ -88,12 +84,23 @@ public class World {
         CompoundTag nbt = parseLevelDat(levelDat);
 
         CompoundTag data = nbt.get("Data");
-        String name = data.<StringTag>get("LevelName").getValue();
-        lastPlayed = data.<LongTag>get("LastPlayed").getValue();
-        seed = data.<LongTag>get("RandomSeed").getValue();
-        CompoundTag version = data.get("Version");
-        gameVersion = version.<StringTag>get("Name").getValue();
-        worldName = name;
+        if (data.get("LevelName") instanceof StringTag)
+            worldName = data.<StringTag>get("LevelName").getValue();
+        else
+            throw new IOException("level.dat missing LevelName");
+
+        if (data.get("LastPlayed") instanceof LongTag)
+            lastPlayed = data.<LongTag>get("LastPlayed").getValue();
+        else
+            throw new IOException("level.dat missing LastPlayed");
+
+        gameVersion = null;
+        if (data.get("Version") instanceof CompoundTag) {
+            CompoundTag version = data.get("Version");
+
+            if (version.get("Name") instanceof StringTag)
+                gameVersion = version.<StringTag>get("Name").getValue();
+        }
     }
 
     public void rename(String newName) throws IOException {
@@ -106,7 +113,9 @@ public class World {
         CompoundTag data = nbt.get("Data");
         data.put(new StringTag("LevelName", newName));
 
-        NBTIO.writeTag(new GZIPOutputStream(Files.newOutputStream(levelDat)), nbt);
+        try (OutputStream os = new GZIPOutputStream(Files.newOutputStream(levelDat))) {
+            NBTIO.writeTag(os, nbt);
+        }
 
         // then change the folder's name
         Files.move(file, file.resolveSibling(newName));
@@ -127,9 +136,10 @@ public class World {
                 }
                 subDirectoryName = FileUtils.getName(subDirs.get(0));
             }
-            new Unzipper(file, savesDir)
+            new Unzipper(file, worldDir)
                     .setSubDirectory("/" + subDirectoryName + "/")
                     .unzip();
+            new World(worldDir).rename(name);
         } else if (Files.isDirectory(file)) {
             FileUtils.copyDirectory(file, worldDir);
         }
@@ -145,17 +155,28 @@ public class World {
     }
 
     private static CompoundTag parseLevelDat(Path path) throws IOException {
-        Tag nbt = NBTIO.readTag(new GZIPInputStream(Files.newInputStream(path)));
-        if (nbt instanceof CompoundTag)
-            return (CompoundTag) nbt;
-        else
-            throw new IOException("level.dat malformed");
+        try (InputStream is = new GZIPInputStream(Files.newInputStream(path))) {
+            Tag nbt = NBTIO.readTag(is);
+            if (nbt instanceof CompoundTag)
+                return (CompoundTag) nbt;
+            else
+                throw new IOException("level.dat malformed");
+        }
     }
 
-    public static List<World> getWorlds(Path worldDir) throws IOException {
+    public static List<World> getWorlds(Path savesDir) {
         List<World> worlds = new ArrayList<>();
-        for (Path world : Files.newDirectoryStream(worldDir)) {
-            worlds.add(new World(world));
+        try {
+            if (Files.exists(savesDir))
+                for (Path world : Files.newDirectoryStream(savesDir)) {
+                    try {
+                        worlds.add(new World(world));
+                    } catch (IOException | IllegalArgumentException e) {
+                        Logging.LOG.log(Level.WARNING, "Failed to read world " + world, e);
+                    }
+                }
+        } catch (IOException e) {
+            Logging.LOG.log(Level.WARNING, "Failed to read saves", e);
         }
         return worlds;
     }

@@ -301,7 +301,13 @@ public abstract class Task {
         return finalized(scheduler, (variables, isDependentsSucceeded) -> {
             if (isDependentsSucceeded) {
                 if (success != null)
-                    success.accept(variables);
+                    try {
+                        success.accept(variables);
+                    } catch (Exception e) {
+                        Logging.LOG.log(Level.WARNING, "Failed to execute " + success, e);
+                        if (failure != null)
+                            failure.accept(e);
+                    }
             }
             else {
                 if (failure != null)
