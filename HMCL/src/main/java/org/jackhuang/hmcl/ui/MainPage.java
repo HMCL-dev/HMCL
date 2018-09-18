@@ -99,10 +99,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
         Profiles.selectedProfileProperty().addListener((a, b, newValue) -> profile = newValue);
 
         profile = Profiles.getSelectedProfile();
-        if (profile.getRepository().isLoaded())
-            loadVersions(profile.getRepository());
-        else
-            profile.getRepository().refreshVersionsAsync().start();
+        if (profile != null) {
+            if (profile.getRepository().isLoaded())
+                loadVersions(profile.getRepository());
+            else
+                profile.getRepository().refreshVersionsAsync().start();
+        }
     }
 
     private void loadVersions(HMCLGameRepository repository) {
