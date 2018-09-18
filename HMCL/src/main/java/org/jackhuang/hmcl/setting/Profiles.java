@@ -17,14 +17,16 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.jfoenix.concurrency.JFXUtilities;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyListProperty;
-import javafx.beans.property.ReadOnlyListWrapper;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.event.EventBus;
+import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 
 import java.io.File;
 import java.util.HashSet;
@@ -40,6 +42,8 @@ public final class Profiles {
 
     public static final String DEFAULT_PROFILE = "Default";
     public static final String HOME_PROFILE = "Home";
+
+    private static InvalidationListener listener = o -> loadVersion();
 
     private Profiles() {
     }
@@ -61,11 +65,17 @@ public final class Profiles {
     private static ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<Profile>() {
         {
             profiles.addListener(onInvalidating(this::invalidated));
+
+            this.addListener(this::change);
         }
 
         @Override
         protected void invalidated() {
             Profile profile = get();
+
+            if (get() != null)
+                get().removeListener(listener);
+
             if (profiles.isEmpty()) {
                 if (profile != null) {
                     set(null);
@@ -80,7 +90,16 @@ public final class Profiles {
 
             if (!initialized)
                 return;
+
             config().setSelectedProfile(profile == null ? "" : profile.getName());
+            loadVersion();
+        }
+
+        private void change(ObservableValue<? extends Profile> observableValue, Profile oldProfile, Profile newProfile) {
+            if (oldProfile != null)
+                oldProfile.selectedVersionProperty().removeListener(listener);
+            if (newProfile != null)
+                newProfile.selectedVersionProperty().addListener(listener);
         }
     };
 
@@ -143,6 +162,13 @@ public final class Profiles {
 
             initialized = true;
         });
+
+        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
+            JFXUtilities.runInFX(() -> {
+                if (selectedProfile.get() != null && selectedProfile.get().getRepository() == event.getSource())
+                    loadVersion();
+            });
+        });
     }
 
     public static ObservableList<Profile> getProfiles() {
@@ -163,5 +189,22 @@ public final class Profiles {
 
     public static ObjectProperty<Profile> selectedProfileProperty() {
         return selectedProfile;
+    }
+
+    private static final ReadOnlyStringWrapper selectedVersion = new ReadOnlyStringWrapper();
+
+    public static ReadOnlyStringProperty selectedVersionProperty() {
+        return selectedVersion.getReadOnlyProperty();
+    }
+
+    public static String getSelectedVersion() {
+        return selectedVersion.get();
+    }
+
+    private static void loadVersion() {
+        Profile profile = selectedProfile.get();
+        if (profile == null || !profile.getRepository().isLoaded()) return;
+        JFXUtilities.runInFX(() ->
+                selectedVersion.set(profile.getSelectedVersion()));
     }
 }

@@ -32,40 +32,10 @@ import java.io.File;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameAdvancedListItem extends AdvancedListItem {
-    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
-
-    private Profile profile;
-    private InvalidationListener listener = o -> loadVersion();
 
     public GameAdvancedListItem() {
-        Profiles.selectedProfileProperty().addListener(listenerHolder.weak((a, b, newValue) -> {
-            JFXUtilities.runInFX(() -> loadProfile(newValue));
-        }));
-        listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
-            JFXUtilities.runInFX(() -> {
-                if (profile != null && profile.getRepository() == event.getSource())
-                    loadVersion();
-            });
-        }));
-        loadProfile(Profiles.getSelectedProfile());
-    }
-
-    private void loadProfile(Profile newProfile) {
-        if (profile != null)
-            profile.selectedVersionProperty().removeListener(listener);
-        profile = newProfile;
-        if (profile != null)
-            profile.selectedVersionProperty().addListener(listener);
-        loadVersion();
-    }
-
-    private void loadVersion() {
-        Profile profile = this.profile;
-        if (profile == null || !profile.getRepository().isLoaded()) return;
-        String version = profile.getSelectedVersion();
-        File iconFile = profile.getRepository().getVersionIcon(version);
-
-        JFXUtilities.runInFX(() -> {
+        Profiles.selectedVersionProperty().addListener((o, a, version) -> {
+            File iconFile = Profiles.getSelectedProfile().getRepository().getVersionIcon(version);
             if (iconFile.exists())
                 imageProperty().set(new Image("file:" + iconFile.getAbsolutePath()));
             else

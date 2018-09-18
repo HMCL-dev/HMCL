@@ -150,4 +150,8 @@ public final class SVG {
     public static Node openInNew(ObjectBinding<? extends Paint> fill, double width, double height) {
         return createSVGPath("M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z", fill, width, height);
     }
+
+    public static Node triangle(ObjectBinding<? extends Paint> fill, double width, double height) {
+        return createSVGPath("M1,21H23L12,2", fill, width, height);
+    }
 }

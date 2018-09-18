@@ -2,11 +2,23 @@
 
 <?import com.jfoenix.controls.JFXButton?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
 <fx:root type="StackPane" pickOnBounds="false"
          xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
     <StackPane fx:id="main" style="-fx-padding: 25;">
-        <JFXButton prefWidth="150" prefHeight="50" buttonType="RAISED" styleClass="jfx-button-raised"
-                   style="-fx-font-size: 15;" onMouseClicked="#launch"
-                   text="%version.launch" StackPane.alignment="BOTTOM_RIGHT"/>
+        <JFXButton prefWidth="200" prefHeight="50" buttonType="RAISED" styleClass="jfx-button-raised"
+                   onMouseClicked="#launch" fx:id="btnLaunch"
+                   StackPane.alignment="BOTTOM_RIGHT">
+            <graphic>
+                <VBox alignment="CENTER" translateX="-10" maxWidth="160">
+                    <Label style="-fx-font-size: 15;" text="%version.launch" />
+                    <Label style="-fx-font-size: 10px;" fx:id="lblCurrentGame" />
+                </VBox>
+            </graphic>
+        </JFXButton>
+        <JFXButton prefWidth="200" prefHeight="50" buttonType="RAISED" styleClass="jfx-button-raised"
+                   style="-fx-font-size: 15;" onMouseClicked="#onMenu"
+                   fx:id="btnMenu" StackPane.alignment="BOTTOM_RIGHT" />
     </StackPane>
 </fx:root>

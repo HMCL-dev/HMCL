@@ -39,12 +39,17 @@ public class IconedItem extends RipplerContainer {
 
     private static HBox createHBox(Node icon) {
         HBox hBox = new HBox();
+
+        if (icon != null) {
+            icon.setMouseTransparent(true);
+            hBox.getChildren().add(icon);
+        }
+
         hBox.getStyleClass().setAll("iconed-item-container");
-        icon.setMouseTransparent(true);
         Label textLabel = new Label();
         textLabel.setId("label");
         textLabel.setMouseTransparent(true);
-        hBox.getChildren().addAll(icon, textLabel);
+        hBox.getChildren().addAll(textLabel);
         return hBox;
     }
 
