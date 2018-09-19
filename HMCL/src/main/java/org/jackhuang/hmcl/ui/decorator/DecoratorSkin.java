@@ -233,6 +233,7 @@ public class DecoratorSkin extends SkinBase<DecoratorControl> {
                 Rectangle separator = new Rectangle();
                 separator.visibleProperty().bind(refreshNavButton.visibleProperty());
                 separator.heightProperty().bind(navBar.heightProperty());
+                separator.setFill(Color.GRAY);
 
                 JFXButton btnMin = new JFXButton();
                 StackPane pane = new StackPane(minus);

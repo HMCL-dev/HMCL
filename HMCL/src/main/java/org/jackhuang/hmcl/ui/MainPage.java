@@ -28,6 +28,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
@@ -61,6 +62,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private JFXButton btnMenu;
     @FXML
     private Label lblCurrentGame;
+    @FXML
+    private Rectangle separator;
 
     private Profile profile;
     {
@@ -74,14 +77,14 @@ public final class MainPage extends StackPane implements DecoratorPage {
         });
 
         btnLaunch.setClip(new Rectangle(-100, -100, 280, 200));
-        btnMenu.setClip(new Rectangle(180, -100, 100, 200));
+        btnMenu.setClip(new Rectangle(181, -100, 100, 200));
         menu.setMinWidth(200);
 
         StackPane graphic = new StackPane();
         Node svg = SVG.triangle(Theme.whiteFillBinding(), 10, 10);
         StackPane.setAlignment(svg, Pos.CENTER_RIGHT);
         graphic.getChildren().setAll(svg);
-        graphic.setTranslateX(11);
+        graphic.setTranslateX(12);
         btnMenu.setGraphic(graphic);
 
         Profiles.selectedVersionProperty().addListener((o, a, version) -> {
@@ -113,7 +116,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 .sorted((a, b) -> VersionNumber.COMPARATOR.compare(VersionNumber.asVersion(a.getId()), VersionNumber.asVersion(b.getId())))
                 .map(version -> new IconedMenuItem(null, version.getId(), () -> {
                     repository.getProfile().setSelectedVersion(version.getId());
-                    Versions.launch(repository.getProfile(), version.getId());
                     popup.hide();
                 }))
                 .collect(Collectors.toList());
