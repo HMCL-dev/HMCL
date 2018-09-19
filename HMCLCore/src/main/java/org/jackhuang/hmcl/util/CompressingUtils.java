@@ -74,7 +74,7 @@ public final class CompressingUtils {
             // Since Java 8 throws ZipError stupidly
             throw new ZipException(error.getMessage());
         } catch (UnsupportedOperationException ex) {
-            throw new IOException("Not a zip file");
+            throw new IOException("Not a zip file", ex);
         }
     }
 

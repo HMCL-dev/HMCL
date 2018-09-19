@@ -10,9 +10,7 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.util.*;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -48,7 +46,40 @@ public class Datapack {
             }
 
         if (isMultiple) {
-            new Unzipper(path, worldPath).setReplaceExistentFile(true).unzip();
+            new Unzipper(path, worldPath)
+                    .setReplaceExistentFile(true)
+                    .setFilter(new Unzipper.FileFilter() {
+                        @Override
+                        public boolean accept(Path destPath, boolean isDirectory, Path zipEntry, String entryPath) {
+                            // We will merge resources.zip instead of replacement.
+                            return !entryPath.equals("resources.zip");
+                        }
+                    })
+                    .unzip();
+
+            try (FileSystem dest = CompressingUtils.createWritableZipFileSystem(worldPath.resolve("resources.zip"));
+                 FileSystem zip = CompressingUtils.createReadOnlyZipFileSystem(path)) {
+                Path resourcesZip = zip.getPath("resources.zip");
+                if (Files.isRegularFile(resourcesZip)) {
+                    Path temp = Files.createTempFile("hmcl", ".zip");
+                    Files.copy(resourcesZip, temp, StandardCopyOption.REPLACE_EXISTING);
+                    try (FileSystem resources = CompressingUtils.createReadOnlyZipFileSystem(temp)) {
+                        FileUtils.copyDirectory(resources.getPath("/"), dest.getPath("/"));
+                    }
+                }
+                Path packMcMeta = dest.getPath("pack.mcmeta");
+                Files.write(packMcMeta, Arrays.asList("{",
+                        "\t\"pack\": {",
+                        "\t\t\"pack_format\": 4,",
+                        "\t\t\"description\": \"Modified by HMCL.\"",
+                        "\t}",
+                        "}"), StandardOpenOption.CREATE);
+
+
+                Path packPng = dest.getPath("pack.png");
+                if (Files.isRegularFile(packPng))
+                    Files.delete(packPng);
+            }
         } else {
             FileUtils.copyFile(path.toFile(), datapacks.resolve(FileUtils.getName(path)).toFile());
         }
