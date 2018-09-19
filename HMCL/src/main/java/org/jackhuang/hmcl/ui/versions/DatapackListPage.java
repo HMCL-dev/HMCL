@@ -38,7 +38,7 @@ public class DatapackListPage extends ListPage<DatapackListItem> implements Deco
 
         list = MappedObservableList.create(datapack.getInfo(), pack -> new DatapackListItem(pack, item -> {
             try {
-                datapack.deletePack(pack.getId());
+                datapack.deletePack(pack);
             } catch (IOException e) {
                 Logging.LOG.warning("Failed to delete datapack");
             }
@@ -84,7 +84,7 @@ public class DatapackListPage extends ListPage<DatapackListItem> implements Deco
     public void add() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("datapack.choose_datapack"));
-        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.datapack"), "*.zip"));
+        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("datapack.extension"), "*.zip"));
         List<File> res = chooser.showOpenMultipleDialog(Controllers.getStage());
 
         if (res != null)
