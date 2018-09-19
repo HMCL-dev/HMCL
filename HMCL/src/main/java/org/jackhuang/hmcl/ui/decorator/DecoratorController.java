@@ -94,6 +94,7 @@ public class DecoratorController {
         welcomeView = new ImageView();
         welcomeView.setImage(new Image("/assets/img/welcome.png"));
         welcomeView.setCursor(Cursor.HAND);
+        FXUtils.limitSize(welcomeView, 796, 517);
         welcomeView.setOnMouseClicked(e -> {
             Timeline nowAnimation = new Timeline();
             nowAnimation.getKeyFrames().addAll(

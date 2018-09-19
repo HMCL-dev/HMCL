@@ -24,30 +24,34 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 
 import java.io.File;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameAdvancedListItem extends AdvancedListItem {
 
     public GameAdvancedListItem() {
-        Profiles.selectedVersionProperty().addListener((o, a, version) -> {
-            File iconFile = Profiles.getSelectedProfile().getRepository().getVersionIcon(version);
-            if (iconFile.exists())
-                imageProperty().set(new Image("file:" + iconFile.getAbsolutePath()));
-            else
-                imageProperty().set(new Image("/assets/img/grass.png"));
+        FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
+            FXUtils.runLaterIf(() -> !Objects.nonNull(Profiles.getSelectedProfile()), () -> {
+                File iconFile = Profiles.getSelectedProfile().getRepository().getVersionIcon(version);
+                if (iconFile.exists())
+                    imageProperty().set(new Image("file:" + iconFile.getAbsolutePath()));
+                else
+                    imageProperty().set(new Image("/assets/img/grass.png"));
 
-            if (version != null) {
-                titleProperty().set(version);
-                subtitleProperty().set(null);
-            } else {
-                titleProperty().set(i18n("version.empty"));
-                subtitleProperty().set(i18n("version.empty.add"));
-            }
+                if (version != null) {
+                    titleProperty().set(version);
+                    subtitleProperty().set(null);
+                } else {
+                    titleProperty().set(i18n("version.empty"));
+                    subtitleProperty().set(i18n("version.empty.add"));
+                }
+            });
         });
     }
 }

@@ -51,6 +51,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -90,6 +91,11 @@ public final class FXUtils {
     public static <T> void onWeakChangeAndOperate(ObservableValue<T> value, Consumer<T> consumer) {
         onWeakChange(value, consumer);
         consumer.accept(value.getValue());
+    }
+
+    public static void runLaterIf(BooleanSupplier condition, Runnable runnable) {
+        if (condition.getAsBoolean()) Platform.runLater(() -> runLaterIf(condition, runnable));
+        else runnable.run();
     }
 
     public static void limitSize(ImageView imageView, double maxWidth, double maxHeight) {

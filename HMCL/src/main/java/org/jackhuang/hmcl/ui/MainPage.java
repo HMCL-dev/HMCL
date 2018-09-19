@@ -87,7 +87,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         graphic.setTranslateX(12);
         btnMenu.setGraphic(graphic);
 
-        Profiles.selectedVersionProperty().addListener((o, a, version) -> {
+        FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
             if (version != null) {
                 lblCurrentGame.setText(version);
             } else {

@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -86,7 +87,9 @@ public final class LeftPaneController extends AdvancedListBox {
                 .add(launcherSettingsItem);
 
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(event -> onRefreshedVersions((HMCLGameRepository) event.getSource()));
-        if (Profiles.selectedProfileProperty().get().getRepository().isLoaded())
+
+        Profile profile = Profiles.getSelectedProfile();
+        if (profile != null && profile.getRepository().isLoaded())
             onRefreshedVersions(Profiles.selectedProfileProperty().get().getRepository());
     }
 
