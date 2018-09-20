@@ -204,10 +204,12 @@ public class DecoratorController {
         if (navigator.getCurrentPage() instanceof DecoratorPage) {
             DecoratorPage page = (DecoratorPage) navigator.getCurrentPage();
 
-            page.onForceToClose();
-        } else {
-            navigator.close();
+            if (page.canForceToClose()) {
+                page.onForceToClose();
+                return;
+            }
         }
+        navigator.clear();
     }
 
     private void back() {
@@ -249,14 +251,13 @@ public class DecoratorController {
 
         if (to instanceof DecoratorPage) {
             decorator.drawerTitleProperty().bind(((DecoratorPage) to).titleProperty());
-            decorator.canCloseProperty().set(((DecoratorPage) to).canForceToClose());
         } else {
             decorator.drawerTitleProperty().unbind();
             decorator.drawerTitleProperty().set("");
-            decorator.canCloseProperty().set(false);
         }
 
         decorator.canBackProperty().set(navigator.canGoBack());
+        decorator.canCloseProperty().set(navigator.canGoBack());
 
         if (navigator.canGoBack()) {
             decorator.setContentBackground(new Background(new BackgroundFill(Color.rgb(244, 244, 244, 0.5), CornerRadii.EMPTY, Insets.EMPTY)));

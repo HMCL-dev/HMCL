@@ -66,6 +66,11 @@ public class Navigator extends StackPane {
         close(stack.peek());
     }
 
+    public void clear() {
+        while (stack.size() > 1)
+            close(stack.peek());
+    }
+
     @SuppressWarnings("unchecked")
     public void close(Node from) {
         FXUtils.checkFxUserThread();
