@@ -64,8 +64,6 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
         selectedItemPropertyFor(cboDownloadSource).bindBidirectional(config().downloadTypeProperty());
         // ====
 
-        chkEnableGameList.selectedProperty().bindBidirectional(config().enableMainPageGameListProperty());
-
         cboFont.initValue(Settings.instance().getFont());
         cboFont.valueProperty().addListener((a, b, newValue) -> {
             Font font = Font.font(newValue, Settings.instance().getFont().getSize());

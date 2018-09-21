@@ -59,6 +59,10 @@
     -fx-padding: 20 0 20 0;
 }
 
+.iconed-item {
+    -jfx-rippler-fill: -fx-base-color;
+}
+
 .iconed-item .iconed-item-container {
     -fx-padding: 10 16 10 16;
     -fx-spacing: 10;
@@ -66,11 +70,19 @@
     -fx-alignment: CENTER_LEFT;
 }
 
+.iconed-menu-item {
+    -jfx-rippler-fill: -fx-base-color;
+}
+
 .iconed-menu-item .iconed-item-container {
-    -fx-padding: 10 16 10 16;
+    -fx-padding: 8 16 8 16;
     -fx-spacing: 10;
     -fx-font-size: 12;
     -fx-alignment: CENTER_LEFT;
+}
+
+.menu {
+    -fx-padding: 4 0 4 0;
 }
 
 /*******************************************************************************
@@ -181,7 +193,6 @@
 
 .jfx-popup-container {
     -fx-background-color: WHITE;
-    -fx-pref-width: 151.0px;
 }
 
 .popup-list-view {
@@ -309,6 +320,7 @@
 }
 
 .jfx-tool-bar-second {
+    -fx-pref-height: 42;
     -fx-padding: 2 2 2 2;
     -fx-background-color: -fx-base-check-color;
 }
@@ -318,7 +330,7 @@
 }
 
 .jfx-tool-bar-button {
-    -fx-toggle-icon4-size: 35px;
+    -fx-toggle-icon4-size: 37px;
     -fx-pref-height: -fx-toggle-icon4-size;
     -fx-max-height: -fx-toggle-icon4-size;
     -fx-min-height: -fx-toggle-icon4-size;

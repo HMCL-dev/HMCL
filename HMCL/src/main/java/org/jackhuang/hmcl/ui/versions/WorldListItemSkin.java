@@ -4,7 +4,6 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -16,8 +15,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-
-import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -47,24 +44,12 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         root.setCenter(center);
 
         VBox menu = new VBox();
+        menu.getStyleClass().setAll("menu");
         JFXPopup popup = new JFXPopup(menu);
 
-        Function<Runnable, Runnable> wrap = r -> () -> {
-            r.run();
-            popup.hide();
-        };
-
-        Function<Node, Node> limitWidth = node -> {
-            StackPane pane = new StackPane(node);
-            pane.setAlignment(Pos.CENTER);
-            FXUtils.setLimitWidth(pane, 14);
-            FXUtils.setLimitHeight(pane, 14);
-            return pane;
-        };
-
         menu.getChildren().setAll(
-                new IconedMenuItem(limitWidth.apply(SVG.gear(Theme.blackFillBinding(), 14, 14)), i18n("world.datapack"), wrap.apply(skinnable::manageDatapacks)),
-                new IconedMenuItem(limitWidth.apply(SVG.export(Theme.blackFillBinding(), 14, 14)), i18n("world.export"), wrap.apply(skinnable::export)));
+                new IconedMenuItem(FXUtils.limitingSize(SVG.gear(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.datapack"), FXUtils.withJFXPopupClosing(skinnable::manageDatapacks, popup)),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.export"), FXUtils.withJFXPopupClosing(skinnable::export, popup)));
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);

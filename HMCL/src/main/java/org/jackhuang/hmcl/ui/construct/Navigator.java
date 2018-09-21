@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.SimpleObjectProperty;
@@ -43,6 +44,9 @@ public class Navigator extends StackPane {
     public Navigator(Node init) {
         stack.push(init);
         getChildren().setAll(init);
+
+        Platform.runLater(() ->
+                fireEvent(new NavigationEvent(this, init, NavigationEvent.NAVIGATED)));
     }
 
     public void navigate(Node node) {

@@ -201,6 +201,13 @@ public class DecoratorSkin extends SkinBase<DecoratorControl> {
                         if (newValue) navLeft.getChildren().setAll(backNavButton, closeNavButton);
                         else navLeft.getChildren().setAll(backNavButton);
                     });
+
+                    skinnable.showCloseAsHomeProperty().addListener((a, b, newValue) -> {
+                        if (newValue)
+                            closeNavButton.setGraphic(SVG.home(Theme.foregroundFillBinding(), -1, -1));
+                        else
+                            closeNavButton.setGraphic(SVG.close(Theme.foregroundFillBinding(), -1, -1));
+                    });
                 }
                 navBar.setLeft(navLeft);
 

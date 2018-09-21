@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXTabPane;
 import javafx.beans.property.ReadOnlyStringProperty;
@@ -26,9 +25,11 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.FileUtils;
 
@@ -49,10 +50,6 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     private InstallerListPage installer;
     @FXML
     private WorldListPage world;
-    @FXML
-    private JFXListView<?> browseList;
-    @FXML
-    private JFXListView<?> managementList;
     @FXML
     private JFXButton btnBrowseMenu;
     @FXML
@@ -77,10 +74,27 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     {
         FXUtils.loadFXML(this, "/assets/fxml/version/version.fxml");
 
-        getChildren().removeAll(browseList, managementList);
-
+        VBox browseList = new VBox();
+        browseList.getStyleClass().setAll("menu");
         browsePopup = new JFXPopup(browseList);
+        browseList.getChildren().setAll(
+                new IconedMenuItem(null, i18n("folder.game"), FXUtils.withJFXPopupClosing(() -> onBrowse(""), browsePopup)),
+                new IconedMenuItem(null, i18n("folder.mod"), FXUtils.withJFXPopupClosing(() -> onBrowse("mods"), browsePopup)),
+                new IconedMenuItem(null, i18n("folder.config"), FXUtils.withJFXPopupClosing(() -> onBrowse("config"), browsePopup)),
+                new IconedMenuItem(null, i18n("folder.resourcepacks"), FXUtils.withJFXPopupClosing(() -> onBrowse("resourcepacks"), browsePopup)),
+                new IconedMenuItem(null, i18n("folder.screenshots"), FXUtils.withJFXPopupClosing(() -> onBrowse("screenshots"), browsePopup)),
+                new IconedMenuItem(null, i18n("folder.saves"), FXUtils.withJFXPopupClosing(() -> onBrowse("resourcepacks"), browsePopup))
+        );
+
+        VBox managementList = new VBox();
+        managementList.getStyleClass().setAll("menu");
         managementPopup = new JFXPopup(managementList);
+        managementList.getChildren().setAll(
+                new IconedMenuItem(null, i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(() -> Versions.renameVersion(profile, version), managementPopup)),
+                new IconedMenuItem(null, i18n("version.manage.remove"), FXUtils.withJFXPopupClosing(() -> Versions.deleteVersion(profile, version), managementPopup)),
+                new IconedMenuItem(null, i18n("version.manage.redownload_assets_index"), FXUtils.withJFXPopupClosing(() -> new GameAssetIndexDownloadTask(profile.getDependency(), profile.getRepository().getResolvedVersion(version)).start(), managementPopup)),
+                new IconedMenuItem(null, i18n("version.manage.remove_libraries"), FXUtils.withJFXPopupClosing(() -> FileUtils.deleteDirectoryQuietly(new File(profile.getRepository().getBaseDirectory(), "libraries")), managementPopup))
+        );
 
         FXUtils.installTooltip(btnDelete, i18n("version.manage.remove"));
         FXUtils.installTooltip(btnBrowseMenu, i18n("settings.game.exploration"));
@@ -104,65 +118,16 @@ public final class VersionPage extends StackPane implements DecoratorPage {
 
     @FXML
     private void onBrowseMenu() {
-        browseList.getSelectionModel().select(-1);
-        browsePopup.show(btnBrowseMenu, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, -12, 15);
+        browsePopup.show(btnBrowseMenu, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, btnBrowseMenu.getHeight());
     }
 
     @FXML
     private void onManagementMenu() {
-        managementList.getSelectionModel().select(-1);
-        managementPopup.show(btnManagementMenu, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, -12, 15);
+        managementPopup.show(btnManagementMenu, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, btnManagementMenu.getHeight());
     }
 
-    @FXML
-    private void onBrowse() {
-        String sub;
-        switch (browseList.getSelectionModel().getSelectedIndex()) {
-            case 0:
-                sub = "";
-                break;
-            case 1:
-                sub = "mods";
-                break;
-            case 2:
-                sub = "coremods";
-                break;
-            case 3:
-                sub = "config";
-                break;
-            case 4:
-                sub = "resourcepacks";
-                break;
-            case 5:
-                sub = "screenshots";
-                break;
-            case 6:
-                sub = "saves";
-                break;
-            default:
-                return;
-        }
+    private void onBrowse(String sub) {
         FXUtils.openFolder(new File(profile.getRepository().getRunDirectory(version), sub));
-    }
-
-    @FXML
-    private void onManagement() {
-        switch (managementList.getSelectionModel().getSelectedIndex()) {
-            case 0: // rename a version
-                Versions.renameVersion(profile, version);
-                break;
-            case 1: // remove a version
-                Versions.deleteVersion(profile, version);
-                break;
-            case 2: // redownload asset index
-                new GameAssetIndexDownloadTask(profile.getDependency(), profile.getRepository().getResolvedVersion(version)).start();
-                break;
-            case 3: // delete libraries
-                FileUtils.deleteDirectoryQuietly(new File(profile.getRepository().getBaseDirectory(), "libraries"));
-                break;
-            case 4:
-                throw new Error();
-        }
     }
 
     public String getTitle() {

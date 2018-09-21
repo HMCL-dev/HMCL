@@ -19,12 +19,10 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -34,12 +32,9 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
+import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -76,29 +71,20 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         root.setCenter(center);
 
         VBox menu = new VBox();
+        menu.getStyleClass().setAll("menu");
         JFXPopup popup = new JFXPopup(menu);
 
-        Function<Runnable, Runnable> wrap = r -> () -> {
-            r.run();
-            popup.hide();
-        };
-
-        Function<Node, Node> limitWidth = node -> {
-            StackPane pane = new StackPane(node);
-            pane.setAlignment(Pos.CENTER);
-            FXUtils.setLimitWidth(pane, 14);
-            FXUtils.setLimitHeight(pane, 14);
-            return pane;
-        };
-
         menu.getChildren().setAll(
-                new IconedMenuItem(limitWidth.apply(SVG.gear(Theme.blackFillBinding(), 14, 14)), i18n("version.manage.manage"), wrap.apply(skinnable::modifyGameSettings)),
-                new IconedMenuItem(limitWidth.apply(SVG.pencil(Theme.blackFillBinding(), 14, 14)), i18n("version.manage.rename"), wrap.apply(skinnable::rename)),
-                new IconedMenuItem(limitWidth.apply(SVG.delete(Theme.blackFillBinding(), 14, 14)), i18n("version.manage.remove"), wrap.apply(skinnable::remove)),
-                new IconedMenuItem(limitWidth.apply(SVG.export(Theme.blackFillBinding(), 14, 14)), i18n("modpack.export"), wrap.apply(skinnable::export)),
-                new IconedMenuItem(limitWidth.apply(SVG.folderOpen(Theme.blackFillBinding(), 14, 14)), i18n("folder.game"), wrap.apply(skinnable::browse)),
-                new IconedMenuItem(limitWidth.apply(SVG.launch(Theme.blackFillBinding(), 14, 14)), i18n("version.launch"), wrap.apply(skinnable::launch)),
-                new IconedMenuItem(limitWidth.apply(SVG.script(Theme.blackFillBinding(), 14, 14)), i18n("version.launch_script"), wrap.apply(skinnable::generateLaunchScript)));
+                new IconedMenuItem(FXUtils.limitingSize(SVG.gear(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.manage"), FXUtils.withJFXPopupClosing(skinnable::modifyGameSettings, popup)),
+                new MenuSeparator(),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.pencil(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(skinnable::rename, popup)),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.delete(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.remove"), FXUtils.withJFXPopupClosing(skinnable::remove, popup)),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("modpack.export"), FXUtils.withJFXPopupClosing(skinnable::export, popup)),
+                new MenuSeparator(),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.folderOpen(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.game"), FXUtils.withJFXPopupClosing(skinnable::browse, popup)),
+                new MenuSeparator(),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.launch(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch"), FXUtils.withJFXPopupClosing(skinnable::launch, popup)),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.script(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch_script"), FXUtils.withJFXPopupClosing(skinnable::generateLaunchScript, popup)));
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);

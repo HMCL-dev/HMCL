@@ -31,12 +31,14 @@ import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WeakChangeListener;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Callback;
 import javafx.util.Duration;
@@ -199,6 +201,14 @@ public final class FXUtils {
 
     public static double getLimitHeight(Region region) {
         return region.getMaxHeight();
+    }
+
+    public static Node limitingSize(Node node, double width, double height) {
+        StackPane pane = new StackPane(node);
+        pane.setAlignment(Pos.CENTER);
+        FXUtils.setLimitWidth(pane, width);
+        FXUtils.setLimitHeight(pane, height);
+        return pane;
     }
 
     public static void smoothScrolling(ScrollPane scrollPane) {
@@ -465,4 +475,11 @@ public final class FXUtils {
             return "Interpolator.SINE";
         }
     };
+
+    public static Runnable withJFXPopupClosing(Runnable runnable, JFXPopup popup) {
+        return () -> {
+            runnable.run();
+            popup.hide();
+        };
+    }
 }

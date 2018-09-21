@@ -28,11 +28,9 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
-import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Profile;
@@ -69,16 +67,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
     {
         FXUtils.loadFXML(this, "/assets/fxml/main.fxml");
 
-        FXUtils.onChangeAndOperate(ConfigHolder.config().enableMainPageGameListProperty(), newValue -> {
-            if (newValue)
-                getChildren().setAll(new GameVersionListPage());
-            else
-                getChildren().setAll(main);
-        });
-
         btnLaunch.setClip(new Rectangle(-100, -100, 280, 200));
         btnMenu.setClip(new Rectangle(181, -100, 100, 200));
         menu.setMinWidth(200);
+        menu.getStyleClass().setAll("menu");
 
         StackPane graphic = new StackPane();
         Node svg = SVG.triangle(Theme.whiteFillBinding(), 10, 10);

@@ -45,6 +45,7 @@ public class DecoratorControl extends Control {
     private final BooleanProperty canRefresh = new SimpleBooleanProperty(false);
     private final BooleanProperty canBack = new SimpleBooleanProperty(false);
     private final BooleanProperty canClose = new SimpleBooleanProperty(false);
+    private final BooleanProperty showCloseAsHome = new SimpleBooleanProperty(false);
     private final Stage primaryStage;
     private StackPane drawerWrapper;
 
@@ -172,6 +173,10 @@ public class DecoratorControl extends Control {
 
     public BooleanProperty canCloseProperty() {
         return canClose;
+    }
+
+    public BooleanProperty showCloseAsHomeProperty() {
+        return showCloseAsHome;
     }
 
     public ObjectProperty<EventHandler<ActionEvent>> onBackNavButtonActionProperty() {

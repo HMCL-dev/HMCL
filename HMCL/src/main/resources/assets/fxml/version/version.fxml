@@ -29,7 +29,7 @@
             </Tab>
         </JFXTabPane>
 
-        <HBox alignment="TOP_RIGHT" style="-fx-padding: 2 2 2 2;" spacing="3" pickOnBounds="false">
+        <HBox alignment="TOP_RIGHT" style="-fx-padding: 4;" spacing="3" pickOnBounds="false">
             <JFXButton fx:id="btnBrowseMenu" maxHeight="40.0" minHeight="40.0" onMouseClicked="#onBrowseMenu"
                        styleClass="toggle-icon3">
                 <graphic>
@@ -44,23 +44,4 @@
             </JFXButton>
         </HBox>
     </StackPane>
-
-    <JFXListView fx:id="browseList" styleClass="option-list-view" onMouseClicked="#onBrowse" maxWidth="150.0"
-                 minWidth="150.0">
-        <Label text="%folder.game"/>
-        <Label text="%folder.mod"/>
-        <Label text="%folder.coremod"/>
-        <Label text="%folder.config"/>
-        <Label text="%folder.resourcepacks"/>
-        <Label text="%folder.screenshots"/>
-        <Label text="%folder.saves"/>
-    </JFXListView>
-
-    <JFXListView fx:id="managementList" styleClass="option-list-view" onMouseClicked="#onManagement"
-                 maxWidth="300.0" minWidth="300.0">
-        <Label text="%version.manage.rename"/>
-        <Label text="%version.manage.remove"/>
-        <Label text="%version.manage.redownload_assets_index"/>
-        <Label text="%version.manage.remove_libraries"/>
-    </JFXListView>
 </fx:root>

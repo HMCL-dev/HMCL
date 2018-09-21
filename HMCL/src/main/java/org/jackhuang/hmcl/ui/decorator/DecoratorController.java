@@ -251,9 +251,11 @@ public class DecoratorController {
 
         if (to instanceof DecoratorPage) {
             decorator.drawerTitleProperty().bind(((DecoratorPage) to).titleProperty());
+            decorator.showCloseAsHomeProperty().set(!((DecoratorPage) to).canForceToClose());
         } else {
             decorator.drawerTitleProperty().unbind();
             decorator.drawerTitleProperty().set("");
+            decorator.showCloseAsHomeProperty().set(true);
         }
 
         decorator.canBackProperty().set(navigator.canGoBack());

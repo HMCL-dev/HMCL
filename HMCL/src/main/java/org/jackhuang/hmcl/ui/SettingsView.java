@@ -64,7 +64,6 @@ public abstract class SettingsView extends StackPane {
     protected final JFXCheckBox chkProxyAuthentication;
     protected final GridPane authPane;
     protected final Pane proxyPane;
-    protected final JFXToggleButton chkEnableGameList;
 
     public SettingsView() {
         scroll = new ScrollPane();
@@ -163,23 +162,6 @@ public abstract class SettingsView extends StackPane {
                     backgroundItem.setCustomText(i18n("settings.custom"));
 
                     settingsPane.getContent().add(backgroundItem);
-                }
-
-                {
-                    BorderPane borderPane = new BorderPane();
-
-                    Label left = new Label(i18n("settings.launcher.enable_game_list"));
-                    BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                    borderPane.setLeft(left);
-
-                    chkEnableGameList = new JFXToggleButton();
-                    chkEnableGameList.setSize(8);
-                    FXUtils.setLimitHeight(chkEnableGameList, 20);
-                    borderPane.setRight(chkEnableGameList);
-
-                    // Do not uncomment this line,
-                    // since option for user to enable game list in main page is unnecessary
-                    // settingsPane.addChildren(borderPane);
                 }
 
                 {

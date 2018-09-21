@@ -1,6 +1,9 @@
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.beans.property.*;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
@@ -12,6 +15,7 @@ import org.jackhuang.hmcl.util.IntVersionNumber;
 import org.jackhuang.hmcl.util.VersionNumber;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -21,12 +25,14 @@ public class WorldListItem extends Control {
     private final StringProperty subtitle = new SimpleStringProperty();
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
     private final World world;
+    private final SimpleDateFormat simpleDateFormat;
 
     public WorldListItem(World world) {
         this.world = world;
+        this.simpleDateFormat = new SimpleDateFormat(i18n("world.time"));
 
         title.set(world.getWorldName());
-        subtitle.set(i18n("world.description", world.getFileName(), new Date(world.getLastPlayed()).toString(), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
+        subtitle.set(i18n("world.description", world.getFileName(), simpleDateFormat.format(new Date(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
     }
 
     @Override

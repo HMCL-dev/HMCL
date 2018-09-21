@@ -154,4 +154,8 @@ public final class SVG {
     public static Node triangle(ObjectBinding<? extends Paint> fill, double width, double height) {
         return createSVGPath("M1,21H23L12,2", fill, width, height);
     }
+
+    public static Node home(ObjectBinding<? extends Paint> fill, double width, double height) {
+        return createSVGPath("M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z", fill, width, height);
+    }
 }
