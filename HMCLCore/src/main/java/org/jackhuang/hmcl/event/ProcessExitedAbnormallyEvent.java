@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.event;
 
-import org.jackhuang.hmcl.util.ManagedProcess;
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
 /**
  * This event gets fired when a JavaProcess exited abnormally and the exit code is not zero.

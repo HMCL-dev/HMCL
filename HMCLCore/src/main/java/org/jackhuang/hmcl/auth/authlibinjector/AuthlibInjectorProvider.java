@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.auth.authlibinjector;
 
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilProvider;
-import org.jackhuang.hmcl.util.NetworkUtils;
-import org.jackhuang.hmcl.util.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.net.URL;
 import java.util.UUID;

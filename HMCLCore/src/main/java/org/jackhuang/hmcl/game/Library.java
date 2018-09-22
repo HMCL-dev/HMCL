@@ -20,9 +20,9 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.OperatingSystem;
-import org.jackhuang.hmcl.util.Platform;
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.lang.reflect.Type;
 import java.util.List;

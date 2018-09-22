@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.gson.Validation;
 
 import java.util.*;
 import java.util.logging.Level;

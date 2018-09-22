@@ -18,9 +18,9 @@
 package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.CompressingUtils;
-import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.FileUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,6 +69,6 @@ public final class MinecraftInstanceTask<T> extends Task {
                 });
         }
 
-        FileUtils.writeText(jsonFile, Constants.GSON.toJson(new ModpackConfiguration<>(manifest, type, overrides)));
+        FileUtils.writeText(jsonFile, JsonUtils.GSON.toJson(new ModpackConfiguration<>(manifest, type, overrides)));
     }
 }

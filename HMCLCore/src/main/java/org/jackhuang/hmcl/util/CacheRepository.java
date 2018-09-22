@@ -22,6 +22,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
+import org.jackhuang.hmcl.util.io.FileUtils;
+
 public class CacheRepository {
     private Path commonDirectory;
     private Path cacheDirectory;

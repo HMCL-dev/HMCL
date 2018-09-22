@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
-import org.jackhuang.hmcl.util.ExceptionalSupplier;
+import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 
 import java.io.IOException;
 import java.util.Map;

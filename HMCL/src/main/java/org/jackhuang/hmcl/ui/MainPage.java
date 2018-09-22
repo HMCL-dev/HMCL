@@ -40,7 +40,7 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.GameItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
-import org.jackhuang.hmcl.util.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.List;
 import java.util.stream.Collectors;

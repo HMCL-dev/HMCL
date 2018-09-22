@@ -17,16 +17,12 @@
  */
 package org.jackhuang.hmcl;
 
-import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
-
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -40,6 +36,7 @@ public final class Main {
 
     public static void main(String[] args) {
         System.setProperty("java.net.useSystemProxies", "true");
+        System.setProperty("http.agent", "HMCL/" + Metadata.VERSION);
 
         checkJavaFX();
         checkDirectoryPath();

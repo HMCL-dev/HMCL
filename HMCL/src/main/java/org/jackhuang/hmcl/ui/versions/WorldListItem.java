@@ -11,8 +11,8 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
-import org.jackhuang.hmcl.util.IntVersionNumber;
-import org.jackhuang.hmcl.util.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.IntVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.text.SimpleDateFormat;

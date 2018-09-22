@@ -21,7 +21,7 @@ import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.util.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
 import java.io.File;
 import java.io.IOException;

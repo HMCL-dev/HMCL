@@ -20,6 +20,14 @@ package org.jackhuang.hmcl.launch;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.Unzipper;
+import org.jackhuang.hmcl.util.platform.CommandBuilder;
+import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.io.*;
 import java.nio.file.Files;

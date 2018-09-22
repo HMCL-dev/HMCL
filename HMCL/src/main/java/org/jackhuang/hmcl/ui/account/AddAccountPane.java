@@ -42,7 +42,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
 
 import java.util.List;
@@ -190,6 +189,7 @@ public class AddAccountPane extends StackPane {
     }
 
     private class Selector extends BorderPane implements CharacterSelector {
+
         private final AdvancedListBox listBox = new AdvancedListBox();
         private final JFXButton cancel = new JFXButton();
 
@@ -225,16 +225,13 @@ public class AddAccountPane extends StackPane {
                     image = AccountHelper.getSkinImmediately(yggdrasilAccount, profile, 4);
                 } catch (Exception e) {
                     Logging.LOG.log(Level.WARNING, "Failed to get skin for " + profile.getName(), e);
-                    image = null;
+                    image = AccountHelper.getDefaultSkin(profile.getId(), 4);
                 }
+
                 ImageView portraitView = new ImageView();
                 portraitView.setSmooth(false);
-                if (image == null) {
-                    portraitView.setImage(Constants.DEFAULT_ICON.get());
-                } else {
-                    portraitView.setImage(image);
-                    portraitView.setViewport(AccountHelper.getViewport(4));
-                }
+                portraitView.setImage(image);
+                portraitView.setViewport(AccountHelper.getViewport(4));
                 FXUtils.limitSize(portraitView, 32, 32);
 
                 IconedItem accountItem = new IconedItem(portraitView, profile.getName());

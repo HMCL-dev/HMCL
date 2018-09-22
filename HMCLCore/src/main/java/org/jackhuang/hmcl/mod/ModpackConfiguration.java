@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.mod;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.Validation;
+import org.jackhuang.hmcl.util.gson.Validation;
 
 import java.util.ArrayList;
 import java.util.Collections;

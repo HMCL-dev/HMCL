@@ -21,7 +21,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.Validation;
+import org.jackhuang.hmcl.util.gson.Validation;
 
 /**
  *

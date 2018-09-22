@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.launch;
 
 import org.jackhuang.hmcl.util.Log4jLevel;
-import org.jackhuang.hmcl.util.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
 /**
  *

@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.util.OperatingSystem;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,6 +26,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.logging.Level;
+
+import org.jackhuang.hmcl.util.InvocationDispatcher;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -68,7 +71,7 @@ public final class ConfigHolder {
         Settings.init();
 
         if (newlyCreated) {
-            saveConfig();
+            saveConfigSync();
 
             // hide the config file on windows
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
@@ -122,22 +125,26 @@ public final class ConfigHolder {
         return new Config();
     }
 
-    private static void saveConfig() throws IOException {
-        LOG.info("Saving config");
+    private static InvocationDispatcher<String> configWriter = InvocationDispatcher.runOn(Lang::thread, content -> {
         try {
-            Files.write(configLocation, configInstance.toJson().getBytes(UTF_8));
+            writeToConfig(content);
         } catch (IOException e) {
             LOG.log(Level.SEVERE, "Failed to save config", e);
-            throw e;
+        }
+    });
+
+    private static void writeToConfig(String content) throws IOException {
+        LOG.info("Saving config");
+        synchronized (configLocation) {
+            Files.write(configLocation, content.getBytes(UTF_8));
         }
     }
 
     static void markConfigDirty() {
-        // TODO: change this to async
-        try {
-            saveConfig();
-        } catch (IOException ignored) {
-            // ignore it as it has been logged
-        }
+        configWriter.accept(configInstance.toJson());
+    }
+
+    private static void saveConfigSync() throws IOException {
+        writeToConfig(configInstance.toJson());
     }
 }

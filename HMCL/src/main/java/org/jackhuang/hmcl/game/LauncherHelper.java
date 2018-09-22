@@ -41,6 +41,13 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.platform.CommandBuilder;
+import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.io.IOException;
@@ -281,13 +288,13 @@ public final class LauncherHelper {
             }
         }
 
-        if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
-                org.jackhuang.hmcl.util.Platform.IS_64_BIT) {
+        if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.BIT_32 &&
+                org.jackhuang.hmcl.util.platform.Platform.IS_64_BIT) {
             final JavaVersion java32 = java;
 
             // First find if same java version but whose platform is 64-bit installed.
             Optional<JavaVersion> java64 = JavaVersion.getJREs().stream()
-                    .filter(javaVersion -> javaVersion.getPlatform() == org.jackhuang.hmcl.util.Platform.PLATFORM)
+                    .filter(javaVersion -> javaVersion.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.PLATFORM)
                     .filter(javaVersion -> javaVersion.getParsedVersion() == java32.getParsedVersion())
                     .max(Comparator.comparing(JavaVersion::getVersionNumber));
 
@@ -296,7 +303,7 @@ public final class LauncherHelper {
 
                 // Then find if other java version which satisfies requirements installed.
                 java64 = JavaVersion.getJREs().stream()
-                        .filter(javaVersion -> javaVersion.getPlatform() == org.jackhuang.hmcl.util.Platform.PLATFORM)
+                        .filter(javaVersion -> javaVersion.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.PLATFORM)
                         .filter(javaVersion -> {
                             if (java8requiredFinal) return javaVersion.getParsedVersion() == JavaVersion.JAVA_8;
                             if (newJavaRequiredFinal) return javaVersion.getParsedVersion() >= JavaVersion.JAVA_8;
@@ -313,7 +320,7 @@ public final class LauncherHelper {
             }
         }
 
-        if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.Platform.BIT_32 &&
+        if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.BIT_32 &&
                 setting.getMaxMemory() > 1.5 * 1024) {
             // 1.5 * 1024 is an inaccurate number.
             // Actual memory limit depends on operating system and memory.

@@ -34,8 +34,8 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
-import org.jackhuang.hmcl.util.VersionNumber;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.List;
 import java.util.stream.Collectors;

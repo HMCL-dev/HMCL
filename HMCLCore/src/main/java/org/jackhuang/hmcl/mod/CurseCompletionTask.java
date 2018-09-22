@@ -22,6 +22,9 @@ import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,7 +77,7 @@ public final class CurseCompletionTask extends Task {
             try {
                 File manifestFile = new File(repository.getVersionRoot(version), "manifest.json");
                 if (manifestFile.exists())
-                    this.manifest = Constants.GSON.fromJson(FileUtils.readText(manifestFile), CurseManifest.class);
+                    this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), CurseManifest.class);
             } catch (Exception e) {
                 Logging.LOG.log(Level.WARNING, "Unable to read CurseForge modpack manifest.json", e);
             }
@@ -119,7 +122,7 @@ public final class CurseCompletionTask extends Task {
                                 return file;
                         })
                         .collect(Collectors.toList()));
-        FileUtils.writeText(new File(root, "manifest.json"), Constants.GSON.toJson(newManifest));
+        FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(newManifest));
 
         for (CurseManifestFile file : newManifest.getFiles())
             if (StringUtils.isNotBlank(file.getFileName())) {

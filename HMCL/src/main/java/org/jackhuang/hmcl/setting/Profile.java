@@ -31,6 +31,9 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.javafx.ImmediateObjectProperty;
+import org.jackhuang.hmcl.util.javafx.ImmediateStringProperty;
+import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 
 import java.io.File;
 import java.lang.reflect.Type;

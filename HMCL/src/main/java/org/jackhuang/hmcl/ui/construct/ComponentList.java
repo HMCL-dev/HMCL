@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+
 import javafx.beans.DefaultProperty;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
@@ -32,7 +34,6 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.util.MappedObservableList;
 
 @DefaultProperty("content")
 public class ComponentList extends Control {

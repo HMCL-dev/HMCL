@@ -21,6 +21,9 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -116,7 +119,7 @@ public final class ForgeModMetadata {
             Path mcmod = fs.getPath("mcmod.info");
             if (Files.notExists(mcmod))
                 throw new IOException("File " + modFile + " is not a Forge mod.");
-            List<ForgeModMetadata> modList = Constants.GSON.fromJson(IOUtils.readFullyAsString(Files.newInputStream(mcmod)),
+            List<ForgeModMetadata> modList = JsonUtils.GSON.fromJson(IOUtils.readFullyAsString(Files.newInputStream(mcmod)),
                     new TypeToken<List<ForgeModMetadata>>() {
                     }.getType());
             if (modList == null || modList.isEmpty())

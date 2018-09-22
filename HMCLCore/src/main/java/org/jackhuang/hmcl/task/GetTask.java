@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.util.IOUtils;
 import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.NetworkUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

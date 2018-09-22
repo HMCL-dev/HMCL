@@ -22,8 +22,8 @@ import org.jackhuang.hmcl.event.JVMLaunchFailedEvent;
 import org.jackhuang.hmcl.event.ProcessExitedAbnormallyEvent;
 import org.jackhuang.hmcl.event.ProcessStoppedEvent;
 import org.jackhuang.hmcl.util.Log4jLevel;
-import org.jackhuang.hmcl.util.ManagedProcess;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
 import java.util.Collection;
 import java.util.List;

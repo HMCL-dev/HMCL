@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.util.ToStringBuilder;
-import org.jackhuang.hmcl.util.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.Objects;
 

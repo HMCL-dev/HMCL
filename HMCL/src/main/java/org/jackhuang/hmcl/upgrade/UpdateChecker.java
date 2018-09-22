@@ -24,7 +24,7 @@ import javafx.beans.property.*;
 import javafx.beans.value.ObservableBooleanValue;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.ConfigHolder;
-import org.jackhuang.hmcl.util.NetworkUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -35,7 +35,7 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
-import static org.jackhuang.hmcl.util.VersionNumber.asVersion;
+import static org.jackhuang.hmcl.util.versioning.VersionNumber.asVersion;
 
 public final class UpdateChecker {
     private UpdateChecker() {}
@@ -83,7 +83,7 @@ public final class UpdateChecker {
     }
 
     private static RemoteVersion checkUpdate(UpdateChannel channel) throws IOException {
-        if (!IntegrityChecker.isSelfVerified()) {
+        if (!IntegrityChecker.isSelfVerified() && !"true".equals(System.getProperty("hmcl.self_integrity_check.disable"))) {
             throw new IOException("Self verification failed");
         }
 

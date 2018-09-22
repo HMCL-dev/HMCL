@@ -22,7 +22,7 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.ReleaseType;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.Validation;
+import org.jackhuang.hmcl.util.gson.Validation;
 
 import java.util.Date;
 

@@ -46,8 +46,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.SelectionModelSelectedItemProperty.selectedItemPropertyFor;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.javafx.SelectionModelSelectedItemProperty.selectedItemPropertyFor;
 
 public final class SettingsPage extends SettingsView implements DecoratorPage {
     private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(this, "title", i18n("settings.launcher"));
