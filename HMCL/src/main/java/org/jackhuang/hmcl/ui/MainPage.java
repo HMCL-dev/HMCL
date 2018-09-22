@@ -67,9 +67,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
     {
         FXUtils.loadFXML(this, "/assets/fxml/main.fxml");
 
-        btnLaunch.setClip(new Rectangle(-100, -100, 280, 200));
-        btnMenu.setClip(new Rectangle(181, -100, 100, 200));
-        menu.setMinWidth(200);
+        btnLaunch.setClip(new Rectangle(-100, -100, 310, 200));
+        btnMenu.setClip(new Rectangle(211, -100, 100, 200));
         menu.getStyleClass().setAll("menu");
 
         StackPane graphic = new StackPane();

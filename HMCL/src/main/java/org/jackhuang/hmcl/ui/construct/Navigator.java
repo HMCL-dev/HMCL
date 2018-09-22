@@ -79,7 +79,9 @@ public class Navigator extends StackPane {
     public void close(Node from) {
         FXUtils.checkFxUserThread();
 
-        stack.remove(from);
+        if (stack.peek() != from)
+            throw new IllegalStateException();
+        stack.pop();
         Node node = stack.peek();
         fireEvent(new NavigationEvent(this, from, NavigationEvent.NAVIGATING));
         setContent(node);
