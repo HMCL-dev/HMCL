@@ -6,9 +6,9 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
-import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 import java.net.URL;

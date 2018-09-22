@@ -28,7 +28,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.MappedObservableList;
+import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.loadFXML;

@@ -17,11 +17,11 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.util.ExceptionalRunnable;
-
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+
+import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 
 /**
  *

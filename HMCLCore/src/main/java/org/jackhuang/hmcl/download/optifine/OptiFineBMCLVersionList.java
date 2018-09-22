@@ -22,10 +22,10 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.NetworkUtils;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.VersionNumber;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.*;
 
@@ -58,7 +58,7 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
             public void execute() {
                 versions.clear();
                 Set<String> duplicates = new HashSet<>();
-                List<OptiFineVersion> root = Constants.GSON.fromJson(task.getResult(), new TypeToken<List<OptiFineVersion>>() {
+                List<OptiFineVersion> root = JsonUtils.GSON.fromJson(task.getResult(), new TypeToken<List<OptiFineVersion>>() {
                 }.getType());
                 for (OptiFineVersion element : root) {
                     String version = element.getType() + "_" + element.getPatch();

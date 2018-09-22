@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.util.regex.Pattern;
 

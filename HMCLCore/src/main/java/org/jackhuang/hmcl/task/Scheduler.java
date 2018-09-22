@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.util.ExceptionalRunnable;
-
 import java.util.concurrent.Future;
+
+import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 
 /**
  * Determines how a task is executed.

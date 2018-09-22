@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.auth.offline;
 
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
-import org.jackhuang.hmcl.util.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
 import java.util.Map;
 import java.util.UUID;

@@ -24,10 +24,10 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskResult;
-import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.FileUtils;
-import org.jackhuang.hmcl.util.IOUtils;
-import org.jackhuang.hmcl.util.NetworkUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.*;
 import java.util.Collection;
@@ -89,7 +89,7 @@ public final class ForgeInstallTask extends TaskResult<Version> {
             if (stream == null)
                 throw new IOException("Malformed forge installer file, install_profile.json does not exist.");
             String json = IOUtils.readFullyAsString(stream);
-            ForgeInstallProfile installProfile = Constants.GSON.fromJson(json, ForgeInstallProfile.class);
+            ForgeInstallProfile installProfile = JsonUtils.GSON.fromJson(json, ForgeInstallProfile.class);
             if (installProfile == null)
                 throw new IOException("Malformed forge installer file, install_profile.json does not exist.");
             

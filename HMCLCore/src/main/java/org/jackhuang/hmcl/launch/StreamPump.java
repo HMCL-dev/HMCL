@@ -17,13 +17,13 @@
  */
 package org.jackhuang.hmcl.launch;
 
-import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
@@ -49,7 +49,7 @@ final class StreamPump implements Runnable {
 
     @Override
     public void run() {
-        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, Constants.SYSTEM_CHARSET))) {
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, Charset.defaultCharset()))) {
             String line;
             while ((line = bufferedReader.readLine()) != null) {
                 if (Thread.currentThread().isInterrupted()) {

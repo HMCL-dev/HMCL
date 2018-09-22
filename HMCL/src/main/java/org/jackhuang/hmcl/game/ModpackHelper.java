@@ -25,9 +25,9 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.FinalizedCallback;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -64,7 +64,7 @@ public final class ModpackHelper {
             throw new FileNotFoundException(file.getPath());
         else
             try {
-                return Constants.GSON.fromJson(FileUtils.readText(file), new TypeToken<ModpackConfiguration<?>>() {
+                return JsonUtils.GSON.fromJson(FileUtils.readText(file), new TypeToken<ModpackConfiguration<?>>() {
                 }.getType());
             } catch (JsonParseException e) {
                 throw new IOException("Malformed modpack configuration");

@@ -35,11 +35,11 @@ import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
-import org.jackhuang.hmcl.util.EnumOrdinalDeserializer;
-import org.jackhuang.hmcl.util.FileTypeAdapter;
-import org.jackhuang.hmcl.util.ObservableHelper;
+import org.jackhuang.hmcl.util.gson.EnumOrdinalDeserializer;
+import org.jackhuang.hmcl.util.gson.FileTypeAdapter;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 
 import java.io.File;
 import java.lang.reflect.Modifier;

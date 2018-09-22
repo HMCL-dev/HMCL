@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.AutoTypingMap;
-import org.jackhuang.hmcl.util.ExceptionalFunction;
+import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 
 import java.util.Collection;
 import java.util.Collections;

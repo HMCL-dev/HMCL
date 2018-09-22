@@ -3,7 +3,7 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.util.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
 import java.util.Map;
 import java.util.Optional;

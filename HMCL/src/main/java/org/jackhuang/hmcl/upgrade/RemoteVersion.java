@@ -21,8 +21,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
-import org.jackhuang.hmcl.util.JsonUtils;
-import org.jackhuang.hmcl.util.NetworkUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 import java.util.Optional;

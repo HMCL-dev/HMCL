@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
-import org.jackhuang.hmcl.util.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.List;
 import java.util.stream.Collectors;

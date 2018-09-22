@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.upgrade;
 
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.IOUtils;
-import org.jackhuang.hmcl.util.JarUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -26,6 +26,8 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
@@ -77,9 +79,6 @@ public final class Launcher extends Application {
 
         try {
             Logging.start(LOG_DIRECTORY);
-
-            // NetworkUtils.setUserAgentSupplier(() -> "Hello Minecraft! Launcher");
-            Constants.UI_THREAD_SCHEDULER = Constants.JAVAFX_UI_THREAD_SCHEDULER;
 
             LOG.info("*** " + Metadata.TITLE + " ***");
             LOG.info("Operating System: " + System.getProperty("os.name") + ' ' + OperatingSystem.SYSTEM_VERSION);

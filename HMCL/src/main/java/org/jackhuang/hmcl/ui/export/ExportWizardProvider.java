@@ -28,7 +28,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.Zipper;
+import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
 import java.nio.file.Files;

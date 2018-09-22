@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.ui.profile.ProfileList;
 import org.jackhuang.hmcl.ui.versions.GameList;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.util.FutureCallback;
-import org.jackhuang.hmcl.util.JavaVersion;
+import org.jackhuang.hmcl.util.platform.JavaVersion;
 
 import java.util.function.Consumer;
 

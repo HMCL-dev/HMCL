@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.Validation;
+import org.jackhuang.hmcl.util.gson.Validation;
 
 /**
  *

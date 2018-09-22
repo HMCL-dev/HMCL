@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
+import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 
 import java.util.*;
 import java.util.concurrent.*;

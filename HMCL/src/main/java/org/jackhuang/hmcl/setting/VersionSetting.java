@@ -22,6 +22,12 @@ import javafx.beans.InvalidationListener;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.javafx.ImmediateBooleanProperty;
+import org.jackhuang.hmcl.util.javafx.ImmediateIntegerProperty;
+import org.jackhuang.hmcl.util.javafx.ImmediateObjectProperty;
+import org.jackhuang.hmcl.util.javafx.ImmediateStringProperty;
+import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;

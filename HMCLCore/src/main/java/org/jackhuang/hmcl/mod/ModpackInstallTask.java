@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.FileUtils;
-import org.jackhuang.hmcl.util.Unzipper;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.Unzipper;
 
 import java.io.File;
 import java.io.IOException;

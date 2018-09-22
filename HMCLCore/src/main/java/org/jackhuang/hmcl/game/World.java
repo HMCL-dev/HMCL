@@ -6,6 +6,10 @@ import com.github.steveice10.opennbt.tag.builtin.LongTag;
 import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.Unzipper;
+import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.IOException;
 import java.io.InputStream;

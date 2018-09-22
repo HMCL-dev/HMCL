@@ -19,9 +19,9 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.Zipper;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -73,8 +73,8 @@ public class HMCLModpackExportTask extends Task {
             Version mv = repository.getResolvedVersion(version);
             String gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version))
                     .orElseThrow(() ->  new IllegalStateException("Cannot parse the version of " + version));
-            zip.putTextFile(Constants.GSON.toJson(mv.setJar(gameVersion)), "minecraft/pack.json"); // Making "jar" to gameVersion is to be compatible with old HMCL.
-            zip.putTextFile(Constants.GSON.toJson(modpack.setGameVersion(gameVersion)), "modpack.json"); // Newer HMCL only reads 'gameVersion' field.
+            zip.putTextFile(JsonUtils.GSON.toJson(mv.setJar(gameVersion)), "minecraft/pack.json"); // Making "jar" to gameVersion is to be compatible with old HMCL.
+            zip.putTextFile(JsonUtils.GSON.toJson(modpack.setGameVersion(gameVersion)), "modpack.json"); // Newer HMCL only reads 'gameVersion' field.
         }
     }
 }

@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
-import org.jackhuang.hmcl.util.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
 import java.util.Map;
 import java.util.Objects;

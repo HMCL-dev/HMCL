@@ -17,17 +17,20 @@
  */
 package org.jackhuang.hmcl.task;
 
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
+import org.jackhuang.hmcl.util.function.ExceptionalFunction;
+import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.logging.Level;
 
@@ -172,8 +175,8 @@ public abstract class Task {
     }
 
     private long lastTime = Long.MIN_VALUE;
-    private final AtomicReference<Double> progressUpdate = new AtomicReference<>();
     private final ReadOnlyDoubleWrapper progress = new ReadOnlyDoubleWrapper(this, "progress", -1);
+    private final InvocationDispatcher<Double> progressUpdate = InvocationDispatcher.runOn(Platform::runLater, progress::set);
 
     public ReadOnlyDoubleProperty progressProperty() {
         return progress.getReadOnlyProperty();
@@ -194,18 +197,18 @@ public abstract class Task {
     }
 
     protected void updateProgressImmediately(double progress) {
-        Properties.updateAsync(this.progress, progress, progressUpdate);
+        progressUpdate.accept(progress);
     }
 
-    private final AtomicReference<String> messageUpdate = new AtomicReference<>();
     private final ReadOnlyStringWrapper message = new ReadOnlyStringWrapper(this, "message", null);
+    private final InvocationDispatcher<String> messageUpdate = InvocationDispatcher.runOn(Platform::runLater, message::set);
 
     public final ReadOnlyStringProperty messageProperty() {
         return message.getReadOnlyProperty();
     }
 
     protected final void updateMessage(String newMessage) {
-        Properties.updateAsync(message, newMessage, messageUpdate);
+        messageUpdate.accept(newMessage);
     }
 
     public final void run() throws Exception {

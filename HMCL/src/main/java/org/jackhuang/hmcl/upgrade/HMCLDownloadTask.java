@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.upgrade;
 
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.util.NetworkUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.tukaani.xz.XZInputStream;
 
 import java.io.ByteArrayInputStream;

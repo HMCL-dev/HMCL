@@ -20,8 +20,9 @@ package org.jackhuang.hmcl.auth.authlibinjector;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
-import org.jackhuang.hmcl.util.JsonUtils;
-import org.jackhuang.hmcl.util.NetworkUtils;
+
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 import java.util.Optional;
