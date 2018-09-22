@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl;
 
-import org.jackhuang.hmcl.util.JarUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 
 /**
  * Stores metadata about this application.

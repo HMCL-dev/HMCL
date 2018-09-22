@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
- *
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,21 +15,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see {http://www.gnu.org/licenses/}.
  */
-package org.jackhuang.hmcl.util;
+package org.jackhuang.hmcl.util.javafx;
 
-import com.google.gson.JsonParseException;
+import javafx.beans.property.Property;
+
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.jackhuang.hmcl.util.Constants;
 
 /**
- * @author yushijinhun
+ *
+ * @author huangyuhui
  */
-public final class JsonUtils {
+public final class Properties {
 
-    private JsonUtils() {}
+    private Properties() {
+    }
 
-    public static <T> T fromNonNullJson(String json, Class<T> classOfT) throws JsonParseException {
-        T parsed = Constants.GSON.fromJson(json, classOfT);
-        if (parsed == null)
-            throw new JsonParseException("Json object cannot be null.");
-        return parsed;
+    public static <T> void updateAsync(Property<? super T> property, T newValue, AtomicReference<T> update) {
+        if (update.getAndSet(newValue) == null)
+            Constants.UI_THREAD_SCHEDULER.accept(() ->
+                    property.setValue(update.getAndSet(null)));
     }
 }

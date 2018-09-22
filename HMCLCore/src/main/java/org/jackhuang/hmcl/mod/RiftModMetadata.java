@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.mod;
 import com.google.gson.JsonParseException;
 
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.JsonUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 

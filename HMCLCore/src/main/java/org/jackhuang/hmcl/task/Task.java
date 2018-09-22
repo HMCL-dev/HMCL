@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
+import org.jackhuang.hmcl.util.javafx.Properties;
 
 import java.util.Collection;
 import java.util.Collections;
