@@ -28,10 +28,10 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import org.jackhuang.hmcl.util.InvocationDispatcher;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class ConfigHolder {
@@ -44,19 +44,6 @@ public final class ConfigHolder {
     private static Path configLocation;
     private static Config configInstance;
     private static boolean newlyCreated;
-
-    private static InvocationDispatcher<String> configWriter = new InvocationDispatcher<>(content -> {
-        thread(() -> {
-            LOG.info("Saving config");
-            try {
-                synchronized (configLocation) {
-                    Files.write(configLocation, content.get().getBytes(UTF_8));
-                }
-            } catch (IOException e) {
-                LOG.log(Level.SEVERE, "Failed to save config", e);
-            }
-        });
-    });
 
     public static Config config() {
         if (configInstance == null) {
@@ -84,7 +71,7 @@ public final class ConfigHolder {
         Settings.init();
 
         if (newlyCreated) {
-            markConfigDirty();
+            saveConfigSync();
 
             // hide the config file on windows
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
@@ -138,7 +125,26 @@ public final class ConfigHolder {
         return new Config();
     }
 
+    private static InvocationDispatcher<String> configWriter = InvocationDispatcher.runOn(Lang::thread, content -> {
+        try {
+            writeToConfig(content);
+        } catch (IOException e) {
+            LOG.log(Level.SEVERE, "Failed to save config", e);
+        }
+    });
+
+    private static void writeToConfig(String content) throws IOException {
+        LOG.info("Saving config");
+        synchronized (configLocation) {
+            Files.write(configLocation, content.getBytes(UTF_8));
+        }
+    }
+
     static void markConfigDirty() {
         configWriter.accept(configInstance.toJson());
+    }
+
+    private static void saveConfigSync() throws IOException {
+        writeToConfig(configInstance.toJson());
     }
 }
