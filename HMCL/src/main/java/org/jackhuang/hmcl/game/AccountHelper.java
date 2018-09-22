@@ -159,11 +159,11 @@ public final class AccountHelper {
     }
 
     public static Image getSteveSkin(double scaleRatio) {
-         return scale("/assets/img/steve.png", 4);
+        return scale("/assets/img/steve.png", scaleRatio);
     }
 
     public static Image getAlexSkin(double scaleRatio) {
-        return scale("/assets/img/alex.png", 4);
+        return scale("/assets/img/alex.png", scaleRatio);
     }
 
     public static Image getDefaultSkin(UUID uuid, double scaleRatio) {
