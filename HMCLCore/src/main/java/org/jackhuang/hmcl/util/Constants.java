@@ -17,10 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.task.Schedulers;
-import java.awt.*;
-import java.util.function.Consumer;
-
 /**
  * Constants.
  *
@@ -34,20 +30,4 @@ public final class Constants {
     public static final String DEFAULT_LIBRARY_URL = "https://libraries.minecraft.net/";
     public static final String DEFAULT_VERSION_DOWNLOAD_URL = "https://s3.amazonaws.com/Minecraft.Download/versions/";
     public static final String DEFAULT_INDEX_URL = "https://s3.amazonaws.com/Minecraft.Download/indexes/";
-
-    public static Consumer<Runnable> UI_THREAD_SCHEDULER = s -> Schedulers.computation().schedule(s::run);
-    
-    public static final Consumer<Runnable> SWING_UI_THREAD_SCHEDULER = s -> {
-        if (EventQueue.isDispatchThread())
-            s.run();
-        else
-            EventQueue.invokeLater(s);
-    };
-    
-    public static final Consumer<Runnable> JAVAFX_UI_THREAD_SCHEDULER = s -> {
-        if (javafx.application.Platform.isFxApplicationThread())
-            s.run();
-        else
-            javafx.application.Platform.runLater(s);
-    };
 }

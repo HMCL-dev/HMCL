@@ -27,9 +27,11 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.logging.Level;
 
+import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class ConfigHolder {
@@ -42,6 +44,19 @@ public final class ConfigHolder {
     private static Path configLocation;
     private static Config configInstance;
     private static boolean newlyCreated;
+
+    private static InvocationDispatcher<String> configWriter = new InvocationDispatcher<>(content -> {
+        thread(() -> {
+            LOG.info("Saving config");
+            try {
+                synchronized (configLocation) {
+                    Files.write(configLocation, content.get().getBytes(UTF_8));
+                }
+            } catch (IOException e) {
+                LOG.log(Level.SEVERE, "Failed to save config", e);
+            }
+        });
+    });
 
     public static Config config() {
         if (configInstance == null) {
@@ -69,7 +84,7 @@ public final class ConfigHolder {
         Settings.init();
 
         if (newlyCreated) {
-            saveConfig();
+            markConfigDirty();
 
             // hide the config file on windows
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
@@ -123,22 +138,7 @@ public final class ConfigHolder {
         return new Config();
     }
 
-    private static void saveConfig() throws IOException {
-        LOG.info("Saving config");
-        try {
-            Files.write(configLocation, configInstance.toJson().getBytes(UTF_8));
-        } catch (IOException e) {
-            LOG.log(Level.SEVERE, "Failed to save config", e);
-            throw e;
-        }
-    }
-
     static void markConfigDirty() {
-        // TODO: change this to async
-        try {
-            saveConfig();
-        } catch (IOException ignored) {
-            // ignore it as it has been logged
-        }
+        configWriter.accept(configInstance.toJson());
     }
 }

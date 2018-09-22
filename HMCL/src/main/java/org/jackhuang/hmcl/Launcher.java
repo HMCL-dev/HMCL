@@ -80,9 +80,6 @@ public final class Launcher extends Application {
         try {
             Logging.start(LOG_DIRECTORY);
 
-            // NetworkUtils.setUserAgentSupplier(() -> "Hello Minecraft! Launcher");
-            Constants.UI_THREAD_SCHEDULER = Constants.JAVAFX_UI_THREAD_SCHEDULER;
-
             LOG.info("*** " + Metadata.TITLE + " ***");
             LOG.info("Operating System: " + System.getProperty("os.name") + ' ' + OperatingSystem.SYSTEM_VERSION);
             LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
