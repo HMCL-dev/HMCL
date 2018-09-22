@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -93,7 +92,7 @@ public final class CurseInstallTask extends Task {
         } catch (JsonParseException | IOException ignore) {
         }
         this.config = config;
-        dependents.add(new ModpackInstallTask<>(zipFile, run, manifest.getOverrides(), Constants.truePredicate(), config));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, manifest.getOverrides(), any -> true, config));
     }
 
     @Override

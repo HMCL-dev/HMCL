@@ -100,7 +100,7 @@ public final class MultiMCModpackInstallTask extends Task {
         } catch (JsonParseException | IOException ignore) {
         }
 
-        dependents.add(new ModpackInstallTask<>(zipFile, run, "/" + manifest.getName() + "/minecraft", Constants.truePredicate(), config));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, "/" + manifest.getName() + "/minecraft", any -> true, config));
     }
     
     @Override

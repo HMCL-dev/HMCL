@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 /**
  * Constants.
@@ -63,16 +62,4 @@ public final class Constants {
 
     // lazy loading
     public static final ObjectBinding<Image> DEFAULT_ICON = Bindings.createObjectBinding(() -> new Image("/assets/img/icon.png"));
-
-    public static <T> Predicate<T> truePredicate() {
-        return s -> true;
-    }
-
-    public static <T> Predicate<T> falsePredicate() {
-        return s -> false;
-    }
-
-    public static <T> Consumer<T> emptyConsumer() {
-        return x -> {};
-    }
 }
