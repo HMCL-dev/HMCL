@@ -27,6 +27,13 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.RuledArgument;
 import org.jackhuang.hmcl.game.StringArgument;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.util.gson.DateTypeAdapter;
+import org.jackhuang.hmcl.util.gson.FileTypeAdapter;
+import org.jackhuang.hmcl.util.gson.LowerCaseEnumTypeAdapterFactory;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.gson.ValidationTypeAdapterFactory;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.awt.*;
 import java.io.File;

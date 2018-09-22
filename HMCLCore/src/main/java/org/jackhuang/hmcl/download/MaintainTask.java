@@ -22,8 +22,8 @@ import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.StringArgument;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.TaskResult;
-import org.jackhuang.hmcl.util.CommandBuilder;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.platform.CommandBuilder;
 
 import java.util.ArrayList;
 import java.util.Arrays;

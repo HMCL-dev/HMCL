@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.download.forge;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.Validation;
+import org.jackhuang.hmcl.util.gson.Validation;
 
 /**
  *

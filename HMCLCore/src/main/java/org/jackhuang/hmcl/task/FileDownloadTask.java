@@ -20,6 +20,10 @@ package org.jackhuang.hmcl.task;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.event.FailedEvent;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
 import java.io.IOException;

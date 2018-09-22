@@ -18,10 +18,10 @@
 package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.SimpleMultimap;
-import org.jackhuang.hmcl.util.VersionNumber;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.io.IOException;

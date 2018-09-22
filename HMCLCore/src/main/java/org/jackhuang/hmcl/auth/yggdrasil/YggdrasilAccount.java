@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
 import java.util.*;
 

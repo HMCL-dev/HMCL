@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.util.ExceptionalSupplier;
+import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 
 public final class SimpleTaskResult<V> extends TaskResult<V> {
     private final String id;

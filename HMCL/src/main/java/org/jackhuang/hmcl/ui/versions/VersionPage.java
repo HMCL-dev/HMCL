@@ -31,7 +31,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.FileUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 

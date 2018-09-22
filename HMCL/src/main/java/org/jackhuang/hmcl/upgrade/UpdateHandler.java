@@ -29,8 +29,8 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.util.JarUtils;
-import org.jackhuang.hmcl.util.JavaVersion;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.platform.JavaVersion;
 
 import javax.swing.*;
 import java.io.IOException;

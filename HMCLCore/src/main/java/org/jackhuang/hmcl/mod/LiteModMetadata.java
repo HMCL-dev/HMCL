@@ -19,8 +19,8 @@ package org.jackhuang.hmcl.mod;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.IOUtils;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;

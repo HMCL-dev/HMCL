@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.util.OperatingSystem;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,6 +26,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.logging.Level;
+
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Logging.LOG;

@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.mod;
 
-import org.jackhuang.hmcl.util.CompressingUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 
 import java.io.File;
 import java.io.IOException;

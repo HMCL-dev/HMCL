@@ -9,9 +9,9 @@ import org.jackhuang.hmcl.mod.Datapack;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.ListPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.MappedObservableList;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.io.File;
 import java.io.IOException;

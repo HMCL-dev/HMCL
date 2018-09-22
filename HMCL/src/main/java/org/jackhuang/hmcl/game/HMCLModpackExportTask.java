@@ -21,7 +21,7 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.Zipper;
+import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
 import java.util.ArrayList;

@@ -20,8 +20,9 @@ package org.jackhuang.hmcl.auth;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import org.jackhuang.hmcl.util.ObservableHelper;
+
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 
 import java.util.Map;
 import java.util.Optional;

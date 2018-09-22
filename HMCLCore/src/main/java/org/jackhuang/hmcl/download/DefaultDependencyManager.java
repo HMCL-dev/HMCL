@@ -32,7 +32,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.ParallelTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.AutoTypingMap;
-import org.jackhuang.hmcl.util.ExceptionalFunction;
+import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 
 /**
  * Note: This class has no state.

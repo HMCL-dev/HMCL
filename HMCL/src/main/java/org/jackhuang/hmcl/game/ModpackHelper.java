@@ -26,8 +26,8 @@ import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.FinalizedCallback;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.FileUtils;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;

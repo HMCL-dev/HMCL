@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.SimpleMultimap;
-import org.jackhuang.hmcl.util.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.ArrayList;
 import java.util.HashMap;

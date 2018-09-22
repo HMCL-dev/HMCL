@@ -24,6 +24,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+
 /**
  *
  * @author huangyuhui
