@@ -22,8 +22,6 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.function.Supplier;
 
 import org.jackhuang.hmcl.util.Lang;
 
@@ -37,16 +35,6 @@ import static org.jackhuang.hmcl.util.StringUtils.*;
 public final class NetworkUtils {
 
     private NetworkUtils() {
-    }
-
-    private static Supplier<String> userAgentSupplier = () -> "HMCLCore";
-
-    public static String getUserAgent() {
-        return userAgentSupplier.get();
-    }
-
-    public static void setUserAgentSupplier(Supplier<String> userAgentSupplier) {
-        NetworkUtils.userAgentSupplier = Objects.requireNonNull(userAgentSupplier);
     }
 
     public static String withQuery(String baseUrl, Map<String, String> params) {
@@ -76,7 +64,6 @@ public final class NetworkUtils {
         connection.setUseCaches(false);
         connection.setConnectTimeout(15000);
         connection.setReadTimeout(15000);
-        connection.setRequestProperty("User-Agent", getUserAgent());
         return connection;
     }
 
