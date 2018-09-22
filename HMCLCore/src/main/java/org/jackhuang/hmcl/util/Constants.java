@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-
 import java.awt.*;
-import java.nio.charset.Charset;
 import java.util.function.Consumer;
 
 /**
@@ -33,8 +30,6 @@ public final class Constants {
 
     private Constants() {
     }
-
-    public static final Charset SYSTEM_CHARSET = Charset.forName(OperatingSystem.ENCODING);
 
     public static final String DEFAULT_LIBRARY_URL = "https://libraries.minecraft.net/";
     public static final String DEFAULT_VERSION_DOWNLOAD_URL = "https://s3.amazonaws.com/Minecraft.Download/versions/";
