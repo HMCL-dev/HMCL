@@ -17,10 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ObjectBinding;
-import javafx.scene.image.Image;
-
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -59,7 +55,4 @@ public final class Constants {
         else
             javafx.application.Platform.runLater(s);
     };
-
-    // lazy loading
-    public static final ObjectBinding<Image> DEFAULT_ICON = Bindings.createObjectBinding(() -> new Image("/assets/img/icon.png"));
 }
