@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
@@ -83,7 +84,7 @@ public final class CurseInstallTask extends Task {
         ModpackConfiguration<CurseManifest> config = null;
         try {
             if (json.exists()) {
-                config = Constants.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<CurseManifest>>() {
+                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<CurseManifest>>() {
                 }.getType());
 
                 if (!MODPACK_TYPE.equals(config.getType()))
@@ -118,7 +119,7 @@ public final class CurseInstallTask extends Task {
             }
 
         File root = repository.getVersionRoot(name);
-        FileUtils.writeText(new File(root, "manifest.json"), Constants.GSON.toJson(manifest));
+        FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(manifest));
 
         dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest));
         dependencies.add(new MinecraftInstanceTask<>(zipFile, manifest.getOverrides(), manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)));

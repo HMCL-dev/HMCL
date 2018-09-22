@@ -21,9 +21,9 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
@@ -113,7 +113,7 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public Version readVersionJson(File file) throws IOException, JsonSyntaxException {
-        return Constants.GSON.fromJson(FileUtils.readText(file), Version.class);
+        return JsonUtils.GSON.fromJson(FileUtils.readText(file), Version.class);
     }
 
     @Override
@@ -142,7 +142,7 @@ public class DefaultGameRepository implements GameRepository {
 
             if (fromVersion.getId().equals(fromVersion.getJar()))
                 fromVersion = fromVersion.setJar(to);
-            FileUtils.writeText(toJson, Constants.GSON.toJson(fromVersion.setId(to)));
+            FileUtils.writeText(toJson, JsonUtils.GSON.toJson(fromVersion.setId(to)));
             return true;
         } catch (IOException | JsonParseException | VersionNotFoundException e) {
             return false;
@@ -229,7 +229,7 @@ public class DefaultGameRepository implements GameRepository {
                 if (!id.equals(version.getId())) {
                     version = version.setId(id);
                     try {
-                        FileUtils.writeText(json, Constants.GSON.toJson(version));
+                        FileUtils.writeText(json, JsonUtils.GSON.toJson(version));
                     } catch (Exception e) {
                         Logging.LOG.log(Level.WARNING, "Ignoring version " + id + " because wrong id " + version.getId() + " is set and cannot correct it.");
                         return Stream.empty();
@@ -269,7 +269,7 @@ public class DefaultGameRepository implements GameRepository {
     @Override
     public AssetIndex getAssetIndex(String version, String assetId) throws IOException {
         try {
-            return Objects.requireNonNull(Constants.GSON.fromJson(FileUtils.readText(getIndexFile(version, assetId)), AssetIndex.class));
+            return Objects.requireNonNull(JsonUtils.GSON.fromJson(FileUtils.readText(getIndexFile(version, assetId)), AssetIndex.class));
         } catch (JsonParseException | NullPointerException e) {
             throw new IOException("Asset index file malformed", e);
         }
@@ -329,7 +329,7 @@ public class DefaultGameRepository implements GameRepository {
             return assetsDir;
 
         String assetIndexContent = FileUtils.readText(indexFile);
-        AssetIndex index = Constants.GSON.fromJson(assetIndexContent, AssetIndex.class);
+        AssetIndex index = JsonUtils.GSON.fromJson(assetIndexContent, AssetIndex.class);
 
         if (index == null)
             return assetsDir;

@@ -17,29 +17,15 @@
  */
 package org.jackhuang.hmcl.util;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.game.Argument;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.RuledArgument;
-import org.jackhuang.hmcl.game.StringArgument;
+
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.gson.DateTypeAdapter;
-import org.jackhuang.hmcl.util.gson.FileTypeAdapter;
-import org.jackhuang.hmcl.util.gson.LowerCaseEnumTypeAdapterFactory;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
-import org.jackhuang.hmcl.util.gson.ValidationTypeAdapterFactory;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.awt.*;
-import java.io.File;
 import java.nio.charset.Charset;
-import java.util.Date;
-import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -77,21 +63,6 @@ public final class Constants {
 
     // lazy loading
     public static final ObjectBinding<Image> DEFAULT_ICON = Bindings.createObjectBinding(() -> new Image("/assets/img/icon.png"));
-
-    public static final Gson GSON = new GsonBuilder()
-            .enableComplexMapKeySerialization()
-            .setPrettyPrinting()
-            .registerTypeAdapter(Library.class, Library.Serializer.INSTANCE)
-            .registerTypeAdapter(Argument.class, Argument.Serializer.INSTANCE)
-            .registerTypeAdapter(StringArgument.class, Argument.Serializer.INSTANCE)
-            .registerTypeAdapter(RuledArgument.class, RuledArgument.Serializer.INSTANCE)
-            .registerTypeAdapter(Date.class, DateTypeAdapter.INSTANCE)
-            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
-            .registerTypeAdapter(Platform.class, Platform.Serializer.INSTANCE)
-            .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
-            .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
-            .registerTypeAdapterFactory(LowerCaseEnumTypeAdapterFactory.INSTANCE)
-            .create();
 
     public static <T> Predicate<T> truePredicate() {
         return s -> true;

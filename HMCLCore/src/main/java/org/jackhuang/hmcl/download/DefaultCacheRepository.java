@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.download.game.LibraryDownloadTask;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.LibraryDownloadInfo;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -58,7 +59,7 @@ public class DefaultCacheRepository extends CacheRepository {
         lock.writeLock().lock();
         try {
             if (Files.isRegularFile(indexFile))
-                index = Constants.GSON.fromJson(FileUtils.readText(indexFile.toFile()), Index.class);
+                index = JsonUtils.GSON.fromJson(FileUtils.readText(indexFile.toFile()), Index.class);
             else
                 index = new Index();
         } catch (IOException e) {
@@ -193,7 +194,7 @@ public class DefaultCacheRepository extends CacheRepository {
     private void saveIndex() {
         if (indexFile == null || index == null) return;
         try {
-            FileUtils.writeText(indexFile.toFile(), Constants.GSON.toJson(index));
+            FileUtils.writeText(indexFile.toFile(), JsonUtils.GSON.toJson(index));
         } catch (IOException e) {
             Logging.LOG.log(Level.SEVERE, "Unable to save index.json", e);
         }

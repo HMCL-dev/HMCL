@@ -21,8 +21,8 @@ import org.jackhuang.hmcl.game.CompatibilityRule;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.TaskResult;
-import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.SimpleMultimap;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.ArrayList;
@@ -53,7 +53,7 @@ public class LibrariesUniqueTask extends TaskResult<Version> {
         for (Library library : libraries) {
             String id = library.getGroupId() + ":" + library.getArtifactId();
             VersionNumber number = VersionNumber.asVersion(library.getVersion());
-            String serialized = Constants.GSON.toJson(library);
+            String serialized = JsonUtils.GSON.toJson(library);
 
             if (multimap.containsKey(id)) {
                 boolean duplicate = false;
@@ -68,7 +68,7 @@ public class LibrariesUniqueTask extends TaskResult<Version> {
                         } else if (number.compareTo(otherNumber) == 0) { // same library id.
                             // prevent from duplicated libraries
                             if (library.equals(otherLibrary)) {
-                                String otherSerialized = Constants.GSON.toJson(otherLibrary);
+                                String otherSerialized = JsonUtils.GSON.toJson(otherLibrary);
                                 // A trick, the library that has more information is better, which can be
                                 // considered whose serialized JSON text will be longer.
                                 if (serialized.length() > otherSerialized.length()) {

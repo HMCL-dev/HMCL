@@ -27,7 +27,7 @@ import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackInstallTask;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -65,7 +65,7 @@ public final class HMCLModpackInstallTask extends Task {
         ModpackConfiguration<Modpack> config = null;
         try {
             if (json.exists()) {
-                config = Constants.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<Modpack>>() {
+                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<Modpack>>() {
                 }.getType());
 
                 if (!MODPACK_TYPE.equals(config.getType()))
@@ -89,7 +89,7 @@ public final class HMCLModpackInstallTask extends Task {
     @Override
     public void execute() throws Exception {
         String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
-        Version version = Constants.GSON.fromJson(json, Version.class).setId(name).setJar(null);
+        Version version = JsonUtils.GSON.fromJson(json, Version.class).setId(name).setJar(null);
         dependencies.add(new VersionJsonSaveTask(repository, version));
         dependencies.add(new MinecraftInstanceTask<>(zipFile, "/minecraft", modpack, MODPACK_TYPE, repository.getModpackConfiguration(name)));
     }

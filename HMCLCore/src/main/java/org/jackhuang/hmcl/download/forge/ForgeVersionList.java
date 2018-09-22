@@ -21,8 +21,8 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -60,7 +60,7 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
                 lock.writeLock().lock();
 
                 try {
-                    ForgeVersionRoot root = Constants.GSON.fromJson(task.getResult(), ForgeVersionRoot.class);
+                    ForgeVersionRoot root = JsonUtils.GSON.fromJson(task.getResult(), ForgeVersionRoot.class);
                     if (root == null)
                         return;
                     versions.clear();

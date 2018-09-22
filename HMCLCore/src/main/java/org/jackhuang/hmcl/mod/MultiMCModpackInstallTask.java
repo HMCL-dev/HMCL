@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
@@ -90,7 +91,7 @@ public final class MultiMCModpackInstallTask extends Task {
         ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
         try {
             if (json.exists()) {
-                config = Constants.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<MultiMCInstanceConfiguration>>() {
+                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<MultiMCInstanceConfiguration>>() {
                 }.getType());
 
                 if (!MODPACK_TYPE.equals(config.getType()))
@@ -124,7 +125,7 @@ public final class MultiMCModpackInstallTask extends Task {
             if (Files.exists(patches))
                 for (Path patchJson : Files.newDirectoryStream(patches)) {
                     if (patchJson.toString().endsWith(".json")) {
-                        MultiMCInstancePatch patch = Constants.GSON.fromJson(IOUtils.readFullyAsString(Files.newInputStream(patchJson)), MultiMCInstancePatch.class);
+                        MultiMCInstancePatch patch = JsonUtils.GSON.fromJson(IOUtils.readFullyAsString(Files.newInputStream(patchJson)), MultiMCInstancePatch.class);
                         List<String> newArguments = new LinkedList<>();
                         for (String arg : patch.getTweakers()) {
                             newArguments.add("--tweakClass");

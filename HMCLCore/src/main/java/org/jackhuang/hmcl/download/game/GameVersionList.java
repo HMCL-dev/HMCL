@@ -21,8 +21,8 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.util.Collection;
@@ -70,7 +70,7 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
                 try {
                     versions.clear();
 
-                    GameRemoteVersions root = Constants.GSON.fromJson(task.getResult(), GameRemoteVersions.class);
+                    GameRemoteVersions root = JsonUtils.GSON.fromJson(task.getResult(), GameRemoteVersions.class);
                     for (GameRemoteVersionInfo remoteVersion : root.getVersions()) {
                         versions.put(remoteVersion.getGameVersion(), new GameRemoteVersion(
                                 remoteVersion.getGameVersion(),

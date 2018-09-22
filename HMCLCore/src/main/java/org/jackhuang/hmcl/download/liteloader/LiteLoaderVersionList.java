@@ -21,7 +21,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.w3c.dom.Document;
@@ -65,7 +65,7 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
                 lock.writeLock().lock();
 
                 try {
-                    LiteLoaderVersionsRoot root = Constants.GSON.fromJson(task.getResult(), LiteLoaderVersionsRoot.class);
+                    LiteLoaderVersionsRoot root = JsonUtils.GSON.fromJson(task.getResult(), LiteLoaderVersionsRoot.class);
                     versions.clear();
 
                     for (Map.Entry<String, LiteLoaderGameVersions> entry : root.getVersions().entrySet()) {

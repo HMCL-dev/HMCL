@@ -22,8 +22,8 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.ParallelTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.AutoTypingMap;
-import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 /**
  *
@@ -50,7 +50,7 @@ public class DefaultGameBuilder extends GameBuilder {
     @Override
     public Task buildAsync() {
         return new VersionJsonDownloadTask(gameVersion, dependencyManager).then(variables -> {
-            Version version = Constants.GSON.fromJson(variables.<String>get(VersionJsonDownloadTask.ID), Version.class);
+            Version version = JsonUtils.GSON.fromJson(variables.<String>get(VersionJsonDownloadTask.ID), Version.class);
             version = version.setId(name).setJar(null);
             variables.set("version", version);
             Task result = downloadGameAsync(gameVersion, version).then(new ParallelTask(

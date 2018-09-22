@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.download.game;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
@@ -54,6 +54,6 @@ public final class VersionJsonSaveTask extends Task {
         File json = repository.getVersionJson(version.getId()).getAbsoluteFile();
         if (!FileUtils.makeFile(json))
             throw new IOException("Cannot create file " + json);
-        FileUtils.writeText(json, Constants.GSON.toJson(version));
+        FileUtils.writeText(json, JsonUtils.GSON.toJson(version));
     }
 }

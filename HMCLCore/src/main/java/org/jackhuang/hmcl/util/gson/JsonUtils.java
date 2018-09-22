@@ -17,8 +17,18 @@
  */
 package org.jackhuang.hmcl.util.gson;
 
-import org.jackhuang.hmcl.util.Constants;
+import java.io.File;
+import java.util.Date;
+import java.util.UUID;
 
+import org.jackhuang.hmcl.game.Argument;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.RuledArgument;
+import org.jackhuang.hmcl.game.StringArgument;
+import org.jackhuang.hmcl.util.platform.Platform;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 
 /**
@@ -26,10 +36,26 @@ import com.google.gson.JsonParseException;
  */
 public final class JsonUtils {
 
-    private JsonUtils() {}
+    public static final Gson GSON = new GsonBuilder()
+            .enableComplexMapKeySerialization()
+            .setPrettyPrinting()
+            .registerTypeAdapter(Library.class, Library.Serializer.INSTANCE)
+            .registerTypeAdapter(Argument.class, Argument.Serializer.INSTANCE)
+            .registerTypeAdapter(StringArgument.class, Argument.Serializer.INSTANCE)
+            .registerTypeAdapter(RuledArgument.class, RuledArgument.Serializer.INSTANCE)
+            .registerTypeAdapter(Date.class, DateTypeAdapter.INSTANCE)
+            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
+            .registerTypeAdapter(Platform.class, Platform.Serializer.INSTANCE)
+            .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
+            .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
+            .registerTypeAdapterFactory(LowerCaseEnumTypeAdapterFactory.INSTANCE)
+            .create();
+
+    private JsonUtils() {
+    }
 
     public static <T> T fromNonNullJson(String json, Class<T> classOfT) throws JsonParseException {
-        T parsed = Constants.GSON.fromJson(json, classOfT);
+        T parsed = GSON.fromJson(json, classOfT);
         if (parsed == null)
             throw new JsonParseException("Json object cannot be null.");
         return parsed;

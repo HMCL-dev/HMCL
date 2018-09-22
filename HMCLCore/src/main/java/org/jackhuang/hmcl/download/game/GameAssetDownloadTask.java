@@ -24,10 +24,10 @@ import org.jackhuang.hmcl.game.AssetObject;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.CacheRepository;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.File;
 import java.util.Collection;
@@ -75,7 +75,7 @@ public final class GameAssetDownloadTask extends Task {
     
     @Override
     public void execute() throws Exception {
-        AssetIndex index = Constants.GSON.fromJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
+        AssetIndex index = JsonUtils.GSON.fromJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
         int progress = 0;
         if (index != null)
             for (AssetObject assetObject : index.getObjects().values()) {
