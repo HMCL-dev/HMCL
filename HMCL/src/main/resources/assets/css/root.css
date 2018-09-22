@@ -81,6 +81,10 @@
     -fx-alignment: CENTER_LEFT;
 }
 
+.menu-container {
+    -fx-padding: 8 16 8 16;
+}
+
 .menu {
     -fx-padding: 4 0 4 0;
 }

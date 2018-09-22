@@ -24,17 +24,14 @@ import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.PopupMenu;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -52,29 +49,12 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         chkSelected.setToggleGroup(skinnable.getToggleGroup());
         root.setLeft(chkSelected);
 
-        HBox center = new HBox();
-        center.setSpacing(8);
-        center.setAlignment(Pos.CENTER_LEFT);
+        root.setCenter(new GameItem(skinnable.getProfile(), skinnable.getVersion()));
 
-        StackPane imageViewContainer = new StackPane();
-        FXUtils.setLimitWidth(imageViewContainer, 32);
-        FXUtils.setLimitHeight(imageViewContainer, 32);
-
-        ImageView imageView = new ImageView();
-        FXUtils.limitSize(imageView, 32, 32);
-        imageView.imageProperty().bind(skinnable.imageProperty());
-        imageViewContainer.getChildren().setAll(imageView);
-
-        TwoLineListItem item = new TwoLineListItem();
-        BorderPane.setAlignment(item, Pos.CENTER);
-        center.getChildren().setAll(imageView, item);
-        root.setCenter(center);
-
-        VBox menu = new VBox();
-        menu.getStyleClass().setAll("menu");
+        PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
 
-        menu.getChildren().setAll(
+        menu.getContent().setAll(
                 new IconedMenuItem(FXUtils.limitingSize(SVG.gear(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.manage"), FXUtils.withJFXPopupClosing(skinnable::modifyGameSettings, popup)),
                 new MenuSeparator(),
                 new IconedMenuItem(FXUtils.limitingSize(SVG.pencil(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(skinnable::rename, popup)),
@@ -109,8 +89,6 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
 
         root.setStyle("-fx-background-color: white; -fx-padding: 8 8 8 0;");
         JFXDepthManager.setDepth(root, 1);
-        item.titleProperty().bind(skinnable.titleProperty());
-        item.subtitleProperty().bind(skinnable.subtitleProperty());
 
         getChildren().setAll(root);
     }

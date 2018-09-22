@@ -276,7 +276,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png"));
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());
         if (selectedFile != null) {
-            File iconFile = profile.getRepository().getVersionIcon(versionId);
+            File iconFile = profile.getRepository().getVersionIconFile(versionId);
             try {
                 FileUtils.copyFile(selectedFile, iconFile);
                 loadIcon();
@@ -291,7 +291,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         if (versionId == null)
             return;
 
-        File iconFile = profile.getRepository().getVersionIcon(versionId);
+        File iconFile = profile.getRepository().getVersionIconFile(versionId);
         if (iconFile.exists())
             iconFile.delete();
         loadIcon();
@@ -303,7 +303,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             return;
         }
 
-        File iconFile = profile.getRepository().getVersionIcon(versionId);
+        File iconFile = profile.getRepository().getVersionIconFile(versionId);
         if (iconFile.exists())
             iconPickerItem.setImage(new Image("file:" + iconFile.getAbsolutePath()));
         else

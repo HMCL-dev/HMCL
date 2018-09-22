@@ -90,7 +90,7 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         JFXButton settings = new JFXButton();
         FXUtils.setLimitWidth(settings, 40);
         settings.getStyleClass().setAll("toggle-icon4");
-        settings.setGraphic(SVG.dotsVertical(Theme.blackFillBinding(), -1, -1));
+        settings.setGraphic(SVG.gear(Theme.blackFillBinding(), -1, -1));
         right.getChildren().setAll(settings);
         root.setRight(right);
 

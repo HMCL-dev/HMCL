@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
@@ -144,8 +145,22 @@ public class HMCLGameRepository extends DefaultGameRepository {
         return setting;
     }
 
-    public File getVersionIcon(String id) {
+    public File getVersionIconFile(String id) {
         return new File(getVersionRoot(id), "icon.png");
+    }
+
+    public Image getVersionIconImage(String id) {
+        if (id == null)
+            return new Image("/assets/img/grass.png");
+
+        Version version = getVersion(id);
+        File iconFile = getVersionIconFile(id);
+        if (iconFile.exists())
+            return new Image("file:" + iconFile.getAbsolutePath());
+        else if ("net.minecraft.launchwrapper.Launch".equals(version.getMainClass()))
+            return new Image("/assets/img/furnace.png");
+        else
+            return new Image("/assets/img/grass.png");
     }
 
     public boolean saveVersionSetting(String id) {

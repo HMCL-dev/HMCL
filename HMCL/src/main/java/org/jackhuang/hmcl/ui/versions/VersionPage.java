@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
+import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.FileUtils;
 
@@ -74,10 +75,9 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     {
         FXUtils.loadFXML(this, "/assets/fxml/version/version.fxml");
 
-        VBox browseList = new VBox();
-        browseList.getStyleClass().setAll("menu");
+        PopupMenu browseList = new PopupMenu();
         browsePopup = new JFXPopup(browseList);
-        browseList.getChildren().setAll(
+        browseList.getContent().setAll(
                 new IconedMenuItem(null, i18n("folder.game"), FXUtils.withJFXPopupClosing(() -> onBrowse(""), browsePopup)),
                 new IconedMenuItem(null, i18n("folder.mod"), FXUtils.withJFXPopupClosing(() -> onBrowse("mods"), browsePopup)),
                 new IconedMenuItem(null, i18n("folder.config"), FXUtils.withJFXPopupClosing(() -> onBrowse("config"), browsePopup)),
@@ -86,10 +86,9 @@ public final class VersionPage extends StackPane implements DecoratorPage {
                 new IconedMenuItem(null, i18n("folder.saves"), FXUtils.withJFXPopupClosing(() -> onBrowse("resourcepacks"), browsePopup))
         );
 
-        VBox managementList = new VBox();
-        managementList.getStyleClass().setAll("menu");
+        PopupMenu managementList = new PopupMenu();
         managementPopup = new JFXPopup(managementList);
-        managementList.getChildren().setAll(
+        managementList.getContent().setAll(
                 new IconedMenuItem(null, i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(() -> Versions.renameVersion(profile, version), managementPopup)),
                 new IconedMenuItem(null, i18n("version.manage.remove"), FXUtils.withJFXPopupClosing(() -> Versions.deleteVersion(profile, version), managementPopup)),
                 new IconedMenuItem(null, i18n("version.manage.redownload_assets_index"), FXUtils.withJFXPopupClosing(() -> new GameAssetIndexDownloadTask(profile.getDependency(), profile.getRepository().getResolvedVersion(version)).start(), managementPopup)),

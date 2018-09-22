@@ -32,12 +32,13 @@ import javafx.scene.shape.Rectangle;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
-import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
+import org.jackhuang.hmcl.ui.construct.PopupMenu;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.versions.GameItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.VersionNumber;
 
@@ -49,7 +50,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class MainPage extends StackPane implements DecoratorPage {
     private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(this, "title", i18n("main_page"));
 
-    private final VBox menu = new VBox();
+    private final PopupMenu menu = new PopupMenu();
     private final JFXPopup popup = new JFXPopup(menu);
 
     @FXML
@@ -69,7 +70,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         btnLaunch.setClip(new Rectangle(-100, -100, 310, 200));
         btnMenu.setClip(new Rectangle(211, -100, 100, 200));
-        menu.getStyleClass().setAll("menu");
+        menu.setMaxHeight(400);
 
         StackPane graphic = new StackPane();
         Node svg = SVG.triangle(Theme.whiteFillBinding(), 10, 10);
@@ -102,17 +103,26 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void loadVersions(HMCLGameRepository repository) {
-        List<IconedMenuItem> children = repository.getVersions().parallelStream()
+        List<Node> children = repository.getVersions().parallelStream()
                 .filter(version -> !version.isHidden())
                 .sorted((a, b) -> VersionNumber.COMPARATOR.compare(VersionNumber.asVersion(a.getId()), VersionNumber.asVersion(b.getId())))
-                .map(version -> new IconedMenuItem(null, version.getId(), () -> {
-                    repository.getProfile().setSelectedVersion(version.getId());
-                    popup.hide();
-                }))
+                .map(version -> {
+                    StackPane pane = new StackPane();
+                    GameItem item = new GameItem(repository.getProfile(), version.getId());
+                    pane.getChildren().setAll(item);
+                    pane.getStyleClass().setAll("menu-container");
+                    item.setMouseTransparent(true);
+                    RipplerContainer container = new RipplerContainer(pane);
+                    container.setOnMouseClicked(e -> {
+                        repository.getProfile().setSelectedVersion(version.getId());
+                        popup.hide();
+                    });
+                    return container;
+                })
                 .collect(Collectors.toList());
         JFXUtilities.runInFX(() -> {
             if (profile == repository.getProfile())
-                menu.getChildren().setAll(children);
+                menu.getContent().setAll(children);
         });
     }
 

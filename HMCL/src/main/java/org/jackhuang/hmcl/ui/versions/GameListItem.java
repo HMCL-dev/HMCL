@@ -21,27 +21,16 @@ import javafx.beans.property.*;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.image.Image;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.GameVersion;
+
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
-
-import java.io.File;
-
-import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
-import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameListItem extends Control {
     private final Profile profile;
     private final String version;
     private final boolean isModpack;
     private final ToggleGroup toggleGroup;
-    private final StringProperty title = new SimpleStringProperty();
-    private final StringProperty subtitle = new SimpleStringProperty();
     private final BooleanProperty selected = new SimpleBooleanProperty();
-    private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
 
     public GameListItem(ToggleGroup toggleGroup, Profile profile, String id) {
         this.profile = profile;
@@ -49,23 +38,7 @@ public class GameListItem extends Control {
         this.toggleGroup = toggleGroup;
         this.isModpack = profile.getRepository().isModpack(id);
 
-        String game = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(id)).orElse("Unknown");
-
-        StringBuilder libraries = new StringBuilder(game);
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getVersion(id));
-        analyzer.getForge().ifPresent(library -> libraries.append(", ").append(i18n("install.installer.forge")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)forge", ""))));
-        analyzer.getLiteLoader().ifPresent(library -> libraries.append(", ").append(i18n("install.installer.liteloader")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)liteloader", ""))));
-        analyzer.getOptiFine().ifPresent(library -> libraries.append(", ").append(i18n("install.installer.optifine")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)optifine", ""))));
-
-        title.set(id);
-        subtitle.set(libraries.toString());
         selected.set(id.equals(profile.getSelectedVersion()));
-
-        File iconFile = profile.getRepository().getVersionIcon(version);
-        if (iconFile.exists())
-            image.set(new Image("file:" + iconFile.getAbsolutePath()));
-        else
-            image.set(new Image("/assets/img/grass.png"));
     }
 
     @Override
@@ -85,20 +58,8 @@ public class GameListItem extends Control {
         return version;
     }
 
-    public StringProperty titleProperty() {
-        return title;
-    }
-
-    public StringProperty subtitleProperty() {
-        return subtitle;
-    }
-
     public BooleanProperty selectedProperty() {
         return selected;
-    }
-
-    public ObjectProperty<Image> imageProperty() {
-        return image;
     }
 
     public void checkSelection() {
@@ -140,9 +101,5 @@ public class GameListItem extends Control {
 
     public void update() {
         Versions.updateVersion(profile, version);
-    }
-
-    private static String modifyVersion(String gameVersion, String version) {
-        return removeSuffix(removePrefix(removeSuffix(removePrefix(version.replace(gameVersion, "").trim(), "-"), "-"), "_"), "_");
     }
 }

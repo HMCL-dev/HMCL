@@ -14,7 +14,7 @@
                 <graphic>
                     <VBox alignment="CENTER" translateX="-7" maxWidth="200">
                         <Label style="-fx-font-size: 16;" text="%version.launch"/>
-                        <Label style="-fx-font-size: 12px;" fx:id="lblCurrentGame"/>
+                        <Label style="-fx-font-size: 13px;" fx:id="lblCurrentGame"/>
                     </VBox>
                 </graphic>
             </JFXButton>

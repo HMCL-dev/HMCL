@@ -9,11 +9,11 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
+import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -43,11 +43,10 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         center.getChildren().setAll(imageView, item);
         root.setCenter(center);
 
-        VBox menu = new VBox();
-        menu.getStyleClass().setAll("menu");
+        PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
 
-        menu.getChildren().setAll(
+        menu.getContent().setAll(
                 new IconedMenuItem(FXUtils.limitingSize(SVG.gear(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.datapack"), FXUtils.withJFXPopupClosing(skinnable::manageDatapacks, popup)),
                 new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.export"), FXUtils.withJFXPopupClosing(skinnable::export, popup)));
 

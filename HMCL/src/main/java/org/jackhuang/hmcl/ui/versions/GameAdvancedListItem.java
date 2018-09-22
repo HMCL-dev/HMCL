@@ -38,11 +38,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
     public GameAdvancedListItem() {
         FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
             FXUtils.runLaterIf(() -> !Objects.nonNull(Profiles.getSelectedProfile()), () -> {
-                File iconFile = Profiles.getSelectedProfile().getRepository().getVersionIcon(version);
-                if (iconFile.exists())
-                    imageProperty().set(new Image("file:" + iconFile.getAbsolutePath()));
-                else
-                    imageProperty().set(new Image("/assets/img/grass.png"));
+                imageProperty().set(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
 
                 if (version != null) {
                     titleProperty().set(version);
