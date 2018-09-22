@@ -117,3 +117,9 @@ new MultiMCModpackInstallTask(dependency, modpackZipFile, MultiMCInstanceConfigu
 ## HMCL
 
 No plugin API.
+
+## JVM Options (for debugging)
+|Parameter|Description|
+|`-Dhmcl.self_integrity_check.disable=true`|Bypass the self integrity check when checking for update.|
+|`-Dhmcl.version.override=<version>`|Override the version number.|
+|`-Dhmcl.update_source.override=<url>`|Override the update source.|
