@@ -20,6 +20,12 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
@@ -29,6 +35,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -37,9 +44,13 @@ import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.GameItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.upgrade.RemoteVersion;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.List;
@@ -52,15 +63,22 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private final PopupMenu menu = new PopupMenu();
     private final JFXPopup popup = new JFXPopup(menu);
+    private InvalidationListener updateListener;
 
     @FXML
     private StackPane main;
+    @FXML
+    private StackPane updatePane;
     @FXML
     private JFXButton btnLaunch;
     @FXML
     private JFXButton btnMenu;
     @FXML
+    private JFXButton closeButton;
+    @FXML
     private Label lblCurrentGame;
+    @FXML
+    private TwoLineListItem lblLatestVersion;
     @FXML
     private Rectangle separator;
 
@@ -71,6 +89,32 @@ public final class MainPage extends StackPane implements DecoratorPage {
         btnLaunch.setClip(new Rectangle(-100, -100, 310, 200));
         btnMenu.setClip(new Rectangle(211, -100, 100, 200));
         menu.setMaxHeight(400);
+
+        updatePane.visibleProperty().bind(UpdateChecker.outdatedProperty());
+        closeButton.setGraphic(SVG.close(Theme.whiteFillBinding(), 10, 10));
+        closeButton.setOnMouseClicked(event -> {
+            Duration duration = Duration.millis(320);
+            Timeline nowAnimation = new Timeline();
+            nowAnimation.getKeyFrames().addAll(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(updatePane.translateXProperty(), 0, Interpolator.EASE_IN)),
+                    new KeyFrame(duration,
+                            new KeyValue(updatePane.translateXProperty(), 260, Interpolator.EASE_IN)),
+                    new KeyFrame(duration, e -> {
+                updatePane.visibleProperty().unbind();
+                updatePane.setVisible(false);
+            }));
+            nowAnimation.play();
+        });
+        updateListener = any -> {
+            if (UpdateChecker.isOutdated()) {
+                lblLatestVersion.setTitle(i18n("update.bubble.title", UpdateChecker.getLatestVersion().getVersion()));
+            }
+        };
+        UpdateChecker.latestVersionProperty().addListener(new WeakInvalidationListener(updateListener));
+        UpdateChecker.outdatedProperty().addListener(new WeakInvalidationListener(updateListener));
+        UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
+        updateListener.invalidated(null);
 
         StackPane graphic = new StackPane();
         Node svg = SVG.triangle(Theme.whiteFillBinding(), 10, 10);
@@ -135,6 +179,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
     @FXML
     private void onMenu() {
         popup.show(btnMenu, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.RIGHT, 0, -btnMenu.getHeight());
+    }
+
+    @FXML
+    private void onUpgrade() {
+        RemoteVersion target = UpdateChecker.getLatestVersion();
+        if (target == null) {
+            return;
+        }
+        UpdateHandler.updateFrom(target);
     }
 
     public String getTitle() {

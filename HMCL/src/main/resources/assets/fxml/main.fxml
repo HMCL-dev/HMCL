@@ -5,16 +5,33 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Rectangle?>
+<?import org.jackhuang.hmcl.ui.FXUtils?>
+<?import javafx.geometry.Insets?>
+<?import org.jackhuang.hmcl.ui.construct.TwoLineListItem?>
 <fx:root type="StackPane" pickOnBounds="false"
          xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1">
     <StackPane fx:id="main" style="-fx-padding: 25;">
+        <StackPane fx:id="updatePane" styleClass="bubble" FXUtils.limitWidth="230" FXUtils.limitHeight="55"
+                   onMouseClicked="#onUpgrade" StackPane.alignment="TOP_RIGHT">
+            <TwoLineListItem StackPane.alignment="CENTER_LEFT" titleFill="white" subtitleFill="white" subtitle="%update.bubble.subtitle" fx:id="lblLatestVersion" pickOnBounds="false">
+                <StackPane.margin>
+                    <Insets left="12" top="9" right="12" bottom="9" />
+                </StackPane.margin>
+            </TwoLineListItem>
+
+            <JFXButton fx:id="closeButton" StackPane.alignment="TOP_RIGHT" styleClass="toggle-icon-tiny">
+                <StackPane.margin>
+                    <Insets topRightBottomLeft="4" />
+                </StackPane.margin>
+            </JFXButton>
+        </StackPane>
         <StackPane maxWidth="230" maxHeight="55" StackPane.alignment="BOTTOM_RIGHT">
             <JFXButton prefWidth="230" prefHeight="55" buttonType="RAISED" styleClass="jfx-button-raised"
                        onMouseClicked="#launch" fx:id="btnLaunch">
                 <graphic>
                     <VBox alignment="CENTER" translateX="-7" maxWidth="200">
                         <Label style="-fx-font-size: 16;" text="%version.launch"/>
-                        <Label style="-fx-font-size: 13px;" fx:id="lblCurrentGame"/>
+                        <Label style="-fx-font-size: 12px;" fx:id="lblCurrentGame"/>
                     </VBox>
                 </graphic>
             </JFXButton>

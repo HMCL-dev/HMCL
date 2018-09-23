@@ -89,6 +89,15 @@
     -fx-padding: 4 0 4 0;
 }
 
+.bubble {
+    -fx-background-color: gray;
+    -fx-background-radius: 2px;
+}
+
+.bubble .label {
+    -fx-text-fill: white;
+}
+
 /*******************************************************************************
  *                                                                             *
  * JFX Tab Pane                                                                *

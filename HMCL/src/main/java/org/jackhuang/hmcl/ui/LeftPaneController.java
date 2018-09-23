@@ -19,9 +19,7 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import javafx.application.Platform;
-import javafx.beans.binding.When;
 import javafx.scene.layout.Region;
-import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -63,16 +61,7 @@ public final class LeftPaneController extends AdvancedListBox {
         profileListItem.profileProperty().bind(Profiles.selectedProfileProperty());
 
         IconedItem launcherSettingsItem = new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20), "iconed-item");
-
-        launcherSettingsItem.getLabel().textProperty().bind(
-                new When(UpdateChecker.outdatedProperty())
-                        .then(i18n("update.found"))
-                        .otherwise(i18n("settings.launcher")));
-
-        launcherSettingsItem.getLabel().textFillProperty().bind(
-                new When(UpdateChecker.outdatedProperty())
-                        .then(Color.RED)
-                        .otherwise(Color.BLACK));
+        launcherSettingsItem.getLabel().setText(i18n("settings.launcher"));
 
         launcherSettingsItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
 
