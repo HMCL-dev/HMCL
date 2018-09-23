@@ -59,7 +59,6 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         ImageView imageView = new ImageView();
         FXUtils.limitSize(imageView, 32, 32);
         imageView.imageProperty().bind(skinnable.imageProperty());
-        imageView.viewportProperty().bind(skinnable.viewportProperty());
         imageViewContainer.getChildren().setAll(imageView);
 
         TwoLineListItem item = new TwoLineListItem();

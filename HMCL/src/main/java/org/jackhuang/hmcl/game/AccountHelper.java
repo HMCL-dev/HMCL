@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import javafx.geometry.Rectangle2D;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
 
@@ -91,9 +92,52 @@ public final class AccountHelper {
         return scale(url, scaleRatio);
     }
 
-    public static Rectangle2D getViewport(double scaleRatio) {
-        double size = 8.0 * scaleRatio;
-        return new Rectangle2D(size, size, size, size);
+    public static Image getHead(Image skin, int scaleRatio) {
+        int size = 8 * scaleRatio;
+        BufferedImage image = SwingFXUtils.fromFXImage(skin, null);
+        BufferedImage head = image.getSubimage(size, size, size, size);
+        if (image.getHeight() > 32) {
+            int[] face = head.getRGB(0, 0, size, size, null, 0, size);
+            int[] helmet = image.getRGB(40 * scaleRatio, 8 * scaleRatio, size, size, null, 0, size);
+            int[] result = blendColor(face, helmet);
+            head.setRGB(0, 0, size, size, result, 0, size);
+        }
+        return SwingFXUtils.toFXImage(head, null);
+    }
+
+    private static int[] blendColor(int[] bottom, int[] top) {
+        if (bottom.length != top.length) throw new IllegalArgumentException();
+        int[] result = new int[bottom.length];
+        for (int i = 0; i < bottom.length; i++) {
+            int b = bottom[i];
+            int t = top[i];
+            result[i] = blendColor(b, t);
+        }
+        return result;
+    }
+
+    private static int blendColor(int bottom, int top) {
+        int tAlpha = (top >> 24) & 0xFF;
+        if (tAlpha == 0) return bottom | 0xFF000000;  // set alpha to 255
+        if (tAlpha == 255) return top;
+
+        int tRed = (top >> 16) & 0xFF,
+                tGreen = (top >> 8) & 0xFF,
+                tBlue = (top) & 0xFF;
+        int bRed = (bottom >> 16) & 0xFF,
+                bGreen = (bottom >> 8) & 0xFF,
+                bBlue = (bottom) & 0xFF;
+        int cRed = blendColorChannel(bRed, tRed, tAlpha),
+                cGreen = blendColorChannel(bGreen, tGreen, tAlpha),
+                cBlue = blendColorChannel(bBlue, tBlue, tAlpha);
+        return 0xFF000000 |  // set alpha to 255
+                ((cRed & 0xFF) << 16) |
+                ((cGreen & 0xFF) << 8) |
+                ((cBlue & 0xFF));
+    }
+
+    private static int blendColorChannel(int bottom, int top, int alpha) {
+        return (top * alpha + bottom * (255 - alpha)) / 255;
     }
 
     private static class SkinLoadTask extends Task {

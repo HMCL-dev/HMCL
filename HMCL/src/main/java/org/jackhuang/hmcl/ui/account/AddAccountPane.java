@@ -221,17 +221,17 @@ public class AddAccountPane extends StackPane {
 
             for (GameProfile profile : names) {
                 Image image;
+                final int scaleRatio = 4;
                 try {
-                    image = AccountHelper.getSkinImmediately(yggdrasilAccount, profile, 4);
+                    image = AccountHelper.getSkinImmediately(yggdrasilAccount, profile, scaleRatio);
                 } catch (Exception e) {
                     Logging.LOG.log(Level.WARNING, "Failed to get skin for " + profile.getName(), e);
-                    image = AccountHelper.getDefaultSkin(profile.getId(), 4);
+                    image = AccountHelper.getDefaultSkin(profile.getId(), scaleRatio);
                 }
 
                 ImageView portraitView = new ImageView();
                 portraitView.setSmooth(false);
-                portraitView.setImage(image);
-                portraitView.setViewport(AccountHelper.getViewport(4));
+                portraitView.setImage(AccountHelper.getHead(image, scaleRatio));
                 FXUtils.limitSize(portraitView, 32, 32);
 
                 IconedItem accountItem = new IconedItem(portraitView, profile.getName());

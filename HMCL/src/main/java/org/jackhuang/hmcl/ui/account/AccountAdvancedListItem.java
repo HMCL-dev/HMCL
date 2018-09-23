@@ -39,18 +39,18 @@ public class AccountAdvancedListItem extends AdvancedListItem {
                 titleProperty().set(i18n("account.missing"));
                 subtitleProperty().set(i18n("account.missing.add"));
                 imageProperty().set(new Image("/assets/img/craft_table.png"));
-                viewportProperty().set(null);
             } else {
                 titleProperty().set(account.getCharacter());
                 subtitleProperty().set(accountSubtitle(account));
 
-                imageProperty().set(AccountHelper.getDefaultSkin(account.getUUID(), 4));
-                viewportProperty().set(AccountHelper.getViewport(4));
+                final int scaleRatio = 4;
+                Image defaultSkin = AccountHelper.getDefaultSkin(account.getUUID(), scaleRatio);
+                imageProperty().set(AccountHelper.getHead(defaultSkin, scaleRatio));
 
                 if (account instanceof YggdrasilAccount) {
                     AccountHelper.loadSkinAsync((YggdrasilAccount) account).subscribe(Schedulers.javafx(), () -> {
-                        Image image = AccountHelper.getSkin((YggdrasilAccount) account, 4);
-                        imageProperty().set(image);
+                        Image image = AccountHelper.getSkin((YggdrasilAccount) account, scaleRatio);
+                        imageProperty().set(AccountHelper.getHead(image, scaleRatio));
                     });
                 }
             }
