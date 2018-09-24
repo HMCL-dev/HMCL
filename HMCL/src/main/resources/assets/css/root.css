@@ -98,6 +98,12 @@
     -fx-text-fill: white;
 }
 
+.two-line-list-item {
+    -jfx-title-font-size: 15px;
+    -jfx-title-fill: black;
+    -jfx-subtitle-fill: gray;
+}
+
 /*******************************************************************************
  *                                                                             *
  * JFX Tab Pane                                                                *

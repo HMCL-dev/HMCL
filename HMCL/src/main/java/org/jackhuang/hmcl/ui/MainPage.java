@@ -78,6 +78,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
     @FXML
     private Label lblCurrentGame;
     @FXML
+    private Label lblIcon;
+    @FXML
     private TwoLineListItem lblLatestVersion;
     @FXML
     private Rectangle separator;
@@ -106,6 +108,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             }));
             nowAnimation.play();
         });
+        lblIcon.setGraphic(SVG.update(Theme.whiteFillBinding(), 20, 20));
         updateListener = any -> {
             if (UpdateChecker.isOutdated()) {
                 lblLatestVersion.setTitle(i18n("update.bubble.title", UpdateChecker.getLatestVersion().getVersion()));

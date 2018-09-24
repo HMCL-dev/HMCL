@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class TwoLineListItem extends StackPane {
+    private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
@@ -64,6 +65,8 @@ public class TwoLineListItem extends StackPane {
         VBox vbox = new VBox();
         vbox.getChildren().setAll(lblTitle, lblSubtitle);
         getChildren().setAll(vbox);
+
+        getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
     public String getTitle() {
