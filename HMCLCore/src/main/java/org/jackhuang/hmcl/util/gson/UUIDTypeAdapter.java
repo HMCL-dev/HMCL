@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.gson;
 
+import com.google.gson.JsonParseException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -50,7 +51,11 @@ public final class UUIDTypeAdapter extends TypeAdapter<UUID> {
     }
 
     public static UUID fromString(String input) {
-        return UUID.fromString(input.replaceFirst("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})", "$1-$2-$3-$4-$5"));
+        try {
+            return UUID.fromString(input.replaceFirst("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})", "$1-$2-$3-$4-$5"));
+        } catch (IllegalArgumentException e) {
+            throw new JsonParseException("UUID malformed");
+        }
     }
 
 }

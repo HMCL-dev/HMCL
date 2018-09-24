@@ -8,6 +8,7 @@ import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.gson.ValidationTypeAdapterFactory;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
@@ -187,6 +188,7 @@ public class YggdrasilService {
     private static final Gson GSON = new GsonBuilder()
             .registerTypeAdapter(PropertyMap.class, PropertyMap.Serializer.INSTANCE)
             .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
+            .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
             .create();
 
 }

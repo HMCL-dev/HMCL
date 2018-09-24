@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.Validation;
 
 import java.util.UUID;
 
@@ -26,7 +29,7 @@ import java.util.UUID;
  * @author huangyuhui
  */
 @Immutable
-public final class GameProfile {
+public final class GameProfile implements Validation {
 
     private final UUID id;
     private final String name;
@@ -61,4 +64,11 @@ public final class GameProfile {
         return properties;
     }
 
+    @Override
+    public void validate() throws JsonParseException {
+        if (id == null)
+            throw new JsonParseException("Game profile id cannot be null or malformed");
+        if (StringUtils.isBlank(name))
+            throw new JsonParseException("Game profile name cannot be null or blank");
+    }
 }
