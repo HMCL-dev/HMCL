@@ -30,16 +30,11 @@ import javafx.scene.image.Image;
 
 public class AdvancedListItem extends Control {
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
-    private final ObjectProperty<Rectangle2D> viewport = new SimpleObjectProperty<>();
     private final StringProperty title = new SimpleStringProperty();
     private final StringProperty subtitle = new SimpleStringProperty();
 
     public ObjectProperty<Image> imageProperty() {
         return image;
-    }
-
-    public ObjectProperty<Rectangle2D> viewportProperty() {
-        return viewport;
     }
 
     public StringProperty titleProperty() {

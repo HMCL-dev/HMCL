@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.account;
 
 import javafx.beans.property.*;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleGroup;
@@ -41,7 +40,6 @@ public class AccountListItem extends Control {
     private final StringProperty subtitle = new SimpleStringProperty();
     private final BooleanProperty selected = new SimpleBooleanProperty();
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
-    private final ObjectProperty<Rectangle2D> viewport = new SimpleObjectProperty<>();
 
     public AccountListItem(ToggleGroup toggleGroup, Account account) {
         this.account = account;
@@ -60,13 +58,11 @@ public class AccountListItem extends Control {
         subtitle.set(subtitleString.toString());
         selected.set(Accounts.selectedAccountProperty().get() == account);
 
-        viewport.set(AccountHelper.getViewport(4));
-        if (account instanceof YggdrasilAccount) {
-            Image image = AccountHelper.getSkin((YggdrasilAccount) account, 4);
-            this.image.set(image);
-        } else {
-            this.image.set(AccountHelper.getDefaultSkin(account.getUUID(), 4));
-        }
+        final int scaleRatio = 4;
+        Image image = account instanceof YggdrasilAccount ?
+                AccountHelper.getSkin((YggdrasilAccount) account, scaleRatio) :
+                AccountHelper.getDefaultSkin(account.getUUID(), scaleRatio);
+        this.image.set(AccountHelper.getHead(image, scaleRatio));
     }
 
     @Override
@@ -98,10 +94,6 @@ public class AccountListItem extends Control {
         return image;
     }
 
-    public ObjectProperty<Rectangle2D> viewportProperty() {
-        return viewport;
-    }
-
     public void refresh() {
         if (account instanceof YggdrasilAccount) {
             // progressBar.setVisible(true);
@@ -110,8 +102,9 @@ public class AccountListItem extends Control {
                         // progressBar.setVisible(false);
 
                         if (isDependentsSucceeded) {
-                            Image image = AccountHelper.getSkin((YggdrasilAccount) account, 4);
-                            this.image.set(image);
+                            final int scaleRatio = 4;
+                            Image image = AccountHelper.getSkin((YggdrasilAccount) account, scaleRatio);
+                            this.image.set(AccountHelper.getHead(image, scaleRatio));
                         }
                     }).start();
         }

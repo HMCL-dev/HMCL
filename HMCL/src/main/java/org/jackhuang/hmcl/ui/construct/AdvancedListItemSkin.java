@@ -54,7 +54,6 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         FXUtils.limitSize(imageView, 32, 32);
         imageView.setPreserveRatio(true);
         imageView.imageProperty().bind(skinnable.imageProperty());
-        imageView.viewportProperty().bind(skinnable.viewportProperty());
         imageViewContainer.getChildren().setAll(imageView);
 
         VBox vbox = new VBox();

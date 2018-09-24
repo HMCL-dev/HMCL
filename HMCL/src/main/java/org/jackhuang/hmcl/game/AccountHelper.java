@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import javafx.geometry.Rectangle2D;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
@@ -32,6 +32,8 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
 
@@ -91,9 +93,19 @@ public final class AccountHelper {
         return scale(url, scaleRatio);
     }
 
-    public static Rectangle2D getViewport(double scaleRatio) {
-        double size = 8.0 * scaleRatio;
-        return new Rectangle2D(size, size, size, size);
+    public static Image getHead(Image skin, int scaleRatio) {
+        final int size = 8 * scaleRatio;
+        final int faceOffset = (int) Math.floor(scaleRatio * 4d / 9d);
+        BufferedImage image = SwingFXUtils.fromFXImage(skin, null);
+        BufferedImage head = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = head.createGraphics();
+        g2d.drawImage(image, faceOffset, faceOffset, size - faceOffset, size - faceOffset,
+                size, size, size + size, size + size, null);
+        if (image.getHeight() > 32) {
+            g2d.drawImage(image, 0, 0, size, size,
+                    40 * scaleRatio, 8 * scaleRatio, 48 * scaleRatio, 16 * scaleRatio, null);
+        }
+        return SwingFXUtils.toFXImage(head, null);
     }
 
     private static class SkinLoadTask extends Task {
