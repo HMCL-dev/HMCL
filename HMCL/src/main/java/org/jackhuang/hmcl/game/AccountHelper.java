@@ -95,7 +95,7 @@ public final class AccountHelper {
 
     public static Image getHead(Image skin, int scaleRatio) {
         final int size = 8 * scaleRatio;
-        final int faceOffset = (int) Math.floor(scaleRatio * 4d / 9d);
+        final int faceOffset = (int) Math.round(scaleRatio * 4d / 9d);
         BufferedImage image = SwingFXUtils.fromFXImage(skin, null);
         BufferedImage head = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = head.createGraphics();

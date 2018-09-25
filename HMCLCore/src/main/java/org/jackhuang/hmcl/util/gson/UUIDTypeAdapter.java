@@ -43,7 +43,11 @@ public final class UUIDTypeAdapter extends TypeAdapter<UUID> {
 
     @Override
     public UUID read(JsonReader reader) throws IOException {
-        return fromString(reader.nextString());
+        try {
+            return fromString(reader.nextString());
+        } catch (IllegalArgumentException e) {
+            throw new JsonParseException("UUID malformed");
+        }
     }
 
     public static String fromUUID(UUID value) {
@@ -51,11 +55,7 @@ public final class UUIDTypeAdapter extends TypeAdapter<UUID> {
     }
 
     public static UUID fromString(String input) {
-        try {
-            return UUID.fromString(input.replaceFirst("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})", "$1-$2-$3-$4-$5"));
-        } catch (IllegalArgumentException e) {
-            throw new JsonParseException("UUID malformed");
-        }
+        return UUID.fromString(input.replaceFirst("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})", "$1-$2-$3-$4-$5"));
     }
 
 }
