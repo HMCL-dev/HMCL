@@ -150,7 +150,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public Image getVersionIconImage(String id) {
-        if (id == null)
+        if (id == null || !isLoaded())
             return new Image("/assets/img/grass.png");
 
         Version version = getVersion(id);

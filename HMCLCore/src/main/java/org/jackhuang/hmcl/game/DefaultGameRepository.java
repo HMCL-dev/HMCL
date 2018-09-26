@@ -40,7 +40,6 @@ public class DefaultGameRepository implements GameRepository {
 
     private File baseDirectory;
     protected Map<String, Version> versions;
-    protected boolean loaded = false;
 
     public DefaultGameRepository(File baseDirectory) {
         this.baseDirectory = baseDirectory;
@@ -251,7 +250,6 @@ public class DefaultGameRepository implements GameRepository {
         }
 
         this.versions = versions;
-        loaded = true;
     }
 
     @Override
@@ -357,7 +355,7 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public boolean isLoaded() {
-        return loaded;
+        return versions != null;
     }
 
     public File getModpackConfiguration(String version) {
