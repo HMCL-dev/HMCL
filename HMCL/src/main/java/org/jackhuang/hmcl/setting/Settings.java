@@ -17,10 +17,14 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import javafx.beans.binding.Bindings;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.util.CacheRepository;
+
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
@@ -49,7 +53,15 @@ public class Settings {
         Profiles.init();
 
         CacheRepository.setInstance(HMCLCacheRepository.REPOSITORY);
-        HMCLCacheRepository.REPOSITORY.directoryProperty().bind(config().commonDirectoryProperty());
+        HMCLCacheRepository.REPOSITORY.directoryProperty().bind(Bindings.createStringBinding(() -> {
+            String str = config().getCommonDirectory();
+            try {
+                Paths.get(str);
+                return str;
+            } catch (InvalidPathException e) {
+                return getDefaultCommonDirectory();
+            }
+        }, config().commonDirectoryProperty()));
     }
 
     public Font getFont() {
