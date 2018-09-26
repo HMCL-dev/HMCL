@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonSyntaxException;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Logging;
@@ -108,11 +107,11 @@ public class DefaultGameRepository implements GameRepository {
         return new File(getVersionRoot(id), id + ".json");
     }
 
-    public Version readVersionJson(String id) throws IOException, JsonSyntaxException {
+    public Version readVersionJson(String id) throws IOException, JsonParseException {
         return readVersionJson(getVersionJson(id));
     }
 
-    public Version readVersionJson(File file) throws IOException, JsonSyntaxException {
+    public Version readVersionJson(File file) throws IOException, JsonParseException {
         return JsonUtils.GSON.fromJson(FileUtils.readText(file), Version.class);
     }
 

@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.upgrade;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 import javafx.application.Platform;
 import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.Launcher;
@@ -239,18 +240,20 @@ public final class UpdateHandler {
     }
 
     private static void breakForceUpdateFeature() {
-        try {
-            Path hmclVersionJson = Launcher.HMCL_DIRECTORY.toPath().resolve("hmclver.json");
-            if (Files.isRegularFile(hmclVersionJson)) {
+        Path hmclVersionJson = Launcher.HMCL_DIRECTORY.toPath().resolve("hmclver.json");
+        if (Files.isRegularFile(hmclVersionJson)) {
+            try {
                 Map<?, ?> content = new Gson().fromJson(new String(Files.readAllBytes(hmclVersionJson), UTF_8), Map.class);
                 Object ver = content.get("ver");
                 if (ver instanceof String && ((String) ver).startsWith("3.")) {
                     Files.delete(hmclVersionJson);
                     LOG.info("Successfully broke the force update feature");
                 }
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to break the force update feature", e);
+            } catch (JsonParseException e) {
+                hmclVersionJson.toFile().delete();
             }
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to break the force update feature", e);
         }
     }
     // ====

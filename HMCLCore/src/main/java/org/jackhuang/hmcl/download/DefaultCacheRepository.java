@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.game.LibraryDownloadTask;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.LibraryDownloadInfo;
@@ -62,7 +63,7 @@ public class DefaultCacheRepository extends CacheRepository {
                 index = JsonUtils.GSON.fromJson(FileUtils.readText(indexFile.toFile()), Index.class);
             else
                 index = new Index();
-        } catch (IOException e) {
+        } catch (IOException | JsonParseException e) {
             Logging.LOG.log(Level.WARNING, "Unable to read index file", e);
             index = new Index();
         } finally {

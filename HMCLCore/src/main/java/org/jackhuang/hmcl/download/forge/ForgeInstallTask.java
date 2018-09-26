@@ -89,9 +89,7 @@ public final class ForgeInstallTask extends TaskResult<Version> {
             if (stream == null)
                 throw new IOException("Malformed forge installer file, install_profile.json does not exist.");
             String json = IOUtils.readFullyAsString(stream);
-            ForgeInstallProfile installProfile = JsonUtils.GSON.fromJson(json, ForgeInstallProfile.class);
-            if (installProfile == null)
-                throw new IOException("Malformed forge installer file, install_profile.json does not exist.");
+            ForgeInstallProfile installProfile = JsonUtils.fromNonNullJson(json, ForgeInstallProfile.class);
             
             // unpack the universal jar in the installer file.
             Library forgeLibrary = Library.fromName(installProfile.getInstall().getPath());

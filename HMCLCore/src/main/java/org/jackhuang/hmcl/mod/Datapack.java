@@ -112,7 +112,7 @@ public class Datapack {
                 try {
                     PackMcMeta pack = JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class);
                     info.add(new Pack(path, FileUtils.getNameWithoutExtension(path), pack.getPackInfo().getDescription(), this));
-                } catch (IOException e) {
+                } catch (IOException | JsonParseException e) {
                     Logging.LOG.log(Level.WARNING, "Failed to read datapack " + path, e);
                 }
             } else {
@@ -147,7 +147,7 @@ public class Datapack {
                         PackMcMeta pack = enabled ? JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class)
                                 : JsonUtils.fromNonNullJson(FileUtils.readText(mcmetaDisabled), PackMcMeta.class);
                         info.add(new Pack(enabled ? mcmeta : mcmetaDisabled, FileUtils.getName(subDir), pack.getPackInfo().getDescription(), this));
-                    } catch (IOException e) {
+                    } catch (IOException | JsonParseException e) {
                         Logging.LOG.log(Level.WARNING, "Failed to read datapack " + subDir, e);
                     }
                 } else if (Files.isRegularFile(subDir)) {
@@ -169,7 +169,7 @@ public class Datapack {
 
                         PackMcMeta pack = JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class);
                         info.add(new Pack(subDir, name, pack.getPackInfo().getDescription(), this));
-                    } catch (IOException e) {
+                    } catch (IOException | JsonParseException e) {
                         Logging.LOG.log(Level.WARNING, "Failed to read datapack " + subDir, e);
                     }
                 }

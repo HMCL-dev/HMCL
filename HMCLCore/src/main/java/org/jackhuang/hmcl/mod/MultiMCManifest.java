@@ -63,8 +63,8 @@ public final class MultiMCManifest {
             String json = IOUtils.readFullyAsString(Files.newInputStream(mmcPack));
             MultiMCManifest manifest = JsonUtils.fromNonNullJson(json, MultiMCManifest.class);
 
-            if (manifest != null && manifest.getComponents() == null)
-                    throw new IOException("mmc-pack.json malformed.");
+            if (manifest.getComponents() == null)
+                throw new IOException("mmc-pack.json malformed.");
 
             return manifest;
         }
