@@ -92,13 +92,10 @@ public class Versions {
                 region.set(Controllers.taskDialog(executor, i18n("modpack.update"), ""));
                 executor.start();
             } catch (UnsupportedModpackException e) {
-                region.get().fireEvent(new DialogCloseEvent());
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
             } catch (MismatchedModpackTypeException e) {
-                region.get().fireEvent(new DialogCloseEvent());
                 Controllers.dialog(i18n("modpack.mismatched_type"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
             } catch (IOException e) {
-                region.get().fireEvent(new DialogCloseEvent());
                 Controllers.dialog(i18n("modpack.invalid"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
             }
         }
