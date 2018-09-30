@@ -95,7 +95,7 @@ public final class Config implements Cloneable, Observable {
     private BooleanProperty hasProxyAuth = new SimpleBooleanProperty();
 
     @SerializedName("proxyType")
-    private ObjectProperty<Proxy.Type> proxyType = new SimpleObjectProperty<>(Proxy.Type.DIRECT);
+    private ObjectProperty<Proxy.Type> proxyType = new SimpleObjectProperty<>(Proxy.Type.HTTP);
 
     @SerializedName("proxyHost")
     private StringProperty proxyHost = new SimpleStringProperty();
