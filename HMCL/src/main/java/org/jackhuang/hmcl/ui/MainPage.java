@@ -32,6 +32,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
@@ -90,7 +91,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         btnLaunch.setClip(new Rectangle(-100, -100, 310, 200));
         btnMenu.setClip(new Rectangle(211, -100, 100, 200));
-        menu.setMaxHeight(400);
+        menu.setMaxHeight(365);
+        menu.setMinWidth(545);
 
         updatePane.visibleProperty().bind(UpdateChecker.outdatedProperty());
         closeButton.setGraphic(SVG.close(Theme.whiteFillBinding(), 10, 10));
@@ -154,9 +156,17 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 .filter(version -> !version.isHidden())
                 .sorted((a, b) -> VersionNumber.COMPARATOR.compare(VersionNumber.asVersion(a.getId()), VersionNumber.asVersion(b.getId())))
                 .map(version -> {
-                    StackPane pane = new StackPane();
+                    BorderPane pane = new BorderPane();
                     GameItem item = new GameItem(repository.getProfile(), version.getId());
-                    pane.getChildren().setAll(item);
+                    pane.setLeft(item);
+                    JFXButton settings = new JFXButton();
+                    settings.setGraphic(SVG.gear(Theme.blackFillBinding(), -1, -1));
+                    settings.getStyleClass().setAll("toggle-icon4");
+                    settings.setOnMouseClicked(e -> {
+                        Versions.modifyGameSettings(profile, version.getId());
+                        popup.hide();
+                    });
+                    pane.setRight(settings);
                     pane.getStyleClass().setAll("menu-container");
                     item.setMouseTransparent(true);
                     RipplerContainer container = new RipplerContainer(pane);

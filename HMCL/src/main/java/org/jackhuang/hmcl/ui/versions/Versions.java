@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -133,5 +132,10 @@ public class Versions {
         VersionSettingsPage page = new VersionSettingsPage();
         page.loadVersionSetting(profile, null);
         Controllers.navigate(page);
+    }
+
+    public static void modifyGameSettings(Profile profile, String version) {
+        Controllers.getVersionPage().load(version, profile);
+        Controllers.navigate(Controllers.getVersionPage());
     }
 }
