@@ -53,6 +53,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -106,11 +107,11 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         FXUtils.smoothScrolling(scroll);
 
-        Task.of(variables -> variables.set("list", JavaVersion.getJREs()))
+        Task.of(variables -> variables.set("list", JavaVersion.getJavas()))
                 .subscribe(Schedulers.javafx(), variables -> {
                     javaItem.loadChildren(
                             (variables.<List<JavaVersion>>get("list")).stream()
-                                    .map(javaVersion -> javaItem.createChildren(javaVersion.getVersion() + i18n("settings.game.java_directory.bit", javaVersion.getPlatform().getBit()), javaVersion.getBinary().getAbsolutePath(), javaVersion))
+                                    .map(javaVersion -> javaItem.createChildren(javaVersion.getVersion() + i18n("settings.game.java_directory.bit", javaVersion.getPlatform().getBit()), javaVersion.getBinary().toString(), javaVersion))
                                     .collect(Collectors.toList()));
                     javaItemsLoaded = true;
                     initializeSelectedJava();
@@ -259,7 +260,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         Task.of(variables -> variables.set("java", versionSetting.getJavaVersion()))
                 .subscribe(Task.of(Schedulers.javafx(),
                         variables -> javaItem.setSubtitle(variables.<JavaVersion>getOptional("java")
-                                .map(JavaVersion::getBinary).map(File::getAbsolutePath).orElse("Invalid Java Directory"))));
+                                .map(JavaVersion::getBinary).map(Path::toString).orElse("Invalid Java Directory"))));
     }
 
     @FXML

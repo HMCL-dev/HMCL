@@ -17,27 +17,24 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import static java.util.Collections.unmodifiableList;
+import static java.util.stream.Collectors.toList;
+import static org.jackhuang.hmcl.util.Logging.LOG;
+
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -48,19 +45,19 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
  */
 public final class JavaVersion {
 
-    private final File binary;
+    private final Path binary;
     private final String longVersion;
     private final Platform platform;
     private final int version;
 
-    public JavaVersion(File binary, String longVersion, Platform platform) {
+    public JavaVersion(Path binary, String longVersion, Platform platform) {
         this.binary = binary;
         this.longVersion = longVersion;
         this.platform = platform;
         version = parseVersion(longVersion);
     }
 
-    public File getBinary() {
+    public Path getBinary() {
         return binary;
     }
 
@@ -114,15 +111,18 @@ public final class JavaVersion {
             return UNKNOWN;
     }
 
-    public static JavaVersion fromExecutable(File executable) throws IOException {
+    public static JavaVersion fromExecutable(Path executable) throws IOException {
         Platform platform = Platform.BIT_32;
         String version = null;
 
         // javaw is only used on windows
-        if ("javaw.exe".equalsIgnoreCase(executable.getName()))
-            executable = new File(executable.getAbsoluteFile().getParentFile(), "java.exe");
+        if ("javaw.exe".equalsIgnoreCase(executable.getFileName().toString())) {
+            executable = executable.resolveSibling("java.exe");
+        }
 
-        Process process = new ProcessBuilder(executable.getAbsolutePath(), "-version").start();
+        executable = executable.toRealPath();
+
+        Process process = new ProcessBuilder(executable.toString(), "-version").start();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
             for (String line; (line = reader.readLine()) != null;) {
                 Matcher m = REGEX.matcher(line);
@@ -134,7 +134,7 @@ public final class JavaVersion {
         }
 
         if (version == null)
-            throw new IOException("No matched Java version.");
+            throw new IOException("No Java version is matched");
 
         if (parseVersion(version) == UNKNOWN)
             throw new IOException("Unrecognized Java version " + version);
@@ -142,181 +142,174 @@ public final class JavaVersion {
         return new JavaVersion(executable, version, platform);
     }
 
-    public static JavaVersion fromJavaHome(File home) throws IOException {
-        return fromExecutable(getExecutable(home));
-    }
-
-    private static File getExecutable(File javaHome) {
+    private static Path getExecutable(Path javaHome) {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            return new File(javaHome, "bin/java.exe");
+            return javaHome.resolve("bin").resolve("java.exe");
         } else {
-            return new File(javaHome, "bin/java");
+            return javaHome.resolve("bin").resolve("java");
         }
     }
 
     public static JavaVersion fromCurrentEnvironment() {
-        return THIS_JAVA;
+        return CURRENT_JAVA;
     }
 
-    public static final JavaVersion THIS_JAVA = new JavaVersion(
-            getExecutable(new File(System.getProperty("java.home"))),
-            System.getProperty("java.version"),
-            Platform.PLATFORM
-    );
+    public static final JavaVersion CURRENT_JAVA;
+
+    static {
+        Path currentExecutable = getExecutable(Paths.get(System.getProperty("java.home")));
+        try {
+            currentExecutable = currentExecutable.toRealPath();
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to resolve current Java path: " + currentExecutable, e);
+        }
+        CURRENT_JAVA = new JavaVersion(
+                currentExecutable,
+                System.getProperty("java.version"),
+                Platform.PLATFORM);
+    }
 
     private static List<JavaVersion> JAVAS;
     private static final CountDownLatch LATCH = new CountDownLatch(1);
 
-    public static List<JavaVersion> getJREs() throws InterruptedException {
+    public static List<JavaVersion> getJavas() throws InterruptedException {
         if (JAVAS != null)
             return JAVAS;
         LATCH.await();
         return JAVAS;
     }
 
-    public static synchronized void initialize() throws IOException {
+    public static synchronized void initialize() {
         if (JAVAS != null)
             throw new IllegalStateException("JavaVersions have already been initialized.");
+
         List<JavaVersion> javaVersions;
-        switch (OperatingSystem.CURRENT_OS) {
-            case WINDOWS:
-                javaVersions = queryWindows();
-                break;
-            case LINUX:
-                javaVersions = queryLinux();
-                break;
-            case OSX:
-                javaVersions = queryMacintosh();
-                break;
-            default:
-                javaVersions = new ArrayList<>();
-                break;
+
+        try {
+            javaVersions = lookupJavas(searchPotentialJavaHomes());
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to search Java homes", e);
+            javaVersions = new ArrayList<>();
         }
 
-        boolean isCurrentJavaIncluded = false;
-        for (int i = 0; i < javaVersions.size(); i++) {
-            if (THIS_JAVA.getBinary().equals(javaVersions.get(i).getBinary())) {
-                javaVersions.set(i, THIS_JAVA);
-                isCurrentJavaIncluded = true;
-                break;
-            }
-        }
-        if (!isCurrentJavaIncluded) {
-            javaVersions.add(THIS_JAVA);
+        // insert current java to the list
+        if (!javaVersions.contains(CURRENT_JAVA)) {
+            javaVersions.add(CURRENT_JAVA);
         }
 
-        JAVAS = Collections.unmodifiableList(javaVersions);
+        JAVAS = unmodifiableList(javaVersions);
         LATCH.countDown();
     }
 
-    // ==== Linux ====
-    private static List<JavaVersion> queryLinux() throws IOException {
-        Path jvmDir = Paths.get("/usr/lib/jvm");
-        if (Files.isDirectory(jvmDir)) {
-            return Files.list(jvmDir)
-                    .filter(dir -> Files.isDirectory(dir, LinkOption.NOFOLLOW_LINKS))
-                    .map(dir -> dir.resolve("bin/java"))
-                    .filter(Files::isExecutable)
-                    .flatMap(executable -> {
-                        try {
-                            return Stream.of(fromExecutable(executable.toFile()));
-                        } catch (IOException e) {
-                            Logging.LOG.log(Level.WARNING, "Couldn't determine java " + executable, e);
-                            return Stream.empty();
-                        }
-                    })
-                    .collect(Collectors.toList());
-        } else {
-            return Collections.emptyList();
+    private static List<JavaVersion> lookupJavas(Stream<Path> javaHomes) {
+        return javaHomes
+                .filter(Files::isDirectory)
+                .map(JavaVersion::getExecutable)
+                .filter(Files::isExecutable)
+                .flatMap(executable -> { // resolve symbolic links
+                    try {
+                        return Stream.of(executable.toRealPath());
+                    } catch (IOException e) {
+                        LOG.log(Level.WARNING, "Failed to lookup Java executable at " + executable, e);
+                        return Stream.empty();
+                    }
+                })
+                .distinct() // remove duplicated javas
+                .flatMap(executable -> {
+                    if (executable.equals(CURRENT_JAVA.getBinary())) {
+                        return Stream.of(CURRENT_JAVA);
+                    }
+                    try {
+                        return Stream.of(fromExecutable(executable));
+                    } catch (IOException e) {
+                        LOG.log(Level.WARNING, "Failed to determine Java at " + executable, e);
+                        return Stream.empty();
+                    }
+                })
+                .collect(toList());
+    }
+
+    private static Stream<Path> searchPotentialJavaHomes() throws IOException {
+        switch (OperatingSystem.CURRENT_OS) {
+
+            case WINDOWS:
+                List<Path> locations = new ArrayList<>();
+                locations.addAll(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\"));
+                locations.addAll(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\"));
+                locations.addAll(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JRE\\"));
+                locations.addAll(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JDK\\"));
+                return locations.stream();
+
+            case LINUX:
+                Path linuxJvmDir = Paths.get("/usr/lib/jvm");
+                if (Files.isDirectory(linuxJvmDir)) {
+                    return Files.list(linuxJvmDir);
+                }
+                return Stream.empty();
+
+            case OSX:
+                Path osxJvmDir = Paths.get("/Library/Java/JavaVirtualMachines");
+                if (Files.isDirectory(osxJvmDir)) {
+                    return Files.list(osxJvmDir)
+                            .map(dir -> dir.resolve("Contents/Home"));
+                }
+                return Stream.empty();
+
+            default:
+                return Stream.empty();
         }
     }
-    // ====
 
-    private static JavaVersion fromJavaHomeQuietly(File home) {
-        try {
-            return fromJavaHome(home);
-        } catch (IOException e) {
-            Logging.LOG.log(Level.WARNING, "Couldn't determine java " + home, e);
-            return null;
-        }
-    }
-
-    // ==== OSX ====
-    private static List<JavaVersion> queryMacintosh() {
-        List<JavaVersion> res = new ArrayList<>();
-
-        File currentJRE = new File("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home");
-        if (currentJRE.exists())
-            res.add(fromJavaHomeQuietly(currentJRE));
-        File[] files = new File("/Library/Java/JavaVirtualMachines/").listFiles();
-        if (files != null)
-            for (File file : files)
-                res.add(fromJavaHomeQuietly(new File(file, "Contents/Home")));
-
-        res.removeIf(Objects::isNull);
-        return res;
-    }
-    // ====
-
-    // ==== Windows ====
-    private static List<JavaVersion> queryWindows() {
-        List<JavaVersion> res = new ArrayList<>();
-        Lang.ignoringException(() -> res.addAll(queryJavaInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\")));
-        Lang.ignoringException(() -> res.addAll(queryJavaInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\")));
-        Lang.ignoringException(() -> res.addAll(queryJavaInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JRE\\")));
-        Lang.ignoringException(() -> res.addAll(queryJavaInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JDK\\")));
-        return res;
-    }
-
-    private static List<JavaVersion> queryJavaInRegistryKey(String location) throws IOException, InterruptedException {
-        List<JavaVersion> res = new ArrayList<>();
+    // ==== Windows Registry Support ====
+    private static List<Path> queryJavaHomesInRegistryKey(String location) throws IOException {
+        List<Path> homes = new ArrayList<>();
         for (String java : querySubFolders(location)) {
-            if (!querySubFolders(java).contains(java + "\\MSI")) continue;
+            if (!querySubFolders(java).contains(java + "\\MSI"))
+                continue;
             String home = queryRegisterValue(java, "JavaHome");
-            if (home != null)
-                res.add(fromJavaHomeQuietly(new File(home)));
+            if (home != null) {
+                homes.add(Paths.get(home));
+            }
         }
-
-        res.removeIf(Objects::isNull);
-        return res;
+        return homes;
     }
 
-    // Registry utilities
-    private static List<String> querySubFolders(String location) throws IOException, InterruptedException {
+    private static List<String> querySubFolders(String location) throws IOException {
         List<String> res = new ArrayList<>();
-        String[] cmd = new String[] { "cmd", "/c", "reg", "query", location };
-        Process process = Runtime.getRuntime().exec(cmd);
-        process.waitFor();
 
+        Process process = Runtime.getRuntime().exec(new String[] { "cmd", "/c", "reg", "query", location });
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            for (String line; (line = reader.readLine()) != null; )
-                if (line.startsWith(location) && !line.equals(location))
+            for (String line; (line = reader.readLine()) != null;) {
+                if (line.startsWith(location) && !line.equals(location)) {
                     res.add(line);
+                }
+            }
         }
         return res;
     }
 
-    private static String queryRegisterValue(String location, String name) throws IOException, InterruptedException {
-        String[] cmd = new String[] { "cmd", "/c", "reg", "query", location, "/v", name };
+    private static String queryRegisterValue(String location, String name) throws IOException {
         boolean last = false;
-        Process process = Runtime.getRuntime().exec(cmd);
-        process.waitFor();
+        Process process = Runtime.getRuntime().exec(new String[] { "cmd", "/c", "reg", "query", location, "/v", name });
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            for (String line; (line = reader.readLine()) != null; )
+            for (String line; (line = reader.readLine()) != null;) {
                 if (StringUtils.isNotBlank(line)) {
                     if (last && line.trim().startsWith(name)) {
                         int begins = line.indexOf(name);
                         if (begins > 0) {
                             String s2 = line.substring(begins + name.length());
                             begins = s2.indexOf("REG_SZ");
-                            if (begins > 0)
+                            if (begins > 0) {
                                 return s2.substring(begins + "REG_SZ".length()).trim();
+                            }
                         }
                     }
-                    if (location.equals(line.trim()))
+                    if (location.equals(line.trim())) {
                         last = true;
+                    }
                 }
+            }
         }
         return null;
     }

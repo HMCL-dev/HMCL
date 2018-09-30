@@ -159,7 +159,7 @@ public final class UpdateHandler {
 
     private static void startJava(Path jar, String... appArgs) throws IOException {
         List<String> commandline = new ArrayList<>();
-        commandline.add(JavaVersion.fromCurrentEnvironment().getBinary().getAbsolutePath());
+        commandline.add(JavaVersion.fromCurrentEnvironment().getBinary().toString());
         commandline.add("-jar");
         commandline.add(jar.toAbsolutePath().toString());
         for (String arg : appArgs) {

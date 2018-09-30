@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -455,12 +456,12 @@ public final class VersionSetting {
         if ("Default".equals(getJava())) return JavaVersion.fromCurrentEnvironment();
         else if (isUsesCustomJavaDir()) {
             try {
-                return JavaVersion.fromExecutable(new File(getJavaDir()));
+                return JavaVersion.fromExecutable(Paths.get(getJavaDir()));
             } catch (IOException e) {
                 return null; // Custom Java Directory not found,
             }
         } else if (StringUtils.isNotBlank(getJava())) {
-            List<JavaVersion> matchedJava = JavaVersion.getJREs().stream()
+            List<JavaVersion> matchedJava = JavaVersion.getJavas().stream()
                     .filter(java -> java.getVersion().equals(getJava()))
                     .collect(Collectors.toList());
             if (matchedJava.isEmpty()) {
