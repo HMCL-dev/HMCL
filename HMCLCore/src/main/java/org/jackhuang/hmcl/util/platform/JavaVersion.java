@@ -28,6 +28,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -231,18 +232,28 @@ public final class JavaVersion {
     }
     // ====
 
+    private static JavaVersion fromJavaHomeQuietly(File home) {
+        try {
+            return fromJavaHome(home);
+        } catch (IOException e) {
+            Logging.LOG.log(Level.WARNING, "Couldn't determine java " + home, e);
+            return null;
+        }
+    }
+
     // ==== OSX ====
-    private static List<JavaVersion> queryMacintosh() throws IOException {
+    private static List<JavaVersion> queryMacintosh() {
         List<JavaVersion> res = new ArrayList<>();
 
         File currentJRE = new File("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home");
         if (currentJRE.exists())
-            res.add(fromJavaHome(currentJRE));
+            res.add(fromJavaHomeQuietly(currentJRE));
         File[] files = new File("/Library/Java/JavaVirtualMachines/").listFiles();
         if (files != null)
             for (File file : files)
-                res.add(fromJavaHome(new File(file, "Contents/Home")));
+                res.add(fromJavaHomeQuietly(new File(file, "Contents/Home")));
 
+        res.removeIf(Objects::isNull);
         return res;
     }
     // ====
@@ -263,8 +274,10 @@ public final class JavaVersion {
             if (!querySubFolders(java).contains(java + "\\MSI")) continue;
             String home = queryRegisterValue(java, "JavaHome");
             if (home != null)
-                res.add(fromJavaHome(new File(home)));
+                res.add(fromJavaHomeQuietly(new File(home)));
         }
+
+        res.removeIf(Objects::isNull);
         return res;
     }
 
