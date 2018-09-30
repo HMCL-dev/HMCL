@@ -246,7 +246,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         }
 
         if (lastVersionSetting.isUsesCustomJavaDir()) {
-            javaItem.setSelectedData(null);
+            javaItem.getGroup().getToggles().stream()
+                    .filter(javaItem::isCustomToggle)
+                    .findFirst().get()
+                    .setSelected(true);
         } else {
             try {
                 javaItem.setSelectedData(lastVersionSetting.getJavaVersion());
