@@ -54,14 +54,14 @@ public class Settings {
 
         CacheRepository.setInstance(HMCLCacheRepository.REPOSITORY);
         HMCLCacheRepository.REPOSITORY.directoryProperty().bind(Bindings.createStringBinding(() -> {
-            String str = config().getCommonDirectory();
+            String str = getCommonDirectory();
             try {
                 Paths.get(str);
                 return str;
             } catch (InvalidPathException e) {
                 return getDefaultCommonDirectory();
             }
-        }, config().commonDirectoryProperty()));
+        }, config().commonDirectoryProperty(), config().commonDirTypeProperty()));
     }
 
     public Font getFont() {
