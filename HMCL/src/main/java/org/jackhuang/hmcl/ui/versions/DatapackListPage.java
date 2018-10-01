@@ -2,7 +2,6 @@ package org.jackhuang.hmcl.ui.versions;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.collections.ObservableList;
 import javafx.scene.input.TransferMode;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.Datapack;
@@ -24,7 +23,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DatapackListPage extends ListPage<DatapackListItem> implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty();
-    private final ObservableList<DatapackListItem> list; // Hold weak references
     private final Path worldDir;
     private final Datapack datapack;
 
@@ -36,14 +34,14 @@ public class DatapackListPage extends ListPage<DatapackListItem> implements Deco
         datapack = new Datapack(worldDir.resolve("datapacks"));
         datapack.loadFromDir();
 
-        list = MappedObservableList.create(datapack.getInfo(), pack -> new DatapackListItem(pack, item -> {
-            try {
-                datapack.deletePack(pack);
-            } catch (IOException e) {
-                Logging.LOG.warning("Failed to delete datapack");
-            }
-        }));
-        itemsProperty().bindContent(list);
+        setItems(MappedObservableList.create(datapack.getInfo(),
+                pack -> new DatapackListItem(pack, item -> {
+                    try {
+                        datapack.deletePack(pack);
+                    } catch (IOException e) {
+                        Logging.LOG.warning("Failed to delete datapack");
+                    }
+                })));
 
         setOnDragOver(event -> {
             if (event.getGestureSource() != this && event.getDragboard().hasFiles())
