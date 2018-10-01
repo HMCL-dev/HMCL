@@ -5,12 +5,6 @@ GPL v3, see http://www.gnu.org/licenses/gpl.html
 
 HMCL is a Minecraft launcher which supports Mod management, game customizing, auto installing(Forge, LiteLoader and OptiFine), modpack creating, UI customizing and so on.
 
-## Downloads
-
-Binary version can be found here: https://ci.huangyuhui.net/job/HMCL
-
-Archives in GitHub releases are built by closed CIs, uploaded here for backup.
-
 ## Contribution
 
 If you want to submit a pull request, there're some requirements:
