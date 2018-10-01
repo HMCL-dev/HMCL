@@ -19,48 +19,22 @@ package org.jackhuang.hmcl.ui.account;
 
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.ListPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
-
-import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.javafx.SelectedItemProperties.createSelectedItemPropertyFor;
 
 public class AccountList extends ListPage<AccountListItem> implements DecoratorPage {
-    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(i18n("account.manage"));
-    private ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<Account>() {
-        {
-            itemsProperty().addListener(onInvalidating(this::invalidated));
-        }
-
-        @Override
-        protected void invalidated() {
-            Account selected = get();
-            itemsProperty().forEach(item -> item.selectedProperty().set(item.getAccount() == selected));
-        }
-    };
-    private final ListProperty<Account> accounts = new SimpleListProperty<>(FXCollections.observableArrayList());
-
-    private ToggleGroup toggleGroup;
-    private final ObservableList<AccountListItem> accountItems;
+    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(this, "title", i18n("account.manage"));
+    private final ListProperty<Account> accounts = new SimpleListProperty<>(this, "accounts", FXCollections.observableArrayList());
+    private final ObjectProperty<Account> selectedAccount;
 
     public AccountList() {
-        toggleGroup = new ToggleGroup();
-
-        accountItems = MappedObservableList.create(
-                accountsProperty(),
-                account -> new AccountListItem(toggleGroup, account));
-
-        itemsProperty().bindContent(accountItems);
-
-        toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {
-            if (toggle == null || toggle.getUserData() == null) return;
-            selectedAccount.set(((AccountListItem) toggle.getUserData()).getAccount());
-        });
+        setItems(MappedObservableList.create(accounts, AccountListItem::new));
+        selectedAccount = createSelectedItemPropertyFor(getItems(), Account.class);
     }
 
     public ObjectProperty<Account> selectedAccountProperty() {

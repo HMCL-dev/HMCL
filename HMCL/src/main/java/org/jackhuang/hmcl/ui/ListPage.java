@@ -22,6 +22,7 @@ import javafx.beans.property.ListProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
@@ -32,16 +33,32 @@ public abstract class ListPage<T extends Node> extends Control {
 
     public abstract void add();
 
+    @Override
+    protected Skin<?> createDefaultSkin() {
+        return new ListPageSkin(this);
+    }
+
+    public ObservableList<T> getItems() {
+        return items.get();
+    }
+
+    public void setItems(ObservableList<T> items) {
+        this.items.set(items);
+    }
+
     public ListProperty<T> itemsProperty() {
         return items;
     }
 
-    public BooleanProperty loadingProperty() {
-        return loading;
+    public boolean isLoading() {
+        return loading.get();
     }
 
-    @Override
-    protected Skin<?> createDefaultSkin() {
-        return new ListPageSkin(this);
+    public void setLoading(boolean loading) {
+        this.loading.set(loading);
+    }
+
+    public BooleanProperty loadingProperty() {
+        return loading;
     }
 }

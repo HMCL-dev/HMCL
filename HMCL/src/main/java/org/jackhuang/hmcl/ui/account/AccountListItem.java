@@ -18,9 +18,8 @@
 package org.jackhuang.hmcl.ui.account;
 
 import javafx.beans.property.*;
-import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
@@ -33,17 +32,17 @@ import org.jackhuang.hmcl.task.Schedulers;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class AccountListItem extends Control {
+public class AccountListItem extends ToggleButton {
+
     private final Account account;
-    private final ToggleGroup toggleGroup;
     private final StringProperty title = new SimpleStringProperty();
     private final StringProperty subtitle = new SimpleStringProperty();
-    private final BooleanProperty selected = new SimpleBooleanProperty();
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
 
-    public AccountListItem(ToggleGroup toggleGroup, Account account) {
+    public AccountListItem(Account account) {
         this.account = account;
-        this.toggleGroup = toggleGroup;
+        getStyleClass().clear();
+        setUserData(account);
 
         StringBuilder subtitleString = new StringBuilder(Accounts.getAccountTypeName(account));
         if (account instanceof AuthlibInjectorAccount) {
@@ -56,7 +55,6 @@ public class AccountListItem extends Control {
         else
             title.set(account.getUsername() + " - " + account.getCharacter());
         subtitle.set(subtitleString.toString());
-        selected.set(Accounts.selectedAccountProperty().get() == account);
 
         final int scaleRatio = 4;
         Image image = account instanceof YggdrasilAccount ?
@@ -68,30 +66,6 @@ public class AccountListItem extends Control {
     @Override
     protected Skin<?> createDefaultSkin() {
         return new AccountListItemSkin(this);
-    }
-
-    public ToggleGroup getToggleGroup() {
-        return toggleGroup;
-    }
-
-    public Account getAccount() {
-        return account;
-    }
-
-    public StringProperty titleProperty() {
-        return title;
-    }
-
-    public StringProperty subtitleProperty() {
-        return subtitle;
-    }
-
-    public BooleanProperty selectedProperty() {
-        return selected;
-    }
-
-    public ObjectProperty<Image> imageProperty() {
-        return image;
     }
 
     public void refresh() {
@@ -112,5 +86,45 @@ public class AccountListItem extends Control {
 
     public void remove() {
         Accounts.getAccounts().remove(account);
+    }
+
+    public Account getAccount() {
+        return account;
+    }
+
+    public String getTitle() {
+        return title.get();
+    }
+
+    public void setTitle(String title) {
+        this.title.set(title);
+    }
+
+    public StringProperty titleProperty() {
+        return title;
+    }
+
+    public String getSubtitle() {
+        return subtitle.get();
+    }
+
+    public void setSubtitle(String subtitle) {
+        this.subtitle.set(subtitle);
+    }
+
+    public StringProperty subtitleProperty() {
+        return subtitle;
+    }
+
+    public Image getImage() {
+        return image.get();
+    }
+
+    public void setImage(Image image) {
+        this.image.set(image);
+    }
+
+    public ObjectProperty<Image> imageProperty() {
+        return image;
     }
 }

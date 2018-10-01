@@ -29,6 +29,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
+import javafx.collections.ObservableList;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.SelectionModel;
 import javafx.scene.control.Toggle;
@@ -41,6 +42,7 @@ public final class SelectedItemProperties {
 
     private static final String PROP_PREFIX = SelectedItemProperties.class.getName();
 
+    // ==== ComboBox ====
     @SuppressWarnings("unchecked")
     public static <T> ObjectProperty<T> selectedItemPropertyFor(ComboBox<T> comboBox) {
         return (ObjectProperty<T>) comboBox.getProperties().computeIfAbsent(
@@ -54,7 +56,9 @@ public final class SelectedItemProperties {
                         .flatMap(SelectionModel::selectedItemProperty),
                 modelProperty.getValue()::select);
     }
+    // ====
 
+    // ==== Toggle ====
     @SuppressWarnings("unchecked")
     public static ObjectProperty<Toggle> selectedTogglePropertyFor(ToggleGroup toggleGroup) {
         return (ObjectProperty<Toggle>) toggleGroup.getProperties().computeIfAbsent(
@@ -66,6 +70,10 @@ public final class SelectedItemProperties {
         return new ReadWriteComposedProperty<>(toggleGroup, "extra.selectedToggle",
                 toggleGroup.selectedToggleProperty(),
                 toggleGroup::selectToggle);
+    }
+
+    public static <T> ObjectProperty<T> createSelectedItemPropertyFor(ObservableList<? extends Toggle> items, Class<T> userdataType) {
+        return selectedItemPropertyFor(new AutomatedToggleGroup(items), userdataType);
     }
 
     @SuppressWarnings("unchecked")
@@ -113,6 +121,7 @@ public final class SelectedItemProperties {
 
         return property;
     }
+    // ====
 
     private SelectedItemProperties() {
     }
