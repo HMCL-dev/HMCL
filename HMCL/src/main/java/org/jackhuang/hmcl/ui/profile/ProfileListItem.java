@@ -17,30 +17,26 @@
  */
 package org.jackhuang.hmcl.ui.profile;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.ToggleButton;
+
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 
-public class ProfileListItem extends Control {
+public class ProfileListItem extends ToggleButton {
     private final Profile profile;
-    private final ToggleGroup toggleGroup;
     private final StringProperty title = new SimpleStringProperty();
     private final StringProperty subtitle = new SimpleStringProperty();
-    private final BooleanProperty selected = new SimpleBooleanProperty();
 
-    public ProfileListItem(ToggleGroup toggleGroup, Profile profile) {
+    public ProfileListItem(Profile profile) {
         this.profile = profile;
-        this.toggleGroup = toggleGroup;
+        getStyleClass().clear();
+        setUserData(profile);
 
         title.set(Profiles.getProfileDisplayName(profile));
         subtitle.set(profile.getGameDir().toString());
-        selected.set(Profiles.selectedProfileProperty().get() == profile);
     }
 
     @Override
@@ -48,27 +44,35 @@ public class ProfileListItem extends Control {
         return new ProfileListItemSkin(this);
     }
 
-    public ToggleGroup getToggleGroup() {
-        return toggleGroup;
+    public void remove() {
+        Profiles.getProfiles().remove(profile);
     }
 
     public Profile getProfile() {
         return profile;
     }
 
+    public String getTitle() {
+        return title.get();
+    }
+
+    public void setTitle(String title) {
+        this.title.set(title);
+    }
+
     public StringProperty titleProperty() {
         return title;
     }
 
+    public String getSubtitle() {
+        return subtitle.get();
+    }
+
+    public void setSubtitle(String subtitle) {
+        this.subtitle.set(subtitle);
+    }
+
     public StringProperty subtitleProperty() {
         return subtitle;
-    }
-
-    public BooleanProperty selectedProperty() {
-        return selected;
-    }
-
-    public void remove() {
-        Profiles.getProfiles().remove(profile);
     }
 }

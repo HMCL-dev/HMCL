@@ -41,9 +41,7 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
 
         JFXRadioButton chkSelected = new JFXRadioButton();
         BorderPane.setAlignment(chkSelected, Pos.CENTER);
-        chkSelected.setUserData(skinnable);
         chkSelected.selectedProperty().bindBidirectional(skinnable.selectedProperty());
-        chkSelected.setToggleGroup(skinnable.getToggleGroup());
         root.setLeft(chkSelected);
 
         HBox center = new HBox();

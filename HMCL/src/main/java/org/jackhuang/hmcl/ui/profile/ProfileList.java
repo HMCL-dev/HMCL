@@ -19,48 +19,23 @@ package org.jackhuang.hmcl.ui.profile;
 
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.ListPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
-import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.javafx.SelectedItemProperties.createSelectedItemPropertyFor;
 
 public class ProfileList extends ListPage<ProfileListItem> implements DecoratorPage {
     private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(i18n("profile.manage"));
-    private ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<Profile>() {
-        {
-            itemsProperty().addListener(onInvalidating(this::invalidated));
-        }
-
-        @Override
-        protected void invalidated() {
-            Profile selected = get();
-            itemsProperty().forEach(item -> item.selectedProperty().set(item.getProfile() == selected));
-        }
-    };
     private final ListProperty<Profile> profiles = new SimpleListProperty<>(FXCollections.observableArrayList());
-
-    private ToggleGroup toggleGroup;
-    private final ObservableList<ProfileListItem> profileItems;
+    private ObjectProperty<Profile> selectedProfile;
 
     public ProfileList() {
-        toggleGroup = new ToggleGroup();
-
-        profileItems = MappedObservableList.create(
-                profilesProperty(),
-                profile -> new ProfileListItem(toggleGroup, profile));
-
-        itemsProperty().bindContent(profileItems);
-
-        toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {
-            if (toggle == null || toggle.getUserData() == null) return;
-            selectedProfile.set(((ProfileListItem) toggle.getUserData()).getProfile());
-        });
+        setItems(MappedObservableList.create(profilesProperty(), ProfileListItem::new));
+        selectedProfile = createSelectedItemPropertyFor(getItems(), Profile.class);
     }
 
     public ObjectProperty<Profile> selectedProfileProperty() {
