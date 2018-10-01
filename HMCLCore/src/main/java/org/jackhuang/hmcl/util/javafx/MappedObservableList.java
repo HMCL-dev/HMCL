@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.util.javafx;
 
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -35,20 +33,6 @@ import static javafx.collections.FXCollections.unmodifiableObservableList;
  */
 public final class MappedObservableList {
     private MappedObservableList() {
-    }
-
-    private static class ReferenceHolder implements InvalidationListener {
-        @SuppressWarnings("unused")
-        private Object ref;
-
-        ReferenceHolder(Object ref) {
-            this.ref = ref;
-        }
-
-        @Override
-        public void invalidated(Observable observable) {
-            // no-op
-        }
     }
 
     private static class MappedObservableListUpdater<T, U> implements ListChangeListener<T> {

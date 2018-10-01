@@ -47,7 +47,7 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.javafx.SelectionModelSelectedItemProperty;
+import org.jackhuang.hmcl.util.javafx.SelectedItemProperties;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
@@ -348,7 +348,7 @@ public final class FXUtils {
      * @param comboBox the combo box being bound with {@code property}.
      * @param property the property being bound with {@code combo box}.
      * @see #unbindEnum(JFXComboBox)
-     * @deprecated Use {@link SelectionModelSelectedItemProperty#selectedItemPropertyFor(ComboBox)}
+     * @deprecated Use {@link SelectedItemProperties#selectedItemPropertyFor(ComboBox)}
      */
     @SuppressWarnings("unchecked")
     @Deprecated

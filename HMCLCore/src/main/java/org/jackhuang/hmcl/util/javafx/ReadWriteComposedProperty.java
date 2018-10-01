@@ -36,6 +36,11 @@ public class ReadWriteComposedProperty<T> extends SimpleObjectProperty<T> {
     private ChangeListener<T> listener;
 
     public ReadWriteComposedProperty(ObservableValue<T> readSource, Consumer<T> writeTarget) {
+        this(null, "", readSource, writeTarget);
+    }
+
+    public ReadWriteComposedProperty(Object bean, String name, ObservableValue<T> readSource, Consumer<T> writeTarget) {
+        super(bean, name);
         this.readSource = readSource;
         this.writeTarget = writeTarget;
 

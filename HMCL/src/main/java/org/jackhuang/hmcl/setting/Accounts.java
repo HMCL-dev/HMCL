@@ -91,9 +91,9 @@ public final class Accounts {
     }
 
     private static ObservableList<Account> accounts = observableArrayList(account -> new Observable[] { account });
-    private static ReadOnlyListWrapper<Account> accountsWrapper = new ReadOnlyListWrapper<>(accounts);
+    private static ReadOnlyListWrapper<Account> accountsWrapper = new ReadOnlyListWrapper<>(Accounts.class, "accounts", accounts);
 
-    private static ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<Account>() {
+    private static ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<Account>(Accounts.class, "selectedAccount") {
         {
             accounts.addListener(onInvalidating(this::invalidated));
         }
