@@ -17,26 +17,33 @@
  */
 package org.jackhuang.hmcl.util.javafx;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.SelectionModel;
 
-public class SelectionModelSelectedItemProperty<T> extends SimpleObjectProperty<T> {
+/**
+ * @author yushijinhun
+ */
+public final class SelectionModelSelectedItemProperty<T> extends SimpleObjectProperty<T> {
 
-    public static <T> SelectionModelSelectedItemProperty<T> selectedItemPropertyFor(ComboBox<T> comboBox) {
-        return new SelectionModelSelectedItemProperty<>(comboBox.getSelectionModel());
+    private static final String NODE_PROPERTY = SelectionModelSelectedItemProperty.class.getName() + ".instance";
+
+    @SuppressWarnings("unchecked")
+    public static <T> ObjectProperty<T> selectedItemPropertyFor(ComboBox<T> comboBox) {
+        return (ObjectProperty<T>) comboBox.getProperties().computeIfAbsent(
+                NODE_PROPERTY,
+                any -> createSelectedItemProperty(comboBox.selectionModelProperty()));
     }
 
-    private SelectionModel<T> model;
-
-    public SelectionModelSelectedItemProperty(SelectionModel<T> model) {
-        this.model = model;
-        model.selectedItemProperty().addListener((observable, oldValue, newValue) -> set(newValue));
-        set(model.getSelectedItem());
+    private static <T> ObjectProperty<T> createSelectedItemProperty(Property<? extends SelectionModel<T>> modelProperty) {
+        return new ReadWriteComposedProperty<>(
+                MultiStepBinding.of(modelProperty)
+                        .flatMap(SelectionModel::selectedItemProperty),
+                newValue -> modelProperty.getValue().select(newValue));
     }
 
-    @Override
-    protected void invalidated() {
-        model.select(get());
+    private SelectionModelSelectedItemProperty() {
     }
 }
