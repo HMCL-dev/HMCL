@@ -101,11 +101,8 @@ public class Versions {
     }
 
     public static void generateLaunchScript(Profile profile, String id) {
-        GameRepository repository = profile.getRepository();
-
-        if (Accounts.getSelectedAccount() == null)
-            Controllers.dialog(i18n("login.empty_username"));
-        else {
+        if (checkForLaunching(profile, id)) {
+            GameRepository repository = profile.getRepository();
             FileChooser chooser = new FileChooser();
             if (repository.getRunDirectory(id).isDirectory())
                 chooser.setInitialDirectory(repository.getRunDirectory(id));
@@ -115,17 +112,31 @@ public class Versions {
                     : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
             File file = chooser.showSaveDialog(Controllers.getStage());
             if (file != null)
-                LauncherHelper.INSTANCE.launch(profile, Accounts.getSelectedAccount(), id, file);
+                new LauncherHelper(profile, Accounts.getSelectedAccount(), id).makeLaunchScript(file);
         }
     }
 
     public static void launch(Profile profile, String id) {
+        if (checkForLaunching(profile, id))
+            new LauncherHelper(profile, Accounts.getSelectedAccount(), id).launch();
+    }
+
+    public static void testGame(Profile profile, String id) {
+        if (checkForLaunching(profile, id)) {
+            LauncherHelper helper = new LauncherHelper(profile, Accounts.getSelectedAccount(), id);
+            helper.setTestMode();
+            helper.launch();
+        }
+    }
+
+    private static boolean checkForLaunching(Profile profile, String id) {
         if (Accounts.getSelectedAccount() == null)
             Controllers.getLeftPaneController().checkAccount();
-        else if (id == null)
+        else if (id == null || !profile.getRepository().isLoaded() || !profile.getRepository().hasVersion(id))
             Controllers.dialog(i18n("version.empty.launch"));
         else
-            LauncherHelper.INSTANCE.launch(profile, Accounts.getSelectedAccount(), id, null);
+            return true;
+        return false;
     }
 
     public static void modifyGlobalSettings(Profile profile) {

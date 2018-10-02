@@ -54,7 +54,7 @@ public final class SelectedItemProperties {
         return new ReadWriteComposedProperty<>(bean, "extra.selectedItem",
                 MultiStepBinding.of(modelProperty)
                         .flatMap(SelectionModel::selectedItemProperty),
-                modelProperty.getValue()::select);
+                obj -> modelProperty.getValue().select(obj));
     }
     // ====
 

@@ -40,7 +40,10 @@ import org.jackhuang.hmcl.ui.LogWindow;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
@@ -62,39 +65,58 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class LauncherHelper {
-    public static final LauncherHelper INSTANCE = new LauncherHelper();
-    private LauncherHelper(){}
 
-    public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
+    private final Profile profile;
+    private final Account account;
+    private final String selectedVersion;
+    private File scriptFile;
+    private final VersionSetting setting;
+    private LauncherVisibility launcherVisibility;
+    private boolean showLogs;
+
+    public LauncherHelper(Profile profile, Account account, String selectedVersion) {
+        this.profile = Objects.requireNonNull(profile);
+        this.account = Objects.requireNonNull(account);
+        this.selectedVersion = Objects.requireNonNull(selectedVersion);
+        this.setting = profile.getVersionSetting(selectedVersion);
+        this.launcherVisibility = setting.getLauncherVisibility();
+        this.showLogs = setting.isShowLogs();
+    }
+
     private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(it -> {});
 
-    public void launch(Profile profile, Account account, String selectedVersion, File scriptFile) {
-        if (account == null)
-            throw new IllegalArgumentException("No account");
+    public void setTestMode() {
+        launcherVisibility = LauncherVisibility.KEEP;
+        showLogs = true;
+    }
 
+    public void launch() {
         Logging.LOG.info("Launching game version: " + selectedVersion);
 
         GameRepository repository = profile.getRepository();
-
         Version version = repository.getResolvedVersion(selectedVersion);
-        VersionSetting setting = profile.getVersionSetting(selectedVersion);
 
         Platform.runLater(() -> {
             try {
                 checkGameState(profile, setting, version, () -> {
                     Controllers.dialog(launchingStepsPane);
-                    Schedulers.newThread().schedule(() -> launch0(profile, account, selectedVersion, scriptFile));
+                    Schedulers.newThread().schedule(this::launch0);
                 });
             } catch (InterruptedException ignore) {
             }
         });
     }
 
-    private void launch0(Profile profile, Account account, String selectedVersion, File scriptFile) {
+    public void makeLaunchScript(File scriptFile) {
+        this.scriptFile = Objects.requireNonNull(scriptFile);
+
+        launch();
+    }
+
+    private void launch0() {
         HMCLGameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
         Version version = MaintainTask.maintain(repository.getResolvedVersion(selectedVersion));
-        VersionSetting setting = profile.getVersionSetting(selectedVersion);
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
         TaskExecutor executor = Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))
@@ -134,7 +156,7 @@ public final class LauncherHelper {
                             selectedVersion,
                             variables.get("account"),
                             setting.toLaunchOptions(profile.getGameDir()),
-                            setting.getLauncherVisibility() == LauncherVisibility.CLOSE
+                            launcherVisibility == LauncherVisibility.CLOSE
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
                                     : new HMCLProcessListener(variables.get("account"), setting, gameVersion.isPresent())
                     ));
@@ -154,7 +176,7 @@ public final class LauncherHelper {
                     if (scriptFile == null) {
                         ManagedProcess process = variables.get(LaunchTask.LAUNCH_ID);
                         PROCESSES.add(process);
-                        if (setting.getLauncherVisibility() == LauncherVisibility.CLOSE)
+                        if (launcherVisibility == LauncherVisibility.CLOSE)
                             Launcher.stopApplication();
                         else
                             launchingStepsPane.setCancel(it -> {
@@ -337,11 +359,6 @@ public final class LauncherHelper {
             onAccept.run();
     }
 
-    public static void stopManagedProcesses() {
-        while (!PROCESSES.isEmpty())
-            Optional.ofNullable(PROCESSES.poll()).ifPresent(ManagedProcess::stop);
-    }
-
     public void emitStatus(LoadingState state) {
         if (state == LoadingState.DONE) {
             launchingStepsPane.fireEvent(new DialogCloseEvent());
@@ -351,8 +368,8 @@ public final class LauncherHelper {
         launchingStepsPane.setSubtitle((state.ordinal() + 1) + " / " + LoadingState.values().length);
     }
 
-    private void checkExit(LauncherVisibility v) {
-        switch (v) {
+    private void checkExit() {
+        switch (launcherVisibility) {
             case HIDE_AND_REOPEN:
                 Platform.runLater(Controllers.getStage()::show);
                 break;
@@ -401,7 +418,6 @@ public final class LauncherHelper {
 
         private final VersionSetting setting;
         private final Map<String, String> forbiddenTokens;
-        private final LauncherVisibility visibility;
         private ManagedProcess process;
         private boolean lwjgl;
         private LogWindow logWindow;
@@ -422,7 +438,6 @@ public final class LauncherHelper {
                         pair(authInfo.getUsername(), "<player>")
                 );
 
-            visibility = setting.getLauncherVisibility();
             logs = new LinkedList<>();
         }
 
@@ -430,7 +445,7 @@ public final class LauncherHelper {
         public void setProcess(ManagedProcess process) {
             this.process = process;
 
-            if (setting.isShowLogs())
+            if (showLogs)
                 Platform.runLater(() -> {
                     logWindow = new LogWindow();
                     logWindow.show();
@@ -453,7 +468,7 @@ public final class LauncherHelper {
             if (logs.size() > config().getLogLines())
                 logs.removeFirst();
 
-            if (setting.isShowLogs()) {
+            if (showLogs) {
                 try {
                     latch.await();
                     logWindow.waitForLoaded();
@@ -467,7 +482,7 @@ public final class LauncherHelper {
 
             if (!lwjgl && (log.contains("LWJGL Version: ") || !detectWindow)) {
                 lwjgl = true;
-                switch (visibility) {
+                switch (launcherVisibility) {
                     case HIDE_AND_REOPEN:
                         Platform.runLater(() -> {
                             Controllers.getStage().hide();
@@ -518,8 +533,14 @@ public final class LauncherHelper {
                     });
                 });
 
-            checkExit(visibility);
+            checkExit();
         }
 
+    }
+
+    public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
+    public static void stopManagedProcesses() {
+        while (!PROCESSES.isEmpty())
+            Optional.ofNullable(PROCESSES.poll()).ifPresent(ManagedProcess::stop);
     }
 }

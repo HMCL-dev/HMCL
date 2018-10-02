@@ -63,7 +63,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
                 new MenuSeparator(),
                 new IconedMenuItem(FXUtils.limitingSize(SVG.folderOpen(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.game"), FXUtils.withJFXPopupClosing(skinnable::browse, popup)),
                 new MenuSeparator(),
-                new IconedMenuItem(FXUtils.limitingSize(SVG.launch(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch"), FXUtils.withJFXPopupClosing(skinnable::launch, popup)),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.launch(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch.test"), FXUtils.withJFXPopupClosing(skinnable::launch, popup)),
                 new IconedMenuItem(FXUtils.limitingSize(SVG.script(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch_script"), FXUtils.withJFXPopupClosing(skinnable::generateLaunchScript, popup)));
 
         HBox right = new HBox();

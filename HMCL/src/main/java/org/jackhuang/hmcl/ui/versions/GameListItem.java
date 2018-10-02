@@ -17,13 +17,12 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.beans.property.*;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleGroup;
-
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.ui.Controllers;
 
 public class GameListItem extends Control {
     private final Profile profile;
@@ -83,7 +82,7 @@ public class GameListItem extends Control {
     }
 
     public void launch() {
-        Versions.launch(profile, version);
+        Versions.testGame(profile, version);
     }
 
     public void modifyGameSettings() {
