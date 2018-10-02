@@ -156,17 +156,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 .filter(version -> !version.isHidden())
                 .sorted((a, b) -> VersionNumber.COMPARATOR.compare(VersionNumber.asVersion(a.getId()), VersionNumber.asVersion(b.getId())))
                 .map(version -> {
-                    BorderPane pane = new BorderPane();
+                    StackPane pane = new StackPane();
                     GameItem item = new GameItem(repository.getProfile(), version.getId());
-                    pane.setLeft(item);
-                    JFXButton settings = new JFXButton();
-                    settings.setGraphic(SVG.gear(Theme.blackFillBinding(), -1, -1));
-                    settings.getStyleClass().setAll("toggle-icon4");
-                    settings.setOnMouseClicked(e -> {
-                        Versions.modifyGameSettings(profile, version.getId());
-                        popup.hide();
-                    });
-                    pane.setRight(settings);
+                    pane.getChildren().setAll(item);
                     pane.getStyleClass().setAll("menu-container");
                     item.setMouseTransparent(true);
                     RipplerContainer container = new RipplerContainer(pane);
