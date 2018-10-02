@@ -1,7 +1,7 @@
 /*
  * Hello Minecraft! Launcher.
  * Copyright (C) 2018  huangyuhui <huanghongxun2008@126.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -106,18 +106,14 @@ public class ComponentList extends Control {
         protected Skin(ComponentList control) {
             super(control);
 
-            list = MappedObservableList.create(control.getContent(), this::mapper);
+            list = MappedObservableList.create(control.getContent(), ComponentListCell::new);
+            ListFirstElementListener.observe(list,
+                    first -> first.getStyleClass().setAll("options-list-item-ahead"),
+                    last -> last.getStyleClass().setAll("options-list-item"));
 
             VBox vbox = new VBox();
             Bindings.bindContent(vbox.getChildren(), list);
             getChildren().setAll(vbox);
-        }
-
-        private Node mapper(Node node) {
-            StackPane child = new StackPane();
-            child.getChildren().add(new ComponentListCell(node));
-            child.getStyleClass().add("options-list-item");
-            return child;
         }
     }
 }

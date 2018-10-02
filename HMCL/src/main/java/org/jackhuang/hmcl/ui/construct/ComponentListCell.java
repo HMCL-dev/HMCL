@@ -122,10 +122,7 @@ class ComponentListCell extends StackPane {
             VBox container = new VBox();
             container.setStyle("-fx-padding: 8 0 0 0;");
             FXUtils.setLimitHeight(container, 0);
-            Rectangle clipRect = new Rectangle();
-            clipRect.widthProperty().bind(container.widthProperty());
-            clipRect.heightProperty().bind(container.heightProperty());
-            container.setClip(clipRect);
+            FXUtils.setOverflowHidden(container, true);
             container.getChildren().setAll(content);
 
             VBox holder = new VBox();
