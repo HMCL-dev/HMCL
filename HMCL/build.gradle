@@ -23,6 +23,8 @@ if (System.getenv("BUILD_NUMBER") != null && System.getenv("BUILD_NUMBER_OFFSET"
 def versionroot = System.getenv("VERSION_ROOT") ?: "3.2"
 version = versionroot + '.' + buildnumber
 
+mainClassName = 'org.jackhuang.hmcl.Main'
+
 dependencies {
     compile project(":HMCLCore")
     compile rootProject.files("lib/JFoenix.jar")
@@ -75,7 +77,7 @@ def repack(File file) {
 jar {
     manifest {
         attributes 'Created-By': 'Copyright(c) 2013-2018 huangyuhui.',
-                'Main-Class': 'org.jackhuang.hmcl.Main',
+                'Main-Class': mainClassName,
                 'Multi-Release': 'true',
                 'Implementation-Version': version
     }

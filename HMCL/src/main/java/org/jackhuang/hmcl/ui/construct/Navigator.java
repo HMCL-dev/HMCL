@@ -83,9 +83,13 @@ public class Navigator extends StackPane {
             throw new IllegalStateException();
         stack.pop();
         Node node = stack.peek();
-        fireEvent(new NavigationEvent(this, from, NavigationEvent.NAVIGATING));
+        NavigationEvent navigating = new NavigationEvent(this, from, NavigationEvent.NAVIGATING);
+        fireEvent(navigating);
+        node.fireEvent(navigating);
         setContent(node);
-        fireEvent(new NavigationEvent(this, node, NavigationEvent.NAVIGATED));
+        NavigationEvent navigated = new NavigationEvent(this, node, NavigationEvent.NAVIGATED);
+        fireEvent(navigated);
+        node.fireEvent(navigated);
 
         Optional.ofNullable(from.getProperties().get(PROPERTY_DIALOG_CLOSE_HANDLER))
                 .ifPresent(handler -> from.removeEventHandler(PageCloseEvent.CLOSE, (EventHandler<PageCloseEvent>) handler));

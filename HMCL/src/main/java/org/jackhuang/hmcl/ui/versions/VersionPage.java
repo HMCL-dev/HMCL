@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXTabPane;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
@@ -30,6 +31,8 @@ import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
+import org.jackhuang.hmcl.ui.construct.Navigator;
+import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -99,6 +102,8 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         FXUtils.installTooltip(btnBrowseMenu, i18n("settings.game.exploration"));
         FXUtils.installTooltip(btnManagementMenu, i18n("settings.game.management"));
         FXUtils.installTooltip(btnExport, i18n("modpack.export"));
+
+        setEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
     }
 
     public void load(String id, Profile profile) {
@@ -113,6 +118,21 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         mod.loadMods(profile.getModManager(), id);
         installer.loadVersion(profile, id);
         world.loadVersion(profile, id);
+    }
+
+    private void onNavigated(Navigator.NavigationEvent event) {
+        if (this.version == null || this.profile == null)
+            throw new IllegalStateException();
+
+        // If we jumped to game list page and deleted this version
+        // and back to this page, we should return to main page.
+        if (!this.profile.getRepository().isLoaded() ||
+            !this.profile.getRepository().hasVersion(version)) {
+            Platform.runLater(() -> fireEvent(new PageCloseEvent()));
+            return;
+        }
+
+        load(this.version, this.profile);
     }
 
     @FXML
