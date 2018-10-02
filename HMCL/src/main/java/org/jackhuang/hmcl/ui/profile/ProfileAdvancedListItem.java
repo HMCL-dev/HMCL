@@ -22,6 +22,8 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 
 public class ProfileAdvancedListItem extends AdvancedListItem {
@@ -32,14 +34,15 @@ public class ProfileAdvancedListItem extends AdvancedListItem {
             Profile profile = get();
             if (profile == null) {
             } else {
-                titleProperty().set(Profiles.getProfileDisplayName(profile));
-                subtitleProperty().set(profile.getGameDir().toString());
+                setTitle(Profiles.getProfileDisplayName(profile));
+                setSubtitle(profile.getGameDir().toString());
             }
         }
     };
 
     public ProfileAdvancedListItem() {
-        imageProperty().set(new Image("/assets/img/craft_table.png"));
+        setImage(new Image("/assets/img/craft_table.png"));
+        setRightGraphic(SVG.viewList(Theme.blackFillBinding(), -1, -1));
     }
 
     public ObjectProperty<Profile> profileProperty() {

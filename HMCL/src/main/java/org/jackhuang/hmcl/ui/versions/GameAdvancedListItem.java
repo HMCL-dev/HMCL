@@ -24,7 +24,9 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 
@@ -41,13 +43,15 @@ public class GameAdvancedListItem extends AdvancedListItem {
                 imageProperty().set(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
 
                 if (version != null) {
-                    titleProperty().set(version);
-                    subtitleProperty().set(null);
+                    setTitle(version);
+                    setSubtitle(null);
                 } else {
-                    titleProperty().set(i18n("version.empty"));
-                    subtitleProperty().set(i18n("version.empty.add"));
+                    setTitle(i18n("version.empty"));
+                    setSubtitle(i18n("version.empty.add"));
                 }
             });
         });
+
+        setRightGraphic(SVG.gear(Theme.blackFillBinding(), -1, -1));
     }
 }

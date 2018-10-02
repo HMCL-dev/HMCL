@@ -28,9 +28,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
 
 public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
 
@@ -38,6 +36,7 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         super(skinnable);
 
         StackPane stackPane = new StackPane();
+        RipplerContainer container = new RipplerContainer(stackPane);
 
         BorderPane root = new BorderPane();
         root.setPickOnBounds(false);
@@ -89,7 +88,7 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         JFXButton settings = new JFXButton();
         FXUtils.setLimitWidth(settings, 40);
         settings.getStyleClass().setAll("toggle-icon4");
-        settings.setGraphic(SVG.gear(Theme.blackFillBinding(), -1, -1));
+        settings.graphicProperty().bind(skinnable.rightGraphicProperty());
         right.getChildren().setAll(settings);
         root.setRight(right);
 
@@ -103,6 +102,6 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         stackPane.setPickOnBounds(false);
         stackPane.getChildren().setAll(root);
 
-        getChildren().setAll(stackPane);
+        getChildren().setAll(container);
     }
 }

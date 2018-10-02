@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import javafx.application.Platform;
+import javafx.scene.image.Image;
 import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
@@ -36,8 +37,8 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.account.AddAccountPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
+import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.profile.ProfileAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
@@ -61,14 +62,17 @@ public final class LeftPaneController extends AdvancedListBox {
         profileListItem.setOnAction(e -> Controllers.navigate(Controllers.getProfileListPage()));
         profileListItem.profileProperty().bind(Profiles.selectedProfileProperty());
 
-        IconedItem gameItem = new IconedItem(FXUtils.limitingSize(SVG.gear(Theme.blackFillBinding(), 20, 20), 32, 20), "iconed-item");
-        gameItem.getLabel().setText(i18n("version.manage"));
-        gameItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getGameListPage()));
+        AdvancedListItem gameItem = new AdvancedListItem();
+        gameItem.setImage(new Image("/assets/img/bookshelf.png"));
+        gameItem.setRightGraphic(SVG.viewList(Theme.blackFillBinding(), -1, -1));
+        gameItem.setTitle(i18n("version.manage"));
+        gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
 
-        IconedItem launcherSettingsItem = new IconedItem(FXUtils.limitingSize(SVG.gear(Theme.blackFillBinding(), 20, 20), 32, 20), "iconed-item");
-        launcherSettingsItem.getLabel().setText(i18n("settings.launcher"));
-
-        launcherSettingsItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
+        AdvancedListItem launcherSettingsItem = new AdvancedListItem();
+        launcherSettingsItem.setImage(new Image("/assets/img/command.png"));
+        launcherSettingsItem.setRightGraphic(SVG.gear(Theme.blackFillBinding(), -1, -1));
+        launcherSettingsItem.setTitle(i18n("settings.launcher"));
+        launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
 
         this
                 .startCategory(i18n("account").toUpperCase())

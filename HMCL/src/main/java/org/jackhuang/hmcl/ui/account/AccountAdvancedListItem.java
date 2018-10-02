@@ -24,7 +24,9 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.AccountHelper;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -36,21 +38,21 @@ public class AccountAdvancedListItem extends AdvancedListItem {
         protected void invalidated() {
             Account account = get();
             if (account == null) {
-                titleProperty().set(i18n("account.missing"));
-                subtitleProperty().set(i18n("account.missing.add"));
-                imageProperty().set(new Image("/assets/img/craft_table.png"));
+                setTitle(i18n("account.missing"));
+                setSubtitle(i18n("account.missing.add"));
+                setImage(new Image("/assets/img/craft_table.png"));
             } else {
-                titleProperty().set(account.getCharacter());
-                subtitleProperty().set(accountSubtitle(account));
+                setTitle(account.getCharacter());
+                setSubtitle(accountSubtitle(account));
 
                 final int scaleRatio = 4;
                 Image defaultSkin = AccountHelper.getDefaultSkin(account.getUUID(), scaleRatio);
-                imageProperty().set(AccountHelper.getHead(defaultSkin, scaleRatio));
+                setImage(AccountHelper.getHead(defaultSkin, scaleRatio));
 
                 if (account instanceof YggdrasilAccount) {
                     AccountHelper.loadSkinAsync((YggdrasilAccount) account).subscribe(Schedulers.javafx(), () -> {
                         Image image = AccountHelper.getSkin((YggdrasilAccount) account, scaleRatio);
-                        imageProperty().set(AccountHelper.getHead(image, scaleRatio));
+                        setImage(AccountHelper.getHead(image, scaleRatio));
                     });
                 }
             }
@@ -58,6 +60,7 @@ public class AccountAdvancedListItem extends AdvancedListItem {
     };
 
     public AccountAdvancedListItem() {
+        setRightGraphic(SVG.viewList(Theme.blackFillBinding(), -1, -1));
     }
 
     public ObjectProperty<Account> accountProperty() {
