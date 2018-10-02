@@ -39,11 +39,6 @@ public final class StringVersionNumber extends VersionNumber {
     }
 
     @Override
-    public int hashCode() {
-        return version.hashCode();
-    }
-
-    @Override
     public String toString() {
         return version;
     }

@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.versioning;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.jackhuang.hmcl.util.StringUtils;
@@ -63,11 +62,6 @@ public final class IntVersionNumber extends VersionNumber {
 
     public int get(int index) {
         return version.get(index);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(version);
     }
 
     @Override

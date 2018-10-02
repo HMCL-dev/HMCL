@@ -52,9 +52,13 @@ public abstract class VersionNumber implements Comparable<VersionNumber> {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == null) return false;
-        else return toString().equals(obj.toString());
+    public boolean equals(Object another) {
+        return another instanceof VersionNumber && this.toString().equals(another.toString());
+    }
+
+    @Override
+    public int hashCode() {
+        return toString().hashCode();
     }
 
     private static <T extends Comparable<T>> int compareTo(List<T> a, List<T> b) {

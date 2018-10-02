@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.versioning;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -41,11 +40,6 @@ public final class ComposedVersionNumber extends VersionNumber {
         composed = Arrays.stream(version.split("-"))
                 .map(VersionNumber::asVersion)
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(composed);
     }
 
     @Override
