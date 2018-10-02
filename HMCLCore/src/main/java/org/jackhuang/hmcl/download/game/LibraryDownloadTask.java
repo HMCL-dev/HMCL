@@ -101,7 +101,7 @@ public class LibraryDownloadTask extends Task {
 
         try {
             URL packXz = NetworkUtils.toURL(url + ".pack.xz");
-            if (NetworkUtils.URLExists(packXz)) {
+            if (NetworkUtils.urlExists(packXz)) {
                 task = new FileDownloadTask(packXz, xzFile, null);
                 xz = true;
             } else {

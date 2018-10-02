@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
-import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -79,7 +78,12 @@ public final class TaskExecutor {
             taskListeners.forEach(it -> it.onStop(flag.get(), this));
         });
         workerQueue.add(future);
-        Lang.invoke((ExceptionalSupplier<?, Exception>) future::get);
+        try {
+            future.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (ExecutionException | CancellationException e) {
+        }
         return flag.get();
     }
 

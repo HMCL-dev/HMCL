@@ -16,7 +16,6 @@ import java.net.URL;
 import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.Lang.liftFunction;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
@@ -114,11 +113,15 @@ public class YggdrasilService {
     public Optional<Map<TextureType, Texture>> getTextures(GameProfile profile) throws AuthenticationException {
         Objects.requireNonNull(profile);
 
-        return Optional.ofNullable(profile.getProperties())
-                .flatMap(properties -> Optional.ofNullable(properties.get("textures")))
-                .map(encodedTextures -> new String(Base64.getDecoder().decode(encodedTextures), UTF_8))
-                .map(liftFunction(textures -> fromJson(textures, TextureResponse.class)))
-                .flatMap(response -> Optional.ofNullable(response.textures));
+        Optional<String> encodedTextures = Optional.ofNullable(profile.getProperties())
+                .flatMap(properties -> Optional.ofNullable(properties.get("textures")));
+
+        if (encodedTextures.isPresent()) {
+            TextureResponse texturePayload = fromJson(new String(Base64.getDecoder().decode(encodedTextures.get()), UTF_8), TextureResponse.class);
+            return Optional.ofNullable(texturePayload.textures);
+        } else {
+            return Optional.empty();
+        }
     }
 
     private static YggdrasilSession handleAuthenticationResponse(String responseText, String clientToken) throws AuthenticationException {

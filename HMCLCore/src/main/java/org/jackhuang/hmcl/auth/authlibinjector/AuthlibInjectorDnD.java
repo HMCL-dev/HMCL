@@ -17,15 +17,15 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
+import static org.jackhuang.hmcl.util.io.NetworkUtils.decodeURL;
+
+import java.util.Optional;
+import java.util.function.Consumer;
+
 import javafx.event.EventHandler;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * @author yushijinhun
@@ -44,11 +44,7 @@ public final class AuthlibInjectorDnD {
 
         String[] uriElements = uri.split(":");
         if (uriElements.length == 3 && SCHEME.equals(uriElements[0]) && PATH_YGGDRASIL_SERVER.equals(uriElements[1])) {
-            try {
-                return Optional.of(URLDecoder.decode(uriElements[2], "UTF-8"));
-            } catch (UnsupportedEncodingException e) {
-                throw new IllegalStateException(e);
-            }
+            return Optional.of(decodeURL(uriElements[2]));
         }
         return Optional.empty();
     }

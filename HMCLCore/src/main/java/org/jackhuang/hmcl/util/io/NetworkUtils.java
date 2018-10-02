@@ -19,11 +19,8 @@ package org.jackhuang.hmcl.util.io;
 
 import java.io.*;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.jackhuang.hmcl.util.Lang;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.StringUtils.*;
@@ -125,13 +122,18 @@ public final class NetworkUtils {
         String disposition = conn.getHeaderField("Content-Disposition");
         if (disposition == null || !disposition.contains("filename=")) {
             String u = conn.getURL().toString();
-            return Lang.invoke(() -> URLDecoder.decode(substringAfterLast(u, '/'), StandardCharsets.UTF_8.name()));
-        } else
-            return Lang.invoke(() -> URLDecoder.decode(removeSurrounding(substringAfter(disposition, "filename="), "\""), StandardCharsets.UTF_8.name()));
+            return decodeURL(substringAfterLast(u, '/'));
+        } else {
+            return decodeURL(removeSurrounding(substringAfter(disposition, "filename="), "\""));
+        }
     }
 
     public static URL toURL(String str) {
-        return Lang.invoke(() -> new URL(str));
+        try {
+            return new URL(str);
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     public static boolean isURL(String str) {
@@ -143,11 +145,29 @@ public final class NetworkUtils {
         }
     }
 
-    public static boolean URLExists(URL url) throws IOException {
+    public static boolean urlExists(URL url) throws IOException {
         try (InputStream stream = url.openStream()) {
             return true;
         } catch (FileNotFoundException e) {
             return false;
         }
     }
+
+    // ==== Shortcut methods for encoding/decoding URLs in UTF-8 ====
+    public static String encodeURL(String toEncode) {
+        try {
+            return URLEncoder.encode(toEncode, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new Error();
+        }
+    }
+
+    public static String decodeURL(String toDecode) {
+        try {
+            return URLDecoder.decode(toDecode, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new Error();
+        }
+    }
+    // ====
 }

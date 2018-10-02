@@ -113,7 +113,12 @@ public final class FileUtils {
     }
 
     public static boolean deleteDirectoryQuietly(File directory) {
-        return Lang.test(() -> deleteDirectory(directory));
+        try {
+            deleteDirectory(directory);
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     public static void copyDirectory(Path src, Path dest) throws IOException {

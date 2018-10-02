@@ -44,7 +44,6 @@ import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SelectedItemProperties;
@@ -52,6 +51,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -223,7 +223,11 @@ public final class FXUtils {
         FXMLLoader loader = new FXMLLoader(node.getClass().getResource(absolutePath), I18n.getResourceBundle());
         loader.setRoot(node);
         loader.setController(node);
-        Lang.invoke((ExceptionalSupplier<Object, IOException>) loader::load);
+        try {
+            loader.load();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public static void installTooltip(Node node, String tooltip) {
