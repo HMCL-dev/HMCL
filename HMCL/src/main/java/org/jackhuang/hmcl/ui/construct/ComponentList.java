@@ -21,18 +21,17 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import javafx.beans.DefaultProperty;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
-import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 @DefaultProperty("content")
@@ -101,15 +100,29 @@ public class ComponentList extends Control {
     }
 
     protected static class Skin extends SkinBase<ComponentList> {
+        private static final PseudoClass PSEUDO_CLASS_FIRST = PseudoClass.getPseudoClass("first");
+
         private final ObservableList<Node> list;
+        private final ObjectBinding<Node> firstItem;
 
         protected Skin(ComponentList control) {
             super(control);
 
-            list = MappedObservableList.create(control.getContent(), ComponentListCell::new);
-            ListFirstElementListener.observe(list,
-                    first -> first.getStyleClass().setAll("options-list-item-ahead"),
-                    last -> last.getStyleClass().setAll("options-list-item"));
+            list = MappedObservableList.create(control.getContent(), node -> {
+                ComponentListCell cell = new ComponentListCell(node);
+                cell.getStyleClass().add("options-list-item");
+                return cell;
+            });
+
+            firstItem = Bindings.valueAt(list, 0);
+            firstItem.addListener((observable, oldValue, newValue) -> {
+                if (newValue != null)
+                    newValue.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, true);
+                if (oldValue != null)
+                    oldValue.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, false);
+            });
+            if (!list.isEmpty())
+                list.get(0).pseudoClassStateChanged(PSEUDO_CLASS_FIRST, true);
 
             VBox vbox = new VBox();
             Bindings.bindContent(vbox.getChildren(), list);

@@ -732,11 +732,8 @@
     -fx-font-size: 12;
 }
 
-.options-list-item-ahead {
-    -fx-background-radius: 2 2 0 0;
-    -fx-background-color: white;
-    -fx-padding: 10 16 10 16;
-    -fx-font-size: 12;
+.options-list-item:first {
+    -fx-border-width: 0;
 }
 
 .options-list-item-expand-button {
