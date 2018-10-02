@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Rectangle2D;
@@ -29,9 +26,10 @@ import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
 
 public class AdvancedListItem extends Control {
-    private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
-    private final StringProperty title = new SimpleStringProperty();
-    private final StringProperty subtitle = new SimpleStringProperty();
+    private final ObjectProperty<Image> image = new SimpleObjectProperty<>(this, "image");
+    private final StringProperty title = new SimpleStringProperty(this, "title");
+    private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
+    private final BooleanProperty actionButtonVisible = new SimpleBooleanProperty(this, "actionButtonVisible", true);
 
     public ObjectProperty<Image> imageProperty() {
         return image;
@@ -43,6 +41,10 @@ public class AdvancedListItem extends Control {
 
     public StringProperty subtitleProperty() {
         return subtitle;
+    }
+
+    public BooleanProperty actionButtonVisibleProperty() {
+        return actionButtonVisible;
     }
 
     public final ObjectProperty<EventHandler<ActionEvent>> onActionProperty() {

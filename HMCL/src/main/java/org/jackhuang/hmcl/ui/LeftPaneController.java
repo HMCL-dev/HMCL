@@ -40,7 +40,7 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.IconedItem;
 import org.jackhuang.hmcl.ui.profile.ProfileAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.ui.versions.Versions;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
@@ -55,12 +55,17 @@ public final class LeftPaneController extends AdvancedListBox {
         accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
         accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
         GameAdvancedListItem gameListItem = new GameAdvancedListItem();
-        gameListItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
+        gameListItem.actionButtonVisibleProperty().bind(Profiles.selectedVersionProperty().isNotNull());
+        gameListItem.setOnAction(e -> Versions.modifyGameSettings(Profiles.getSelectedProfile(), Profiles.getSelectedVersion()));
         ProfileAdvancedListItem profileListItem = new ProfileAdvancedListItem();
         profileListItem.setOnAction(e -> Controllers.navigate(Controllers.getProfileListPage()));
         profileListItem.profileProperty().bind(Profiles.selectedProfileProperty());
 
-        IconedItem launcherSettingsItem = new IconedItem(SVG.gear(Theme.blackFillBinding(), 20, 20), "iconed-item");
+        IconedItem gameItem = new IconedItem(FXUtils.limitingSize(SVG.gear(Theme.blackFillBinding(), 20, 20), 32, 20), "iconed-item");
+        gameItem.getLabel().setText(i18n("version.manage"));
+        gameItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getGameListPage()));
+
+        IconedItem launcherSettingsItem = new IconedItem(FXUtils.limitingSize(SVG.gear(Theme.blackFillBinding(), 20, 20), 32, 20), "iconed-item");
         launcherSettingsItem.getLabel().setText(i18n("settings.launcher"));
 
         launcherSettingsItem.setOnMouseClicked(e -> Controllers.navigate(Controllers.getSettingsPage()));
@@ -70,6 +75,7 @@ public final class LeftPaneController extends AdvancedListBox {
                 .add(accountListItem)
                 .startCategory(i18n("version").toUpperCase())
                 .add(gameListItem)
+                .add(gameItem)
                 .startCategory(i18n("profile.title").toUpperCase())
                 .add(profileListItem)
                 .startCategory(i18n("launcher").toUpperCase())

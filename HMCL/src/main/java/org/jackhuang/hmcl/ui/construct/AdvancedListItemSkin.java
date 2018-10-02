@@ -93,6 +93,11 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         right.getChildren().setAll(settings);
         root.setRight(right);
 
+        FXUtils.onChangeAndOperate(skinnable.actionButtonVisibleProperty(), newValue -> {
+            if (newValue) root.setRight(right);
+            else root.setRight(null);
+        });
+
         stackPane.setStyle("-fx-padding: 10 16 10 16;");
         stackPane.getStyleClass().setAll("transparent");
         stackPane.setPickOnBounds(false);
