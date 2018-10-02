@@ -21,7 +21,7 @@
                 <BorderPane> <!-- Name -->
                     <left>
                         <VBox>
-                            <Label text="%profile" BorderPane.alignment="CENTER_LEFT"/>
+                            <Label text="%profile.name" BorderPane.alignment="CENTER_LEFT"/>
                         </VBox>
                     </left>
                     <right>

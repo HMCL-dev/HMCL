@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -60,7 +61,7 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
         title = new ReadOnlyStringWrapper(this, "title",
                 profile == null ? i18n("profile.new") : i18n("profile") + " - " + profileDisplayName);
         location = new SimpleStringProperty(this, "location",
-                Optional.ofNullable(profile).map(Profile::getGameDir).map(File::getAbsolutePath).orElse(""));
+                Optional.ofNullable(profile).map(Profile::getGameDir).map(File::getAbsolutePath).orElse(".minecraft"));
 
         FXUtils.loadFXML(this, "/assets/fxml/profile.fxml");
 
