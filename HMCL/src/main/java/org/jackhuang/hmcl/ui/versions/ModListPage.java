@@ -23,6 +23,7 @@ import javafx.scene.input.TransferMode;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.ModInfo;
 import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -75,6 +76,10 @@ public final class ModListPage extends ListPage<ModItem> {
             }
             event.consume();
         });
+    }
+
+    public void loadVersion(Profile profile, String id) {
+        loadMods(profile.getModManager(), id);
     }
 
     public void loadMods(ModManager modManager, String versionId) {

@@ -26,7 +26,6 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -112,10 +111,10 @@ public final class VersionPage extends StackPane implements DecoratorPage {
 
         title.set(i18n("version.manage.manage") + " - " + id);
 
-        versionSettings.loadVersionSetting(profile, id);
+        versionSettings.loadVersion(profile, id);
         mod.setParentTab(tabPane);
         modTab.setUserData(mod);
-        mod.loadMods(profile.getModManager(), id);
+        mod.loadVersion(profile, id);
         installer.loadVersion(profile, id);
         world.loadVersion(profile, id);
     }
@@ -127,7 +126,7 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         // If we jumped to game list page and deleted this version
         // and back to this page, we should return to main page.
         if (!this.profile.getRepository().isLoaded() ||
-            !this.profile.getRepository().hasVersion(version)) {
+                !this.profile.getRepository().hasVersion(version)) {
             Platform.runLater(() -> fireEvent(new PageCloseEvent()));
             return;
         }

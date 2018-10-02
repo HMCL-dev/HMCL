@@ -141,7 +141,7 @@ public class Versions {
 
     public static void modifyGlobalSettings(Profile profile) {
         VersionSettingsPage page = new VersionSettingsPage();
-        page.loadVersionSetting(profile, null);
+        page.loadVersion(profile, null);
         Controllers.navigate(page);
     }
 

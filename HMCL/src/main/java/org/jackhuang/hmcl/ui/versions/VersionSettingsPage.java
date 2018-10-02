@@ -139,7 +139,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             else
                 profile.getRepository().globalizeVersionSetting(versionId);
 
-            Platform.runLater(() -> loadVersionSetting(profile, versionId));
+            Platform.runLater(() -> loadVersion(profile, versionId));
         });
 
         specificSettingsListener = o -> {
@@ -150,7 +150,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         advancedSettingsPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
     }
 
-    public void loadVersionSetting(Profile profile, String versionId) {
+    public void loadVersion(Profile profile, String versionId) {
         this.profile = profile;
         this.versionId = versionId;
 
