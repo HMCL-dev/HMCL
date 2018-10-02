@@ -36,7 +36,7 @@ public final class HMCLModpackManager {
     public static final List<String> MODPACK_BLACK_LIST = Lang.immutableListOf(
             "usernamecache.json", "usercache.json", // Minecraft
             "launcher_profiles.json", "launcher.pack.lzma", // Minecraft Launcher
-            "pack.json", "launcher.jar", "hmclmc.log", // HMCL
+            "pack.json", "launcher.jar", "hmclmc.log", "cache", // HMCL
             "manifest.json", "minecraftinstance.json", ".curseclient", // Curse
             "minetweaker.log", // Mods
             "jars", "logs", "versions", "assets", "libraries", "crash-reports", "NVIDIA", "AMD", "screenshots", "natives", "native", "$native", "server-resource-packs", // Minecraft

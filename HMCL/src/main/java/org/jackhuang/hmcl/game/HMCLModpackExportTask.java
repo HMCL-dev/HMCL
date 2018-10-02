@@ -61,6 +61,8 @@ public class HMCLModpackExportTask extends Task {
         Logging.LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
         try (Zipper zip = new Zipper(output.toPath())) {
             zip.putDirectory(repository.getRunDirectory(version).toPath(), "minecraft", path -> {
+                if (path.isEmpty())
+                    return true;
                 for (String s : blackList)
                     if (path.equals(s))
                         return false;

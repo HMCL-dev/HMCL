@@ -76,7 +76,7 @@ public final class Zipper implements Closeable {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
                 String relativePath = source.relativize(file).normalize().toString();
-                if (filter != null && !filter.test(relativePath)) {
+                if (filter != null && !filter.test(relativePath.replace('\\', '/'))) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
                 Files.copy(file, root.resolve(relativePath));
@@ -86,7 +86,7 @@ public final class Zipper implements Closeable {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                 String relativePath = source.relativize(dir).normalize().toString();
-                if (filter != null && !filter.test(relativePath)) {
+                if (filter != null && !filter.test(relativePath.replace('\\', '/'))) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
                 Path path = root.resolve(relativePath);
