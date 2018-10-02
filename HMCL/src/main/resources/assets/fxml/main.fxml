@@ -24,7 +24,7 @@
                 </StackPane.margin>
             </HBox>
 
-            <JFXButton fx:id="closeButton" StackPane.alignment="TOP_RIGHT" styleClass="toggle-icon-tiny">
+            <JFXButton fx:id="closeUpdateButton" StackPane.alignment="TOP_RIGHT" styleClass="toggle-icon-tiny">
                 <StackPane.margin>
                     <Insets topRightBottomLeft="5" />
                 </StackPane.margin>

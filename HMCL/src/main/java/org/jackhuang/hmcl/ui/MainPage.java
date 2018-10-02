@@ -24,17 +24,13 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.beans.InvalidationListener;
-import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.event.EventBus;
@@ -52,6 +48,7 @@ import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.javafx.MultiStepBinding;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.List;
@@ -64,7 +61,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private final PopupMenu menu = new PopupMenu();
     private final JFXPopup popup = new JFXPopup(menu);
-    private InvalidationListener updateListener;
 
     @FXML
     private StackPane main;
@@ -75,7 +71,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     @FXML
     private JFXButton btnMenu;
     @FXML
-    private JFXButton closeButton;
+    private JFXButton closeUpdateButton;
     @FXML
     private Label lblCurrentGame;
     @FXML
@@ -95,8 +91,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
         menu.setMinWidth(545);
 
         updatePane.visibleProperty().bind(UpdateChecker.outdatedProperty());
-        closeButton.setGraphic(SVG.close(Theme.whiteFillBinding(), 10, 10));
-        closeButton.setOnMouseClicked(event -> {
+        closeUpdateButton.setGraphic(SVG.close(Theme.whiteFillBinding(), 10, 10));
+        closeUpdateButton.setOnMouseClicked(event -> {
             Duration duration = Duration.millis(320);
             Timeline nowAnimation = new Timeline();
             nowAnimation.getKeyFrames().addAll(
@@ -111,15 +107,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
             nowAnimation.play();
         });
         lblIcon.setGraphic(SVG.update(Theme.whiteFillBinding(), 20, 20));
-        updateListener = any -> {
-            if (UpdateChecker.isOutdated()) {
-                lblLatestVersion.setTitle(i18n("update.bubble.title", UpdateChecker.getLatestVersion().getVersion()));
-            }
-        };
-        UpdateChecker.latestVersionProperty().addListener(new WeakInvalidationListener(updateListener));
-        UpdateChecker.outdatedProperty().addListener(new WeakInvalidationListener(updateListener));
-        UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
-        updateListener.invalidated(null);
+        lblLatestVersion.titleProperty().bind(
+                MultiStepBinding.of(UpdateChecker.latestVersionProperty())
+                        .map(version -> version == null ? "" : i18n("update.bubble.title", version.getVersion())));
 
         StackPane graphic = new StackPane();
         Node svg = SVG.triangle(Theme.whiteFillBinding(), 10, 10);
