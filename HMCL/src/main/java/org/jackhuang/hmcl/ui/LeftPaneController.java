@@ -57,7 +57,15 @@ public final class LeftPaneController extends AdvancedListBox {
 
         GameAdvancedListItem gameListItem = new GameAdvancedListItem();
         gameListItem.actionButtonVisibleProperty().bind(Profiles.selectedVersionProperty().isNotNull());
-        gameListItem.setOnAction(e -> Versions.modifyGameSettings(Profiles.getSelectedProfile(), Profiles.getSelectedVersion()));
+        gameListItem.setOnAction(e -> {
+        	Profile profile = Profiles.getSelectedProfile();
+        	String version = Profiles.getSelectedVersion();
+        	if (version == null) {
+        		Controllers.navigate(Controllers.getGameListPage());
+        	} else {
+        		Versions.modifyGameSettings(profile, version);        	
+        	}
+        });
 
         ProfileAdvancedListItem profileListItem = new ProfileAdvancedListItem();
         profileListItem.setOnAction(e -> Controllers.navigate(Controllers.getProfileListPage()));
