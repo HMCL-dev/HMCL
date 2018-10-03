@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -55,22 +54,22 @@ public final class LeftPaneController extends AdvancedListBox {
         AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
         accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
         accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
+
         GameAdvancedListItem gameListItem = new GameAdvancedListItem();
         gameListItem.actionButtonVisibleProperty().bind(Profiles.selectedVersionProperty().isNotNull());
         gameListItem.setOnAction(e -> Versions.modifyGameSettings(Profiles.getSelectedProfile(), Profiles.getSelectedVersion()));
+
         ProfileAdvancedListItem profileListItem = new ProfileAdvancedListItem();
         profileListItem.setOnAction(e -> Controllers.navigate(Controllers.getProfileListPage()));
         profileListItem.profileProperty().bind(Profiles.selectedProfileProperty());
 
         AdvancedListItem gameItem = new AdvancedListItem();
         gameItem.setImage(new Image("/assets/img/bookshelf.png"));
-        gameItem.setRightGraphic(SVG.viewList(Theme.blackFillBinding(), -1, -1));
         gameItem.setTitle(i18n("version.manage"));
         gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
 
         AdvancedListItem launcherSettingsItem = new AdvancedListItem();
         launcherSettingsItem.setImage(new Image("/assets/img/command.png"));
-        launcherSettingsItem.setRightGraphic(SVG.gear(Theme.blackFillBinding(), -1, -1));
         launcherSettingsItem.setTitle(i18n("settings.launcher"));
         launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
 
