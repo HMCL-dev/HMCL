@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -83,19 +82,15 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER);
-        right.setPickOnBounds(false);
-
-        JFXButton settings = new JFXButton();
-        FXUtils.setLimitWidth(settings, 40);
-        settings.getStyleClass().setAll("toggle-icon4");
-        settings.graphicProperty().bind(skinnable.rightGraphicProperty());
-        right.getChildren().setAll(settings);
+        right.setMouseTransparent(true);
+        right.getStyleClass().setAll("toggle-icon4");
+        FXUtils.setLimitWidth(right, 40);
+        FXUtils.onChangeAndOperate(skinnable.rightGraphicProperty(),
+                newGraphic -> right.getChildren().setAll(newGraphic));
         root.setRight(right);
 
-        FXUtils.onChangeAndOperate(skinnable.actionButtonVisibleProperty(), newValue -> {
-            if (newValue) root.setRight(right);
-            else root.setRight(null);
-        });
+        FXUtils.onChangeAndOperate(skinnable.actionButtonVisibleProperty(),
+                visible -> root.setRight(visible ? right : null));
 
         stackPane.setStyle("-fx-padding: 10 16 10 16;");
         stackPane.getStyleClass().setAll("transparent");
