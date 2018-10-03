@@ -36,8 +36,8 @@ import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.i18n.Locales;
+import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.net.Proxy;
 import java.util.Arrays;
@@ -64,24 +64,19 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
         selectedItemPropertyFor(cboDownloadSource).bindBidirectional(config().downloadTypeProperty());
         // ====
 
-        cboFont.initValue(Settings.instance().getFont());
-        cboFont.valueProperty().addListener((a, b, newValue) -> {
-            Font font = Font.font(newValue, Settings.instance().getFont().getSize());
-            Settings.instance().setFont(font);
-            lblDisplay.setStyle("-fx-font: " + font.getSize() + " \"" + font.getFamily() + "\";");
-        });
+        // ==== Font ====
+        cboFont.valueProperty().bindBidirectional(config().fontFamilyProperty());
 
-        txtFontSize.setText(Double.toString(Settings.instance().getFont().getSize()));
-        txtFontSize.getValidators().add(new Validator(it -> Lang.toDoubleOrNull(it) != null));
-        txtFontSize.textProperty().addListener((a, b, newValue) -> {
-            if (txtFontSize.validate()) {
-                Font font = Font.font(Settings.instance().getFont().getFamily(), Double.parseDouble(newValue));
-                Settings.instance().setFont(font);
-                lblDisplay.setStyle("-fx-font: " + font.getSize() + " \"" + font.getFamily() + "\";");
-            }
-        });
+        txtFontSize.textProperty().bindBidirectional(config().fontSizeProperty(),
+                SafeStringConverter.fromFiniteDouble()
+                        .restrict(it -> it > 0)
+                        .fallbackTo(12.0)
+                        .asPredicate(Validator.addTo(txtFontSize)));
 
-        lblDisplay.setStyle("-fx-font: " + Settings.instance().getFont().getSize() + " \"" + Settings.instance().getFont().getFamily() + "\";");
+        lblDisplay.fontProperty().bind(Bindings.createObjectBinding(
+                () -> Font.font(config().getFontFamily(), config().getFontSize()),
+                config().fontFamilyProperty(), config().fontSizeProperty()));
+        // ====
 
         // ==== Languages ====
         cboLanguage.getItems().setAll(Locales.LOCALES);

@@ -17,20 +17,26 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import static javafx.collections.FXCollections.emptyObservableList;
+import static javafx.collections.FXCollections.observableList;
+import static javafx.collections.FXCollections.singletonObservableList;
+
+import org.jackhuang.hmcl.util.javafx.MultiStepBinding;
+
 import com.jfoenix.controls.JFXComboBox;
+
 import javafx.beans.NamedArg;
+import javafx.beans.binding.Bindings;
 import javafx.scene.control.ListCell;
 import javafx.scene.text.Font;
 
 public class FontComboBox extends JFXComboBox<String> {
+
     private boolean loaded = false;
 
     public FontComboBox(@NamedArg(value = "fontSize", defaultValue = "12.0") double fontSize,
                         @NamedArg(value = "enableStyle", defaultValue = "false") boolean enableStyle) {
-        valueProperty().addListener((a, b, newValue) -> {
-            if (enableStyle)
-                setStyle("-fx-font-family: \"" + newValue + "\";");
-        });
+        styleProperty().bind(Bindings.concat("-fx-font-family: \"", valueProperty(), "\""));
 
         setCellFactory(listView -> new ListCell<String>() {
             @Override
@@ -43,15 +49,15 @@ public class FontComboBox extends JFXComboBox<String> {
             }
         });
 
+        itemsProperty().bind(MultiStepBinding.of(valueProperty())
+                        .map(value -> value == null ? emptyObservableList() : singletonObservableList(value)));
+
         setOnMouseClicked(e -> {
-            if (loaded) return;
-            getItems().setAll(Font.getFamilies());
+            if (loaded)
+                return;
+            itemsProperty().unbind();
+            setItems(observableList(Font.getFamilies()));
             loaded = true;
         });
-    }
-
-    public void initValue(Font font) {
-        getItems().setAll(font.getFamily());
-        getSelectionModel().select(font.getFamily());
     }
 }

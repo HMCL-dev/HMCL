@@ -33,7 +33,6 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -176,7 +175,7 @@ public final class LogWindow extends Stage {
 
             engine = webView.getEngine();
             engine.loadContent(Lang.ignoringException(() -> IOUtils.readFullyAsString(getClass().getResourceAsStream("/assets/log-window-content.html")))
-                    .replace("${FONT}", Settings.instance().getFont().getSize() + "px \"" + Settings.instance().getFont().getFamily() + "\""));
+                    .replace("${FONT}", config().getFontSize() + "px \"" + config().getFontFamily() + "\""));
             engine.getLoadWorker().stateProperty().addListener((a, b, newValue) -> {
                 if (newValue == Worker.State.SUCCEEDED) {
                     document = engine.getDocument();
