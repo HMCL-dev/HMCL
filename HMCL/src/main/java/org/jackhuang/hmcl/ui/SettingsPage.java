@@ -42,7 +42,6 @@ import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import java.net.Proxy;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Objects;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -144,27 +143,12 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
 
         lblUpdateNote.setWrappingWidth(470);
 
-        ObjectProperty<UpdateChannel> updateChannel = new SimpleObjectProperty<UpdateChannel>() {
-            @Override
-            protected void invalidated() {
-                UpdateChannel updateChannel = Objects.requireNonNull(get());
-                chkUpdateDev.setSelected(updateChannel == UpdateChannel.DEVELOPMENT);
-                chkUpdateStable.setSelected(updateChannel == UpdateChannel.STABLE);
-            }
-        };
-
         ToggleGroup updateChannelGroup = new ToggleGroup();
         chkUpdateDev.setToggleGroup(updateChannelGroup);
         chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);
         chkUpdateStable.setToggleGroup(updateChannelGroup);
         chkUpdateStable.setUserData(UpdateChannel.STABLE);
-        updateChannelGroup.getToggles().forEach(
-                toggle -> toggle.selectedProperty().addListener((observable, oldValue, newValue) -> {
-                    if (newValue) {
-                        updateChannel.set((UpdateChannel) toggle.getUserData());
-                    }
-                }));
-        updateChannel.bindBidirectional(ConfigHolder.config().updateChannelProperty());
+        selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class).bindBidirectional(ConfigHolder.config().updateChannelProperty());
         // ====
 
         // ==== Background ====
