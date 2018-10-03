@@ -86,7 +86,13 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         right.getStyleClass().setAll("toggle-icon4");
         FXUtils.setLimitWidth(right, 40);
         FXUtils.onChangeAndOperate(skinnable.rightGraphicProperty(),
-                newGraphic -> right.getChildren().setAll(newGraphic));
+                newGraphic -> {
+                    if (newGraphic == null) {
+                        right.getChildren().clear();
+                    } else {
+                        right.getChildren().setAll(newGraphic);
+                    }
+                });
         root.setRight(right);
 
         FXUtils.onChangeAndOperate(skinnable.actionButtonVisibleProperty(),
