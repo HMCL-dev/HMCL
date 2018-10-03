@@ -24,6 +24,7 @@ import javafx.beans.NamedArg;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -138,7 +139,7 @@ public class MultiFileItem<T> extends ComponentList {
 
     public Node createChildren(String title, String subtitle, T userData) {
         BorderPane pane = new BorderPane();
-        pane.setStyle("-fx-padding: 3;");
+        pane.setPadding(new Insets(3));
         FXUtils.setLimitHeight(pane, 20);
 
         JFXRadioButton left = new JFXRadioButton(title);
