@@ -240,7 +240,6 @@ public abstract class SettingsView extends StackPane {
 
                             {
                                 txtProxyHost = new JFXTextField();
-                                txtProxyHost.getStyleClass().setAll("fit-width");
                                 GridPane.setRowIndex(txtProxyHost, 1);
                                 GridPane.setColumnIndex(txtProxyHost, 1);
                                 gridPane.getChildren().add(txtProxyHost);
@@ -256,7 +255,6 @@ public abstract class SettingsView extends StackPane {
 
                             {
                                 txtProxyPort = new JFXTextField();
-                                txtProxyPort.getStyleClass().setAll("fit-width");
                                 GridPane.setRowIndex(txtProxyPort, 2);
                                 GridPane.setColumnIndex(txtProxyPort, 1);
                                 FXUtils.setValidateWhileTextChanged(txtProxyPort, true);
@@ -293,7 +291,6 @@ public abstract class SettingsView extends StackPane {
 
                             {
                                 txtProxyUsername = new JFXTextField();
-                                txtProxyUsername.getStyleClass().setAll("fit-width");
                                 GridPane.setRowIndex(txtProxyUsername, 0);
                                 GridPane.setColumnIndex(txtProxyUsername, 1);
                                 authPane.getChildren().add(txtProxyUsername);
@@ -308,7 +305,6 @@ public abstract class SettingsView extends StackPane {
 
                             {
                                 txtProxyPassword = new JFXPasswordField();
-                                txtProxyPassword.getStyleClass().setAll("fit-width");
                                 GridPane.setRowIndex(txtProxyPassword, 1);
                                 GridPane.setColumnIndex(txtProxyPassword, 1);
                                 authPane.getChildren().add(txtProxyPassword);
