@@ -26,7 +26,6 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -41,23 +40,23 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
 
         BorderPane root = new BorderPane();
 
-        JFXRadioButton chkSelected = new JFXRadioButton();
+        JFXRadioButton chkSelected = new JFXRadioButton() {
+            @Override
+            public void fire() {
+                skinnable.fire();
+            }
+        };
         BorderPane.setAlignment(chkSelected, Pos.CENTER);
-        chkSelected.selectedProperty().bindBidirectional(skinnable.selectedProperty());
+        chkSelected.selectedProperty().bind(skinnable.selectedProperty());
         root.setLeft(chkSelected);
 
         HBox center = new HBox();
         center.setSpacing(8);
         center.setAlignment(Pos.CENTER_LEFT);
 
-        StackPane imageViewContainer = new StackPane();
-        FXUtils.setLimitWidth(imageViewContainer, 32);
-        FXUtils.setLimitHeight(imageViewContainer, 32);
-
         ImageView imageView = new ImageView();
         FXUtils.limitSize(imageView, 32, 32);
         imageView.imageProperty().bind(skinnable.imageProperty());
-        imageViewContainer.getChildren().setAll(imageView);
 
         TwoLineListItem item = new TwoLineListItem();
         BorderPane.setAlignment(item, Pos.CENTER);

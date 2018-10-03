@@ -19,13 +19,13 @@ package org.jackhuang.hmcl.ui.profile;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.Skin;
-import javafx.scene.control.ToggleButton;
 
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 
-public class ProfileListItem extends ToggleButton {
+public class ProfileListItem extends RadioButton {
     private final Profile profile;
     private final StringProperty title = new SimpleStringProperty();
     private final StringProperty subtitle = new SimpleStringProperty();

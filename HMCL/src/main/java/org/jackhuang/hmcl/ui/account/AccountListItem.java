@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.ui.account;
 
 import javafx.beans.property.*;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.Skin;
-import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
@@ -32,7 +32,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class AccountListItem extends ToggleButton {
+public class AccountListItem extends RadioButton {
 
     private final Account account;
     private final StringProperty title = new SimpleStringProperty();
