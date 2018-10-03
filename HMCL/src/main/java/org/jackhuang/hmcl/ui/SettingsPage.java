@@ -52,8 +52,6 @@ import static org.jackhuang.hmcl.util.javafx.SelectedItemProperties.selectedItem
 public final class SettingsPage extends SettingsView implements DecoratorPage {
     private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(this, "title", i18n("settings.launcher"));
 
-    private ObjectProperty<Proxy.Type> selectedProxyType;
-
     private InvalidationListener updateListener;
 
     public SettingsPage() {
@@ -97,35 +95,12 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
         config().hasProxyProperty().addListener(o -> chkDisableProxy.setSelected(!config().hasProxy()));
         chkProxyAuthentication.selectedProperty().bindBidirectional(config().hasProxyAuthProperty());
 
-        selectedProxyType = new SimpleObjectProperty<Proxy.Type>(Proxy.Type.HTTP) {
-            {
-                invalidated();
-            }
-
-            @Override
-            protected void invalidated() {
-                Proxy.Type type = Objects.requireNonNull(get());
-                if (type == Proxy.Type.DIRECT) {
-                    set(Proxy.Type.HTTP); // HTTP by default
-                } else {
-                    chkProxyHttp.setSelected(type == Proxy.Type.HTTP);
-                    chkProxySocks.setSelected(type == Proxy.Type.SOCKS);
-                }
-            }
-        };
-        selectedProxyType.bindBidirectional(config().proxyTypeProperty());
-
         ToggleGroup proxyConfigurationGroup = new ToggleGroup();
         chkProxyHttp.setUserData(Proxy.Type.HTTP);
         chkProxyHttp.setToggleGroup(proxyConfigurationGroup);
         chkProxySocks.setUserData(Proxy.Type.SOCKS);
         chkProxySocks.setToggleGroup(proxyConfigurationGroup);
-        proxyConfigurationGroup.getToggles().forEach(
-                toggle -> toggle.selectedProperty().addListener((observable, oldValue, newValue) -> {
-                    if (newValue) {
-                        selectedProxyType.set((Proxy.Type) toggle.getUserData());
-                    }
-                }));
+        selectedItemPropertyFor(proxyConfigurationGroup, Proxy.Type.class).bindBidirectional(config().proxyTypeProperty());
         // ====
 
         fileCommonLocation.loadChildren(Arrays.asList(
