@@ -30,6 +30,7 @@ import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
 import javafx.collections.ObservableList;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.SelectionModel;
 import javafx.scene.control.Toggle;
@@ -38,9 +39,9 @@ import javafx.scene.control.ToggleGroup;
 /**
  * @author yushijinhun
  */
-public final class SelectedItemProperties {
+public final class ExtendedProperties {
 
-    private static final String PROP_PREFIX = SelectedItemProperties.class.getName();
+    private static final String PROP_PREFIX = ExtendedProperties.class.getName();
 
     // ==== ComboBox ====
     @SuppressWarnings("unchecked")
@@ -123,6 +124,16 @@ public final class SelectedItemProperties {
     }
     // ====
 
-    private SelectedItemProperties() {
+    // ==== CheckBox ====
+    @SuppressWarnings("unchecked")
+    public static ObjectProperty<Boolean> reservedSelectedPropertyFor(CheckBox checkbox) {
+        return (ObjectProperty<Boolean>) checkbox.getProperties().computeIfAbsent(
+                PROP_PREFIX + ".checkbox.reservedSelected",
+                any -> new MappedProperty<>(checkbox, "ext.reservedSelected",
+                        checkbox.selectedProperty(), it -> !it, it -> !it));
+    }
+    // ====
+
+    private ExtendedProperties() {
     }
 }

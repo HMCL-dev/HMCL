@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.ui.ListPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.javafx.SelectedItemProperties.createSelectedItemPropertyFor;
+import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
 
 public class AccountList extends ListPage<AccountListItem> implements DecoratorPage {
     private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(this, "title", i18n("account.manage"));
