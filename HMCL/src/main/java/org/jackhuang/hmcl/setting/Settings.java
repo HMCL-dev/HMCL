@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.beans.binding.Bindings;
-import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.util.CacheRepository;
@@ -62,15 +61,6 @@ public class Settings {
                 return getDefaultCommonDirectory();
             }
         }, config().commonDirectoryProperty(), config().commonDirTypeProperty()));
-    }
-
-    public Font getFont() {
-        return Font.font(config().getFontFamily(), config().getFontSize());
-    }
-
-    public void setFont(Font font) {
-        config().setFontFamily(font.getFamily());
-        config().setFontSize(font.getSize());
     }
 
     public static String getDefaultCommonDirectory() {

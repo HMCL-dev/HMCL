@@ -148,7 +148,7 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
         chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);
         chkUpdateStable.setToggleGroup(updateChannelGroup);
         chkUpdateStable.setUserData(UpdateChannel.STABLE);
-        selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class).bindBidirectional(ConfigHolder.config().updateChannelProperty());
+        selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class).bindBidirectional(config().updateChannelProperty());
         // ====
 
         // ==== Background ====
