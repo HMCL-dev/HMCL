@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.account;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
+
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -29,6 +30,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
+import org.jackhuang.hmcl.ui.construct.DialogAware;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -37,9 +39,10 @@ import java.io.IOException;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.loadFXML;
+import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class AddAuthlibInjectorServerPane extends StackPane {
+public class AddAuthlibInjectorServerPane extends StackPane implements DialogAware {
 
     @FXML private StackPane addServerContainer;
     @FXML private Label lblServerUrl;
@@ -70,6 +73,14 @@ public class AddAuthlibInjectorServerPane extends StackPane {
         btnAddNext.disableProperty().bind(
                 Bindings.createBooleanBinding(txtServerUrl::validate, txtServerUrl.textProperty()).not());
         nextPane.hideSpinner();
+
+        txtServerUrl.setText("https://");
+    }
+
+    @Override
+    public void onDialogShown() {
+        txtServerUrl.requestFocus();
+        txtServerUrl.selectEnd();
     }
 
     private String fixInputUrl(String url) {
