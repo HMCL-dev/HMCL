@@ -21,7 +21,6 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
 
-import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
@@ -39,7 +38,6 @@ import java.io.IOException;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.loadFXML;
-import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AddAuthlibInjectorServerPane extends StackPane implements DialogAware {
@@ -70,24 +68,13 @@ public class AddAuthlibInjectorServerPane extends StackPane implements DialogAwa
         transitionHandler = new TransitionHandler(addServerContainer);
         transitionHandler.setContent(addServerPane, ContainerAnimations.NONE.getAnimationProducer());
 
-        btnAddNext.disableProperty().bind(
-                Bindings.createBooleanBinding(txtServerUrl::validate, txtServerUrl.textProperty()).not());
+        btnAddNext.disableProperty().bind(txtServerUrl.textProperty().isEmpty());
         nextPane.hideSpinner();
-
-        txtServerUrl.setText("https://");
     }
 
     @Override
     public void onDialogShown() {
         txtServerUrl.requestFocus();
-        txtServerUrl.selectEnd();
-    }
-
-    private String fixInputUrl(String url) {
-        if (!url.endsWith("/")) {
-            url += "/";
-        }
-        return url;
     }
 
     private String resolveFetchExceptionMessage(Throwable exception) {
@@ -110,13 +97,13 @@ public class AddAuthlibInjectorServerPane extends StackPane implements DialogAwa
 
         lblCreationWarning.setText("");
 
-        String url = fixInputUrl(txtServerUrl.getText());
+        String url = txtServerUrl.getText();
 
         nextPane.showSpinner();
         addServerPane.setDisable(true);
 
         Task.of(() -> {
-            serverBeingAdded = AuthlibInjectorServer.fetchServerInfo(url);
+            serverBeingAdded = AuthlibInjectorServer.locateServer(url);
         }).finalized(Schedulers.javafx(), (variables, isDependentsSucceeded) -> {
             addServerPane.setDisable(false);
             nextPane.hideSpinner();
