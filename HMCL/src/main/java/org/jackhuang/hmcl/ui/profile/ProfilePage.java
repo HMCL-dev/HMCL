@@ -20,11 +20,13 @@ package org.jackhuang.hmcl.ui.profile;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -66,6 +68,19 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
         FXUtils.loadFXML(this, "/assets/fxml/profile.fxml");
 
         txtProfileName.setText(profileDisplayName);
+        txtProfileName.getValidators().add(new ValidatorBase() {
+            {
+                setMessage(i18n("profile.already_exists"));
+            }
+            @Override
+            protected void eval() {
+                JFXTextField control = (JFXTextField) this.getSrcControl();
+                if (Profiles.getProfiles().stream().anyMatch(profile -> profile.getName().equals(control.getText())))
+                    hasErrors.set(true);
+                else
+                    hasErrors.set(false);
+            }
+        });
         FXUtils.onChangeAndOperate(txtProfileName.textProperty(), it -> {
             btnSave.setDisable(!txtProfileName.validate() || StringUtils.isBlank(getLocation()));
         });

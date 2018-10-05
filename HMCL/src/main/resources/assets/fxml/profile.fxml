@@ -20,14 +20,17 @@
 
                 <BorderPane> <!-- Name -->
                     <left>
-                        <VBox>
+                        <VBox alignment="CENTER_LEFT">
                             <Label text="%profile.name" BorderPane.alignment="CENTER_LEFT"/>
                         </VBox>
                     </left>
                     <right>
                         <JFXTextField fx:id="txtProfileName" BorderPane.alignment="CENTER_RIGHT">
+                            <BorderPane.margin>
+                                <Insets top="8" bottom="8" />
+                            </BorderPane.margin>
                             <validators>
-                                <RequiredFieldValidator/>
+                                <RequiredFieldValidator message="%input.not_empty" />
                             </validators>
                         </JFXTextField>
                     </right>
