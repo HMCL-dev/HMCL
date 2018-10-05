@@ -20,21 +20,20 @@ package org.jackhuang.hmcl.auth.authlibinjector;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
+import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.game.Arguments;
-import org.jackhuang.hmcl.task.GetTask;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
-
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
-import java.util.logging.Level;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import static org.jackhuang.hmcl.util.io.IOUtils.readFullyWithoutClosing;
 
 public class AuthlibInjectorAccount extends YggdrasilAccount {
     private AuthlibInjectorServer server;
@@ -58,41 +57,44 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     }
 
     private AuthInfo inject(ExceptionalSupplier<AuthInfo, AuthenticationException> loginAction) throws AuthenticationException {
-        // Pre-fetch metadata
-        GetTask metadataFetchTask = new GetTask(NetworkUtils.toURL(server.getUrl()));
-        Thread metadataFetchThread = Lang.thread(() -> {
-            try {
-                metadataFetchTask.run();
-            } catch (Exception e) {
-                LOG.log(Level.WARNING, "Failed to pre-fetch Yggdrasil metadata", e);
+        CompletableFuture<byte[]> prefetchedMetaTask = CompletableFuture.supplyAsync(() -> {
+            try (InputStream in = new URL(server.getUrl()).openStream()) {
+                return readFullyWithoutClosing(in);
+            } catch (IOException e) {
+                throw new CompletionException(new ServerDisconnectException(e));
             }
-        }, "Yggdrasil metadata fetch thread");
+        });
 
-        // Update authlib-injector
+        CompletableFuture<AuthlibInjectorArtifactInfo> artifactTask = CompletableFuture.supplyAsync(() -> {
+            try {
+                return authlibInjectorDownloader.get();
+            } catch (IOException e) {
+                throw new CompletionException(new AuthenticationException("Failed to download authlib-injector", e));
+            }
+        });
+
+        AuthInfo auth = loginAction.get();
+        byte[] prefetchedMeta;
         AuthlibInjectorArtifactInfo artifact;
-        try {
-            artifact = authlibInjectorDownloader.get();
-        } catch (IOException e) {
-            throw new AuthenticationException("Failed to download authlib-injector", e);
-        }
 
-        // Perform authentication
-        AuthInfo info = loginAction.get();
-        Arguments arguments = new Arguments().addJVMArguments("-javaagent:" + artifact.getLocation().toString() + "=" + server.getUrl());
-
-        // Wait for metadata to be fetched
         try {
-            metadataFetchThread.join();
+            prefetchedMeta = prefetchedMetaTask.get();
+            artifact = artifactTask.get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-        }
-        Optional<String> metadata = Optional.ofNullable(metadataFetchTask.getResult());
-        if (metadata.isPresent()) {
-            arguments = arguments.addJVMArguments(
-                    "-Dorg.to2mbn.authlibinjector.config.prefetched=" + Base64.getEncoder().encodeToString(metadata.get().getBytes(UTF_8)));
+            throw new AuthenticationException(e);
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof AuthenticationException) {
+                throw (AuthenticationException) e.getCause();
+            } else {
+                throw new AuthenticationException(e.getCause());
+            }
         }
 
-        return info.withArguments(arguments);
+        return auth.withArguments(new Arguments().addJVMArguments(
+                "-javaagent:" + artifact.getLocation().toString() + "=" + server.getUrl(),
+                "-Dauthlibinjector.side=client",
+                "-Dorg.to2mbn.authlibinjector.config.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta)));
     }
 
     @Override
