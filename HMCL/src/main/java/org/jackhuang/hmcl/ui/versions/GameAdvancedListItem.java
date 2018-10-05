@@ -17,21 +17,12 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.concurrency.JFXUtilities;
-import javafx.beans.InvalidationListener;
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-
-import java.io.File;
-import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -39,17 +30,15 @@ public class GameAdvancedListItem extends AdvancedListItem {
 
     public GameAdvancedListItem() {
         FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
-            FXUtils.runLaterIf(() -> !Objects.nonNull(Profiles.getSelectedProfile()), () -> {
-                imageProperty().set(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
-
-                if (version != null) {
-                    setTitle(version);
-                    setSubtitle(null);
-                } else {
-                    setTitle(i18n("version.empty"));
-                    setSubtitle(i18n("version.empty.add"));
-                }
-            });
+            if (version != null) {
+                setTitle(version);
+                setSubtitle(null);
+                setImage(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
+            } else {
+                setTitle(i18n("version.empty"));
+                setSubtitle(i18n("version.empty.add"));
+                setImage(new Image("/assets/img/grass.png"));
+            }
         });
 
         setRightGraphic(SVG.gear(Theme.blackFillBinding(), -1, -1));

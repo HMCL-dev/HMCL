@@ -24,6 +24,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -78,7 +79,6 @@ class ComponentListCell extends StackPane {
             content.getStyleClass().add("options-sublist");
 
             BorderPane groupNode = new BorderPane();
-            groupNode.getStyleClass().add("options-list-item-header");
 
             Node expandIcon = SVG.expand(Theme.blackFillBinding(), 10, 10);
             JFXButton expandButton = new JFXButton();
@@ -86,6 +86,7 @@ class ComponentListCell extends StackPane {
             expandButton.getStyleClass().add("options-list-item-expand-button");
 
             VBox labelVBox = new VBox();
+            labelVBox.setAlignment(Pos.CENTER_LEFT);
 
             if (list instanceof ComponentSublist) {
                 Node leftNode = ((ComponentSublist) list).getHeaderLeft();
@@ -94,13 +95,11 @@ class ComponentListCell extends StackPane {
             } else {
                 Label label = new Label();
                 label.textProperty().bind(list.titleProperty());
-                label.setMouseTransparent(true);
                 labelVBox.getChildren().add(label);
 
                 if (list.isHasSubtitle()) {
                     Label subtitleLabel = new Label();
                     subtitleLabel.textProperty().bind(list.subtitleProperty());
-                    subtitleLabel.setMouseTransparent(true);
                     subtitleLabel.getStyleClass().add("subtitle-label");
                     labelVBox.getChildren().add(subtitleLabel);
                 }
@@ -109,6 +108,7 @@ class ComponentListCell extends StackPane {
             groupNode.setLeft(labelVBox);
 
             HBox right = new HBox();
+            right.setAlignment(Pos.CENTER_RIGHT);
             if (list instanceof ComponentSublist) {
                 Node rightNode = ((ComponentSublist) list).getHeaderRight();
                 if (rightNode != null)
@@ -116,18 +116,13 @@ class ComponentListCell extends StackPane {
             }
             right.getChildren().add(expandButton);
             groupNode.setRight(right);
-            labelVBox.setAlignment(Pos.CENTER_LEFT);
-            right.setAlignment(Pos.CENTER_RIGHT);
 
             VBox container = new VBox();
-            container.setStyle("-fx-padding: 8 0 0 0;");
+            container.setPadding(new Insets(8, 0, 0, 0));
             FXUtils.setLimitHeight(container, 0);
             FXUtils.setOverflowHidden(container, true);
             container.getChildren().setAll(content);
-
-            VBox holder = new VBox();
-            holder.getChildren().setAll(groupNode, container);
-            holder.getStyleClass().add("options-list-item-container");
+            groupNode.setBottom(container);
 
             expandButton.setOnMouseClicked(e -> {
                 if (expandAnimation != null && expandAnimation.getStatus() == Animation.Status.RUNNING) {
@@ -159,7 +154,7 @@ class ComponentListCell extends StackPane {
             expandedProperty().addListener((a, b, newValue) ->
                     expandIcon.setRotate(newValue ? 180 : 0));
 
-            getChildren().setAll(holder);
+            getChildren().setAll(groupNode);
         } else
             getChildren().setAll(content);
     }

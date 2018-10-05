@@ -90,13 +90,13 @@ public final class FXUtils {
     }
 
     public static <T> void onChangeAndOperate(ObservableValue<T> value, Consumer<T> consumer) {
-        onChange(value, consumer);
         consumer.accept(value.getValue());
+        onChange(value, consumer);
     }
 
     public static <T> void onWeakChangeAndOperate(ObservableValue<T> value, Consumer<T> consumer) {
-        onWeakChange(value, consumer);
         consumer.accept(value.getValue());
+        onWeakChange(value, consumer);
     }
 
     public static void runLaterIf(BooleanSupplier condition, Runnable runnable) {

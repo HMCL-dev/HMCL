@@ -19,10 +19,8 @@ package org.jackhuang.hmcl.setting;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.event.EventBus;
@@ -30,9 +28,11 @@ import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.toList;
 import static javafx.collections.FXCollections.observableArrayList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
@@ -42,8 +42,6 @@ public final class Profiles {
 
     public static final String DEFAULT_PROFILE = "Default";
     public static final String HOME_PROFILE = "Home";
-
-    private static InvalidationListener listener = o -> loadVersion();
 
     private Profiles() {
     }
@@ -65,16 +63,14 @@ public final class Profiles {
     private static ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<Profile>() {
         {
             profiles.addListener(onInvalidating(this::invalidated));
-
-            this.addListener(this::change);
         }
 
         @Override
         protected void invalidated() {
-            Profile profile = get();
+            if (!initialized)
+                return;
 
-            if (get() != null)
-                get().removeListener(listener);
+            Profile profile = get();
 
             if (profiles.isEmpty()) {
                 if (profile != null) {
@@ -88,18 +84,20 @@ public final class Profiles {
                 }
             }
 
-            if (!initialized)
-                return;
-
             config().setSelectedProfile(profile == null ? "" : profile.getName());
-            loadVersion();
-        }
-
-        private void change(ObservableValue<? extends Profile> observableValue, Profile oldProfile, Profile newProfile) {
-            if (oldProfile != null)
-                oldProfile.selectedVersionProperty().removeListener(listener);
-            if (newProfile != null)
-                newProfile.selectedVersionProperty().addListener(listener);
+            if (profile != null) {
+                if (profile.getRepository().isLoaded())
+                    selectedVersion.bind(profile.selectedVersionProperty());
+                else {
+                    selectedVersion.unbind();
+                    selectedVersion.set(null);
+                    // bind when repository was reloaded.
+                    profile.getRepository().refreshVersionsAsync().start();
+                }
+            } else {
+                selectedVersion.unbind();
+                selectedVersion.set(null);
+            }
         }
     };
 
@@ -154,19 +152,23 @@ public final class Profiles {
         // Platform.runLater is necessary or profiles will be empty
         // since checkProfiles adds 2 base profile later.
         Platform.runLater(() -> {
+            initialized = true;
+
             selectedProfile.set(
                     profiles.stream()
                             .filter(it -> it.getName().equals(config().getSelectedProfile()))
                             .findFirst()
                             .orElse(profiles.get(0)));
-
-            initialized = true;
         });
 
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
             JFXUtilities.runInFX(() -> {
-                if (selectedProfile.get() != null && selectedProfile.get().getRepository() == event.getSource())
-                    loadVersion();
+                Profile profile = selectedProfile.get();
+                if (profile != null && profile.getRepository() == event.getSource()) {
+                    selectedVersion.bind(profile.selectedVersionProperty());
+                    for (Consumer<Profile> listener : versionsListeners)
+                        listener.accept(profile);
+                }
             });
         });
     }
@@ -197,14 +199,17 @@ public final class Profiles {
         return selectedVersion.getReadOnlyProperty();
     }
 
+    // Guaranteed that the repository is loaded.
     public static String getSelectedVersion() {
         return selectedVersion.get();
     }
 
-    private static void loadVersion() {
-        Profile profile = selectedProfile.get();
-        if (profile == null || !profile.getRepository().isLoaded()) return;
-        JFXUtilities.runInFX(() ->
-                selectedVersion.set(profile.getSelectedVersion()));
+    private static final List<Consumer<Profile>> versionsListeners = new LinkedList<>();
+
+    public static void registerVersionsListener(Consumer<Profile> listener) {
+        Profile profile = getSelectedProfile();
+        if (profile != null && profile.getRepository().isLoaded())
+            listener.accept(profile);
+        versionsListeners.add(listener);
     }
 }

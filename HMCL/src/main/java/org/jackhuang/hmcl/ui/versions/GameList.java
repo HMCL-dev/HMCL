@@ -47,28 +47,19 @@ public class GameList extends Control implements DecoratorPage {
     private final BooleanProperty loading = new SimpleBooleanProperty(true);
     private final ListProperty<GameListItem> items = new SimpleListProperty<>(FXCollections.observableArrayList());
 
-    private Profile profile;
     private ToggleGroup toggleGroup;
 
     public GameList() {
-        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(event -> {
-            if (event.getSource() == profile.getRepository())
-                loadVersions((HMCLGameRepository) event.getSource());
-        });
         EventBus.EVENT_BUS.channel(RefreshingVersionsEvent.class).register(event -> {
-            if (event.getSource() == profile.getRepository())
+            if (event.getSource() == Profiles.getSelectedProfile().getRepository())
                 JFXUtilities.runInFX(() -> loading.set(true));
         });
-        Profiles.selectedProfileProperty().addListener((a, b, newValue) -> profile = newValue);
 
-        profile = Profiles.getSelectedProfile();
-        if (profile.getRepository().isLoaded())
-            loadVersions(profile.getRepository());
-        else
-            profile.getRepository().refreshVersionsAsync().start();
+        Profiles.registerVersionsListener(this::loadVersions);
     }
 
-    private void loadVersions(HMCLGameRepository repository) {
+    private void loadVersions(Profile profile) {
+        HMCLGameRepository repository = profile.getRepository();
         toggleGroup = new ToggleGroup();
         WeakListenerHolder listenerHolder = new WeakListenerHolder();
         toggleGroup.getProperties().put("ReferenceHolder", listenerHolder);
@@ -78,7 +69,7 @@ public class GameList extends Control implements DecoratorPage {
                 .map(version -> new GameListItem(toggleGroup, profile, version.getId()))
                 .collect(Collectors.toList());
         JFXUtilities.runInFX(() -> {
-            if (profile == repository.getProfile()) {
+            if (profile == Profiles.getSelectedProfile()) {
                 loading.set(false);
                 items.setAll(children);
                 children.forEach(GameListItem::checkSelection);
@@ -115,11 +106,11 @@ public class GameList extends Control implements DecoratorPage {
     }
 
     public void refresh() {
-        profile.getRepository().refreshVersionsAsync().start();
+        Profiles.getSelectedProfile().getRepository().refreshVersionsAsync().start();
     }
 
     public void modifyGlobalGameSettings() {
-        Versions.modifyGlobalSettings(profile);
+        Versions.modifyGlobalSettings(Profiles.getSelectedProfile());
     }
 
     @Override

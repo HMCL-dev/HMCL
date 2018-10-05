@@ -33,8 +33,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -81,7 +79,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
     @FXML
     private Rectangle separator;
 
-    private Profile profile;
     {
         FXUtils.loadFXML(this, "/assets/fxml/main.fxml");
 
@@ -126,41 +123,30 @@ public final class MainPage extends StackPane implements DecoratorPage {
             }
         });
 
-        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(event -> {
-            if (event.getSource() == profile.getRepository())
-                loadVersions((HMCLGameRepository) event.getSource());
-        });
-        Profiles.selectedProfileProperty().addListener((a, b, newValue) -> profile = newValue);
-
-        profile = Profiles.getSelectedProfile();
-        if (profile != null) {
-            if (profile.getRepository().isLoaded())
-                loadVersions(profile.getRepository());
-            else
-                profile.getRepository().refreshVersionsAsync().start();
-        }
+        Profiles.registerVersionsListener(this::loadVersions);
     }
 
-    private void loadVersions(HMCLGameRepository repository) {
+    private void loadVersions(Profile profile) {
+        HMCLGameRepository repository = profile.getRepository();
         List<Node> children = repository.getVersions().parallelStream()
                 .filter(version -> !version.isHidden())
                 .sorted((a, b) -> VersionNumber.COMPARATOR.compare(VersionNumber.asVersion(a.getId()), VersionNumber.asVersion(b.getId())))
                 .map(version -> {
                     StackPane pane = new StackPane();
-                    GameItem item = new GameItem(repository.getProfile(), version.getId());
+                    GameItem item = new GameItem(profile, version.getId());
                     pane.getChildren().setAll(item);
                     pane.getStyleClass().setAll("menu-container");
                     item.setMouseTransparent(true);
                     RipplerContainer container = new RipplerContainer(pane);
                     container.setOnMouseClicked(e -> {
-                        repository.getProfile().setSelectedVersion(version.getId());
+                        profile.setSelectedVersion(version.getId());
                         popup.hide();
                     });
                     return container;
                 })
                 .collect(Collectors.toList());
         JFXUtilities.runInFX(() -> {
-            if (profile == repository.getProfile())
+            if (profile == Profiles.getSelectedProfile())
                 menu.getContent().setAll(children);
         });
     }
