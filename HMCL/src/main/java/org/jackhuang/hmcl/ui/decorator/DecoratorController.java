@@ -24,6 +24,8 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
@@ -303,6 +305,23 @@ public class DecoratorController {
         EventHandler<DialogCloseEvent> handler = event -> closeDialog(node);
         node.getProperties().put(PROPERTY_DIALOG_CLOSE_HANDLER, handler);
         node.addEventHandler(DialogCloseEvent.CLOSE, handler);
+
+        if (node instanceof DialogAware) {
+            DialogAware dialogAware = (DialogAware) node;
+            if (dialog.isVisible()) {
+                dialogAware.onDialogShown();
+            } else {
+                dialog.visibleProperty().addListener(new ChangeListener<Boolean>() {
+                    @Override
+                    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                        if (newValue) {
+                            dialogAware.onDialogShown();
+                            observable.removeListener(this);
+                        }
+                    }
+                });
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")
