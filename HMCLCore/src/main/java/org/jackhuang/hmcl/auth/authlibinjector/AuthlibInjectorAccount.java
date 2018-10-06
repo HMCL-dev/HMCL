@@ -69,7 +69,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
             try {
                 return authlibInjectorDownloader.get();
             } catch (IOException e) {
-                throw new CompletionException(new AuthenticationException("Failed to download authlib-injector", e));
+                throw new CompletionException(new AuthlibInjectorDownloadException(e));
             }
         });
 

@@ -31,6 +31,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
@@ -278,6 +279,8 @@ public class AddAccountPane extends StackPane {
                     return i18n("account.failed.invalid_password");
             }
             return exception.getMessage();
+        } else if (exception instanceof AuthlibInjectorDownloadException) {
+            return i18n("account.failed.injector_download_failure");
         } else {
             return exception.getClass().getName() + ": " + exception.getLocalizedMessage();
         }
