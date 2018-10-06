@@ -241,11 +241,7 @@ public class VersionNumber implements Comparable<VersionNumber> {
     private void parseVersion(String version) {
         this.value = version;
 
-        items = new ListItem();
-
-        version = version.toLowerCase(Locale.ENGLISH);
-
-        ListItem list = items;
+        ListItem list = items = new ListItem();
 
         Stack<Item> stack = new Stack<>();
         stack.push(list);
