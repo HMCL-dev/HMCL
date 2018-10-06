@@ -4,7 +4,6 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import com.jfoenix.controls.*?>
-<?import org.jackhuang.hmcl.ui.construct.URLValidator?>
 <?import org.jackhuang.hmcl.ui.construct.SpinnerPane?>
 
 <fx:root xmlns="http://javafx.com/javafx"
@@ -16,16 +15,7 @@
                 <Label text="%account.injector.add" />
             </heading>
             <body>
-                <JFXTextField fx:id="txtServerUrl" promptText="%account.injector.server_url" onAction="#onAddNext">
-                    <validators>
-                        <URLValidator message="%input.url">
-                            <protocols>
-                                <String fx:value="http" />
-                                <String fx:value="https" />
-                            </protocols>
-                        </URLValidator>
-                    </validators>
-                </JFXTextField>
+                <JFXTextField fx:id="txtServerUrl" promptText="%account.injector.server_url" onAction="#onAddNext" />
             </body>
             <actions>
                 <Label fx:id="lblCreationWarning" />
