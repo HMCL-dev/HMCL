@@ -46,6 +46,11 @@ public class AuthlibInjectorDownloader {
     private Supplier<DownloadProvider> downloadProvider;
 
     /**
+     * The flag will be reset after application restart.
+     */
+    private boolean updateChecked = false;
+
+    /**
      * @param artifactsDirectory where to save authlib-injector artifacts
      */
     public AuthlibInjectorDownloader(Path artifactsDirectory, Supplier<DownloadProvider> downloadProvider) {
@@ -57,14 +62,17 @@ public class AuthlibInjectorDownloader {
         synchronized (artifactLocation) {
             Optional<AuthlibInjectorArtifactInfo> local = getLocalArtifact();
 
-            try {
-                update(local);
-            } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to download authlib-injector", e);
-                if (!local.isPresent()) {
-                    throw e;
+            if (!local.isPresent() || !updateChecked) {
+                try {
+                    update(local);
+                    updateChecked = true;
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to download authlib-injector", e);
+                    if (!local.isPresent()) {
+                        throw e;
+                    }
+                    LOG.warning("Fallback to use cached artifact: " + local.get());
                 }
-                LOG.warning("Fallback to use cached artifact: " + local.get());
             }
 
             return getLocalArtifact().orElseThrow(() -> new IOException("The updated authlib-inejector cannot be recognized"));
@@ -72,6 +80,7 @@ public class AuthlibInjectorDownloader {
     }
 
     private void update(Optional<AuthlibInjectorArtifactInfo> local) throws IOException {
+        LOG.info("Checking update of authlib-injector");
         AuthlibInjectorVersionInfo latest = getLatestArtifactInfo();
 
         if (local.isPresent() && local.get().getBuildNumber() >= latest.buildNumber) {
