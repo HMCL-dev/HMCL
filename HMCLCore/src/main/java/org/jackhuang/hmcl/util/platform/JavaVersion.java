@@ -70,7 +70,7 @@ public final class JavaVersion {
     }
 
     public VersionNumber getVersionNumber() {
-        return VersionNumber.asVersion(longVersion.replace('_',  '.'));
+        return VersionNumber.asVersion(longVersion);
     }
 
     /**

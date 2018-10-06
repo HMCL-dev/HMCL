@@ -41,10 +41,12 @@ public final class ModManager {
         File modsDirectory = new File(repository.getRunDirectory(id), "mods");
         Consumer<File> puter = modFile -> Lang.ignoringException(() -> modCache.put(id, ModInfo.fromFile(modFile)));
         Optional.ofNullable(modsDirectory.listFiles()).map(Arrays::stream).ifPresent(files -> files.forEach(modFile -> {
-            if (modFile.isDirectory() && VersionNumber.parseVersion(modFile.getName()).isPresent())
+            if (modFile.isDirectory() && VersionNumber.isIntVersionNumber(modFile.getName())) {
+                // If the folder name is game version, forge will search mod in this subdirectory
                 Optional.ofNullable(modFile.listFiles()).map(Arrays::stream).ifPresent(x -> x.forEach(puter));
-            else
+            } else {
                 puter.accept(modFile);
+            }
         }));
     }
 

@@ -71,11 +71,10 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
                     for (Map.Entry<String, LiteLoaderGameVersions> entry : root.getVersions().entrySet()) {
                         String gameVersion = entry.getKey();
                         LiteLoaderGameVersions liteLoader = entry.getValue();
-                        Optional<String> gg = VersionNumber.parseVersion(gameVersion);
-                        if (!gg.isPresent())
-                            continue;
-                        doBranch(gg.get(), gameVersion, liteLoader.getRepoitory(), liteLoader.getArtifacts(), false);
-                        doBranch(gg.get(), gameVersion, liteLoader.getRepoitory(), liteLoader.getSnapshots(), true);
+
+                        String gg = VersionNumber.normalize(gameVersion);
+                        doBranch(gg, gameVersion, liteLoader.getRepoitory(), liteLoader.getArtifacts(), false);
+                        doBranch(gg, gameVersion, liteLoader.getRepoitory(), liteLoader.getSnapshots(), true);
                     }
                 } finally {
                     lock.writeLock().unlock();

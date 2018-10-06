@@ -66,9 +66,7 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
                     versions.clear();
 
                     for (Map.Entry<String, int[]> entry : root.getGameVersions().entrySet()) {
-                        Optional<String> gameVersion = VersionNumber.parseVersion(entry.getKey());
-                        if (!gameVersion.isPresent())
-                            continue;
+                        String gameVersion = VersionNumber.normalize(entry.getKey());
                         for (int v : entry.getValue()) {
                             ForgeVersion version = root.getNumber().get(v);
                             if (version == null)
@@ -84,7 +82,7 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
 
                             if (jar == null)
                                 continue;
-                            versions.put(gameVersion.get(), new ForgeRemoteVersion(
+                            versions.put(gameVersion, new ForgeRemoteVersion(
                                     version.getGameVersion(), version.getVersion(), jar
                             ));
                         }

@@ -296,7 +296,7 @@ public final class LauncherHelper {
         }
 
         // Minecraft 1.13 may crash when generating world on Java 8 earlier than 1.8.0_51
-        VersionNumber JAVA_8 = VersionNumber.asVersion("1.8.0.51");
+        VersionNumber JAVA_8 = VersionNumber.asVersion("1.8.0_51");
         if (!flag && gameVersion.compareTo(VersionNumber.asVersion("1.13")) >= 0 && java.getParsedVersion() == JavaVersion.JAVA_8 && java.getVersionNumber().compareTo(JAVA_8) < 0) {
             Optional<JavaVersion> java8 = JavaVersion.getJavas().stream()
                     .filter(javaVersion -> javaVersion.getVersionNumber().compareTo(JAVA_8) >= 0)
