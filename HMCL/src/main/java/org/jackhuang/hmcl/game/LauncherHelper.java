@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.CurseCompletionException;
 import org.jackhuang.hmcl.mod.CurseCompletionTask;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -141,7 +142,7 @@ public final class LauncherHelper {
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN)))
                 .then(Task.of(i18n("account.methods"), variables -> {
                     try {
-                        variables.set("account", account.logIn());
+                        variables.set("account", Accounts.logIn(account));
                     } catch (CredentialExpiredException e) {
                         variables.set("account", DialogController.logIn(account));
                     } catch (AuthenticationException e) {
