@@ -64,7 +64,7 @@ public class YggdrasilAccount extends Account {
     }
 
     @Override
-    public AuthInfo logIn() throws AuthenticationException {
+    public synchronized AuthInfo logIn() throws AuthenticationException {
         if (!canPlayOnline()) {
             if (service.validate(session.getAccessToken(), session.getClientToken())) {
                 isOnline = true;
@@ -84,7 +84,7 @@ public class YggdrasilAccount extends Account {
     }
 
     @Override
-    public AuthInfo logInWithPassword(String password) throws AuthenticationException {
+    public synchronized AuthInfo logInWithPassword(String password) throws AuthenticationException {
         return logInWithPassword(password, new SpecificCharacterSelector(characterUUID));
     }
 

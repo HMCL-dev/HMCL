@@ -26,7 +26,6 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
-import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccountFactory;
@@ -40,11 +39,8 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.task.Schedulers;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.logging.Level;
 
 import static java.util.stream.Collectors.toList;
@@ -165,11 +161,6 @@ public final class Accounts {
         if (initialized)
             throw new IllegalStateException("Already initialized");
 
-        selectedAccount.addListener((a, b, newValue) -> {
-            if (newValue != null)
-                startLoggingIn(newValue);
-        });
-
         // load accounts
         config().getAccountStorages().forEach(storage -> {
             AccountFactory<?> factory = type2factory.get(storage.get("type"));
@@ -192,11 +183,20 @@ public final class Accounts {
         config().getAuthlibInjectorServers().addListener(onInvalidating(Accounts::removeDanglingAuthlibInjectorAccounts));
 
         // load selected account
-        selectedAccount.set(
-                accounts.stream()
-                        .filter(it -> accountId(it).equals(config().getSelectedAccount()))
-                        .findFirst()
-                        .orElse(null));
+        Account selected = accounts.stream()
+                .filter(it -> accountId(it).equals(config().getSelectedAccount()))
+                .findFirst()
+                .orElse(null);
+        selectedAccount.set(selected);
+
+        Schedulers.io().schedule(() -> {
+            if (selected != null)
+                try {
+                    selected.logIn();
+                } catch (AuthenticationException e) {
+                    LOG.log(Level.WARNING, "Failed to log " + selected + " in", e);
+                }
+        });
     }
 
     public static ObservableList<Account> getAccounts() {
@@ -269,34 +269,4 @@ public final class Accounts {
         return getAccountTypeName(getAccountFactory(account));
     }
     // ====
-
-    private static final Map<Account, Future<?>> accountFutures = new HashMap<>();
-
-    public static void startLoggingIn(Account account) {
-        if (!accountFutures.containsKey(account)) {
-            Future<?> future = Schedulers.computation().schedule(account::logIn);
-            accountFutures.put(account, future);
-        }
-    }
-
-    public static AuthInfo logIn(Account account) throws AuthenticationException {
-        try {
-            if (!accountFutures.containsKey(account)) {
-                Future<?> future = Schedulers.computation().schedule(account::logIn);
-                accountFutures.put(account, future);
-                future.get();
-            } else {
-                accountFutures.get(account).get();
-            }
-        } catch (ExecutionException e) {
-            if (e.getCause() instanceof AuthenticationException)
-                throw (AuthenticationException) e.getCause();
-            else
-                LOG.log(Level.WARNING, "Unable to logIn", e);
-        } catch (InterruptedException e) {
-            // account.logIn()
-        }
-
-        return account.logIn();
-    }
 }

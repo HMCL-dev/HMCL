@@ -62,7 +62,7 @@ public class CacheRepository {
 
     public void tryCacheFile(Path path, String algorithm, String hash) throws IOException {
         Path cache = getFile(algorithm, hash);
-        if (Files.exists(cache)) return;
+        if (Files.isRegularFile(cache)) return;
         FileUtils.copyFile(path.toFile(), cache.toFile());
     }
 

@@ -142,7 +142,7 @@ public final class LauncherHelper {
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN)))
                 .then(Task.of(i18n("account.methods"), variables -> {
                     try {
-                        variables.set("account", Accounts.logIn(account));
+                        variables.set("account", account.logIn());
                     } catch (CredentialExpiredException e) {
                         variables.set("account", DialogController.logIn(account));
                     } catch (AuthenticationException e) {

@@ -47,7 +47,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     }
 
     @Override
-    public AuthInfo logIn() throws AuthenticationException {
+    public synchronized AuthInfo logIn() throws AuthenticationException {
         return inject(super::logIn);
     }
 
