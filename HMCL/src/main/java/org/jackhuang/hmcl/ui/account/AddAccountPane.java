@@ -66,6 +66,8 @@ public class AddAccountPane extends StackPane {
     @FXML private Hyperlink linkManageInjectorServers;
     @FXML private JFXDialogLayout layout;
     @FXML private JFXButton btnAccept;
+    @FXML private JFXButton btnAddServer;
+    @FXML private JFXButton btnManageServer;
     @FXML private SpinnerPane acceptPane;
 
     public AddAccountPane() {
@@ -81,6 +83,9 @@ public class AddAccountPane extends StackPane {
         cboType.setConverter(stringConverter(Accounts::getAccountTypeName));
         cboType.getSelectionModel().select(0);
 
+        btnAddServer.visibleProperty().bind(cboServers.visibleProperty());
+        btnManageServer.visibleProperty().bind(cboServers.visibleProperty());
+
         cboServers.getItems().addListener(onInvalidating(this::checkIfNoServer));
         checkIfNoServer();
 
@@ -91,7 +96,6 @@ public class AddAccountPane extends StackPane {
 
         cboServers.visibleProperty().bind(loginType.isEqualTo(Accounts.FACTORY_AUTHLIB_INJECTOR));
         lblInjectorServer.visibleProperty().bind(cboServers.visibleProperty());
-        linkManageInjectorServers.visibleProperty().bind(cboServers.visibleProperty());
 
         txtUsername.getValidators().add(new Validator(i18n("input.email"), str -> !txtPassword.isVisible() || str.contains("@")));
 
@@ -187,6 +191,11 @@ public class AddAccountPane extends StackPane {
     private void onManageInjecterServers() {
         fireEvent(new DialogCloseEvent());
         Controllers.navigate(Controllers.getServersPage());
+    }
+
+    @FXML
+    private void onAddInjecterServer() {
+        Controllers.dialog(new AddAuthlibInjectorServerPane());
     }
 
     private class Selector extends BorderPane implements CharacterSelector {
