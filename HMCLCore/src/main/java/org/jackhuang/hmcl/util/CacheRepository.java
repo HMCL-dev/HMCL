@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.BiFunction;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -45,6 +46,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class CacheRepository {
     private Path commonDirectory;
@@ -69,7 +71,7 @@ public class CacheRepository {
             } else
                 index = new HashMap<>();
         } catch (IOException | JsonParseException e) {
-            Logging.LOG.log(Level.WARNING, "Unable to read index file", e);
+            LOG.log(Level.WARNING, "Unable to read index file", e);
             index = new HashMap<>();
         } finally {
             lock.writeLock().unlock();
@@ -189,7 +191,7 @@ public class CacheRepository {
         Lock writeLock = lock.writeLock();
         writeLock.lock();
         try {
-            index.put(url, eTagItem);
+            index.compute(eTagItem.url, updateEntity(eTagItem));
             saveETagIndex();
         } finally {
             writeLock.unlock();
@@ -208,11 +210,29 @@ public class CacheRepository {
         Lock writeLock = lock.writeLock();
         writeLock.lock();
         try {
-            index.put(url, eTagItem);
+            index.compute(eTagItem.url, updateEntity(eTagItem));
             saveETagIndex();
         } finally {
             writeLock.unlock();
         }
+    }
+
+    private BiFunction<String, ETagItem, ETagItem> updateEntity(ETagItem newItem) {
+        return (key, oldItem) -> {
+            if (oldItem == null) {
+                return newItem;
+            } else if (oldItem.compareTo(newItem) < 0) {
+                Path cached = getFile(SHA1, oldItem.hash);
+                try {
+                    Files.deleteIfExists(cached);
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Cannot delete old file");
+                }
+                return newItem;
+            } else {
+                return oldItem;
+            }
+        };
     }
 
     @SafeVarargs
@@ -223,12 +243,7 @@ public class CacheRepository {
                 .reduce(Stream.empty(), Stream::concat);
 
         stream.forEach(eTag -> {
-            eTags.compute(eTag.url, (key, oldValue) -> {
-                if (oldValue == null || oldValue.compareTo(eTag) < 0)
-                    return eTag;
-                else
-                    return oldValue;
-            });
+            eTags.compute(eTag.url, updateEntity(eTag));
         });
 
         return eTags;

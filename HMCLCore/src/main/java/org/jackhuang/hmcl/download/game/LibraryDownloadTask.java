@@ -86,7 +86,7 @@ public class LibraryDownloadTask extends Task {
 
     @Override
     public void preExecute() throws Exception {
-        Optional<Path> libPath = cacheRepository.getLibrary(library);
+        Optional<Path> libPath = cacheRepository.getLibrary(library.setClassifier(null));
         if (libPath.isPresent()) {
             try {
                 FileUtils.copyFile(libPath.get().toFile(), jar);
