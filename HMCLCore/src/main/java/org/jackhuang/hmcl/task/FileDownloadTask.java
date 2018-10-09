@@ -299,12 +299,9 @@ public class FileDownloadTask extends Task {
                     integrityCheck.performCheck(digest);
                 }
 
-                if (caching) {
+                if (caching && integrityCheck != null) {
                     try {
-                        if (integrityCheck == null)
-                            repository.cacheFile(file.toPath(), CacheRepository.SHA1, Hex.encodeHex(DigestUtils.digest(CacheRepository.SHA1, file.toPath())));
-                        else
-                            repository.cacheFile(file.toPath(), integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
+                        repository.cacheFile(file.toPath(), integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
                     } catch (IOException e) {
                         Logging.LOG.log(Level.WARNING, "Failed to cache file", e);
                     }

@@ -58,7 +58,7 @@ public final class GameAssetIndexDownloadTask extends Task {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
         AssetIndexInfo assetIndexInfo = version.getAssetIndex();
         File assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
 
@@ -67,10 +67,7 @@ public final class GameAssetIndexDownloadTask extends Task {
         dependencies.add(new FileDownloadTask(
                 NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(assetIndexInfo.getUrl())),
                 assetIndexFile
-        ).setCaching(true)
-                .setCacheRepository(dependencyManager.getCacheRepository())
-                .setCandidate(dependencyManager.getCacheRepository().getCommonDirectory()
-                        .resolve("assets").resolve("indexes").resolve(assetIndexInfo.getId() + ".json")));
+        ).setCacheRepository(dependencyManager.getCacheRepository()));
     }
 
 }
