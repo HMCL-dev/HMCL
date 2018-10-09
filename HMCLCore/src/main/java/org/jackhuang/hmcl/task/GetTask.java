@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
@@ -27,6 +29,8 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -41,6 +45,7 @@ public final class GetTask extends TaskResult<String> {
     private final Charset charset;
     private final int retry;
     private final String id;
+    private CacheRepository repository = CacheRepository.getInstance();
 
     public GetTask(URL url) {
         this(url, ID);
@@ -73,15 +78,33 @@ public final class GetTask extends TaskResult<String> {
         return id;
     }
 
+    public GetTask setCacheRepository(CacheRepository repository) {
+        this.repository = repository;
+        return this;
+    }
+
     @Override
     public void execute() throws Exception {
         Exception exception = null;
+        boolean checkETag = true;
         for (int time = 0; time < retry; ++time) {
             if (time > 0)
                 Logging.LOG.log(Level.WARNING, "Failed to download, repeat times: " + time);
             try {
                 updateProgress(0);
                 HttpURLConnection conn = NetworkUtils.createConnection(url);
+                if (checkETag) repository.injectConnection(conn);
+                conn.connect();
+
+                if (conn.getResponseCode() == 304) {
+                    // Handle cache
+                    Path cache = repository.getCachedRemoteFile(conn);
+                    setResult(FileUtils.readText(cache));
+                    return;
+                } else if (conn.getResponseCode() / 100 != 2) {
+                    throw new IOException("Server error, response code: " + conn.getResponseCode());
+                }
+
                 InputStream input = conn.getInputStream();
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 byte[] buf = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
@@ -100,7 +123,12 @@ public final class GetTask extends TaskResult<String> {
                 if (size > 0 && size != read)
                     throw new IllegalStateException("Not completed! Readed: " + read + ", total size: " + size);
 
-                setResult(baos.toString(charset.name()));
+                String result = baos.toString(charset.name());
+                setResult(result);
+
+                if (checkETag) {
+                    repository.cacheText(result, conn);
+                }
                 return;
             } catch (IOException ex) {
                 exception = ex;

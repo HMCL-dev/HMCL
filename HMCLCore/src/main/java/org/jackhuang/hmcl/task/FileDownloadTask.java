@@ -179,8 +179,10 @@ public class FileDownloadTask extends Task {
     public void execute() throws Exception {
         URL currentURL = url;
 
+        boolean checkETag;
         // Check cache
         if (integrityCheck != null && caching) {
+            checkETag = false;
             Optional<Path> cache = repository.checkExistentFile(candidate, integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
             if (cache.isPresent()) {
                 try {
@@ -191,6 +193,8 @@ public class FileDownloadTask extends Task {
                     Logging.LOG.log(Level.WARNING, "Failed to copy cache files", e);
                 }
             }
+        } else {
+            checkETag = true;
         }
 
         Logging.LOG.log(Level.FINER, "Downloading " + currentURL + " to " + file);
@@ -213,10 +217,16 @@ public class FileDownloadTask extends Task {
                 updateProgress(0);
 
                 HttpURLConnection con = NetworkUtils.createConnection(url);
+                if (checkETag) repository.injectConnection(con);
                 con.connect();
 
-                if (con.getResponseCode() / 100 != 2)
+                if (con.getResponseCode() == 304) {
+                    // Handle cache
+                    Path cache = repository.getCachedRemoteFile(con);
+                    FileUtils.copyFile(cache.toFile(), file);
+                } else if (con.getResponseCode() / 100 != 2) {
                     throw new IOException("Server error, response code: " + con.getResponseCode());
+                }
 
                 int contentLength = con.getContentLength();
                 if (contentLength < 1)
@@ -289,6 +299,21 @@ public class FileDownloadTask extends Task {
                     integrityCheck.performCheck(digest);
                 }
 
+                if (caching) {
+                    try {
+                        if (integrityCheck == null)
+                            repository.cacheFile(file.toPath(), CacheRepository.SHA1, Hex.encodeHex(DigestUtils.digest(CacheRepository.SHA1, file.toPath())));
+                        else
+                            repository.cacheFile(file.toPath(), integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
+                    } catch (IOException e) {
+                        Logging.LOG.log(Level.WARNING, "Failed to cache file", e);
+                    }
+                }
+
+                if (checkETag) {
+                    repository.cacheRemoteFile(file.toPath(), con);
+                }
+
                 return;
             } catch (IOException | IllegalStateException e) {
                 if (temp != null)
@@ -301,17 +326,6 @@ public class FileDownloadTask extends Task {
 
         if (exception != null)
             throw new IOException("Unable to download file " + currentURL + ". " + exception.getMessage(), exception);
-
-        if (caching) {
-            try {
-                if (integrityCheck == null)
-                    repository.cacheFile(file.toPath(), CacheRepository.SHA1, Hex.encodeHex(DigestUtils.digest(CacheRepository.SHA1, file.toPath())));
-                else
-                    repository.cacheFile(file.toPath(), integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
-            } catch (IOException e) {
-                Logging.LOG.log(Level.WARNING, "Failed to cache file", e);
-            }
-        }
     }
 
 }

@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.util.io;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 
 /**
@@ -58,6 +55,14 @@ public final class IOUtils {
 
     public static String readFullyAsString(InputStream stream, Charset charset) throws IOException {
         return readFully(stream).toString(charset.name());
+    }
+
+    public static void write(String text, OutputStream outputStream) throws IOException {
+        write(text.getBytes(), outputStream);
+    }
+
+    public static void write(byte[] bytes, OutputStream outputStream) throws IOException {
+        copyTo(new ByteArrayInputStream(bytes), outputStream);
     }
 
     public static void copyTo(InputStream src, OutputStream dest) throws IOException {
