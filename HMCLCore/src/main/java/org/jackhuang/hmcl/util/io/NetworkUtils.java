@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.io;
 
 import java.io.*;
 import java.net.*;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -57,11 +58,28 @@ public final class NetworkUtils {
 
     public static HttpURLConnection createConnection(URL url) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setDoInput(true);
         connection.setUseCaches(false);
         connection.setConnectTimeout(15000);
         connection.setReadTimeout(15000);
         return connection;
+    }
+
+    public static HttpURLConnection resolveConnection(HttpURLConnection conn) throws IOException {
+        conn.setUseCaches(false);
+        conn.setConnectTimeout(15000);
+        conn.setReadTimeout(15000);
+        conn.setInstanceFollowRedirects(false);
+        Map<String, List<String>> properties = conn.getRequestProperties();
+        int code = conn.getResponseCode();
+        if (code >= 300 && code <= 307 && code != 306 && code != 304) {
+            String newURL = conn.getHeaderField("Location").replace(" ", "%20");
+            conn.disconnect();
+
+            HttpURLConnection redirected = (HttpURLConnection) new URL(conn.getURL(), newURL).openConnection();
+            properties.forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));
+            return resolveConnection(redirected);
+        }
+        return conn;
     }
 
     public static String doGet(URL url) throws IOException {
@@ -110,10 +128,12 @@ public final class NetworkUtils {
     }
 
     public static String detectFileName(URL url) throws IOException {
-        HttpURLConnection conn = createConnection(url);
-        conn.connect();
-        if (conn.getResponseCode() / 100 != 2)
-            throw new IOException("Response code " + conn.getResponseCode());
+        HttpURLConnection conn = resolveConnection(createConnection(url));
+        int code = conn.getResponseCode();
+        if (code == 404)
+            throw new FileNotFoundException();
+        if (code / 100 != 2)
+            throw new IOException(url + ": response code " + conn.getResponseCode());
 
         return detectFileName(conn);
     }

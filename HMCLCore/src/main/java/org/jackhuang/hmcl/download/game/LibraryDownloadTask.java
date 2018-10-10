@@ -35,9 +35,12 @@ public class LibraryDownloadTask extends Task {
     protected final Library library;
     protected final String url;
     protected boolean xz;
+    private final Library originalLibrary;
     private boolean cached = false;
 
     public LibraryDownloadTask(AbstractDependencyManager dependencyManager, File file, Library library) {
+        this.originalLibrary = library;
+
         setSignificance(TaskSignificance.MODERATE);
 
         if (library.is("net.minecraftforge", "forge"))
@@ -86,7 +89,7 @@ public class LibraryDownloadTask extends Task {
 
     @Override
     public void preExecute() throws Exception {
-        Optional<Path> libPath = cacheRepository.getLibrary(library.setClassifier(null));
+        Optional<Path> libPath = cacheRepository.getLibrary(originalLibrary);
         if (libPath.isPresent()) {
             try {
                 FileUtils.copyFile(libPath.get().toFile(), jar);
