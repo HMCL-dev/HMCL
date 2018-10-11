@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
+import com.jfoenix.concurrency.JFXUtilities;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -146,15 +147,17 @@ public final class Profile implements Observable {
     }
 
     private void checkSelectedVersion() {
-        if (!repository.isLoaded()) return;
-        String newValue = selectedVersion.get();
-        if (!repository.hasVersion(newValue)) {
-            Optional<String> version = repository.getVersions().stream().findFirst().map(Version::getId);
-            if (version.isPresent())
-                selectedVersion.setValue(version.get());
-            else if (newValue != null)
-                selectedVersion.setValue(null);
-        }
+        JFXUtilities.runInFX(() -> {
+            if (!repository.isLoaded()) return;
+            String newValue = selectedVersion.get();
+            if (!repository.hasVersion(newValue)) {
+                Optional<String> version = repository.getVersions().stream().findFirst().map(Version::getId);
+                if (version.isPresent())
+                    selectedVersion.setValue(version.get());
+                else if (newValue != null)
+                    selectedVersion.setValue(null);
+            }
+        });
     }
 
     public HMCLGameRepository getRepository() {
