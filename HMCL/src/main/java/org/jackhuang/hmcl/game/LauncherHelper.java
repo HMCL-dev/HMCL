@@ -454,6 +454,31 @@ public final class LauncherHelper {
                 });
         }
 
+        private void finishLaunch() {
+            switch (launcherVisibility) {
+                case HIDE_AND_REOPEN:
+                    Platform.runLater(() -> {
+                        Controllers.getStage().hide();
+                        emitStatus(LoadingState.DONE);
+                    });
+                    break;
+                case CLOSE:
+                    // Never come to here.
+                    break;
+                case KEEP:
+                    Platform.runLater(() -> {
+                        emitStatus(LoadingState.DONE);
+                    });
+                    break;
+                case HIDE:
+                    Platform.runLater(() -> {
+                        Controllers.getStage().close();
+                        emitStatus(LoadingState.DONE);
+                    });
+                    break;
+            }
+        }
+
         @Override
         public synchronized void onLog(String log, Log4jLevel level) {
             String newLog = log;
@@ -483,28 +508,7 @@ public final class LauncherHelper {
 
             if (!lwjgl && (log.contains("LWJGL Version: ") || !detectWindow)) {
                 lwjgl = true;
-                switch (launcherVisibility) {
-                    case HIDE_AND_REOPEN:
-                        Platform.runLater(() -> {
-                            Controllers.getStage().hide();
-                            emitStatus(LoadingState.DONE);
-                        });
-                        break;
-                    case CLOSE:
-                        // Never come to here.
-                        break;
-                    case KEEP:
-                        Platform.runLater(() -> {
-                            emitStatus(LoadingState.DONE);
-                        });
-                        break;
-                    case HIDE:
-                        Platform.runLater(() -> {
-                            Controllers.getStage().close();
-                            emitStatus(LoadingState.DONE);
-                        });
-                        break;
-                }
+                finishLaunch();
             }
         }
 
@@ -512,6 +516,9 @@ public final class LauncherHelper {
         public void onExit(int exitCode, ExitType exitType) {
             if (exitType == ExitType.INTERRUPTED)
                 return;
+
+            // Game crashed before opening the game window.
+            if (!lwjgl) finishLaunch();
 
             if (exitType != ExitType.NORMAL && logWindow == null)
                 Platform.runLater(() -> {
