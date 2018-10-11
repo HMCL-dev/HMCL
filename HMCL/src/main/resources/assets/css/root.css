@@ -104,6 +104,14 @@
     -jfx-subtitle-fill: gray;
 }
 
+.window-title-bar .separator {
+    -fx-fill: -fx-base-darker-color;
+}
+
+.darker-fill {
+    -fx-fill: -fx-base-darker-color;
+}
+
 /*******************************************************************************
  *                                                                             *
  * JFX Tab Pane                                                                *

@@ -146,7 +146,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         titleContainer.setOnMouseMoved(this::onMouseMoved);
         titleContainer.setPickOnBounds(false);
         titleContainer.setMinHeight(40);
-        titleContainer.getStyleClass().setAll("jfx-tool-bar");
+        titleContainer.getStyleClass().addAll("jfx-tool-bar", "window-title-bar");
         titleContainer.addEventHandler(MouseEvent.MOUSE_ENTERED, e -> allowMove = true);
         titleContainer.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {
             if (!isDragging) allowMove = false;
@@ -169,9 +169,9 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 titleWrapper.setCenter(lblTitle);
 
                 Rectangle separator = new Rectangle();
+                separator.getStyleClass().add("separator");
                 separator.heightProperty().bind(titleWrapper.heightProperty());
                 separator.setWidth(1);
-                separator.setFill(Color.GRAY);
                 titleWrapper.setRight(separator);
             }
             titleContainer.setLeft(titleWrapper);

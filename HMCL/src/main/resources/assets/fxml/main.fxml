@@ -41,7 +41,7 @@
                     </VBox>
                 </graphic>
             </JFXButton>
-            <Rectangle fx:id="separator" translateX="95" height="57" fill="gray" width="1" mouseTransparent="true"/>
+            <Rectangle fx:id="separator" translateX="95" height="57" styleClass="darker-fill" width="1" mouseTransparent="true"/>
             <JFXButton prefWidth="230" prefHeight="55" buttonType="RAISED" styleClass="jfx-button-raised"
                        style="-fx-font-size: 15;" onMouseClicked="#onMenu" fx:id="btnMenu" />
         </StackPane>
