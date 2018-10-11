@@ -140,12 +140,12 @@ public final class AccountHelper {
     private static void downloadSkin(YggdrasilAccount account, GameProfile profile, boolean refresh) throws Exception {
         account.clearCache();
 
-        Optional<Texture> texture = account.getSkin(profile);
-        if (!texture.isPresent()) return;
-        String url = texture.get().getUrl();
         File file = getSkinFile(profile.getId());
         if (!refresh && file.exists())
             return;
+        Optional<Texture> texture = account.getSkin(profile);
+        if (!texture.isPresent()) return;
+        String url = texture.get().getUrl();
         new FileDownloadTask(NetworkUtils.toURL(url), file).run();
     }
 
@@ -153,12 +153,12 @@ public final class AccountHelper {
         account.clearCache();
 
         if (account.getCharacter() == null) return;
-        Optional<Texture> texture = account.getSkin();
-        if (!texture.isPresent()) return;
-        String url = texture.get().getUrl();
         File file = getSkinFile(account.getUUID());
         if (!refresh && file.exists())
             return;
+        Optional<Texture> texture = account.getSkin();
+        if (!texture.isPresent()) return;
+        String url = texture.get().getUrl();
         new FileDownloadTask(NetworkUtils.toURL(url), file).run();
     }
 
