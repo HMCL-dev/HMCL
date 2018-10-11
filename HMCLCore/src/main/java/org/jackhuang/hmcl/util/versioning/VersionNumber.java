@@ -332,4 +332,6 @@ public class VersionNumber implements Comparable<VersionNumber> {
     public int hashCode() {
         return canonical.hashCode();
     }
+
+    public static Comparator<String> VERSION_COMPARATOR = Comparator.comparing(VersionNumber::asVersion);
 }

@@ -343,6 +343,7 @@ public final class LauncherHelper {
             }
         }
 
+        // 32-bit JVM cannot make use of too much memory.
         if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.BIT_32 &&
                 setting.getMaxMemory() > 1.5 * 1024) {
             // 1.5 * 1024 is an inaccurate number.
@@ -350,10 +351,22 @@ public final class LauncherHelper {
             Controllers.dialog(i18n("launch.advice.too_large_memory_for_32bit"), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
             flag = true;
         }
-        
+
+        // Cannot allocate too much memory exceeding free space.
         if (!flag && OperatingSystem.TOTAL_MEMORY > 0 && OperatingSystem.TOTAL_MEMORY < setting.getMaxMemory()) {
             Controllers.dialog(i18n("launch.advice.not_enough_space", OperatingSystem.TOTAL_MEMORY), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
             flag = true;
+        }
+
+        // Forge 2760 and above will crash game with LiteLoader.
+        if (!flag) {
+            boolean hasForge2760 = version.getLibraries().stream().filter(it -> it.is("net.minecraftforge", "forge"))
+                    .anyMatch(it -> VersionNumber.VERSION_COMPARATOR.compare(it.getVersion(), "1.12.2-14.23.5.2760") >= 0);
+            boolean hasLiteLoader = version.getLibraries().stream().anyMatch(it -> it.is("com.mumfrey", "liteloader"));
+            if (hasForge2760 && hasLiteLoader && gameVersion.compareTo(VersionNumber.asVersion("1.12.2")) == 0) {
+                Controllers.dialog(i18n("launch.advice.forge2760_liteloader"), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+                flag = true;
+            }
         }
 
         if (!flag)
