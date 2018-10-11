@@ -43,7 +43,7 @@ public class Theme {
             Color.web("#43A047"), // green
             Color.web("#E67E22"), // orange
             Color.web("#9C27B0"), // purple
-            Color.web("#F44336")  // red
+            Color.web("#B71C1C")  // red
     };
 
     private final String color;
