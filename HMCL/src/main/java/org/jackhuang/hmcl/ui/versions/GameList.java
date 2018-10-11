@@ -33,7 +33,8 @@ import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.download.DownloadWizardProvider;
+import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
+import org.jackhuang.hmcl.ui.download.VanillaInstallWizardProvider;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -99,11 +100,11 @@ public class GameList extends Control implements DecoratorPage {
     }
 
     public void addNewGame() {
-        Controllers.getDecorator().startWizard(new DownloadWizardProvider(0), i18n("install.new_game"));
+        Controllers.getDecorator().startWizard(new VanillaInstallWizardProvider(), i18n("install.new_game"));
     }
 
     public void importModpack() {
-        Controllers.getDecorator().startWizard(new DownloadWizardProvider(1), i18n("install.modpack"));
+        Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(), i18n("install.modpack"));
     }
 
     public void refresh() {

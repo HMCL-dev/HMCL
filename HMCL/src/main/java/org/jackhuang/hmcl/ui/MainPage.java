@@ -30,6 +30,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
@@ -42,16 +43,24 @@ import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.versions.GameItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MultiStepBinding;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -126,6 +135,29 @@ public final class MainPage extends StackPane implements DecoratorPage {
         });
 
         Profiles.registerVersionsListener(this::loadVersions);
+
+        setOnDragOver(event -> {
+            if (event.getGestureSource() != this && event.getDragboard().hasFiles()) {
+                if (event.getDragboard().getFiles().stream().anyMatch(it -> "zip".equals(FileUtils.getExtension(it))))
+                event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+            }
+            event.consume();
+        });
+
+        setOnDragDropped(event -> {
+            List<File> files = event.getDragboard().getFiles();
+            if (files != null) {
+                List<File> modpacks = files.stream()
+                        .filter(it -> "zip".equals(FileUtils.getExtension(it)))
+                        .collect(Collectors.toList());
+                if (!modpacks.isEmpty()) {
+                    File modpack = modpacks.get(0);
+                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(modpack), i18n("install.modpack"));
+                    event.setDropCompleted(true);
+                }
+            }
+            event.consume();
+        });
     }
 
     private void loadVersions(Profile profile) {

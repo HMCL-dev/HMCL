@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WebStage;
+import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
@@ -39,7 +40,9 @@ import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Optional;
 
+import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModpackPage extends StackPane implements WizardPage {
@@ -75,31 +78,41 @@ public final class ModpackPage extends StackPane implements WizardPage {
 
         Profile profile = (Profile) controller.getSettings().get("PROFILE");
 
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle(i18n("modpack.choose"));
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
-        File selectedFile = chooser.showOpenDialog(Controllers.getStage());
-        if (selectedFile == null) Platform.runLater(controller::onEnd);
-        else {
+        File selectedFile;
+
+        Optional<File> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), File.class);
+        if (filePath.isPresent()) {
+            selectedFile = filePath.get();
+        } else {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle(i18n("modpack.choose"));
+            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
+            selectedFile = chooser.showOpenDialog(Controllers.getStage());
+            if (selectedFile == null) {
+                Platform.runLater(controller::onEnd);
+                return;
+            }
+
             controller.getSettings().put(MODPACK_FILE, selectedFile);
+        }
+
+        try {
+            manifest = ModpackHelper.readModpackManifest(selectedFile);
+            controller.getSettings().put(MODPACK_MANIFEST, manifest);
+            lblName.setText(manifest.getName());
+            lblVersion.setText(manifest.getVersion());
+            lblAuthor.setText(manifest.getAuthor());
+            txtModpackName.setText(manifest.getName() + (StringUtils.isBlank(manifest.getVersion()) ? "" : "-" + manifest.getVersion()));
+
             lblModpackLocation.setText(selectedFile.getAbsolutePath());
             txtModpackName.getValidators().addAll(
                     new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().hasVersion(str) && StringUtils.isNotBlank(str)),
                     new Validator(i18n("version.forbidden_name"), str -> !profile.getRepository().forbidsVersion(str))
             );
             txtModpackName.textProperty().addListener(e -> btnInstall.setDisable(!txtModpackName.validate()));
-
-            try {
-                manifest = ModpackHelper.readModpackManifest(selectedFile);
-                controller.getSettings().put(MODPACK_MANIFEST, manifest);
-                lblName.setText(manifest.getName());
-                lblVersion.setText(manifest.getVersion());
-                lblAuthor.setText(manifest.getAuthor());
-                txtModpackName.setText(manifest.getName() + (StringUtils.isBlank(manifest.getVersion()) ? "" : "-" + manifest.getVersion()));
-            } catch (UnsupportedModpackException e) {
-                txtModpackName.setText(i18n("modpack.task.install.error"));
-                btnInstall.setDisable(true);
-            }
+        } catch (UnsupportedModpackException e) {
+            Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
+            Platform.runLater(controller::onEnd);
         }
     }
 
