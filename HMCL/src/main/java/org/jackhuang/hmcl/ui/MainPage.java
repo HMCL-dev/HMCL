@@ -96,7 +96,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
         btnLaunch.setClip(new Rectangle(-100, -100, 310, 200));
         btnMenu.setClip(new Rectangle(211, -100, 100, 200));
         menu.setMaxHeight(365);
-        menu.setMinWidth(545);
+        menu.setMaxWidth(545);
+        menu.setAlwaysShowingVBar(true);
 
         updatePane.visibleProperty().bind(UpdateChecker.outdatedProperty());
         closeUpdateButton.setGraphic(SVG.close(Theme.whiteFillBinding(), 10, 10));

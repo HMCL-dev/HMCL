@@ -18,6 +18,9 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.When;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -31,12 +34,25 @@ import org.jackhuang.hmcl.ui.FXUtils;
 public class PopupMenu extends Control {
 
     private final ObservableList<Node> content = FXCollections.observableArrayList();
+    private final BooleanProperty alwaysShowingVBar = new SimpleBooleanProperty();
 
     public PopupMenu() {
     }
 
     public ObservableList<Node> getContent() {
         return content;
+    }
+
+    public boolean isAlwaysShowingVBar() {
+        return alwaysShowingVBar.get();
+    }
+
+    public BooleanProperty alwaysShowingVBarProperty() {
+        return alwaysShowingVBar;
+    }
+
+    public void setAlwaysShowingVBar(boolean alwaysShowingVBar) {
+        this.alwaysShowingVBar.set(alwaysShowingVBar);
     }
 
     @Override
@@ -52,6 +68,9 @@ public class PopupMenu extends Control {
             ScrollPane scrollPane = new ScrollPane();
             scrollPane.setFitToHeight(true);
             scrollPane.setFitToWidth(true);
+            scrollPane.vbarPolicyProperty().bind(new When(alwaysShowingVBar)
+                    .then(ScrollPane.ScrollBarPolicy.ALWAYS)
+                    .otherwise(ScrollPane.ScrollBarPolicy.AS_NEEDED));
 
             VBox content = new VBox();
             content.getStyleClass().add("menu");
