@@ -69,7 +69,7 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 public class DecoratorController {
     private static final String PROPERTY_DIALOG_CLOSE_HANDLER = DecoratorController.class.getName() + ".dialog.closeListener";
 
-    private final DecoratorControl decorator;
+    private final Decorator decorator;
     private final ImageView welcomeView;
     private final Navigator navigator;
     private final Node mainPage;
@@ -80,7 +80,7 @@ public class DecoratorController {
     public DecoratorController(Stage stage, Node mainPage) {
         this.mainPage = mainPage;
 
-        decorator = new DecoratorControl(stage);
+        decorator = new Decorator(stage);
         decorator.titleProperty().set(Metadata.TITLE);
         decorator.setOnCloseButtonAction(Launcher::stopApplication);
 
@@ -114,7 +114,7 @@ public class DecoratorController {
         setupAuthlibInjectorDnD();
     }
 
-    public DecoratorControl getDecorator() {
+    public Decorator getDecorator() {
         return decorator;
     }
 

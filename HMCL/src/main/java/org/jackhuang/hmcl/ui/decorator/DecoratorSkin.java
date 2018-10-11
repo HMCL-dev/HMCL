@@ -42,7 +42,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.Lang;
 
-public class DecoratorSkin extends SkinBase<DecoratorControl> {
+public class DecoratorSkin extends SkinBase<Decorator> {
     private static final SVGGlyph minus = Lang.apply(new SVGGlyph(0, "MINUS", "M804.571 420.571v109.714q0 22.857-16 38.857t-38.857 16h-694.857q-22.857 0-38.857-16t-16-38.857v-109.714q0-22.857 16-38.857t38.857-16h694.857q22.857 0 38.857 16t16 38.857z", Color.WHITE),
         glyph -> { glyph.setSize(12, 2); glyph.setTranslateY(4); });
 
@@ -62,14 +62,14 @@ public class DecoratorSkin extends SkinBase<DecoratorControl> {
      *
      * @param control The control for which this Skin should attach to.
      */
-    public DecoratorSkin(DecoratorControl control) {
+    public DecoratorSkin(Decorator control) {
         super(control);
 
         primaryStage = control.getPrimaryStage();
 
         minus.fillProperty().bind(Theme.foregroundFillBinding());
 
-        DecoratorControl skinnable = getSkinnable();
+        Decorator skinnable = getSkinnable();
 
         BorderPane root = new BorderPane();
         root.getStyleClass().setAll("jfx-decorator", "resize-border");

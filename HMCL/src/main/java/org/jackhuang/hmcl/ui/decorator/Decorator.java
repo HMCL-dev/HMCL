@@ -30,7 +30,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
-public class DecoratorControl extends Control {
+public class Decorator extends Control {
     private final ListProperty<Node> drawer = new SimpleListProperty<>(FXCollections.observableArrayList());
     private final ListProperty<Node> content = new SimpleListProperty<>(FXCollections.observableArrayList());
     private final ListProperty<Node> container = new SimpleListProperty<>(FXCollections.observableArrayList());
@@ -49,7 +49,7 @@ public class DecoratorControl extends Control {
     private final Stage primaryStage;
     private StackPane drawerWrapper;
 
-    public DecoratorControl(Stage primaryStage) {
+    public Decorator(Stage primaryStage) {
         this.primaryStage = primaryStage;
 
         primaryStage.initStyle(StageStyle.UNDECORATED);
