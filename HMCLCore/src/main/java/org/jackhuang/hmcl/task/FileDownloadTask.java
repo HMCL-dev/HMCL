@@ -218,9 +218,9 @@ public class FileDownloadTask extends Task {
 
                 HttpURLConnection con = NetworkUtils.createConnection(url);
                 if (checkETag) repository.injectConnection(con);
-                con.connect();
+                con = NetworkUtils.resolveConnection(con);
 
-                if (con.getResponseCode() == 304) {
+                if (con.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
                     // Handle cache
                     Path cache = repository.getCachedRemoteFile(con);
                     FileUtils.copyFile(cache.toFile(), file);

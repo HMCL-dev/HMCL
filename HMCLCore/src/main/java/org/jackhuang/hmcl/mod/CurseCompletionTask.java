@@ -27,10 +27,12 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -103,6 +105,7 @@ public final class CurseCompletionTask extends Task {
 
         AtomicBoolean flag = new AtomicBoolean(true);
         AtomicInteger finished = new AtomicInteger(0);
+        AtomicBoolean notFound = new AtomicBoolean(false);
 
         // Because in China, Curse is too difficult to visit,
         // if failed, ignore it and retry next time.
@@ -113,6 +116,9 @@ public final class CurseCompletionTask extends Task {
                             if (StringUtils.isBlank(file.getFileName())) {
                                 try {
                                     return file.withFileName(NetworkUtils.detectFileName(file.getUrl()));
+                                } catch (FileNotFoundException e) {
+                                    notFound.set(true);
+                                    return file;
                                 } catch (IOException ioe) {
                                     Logging.LOG.log(Level.WARNING, "Unable to fetch the file name of URL: " + file.getUrl(), ioe);
                                     flag.set(false);
@@ -132,9 +138,13 @@ public final class CurseCompletionTask extends Task {
             }
 
         // Let this task fail if the curse manifest has not been completed.
-        if (!flag.get())
+        // But continue other downloads.
+        if (!flag.get() || notFound.get())
             dependencies.add(Task.of(() -> {
-                throw new CurseCompletionException();
+                if (notFound.get())
+                    throw new CurseCompletionException(new FileNotFoundException());
+                else
+                    throw new CurseCompletionException();
             }));
     }
 

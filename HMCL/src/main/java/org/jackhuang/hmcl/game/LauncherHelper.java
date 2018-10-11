@@ -54,6 +54,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -216,7 +217,10 @@ public final class LauncherHelper {
                             if (ex != null) {
                                 String message;
                                 if (ex instanceof CurseCompletionException) {
-                                    message = i18n("modpack.type.curse.error");
+                                    if (ex.getCause() instanceof FileNotFoundException)
+                                        message = i18n("modpack.type.curse.not_found");
+                                    else
+                                        message = i18n("modpack.type.curse.error");
                                 } else if (ex instanceof PermissionException) {
                                     message = i18n("launch.failed.executable_permission");
                                 } else if (ex instanceof ProcessCreationException) {
