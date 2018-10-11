@@ -28,7 +28,9 @@ import javafx.scene.control.Tab;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
@@ -61,6 +63,8 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     private JFXButton btnManagementMenu;
     @FXML
     private JFXButton btnExport;
+    @FXML
+    private JFXButton btnTestGame;
     @FXML
     private StackPane rootPane;
     @FXML
@@ -102,6 +106,9 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         FXUtils.installTooltip(btnManagementMenu, i18n("settings.game.management"));
         FXUtils.installTooltip(btnExport, i18n("modpack.export"));
 
+        btnTestGame.setGraphic(SVG.launch(Theme.whiteFillBinding(), 20, 20));
+        FXUtils.installTooltip(btnTestGame, i18n("version.launch.test"));
+
         setEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
     }
 
@@ -132,6 +139,11 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         }
 
         load(this.version, this.profile);
+    }
+
+    @FXML
+    private void onTestGame() {
+        Versions.testGame(profile, version);
     }
 
     @FXML

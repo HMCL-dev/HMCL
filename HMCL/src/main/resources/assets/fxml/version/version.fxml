@@ -30,6 +30,8 @@
         </JFXTabPane>
 
         <HBox alignment="TOP_RIGHT" style="-fx-padding: 4;" spacing="3" pickOnBounds="false">
+            <JFXButton fx:id="btnTestGame" maxHeight="40.0" minHeight="40.0" onMouseClicked="#onTestGame"
+                       styleClass="toggle-icon3" />
             <JFXButton fx:id="btnBrowseMenu" maxHeight="40.0" minHeight="40.0" onMouseClicked="#onBrowseMenu"
                        styleClass="toggle-icon3">
                 <graphic>
