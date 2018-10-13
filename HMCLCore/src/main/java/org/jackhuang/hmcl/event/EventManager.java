@@ -47,7 +47,7 @@ public final class EventManager<T extends Event> {
         register(consumer, EventPriority.NORMAL);
     }
 
-    public void register(Consumer<T> consumer, EventPriority priority) {
+    public synchronized void register(Consumer<T> consumer, EventPriority priority) {
         if (!handlers.get(priority).contains(consumer))
             handlers.put(priority, consumer);
     }
@@ -60,7 +60,7 @@ public final class EventManager<T extends Event> {
         register(t -> runnable.run(), priority);
     }
 
-    public Event.Result fireEvent(T event) {
+    public synchronized Event.Result fireEvent(T event) {
         for (EventPriority priority : EventPriority.values()) {
             for (Consumer<T> handler : handlers.get(priority))
                 handler.accept(event);
