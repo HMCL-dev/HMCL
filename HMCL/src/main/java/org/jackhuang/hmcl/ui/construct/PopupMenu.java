@@ -28,6 +28,7 @@ import javafx.scene.control.Control;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 
@@ -58,6 +59,14 @@ public class PopupMenu extends Control {
     @Override
     protected Skin<?> createDefaultSkin() {
         return new PopupMenuSkin();
+    }
+
+    public static Node wrapPopupMenuItem(Node node) {
+        StackPane pane = new StackPane();
+        pane.getChildren().setAll(node);
+        pane.getStyleClass().setAll("menu-container");
+        node.setMouseTransparent(true);
+        return new RipplerContainer(pane);
     }
 
     private class PopupMenuSkin extends SkinBase<PopupMenu> {

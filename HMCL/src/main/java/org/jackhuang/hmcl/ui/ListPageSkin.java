@@ -46,14 +46,14 @@ public class ListPageSkin extends SkinBase<ListPage> {
             {
                 scrollPane.setFitToWidth(true);
 
-                VBox accountList = new VBox();
-                accountList.maxWidthProperty().bind(scrollPane.widthProperty());
-                accountList.setSpacing(10);
-                accountList.setStyle("-fx-padding: 10 10 10 10;");
+                VBox list = new VBox();
+                list.maxWidthProperty().bind(scrollPane.widthProperty());
+                list.setSpacing(10);
+                list.setPadding(new Insets(10));
 
-                Bindings.bindContent(accountList.getChildren(), skinnable.itemsProperty());
+                Bindings.bindContent(list.getChildren(), skinnable.itemsProperty());
 
-                scrollPane.setContent(accountList);
+                scrollPane.setContent(list);
                 JFXScrollPane.smoothScrolling(scrollPane);
             }
 

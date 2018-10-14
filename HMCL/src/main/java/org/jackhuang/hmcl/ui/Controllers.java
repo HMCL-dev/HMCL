@@ -17,33 +17,46 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.concurrency.JFXUtilities;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountList;
 import org.jackhuang.hmcl.ui.account.AuthlibInjectorServersPage;
-import org.jackhuang.hmcl.ui.construct.InputDialogPane;
-import org.jackhuang.hmcl.ui.construct.MessageBox;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
+import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.profile.ProfileList;
+import org.jackhuang.hmcl.ui.versions.GameItem;
 import org.jackhuang.hmcl.ui.versions.GameList;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.FutureCallback;
+import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.javafx.MultiStepBinding;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
+import java.io.File;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
 
@@ -121,8 +134,60 @@ public final class Controllers {
     }
 
     public static MainPage getMainPage() {
-        if (mainPage == null)
+        if (mainPage == null) {
             mainPage = new MainPage();
+            mainPage.setOnDragOver(event -> {
+                if (event.getGestureSource() != mainPage && event.getDragboard().hasFiles()) {
+                    if (event.getDragboard().getFiles().stream().anyMatch(it -> "zip".equals(FileUtils.getExtension(it))))
+                        event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+                }
+                event.consume();
+            });
+
+            mainPage.setOnDragDropped(event -> {
+                List<File> files = event.getDragboard().getFiles();
+                if (files != null) {
+                    List<File> modpacks = files.stream()
+                            .filter(it -> "zip".equals(FileUtils.getExtension(it)))
+                            .collect(Collectors.toList());
+                    if (!modpacks.isEmpty()) {
+                        File modpack = modpacks.get(0);
+                        Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(modpack), i18n("install.modpack"));
+                        event.setDropCompleted(true);
+                    }
+                }
+                event.consume();
+            });
+
+            FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
+                if (version != null) {
+                    mainPage.setCurrentGame(version);
+                } else {
+                    mainPage.setCurrentGame(i18n("version.empty"));
+                }
+            });
+            mainPage.showUpdateProperty().bind(UpdateChecker.outdatedProperty());
+            mainPage.latestVersionProperty().bind(
+                    MultiStepBinding.of(UpdateChecker.latestVersionProperty())
+                            .map(version -> version == null ? "" : i18n("update.bubble.title", version.getVersion())));
+
+            Profiles.registerVersionsListener(profile -> {
+                HMCLGameRepository repository = profile.getRepository();
+                List<Node> children = repository.getVersions().parallelStream()
+                        .filter(version -> !version.isHidden())
+                        .sorted(Comparator.comparing(Version::getReleaseTime).thenComparing(a -> VersionNumber.asVersion(a.getId())))
+                        .map(version -> {
+                            Node node = PopupMenu.wrapPopupMenuItem(new GameItem(profile, version.getId()));
+                            node.setOnMouseClicked(e -> profile.setSelectedVersion(version.getId()));
+                            return node;
+                        })
+                        .collect(Collectors.toList());
+                JFXUtilities.runInFX(() -> {
+                    if (profile == Profiles.getSelectedProfile())
+                        mainPage.getVersions().setAll(children);
+                });
+            });
+        }
         return mainPage;
     }
 
@@ -131,6 +196,8 @@ public final class Controllers {
     }
 
     public static void initialize(Stage stage) {
+        Logging.LOG.info("Start initializing application");
+
         Controllers.stage = stage;
 
         stage.setOnCloseRequest(e -> Launcher.stopApplication());

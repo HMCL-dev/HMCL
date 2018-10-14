@@ -17,52 +17,37 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
-import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.beans.property.ReadOnlyStringProperty;
-import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.fxml.FXML;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.input.TransferMode;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
-import org.jackhuang.hmcl.ui.versions.GameItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
-import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.javafx.MultiStepBinding;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
-
+import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class MainPage extends StackPane implements DecoratorPage {
@@ -71,139 +56,153 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final PopupMenu menu = new PopupMenu();
     private final JFXPopup popup = new JFXPopup(menu);
 
-    @FXML
-    private StackPane main;
-    @FXML
+    private final StringProperty currentGame = new SimpleStringProperty(this, "currentGame");
+    private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
+    private final StringProperty latestVersion = new SimpleStringProperty(this, "latestVersion");
+    private final ObservableList<Node> versions = FXCollections.observableArrayList();
+
     private StackPane updatePane;
-    @FXML
-    private JFXButton btnLaunch;
-    @FXML
-    private JFXButton btnMenu;
-    @FXML
-    private JFXButton closeUpdateButton;
-    @FXML
-    private Label lblCurrentGame;
-    @FXML
-    private Label lblIcon;
-    @FXML
-    private TwoLineListItem lblLatestVersion;
-    @FXML
-    private Rectangle separator;
+    private JFXButton menuButton;
 
     {
-        FXUtils.loadFXML(this, "/assets/fxml/main.fxml");
+        setPadding(new Insets(25));
 
-        btnLaunch.setClip(new Rectangle(-100, -100, 310, 200));
-        btnMenu.setClip(new Rectangle(211, -100, 100, 200));
+        updatePane = new StackPane();
+        updatePane.setVisible(false);
+        updatePane.getStyleClass().add("bubble");
+        FXUtils.setLimitWidth(updatePane, 230);
+        FXUtils.setLimitHeight(updatePane, 55);
+        StackPane.setAlignment(updatePane, Pos.TOP_RIGHT);
+        updatePane.setOnMouseClicked(e -> onUpgrade());
+        FXUtils.onChange(showUpdateProperty(), this::doAnimation);
+
+        {
+            HBox hBox = new HBox();
+            hBox.setSpacing(12);
+            hBox.setAlignment(Pos.CENTER_LEFT);
+            StackPane.setAlignment(hBox, Pos.CENTER_LEFT);
+            StackPane.setMargin(hBox, new Insets(9, 12, 9, 16));
+            {
+                Label lblIcon = new Label();
+                lblIcon.setGraphic(SVG.update(Theme.whiteFillBinding(), 20, 20));
+
+                TwoLineListItem prompt = new TwoLineListItem();
+                prompt.setTitleFill(Color.WHITE);
+                prompt.setSubtitleFill(Color.WHITE);
+                prompt.setSubtitle(i18n("update.bubble.subtitle"));
+                prompt.setPickOnBounds(false);
+                prompt.setStyle("-jfx-title-font-weight: BOLD;");
+                prompt.titleProperty().bind(latestVersionProperty());
+
+                hBox.getChildren().setAll(lblIcon, prompt);
+            }
+
+            JFXButton closeUpdateButton = new JFXButton();
+            closeUpdateButton.setGraphic(SVG.close(Theme.whiteFillBinding(), 10, 10));
+            StackPane.setAlignment(closeUpdateButton, Pos.TOP_RIGHT);
+            closeUpdateButton.getStyleClass().add("toggle-icon-tiny");
+            StackPane.setMargin(closeUpdateButton, new Insets(5));
+            closeUpdateButton.setOnMouseClicked(e -> closeUpdateBubble());
+
+            updatePane.getChildren().setAll(hBox, closeUpdateButton);
+        }
+
+        StackPane launchPane = new StackPane();
+        launchPane.setMaxWidth(230);
+        launchPane.setMaxHeight(55);
+        StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
+        {
+            JFXButton launchButton = new JFXButton();
+            launchButton.setPrefWidth(230);
+            launchButton.setPrefHeight(55);
+            launchButton.setButtonType(JFXButton.ButtonType.RAISED);
+            launchButton.getStyleClass().add("jfx-button-raised");
+            launchButton.setOnMouseClicked(e -> launch());
+            launchButton.setClip(new Rectangle(-100, -100, 310, 200));
+            {
+                VBox graphic = new VBox();
+                graphic.setAlignment(Pos.CENTER);
+                graphic.setTranslateX(-7);
+                graphic.setMaxWidth(200);
+                Label launchLabel = new Label(i18n("version.launch"));
+                launchLabel.setStyle("-fx-font-size: 16px;");
+                Label currentLabel = new Label();
+                currentLabel.setStyle("-fx-font-size: 12px;");
+                currentLabel.textProperty().bind(currentGameProperty());
+                graphic.getChildren().setAll(launchLabel, currentLabel);
+
+                launchButton.setGraphic(graphic);
+            }
+
+            Rectangle separator = new Rectangle();
+            separator.getStyleClass().add("darker-fill");
+            separator.setWidth(1);
+            separator.setHeight(57);
+            separator.setTranslateX(95);
+            separator.setMouseTransparent(true);
+
+            menuButton = new JFXButton();
+            menuButton.setPrefHeight(55);
+            menuButton.setPrefWidth(230);
+            menuButton.setButtonType(JFXButton.ButtonType.RAISED);
+            menuButton.getStyleClass().add("jfx-button-raised");
+            menuButton.setStyle("-fx-font-size: 15px;");
+            menuButton.setOnMouseClicked(e -> onMenu());
+            menuButton.setClip(new Rectangle(211, -100, 100, 200));
+            StackPane graphic = new StackPane();
+            Node svg = SVG.triangle(Theme.whiteFillBinding(), 10, 10);
+            StackPane.setAlignment(svg, Pos.CENTER_RIGHT);
+            graphic.getChildren().setAll(svg);
+            graphic.setTranslateX(12);
+            menuButton.setGraphic(graphic);
+
+            launchPane.getChildren().setAll(launchButton, separator, menuButton);
+        }
+
+        getChildren().setAll(updatePane, launchPane);
+
         menu.setMaxHeight(365);
         menu.setMaxWidth(545);
         menu.setAlwaysShowingVBar(true);
-
-        updatePane.visibleProperty().bind(UpdateChecker.outdatedProperty());
-        closeUpdateButton.setGraphic(SVG.close(Theme.whiteFillBinding(), 10, 10));
-        closeUpdateButton.setOnMouseClicked(event -> {
-            Duration duration = Duration.millis(320);
-            Timeline nowAnimation = new Timeline();
-            nowAnimation.getKeyFrames().addAll(
-                    new KeyFrame(Duration.ZERO,
-                            new KeyValue(updatePane.translateXProperty(), 0, Interpolator.EASE_IN)),
-                    new KeyFrame(duration,
-                            new KeyValue(updatePane.translateXProperty(), 260, Interpolator.EASE_IN)),
-                    new KeyFrame(duration, e -> {
-                updatePane.visibleProperty().unbind();
-                updatePane.setVisible(false);
-            }));
-            nowAnimation.play();
-        });
-        lblIcon.setGraphic(SVG.update(Theme.whiteFillBinding(), 20, 20));
-        lblLatestVersion.titleProperty().bind(
-                MultiStepBinding.of(UpdateChecker.latestVersionProperty())
-                        .map(version -> version == null ? "" : i18n("update.bubble.title", version.getVersion())));
-
-        StackPane graphic = new StackPane();
-        Node svg = SVG.triangle(Theme.whiteFillBinding(), 10, 10);
-        StackPane.setAlignment(svg, Pos.CENTER_RIGHT);
-        graphic.getChildren().setAll(svg);
-        graphic.setTranslateX(12);
-        btnMenu.setGraphic(graphic);
-
-        FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
-            if (version != null) {
-                lblCurrentGame.setText(version);
-            } else {
-                lblCurrentGame.setText(i18n("version.empty"));
-            }
-        });
-
-        Profiles.registerVersionsListener(this::loadVersions);
-
-        setOnDragOver(event -> {
-            if (event.getGestureSource() != this && event.getDragboard().hasFiles()) {
-                if (event.getDragboard().getFiles().stream().anyMatch(it -> "zip".equals(FileUtils.getExtension(it))))
-                event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
-            }
-            event.consume();
-        });
-
-        setOnDragDropped(event -> {
-            List<File> files = event.getDragboard().getFiles();
-            if (files != null) {
-                List<File> modpacks = files.stream()
-                        .filter(it -> "zip".equals(FileUtils.getExtension(it)))
-                        .collect(Collectors.toList());
-                if (!modpacks.isEmpty()) {
-                    File modpack = modpacks.get(0);
-                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(modpack), i18n("install.modpack"));
-                    event.setDropCompleted(true);
-                }
-            }
-            event.consume();
-        });
+        menu.setOnMouseClicked(e -> popup.hide());
+        Bindings.bindContent(menu.getContent(), versions);
     }
 
-    private void loadVersions(Profile profile) {
-        HMCLGameRepository repository = profile.getRepository();
-        List<Node> children = repository.getVersions().parallelStream()
-                .filter(version -> !version.isHidden())
-                .sorted(Comparator.comparing(Version::getReleaseTime).thenComparing(a -> VersionNumber.asVersion(a.getId())))
-                .map(version -> {
-                    StackPane pane = new StackPane();
-                    GameItem item = new GameItem(profile, version.getId());
-                    pane.getChildren().setAll(item);
-                    pane.getStyleClass().setAll("menu-container");
-                    item.setMouseTransparent(true);
-                    RipplerContainer container = new RipplerContainer(pane);
-                    container.setOnMouseClicked(e -> {
-                        profile.setSelectedVersion(version.getId());
-                        popup.hide();
-                    });
-                    return container;
-                })
-                .collect(Collectors.toList());
-        JFXUtilities.runInFX(() -> {
-            if (profile == Profiles.getSelectedProfile())
-                menu.getContent().setAll(children);
-        });
+    private void doAnimation(boolean show) {
+        Duration duration = Duration.millis(320);
+        Timeline nowAnimation = new Timeline();
+        nowAnimation.getKeyFrames().addAll(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(updatePane.translateXProperty(), show ? 260 : 0, SINE)),
+                new KeyFrame(duration,
+                        new KeyValue(updatePane.translateXProperty(), show ? 0 : 260, SINE)));
+        if (show) nowAnimation.getKeyFrames().add(
+                new KeyFrame(Duration.ZERO, e -> updatePane.setVisible(true)));
+        else nowAnimation.getKeyFrames().add(
+                new KeyFrame(duration, e -> updatePane.setVisible(false)));
+        nowAnimation.play();
     }
 
-    @FXML
     private void launch() {
         Profile profile = Profiles.getSelectedProfile();
         Versions.launch(profile, profile.getSelectedVersion());
     }
 
-    @FXML
     private void onMenu() {
-        popup.show(btnMenu, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.RIGHT, 0, -btnMenu.getHeight());
+        popup.show(menuButton, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.RIGHT, 0, -menuButton.getHeight());
     }
 
-    @FXML
     private void onUpgrade() {
         RemoteVersion target = UpdateChecker.getLatestVersion();
         if (target == null) {
             return;
         }
         UpdateHandler.updateFrom(target);
+    }
+
+    private void closeUpdateBubble() {
+        showUpdate.unbind();
+        showUpdate.set(false);
     }
 
     public String getTitle() {
@@ -217,5 +216,45 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     public void setTitle(String title) {
         this.title.set(title);
+    }
+
+    public String getCurrentGame() {
+        return currentGame.get();
+    }
+
+    public StringProperty currentGameProperty() {
+        return currentGame;
+    }
+
+    public void setCurrentGame(String currentGame) {
+        this.currentGame.set(currentGame);
+    }
+
+    public boolean isShowUpdate() {
+        return showUpdate.get();
+    }
+
+    public BooleanProperty showUpdateProperty() {
+        return showUpdate;
+    }
+
+    public void setShowUpdate(boolean showUpdate) {
+        this.showUpdate.set(showUpdate);
+    }
+
+    public String getLatestVersion() {
+        return latestVersion.get();
+    }
+
+    public StringProperty latestVersionProperty() {
+        return latestVersion;
+    }
+
+    public void setLatestVersion(String latestVersion) {
+        this.latestVersion.set(latestVersion);
+    }
+
+    public ObservableList<Node> getVersions() {
+        return versions;
     }
 }

@@ -55,7 +55,8 @@ public final class Launcher extends Application {
             Main.showErrorAndExit(i18n("fatal.config_loading_failure", Paths.get("").toAbsolutePath().normalize()));
         }
 
-        try {
+        // runLater to ensure ConfigHolder.init() finished initialization
+        Platform.runLater(() -> {
             // When launcher visibility is set to "hide and reopen" without Platform.implicitExit = false,
             // Stage.show() cannot work again because JavaFX Toolkit have already shut down.
             Platform.setImplicitExit(false);
@@ -66,9 +67,8 @@ public final class Launcher extends Application {
             UpdateChecker.init();
 
             primaryStage.show();
-        } catch (Throwable e) {
-            CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
-        }
+        });
+
     }
 
     public static void main(String[] args) {
