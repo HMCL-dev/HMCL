@@ -106,8 +106,11 @@ public class DecoratorController {
             );
             nowAnimation.play();
         });
-        if (ConfigHolder.isNewlyCreated() && config().getLocalization().getLocale() == Locale.CHINA)
+
+        if (ConfigHolder.config().getUiVersion() < Controllers.UI_VERSION && config().getLocalization().getLocale() == Locale.CHINA) {
+            ConfigHolder.config().setUiVersion(Controllers.UI_VERSION);
             decorator.getContainer().setAll(welcomeView);
+        }
 
         setupBackground();
 

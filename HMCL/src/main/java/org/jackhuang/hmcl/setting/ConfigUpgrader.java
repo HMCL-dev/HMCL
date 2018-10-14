@@ -29,6 +29,8 @@ import java.util.Map;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 final class ConfigUpgrader {
+    private static final int VERSION = 0;
+
     private ConfigUpgrader() {
     }
 
@@ -37,10 +39,22 @@ final class ConfigUpgrader {
      *
      * @param deserialized deserialized config settings
      * @param rawJson      raw json structure of the config settings without modification
+     * @return true if config version is upgraded
      */
-    static void upgradeConfig(Config deserialized, Map<?, ?> rawJson) {
+    static boolean upgradeConfig(Config deserialized, Map<?, ?> rawJson) {
+        boolean upgraded;
+        if (deserialized.getConfigVersion() < VERSION) {
+            deserialized.setConfigVersion(VERSION);
+            // TODO: Add upgrade code here.
+            upgraded = true;
+        } else {
+            upgraded = false;
+        }
+
         upgradeV2(deserialized, rawJson);
         upgradeV3(deserialized, rawJson);
+
+        return upgraded;
     }
 
     /**

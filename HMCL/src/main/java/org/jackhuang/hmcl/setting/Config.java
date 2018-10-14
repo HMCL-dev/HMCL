@@ -145,6 +145,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("_version")
     private IntegerProperty configVersion = new SimpleIntegerProperty(0);
 
+    @SerializedName("uiVersion")
+    private IntegerProperty uiVersion = new SimpleIntegerProperty(0);
+
     private transient ObservableHelper helper = new ObservableHelper(this);
 
     public Config() {
@@ -440,4 +443,27 @@ public final class Config implements Cloneable, Observable {
         this.updateChannel.set(updateChannel);
     }
 
+    public int getConfigVersion() {
+        return configVersion.get();
+    }
+
+    public IntegerProperty configVersionProperty() {
+        return configVersion;
+    }
+
+    public void setConfigVersion(int configVersion) {
+        this.configVersion.set(configVersion);
+    }
+
+    public int getUiVersion() {
+        return uiVersion.get();
+    }
+
+    public IntegerProperty uiVersionProperty() {
+        return uiVersion;
+    }
+
+    public void setUiVersion(int uiVersion) {
+        this.uiVersion.set(uiVersion);
+    }
 }
