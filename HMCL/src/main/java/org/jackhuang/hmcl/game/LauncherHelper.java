@@ -475,8 +475,12 @@ public final class LauncherHelper {
             switch (launcherVisibility) {
                 case HIDE_AND_REOPEN:
                     Platform.runLater(() -> {
-                        Controllers.getStage().hide();
-                        emitStatus(LoadingState.DONE);
+                        // If application was stopped and execution services did not finish termination,
+                        // these codes will be executed.
+                        if (Controllers.getStage() != null) {
+                            Controllers.getStage().hide();
+                            emitStatus(LoadingState.DONE);
+                        }
                     });
                     break;
                 case CLOSE:
@@ -489,8 +493,12 @@ public final class LauncherHelper {
                     break;
                 case HIDE:
                     Platform.runLater(() -> {
-                        Controllers.getStage().close();
-                        emitStatus(LoadingState.DONE);
+                        // If application was stopped and execution services did not finish termination,
+                        // these codes will be executed.
+                        if (Controllers.getStage() != null) {
+                            Controllers.getStage().close();
+                            emitStatus(LoadingState.DONE);
+                        }
                     });
                     break;
             }
