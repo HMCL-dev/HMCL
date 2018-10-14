@@ -164,6 +164,16 @@ public class CacheRepository {
         return file;
     }
 
+    public void removeRemoteEntry(URLConnection conn) {
+        String url = conn.getURL().toString();
+        lock.readLock().lock();
+        try {
+            index.remove(url);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
     public void injectConnection(URLConnection conn) {
         String url = conn.getURL().toString();
         lock.readLock().lock();

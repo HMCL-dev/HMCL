@@ -222,8 +222,14 @@ public class FileDownloadTask extends Task {
 
                 if (con.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
                     // Handle cache
-                    Path cache = repository.getCachedRemoteFile(con);
-                    FileUtils.copyFile(cache.toFile(), file);
+                    try {
+                        Path cache = repository.getCachedRemoteFile(con);
+                        FileUtils.copyFile(cache.toFile(), file);
+                        return;
+                    } catch (IOException e) {
+                        Logging.LOG.log(Level.WARNING, "Unable to use cached file, redownload it", e);
+                        repository.removeRemoteEntry(con);
+                    }
                 } else if (con.getResponseCode() / 100 != 2) {
                     throw new IOException("Server error, response code: " + con.getResponseCode());
                 }

@@ -96,11 +96,17 @@ public final class GetTask extends TaskResult<String> {
                 if (checkETag) repository.injectConnection(conn);
                 conn.connect();
 
-                if (conn.getResponseCode() == 304) {
+                if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
                     // Handle cache
-                    Path cache = repository.getCachedRemoteFile(conn);
-                    setResult(FileUtils.readText(cache));
-                    return;
+                    try {
+                        Path cache = repository.getCachedRemoteFile(conn);
+                        setResult(FileUtils.readText(cache));
+                        return;
+                    } catch (IOException e) {
+                        Logging.LOG.log(Level.WARNING, "Unable to use cached file, redownload it", e);
+                        repository.removeRemoteEntry(conn);
+                        continue;
+                    }
                 } else if (conn.getResponseCode() / 100 != 2) {
                     throw new IOException("Server error, response code: " + conn.getResponseCode());
                 }
