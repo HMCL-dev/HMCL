@@ -94,7 +94,8 @@ public final class FileUtils {
     }
 
     public static void writeBytes(File file, byte[] array) throws IOException {
-        Files.write(file.toPath(), array);
+        Files.createDirectories(file.toPath().getParent());
+        Files.write(file.toPath(), array, StandardOpenOption.CREATE);
     }
 
     public static void deleteDirectory(File directory)
