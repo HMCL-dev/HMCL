@@ -30,6 +30,7 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
+import org.jackhuang.hmcl.util.Logging;
 
 import java.util.Optional;
 import java.util.Stack;
@@ -56,6 +57,8 @@ public class Navigator extends StackPane {
         if (from == node)
             return;
 
+        Logging.LOG.info("Navigate to " + node);
+
         stack.push(node);
         fireEvent(new NavigationEvent(this, from, NavigationEvent.NAVIGATING));
         setContent(node);
@@ -78,6 +81,8 @@ public class Navigator extends StackPane {
     @SuppressWarnings("unchecked")
     public void close(Node from) {
         FXUtils.checkFxUserThread();
+
+        Logging.LOG.info("Closed page " + from);
 
         if (stack.peek() != from)
             throw new IllegalStateException();
