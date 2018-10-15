@@ -88,11 +88,16 @@ class ComponentListCell extends StackPane {
             VBox labelVBox = new VBox();
             labelVBox.setAlignment(Pos.CENTER_LEFT);
 
+            boolean overrideHeaderLeft = false;
             if (list instanceof ComponentSublist) {
                 Node leftNode = ((ComponentSublist) list).getHeaderLeft();
-                if (leftNode != null)
+                if (leftNode != null) {
                     labelVBox.getChildren().setAll(leftNode);
-            } else {
+                    overrideHeaderLeft = true;
+                }
+            }
+
+            if (!overrideHeaderLeft) {
                 Label label = new Label();
                 label.textProperty().bind(list.titleProperty());
                 labelVBox.getChildren().add(label);
@@ -108,6 +113,7 @@ class ComponentListCell extends StackPane {
             groupNode.setLeft(labelVBox);
 
             HBox right = new HBox();
+            right.setSpacing(16);
             right.setAlignment(Pos.CENTER_RIGHT);
             if (list instanceof ComponentSublist) {
                 Node rightNode = ((ComponentSublist) list).getHeaderRight();

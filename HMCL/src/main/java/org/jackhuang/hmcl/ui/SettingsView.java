@@ -333,34 +333,49 @@ public abstract class SettingsView extends StackPane {
                 }
 
                 {
-                    VBox fontPane = new VBox();
-                    fontPane.setSpacing(5);
-                    settingsPane.getContent().add(fontPane);
+                    ComponentSublist logPane = new ComponentSublist();
+                    logPane.setTitle(i18n("settings.launcher.log"));
 
                     {
-                        BorderPane borderPane = new BorderPane();
-                        fontPane.getChildren().add(borderPane);
-                        {
-                            Label left = new Label(i18n("settings.launcher.log_font"));
-                            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                            borderPane.setLeft(left);
-                        }
+                        JFXButton logButton = new JFXButton(i18n("settings.launcher.log.dir"));
+                        logButton.setOnMouseClicked(e -> onOpenLogFolder());
+                        logButton.getStyleClass().setAll("jfx-button-border");
 
-                        {
-                            HBox hBox = new HBox();
-                            hBox.setSpacing(3);
-
-                            cboFont = new FontComboBox(12, false);
-                            txtFontSize = new JFXTextField();
-                            FXUtils.setLimitWidth(txtFontSize, 50);
-                            hBox.getChildren().setAll(cboFont, txtFontSize);
-
-                            borderPane.setRight(hBox);
-                        }
+                        logPane.setHeaderRight(logButton);
                     }
 
-                    lblDisplay = new Label("[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower.");
-                    fontPane.getChildren().add(lblDisplay);
+                    {
+                        VBox fontPane = new VBox();
+                        fontPane.setSpacing(5);
+
+                        {
+                            BorderPane borderPane = new BorderPane();
+                            fontPane.getChildren().add(borderPane);
+                            {
+                                Label left = new Label(i18n("settings.launcher.log.font"));
+                                BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                                borderPane.setLeft(left);
+                            }
+
+                            {
+                                HBox hBox = new HBox();
+                                hBox.setSpacing(3);
+
+                                cboFont = new FontComboBox(12, false);
+                                txtFontSize = new JFXTextField();
+                                FXUtils.setLimitWidth(txtFontSize, 50);
+                                hBox.getChildren().setAll(cboFont, txtFontSize);
+
+                                borderPane.setRight(hBox);
+                            }
+                        }
+
+                        lblDisplay = new Label("[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower.");
+                        fontPane.getChildren().add(lblDisplay);
+
+                        logPane.getContent().add(fontPane);
+                    }
+                    settingsPane.getContent().add(logPane);
                 }
 
                 {
@@ -477,4 +492,5 @@ public abstract class SettingsView extends StackPane {
 
     protected abstract void onUpdate();
     protected abstract void onHelp();
+    protected abstract void onOpenLogFolder();
 }

@@ -546,7 +546,7 @@
 .jfx-button-raised {
     -fx-text-fill: white;
     -fx-background-color: -fx-base-color;
-    -fx-font-size:14px;
+    -fx-font-size: 14px;
 }
 
 .jfx-button-raised .jfx-rippler {
@@ -556,6 +556,22 @@
 .jfx-button-raised .label {
     -fx-text-fill: white;
     -fx-font-size: 14px;
+}
+
+.jfx-button-border {
+    -fx-text-fill: -fx-base-color;
+    -fx-border-color: gray;
+    -fx-border-radius: 5px;
+    -fx-border-width: 0.2px;
+    -fx-padding: 8px;
+}
+
+.jfx-button-border .jfx-rippler {
+    -jfx-rippler-fill: -fx-base-check-color;
+}
+
+.jfx-button-border .label {
+    -fx-text-fill: -fx-base-color;
 }
 
 .jfx-button-raised-round {
