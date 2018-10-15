@@ -30,7 +30,8 @@ public class GameAdvancedListItem extends AdvancedListItem {
 
     public GameAdvancedListItem() {
         FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
-            if (Profiles.getSelectedProfile().getRepository().hasVersion(version)) {
+            if (version != null && Profiles.getSelectedProfile() != null &&
+                    Profiles.getSelectedProfile().getRepository().hasVersion(version)) {
                 setTitle(version);
                 setSubtitle(null);
                 setImage(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
