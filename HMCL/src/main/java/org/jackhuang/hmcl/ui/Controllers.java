@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -176,7 +177,8 @@ public final class Controllers {
                 HMCLGameRepository repository = profile.getRepository();
                 List<Node> children = repository.getVersions().parallelStream()
                         .filter(version -> !version.isHidden())
-                        .sorted(Comparator.comparing(Version::getReleaseTime).thenComparing(a -> VersionNumber.asVersion(a.getId())))
+                        .sorted(Comparator.comparing((Version version) -> version.getReleaseTime() == null ? new Date() : version.getReleaseTime())
+                                .thenComparing(a -> VersionNumber.asVersion(a.getId())))
                         .map(version -> {
                             Node node = PopupMenu.wrapPopupMenuItem(new GameItem(profile, version.getId()));
                             node.setOnMouseClicked(e -> profile.setSelectedVersion(version.getId()));
