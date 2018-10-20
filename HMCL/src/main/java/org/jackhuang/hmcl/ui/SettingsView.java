@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 public abstract class SettingsView extends StackPane {
@@ -337,8 +336,8 @@ public abstract class SettingsView extends StackPane {
                     logPane.setTitle(i18n("settings.launcher.log"));
 
                     {
-                        JFXButton logButton = new JFXButton(i18n("settings.launcher.log.dir"));
-                        logButton.setOnMouseClicked(e -> onOpenLogFolder());
+                        JFXButton logButton = new JFXButton(i18n("settings.launcher.launcher_log.export"));
+                        logButton.setOnMouseClicked(e -> onExportLogs());
                         logButton.getStyleClass().setAll("jfx-button-border");
 
                         logPane.setHeaderRight(logButton);
@@ -492,5 +491,5 @@ public abstract class SettingsView extends StackPane {
 
     protected abstract void onUpdate();
     protected abstract void onHelp();
-    protected abstract void onOpenLogFolder();
+    protected abstract void onExportLogs();
 }

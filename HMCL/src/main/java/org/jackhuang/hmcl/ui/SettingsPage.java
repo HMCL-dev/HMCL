@@ -30,21 +30,33 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
+import java.awt.Desktop;
+import java.io.IOException;
 import java.net.Proxy;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.Lang.thread;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.reservedSelectedPropertyFor;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
@@ -201,8 +213,29 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
     }
 
     @Override
-    protected void onOpenLogFolder() {
-        FXUtils.openFolder(Metadata.HMCL_DIRECTORY.resolve("logs").toFile());
+    protected void onExportLogs() {
+        // We cannot determine which file is JUL using.
+        // So we write all the logs to a new file.
+        thread(() -> {
+            Path logFile = Paths.get("hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
+
+            LOG.info("Exporting logs to " + logFile);
+            try {
+                Files.write(logFile, Logging.getRawLogs());
+            } catch (IOException e) {
+                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + e, null, MessageBox.ERROR_MESSAGE));
+                LOG.log(Level.WARNING, "Failed to export logs", e);
+                return;
+            }
+
+            Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", logFile)));
+            if (Desktop.isDesktopSupported()) {
+                try {
+                    Desktop.getDesktop().open(logFile.toFile());
+                } catch (IOException ignored) {
+                }
+            }
+        });
     }
 
     @Override

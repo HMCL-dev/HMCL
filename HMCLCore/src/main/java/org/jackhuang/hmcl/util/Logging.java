@@ -32,21 +32,16 @@ import java.util.logging.*;
  */
 public final class Logging {
 
-    public static final Logger LOG;
-    private static final ByteArrayOutputStream OUTPUT_STREAM = new ByteArrayOutputStream();
-
-    static {
-        LOG = Logger.getLogger("HMCL");
-    }
+    public static final Logger LOG = Logger.getLogger("HMCL");
+    private static ByteArrayOutputStream storedLogs = new ByteArrayOutputStream();
 
     public static void start(Path logFolder) {
-        LOG.setLevel(Level.FINER);
+        LOG.setLevel(Level.ALL);
         LOG.setUseParentHandlers(false);
 
         try {
             Files.createDirectories(logFolder);
             FileHandler fileHandler = new FileHandler(logFolder.resolve("hmcl.log").toAbsolutePath().toString());
-            fileHandler.setLevel(Level.FINEST);
             fileHandler.setFormatter(DefaultFormatter.INSTANCE);
             LOG.addHandler(fileHandler);
         } catch (IOException e) {
@@ -54,31 +49,28 @@ public final class Logging {
         }
 
         ConsoleHandler consoleHandler = new ConsoleHandler();
-        consoleHandler.setLevel(Level.FINER);
         consoleHandler.setFormatter(DefaultFormatter.INSTANCE);
         LOG.addHandler(consoleHandler);
 
-        StreamHandler streamHandler = new StreamHandler(OUTPUT_STREAM, DefaultFormatter.INSTANCE) {
+        StreamHandler streamHandler = new StreamHandler(storedLogs, DefaultFormatter.INSTANCE) {
             @Override
             public synchronized void publish(LogRecord record) {
                 super.publish(record);
                 flush();
             }
         };
-        streamHandler.setLevel(Level.FINEST);
         LOG.addHandler(streamHandler);
     }
 
-    public static void stop() {
-        for (Handler handler : LOG.getHandlers())
-            LOG.removeHandler(handler);
+    public static byte[] getRawLogs() {
+        return storedLogs.toByteArray();
     }
 
     public static String getLogs() {
-        return OUTPUT_STREAM.toString();
+        return storedLogs.toString();
     }
 
-    static final class DefaultFormatter extends Formatter {
+    private static final class DefaultFormatter extends Formatter {
 
         static final DefaultFormatter INSTANCE = new DefaultFormatter();
         private final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
