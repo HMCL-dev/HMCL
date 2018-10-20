@@ -28,7 +28,6 @@ import javafx.beans.property.*;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.construct.Validator;
@@ -203,7 +202,7 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
 
     @Override
     protected void onOpenLogFolder() {
-        FXUtils.openFolder(Launcher.LOG_DIRECTORY);
+        FXUtils.openFolder(Metadata.HMCL_DIRECTORY.resolve("logs").toFile());
     }
 
     @Override

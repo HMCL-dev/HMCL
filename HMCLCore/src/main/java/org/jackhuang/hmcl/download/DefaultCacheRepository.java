@@ -43,7 +43,7 @@ public class DefaultCacheRepository extends CacheRepository {
     private Index index = null;
 
     public DefaultCacheRepository() {
-        this(OperatingSystem.getWorkingDirectory("minecraft").toPath());
+        this(OperatingSystem.getWorkingDirectory("minecraft"));
     }
 
     public DefaultCacheRepository(Path commonDirectory) {

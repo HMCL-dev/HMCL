@@ -18,9 +18,10 @@
 package org.jackhuang.hmcl.util;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.*;
@@ -38,12 +39,13 @@ public final class Logging {
         LOG = Logger.getLogger("HMCL");
     }
 
-    public static void start(File logFolder) {
+    public static void start(Path logFolder) {
         LOG.setLevel(Level.FINER);
         LOG.setUseParentHandlers(false);
 
         try {
-            FileHandler fileHandler = new FileHandler(new File(logFolder, "hmcl.log").getAbsolutePath());
+            Files.createDirectories(logFolder);
+            FileHandler fileHandler = new FileHandler(logFolder.resolve("hmcl.log").toAbsolutePath().toString());
             fileHandler.setLevel(Level.FINEST);
             fileHandler.setFormatter(DefaultFormatter.INSTANCE);
             LOG.addHandler(fileHandler);

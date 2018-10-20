@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
@@ -41,7 +41,7 @@ public final class AccountHelper {
 
     private AccountHelper() {}
 
-    public static final File SKIN_DIR = new File(Launcher.HMCL_DIRECTORY, "skins");
+    public static final File SKIN_DIR = Metadata.HMCL_DIRECTORY.resolve("skins").toFile();
 
     public static void loadSkins() {
         for (Account account : Accounts.getAccounts()) {

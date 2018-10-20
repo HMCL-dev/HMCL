@@ -21,7 +21,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import javafx.application.Platform;
 import javafx.scene.layout.Region;
-import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Task;
@@ -231,7 +230,7 @@ public final class UpdateHandler {
     private static boolean isFirstLaunchAfterUpgrade() {
         Optional<Path> currentPath = JarUtils.thisJar();
         if (currentPath.isPresent()) {
-            Path updated = Launcher.HMCL_DIRECTORY.toPath().resolve("HMCL-" + Metadata.VERSION + ".jar");
+            Path updated = Metadata.HMCL_DIRECTORY.resolve("HMCL-" + Metadata.VERSION + ".jar");
             if (currentPath.get().toAbsolutePath().equals(updated.toAbsolutePath())) {
                 return true;
             }
@@ -240,7 +239,7 @@ public final class UpdateHandler {
     }
 
     private static void breakForceUpdateFeature() {
-        Path hmclVersionJson = Launcher.HMCL_DIRECTORY.toPath().resolve("hmclver.json");
+        Path hmclVersionJson = Metadata.HMCL_DIRECTORY.resolve("hmclver.json");
         if (Files.isRegularFile(hmclVersionJson)) {
             try {
                 Map<?, ?> content = new Gson().fromJson(new String(Files.readAllBytes(hmclVersionJson), UTF_8), Map.class);
