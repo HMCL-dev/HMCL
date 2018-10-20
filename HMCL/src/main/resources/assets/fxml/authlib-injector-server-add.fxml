@@ -19,10 +19,12 @@
             </body>
             <actions>
                 <Label fx:id="lblCreationWarning" />
-                <JFXButton onMouseClicked="#onAddCancel" text="%button.cancel" styleClass="dialog-cancel" />
-                <SpinnerPane fx:id="nextPane" styleClass="small-spinner-pane">
-                    <JFXButton fx:id="btnAddNext"  onMouseClicked="#onAddNext" text="%wizard.next" styleClass="dialog-accept" />
-                </SpinnerPane>
+                <HBox>
+                    <JFXButton onMouseClicked="#onAddCancel" text="%button.cancel" styleClass="dialog-cancel" />
+                    <SpinnerPane fx:id="nextPane" styleClass="small-spinner-pane">
+                        <JFXButton fx:id="btnAddNext"  onMouseClicked="#onAddNext" text="%wizard.next" styleClass="dialog-accept" />
+                    </SpinnerPane>
+                </HBox>
             </actions>
         </JFXDialogLayout>
 

@@ -67,10 +67,12 @@
         </body>
         <actions>
             <Label fx:id="lblCreationWarning"/>
-            <SpinnerPane fx:id="acceptPane" styleClass="small-spinner-pane">
-                <JFXButton fx:id="btnAccept" onMouseClicked="#onCreationAccept" text="%button.ok" styleClass="dialog-accept"/>
-            </SpinnerPane>
-            <JFXButton onMouseClicked="#onCreationCancel" text="%button.cancel" styleClass="dialog-cancel"/>
+            <HBox>
+                <SpinnerPane fx:id="acceptPane" styleClass="small-spinner-pane">
+                    <JFXButton fx:id="btnAccept" onMouseClicked="#onCreationAccept" text="%button.ok" styleClass="dialog-accept"/>
+                </SpinnerPane>
+                <JFXButton onMouseClicked="#onCreationCancel" text="%button.cancel" styleClass="dialog-cancel"/>
+            </HBox>
         </actions>
     </JFXDialogLayout>
 </fx:root>
