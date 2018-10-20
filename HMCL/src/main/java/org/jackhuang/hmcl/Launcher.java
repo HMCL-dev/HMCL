@@ -74,8 +74,6 @@ public final class Launcher extends Application {
         Thread.setDefaultUncaughtExceptionHandler(CRASH_REPORTER);
 
         try {
-            Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
-
             LOG.info("*** " + Metadata.TITLE + " ***");
             LOG.info("Operating System: " + System.getProperty("os.name") + ' ' + OperatingSystem.SYSTEM_VERSION);
             LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
