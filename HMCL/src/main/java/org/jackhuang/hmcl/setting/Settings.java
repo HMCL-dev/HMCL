@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.beans.binding.Bindings;
-import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.util.CacheRepository;
 
@@ -64,7 +64,7 @@ public class Settings {
     }
 
     public static String getDefaultCommonDirectory() {
-        return Launcher.MINECRAFT_DIRECTORY.getAbsolutePath();
+        return Metadata.MINECRAFT_DIRECTORY.toString();
     }
 
     public String getCommonDirectory() {

@@ -18,9 +18,10 @@
 package org.jackhuang.hmcl.util;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.*;
@@ -31,20 +32,16 @@ import java.util.logging.*;
  */
 public final class Logging {
 
-    public static final Logger LOG;
-    private static final ByteArrayOutputStream OUTPUT_STREAM = new ByteArrayOutputStream();
+    public static final Logger LOG = Logger.getLogger("HMCL");
+    private static ByteArrayOutputStream storedLogs = new ByteArrayOutputStream();
 
-    static {
-        LOG = Logger.getLogger("HMCL");
-    }
-
-    public static void start(File logFolder) {
-        LOG.setLevel(Level.FINER);
+    public static void start(Path logFolder) {
+        LOG.setLevel(Level.ALL);
         LOG.setUseParentHandlers(false);
 
         try {
-            FileHandler fileHandler = new FileHandler(new File(logFolder, "hmcl.log").getAbsolutePath());
-            fileHandler.setLevel(Level.FINEST);
+            Files.createDirectories(logFolder);
+            FileHandler fileHandler = new FileHandler(logFolder.resolve("hmcl.log").toAbsolutePath().toString());
             fileHandler.setFormatter(DefaultFormatter.INSTANCE);
             LOG.addHandler(fileHandler);
         } catch (IOException e) {
@@ -52,31 +49,28 @@ public final class Logging {
         }
 
         ConsoleHandler consoleHandler = new ConsoleHandler();
-        consoleHandler.setLevel(Level.FINER);
         consoleHandler.setFormatter(DefaultFormatter.INSTANCE);
         LOG.addHandler(consoleHandler);
 
-        StreamHandler streamHandler = new StreamHandler(OUTPUT_STREAM, DefaultFormatter.INSTANCE) {
+        StreamHandler streamHandler = new StreamHandler(storedLogs, DefaultFormatter.INSTANCE) {
             @Override
             public synchronized void publish(LogRecord record) {
                 super.publish(record);
                 flush();
             }
         };
-        streamHandler.setLevel(Level.FINEST);
         LOG.addHandler(streamHandler);
     }
 
-    public static void stop() {
-        for (Handler handler : LOG.getHandlers())
-            LOG.removeHandler(handler);
+    public static byte[] getRawLogs() {
+        return storedLogs.toByteArray();
     }
 
     public static String getLogs() {
-        return OUTPUT_STREAM.toString();
+        return storedLogs.toString();
     }
 
-    static final class DefaultFormatter extends Formatter {
+    private static final class DefaultFormatter extends Formatter {
 
         static final DefaultFormatter INSTANCE = new DefaultFormatter();
         private final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");

@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl;
 
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.Logging;
+
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
@@ -41,6 +43,8 @@ public final class Main {
         checkJavaFX();
         checkDirectoryPath();
         checkDSTRootCAX3();
+
+        Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
 
         if (UpdateHandler.processArguments(args)) {
             return;

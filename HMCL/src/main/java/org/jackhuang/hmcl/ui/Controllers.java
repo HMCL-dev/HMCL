@@ -177,7 +177,7 @@ public final class Controllers {
                 HMCLGameRepository repository = profile.getRepository();
                 List<Node> children = repository.getVersions().parallelStream()
                         .filter(version -> !version.isHidden())
-                        .sorted(Comparator.comparing((Version version) -> version.getReleaseTime() == null ? new Date() : version.getReleaseTime())
+                        .sorted(Comparator.comparing((Version version) -> version.getReleaseTime() == null ? new Date(0L) : version.getReleaseTime())
                                 .thenComparing(a -> VersionNumber.asVersion(a.getId())))
                         .map(version -> {
                             Node node = PopupMenu.wrapPopupMenuItem(new GameItem(profile, version.getId()));

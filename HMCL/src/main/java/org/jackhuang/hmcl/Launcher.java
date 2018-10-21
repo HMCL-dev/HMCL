@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
@@ -74,19 +73,14 @@ public final class Launcher extends Application {
     public static void main(String[] args) {
         Thread.setDefaultUncaughtExceptionHandler(CRASH_REPORTER);
 
-        if (!FileUtils.makeDirectory(LOG_DIRECTORY))
-            System.out.println("Unable to create log directory " + LOG_DIRECTORY + ", log files cannot be generated.");
-
         try {
-            Logging.start(LOG_DIRECTORY);
-
             LOG.info("*** " + Metadata.TITLE + " ***");
             LOG.info("Operating System: " + System.getProperty("os.name") + ' ' + OperatingSystem.SYSTEM_VERSION);
             LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
             LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
             LOG.info("Java Home: " + System.getProperty("java.home"));
             LOG.info("Current Directory: " + Paths.get("").toAbsolutePath());
-            LOG.info("HMCL Directory: " + HMCL_DIRECTORY);
+            LOG.info("HMCL Directory: " + Metadata.HMCL_DIRECTORY);
             LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");
             ManagementFactory.getMemoryPoolMXBeans().stream().filter(bean -> bean.getName().equals("Metaspace")).findAny()
                     .ifPresent(bean -> LOG.info("Metaspace: " + bean.getUsage().getUsed() / 1024 / 1024 + "MB"));
@@ -142,10 +136,6 @@ public final class Launcher extends Application {
         else
             return result;
     }
-
-    public static final File MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
-    public static final File HMCL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
-    public static final File LOG_DIRECTORY = new File(Launcher.HMCL_DIRECTORY, "logs");
 
     public static final CrashReporter CRASH_REPORTER = new CrashReporter();
 }

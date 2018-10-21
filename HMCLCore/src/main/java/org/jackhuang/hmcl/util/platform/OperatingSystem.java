@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
-
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -29,6 +26,8 @@ import org.jackhuang.hmcl.util.Lang;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -135,30 +134,24 @@ public enum OperatingSystem {
         return Optional.empty();
     }
 
-    public static void setClipboard(String string) {
-        ClipboardContent c = new ClipboardContent();
-        c.putString(string);
-        Clipboard.getSystemClipboard().setContent(c);
-    }
-
     public static void forceGC() {
         System.gc();
         System.runFinalization();
         System.gc();
     }
 
-    public static File getWorkingDirectory(String folder) {
+    public static Path getWorkingDirectory(String folder) {
         String home = System.getProperty("user.home", ".");
         switch (OperatingSystem.CURRENT_OS) {
             case LINUX:
-                return new File(home, "." + folder + "/");
+                return Paths.get(home, "." + folder);
             case WINDOWS:
                 String appdata = System.getenv("APPDATA");
-                return new File(Lang.nonNull(appdata, home), "." + folder + "/");
+                return Paths.get(Lang.nonNull(appdata, home), "." + folder);
             case OSX:
-                return new File(home, "Library/Application Support/" + folder);
+                return Paths.get(home, "Library", "Application Support", folder);
             default:
-                return new File(home, folder + "/");
+                return Paths.get(home, folder);
         }
     }
 }

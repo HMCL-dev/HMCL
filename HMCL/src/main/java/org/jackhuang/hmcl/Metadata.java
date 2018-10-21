@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl;
 
+import java.nio.file.Path;
+
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 /**
  * Stores metadata about this application.
@@ -33,4 +36,7 @@ public final class Metadata {
     public static final String CONTACT_URL = "https://hmcl.huangyuhui.net/contact";
     public static final String HELP_URL = "https://hmcl.huangyuhui.net/help";
     public static final String PUBLISH_URL = "http://www.mcbbs.net/thread-142335-1-1.html";
+
+    public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
+    public static final Path HMCL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
 }
