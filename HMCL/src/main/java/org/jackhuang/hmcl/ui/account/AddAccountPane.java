@@ -290,6 +290,8 @@ public class AddAccountPane extends StackPane {
             return exception.getMessage();
         } else if (exception instanceof AuthlibInjectorDownloadException) {
             return i18n("account.failed.injector_download_failure");
+        } else if (exception.getClass() == AuthenticationException.class) {
+            return exception.getLocalizedMessage();
         } else {
             return exception.getClass().getName() + ": " + exception.getLocalizedMessage();
         }
