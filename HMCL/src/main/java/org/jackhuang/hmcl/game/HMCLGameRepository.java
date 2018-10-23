@@ -93,6 +93,16 @@ public class HMCLGameRepository extends DefaultGameRepository {
         refreshVersionsAsync().start();
     }
 
+    private void clean(File directory) throws IOException {
+        FileUtils.deleteDirectory(new File(directory, "crash-reports"));
+        FileUtils.deleteDirectory(new File(directory, "logs"));
+    }
+
+    public void clean(String id) throws IOException {
+        clean(getBaseDirectory());
+        clean(getRunDirectory(id));
+    }
+
     private File getVersionSettingFile(String id) {
         return new File(getVersionRoot(id), "hmclversion.cfg");
     }

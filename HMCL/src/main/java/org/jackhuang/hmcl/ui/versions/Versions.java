@@ -35,12 +35,14 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -97,6 +99,14 @@ public class Versions {
             } catch (IOException e) {
                 Controllers.dialog(i18n("modpack.invalid"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
             }
+        }
+    }
+
+    public static void cleanVersion(Profile profile, String id) {
+        try {
+            profile.getRepository().clean(id);
+        } catch (IOException e) {
+            Logging.LOG.log(Level.WARNING, "Unable to clean game directory", e);
         }
     }
 

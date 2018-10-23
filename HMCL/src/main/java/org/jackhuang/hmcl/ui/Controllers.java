@@ -156,7 +156,7 @@ public final class Controllers {
                             .collect(Collectors.toList());
                     if (!modpacks.isEmpty()) {
                         File modpack = modpacks.get(0);
-                        Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(modpack), i18n("install.modpack"));
+                        Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
                         event.setDropCompleted(true);
                     }
                 }
