@@ -84,9 +84,10 @@ public class DecoratorController {
         decorator.titleProperty().set(Metadata.TITLE);
         decorator.setOnCloseButtonAction(Launcher::stopApplication);
 
-        navigator = new Navigator(mainPage);
+        navigator = new Navigator();
         navigator.setOnNavigating(this::onNavigating);
         navigator.setOnNavigated(this::onNavigated);
+        navigator.init(mainPage);
 
         decorator.getContent().setAll(navigator);
         decorator.onCloseNavButtonActionProperty().set(e -> close());

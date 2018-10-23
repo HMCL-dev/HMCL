@@ -17,9 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -40,18 +38,22 @@ public class Navigator extends StackPane {
 
     private final Stack<Node> stack = new Stack<>();
     private final TransitionHandler animationHandler = new TransitionHandler(this);
-    private final ReadOnlyBooleanWrapper canGoBack = new ReadOnlyBooleanWrapper();
+    private boolean initialized = false;
 
-    public Navigator(Node init) {
+    public void init(Node init) {
         stack.push(init);
         getChildren().setAll(init);
 
-        Platform.runLater(() ->
-                fireEvent(new NavigationEvent(this, init, NavigationEvent.NAVIGATED)));
+        fireEvent(new NavigationEvent(this, init, NavigationEvent.NAVIGATED));
+
+        initialized = true;
     }
 
     public void navigate(Node node) {
         FXUtils.checkFxUserThread();
+
+        if (!initialized)
+            throw new IllegalStateException("Navigator must have a root page");
 
         Node from = stack.peek();
         if (from == node)
@@ -88,6 +90,9 @@ public class Navigator extends StackPane {
     @SuppressWarnings("unchecked")
     public void close(Node from) {
         FXUtils.checkFxUserThread();
+
+        if (!initialized)
+            throw new IllegalStateException("Navigator must have a root page");
 
         Logging.LOG.info("Closed page " + from);
 
