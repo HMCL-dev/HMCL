@@ -61,7 +61,7 @@ public class Version implements Comparable<Version>, Validation {
         this.jar = jar;
         this.assetIndex = assetIndex;
         this.assets = assets;
-        this.libraries = new LinkedList<>(libraries);
+        this.libraries = libraries == null ? new LinkedList<>() : new LinkedList<>(libraries);
         this.compatibilityRules = compatibilityRules == null ? null : new LinkedList<>(compatibilityRules);
         this.downloads = downloads == null ? null : new HashMap<>(downloads);
         this.logging = logging == null ? null : new HashMap<>(logging);
