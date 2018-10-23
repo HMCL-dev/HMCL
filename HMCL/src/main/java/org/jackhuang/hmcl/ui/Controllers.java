@@ -99,9 +99,10 @@ public final class Controllers {
     // FXThread
     public static AccountList getAccountListPage() {
         if (accountListPage == null) {
-            accountListPage = new AccountList();
+            AccountList accountListPage = new AccountList();
             accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
             accountListPage.accountsProperty().bindContent(Accounts.accountsProperty());
+            Controllers.accountListPage = accountListPage;
         }
         return accountListPage;
     }
@@ -109,9 +110,10 @@ public final class Controllers {
     // FXThread
     public static ProfileList getProfileListPage() {
         if (profileListPage == null) {
-            profileListPage = new ProfileList();
+            ProfileList profileListPage = new ProfileList();
             profileListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
             profileListPage.profilesProperty().bindContent(Profiles.profilesProperty());
+            Controllers.profileListPage = profileListPage;
         }
         return profileListPage;
     }
@@ -137,7 +139,7 @@ public final class Controllers {
 
     public static MainPage getMainPage() {
         if (mainPage == null) {
-            mainPage = new MainPage();
+            MainPage mainPage = new MainPage();
             mainPage.setOnDragOver(event -> {
                 if (event.getGestureSource() != mainPage && event.getDragboard().hasFiles()) {
                     if (event.getDragboard().getFiles().stream().anyMatch(it -> "zip".equals(FileUtils.getExtension(it))))
@@ -190,6 +192,7 @@ public final class Controllers {
                         mainPage.getVersions().setAll(children);
                 });
             });
+            Controllers.mainPage = mainPage;
         }
         return mainPage;
     }
