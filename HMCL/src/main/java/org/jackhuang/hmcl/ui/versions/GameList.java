@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -67,7 +68,8 @@ public class GameList extends Control implements DecoratorPage {
         toggleGroup.getProperties().put("ReferenceHolder", listenerHolder);
         List<GameListItem> children = repository.getVersions().parallelStream()
                 .filter(version -> !version.isHidden())
-                .sorted(Comparator.comparing(Version::getReleaseTime).thenComparing(a -> VersionNumber.asVersion(a.getId())))
+                .sorted(Comparator.comparing((Version version) -> version.getReleaseTime() == null ? new Date(0L) : version.getReleaseTime())
+                        .thenComparing(a -> VersionNumber.asVersion(a.getId())))
                 .map(version -> new GameListItem(toggleGroup, profile, version.getId()))
                 .collect(Collectors.toList());
         JFXUtilities.runInFX(() -> {
