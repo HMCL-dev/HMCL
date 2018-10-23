@@ -1,5 +1,6 @@
 package org.jackhuang.hmcl.ui.download;
 
+import javafx.application.Platform;
 import javafx.scene.Node;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.ModpackHelper;
@@ -18,21 +19,20 @@ import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class ModpackInstallWizardProvider implements WizardProvider {
-    private Profile profile;
+    private final Profile profile;
     private final File file;
 
-    public ModpackInstallWizardProvider() {
-        this(null);
+    public ModpackInstallWizardProvider(Profile profile) {
+        this(profile, null);
     }
 
-    public ModpackInstallWizardProvider(File modpackFile) {
+    public ModpackInstallWizardProvider(Profile profile, File modpackFile) {
+        this.profile = profile;
         this.file = modpackFile;
     }
 
     @Override
     public void start(Map<String, Object> settings) {
-        profile = Profiles.getSelectedProfile();
-
         if (file != null)
             settings.put(ModpackPage.MODPACK_FILE, file);
         settings.put(PROFILE, profile);

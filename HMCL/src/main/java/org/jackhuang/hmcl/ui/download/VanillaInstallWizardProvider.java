@@ -33,14 +33,14 @@ import java.util.Map;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VanillaInstallWizardProvider implements WizardProvider {
-    private Profile profile;
+    private final Profile profile;
 
-    public VanillaInstallWizardProvider() {
+    public VanillaInstallWizardProvider(Profile profile) {
+        this.profile = profile;
     }
 
     @Override
     public void start(Map<String, Object> settings) {
-        profile = Profiles.getSelectedProfile();
         settings.put(PROFILE, profile);
     }
 

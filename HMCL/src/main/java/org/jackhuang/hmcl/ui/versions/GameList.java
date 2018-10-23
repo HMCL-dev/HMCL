@@ -101,12 +101,18 @@ public class GameList extends Control implements DecoratorPage {
         return new GameListSkin(this);
     }
 
-    public void addNewGame() {
-        Controllers.getDecorator().startWizard(new VanillaInstallWizardProvider(), i18n("install.new_game"));
+    void addNewGame() {
+        Profile profile = Profiles.getSelectedProfile();
+        if (profile.getRepository().isLoaded()) {
+            Controllers.getDecorator().startWizard(new VanillaInstallWizardProvider(profile), i18n("install.new_game"));
+        }
     }
 
-    public void importModpack() {
-        Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(), i18n("install.modpack"));
+    void importModpack() {
+        Profile profile = Profiles.getSelectedProfile();
+        if (profile.getRepository().isLoaded()) {
+            Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile), i18n("install.modpack"));
+        }
     }
 
     public void refresh() {
