@@ -19,8 +19,11 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.css.*;
-import javafx.scene.Node;
+import javafx.css.CssMetaData;
+import javafx.css.SimpleStyleableObjectProperty;
+import javafx.css.Styleable;
+import javafx.css.StyleableObjectProperty;
+import javafx.css.StyleablePropertyFactory;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -28,8 +31,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class TwoLineListItem extends StackPane {
@@ -152,69 +153,15 @@ public class TwoLineListItem extends StackPane {
     }
 
     public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
-        return StyleableProperties.STYLEABLES;
+        return StyleableProperties.FACTORY.getCssMetaData();
     }
 
     private static class StyleableProperties {
+        private static final StyleablePropertyFactory<TwoLineListItem> FACTORY = new StyleablePropertyFactory<>(StackPane.getClassCssMetaData());
 
-        private static final FontCssMetaData<TwoLineListItem> TITLE_FONT = new FontCssMetaData<TwoLineListItem>("-jfx-title-font", Font.font(15)) {
-            @Override
-            public boolean isSettable(TwoLineListItem control) {
-                return control.title == null || !control.title.isBound();
-            }
-
-            @Override
-            public StyleableProperty<Font> getStyleableProperty(TwoLineListItem control) {
-                return control.titleFontProperty();
-            }
-        };
-
-        private static final FontCssMetaData<TwoLineListItem> SUBTITLE_FONT = new FontCssMetaData<TwoLineListItem>("-jfx-subtitle-font", Font.getDefault()) {
-            @Override
-            public boolean isSettable(TwoLineListItem control) {
-                return control.subtitle == null || !control.subtitle.isBound();
-            }
-
-            @Override
-            public StyleableProperty<Font> getStyleableProperty(TwoLineListItem control) {
-                return control.subtitleFontProperty();
-            }
-        };
-
-        private static final CssMetaData<TwoLineListItem, Paint> TITLE_FILL = new CssMetaData<TwoLineListItem, Paint>("-jfx-title-fill", StyleConverter.getPaintConverter(), Color.BLACK) {
-            @Override
-            public boolean isSettable(TwoLineListItem control) {
-                return control.titleFill == null || !control.titleFill.isBound();
-            }
-
-            @Override
-            public StyleableProperty<Paint> getStyleableProperty(TwoLineListItem control) {
-                return control.titleFillProperty();
-            }
-        };
-
-        private static final CssMetaData<TwoLineListItem, Paint> SUBTITLE_FILL = new CssMetaData<TwoLineListItem, Paint>("-jfx-subtitle-fill", StyleConverter.getPaintConverter(), Color.GRAY) {
-            @Override
-            public boolean isSettable(TwoLineListItem control) {
-                return control.subtitleFill == null || !control.subtitleFill.isBound();
-            }
-
-            @Override
-            public StyleableProperty<Paint> getStyleableProperty(TwoLineListItem control) {
-                return control.subtitleFillProperty();
-            }
-        };
-
-        private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
-
-        private StyleableProperties() {
-        }
-
-        static {
-            List<CssMetaData<? extends Styleable, ?>> styleables = new ArrayList<>(Node.getClassCssMetaData());
-            Collections.addAll(styleables, TITLE_FONT);
-            Collections.addAll(styleables, SUBTITLE_FONT);
-            STYLEABLES = Collections.unmodifiableList(styleables);
-        }
+        private static final CssMetaData<TwoLineListItem, Font> TITLE_FONT = FACTORY.createFontCssMetaData("-jfx-title-font", s -> s.titleFont, Font.font(15));
+        private static final CssMetaData<TwoLineListItem, Font> SUBTITLE_FONT = FACTORY.createFontCssMetaData("-jfx-subtitle-font", s -> s.subtitleFont);
+        private static final CssMetaData<TwoLineListItem, Paint> TITLE_FILL = FACTORY.createPaintCssMetaData("-jfx-title-fill", s -> s.titleFill);
+        private static final CssMetaData<TwoLineListItem, Paint> SUBTITLE_FILL = FACTORY.createPaintCssMetaData("-jfx-subtitle-fill", s -> s.subtitleFill, Color.GREY);
     }
 }
