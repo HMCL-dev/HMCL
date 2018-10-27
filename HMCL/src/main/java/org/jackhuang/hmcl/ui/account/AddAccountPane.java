@@ -80,11 +80,11 @@ public class AddAccountPane extends StackPane {
         selectDefaultServer();
 
         cboType.getItems().setAll(Accounts.FACTORY_OFFLINE, Accounts.FACTORY_YGGDRASIL, Accounts.FACTORY_AUTHLIB_INJECTOR);
-        cboType.setConverter(stringConverter(Accounts::getAccountTypeName));
+        cboType.setConverter(stringConverter(Accounts::getLocalizedLoginTypeName));
         // try selecting the preferred login type
         cboType.getSelectionModel().select(
                 cboType.getItems().stream()
-                        .filter(type -> Accounts.getAccountTypeName(type).equals(config().getPreferredLoginType()))
+                        .filter(type -> Accounts.getLoginType(type).equals(config().getPreferredLoginType()))
                         .findFirst()
                         .orElse(Accounts.FACTORY_OFFLINE));
 
@@ -97,7 +97,7 @@ public class AddAccountPane extends StackPane {
         ReadOnlyObjectProperty<AccountFactory<?>> loginType = cboType.getSelectionModel().selectedItemProperty();
 
         // remember the last used login type
-        loginType.addListener((observable, oldValue, newValue) -> config().setPreferredLoginType(Accounts.getAccountTypeName(newValue)));
+        loginType.addListener((observable, oldValue, newValue) -> config().setPreferredLoginType(Accounts.getLoginType(newValue)));
 
         txtPassword.visibleProperty().bind(loginType.isNotEqualTo(Accounts.FACTORY_OFFLINE));
         lblPassword.visibleProperty().bind(txtPassword.visibleProperty());

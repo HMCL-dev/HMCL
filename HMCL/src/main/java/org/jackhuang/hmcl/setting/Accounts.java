@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.task.Schedulers;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -64,28 +65,37 @@ public final class Accounts {
             new AuthlibInjectorDownloader(Metadata.HMCL_DIRECTORY, DownloadProviders::getDownloadProvider)::getArtifactInfo,
             Accounts::getOrCreateAuthlibInjectorServer);
 
-    private static final String TYPE_OFFLINE = "offline";
-    private static final String TYPE_YGGDRASIL_ACCOUNT = "yggdrasil";
-    private static final String TYPE_AUTHLIB_INJECTOR = "authlibInjector";
+    // ==== login type / account factory mapping ====
+    private static final Map<String, AccountFactory<?>> type2factory = new HashMap<>();
+    private static final Map<AccountFactory<?>, String> factory2type = new HashMap<>();
+    static {
+        type2factory.put("offline", FACTORY_OFFLINE);
+        type2factory.put("yggdrasil", FACTORY_YGGDRASIL);
+        type2factory.put("authlibInjector", FACTORY_AUTHLIB_INJECTOR);
 
-    private static Map<String, AccountFactory<?>> type2factory = mapOf(
-            pair(TYPE_OFFLINE, FACTORY_OFFLINE),
-            pair(TYPE_YGGDRASIL_ACCOUNT, FACTORY_YGGDRASIL),
-            pair(TYPE_AUTHLIB_INJECTOR, FACTORY_AUTHLIB_INJECTOR));
-
-    private static String accountType(Account account) {
-        if (account instanceof OfflineAccount)
-            return TYPE_OFFLINE;
-        else if (account instanceof AuthlibInjectorAccount)
-            return TYPE_AUTHLIB_INJECTOR;
-        else if (account instanceof YggdrasilAccount)
-            return TYPE_YGGDRASIL_ACCOUNT;
-        else
-            throw new IllegalArgumentException("Failed to determine account type: " + account);
+        type2factory.forEach((type, factory) -> factory2type.put(factory, type));
     }
 
+    public static String getLoginType(AccountFactory<?> factory) {
+        return Optional.ofNullable(factory2type.get(factory))
+                .orElseThrow(() -> new IllegalArgumentException("Unrecognized account factory"));
+    }
+
+    public static AccountFactory<?> getAccountFactory(String loginType) {
+        return Optional.ofNullable(type2factory.get(loginType))
+                .orElseThrow(() -> new IllegalArgumentException("Unrecognized login type"));
+    }
+    // ====
+
     public static AccountFactory<?> getAccountFactory(Account account) {
-        return type2factory.get(accountType(account));
+        if (account instanceof OfflineAccount)
+            return FACTORY_OFFLINE;
+        else if (account instanceof AuthlibInjectorAccount)
+            return FACTORY_AUTHLIB_INJECTOR;
+        else if (account instanceof YggdrasilAccount)
+            return FACTORY_YGGDRASIL;
+        else
+            throw new IllegalArgumentException("Failed to determine account type: " + account);
     }
 
     static String accountId(Account account) {
@@ -141,7 +151,7 @@ public final class Accounts {
 
     static Map<Object, Object> getAccountStorage(Account account) {
         Map<Object, Object> storage = account.toStorage();
-        storage.put("type", accountType(account));
+        storage.put("type", getLoginType(getAccountFactory(account)));
         return storage;
     }
 
@@ -255,18 +265,14 @@ public final class Accounts {
     // ====
 
     // ==== Login type name i18n ===
-    private static Map<AccountFactory<?>, String> loginType2name = mapOf(
-            pair(Accounts.FACTORY_OFFLINE, i18n("account.methods.offline")),
-            pair(Accounts.FACTORY_YGGDRASIL, i18n("account.methods.yggdrasil")),
-            pair(Accounts.FACTORY_AUTHLIB_INJECTOR, i18n("account.methods.authlib_injector")));
+    private static Map<AccountFactory<?>, String> unlocalizedLoginTypeNames = mapOf(
+            pair(Accounts.FACTORY_OFFLINE, "account.methods.offline"),
+            pair(Accounts.FACTORY_YGGDRASIL, "account.methods.yggdrasil"),
+            pair(Accounts.FACTORY_AUTHLIB_INJECTOR, "account.methods.authlib_injector"));
 
-    public static String getAccountTypeName(AccountFactory<?> factory) {
-        return Optional.ofNullable(loginType2name.get(factory))
-                .orElseThrow(() -> new IllegalArgumentException("No corresponding login type name"));
-    }
-
-    public static String getAccountTypeName(Account account) {
-        return getAccountTypeName(getAccountFactory(account));
+    public static String getLocalizedLoginTypeName(AccountFactory<?> factory) {
+        return i18n(Optional.ofNullable(unlocalizedLoginTypeNames.get(factory))
+                .orElseThrow(() -> new IllegalArgumentException("Unrecognized account factory")));
     }
     // ====
 }

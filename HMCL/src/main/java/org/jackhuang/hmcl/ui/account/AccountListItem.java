@@ -44,7 +44,7 @@ public class AccountListItem extends RadioButton {
         getStyleClass().clear();
         setUserData(account);
 
-        StringBuilder subtitleString = new StringBuilder(Accounts.getAccountTypeName(account));
+        StringBuilder subtitleString = new StringBuilder(Accounts.getLocalizedLoginTypeName(Accounts.getAccountFactory(account)));
         if (account instanceof AuthlibInjectorAccount) {
             AuthlibInjectorServer server = ((AuthlibInjectorAccount) account).getServer();
             subtitleString.append(", ").append(i18n("account.injector.server")).append(": ").append(server.getName());
