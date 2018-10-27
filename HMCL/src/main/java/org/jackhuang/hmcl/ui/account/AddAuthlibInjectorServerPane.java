@@ -35,9 +35,11 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
+import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.loadFXML;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AddAuthlibInjectorServerPane extends StackPane implements DialogAware {
@@ -116,7 +118,9 @@ public class AddAuthlibInjectorServerPane extends StackPane implements DialogAwa
 
                 transitionHandler.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT.getAnimationProducer());
             } else {
-                lblCreationWarning.setText(resolveFetchExceptionMessage(variables.<Exception>get("lastException")));
+                Exception exception = variables.get("lastException");
+                LOG.log(Level.WARNING, "Failed to resolve auth server: " + url, exception);
+                lblCreationWarning.setText(resolveFetchExceptionMessage(exception));
             }
         }).start();
 
