@@ -157,6 +157,12 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("uiVersion")
     private IntegerProperty uiVersion = new SimpleIntegerProperty(0);
 
+    /**
+     * The preferred login type to use when the user wants to add an account.
+     */
+    @SerializedName("preferredLoginType")
+    private StringProperty preferredLoginType = new SimpleStringProperty();
+
     private transient ObservableHelper helper = new ObservableHelper(this);
 
     public Config() {
@@ -474,5 +480,17 @@ public final class Config implements Cloneable, Observable {
 
     public void setUiVersion(int uiVersion) {
         this.uiVersion.set(uiVersion);
+    }
+
+    public String getPreferredLoginType() {
+        return preferredLoginType.get();
+    }
+
+    public void setPreferredLoginType(String preferredLoginType) {
+        this.preferredLoginType.set(preferredLoginType);
+    }
+
+    public StringProperty preferredLoginTypeProperty() {
+        return preferredLoginType;
     }
 }
