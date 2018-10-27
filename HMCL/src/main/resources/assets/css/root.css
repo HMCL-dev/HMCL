@@ -34,8 +34,6 @@
 
 .rippler-container {
     -jfx-rippler-fill: -fx-base-check-color;
-    -fx-border-color: red;
-    -fx-border-width: 1;
 }
 
 .rippler-container:selected .label {

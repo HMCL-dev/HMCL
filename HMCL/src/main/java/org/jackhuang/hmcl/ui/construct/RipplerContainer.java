@@ -27,7 +27,12 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.css.*;
+import javafx.css.CssMetaData;
+import javafx.css.PseudoClass;
+import javafx.css.SimpleStyleableObjectProperty;
+import javafx.css.Styleable;
+import javafx.css.StyleableObjectProperty;
+import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.layout.Background;
@@ -39,8 +44,6 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import org.jackhuang.hmcl.util.Lang;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @DefaultProperty("container")
@@ -210,32 +213,12 @@ public class RipplerContainer extends StackPane {
     }
 
     public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
-        return StyleableProperties.STYLEABLES;
+        return StyleableProperties.FACTORY.getCssMetaData();
     }
 
     private static class StyleableProperties {
+        private static final StyleablePropertyFactory<RipplerContainer> FACTORY = new StyleablePropertyFactory<>(StackPane.getClassCssMetaData());
 
-        private static final CssMetaData<RipplerContainer, Paint> RIPPLER_FILL = new CssMetaData<RipplerContainer, Paint>("-jfx-rippler-fill", StyleConverter.getPaintConverter(), Color.rgb(0, 200, 255)) {
-            @Override
-            public boolean isSettable(RipplerContainer control) {
-                return control.ripplerFill == null || !control.ripplerFill.isBound();
-            }
-
-            @Override
-            public StyleableProperty<Paint> getStyleableProperty(RipplerContainer control) {
-                return control.ripplerFillProperty();
-            }
-        };
-
-        private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
-
-        private StyleableProperties() {
-        }
-
-        static {
-            List<CssMetaData<? extends Styleable, ?>> styleables = new ArrayList<>(Node.getClassCssMetaData());
-            Collections.addAll(styleables, RIPPLER_FILL);
-            STYLEABLES = Collections.unmodifiableList(styleables);
-        }
+        private static final CssMetaData<RipplerContainer, Paint> RIPPLER_FILL = FACTORY.createPaintCssMetaData("-jfx-rippler-fill", s -> s.ripplerFill, Color.rgb(0, 200, 255));
     }
 }
