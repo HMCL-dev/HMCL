@@ -60,7 +60,6 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
-    public static final int UI_VERSION = 1;
 
     private static Scene scene;
     private static Stage stage;

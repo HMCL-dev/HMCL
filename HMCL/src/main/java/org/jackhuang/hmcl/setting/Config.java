@@ -50,6 +50,8 @@ import java.util.stream.Stream;
 
 public final class Config implements Cloneable, Observable {
 
+    public static final int CURRENT_UI_VERSION = 0;
+
     private static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(VersionSetting.class, VersionSetting.Serializer.INSTANCE)
             .registerTypeAdapter(Profile.class, Profile.Serializer.INSTANCE)
@@ -145,6 +147,13 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("_version")
     private IntegerProperty configVersion = new SimpleIntegerProperty(0);
 
+    /**
+     * The version of UI that the user have last used.
+     * If there is a major change in UI, {@link Config#CURRENT_UI_VERSION} should be increased.
+     * When {@link #CURRENT_UI_VERSION} is higher than the property, the user guide should be shown,
+     * then this property is set to the same value as {@link #CURRENT_UI_VERSION}.
+     * In particular, the property is default to 0, so that whoever open the application for the first time will see the guide.
+     */
     @SerializedName("uiVersion")
     private IntegerProperty uiVersion = new SimpleIntegerProperty(0);
 

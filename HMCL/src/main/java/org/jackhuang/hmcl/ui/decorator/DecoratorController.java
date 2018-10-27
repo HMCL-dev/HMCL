@@ -40,7 +40,7 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
-import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -108,9 +108,11 @@ public class DecoratorController {
             nowAnimation.play();
         });
 
-        if (ConfigHolder.config().getUiVersion() < Controllers.UI_VERSION && config().getLocalization().getLocale() == Locale.CHINA) {
-            ConfigHolder.config().setUiVersion(Controllers.UI_VERSION);
-            decorator.getContainer().setAll(welcomeView);
+        if (switchedToNewUI()) {
+            if (config().getLocalization().getLocale() == Locale.CHINA) {
+                // currently, user guide is only available in Chinese
+                decorator.getContainer().setAll(welcomeView);
+            }
         }
 
         setupBackground();
@@ -120,6 +122,17 @@ public class DecoratorController {
 
     public Decorator getDecorator() {
         return decorator;
+    }
+
+    /**
+     * @return true if the user is seeing the current version of UI for the first time.
+     */
+    private boolean switchedToNewUI() {
+        if (config().getUiVersion() < Config.CURRENT_UI_VERSION) {
+            config().setUiVersion(Config.CURRENT_UI_VERSION);
+            return true;
+        }
+        return false;
     }
 
     // ==== Background ====

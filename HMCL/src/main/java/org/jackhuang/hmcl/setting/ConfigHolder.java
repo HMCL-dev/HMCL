@@ -52,13 +52,6 @@ public final class ConfigHolder {
         return configInstance;
     }
 
-    public static boolean isNewlyCreated() {
-        if (configInstance == null) {
-            throw new IllegalStateException("Configuration hasn't been loaded");
-        }
-        return newlyCreated;
-    }
-
     public synchronized static void init() throws IOException {
         if (configInstance != null) {
             throw new IllegalStateException("Configuration is already loaded");
