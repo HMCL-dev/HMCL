@@ -277,6 +277,23 @@ public final class VersionSetting {
         noJVMArgsProperty.set(noJVMArgs);
     }
 
+    private final ImmediateBooleanProperty notCheckJVMProperty = new ImmediateBooleanProperty(this, "notCheckJVM", false);
+
+    public ImmediateBooleanProperty notCheckJVMProperty() {
+        return notCheckJVMProperty;
+    }
+
+    /**
+     * True if HMCL does not check JVM validity.
+     */
+    public boolean isNotCheckJVM() {
+        return notCheckJVMProperty.get();
+    }
+
+    public void setNotCheckJVM(boolean notCheckJVM) {
+        notCheckJVMProperty.set(notCheckJVM);
+    }
+
     private final ImmediateBooleanProperty notCheckGameProperty = new ImmediateBooleanProperty(this, "notCheckGame", false);
 
     public ImmediateBooleanProperty notCheckGameProperty() {
@@ -494,6 +511,7 @@ public final class VersionSetting {
         minecraftArgsProperty.addListener(listener);
         noJVMArgsProperty.addListener(listener);
         notCheckGameProperty.addListener(listener);
+        notCheckJVMProperty.addListener(listener);
         showLogsProperty.addListener(listener);
         serverIpProperty.addListener(listener);
         fullscreenProperty.addListener(listener);
@@ -558,6 +576,7 @@ public final class VersionSetting {
             obj.addProperty("fullscreen", src.isFullscreen());
             obj.addProperty("noJVMArgs", src.isNoJVMArgs());
             obj.addProperty("notCheckGame", src.isNotCheckGame());
+            obj.addProperty("notCheckJVM", src.isNotCheckJVM());
             obj.addProperty("showLogs", src.isShowLogs());
             obj.addProperty("gameDir", src.getGameDir());
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
@@ -595,6 +614,7 @@ public final class VersionSetting {
             vs.setFullscreen(Optional.ofNullable(obj.get("fullscreen")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNoJVMArgs(Optional.ofNullable(obj.get("noJVMArgs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotCheckGame(Optional.ofNullable(obj.get("notCheckGame")).map(JsonElement::getAsBoolean).orElse(false));
+            vs.setNotCheckJVM(Optional.ofNullable(obj.get("notCheckJVM")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setLauncherVisibility(LauncherVisibility.values()[Optional.ofNullable(obj.get("launcherVisibility")).map(JsonElement::getAsInt).orElse(1)]);
             vs.setGameDirType(EnumGameDirectory.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(0)]);

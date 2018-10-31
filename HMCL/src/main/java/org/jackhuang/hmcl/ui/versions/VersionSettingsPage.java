@@ -90,6 +90,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     @FXML private Label lblPhysicalMemory;
     @FXML private JFXToggleButton chkNoJVMArgs;
     @FXML private JFXToggleButton chkNoGameCheck;
+    @FXML private JFXToggleButton chkNoJVMCheck;
     @FXML private MultiFileItem<JavaVersion> javaItem;
     @FXML private MultiFileItem<EnumGameDirectory> gameDirItem;
     @FXML private JFXToggleButton chkShowLogs;
@@ -181,6 +182,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbindString(txtServerIP, lastVersionSetting.serverIpProperty());
             FXUtils.unbindBoolean(chkFullscreen, lastVersionSetting.fullscreenProperty());
             FXUtils.unbindBoolean(chkNoGameCheck, lastVersionSetting.notCheckGameProperty());
+            FXUtils.unbindBoolean(chkNoJVMCheck, lastVersionSetting.notCheckJVMProperty());
             FXUtils.unbindBoolean(chkNoJVMArgs, lastVersionSetting.noJVMArgsProperty());
             FXUtils.unbindBoolean(chkShowLogs, lastVersionSetting.showLogsProperty());
             FXUtils.unbindEnum(cboLauncherVisibility);
@@ -208,6 +210,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         FXUtils.bindString(txtServerIP, versionSetting.serverIpProperty());
         FXUtils.bindBoolean(chkFullscreen, versionSetting.fullscreenProperty());
         FXUtils.bindBoolean(chkNoGameCheck, versionSetting.notCheckGameProperty());
+        FXUtils.bindBoolean(chkNoJVMCheck, versionSetting.notCheckJVMProperty());
         FXUtils.bindBoolean(chkNoJVMArgs, versionSetting.noJVMArgsProperty());
         FXUtils.bindBoolean(chkShowLogs, versionSetting.showLogsProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());

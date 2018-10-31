@@ -158,6 +158,14 @@
                         <JFXToggleButton fx:id="chkNoGameCheck" size="8" FXUtils.limitHeight="20" />
                     </right>
                 </BorderPane>
+                <BorderPane>
+                    <left>
+                        <Label BorderPane.alignment="CENTER_LEFT" text="%settings.advanced.dont_check_jvm_validity"/>
+                    </left>
+                    <right>
+                        <JFXToggleButton fx:id="chkNoJVMCheck" size="8" FXUtils.limitHeight="20" />
+                    </right>
+                </BorderPane>
             </ComponentList>
         </VBox>
     </ScrollPane>

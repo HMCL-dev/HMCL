@@ -247,6 +247,11 @@ public final class LauncherHelper {
     }
 
     private static void checkGameState(Profile profile, VersionSetting setting, Version version, Runnable onAccept) throws InterruptedException {
+        if (setting.isNotCheckJVM()) {
+            onAccept.run();
+            return;
+        }
+
         boolean flag = false;
         boolean java8required = false;
         boolean newJavaRequired = false;
@@ -294,8 +299,10 @@ public final class LauncherHelper {
             if (java8.isPresent()) {
                 java8required = true;
                 setting.setJavaVersion(java8.get());
+                Controllers.dialog(i18n("launch.advice.java9") + "\n" + i18n("launch.advice.corrected"), i18n("message.info"), MessageBox.INFORMATION_MESSAGE, onAccept);
+                flag = true;
             } else {
-                Controllers.dialog(i18n("launch.advice.java9"), i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
+                Controllers.dialog(i18n("launch.advice.java9") + "\n" + i18n("launch.advice.uncorrected"), i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
                 flag = true;
             }
         }
