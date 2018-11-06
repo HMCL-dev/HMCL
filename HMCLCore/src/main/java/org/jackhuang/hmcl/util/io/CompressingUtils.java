@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.util.io;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
@@ -88,7 +87,7 @@ public final class CompressingUtils {
      */
     public static String readTextZipEntry(File zipFile, String name) throws IOException {
         try (FileSystem fs = createReadOnlyZipFileSystem(zipFile.toPath())) {
-            return new String(Files.readAllBytes(fs.getPath(name)));
+            return FileUtils.readText(fs.getPath(name));
         }
     }
 

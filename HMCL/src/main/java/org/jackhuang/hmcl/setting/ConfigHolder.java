@@ -19,6 +19,10 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.util.InvocationDispatcher;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,10 +30,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.logging.Level;
-
-import org.jackhuang.hmcl.util.InvocationDispatcher;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -99,7 +99,7 @@ public final class ConfigHolder {
     private static Config loadConfig() throws IOException {
         if (Files.exists(configLocation)) {
             try {
-                String content = new String(Files.readAllBytes(configLocation), UTF_8);
+                String content = FileUtils.readText(configLocation);
                 Config deserialized = Config.fromJson(content);
                 if (deserialized == null) {
                     LOG.info("Config is empty");
