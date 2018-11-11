@@ -31,6 +31,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -39,10 +40,13 @@ public final class Main {
     public static void main(String[] args) {
         System.setProperty("java.net.useSystemProxies", "true");
         System.setProperty("http.agent", "HMCL/" + Metadata.VERSION);
+        System.setProperty("javafx.autoproxy.disable", "true");
 
         checkJavaFX();
         checkDirectoryPath();
-        checkDSTRootCAX3();
+
+        // This environment check will take ~300ms
+        thread(() -> checkDSTRootCAX3(), "CA Certificate Check", true);
 
         Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
 
