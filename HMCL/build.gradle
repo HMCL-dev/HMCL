@@ -110,6 +110,15 @@ def createExecutable(String suffix, String header) {
     createChecksum(output)
 }
 
+processResources {
+    doLast {
+        exec {
+            workingDir new File(this.projectDir, 'src/main/resources/assets/css')
+            commandLine 'javapackager', '-createbss', '-outdir', '.', '-srcdir', '.'
+        }
+    }
+}
+
 task makePack(dependsOn: jar) {
     ext.outputPath = new File(jar.archivePath.parentFile, jar.archivePath.name[0..-4] + "pack")
     doLast {

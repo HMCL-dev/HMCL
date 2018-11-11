@@ -84,12 +84,12 @@ public class Theme {
             css = temp.toURI().toString();
         } catch (IOException e) {
             Logging.LOG.log(Level.SEVERE, "Unable to create theme stylesheet. Fallback to blue theme.", e);
-            css = Theme.class.getResource("/assets/css/blue.css").toExternalForm();
+            css = "/assets/css/blue.css";
         }
 
         return new String[]{
                 css,
-                Theme.class.getResource("/assets/css/root.css").toExternalForm()
+                "/assets/css/root.css"
         };
     }
 
