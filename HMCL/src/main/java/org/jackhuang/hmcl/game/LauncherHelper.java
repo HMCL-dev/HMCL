@@ -369,10 +369,12 @@ public final class LauncherHelper {
             flag = true;
         }
 
-        // Forge 2760 and above will crash game with LiteLoader.
+        // Forge 2760~2773 will crash game with LiteLoader.
         if (!flag) {
             boolean hasForge2760 = version.getLibraries().stream().filter(it -> it.is("net.minecraftforge", "forge"))
-                    .anyMatch(it -> VersionNumber.VERSION_COMPARATOR.compare(it.getVersion(), "1.12.2-14.23.5.2760") >= 0);
+                    .anyMatch(it ->
+                            0 <= VersionNumber.VERSION_COMPARATOR.compare("1.12.2-14.23.5.2760", it.getVersion()) &&
+                                    VersionNumber.VERSION_COMPARATOR.compare(it.getVersion(), "1.12.2-14.23.5.2773") < 0);
             boolean hasLiteLoader = version.getLibraries().stream().anyMatch(it -> it.is("com.mumfrey", "liteloader"));
             if (hasForge2760 && hasLiteLoader && gameVersion.compareTo(VersionNumber.asVersion("1.12.2")) == 0) {
                 Controllers.dialog(i18n("launch.advice.forge2760_liteloader"), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
