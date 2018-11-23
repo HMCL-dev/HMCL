@@ -81,11 +81,14 @@ public final class ExportWizardProvider implements WizardProvider {
                     dependency = dependency.then(Task.of(() -> {
                         try (Zipper zip = new Zipper(modpackFile.toPath())) {
                             Config exported = new Config();
+
                             exported.setBackgroundImageType(config().getBackgroundImageType());
                             exported.setBackgroundImage(config().getBackgroundImage());
                             exported.setTheme(config().getTheme());
                             exported.setDownloadType(config().getDownloadType());
+                            exported.setPreferredLoginType(config().getPreferredLoginType());
                             exported.getAuthlibInjectorServers().setAll(config().getAuthlibInjectorServers());
+
                             zip.putTextFile(exported.toJson(), ConfigHolder.CONFIG_FILENAME);
                             zip.putFile(tempModpack, "modpack.zip");
 
