@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
 import com.jfoenix.concurrency.JFXUtilities;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -47,6 +48,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
  *
  * @author huangyuhui
  */
+@JsonAdapter(Profile.Serializer.class)
 public final class Profile implements Observable {
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private final HMCLGameRepository repository;
@@ -217,11 +219,6 @@ public final class Profile implements Observable {
     }
 
     public static final class Serializer implements JsonSerializer<Profile>, JsonDeserializer<Profile> {
-        public static final Serializer INSTANCE = new Serializer();
-
-        private Serializer() {
-        }
-
         @Override
         public JsonElement serialize(Profile src, Type typeOfSrc, JsonSerializationContext context) {
             if (src == null)

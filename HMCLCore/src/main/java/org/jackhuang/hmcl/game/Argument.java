@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
+
 import org.jackhuang.hmcl.util.Immutable;
 
 import java.lang.reflect.Type;
@@ -28,6 +30,7 @@ import java.util.Map;
  *
  * @author huangyuhui
  */
+@JsonAdapter(Argument.Serializer.class)
 @Immutable
 public interface Argument extends Cloneable {
 
@@ -41,12 +44,6 @@ public interface Argument extends Cloneable {
     List<String> toString(Map<String, String> keys, Map<String, Boolean> features);
 
     class Serializer implements JsonDeserializer<Argument>, JsonSerializer<Argument> {
-
-        public static final Serializer INSTANCE = new Serializer();
-
-        private Serializer() {
-        }
-
         @Override
         public Argument deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (json.isJsonPrimitive())

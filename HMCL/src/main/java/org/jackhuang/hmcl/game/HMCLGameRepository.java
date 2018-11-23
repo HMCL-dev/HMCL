@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -227,8 +226,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
         beingModpackVersions.remove(id);
     }
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
-            .registerTypeAdapter(VersionSetting.class, VersionSetting.Serializer.INSTANCE)
+    private static final Gson GSON = new GsonBuilder()
+            .setPrettyPrinting()
             .create();
 
     private static final HashSet<String> FORBIDDEN = new HashSet<>(Arrays.asList("modpack", "minecraftinstance", "manifest"));

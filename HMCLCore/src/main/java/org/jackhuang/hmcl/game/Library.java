@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.ToStringBuilder;
@@ -35,6 +36,7 @@ import java.util.Optional;
  *
  * @author huangyuhui
  */
+@JsonAdapter(Library.Serializer.class)
 public class Library implements Comparable<Library> {
 
     private final String groupId;
@@ -189,12 +191,6 @@ public class Library implements Comparable<Library> {
     }
 
     public static class Serializer implements JsonDeserializer<Library>, JsonSerializer<Library> {
-
-        public static final Serializer INSTANCE = new Serializer();
-
-        private Serializer() {
-        }
-
         @Override
         public Library deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
             if (json == null || json == JsonNull.INSTANCE)

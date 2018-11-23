@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.Lang;
@@ -83,6 +84,7 @@ public final class Locales {
         else throw new IllegalArgumentException("Unknown locale: " + locale);
     }
 
+    @JsonAdapter(SupportedLocale.TypeAdapter.class)
     public static class SupportedLocale {
         private final Locale locale;
         private final String name;

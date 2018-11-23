@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
+
 import javafx.beans.InvalidationListener;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.LaunchOptions;
@@ -43,6 +45,7 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
  *
  * @author huangyuhui
  */
+@JsonAdapter(VersionSetting.Serializer.class)
 public final class VersionSetting {
 
     public transient String id;
@@ -550,11 +553,6 @@ public final class VersionSetting {
     }
 
     public static class Serializer implements JsonSerializer<VersionSetting>, JsonDeserializer<VersionSetting> {
-        public static final Serializer INSTANCE = new Serializer();
-
-        private Serializer() {
-        }
-
         @Override
         public JsonElement serialize(VersionSetting src, Type typeOfSrc, JsonSerializationContext context) {
             if (src == null) return JsonNull.INSTANCE;

@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.Immutable;
 
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
  *
  * @author huangyuhui
  */
+@JsonAdapter(RuledArgument.Serializer.class)
 @Immutable
 public class RuledArgument implements Argument {
 
@@ -74,12 +76,6 @@ public class RuledArgument implements Argument {
     }
 
     public static class Serializer implements JsonSerializer<RuledArgument>, JsonDeserializer<RuledArgument> {
-
-        public static final Serializer INSTANCE = new Serializer();
-
-        private Serializer() {
-        }
-
         @Override
         public JsonElement serialize(RuledArgument src, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject obj = new JsonObject();

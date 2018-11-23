@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.platform;
 
 import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
 
 import java.lang.reflect.Type;
 
@@ -27,6 +28,7 @@ import java.lang.reflect.Type;
  *
  * @author huangyuhui
  */
+@JsonAdapter(Platform.Serializer.class)
 public enum Platform {
     BIT_32("32"),
     BIT_64("64"),
@@ -56,12 +58,6 @@ public enum Platform {
      * The json serializer to {@link Platform}.
      */
     public static class Serializer implements JsonSerializer<Platform>, JsonDeserializer<Platform> {
-
-        public static final Serializer INSTANCE = new Serializer();
-
-        private Serializer() {
-        }
-
         @Override
         public JsonElement serialize(Platform t, Type type, JsonSerializationContext jsc) {
             if (t == null)

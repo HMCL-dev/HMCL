@@ -52,15 +52,11 @@ public final class Config implements Cloneable, Observable {
     public static final int CURRENT_UI_VERSION = 0;
 
     private static final Gson CONFIG_GSON = new GsonBuilder()
-            .registerTypeAdapter(VersionSetting.class, VersionSetting.Serializer.INSTANCE)
-            .registerTypeAdapter(Profile.class, Profile.Serializer.INSTANCE)
             .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
             .registerTypeAdapter(ObservableList.class, new ObservableListCreator())
             .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
             .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
             .registerTypeAdapterFactory(new JavaFxPropertyTypeAdapterFactory(true, true))
-            .registerTypeAdapter(Theme.class, new Theme.TypeAdapter())
-            .registerTypeAdapter(SupportedLocale.class, new SupportedLocale.TypeAdapter())
             .registerTypeAdapter(EnumBackgroundImage.class, new EnumOrdinalDeserializer<>(EnumBackgroundImage.class)) // backward compatibility for backgroundType
             .registerTypeAdapter(Proxy.Type.class, new EnumOrdinalDeserializer<>(Proxy.Type.class)) // backward compatibility for hasProxy
             .setPrettyPrinting()
