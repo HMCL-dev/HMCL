@@ -55,6 +55,19 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         return inject(() -> super.logInWithPassword(password, selector));
     }
 
+    @Override
+    public Optional<AuthInfo> playOffline() {
+        Optional<AuthInfo> auth = super.playOffline();
+        Optional<AuthlibInjectorArtifactInfo> artifact = downloader.getArtifactInfoImmediately();
+        Optional<String> prefetchedMeta = server.getMetadataResponse();
+
+        if (auth.isPresent() && artifact.isPresent() && prefetchedMeta.isPresent()) {
+            return Optional.of(auth.get().withArguments(generateArguments(artifact.get(), server, prefetchedMeta.get())));
+        } else {
+            return Optional.empty();
+        }
+    }
+
     private AuthInfo inject(ExceptionalSupplier<AuthInfo, AuthenticationException> loginAction) throws AuthenticationException {
         CompletableFuture<String> prefetchedMetaTask = CompletableFuture.supplyAsync(() -> {
             try {
@@ -90,10 +103,14 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
             }
         }
 
-        return auth.withArguments(new Arguments().addJVMArguments(
+        return auth.withArguments(generateArguments(artifact, server, prefetchedMeta));
+    }
+
+    private static Arguments generateArguments(AuthlibInjectorArtifactInfo artifact, AuthlibInjectorServer server, String prefetchedMeta) {
+        return new Arguments().addJVMArguments(
                 "-javaagent:" + artifact.getLocation().toString() + "=" + server.getUrl(),
                 "-Dauthlibinjector.side=client",
-                "-Dorg.to2mbn.authlibinjector.config.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta.getBytes(UTF_8))));
+                "-Dorg.to2mbn.authlibinjector.config.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta.getBytes(UTF_8)));
     }
 
     @Override
