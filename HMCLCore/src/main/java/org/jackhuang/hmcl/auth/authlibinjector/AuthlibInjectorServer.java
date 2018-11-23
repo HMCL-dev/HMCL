@@ -219,6 +219,11 @@ public class AuthlibInjectorServer implements Observable {
     }
 
     @Override
+    public String toString() {
+        return name == null ? url : url + " (" + name + ")";
+    }
+
+    @Override
     public void addListener(InvalidationListener listener) {
         helper.addListener(listener);
     }

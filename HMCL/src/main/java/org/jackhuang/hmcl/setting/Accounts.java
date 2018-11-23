@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.task.Schedulers;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -201,6 +202,18 @@ public final class Accounts {
                     selected.logIn();
                 } catch (AuthenticationException e) {
                     LOG.log(Level.WARNING, "Failed to log " + selected + " in", e);
+                }
+            });
+        }
+
+        for (AuthlibInjectorServer server : config().getAuthlibInjectorServers()) {
+            if (selected instanceof AuthlibInjectorAccount && ((AuthlibInjectorAccount) selected).getServer() == server)
+                continue;
+            Schedulers.io().schedule(() -> {
+                try {
+                    server.fetchMetadataResponse();
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to fetch authlib-injector server metdata: " + server, e);
                 }
             });
         }
