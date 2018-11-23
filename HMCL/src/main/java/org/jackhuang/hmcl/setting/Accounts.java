@@ -97,10 +97,6 @@ public final class Accounts {
             throw new IllegalArgumentException("Failed to determine account type: " + account);
     }
 
-    static String accountId(Account account) {
-        return account.getUsername() + ":" + account.getCharacter();
-    }
-
     private static ObservableList<Account> accounts = observableArrayList(account -> new Observable[] { account });
     private static ReadOnlyListWrapper<Account> accountsWrapper = new ReadOnlyListWrapper<>(Accounts.class, "accounts", accounts);
 
@@ -135,7 +131,7 @@ public final class Accounts {
             // selection is valid, store it
             if (!initialized)
                 return;
-            config().setSelectedAccount(selected == null ? "" : accountId(selected));
+            updateAccountStorages();
         }
     };
 
@@ -148,9 +144,12 @@ public final class Accounts {
         accounts.addListener(onInvalidating(Accounts::updateAccountStorages));
     }
 
-    static Map<Object, Object> getAccountStorage(Account account) {
+    private static Map<Object, Object> getAccountStorage(Account account) {
         Map<Object, Object> storage = account.toStorage();
         storage.put("type", getLoginType(getAccountFactory(account)));
+        if (account == selectedAccount.get()) {
+            storage.put("selected", true);
+        }
         return storage;
     }
 
@@ -185,27 +184,26 @@ public final class Accounts {
                 return;
             }
             accounts.add(account);
+
+            if (Boolean.TRUE.equals(storage.get("selected"))) {
+                selectedAccount.set(account);
+            }
         });
 
         initialized = true;
 
         config().getAuthlibInjectorServers().addListener(onInvalidating(Accounts::removeDanglingAuthlibInjectorAccounts));
 
-        // load selected account
-        Account selected = accounts.stream()
-                .filter(it -> accountId(it).equals(config().getSelectedAccount()))
-                .findFirst()
-                .orElse(null);
-        selectedAccount.set(selected);
-
-        Schedulers.io().schedule(() -> {
-            if (selected != null)
+        Account selected = selectedAccount.get();
+        if (selected != null) {
+            Schedulers.io().schedule(() -> {
                 try {
                     selected.logIn();
                 } catch (AuthenticationException e) {
                     LOG.log(Level.WARNING, "Failed to log " + selected + " in", e);
                 }
-        });
+            });
+        }
     }
 
     public static ObservableList<Account> getAccounts() {

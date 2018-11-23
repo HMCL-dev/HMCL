@@ -17,13 +17,8 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import org.jackhuang.hmcl.auth.offline.OfflineAccount;
-import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
-
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -67,19 +62,20 @@ final class ConfigUpgrader {
         // Convert OfflineAccounts whose stored uuid is important.
         tryCast(rawJson.get("auth"), Map.class).ifPresent(auth -> {
             tryCast(auth.get("offline"), Map.class).ifPresent(offline -> {
-                List<OfflineAccount> accounts = new LinkedList<>();
+                String selected = rawJson.containsKey("selectedAccount") ? null
+                        : tryCast(offline.get("IAuthenticator_UserName"), String.class).orElse(null);
+
                 tryCast(offline.get("uuidMap"), Map.class).ifPresent(uuidMap -> {
                     ((Map<?, ?>) uuidMap).forEach((key, value) -> {
-                        OfflineAccount account = OfflineAccountFactory.INSTANCE.create((String) key, UUIDTypeAdapter.fromString((String) value));
-                        accounts.add(account);
-                        deserialized.getAccountStorages().add(Accounts.getAccountStorage(account));
+                        Map<Object, Object> storage = new HashMap<>();
+                        storage.put("type", "offline");
+                        storage.put("username", key);
+                        storage.put("uuid", value);
+                        if (key.equals(selected)) {
+                            storage.put("selected", true);
+                        }
+                        deserialized.getAccountStorages().add(storage);
                     });
-                });
-
-                tryCast(offline.get("IAuthenticator_UserName"), String.class).ifPresent(selected -> {
-                    if (!rawJson.containsKey("selectedAccount"))
-                        accounts.stream().filter(account -> selected.equals(account.getUsername())).findAny().ifPresent(account ->
-                                deserialized.setSelectedAccount(Accounts.accountId(account)));
                 });
             });
         });
@@ -112,5 +108,22 @@ final class ConfigUpgrader {
                         }
                     });
         }
+
+        tryCast(rawJson.get("selectedAccount"), String.class)
+                .ifPresent(selected -> {
+                    deserialized.getAccountStorages().stream()
+                            .filter(storage -> {
+                                Object type = storage.get("type");
+                                if ("offline".equals(type)) {
+                                    return selected.equals(storage.get("username") + ":" + storage.get("username"));
+                                } else if ("yggdrasil".equals(type) || "authlibInjector".equals(type)) {
+                                    return selected.equals(storage.get("username") + ":" + storage.get("displayName"));
+                                } else {
+                                    return false;
+                                }
+                            })
+                            .findFirst()
+                            .ifPresent(storage -> storage.put("selected", true));
+                });
     }
 }

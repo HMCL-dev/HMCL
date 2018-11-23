@@ -120,9 +120,6 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("accounts")
     private ObservableList<Map<Object, Object>> accountStorages = FXCollections.observableArrayList();
 
-    @SerializedName("selectedAccount")
-    private StringProperty selectedAccount = new SimpleStringProperty("");
-
     @SerializedName("fontFamily")
     private StringProperty fontFamily = new SimpleStringProperty("Consolas");
 
@@ -369,18 +366,6 @@ public final class Config implements Cloneable, Observable {
 
     public ObservableList<Map<Object, Object>> getAccountStorages() {
         return accountStorages;
-    }
-
-    public String getSelectedAccount() {
-        return selectedAccount.get();
-    }
-
-    public void setSelectedAccount(String selectedAccount) {
-        this.selectedAccount.set(selectedAccount);
-    }
-
-    public StringProperty selectedAccountProperty() {
-        return selectedAccount;
     }
 
     public String getFontFamily() {
