@@ -22,9 +22,6 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
-import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
-
-import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -32,14 +29,14 @@ import java.util.function.Function;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjectorAccount> {
-    private ExceptionalSupplier<AuthlibInjectorArtifactInfo, ? extends IOException> authlibInjectorDownloader;
+    private AuthlibInjectorDownloader downloader;
     private Function<String, AuthlibInjectorServer> serverLookup;
 
     /**
      * @param serverLookup a function that looks up {@link AuthlibInjectorServer} by url
      */
-    public AuthlibInjectorAccountFactory(ExceptionalSupplier<AuthlibInjectorArtifactInfo, ? extends IOException> authlibInjectorDownloader, Function<String, AuthlibInjectorServer> serverLookup) {
-        this.authlibInjectorDownloader = authlibInjectorDownloader;
+    public AuthlibInjectorAccountFactory(AuthlibInjectorDownloader downloader, Function<String, AuthlibInjectorServer> serverLookup) {
+        this.downloader = downloader;
         this.serverLookup = serverLookup;
     }
 
@@ -52,7 +49,7 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
         AuthlibInjectorServer server = (AuthlibInjectorServer) additionalData;
 
         AuthlibInjectorAccount account = new AuthlibInjectorAccount(new YggdrasilService(new AuthlibInjectorProvider(server.getUrl())),
-                server, authlibInjectorDownloader, username, null, null);
+                server, downloader, username, null, null);
         account.logInWithPassword(password, selector);
         return account;
     }
@@ -71,6 +68,6 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
         AuthlibInjectorServer server = serverLookup.apply(apiRoot);
 
         return new AuthlibInjectorAccount(new YggdrasilService(new AuthlibInjectorProvider(server.getUrl())),
-                server, authlibInjectorDownloader, username, session.getSelectedProfile().getId(), session);
+                server, downloader, username, session.getSelectedProfile().getId(), session);
     }
 }

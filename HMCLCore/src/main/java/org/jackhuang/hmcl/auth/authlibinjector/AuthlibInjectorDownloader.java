@@ -79,6 +79,10 @@ public class AuthlibInjectorDownloader {
         }
     }
 
+    public Optional<AuthlibInjectorArtifactInfo> getArtifactInfoImmediately() {
+        return getLocalArtifact();
+    }
+
     private void update(Optional<AuthlibInjectorArtifactInfo> local) throws IOException {
         LOG.info("Checking update of authlib-injector");
         AuthlibInjectorVersionInfo latest = getLatestArtifactInfo();

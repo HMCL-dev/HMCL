@@ -62,7 +62,7 @@ public final class Accounts {
     public static final OfflineAccountFactory FACTORY_OFFLINE = OfflineAccountFactory.INSTANCE;
     public static final YggdrasilAccountFactory FACTORY_YGGDRASIL = new YggdrasilAccountFactory(MojangYggdrasilProvider.INSTANCE);
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(
-            new AuthlibInjectorDownloader(Metadata.HMCL_DIRECTORY, DownloadProviders::getDownloadProvider)::getArtifactInfo,
+            new AuthlibInjectorDownloader(Metadata.HMCL_DIRECTORY, DownloadProviders::getDownloadProvider),
             Accounts::getOrCreateAuthlibInjectorServer);
 
     // ==== login type / account factory mapping ====

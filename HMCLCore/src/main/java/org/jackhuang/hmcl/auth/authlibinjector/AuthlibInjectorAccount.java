@@ -33,16 +33,17 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+
 import static org.jackhuang.hmcl.util.io.IOUtils.readFullyWithoutClosing;
 
 public class AuthlibInjectorAccount extends YggdrasilAccount {
     private AuthlibInjectorServer server;
-    private ExceptionalSupplier<AuthlibInjectorArtifactInfo, ? extends IOException> authlibInjectorDownloader;
+    private AuthlibInjectorDownloader downloader;
 
-    protected AuthlibInjectorAccount(YggdrasilService service, AuthlibInjectorServer server, ExceptionalSupplier<AuthlibInjectorArtifactInfo, ? extends IOException> authlibInjectorDownloader, String username, UUID characterUUID, YggdrasilSession session) {
+    protected AuthlibInjectorAccount(YggdrasilService service, AuthlibInjectorServer server, AuthlibInjectorDownloader downloader, String username, UUID characterUUID, YggdrasilSession session) {
         super(service, username, characterUUID, session);
 
-        this.authlibInjectorDownloader = authlibInjectorDownloader;
+        this.downloader = downloader;
         this.server = server;
     }
 
@@ -67,7 +68,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
 
         CompletableFuture<AuthlibInjectorArtifactInfo> artifactTask = CompletableFuture.supplyAsync(() -> {
             try {
-                return authlibInjectorDownloader.get();
+                return downloader.getArtifactInfo();
             } catch (IOException e) {
                 throw new CompletionException(new AuthlibInjectorDownloadException(e));
             }
