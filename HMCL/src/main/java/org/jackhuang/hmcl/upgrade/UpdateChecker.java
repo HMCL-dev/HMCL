@@ -128,7 +128,7 @@ public final class UpdateChecker {
                         }
                     }
                 });
-            });
+            }, "Update Checker", true);
         });
     }
 }
