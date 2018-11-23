@@ -137,7 +137,7 @@ public final class Config implements Cloneable, Observable {
     private IntegerProperty logLines = new SimpleIntegerProperty(100);
 
     @SerializedName("authlibInjectorServers")
-    private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList();
+    private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList(server -> new Observable[] { server });
 
     @SerializedName("updateChannel")
     private ObjectProperty<UpdateChannel> updateChannel = new SimpleObjectProperty<>(UpdateChannel.STABLE);

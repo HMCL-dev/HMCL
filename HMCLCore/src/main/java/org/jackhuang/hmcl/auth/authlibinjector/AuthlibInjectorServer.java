@@ -20,25 +20,40 @@ package org.jackhuang.hmcl.auth.authlibinjector;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.io.IOUtils.readFullyAsByteArray;
 import static org.jackhuang.hmcl.util.io.IOUtils.readFullyWithoutClosing;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Optional;
+import java.util.logging.Level;
 
-import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.javafx.ObservableHelper;
+import org.jetbrains.annotations.Nullable;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
+import com.google.gson.annotations.JsonAdapter;
 
-public class AuthlibInjectorServer {
+import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+
+@JsonAdapter(AuthlibInjectorServer.Deserializer.class)
+public class AuthlibInjectorServer implements Observable {
 
     private static final int MAX_REDIRECTS = 5;
+    private static final Gson GSON = new GsonBuilder().create();
 
     public static AuthlibInjectorServer locateServer(String url) throws IOException {
         url = parseInputUrl(url);
@@ -60,8 +75,11 @@ public class AuthlibInjectorServer {
             }
         }
 
+
         try {
-            return parseResponse(url, readFullyWithoutClosing(conn.getInputStream()));
+            AuthlibInjectorServer server = new AuthlibInjectorServer(url);
+            server.refreshMetadata(readFullyWithoutClosing(conn.getInputStream()));
+            return server;
         } finally {
             conn.disconnect();
         }
@@ -107,45 +125,82 @@ public class AuthlibInjectorServer {
     }
 
     public static AuthlibInjectorServer fetchServerInfo(String url) throws IOException {
-        try (InputStream in = new URL(url).openStream()) {
-            return parseResponse(url, readFullyWithoutClosing(in));
-        }
-    }
-
-    private static AuthlibInjectorServer parseResponse(String url, byte[] rawResponse) throws IOException {
-        try {
-            JsonObject response = JsonUtils.fromNonNullJson(new String(rawResponse, UTF_8), JsonObject.class);
-            String name = extractServerName(response).orElse(url);
-            return new AuthlibInjectorServer(url, name);
-        } catch (JsonParseException e) {
-            throw new IOException("Malformed response", e);
-        }
-    }
-
-    private static Optional<String> extractServerName(JsonObject response){
-        return tryCast(response.get("meta"), JsonObject.class)
-                .flatMap(meta -> tryCast(meta.get("serverName"), JsonPrimitive.class).map(JsonPrimitive::getAsString));
+        AuthlibInjectorServer server = new AuthlibInjectorServer(url);
+        server.refreshMetadata();
+        return server;
     }
 
     private String url;
-    private String name;
+    @Nullable
+    private String metadataResponse;
+    private long metadataTimestamp;
 
-    public AuthlibInjectorServer(String url, String name) {
+    @Nullable
+    private transient String name;
+
+    private transient boolean metadataRefreshed;
+    private transient ObservableHelper helper = new ObservableHelper(this);
+
+    public AuthlibInjectorServer(String url) {
         this.url = url;
-        this.name = name;
     }
 
     public String getUrl() {
         return url;
     }
 
-    public String getName() {
-        return name;
+    public Optional<String> getMetadataResponse() {
+        return Optional.ofNullable(metadataResponse);
     }
 
-    @Override
-    public String toString() {
-        return url + " (" + name + ")";
+    public long getMetadataTimestamp() {
+        return metadataTimestamp;
+    }
+
+    public String getName() {
+        return Optional.ofNullable(name)
+                .orElse(url);
+    }
+
+    public String fetchMetadataResponse() throws IOException {
+        if (metadataResponse == null || !metadataRefreshed) {
+            refreshMetadata();
+        }
+        return getMetadataResponse().get();
+    }
+
+    public void refreshMetadata() throws IOException {
+        refreshMetadata(readFullyAsByteArray(new URL(url).openStream()));
+    }
+
+    private void refreshMetadata(byte[] rawResponse) throws IOException {
+        long timestamp = System.currentTimeMillis();
+        try {
+            setMetadataResponse(new String(rawResponse, UTF_8), timestamp);
+        } catch (JsonParseException e) {
+            throw new IOException("Malformed response", e);
+        }
+
+        metadataRefreshed = true;
+        LOG.info("authlib-injector server metadata refreshed: " + url);
+        Platform.runLater(helper::invalidate);
+    }
+
+    private void setMetadataResponse(String metadataResponse, long metadataTimestamp) throws JsonParseException {
+        JsonObject response = GSON.fromJson(metadataResponse, JsonObject.class);
+        if (response == null) {
+            throw new JsonParseException("Metadata response is empty");
+        }
+
+        synchronized (this) {
+            this.metadataResponse = metadataResponse;
+            this.metadataTimestamp = metadataTimestamp;
+
+            Optional<JsonObject> metaObject = tryCast(response.get("meta"), JsonObject.class);
+
+            this.name = metaObject.flatMap(meta -> tryCast(meta.get("serverName"), JsonPrimitive.class).map(JsonPrimitive::getAsString))
+                    .orElse(null);
+        }
     }
 
     @Override
@@ -161,5 +216,37 @@ public class AuthlibInjectorServer {
             return false;
         AuthlibInjectorServer another = (AuthlibInjectorServer) obj;
         return this.url.equals(another.url);
+    }
+
+    @Override
+    public void addListener(InvalidationListener listener) {
+        helper.addListener(listener);
+    }
+
+    @Override
+    public void removeListener(InvalidationListener listener) {
+        helper.removeListener(listener);
+    }
+
+    public static class Deserializer implements JsonDeserializer<AuthlibInjectorServer> {
+        @Override
+        public AuthlibInjectorServer deserialize(JsonElement json, Type type, JsonDeserializationContext ctx) throws JsonParseException {
+            JsonObject jsonObj = json.getAsJsonObject();
+            AuthlibInjectorServer instance = new AuthlibInjectorServer(jsonObj.get("url").getAsString());
+
+            if (jsonObj.has("name")) {
+                instance.name = jsonObj.get("name").getAsString();
+            }
+
+            if (jsonObj.has("metadataResponse")) {
+                try {
+                    instance.setMetadataResponse(jsonObj.get("metadataResponse").getAsString(), jsonObj.get("metadataTimestamp").getAsLong());
+                } catch (JsonParseException e) {
+                    LOG.log(Level.WARNING, "Ignoring malformed metadata response cache: " + jsonObj.get("metadataResponse"), e);
+                }
+            }
+            return instance;
+        }
+
     }
 }

@@ -27,14 +27,12 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
-import static org.jackhuang.hmcl.util.io.IOUtils.readFullyWithoutClosing;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class AuthlibInjectorAccount extends YggdrasilAccount {
     private AuthlibInjectorServer server;
@@ -58,9 +56,9 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     }
 
     private AuthInfo inject(ExceptionalSupplier<AuthInfo, AuthenticationException> loginAction) throws AuthenticationException {
-        CompletableFuture<byte[]> prefetchedMetaTask = CompletableFuture.supplyAsync(() -> {
-            try (InputStream in = new URL(server.getUrl()).openStream()) {
-                return readFullyWithoutClosing(in);
+        CompletableFuture<String> prefetchedMetaTask = CompletableFuture.supplyAsync(() -> {
+            try {
+                return server.fetchMetadataResponse();
             } catch (IOException e) {
                 throw new CompletionException(new ServerDisconnectException(e));
             }
@@ -75,7 +73,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         });
 
         AuthInfo auth = loginAction.get();
-        byte[] prefetchedMeta;
+        String prefetchedMeta;
         AuthlibInjectorArtifactInfo artifact;
 
         try {
@@ -95,7 +93,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         return auth.withArguments(new Arguments().addJVMArguments(
                 "-javaagent:" + artifact.getLocation().toString() + "=" + server.getUrl(),
                 "-Dauthlibinjector.side=client",
-                "-Dorg.to2mbn.authlibinjector.config.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta)));
+                "-Dorg.to2mbn.authlibinjector.config.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta.getBytes(UTF_8))));
     }
 
     @Override

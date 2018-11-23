@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.task.Schedulers;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -235,16 +234,7 @@ public final class Accounts {
                 .filter(server -> url.equals(server.getUrl()))
                 .findFirst()
                 .orElseGet(() -> {
-                    // this usually happens when migrating data from an older version
-                    AuthlibInjectorServer server;
-                    try {
-                        server = AuthlibInjectorServer.fetchServerInfo(url);
-                        LOG.info("Migrated authlib injector server " + server);
-                    } catch (IOException e) {
-                        server = new AuthlibInjectorServer(url, url);
-                        LOG.log(Level.WARNING, "Failed to migrate authlib injector server " + url, e);
-                    }
-
+                    AuthlibInjectorServer server = new AuthlibInjectorServer(url);
                     config().getAuthlibInjectorServers().add(server);
                     return server;
                 });
