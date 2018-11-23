@@ -63,6 +63,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -145,8 +146,10 @@ public final class LauncherHelper {
                     try {
                         variables.set("account", account.logIn());
                     } catch (CredentialExpiredException e) {
+                        LOG.info("Credential has expired: " + e);
                         variables.set("account", DialogController.logIn(account));
                     } catch (AuthenticationException e) {
+                        LOG.warning("Authentication failed, try playing offline: " + e);
                         variables.set("account",
                                 account.playOffline().orElseThrow(() -> e));
                     }
