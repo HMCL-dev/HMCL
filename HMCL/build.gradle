@@ -111,12 +111,19 @@ def createExecutable(String suffix, String header) {
 }
 
 processResources {
-    doLast {
-        exec {
-            workingDir new File(this.projectDir, 'src/main/resources/assets/css')
-            commandLine 'javapackager', '-createbss', '-outdir', '.', '-srcdir', '.'
+    ext.convertToBSS = { resource ->
+        exclude resource
+        doFirst {
+            def cssFile = new File(this.projectDir, "src/main/resources/" + resource)
+            def bssFile = new File(this.projectDir, "build/compiled-resources/" + resource[0..-4] + "bss")
+            bssFile.parentFile.mkdirs()
+            javafx.css.Stylesheet.convertToBinary cssFile, bssFile
         }
     }
+    from "build/compiled-resources"
+
+    convertToBSS "assets/css/root.css"
+    convertToBSS "assets/css/blue.css"
 }
 
 task makePack(dependsOn: jar) {
