@@ -40,13 +40,12 @@ import org.jackhuang.hmcl.util.gson.FileTypeAdapter;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
+import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 
 import java.io.File;
-import java.lang.reflect.Modifier;
 import java.net.Proxy;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.stream.Stream;
 
 public final class Config implements Cloneable, Observable {
 
@@ -68,10 +67,9 @@ public final class Config implements Cloneable, Observable {
             .create();
 
     public static Config fromJson(String json) throws JsonParseException {
-        Config instance = CONFIG_GSON.fromJson(json, Config.class);
-        // Gson will replace the property fields (even they are final!)
-        // So we have to add the listeners again after deserialization
-        instance.addListenerToProperties();
+        Config loaded = CONFIG_GSON.fromJson(json, Config.class);
+        Config instance = new Config();
+        PropertyUtils.copyProperties(loaded, instance);
         return instance;
     }
 
@@ -166,24 +164,7 @@ public final class Config implements Cloneable, Observable {
     private transient ObservableHelper helper = new ObservableHelper(this);
 
     public Config() {
-        addListenerToProperties();
-    }
-
-    private void addListenerToProperties() {
-        Stream.of(getClass().getDeclaredFields())
-                .filter(it -> {
-                    int modifiers = it.getModifiers();
-                    return !Modifier.isTransient(modifiers) && !Modifier.isStatic(modifiers);
-                })
-                .filter(it -> Observable.class.isAssignableFrom(it.getType()))
-                .map(it -> {
-                    try {
-                        return (Observable) it.get(this);
-                    } catch (IllegalAccessException e) {
-                        throw new IllegalStateException("Failed to get my own properties");
-                    }
-                })
-                .forEach(helper::receiveUpdatesFrom);
+        PropertyUtils.attachListener(this, helper);
     }
 
     @Override
