@@ -29,8 +29,10 @@ import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccountFactory;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactProvider;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloader;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.authlibinjector.SimpleAuthlibInjectorArtifactProvider;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.MojangYggdrasilProvider;
@@ -39,6 +41,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.task.Schedulers;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -61,9 +64,7 @@ public final class Accounts {
 
     public static final OfflineAccountFactory FACTORY_OFFLINE = OfflineAccountFactory.INSTANCE;
     public static final YggdrasilAccountFactory FACTORY_YGGDRASIL = new YggdrasilAccountFactory(MojangYggdrasilProvider.INSTANCE);
-    public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(
-            new AuthlibInjectorDownloader(Metadata.HMCL_DIRECTORY, DownloadProviders::getDownloadProvider),
-            Accounts::getOrCreateAuthlibInjectorServer);
+    public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(createAuthlibInjectorArtifactProvider(), Accounts::getOrCreateAuthlibInjectorServer);
 
     // ==== login type / account factory mapping ====
     private static final Map<String, AccountFactory<?>> type2factory = new HashMap<>();
@@ -240,6 +241,16 @@ public final class Accounts {
     }
 
     // ==== authlib-injector ====
+    private static AuthlibInjectorArtifactProvider createAuthlibInjectorArtifactProvider() {
+        String authlibinjectorLocation = System.getProperty("hmcl.authlibinjector.location");
+        if (authlibinjectorLocation == null) {
+            return new AuthlibInjectorDownloader(Metadata.HMCL_DIRECTORY, DownloadProviders::getDownloadProvider);
+        } else {
+            LOG.info("Using specified authlib-injector: " + authlibinjectorLocation);
+            return new SimpleAuthlibInjectorArtifactProvider(Paths.get(authlibinjectorLocation));
+        }
+    }
+
     private static AuthlibInjectorServer getOrCreateAuthlibInjectorServer(String url) {
         return config().getAuthlibInjectorServers().stream()
                 .filter(server -> url.equals(server.getUrl()))

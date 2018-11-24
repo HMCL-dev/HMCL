@@ -29,13 +29,13 @@ import java.util.function.Function;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjectorAccount> {
-    private AuthlibInjectorDownloader downloader;
+    private AuthlibInjectorArtifactProvider downloader;
     private Function<String, AuthlibInjectorServer> serverLookup;
 
     /**
      * @param serverLookup a function that looks up {@link AuthlibInjectorServer} by url
      */
-    public AuthlibInjectorAccountFactory(AuthlibInjectorDownloader downloader, Function<String, AuthlibInjectorServer> serverLookup) {
+    public AuthlibInjectorAccountFactory(AuthlibInjectorArtifactProvider downloader, Function<String, AuthlibInjectorServer> serverLookup) {
         this.downloader = downloader;
         this.serverLookup = serverLookup;
     }

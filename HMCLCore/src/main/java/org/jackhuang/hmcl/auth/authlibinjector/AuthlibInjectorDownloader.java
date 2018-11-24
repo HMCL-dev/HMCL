@@ -32,13 +32,11 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
-public class AuthlibInjectorDownloader {
+public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvider {
 
     private static final String LATEST_BUILD_URL = "https://authlib-injector.yushi.moe/artifact/latest.json";
 
@@ -58,6 +56,7 @@ public class AuthlibInjectorDownloader {
         this.downloadProvider = downloadProvider;
     }
 
+    @Override
     public AuthlibInjectorArtifactInfo getArtifactInfo() throws IOException {
         synchronized (artifactLocation) {
             Optional<AuthlibInjectorArtifactInfo> local = getLocalArtifact();
@@ -79,6 +78,7 @@ public class AuthlibInjectorDownloader {
         }
     }
 
+    @Override
     public Optional<AuthlibInjectorArtifactInfo> getArtifactInfoImmediately() {
         return getLocalArtifact();
     }
@@ -120,35 +120,10 @@ public class AuthlibInjectorDownloader {
             return Optional.empty();
         }
         try {
-            return Optional.of(readArtifactInfo(artifactLocation));
+            return Optional.of(AuthlibInjectorArtifactInfo.from(artifactLocation));
         } catch (IOException e) {
             LOG.log(Level.WARNING, "Bad authlib-injector artifact", e);
             return Optional.empty();
-        }
-    }
-
-    private static AuthlibInjectorArtifactInfo readArtifactInfo(Path location) throws IOException {
-        try (JarFile jarFile = new JarFile(location.toFile())) {
-            Attributes attributes = jarFile.getManifest().getMainAttributes();
-
-            String title = Optional.ofNullable(attributes.getValue("Implementation-Title"))
-                    .orElseThrow(() -> new IOException("Missing Implementation-Title"));
-            if (!"authlib-injector".equals(title)) {
-                throw new IOException("Bad Implementation-Title");
-            }
-
-            String version = Optional.ofNullable(attributes.getValue("Implementation-Version"))
-                    .orElseThrow(() -> new IOException("Missing Implementation-Version"));
-
-            int buildNumber;
-            try {
-                buildNumber = Optional.ofNullable(attributes.getValue("Build-Number"))
-                        .map(Integer::parseInt)
-                        .orElseThrow(() -> new IOException("Missing Build-Number"));
-            } catch (NumberFormatException e) {
-                throw new IOException("Bad Build-Number", e);
-            }
-            return new AuthlibInjectorArtifactInfo(buildNumber, version, location.toAbsolutePath());
         }
     }
 

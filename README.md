@@ -118,3 +118,4 @@ No plugin API.
 |`-Dhmcl.self_integrity_check.disable=true`|Bypass the self integrity check when checking for update.|
 |`-Dhmcl.version.override=<version>`|Override the version number.|
 |`-Dhmcl.update_source.override=<url>`|Override the update source.|
+|`-Dhmcl.authlibinjector.location=<path>`|Use specified authlib-injector (instead of downloading one).|

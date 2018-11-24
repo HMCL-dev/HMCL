@@ -36,9 +36,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class AuthlibInjectorAccount extends YggdrasilAccount {
     private AuthlibInjectorServer server;
-    private AuthlibInjectorDownloader downloader;
+    private AuthlibInjectorArtifactProvider downloader;
 
-    protected AuthlibInjectorAccount(YggdrasilService service, AuthlibInjectorServer server, AuthlibInjectorDownloader downloader, String username, UUID characterUUID, YggdrasilSession session) {
+    protected AuthlibInjectorAccount(YggdrasilService service, AuthlibInjectorServer server, AuthlibInjectorArtifactProvider downloader, String username, UUID characterUUID, YggdrasilSession session) {
         super(service, username, characterUUID, session);
 
         this.downloader = downloader;
