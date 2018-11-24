@@ -175,10 +175,11 @@ public class AuthlibInjectorServer implements Observable {
 
     private void refreshMetadata(byte[] rawResponse) throws IOException {
         long timestamp = System.currentTimeMillis();
+        String text = new String(rawResponse, UTF_8);
         try {
-            setMetadataResponse(new String(rawResponse, UTF_8), timestamp);
+            setMetadataResponse(text, timestamp);
         } catch (JsonParseException e) {
-            throw new IOException("Malformed response", e);
+            throw new IOException("Malformed response\n" + text, e);
         }
 
         metadataRefreshed = true;
