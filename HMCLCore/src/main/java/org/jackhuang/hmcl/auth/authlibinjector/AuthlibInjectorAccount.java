@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.game.Arguments;
+import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import java.io.IOException;
 import java.util.*;
@@ -135,5 +136,13 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
             return false;
         AuthlibInjectorAccount another = (AuthlibInjectorAccount) obj;
         return super.equals(another) && server.equals(another.server);
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("username", getUsername())
+                .append("server", getServer())
+                .toString();
     }
 }
