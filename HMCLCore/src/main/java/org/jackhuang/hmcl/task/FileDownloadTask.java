@@ -19,7 +19,8 @@ package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.event.FailedEvent;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.CacheRepository;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
@@ -328,7 +329,7 @@ public class FileDownloadTask extends Task {
         }
 
         if (exception != null)
-            throw new IOException("Unable to download file " + currentURL + ". " + exception.getMessage(), exception);
+            throw new DownloadException(currentURL, exception);
     }
 
 }

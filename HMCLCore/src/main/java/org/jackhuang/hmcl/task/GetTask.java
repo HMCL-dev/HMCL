@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.Level;
 
@@ -141,7 +140,7 @@ public final class GetTask extends TaskResult<String> {
             }
         }
         if (exception != null)
-            throw exception;
+            throw new DownloadException(url, exception);
     }
 
     /**

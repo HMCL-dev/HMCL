@@ -1,18 +1,21 @@
 package org.jackhuang.hmcl.ui.download;
 
-import javafx.application.Platform;
 import javafx.scene.Node;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.ModpackHelper;
+import org.jackhuang.hmcl.mod.CurseCompletionException;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -54,7 +57,22 @@ public class ModpackInstallWizardProvider implements WizardProvider {
     @Override
     public Object finish(Map<String, Object> settings) {
         settings.put("success_message", i18n("install.success"));
-        settings.put("failure_message", i18n("install.failed"));
+        settings.put("failure_callback", new FailureCallback() {
+            @Override
+            public void onFail(Map<String, Object> settings, Exception exception, Runnable next) {
+                if (exception instanceof CurseCompletionException) {
+                    if (exception.getCause() instanceof FileNotFoundException) {
+                        Controllers.dialog(i18n("modpack.type.curse.not_found"), i18n("install.failed"), MessageBox.ERROR_MESSAGE, next);
+                    } else {
+                        Controllers.dialog(i18n("modpack.type.curse.tolerable_error"), i18n("install.success"), MessageBox.INFORMATION_MESSAGE, next);
+                    }
+                } else if (exception instanceof DownloadException) {
+                    Controllers.dialog(StringUtils.getStackTrace(exception), i18n("install.failed.downloading"), MessageBox.ERROR_MESSAGE, next);
+                } else {
+                    Controllers.dialog(StringUtils.getStackTrace(exception), i18n("install.failed"), MessageBox.ERROR_MESSAGE, next);
+                }
+            }
+        });
 
         return finishModpackInstallingAsync(settings);
     }

@@ -74,7 +74,9 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
                             if (executor.getLastException() == null)
                                 return;
                             String appendix = StringUtils.getStackTrace(executor.getLastException());
-                            if (settings.containsKey("failure_message") && settings.get("failure_message") instanceof String)
+                            if (settings.get("failure_callback") instanceof WizardProvider.FailureCallback)
+                                ((WizardProvider.FailureCallback)settings.get("failure_callback")).onFail(settings, executor.getLastException(), () -> onEnd());
+                            else if (settings.get("failure_message") instanceof String)
                                 Controllers.dialog(appendix, (String) settings.get("failure_message"), MessageBox.ERROR_MESSAGE, () -> onEnd());
                             else if (!settings.containsKey("forbid_failure_message"))
                                 Controllers.dialog(appendix, i18n("wizard.failed"), MessageBox.ERROR_MESSAGE, () -> onEnd());
