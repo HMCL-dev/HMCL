@@ -49,25 +49,28 @@ public final class Launcher extends Application {
         Thread.currentThread().setUncaughtExceptionHandler(CRASH_REPORTER);
 
         try {
-            ConfigHolder.init();
-        } catch (IOException e) {
-            Main.showErrorAndExit(i18n("fatal.config_loading_failure", Paths.get("").toAbsolutePath().normalize()));
+            try {
+                ConfigHolder.init();
+            } catch (IOException e) {
+                Main.showErrorAndExit(i18n("fatal.config_loading_failure", Paths.get("").toAbsolutePath().normalize()));
+            }
+
+            // runLater to ensure ConfigHolder.init() finished initialization
+            Platform.runLater(() -> {
+                // When launcher visibility is set to "hide and reopen" without Platform.implicitExit = false,
+                // Stage.show() cannot work again because JavaFX Toolkit have already shut down.
+                Platform.setImplicitExit(false);
+                Controllers.initialize(primaryStage);
+                primaryStage.setResizable(false);
+                primaryStage.setScene(Controllers.getScene());
+
+                UpdateChecker.init();
+
+                primaryStage.show();
+            });
+        } catch (Throwable e) {
+            CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
         }
-
-        // runLater to ensure ConfigHolder.init() finished initialization
-        Platform.runLater(() -> {
-            // When launcher visibility is set to "hide and reopen" without Platform.implicitExit = false,
-            // Stage.show() cannot work again because JavaFX Toolkit have already shut down.
-            Platform.setImplicitExit(false);
-            Controllers.initialize(primaryStage);
-            primaryStage.setResizable(false);
-            primaryStage.setScene(Controllers.getScene());
-
-            UpdateChecker.init();
-
-            primaryStage.show();
-        });
-
     }
 
     public static void main(String[] args) {
