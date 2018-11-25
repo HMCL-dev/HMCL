@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -32,7 +33,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -117,8 +117,16 @@ public final class CurseCompletionTask extends Task {
                                 try {
                                     return file.withFileName(NetworkUtils.detectFileName(file.getUrl()));
                                 } catch (FileNotFoundException e) {
-                                    notFound.set(true);
-                                    return file;
+                                    try {
+                                        String result = NetworkUtils.doGet(NetworkUtils.toURL(String.format("https://cursemeta.dries007.net/%d/%d.json", file.getProjectID(), file.getFileID())));
+                                        CurseMetaMod mod = JsonUtils.fromNonNullJson(result, CurseMetaMod.class);
+                                        return file.withFileName(mod.getFileNameOnDisk()).withURL(mod.getDownloadURL());
+                                    } catch (IOException | JsonParseException e2) {
+                                        Logging.LOG.log(Level.WARNING, "Could not query cursemeta for deleted mods: " + file.getUrl(), e2);
+                                        notFound.set(true);
+                                        return file;
+                                    }
+
                                 } catch (IOException ioe) {
                                     Logging.LOG.log(Level.WARNING, "Unable to fetch the file name of URL: " + file.getUrl(), ioe);
                                     flag.set(false);

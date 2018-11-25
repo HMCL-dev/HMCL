@@ -41,18 +41,22 @@ public final class CurseManifestFile implements Validation {
     
     @SerializedName("fileName")
     private final String fileName;
+
+    @SerializedName("url")
+    private final String url;
     
     @SerializedName("required")
     private final boolean required;
 
     public CurseManifestFile() {
-        this(0, 0, "", true);
+        this(0, 0, null, null, true);
     }
 
-    public CurseManifestFile(int projectID, int fileID, String fileName, boolean required) {
+    public CurseManifestFile(int projectID, int fileID, String fileName, String url, boolean required) {
         this.projectID = projectID;
         this.fileID = fileID;
         this.fileName = fileName;
+        this.url = url;
         this.required = required;
     }
 
@@ -79,11 +83,16 @@ public final class CurseManifestFile implements Validation {
     }
 
     public URL getUrl() {
-        return NetworkUtils.toURL("https://minecraft.curseforge.com/projects/" + projectID + "/files/" + fileID + "/download");
+        return url == null ? NetworkUtils.toURL("https://minecraft.curseforge.com/projects/" + projectID + "/files/" + fileID + "/download")
+                : NetworkUtils.toURL(url);
     }
-    
+
     public CurseManifestFile withFileName(String fileName) {
-        return new CurseManifestFile(projectID, fileID, fileName, required);
+        return new CurseManifestFile(projectID, fileID, fileName, url, required);
+    }
+
+    public CurseManifestFile withURL(String url) {
+        return new CurseManifestFile(projectID, fileID, fileName, url, required);
     }
 
     @Override
