@@ -84,7 +84,7 @@ public class Theme {
                     .replace("%base-color%", color)
                     .replace("%font-color%", getColorDisplayName(getForegroundColor())));
             css = temp.toURI().toString();
-        } catch (IOException e) {
+        } catch (IOException | NullPointerException e) {
             Logging.LOG.log(Level.SEVERE, "Unable to create theme stylesheet. Fallback to blue theme.", e);
             css = "/assets/css/blue.css";
         }

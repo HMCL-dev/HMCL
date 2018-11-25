@@ -1240,7 +1240,7 @@
 }
 
 .tree-table-row-cell .jfx-text-field {
-    -fx-focus-color: rgba(82, 100, 174);
+    -fx-focus-color: rgb(82, 100, 174);
 }
 
 .tree-table-row-cell .jfx-text-field:error {

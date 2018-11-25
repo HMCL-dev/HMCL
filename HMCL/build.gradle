@@ -111,13 +111,15 @@ def createExecutable(String suffix, String header) {
 }
 
 processResources {
-    ext.convertToBSS = { resource ->
+    ext.convertToBSS = { String resource ->
         exclude resource
         doFirst {
             def cssFile = new File(this.projectDir, "src/main/resources/" + resource)
             def bssFile = new File(this.projectDir, "build/compiled-resources/" + resource[0..-4] + "bss")
             bssFile.parentFile.mkdirs()
-            javafx.css.Stylesheet.convertToBinary cssFile, bssFile
+            exec {
+                commandLine 'javapackager', '-createbss', '-outdir', bssFile.parent, '-srcfiles', cssFile.path
+            }
         }
     }
     from "build/compiled-resources"
