@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.download;
 
+import static org.jackhuang.hmcl.util.Logging.LOG;
+
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXSpinner;
@@ -38,6 +40,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public final class VersionsPage extends StackPane implements WizardPage, Refreshable {
@@ -139,6 +142,7 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
                     }
                 });
             } else {
+                LOG.log(Level.WARNING, "Failed to fetch versions list", (Throwable) variables.get("lastException"));
                 Platform.runLater(() -> {
                     transitionHandler.setContent(failedPane, ContainerAnimations.FADE.getAnimationProducer());
                 });
