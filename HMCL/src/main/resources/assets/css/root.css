@@ -92,8 +92,9 @@
     -fx-background-radius: 2px;
 }
 
-.bubble .label {
-    -fx-text-fill: white;
+.bubble .two-line-list-item {
+    -jfx-title-fill: white;
+    -jfx-subtitle-fill: white;
 }
 
 .two-line-list-item {
