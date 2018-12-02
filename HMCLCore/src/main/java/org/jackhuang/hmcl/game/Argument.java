@@ -30,7 +30,7 @@ import java.util.Map;
  *
  * @author huangyuhui
  */
-@JsonAdapter(Argument.Serializer.class)
+@JsonAdapter(Argument.Deserializer.class)
 @Immutable
 public interface Argument extends Cloneable {
 
@@ -43,7 +43,7 @@ public interface Argument extends Cloneable {
      */
     List<String> toString(Map<String, String> keys, Map<String, Boolean> features);
 
-    class Serializer implements JsonDeserializer<Argument>, JsonSerializer<Argument> {
+    class Deserializer implements JsonDeserializer<Argument> {
         @Override
         public Argument deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (json.isJsonPrimitive())
@@ -51,16 +51,5 @@ public interface Argument extends Cloneable {
             else
                 return context.deserialize(json, RuledArgument.class);
         }
-
-        @Override
-        public JsonElement serialize(Argument src, Type typeOfSrc, JsonSerializationContext context) {
-            if (src instanceof StringArgument)
-                return new JsonPrimitive(((StringArgument) src).getArgument());
-            else if (src instanceof RuledArgument)
-                return context.serialize(src, RuledArgument.class);
-            else
-                throw new AssertionError("Unrecognized argument type: " + src);
-        }
-
     }
 }

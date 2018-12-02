@@ -19,6 +19,13 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.util.Immutable;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+import com.google.gson.annotations.JsonAdapter;
+
+import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +36,7 @@ import java.util.regex.Pattern;
  *
  * @author huangyuhui
  */
+@JsonAdapter(StringArgument.Serializer.class)
 @Immutable
 public final class StringArgument implements Argument {
 
@@ -57,5 +65,12 @@ public final class StringArgument implements Argument {
     @Override
     public String toString() {
         return argument;
+    }
+
+    public class Serializer implements JsonSerializer<StringArgument> {
+        @Override
+        public JsonElement serialize(StringArgument src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(src.getArgument());
+        }
     }
 }
