@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -28,9 +31,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -40,6 +40,37 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public final class FileUtils {
 
     private FileUtils() {
+    }
+
+    public static boolean canCreateDirectory(String path) {
+        try {
+            return canCreateDirectory(Paths.get(path));
+        } catch (InvalidPathException e) {
+            return false;
+        }
+    }
+
+    public static boolean canCreateDirectory(Path path) {
+        if (Files.isDirectory(path)) return true;
+        else if (Files.exists(path)) return false;
+        else {
+            Path lastPath = path; // always not exist
+            path = path.getParent();
+            // find existent ancestor
+            while (path != null && !Files.exists(path)) {
+                lastPath = path;
+                path = path.getParent();
+            }
+            if (path == null) return false; // all ancestors are nonexistent
+            if (!Files.isDirectory(path)) return false; // ancestor is file
+            try {
+                Files.createDirectory(lastPath); // check permission
+                Files.delete(lastPath); // safely delete empty directory
+                return true;
+            } catch (IOException e) {
+                return false;
+            }
+        }
     }
 
     public static String getNameWithoutExtension(File file) {

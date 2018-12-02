@@ -24,7 +24,8 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.When;
-import javafx.beans.property.*;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -41,7 +42,7 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
-import java.awt.Desktop;
+import java.awt.*;
 import java.io.IOException;
 import java.net.Proxy;
 import java.nio.file.Files;
@@ -114,13 +115,13 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
         // ====
 
         fileCommonLocation.loadChildren(Arrays.asList(
-                fileCommonLocation.createChildren(i18n("launcher.common_directory.default"), EnumCommonDirectory.DEFAULT)
+                fileCommonLocation.createChildren(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT)
         ), EnumCommonDirectory.CUSTOM);
         fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
         fileCommonLocation.customTextProperty().bindBidirectional(config().commonDirectoryProperty());
         fileCommonLocation.subtitleProperty().bind(
                 Bindings.createObjectBinding(() -> Optional.ofNullable(Settings.instance().getCommonDirectory())
-                                .orElse(i18n("launcher.common_directory.disabled")),
+                                .orElse(i18n("launcher.cache_directory.disabled")),
                         config().commonDirectoryProperty(), config().commonDirTypeProperty()));
 
         // ==== Update ====

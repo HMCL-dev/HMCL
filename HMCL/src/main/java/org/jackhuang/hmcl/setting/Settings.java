@@ -21,9 +21,7 @@ import javafx.beans.binding.Bindings;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.util.CacheRepository;
-
-import java.nio.file.InvalidPathException;
-import java.nio.file.Paths;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
@@ -53,11 +51,9 @@ public class Settings {
 
         CacheRepository.setInstance(HMCLCacheRepository.REPOSITORY);
         HMCLCacheRepository.REPOSITORY.directoryProperty().bind(Bindings.createStringBinding(() -> {
-            String str = getCommonDirectory();
-            try {
-                Paths.get(str);
-                return str;
-            } catch (InvalidPathException e) {
+            if (FileUtils.canCreateDirectory(getCommonDirectory())) {
+                return getCommonDirectory();
+            } else {
                 return getDefaultCommonDirectory();
             }
         }, config().commonDirectoryProperty(), config().commonDirTypeProperty()));

@@ -26,16 +26,15 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
-
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public abstract class SettingsView extends StackPane {
     protected final JFXTextField txtProxyHost;
@@ -144,9 +143,9 @@ public abstract class SettingsView extends StackPane {
 
                 {
                     fileCommonLocation = new MultiFileItem<>(true);
-                    fileCommonLocation.setTitle(i18n("launcher.common_directory"));
+                    fileCommonLocation.setTitle(i18n("launcher.cache_directory"));
                     fileCommonLocation.setDirectory(true);
-                    fileCommonLocation.setChooserTitle(i18n("launcher.common_directory.choose"));
+                    fileCommonLocation.setChooserTitle(i18n("launcher.cache_directory.choose"));
                     fileCommonLocation.setHasSubtitle(true);
                     fileCommonLocation.setCustomText("settings.custom");
 

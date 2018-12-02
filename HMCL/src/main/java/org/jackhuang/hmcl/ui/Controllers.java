@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -210,6 +211,12 @@ public final class Controllers {
         decorator = new DecoratorController(stage, getMainPage());
         leftPaneController = new LeftPaneController();
         decorator.getDecorator().drawerProperty().setAll(leftPaneController);
+
+        if (config().getCommonDirType() == EnumCommonDirectory.CUSTOM &&
+                !FileUtils.canCreateDirectory(config().getCommonDirectory())) {
+            config().setCommonDirType(EnumCommonDirectory.DEFAULT);
+            dialog(i18n("launcher.cache_directory.invalid"));
+        }
 
         Task.of(JavaVersion::initialize).start();
 
