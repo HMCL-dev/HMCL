@@ -250,7 +250,8 @@ public final class FileUtils {
     }
 
     public static boolean makeDirectory(File directory) {
-        return directory.isDirectory() || directory.mkdirs();
+        directory.mkdirs();
+        return directory.isDirectory();
     }
 
     public static boolean makeFile(File file) {
