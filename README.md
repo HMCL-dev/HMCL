@@ -1,5 +1,5 @@
 # Hello Minecraft! Launcher [![Build Status](https://ci.huangyuhui.net/job/HMCL/badge/icon?.svg)](https://ci.huangyuhui.net/job/HMCL)
-GPL v3, see http://www.gnu.org/licenses/gpl.html
+GPL v3, see https://www.gnu.org/licenses/gpl-3.0.html
 
 ## Introduction
 
