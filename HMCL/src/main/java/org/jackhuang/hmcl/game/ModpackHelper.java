@@ -24,8 +24,12 @@ import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.FinalizedCallback;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.AutoTypingMap;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
+import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -85,26 +89,34 @@ public final class ModpackHelper {
     public static Task getInstallTask(Profile profile, File zipFile, String name, Modpack modpack) {
         profile.getRepository().markVersionAsModpack(name);
 
-        FinalizedCallback finalizeTask = (variables, isDependentsSucceeded) -> {
-            if (isDependentsSucceeded) {
+        ExceptionalRunnable<?> success = () -> {
+            HMCLGameRepository repository = profile.getRepository();
+            repository.refreshVersions();
+            VersionSetting vs = repository.specializeVersionSetting(name);
+            repository.undoMark(name);
+            if (vs != null)
+                vs.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
+        };
+
+        ExceptionalConsumer<Exception, ?> failure = ex -> {
+            if (ex instanceof CurseCompletionException && !(ex.getCause() instanceof FileNotFoundException)) {
+                success.run();
+                // This is tolerable and we will not delete the game
+            } else {
                 HMCLGameRepository repository = profile.getRepository();
-                repository.refreshVersions();
-                VersionSetting vs = repository.specializeVersionSetting(name);
-                repository.undoMark(name);
-                if (vs != null)
-                    vs.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
+                repository.removeVersionFromDisk(name);
             }
         };
 
         if (modpack.getManifest() instanceof CurseManifest)
             return new CurseInstallTask(profile.getDependency(), zipFile, ((CurseManifest) modpack.getManifest()), name)
-                    .finalized(finalizeTask);
+                    .finalized(Schedulers.defaultScheduler(), ExceptionalConsumer.fromRunnable(success), failure);
         else if (modpack.getManifest() instanceof HMCLModpackManifest)
             return new HMCLModpackInstallTask(profile, zipFile, modpack, name)
-                    .finalized(finalizeTask);
+                    .finalized(Schedulers.defaultScheduler(), ExceptionalConsumer.fromRunnable(success), failure);
         else if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
             return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name)
-                    .finalized(finalizeTask)
+                    .finalized(Schedulers.defaultScheduler(), ExceptionalConsumer.fromRunnable(success), failure)
                     .then(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
         else throw new IllegalStateException("Unrecognized modpack: " + modpack);
     }
