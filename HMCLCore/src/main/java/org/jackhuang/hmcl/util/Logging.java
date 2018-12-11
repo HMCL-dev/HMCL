@@ -42,6 +42,7 @@ public final class Logging {
         try {
             Files.createDirectories(logFolder);
             FileHandler fileHandler = new FileHandler(logFolder.resolve("hmcl.log").toAbsolutePath().toString());
+            fileHandler.setLevel(Level.FINEST);
             fileHandler.setFormatter(DefaultFormatter.INSTANCE);
             LOG.addHandler(fileHandler);
         } catch (IOException e) {
@@ -50,6 +51,7 @@ public final class Logging {
 
         ConsoleHandler consoleHandler = new ConsoleHandler();
         consoleHandler.setFormatter(DefaultFormatter.INSTANCE);
+        consoleHandler.setLevel(Level.FINER);
         LOG.addHandler(consoleHandler);
 
         StreamHandler streamHandler = new StreamHandler(storedLogs, DefaultFormatter.INSTANCE) {
@@ -59,6 +61,7 @@ public final class Logging {
                 flush();
             }
         };
+        streamHandler.setLevel(Level.ALL);
         LOG.addHandler(streamHandler);
     }
 
