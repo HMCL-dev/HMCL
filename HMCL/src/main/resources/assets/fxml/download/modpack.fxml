@@ -7,12 +7,14 @@
 <?import javafx.scene.layout.*?>
 <?import org.jackhuang.hmcl.ui.construct.ComponentList?>
 <?import org.jackhuang.hmcl.ui.FXUtils?>
+<?import org.jackhuang.hmcl.ui.construct.SpinnerPane?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
     <fx:define>
         <Insets fx:id="insets" bottom="12" />
     </fx:define>
+    <SpinnerPane fx:id="spinnerPane">
         <VBox fx:id="borderPane" alignment="CENTER" FXUtils.limitWidth="500">
             <HBox style="-fx-padding: 0 0 16 5;"><Label text="%modpack.task.install" /></HBox>
             <ComponentList>
@@ -27,4 +29,5 @@
                 </BorderPane>
             </ComponentList>
         </VBox>
+    </SpinnerPane>
 </fx:root>

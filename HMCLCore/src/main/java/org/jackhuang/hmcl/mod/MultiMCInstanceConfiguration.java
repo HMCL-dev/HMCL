@@ -21,9 +21,9 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -264,9 +264,9 @@ public final class MultiMCInstanceConfiguration {
         return mmcPack;
     }
 
-    public static Modpack readMultiMCModpackManifest(File modpackFile) throws IOException {
-        MultiMCManifest manifest = MultiMCManifest.readMultiMCModpackManifest(modpackFile);
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modpackFile.toPath())) {
+    public static Modpack readMultiMCModpackManifest(Path modpackFile, Charset encoding) throws IOException {
+        MultiMCManifest manifest = MultiMCManifest.readMultiMCModpackManifest(modpackFile, encoding);
+        try (FileSystem fs = CompressingUtils.readonly(modpackFile).setEncoding(encoding).build()) {
             Path root = Files.list(fs.getPath("/")).filter(Files::isDirectory).findAny()
                     .orElseThrow(() -> new IOException("Not a valid MultiMC modpack"));
             String name = StringUtils.removeSuffix(root.normalize().getFileName().toString(), "/");
@@ -275,7 +275,7 @@ public final class MultiMCInstanceConfiguration {
             if (Files.notExists(instancePath))
                 throw new IOException("`instance.cfg` not found, " + modpackFile + " is not a valid MultiMC modpack.");
             MultiMCInstanceConfiguration cfg = new MultiMCInstanceConfiguration(name, Files.newInputStream(instancePath), manifest);
-            return new Modpack(cfg.getName(), "", "", cfg.getGameVersion(), cfg.getNotes(), cfg);
+            return new Modpack(cfg.getName(), "", "", cfg.getGameVersion(), cfg.getNotes(), encoding, cfg);
         }
     }
 }

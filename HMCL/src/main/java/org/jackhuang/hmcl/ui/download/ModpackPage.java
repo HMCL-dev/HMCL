@@ -27,16 +27,19 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WebStage;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 
 import java.io.File;
 import java.util.Map;
@@ -71,6 +74,9 @@ public final class ModpackPage extends StackPane implements WizardPage {
     @FXML
     private JFXButton btnInstall;
 
+    @FXML
+    private SpinnerPane spinnerPane;
+
     public ModpackPage(WizardController controller) {
         this.controller = controller;
 
@@ -96,24 +102,28 @@ public final class ModpackPage extends StackPane implements WizardPage {
             controller.getSettings().put(MODPACK_FILE, selectedFile);
         }
 
-        try {
-            manifest = ModpackHelper.readModpackManifest(selectedFile);
-            controller.getSettings().put(MODPACK_MANIFEST, manifest);
-            lblName.setText(manifest.getName());
-            lblVersion.setText(manifest.getVersion());
-            lblAuthor.setText(manifest.getAuthor());
-            txtModpackName.setText(manifest.getName() + (StringUtils.isBlank(manifest.getVersion()) ? "" : "-" + manifest.getVersion()));
+        spinnerPane.showSpinner();
+        Task.ofResult("encoding", () -> CompressingUtils.findSuitableEncoding(selectedFile.toPath()))
+                .then(Task.ofResult("manifest", var ->
+                        manifest = ModpackHelper.readModpackManifest(selectedFile.toPath(), var.get("encoding"))))
+                .finalized(Schedulers.javafx(), var -> {
+                    spinnerPane.hideSpinner();
+                    controller.getSettings().put(MODPACK_MANIFEST, manifest);
+                    lblName.setText(manifest.getName());
+                    lblVersion.setText(manifest.getVersion());
+                    lblAuthor.setText(manifest.getAuthor());
+                    txtModpackName.setText(manifest.getName() + (StringUtils.isBlank(manifest.getVersion()) ? "" : "-" + manifest.getVersion()));
 
-            lblModpackLocation.setText(selectedFile.getAbsolutePath());
-            txtModpackName.getValidators().addAll(
-                    new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().hasVersion(str) && StringUtils.isNotBlank(str)),
-                    new Validator(i18n("version.forbidden_name"), str -> !profile.getRepository().forbidsVersion(str))
-            );
-            txtModpackName.textProperty().addListener(e -> btnInstall.setDisable(!txtModpackName.validate()));
-        } catch (UnsupportedModpackException e) {
-            Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
-            Platform.runLater(controller::onEnd);
-        }
+                    lblModpackLocation.setText(selectedFile.getAbsolutePath());
+                    txtModpackName.getValidators().addAll(
+                            new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().hasVersion(str) && StringUtils.isNotBlank(str)),
+                            new Validator(i18n("version.forbidden_name"), str -> !profile.getRepository().forbidsVersion(str))
+                    );
+                    txtModpackName.textProperty().addListener(e -> btnInstall.setDisable(!txtModpackName.validate()));
+                }, e -> {
+                    Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
+                    Platform.runLater(controller::onEnd);
+                }).start();
     }
 
     @Override

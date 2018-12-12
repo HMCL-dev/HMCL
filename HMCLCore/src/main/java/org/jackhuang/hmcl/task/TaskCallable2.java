@@ -18,8 +18,7 @@
 package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.AutoTypingMap;
-
-import java.util.function.Function;
+import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 
 /**
  *
@@ -28,9 +27,9 @@ import java.util.function.Function;
 class TaskCallable2<V> extends TaskResult<V> {
 
     private final String id;
-    private final Function<AutoTypingMap<String>, V> callable;
+    private final ExceptionalFunction<AutoTypingMap<String>, V, ?> callable;
 
-    public TaskCallable2(String id, Function<AutoTypingMap<String>, V> callable) {
+    public TaskCallable2(String id, ExceptionalFunction<AutoTypingMap<String>, V, ?> callable) {
         this.id = id;
         this.callable = callable;
     }
@@ -41,7 +40,7 @@ class TaskCallable2<V> extends TaskResult<V> {
     }
 
     @Override
-    public void execute() {
+    public void execute() throws Exception {
         setResult(callable.apply(getVariables()));
     }
 }

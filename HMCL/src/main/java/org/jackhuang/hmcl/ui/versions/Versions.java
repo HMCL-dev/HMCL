@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -86,19 +87,23 @@ public class Versions {
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());
         if (selectedFile != null) {
-            AtomicReference<Region> region = new AtomicReference<>();
-            try {
-                TaskExecutor executor = ModpackHelper.getUpdateTask(profile, selectedFile, version, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(version)))
-                        .then(Task.of(Schedulers.javafx(), () -> region.get().fireEvent(new DialogCloseEvent()))).executor();
-                region.set(Controllers.taskDialog(executor, i18n("modpack.update"), ""));
-                executor.start();
-            } catch (UnsupportedModpackException e) {
-                Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
-            } catch (MismatchedModpackTypeException e) {
-                Controllers.dialog(i18n("modpack.mismatched_type"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
-            } catch (IOException e) {
-                Controllers.dialog(i18n("modpack.invalid"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
-            }
+            Task.ofResult("encoding", () -> CompressingUtils.findSuitableEncoding(selectedFile.toPath()))
+                    .then(Task.of(Schedulers.javafx(), var -> {
+                        AtomicReference<Region> region = new AtomicReference<>();
+                        try {
+                            TaskExecutor executor = ModpackHelper.getUpdateTask(profile, selectedFile, var.get("encoding"), version, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(version)))
+                                    .then(Task.of(Schedulers.javafx(), () -> region.get().fireEvent(new DialogCloseEvent()))).executor();
+                            region.set(Controllers.taskDialog(executor, i18n("modpack.update"), ""));
+                            executor.start();
+                        } catch (UnsupportedModpackException e) {
+                            Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
+                        } catch (MismatchedModpackTypeException e) {
+                            Controllers.dialog(i18n("modpack.mismatched_type"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
+                        } catch (IOException e) {
+                            Controllers.dialog(i18n("modpack.invalid"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
+                        }
+                    })).start();
+
         }
     }
 

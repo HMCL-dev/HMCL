@@ -23,7 +23,10 @@ import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import org.jackhuang.hmcl.event.EventManager;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.AutoTypingMap;
+import org.jackhuang.hmcl.util.InvocationDispatcher;
+import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.ReflectionHelper;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
@@ -31,7 +34,6 @@ import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Callable;
-import java.util.function.Function;
 import java.util.logging.Level;
 
 /**
@@ -363,7 +365,7 @@ public abstract class Task {
         return new TaskCallable<>(id, callable);
     }
 
-    public static <V> TaskResult<V> ofResult(String id, Function<AutoTypingMap<String>, V> closure) {
+    public static <V> TaskResult<V> ofResult(String id, ExceptionalFunction<AutoTypingMap<String>, V, ?> closure) {
         return new TaskCallable2<>(id, closure);
     }
 

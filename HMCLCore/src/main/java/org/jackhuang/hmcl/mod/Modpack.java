@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import java.nio.charset.Charset;
+
 /**
  *
  * @author huangyuhui
@@ -27,18 +29,20 @@ public final class Modpack {
     private final String version;
     private final String gameVersion;
     private final String description;
+    private final transient Charset encoding;
     private final Object manifest;
 
     public Modpack() {
-        this("", null, null, null, null, null);
+        this("", null, null, null, null, null, null);
     }
 
-    public Modpack(String name, String author, String version, String gameVersion, String description, Object manifest) {
+    public Modpack(String name, String author, String version, String gameVersion, String description, Charset encoding, Object manifest) {
         this.name = name;
         this.author = author;
         this.version = version;
         this.gameVersion = gameVersion;
         this.description = description;
+        this.encoding = encoding;
         this.manifest = manifest;
     }
 
@@ -59,11 +63,19 @@ public final class Modpack {
     }
 
     public Modpack setGameVersion(String gameVersion) {
-        return new Modpack(name, author, version, gameVersion, description, manifest);
+        return new Modpack(name, author, version, gameVersion, description, encoding, manifest);
     }
 
     public String getDescription() {
         return description;
+    }
+
+    public Charset getEncoding() {
+        return encoding;
+    }
+
+    public Modpack setEncoding(Charset encoding) {
+        return new Modpack(name, author, version, gameVersion, description, encoding, manifest);
     }
 
     public Object getManifest() {
@@ -71,6 +83,6 @@ public final class Modpack {
     }
 
     public Modpack setManifest(Object manifest) {
-        return new Modpack(name, author, version, gameVersion, description, manifest);
+        return new Modpack(name, author, version, gameVersion, description, encoding, manifest);
     }
 }

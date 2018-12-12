@@ -73,7 +73,7 @@ public final class HMCLModpackInstallTask extends Task {
             }
         } catch (JsonParseException | IOException ignore) {
         }
-        dependents.add(new ModpackInstallTask<>(zipFile, run, "/minecraft", it -> !"pack.json".equals(it), config));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/minecraft", it -> !"pack.json".equals(it), config));
     }
 
     @Override
@@ -91,7 +91,7 @@ public final class HMCLModpackInstallTask extends Task {
         String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
         Version version = JsonUtils.GSON.fromJson(json, Version.class).setId(name).setJar(null);
         dependencies.add(new VersionJsonSaveTask(repository, version));
-        dependencies.add(new MinecraftInstanceTask<>(zipFile, "/minecraft", modpack, MODPACK_TYPE, repository.getModpackConfiguration(name)));
+        dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/minecraft", modpack, MODPACK_TYPE, repository.getModpackConfiguration(name)));
     }
 
     public static final String MODPACK_TYPE = "HMCL";

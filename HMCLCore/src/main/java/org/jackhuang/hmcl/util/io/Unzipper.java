@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.util.io;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 
@@ -28,7 +30,7 @@ public class Unzipper {
     private boolean terminateIfSubDirectoryNotExists = false;
     private String subDirectory = "/";
     private FileFilter filter = null;
-    private String encoding;
+    private Charset encoding = StandardCharsets.UTF_8;
 
     /**
      * Decompress the given zip file to a directory.
@@ -82,7 +84,7 @@ public class Unzipper {
         return this;
     }
 
-    public Unzipper setEncoding(String encoding) {
+    public Unzipper setEncoding(Charset encoding) {
         this.encoding = encoding;
         return this;
     }
@@ -99,7 +101,7 @@ public class Unzipper {
      */
     public void unzip() throws IOException {
         Files.createDirectories(dest);
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(zipFile, encoding)) {
+        try (FileSystem fs = CompressingUtils.readonly(zipFile).setEncoding(encoding).setAutoDetectEncoding(true).build()) {
             Path root = fs.getPath(subDirectory);
             if (!root.isAbsolute() || (subDirectory.length() > 1 && subDirectory.endsWith("/")))
                 throw new IllegalArgumentException("Subdirectory for unzipper must be absolute");

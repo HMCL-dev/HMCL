@@ -18,14 +18,13 @@
 package org.jackhuang.hmcl.mod;
 
 import com.google.gson.annotations.SerializedName;
-
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,8 +52,8 @@ public final class MultiMCManifest {
         return components;
     }
 
-    public static MultiMCManifest readMultiMCModpackManifest(File zipFile) throws IOException {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(zipFile.toPath())) {
+    public static MultiMCManifest readMultiMCModpackManifest(Path zipFile, Charset encoding) throws IOException {
+        try (FileSystem fs = CompressingUtils.readonly(zipFile).setEncoding(encoding).build()) {
             Path root = Files.list(fs.getPath("/")).filter(Files::isDirectory).findAny()
                     .orElseThrow(() -> new IOException("Not a valid MultiMC modpack"));
             Path mmcPack = root.resolve("mmc-pack.json");

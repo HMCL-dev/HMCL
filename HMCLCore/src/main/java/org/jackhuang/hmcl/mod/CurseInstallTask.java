@@ -42,6 +42,7 @@ public final class CurseInstallTask extends Task {
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
     private final File zipFile;
+    private final Modpack modpack;
     private final CurseManifest manifest;
     private final String name;
     private final File run;
@@ -58,9 +59,10 @@ public final class CurseInstallTask extends Task {
      * @param name the new version name
      * @see CurseManifest#readCurseForgeModpackManifest
      */
-    public CurseInstallTask(DefaultDependencyManager dependencyManager, File zipFile, CurseManifest manifest, String name) {
+    public CurseInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, CurseManifest manifest, String name) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
+        this.modpack = modpack;
         this.manifest = manifest;
         this.name = name;
         this.repository = dependencyManager.getGameRepository();
@@ -92,7 +94,7 @@ public final class CurseInstallTask extends Task {
         } catch (JsonParseException | IOException ignore) {
         }
         this.config = config;
-        dependents.add(new ModpackInstallTask<>(zipFile, run, manifest.getOverrides(), any -> true, config));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), manifest.getOverrides(), any -> true, config));
     }
 
     @Override
@@ -121,7 +123,7 @@ public final class CurseInstallTask extends Task {
         FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(manifest));
 
         dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest));
-        dependencies.add(new MinecraftInstanceTask<>(zipFile, manifest.getOverrides(), manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)));
+        dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), manifest.getOverrides(), manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)));
     }
 
     public static final String MODPACK_TYPE = "Curse";

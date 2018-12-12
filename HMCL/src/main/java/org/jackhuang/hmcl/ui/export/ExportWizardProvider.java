@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
@@ -74,6 +75,7 @@ public final class ExportWizardProvider implements WizardProvider {
                                 (String) settings.get(ModpackInfoPage.MODPACK_VERSION),
                                 null,
                                 (String) settings.get(ModpackInfoPage.MODPACK_DESCRIPTION),
+                                StandardCharsets.UTF_8,
                                 null
                         ), tempModpack);
 

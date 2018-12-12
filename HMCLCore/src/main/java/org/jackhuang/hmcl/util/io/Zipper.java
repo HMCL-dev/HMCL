@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.function.Predicate;
@@ -39,7 +40,7 @@ public final class Zipper implements Closeable {
         this(zipFile, null);
     }
 
-    public Zipper(Path zipFile, String encoding) throws IOException {
+    public Zipper(Path zipFile, Charset encoding) throws IOException {
         Files.deleteIfExists(zipFile);
         fs = CompressingUtils.createWritableZipFileSystem(zipFile, encoding);
     }

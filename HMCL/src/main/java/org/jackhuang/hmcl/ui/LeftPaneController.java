@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -41,6 +40,7 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.profile.ProfileAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
@@ -111,7 +111,6 @@ public final class LeftPaneController extends AdvancedListBox {
     // ====
 
     private boolean checkedModpack = false;
-    private static boolean showNewAccount = true;
 
     private void onRefreshedVersions(HMCLGameRepository repository) {
         JFXUtilities.runInFX(() -> {
@@ -121,27 +120,24 @@ public final class LeftPaneController extends AdvancedListBox {
                 if (repository.getVersionCount() == 0) {
                     File modpackFile = new File("modpack.zip").getAbsoluteFile();
                     if (modpackFile.exists()) {
-                        try {
-                            AtomicReference<Region> region = new AtomicReference<>();
-                            Modpack modpack = ModpackHelper.readModpackManifest(modpackFile);
-                            TaskExecutor executor = ModpackHelper.getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack)
-                                    .with(Task.of(Schedulers.javafx(), () -> {
-                                        region.get().fireEvent(new DialogCloseEvent());
-                                        checkAccount();
-                                    })).executor();
-                            region.set(Controllers.taskDialog(executor, i18n("modpack.installing"), ""));
-                            executor.start();
-                            showNewAccount = false;
-                        } catch (UnsupportedModpackException ignore) {
-                        }
+                        Task.ofResult("encoding", () -> CompressingUtils.findSuitableEncoding(modpackFile.toPath()))
+                                .then(Task.ofResult("modpack", var -> ModpackHelper.readModpackManifest(modpackFile.toPath(), var.get("encoding"))))
+                                .then(Task.of(var -> {
+                                    AtomicReference<Region> region = new AtomicReference<>();
+                                    Modpack modpack = var.get("modpack");
+                                    TaskExecutor executor = ModpackHelper.getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack)
+                                            .with(Task.of(Schedulers.javafx(), () -> {
+                                                region.get().fireEvent(new DialogCloseEvent());
+                                                checkAccount();
+                                            })).executor();
+                                    region.set(Controllers.taskDialog(executor, i18n("modpack.installing"), ""));
+                                    executor.start();
+                                })).start();
                     }
                 }
             }
 
-            if (showNewAccount) {
-                showNewAccount = false;
-                checkAccount();
-            }
+            checkAccount();
         });
     }
 }

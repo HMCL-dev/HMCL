@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.LinkedList;
@@ -35,13 +36,15 @@ import static org.jackhuang.hmcl.util.Hex.encodeHex;
 public final class MinecraftInstanceTask<T> extends Task {
 
     private final File zipFile;
+    private final Charset encoding;
     private final String subDirectory;
     private final File jsonFile;
     private final T manifest;
     private final String type;
 
-    public MinecraftInstanceTask(File zipFile, String subDirectory, T manifest, String type, File jsonFile) {
+    public MinecraftInstanceTask(File zipFile, Charset encoding, String subDirectory, T manifest, String type, File jsonFile) {
         this.zipFile = zipFile;
+        this.encoding = encoding;
         this.subDirectory = FileUtils.normalizePath(subDirectory);
         this.manifest = manifest;
         this.jsonFile = jsonFile;
@@ -55,7 +58,7 @@ public final class MinecraftInstanceTask<T> extends Task {
     public void execute() throws Exception {
         List<ModpackConfiguration.FileInformation> overrides = new LinkedList<>();
 
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(zipFile.toPath())) {
+        try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setEncoding(encoding).build()) {
             Path root = fs.getPath(subDirectory);
 
             if (Files.exists(root))

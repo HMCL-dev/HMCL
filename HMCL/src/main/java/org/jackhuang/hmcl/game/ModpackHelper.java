@@ -23,10 +23,8 @@ import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
-import org.jackhuang.hmcl.task.FinalizedCallback;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.AutoTypingMap;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
@@ -36,26 +34,28 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.Optional;
 
 public final class ModpackHelper {
     private ModpackHelper() {}
 
-    public static Modpack readModpackManifest(File file) throws UnsupportedModpackException {
+    public static Modpack readModpackManifest(Path file, Charset charset) throws UnsupportedModpackException {
         try {
-            return CurseManifest.readCurseForgeModpackManifest(file);
+            return CurseManifest.readCurseForgeModpackManifest(file, charset);
         } catch (Exception e) {
             // ignore it, not a valid CurseForge modpack.
         }
 
         try {
-            return HMCLModpackManager.readHMCLModpackManifest(file);
+            return HMCLModpackManager.readHMCLModpackManifest(file, charset);
         } catch (Exception e) {
             // ignore it, not a valid HMCL modpack.
         }
 
         try {
-            return MultiMCInstanceConfiguration.readMultiMCModpackManifest(file);
+            return MultiMCInstanceConfiguration.readMultiMCModpackManifest(file, charset);
         } catch (Exception e) {
             // ignore it, not a valid MultiMC modpack.
         }
@@ -109,32 +109,32 @@ public final class ModpackHelper {
         };
 
         if (modpack.getManifest() instanceof CurseManifest)
-            return new CurseInstallTask(profile.getDependency(), zipFile, ((CurseManifest) modpack.getManifest()), name)
+            return new CurseInstallTask(profile.getDependency(), zipFile, modpack, ((CurseManifest) modpack.getManifest()), name)
                     .finalized(Schedulers.defaultScheduler(), ExceptionalConsumer.fromRunnable(success), failure);
         else if (modpack.getManifest() instanceof HMCLModpackManifest)
             return new HMCLModpackInstallTask(profile, zipFile, modpack, name)
                     .finalized(Schedulers.defaultScheduler(), ExceptionalConsumer.fromRunnable(success), failure);
         else if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name)
+            return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, modpack, ((MultiMCInstanceConfiguration) modpack.getManifest()), name)
                     .finalized(Schedulers.defaultScheduler(), ExceptionalConsumer.fromRunnable(success), failure)
                     .then(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
         else throw new IllegalStateException("Unrecognized modpack: " + modpack);
     }
 
-    public static Task getUpdateTask(Profile profile, File zipFile, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, MismatchedModpackTypeException {
-        Modpack modpack = ModpackHelper.readModpackManifest(zipFile);
+    public static Task getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, MismatchedModpackTypeException {
+        Modpack modpack = ModpackHelper.readModpackManifest(zipFile.toPath(), charset);
 
         switch (configuration.getType()) {
             case CurseInstallTask.MODPACK_TYPE:
                 if (!(modpack.getManifest() instanceof CurseManifest))
                     throw new MismatchedModpackTypeException(CurseInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
 
-                return new CurseInstallTask(profile.getDependency(), zipFile, (CurseManifest) modpack.getManifest(), name);
+                return new CurseInstallTask(profile.getDependency(), zipFile, modpack, (CurseManifest) modpack.getManifest(), name);
             case MultiMCModpackInstallTask.MODPACK_TYPE:
                 if (!(modpack.getManifest() instanceof MultiMCInstanceConfiguration))
                     throw new MismatchedModpackTypeException(MultiMCModpackInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
 
-                return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, (MultiMCInstanceConfiguration) modpack.getManifest(), name);
+                return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, modpack, (MultiMCInstanceConfiguration) modpack.getManifest(), name);
             case HMCLModpackInstallTask.MODPACK_TYPE:
                 if (!(modpack.getManifest() instanceof HMCLModpackManifest))
                     throw new MismatchedModpackTypeException(HMCLModpackInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
