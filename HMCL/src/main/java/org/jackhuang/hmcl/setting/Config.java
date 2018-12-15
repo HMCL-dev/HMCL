@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jackhuang.hmcl.util.javafx.PropertyUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.net.Proxy;
@@ -62,8 +63,12 @@ public final class Config implements Cloneable, Observable {
             .setPrettyPrinting()
             .create();
 
+    @Nullable
     public static Config fromJson(String json) throws JsonParseException {
         Config loaded = CONFIG_GSON.fromJson(json, Config.class);
+        if (loaded == null) {
+            return null;
+        }
         Config instance = new Config();
         PropertyUtils.copyProperties(loaded, instance);
         return instance;
