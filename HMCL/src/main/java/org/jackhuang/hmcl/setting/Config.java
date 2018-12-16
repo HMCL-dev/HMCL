@@ -102,7 +102,7 @@ public final class Config implements Cloneable, Observable {
     private StringProperty proxyHost = new SimpleStringProperty();
 
     @SerializedName("proxyPort")
-    private StringProperty proxyPort = new SimpleStringProperty();
+    private IntegerProperty proxyPort = new SimpleIntegerProperty();
 
     @SerializedName("proxyUserName")
     private StringProperty proxyUser = new SimpleStringProperty();
@@ -293,15 +293,15 @@ public final class Config implements Cloneable, Observable {
         return proxyHost;
     }
 
-    public String getProxyPort() {
+    public int getProxyPort() {
         return proxyPort.get();
     }
 
-    public void setProxyPort(String proxyPort) {
+    public void setProxyPort(int proxyPort) {
         this.proxyPort.set(proxyPort);
     }
 
-    public StringProperty proxyPortProperty() {
+    public IntegerProperty proxyPortProperty() {
         return proxyPort;
     }
 

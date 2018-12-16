@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.setting;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.value.ObservableObjectValue;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.net.Authenticator;
@@ -30,6 +29,7 @@ import java.net.Proxy;
 import java.net.Proxy.Type;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class ProxyManager {
     private ProxyManager() {
@@ -49,10 +49,14 @@ public final class ProxyManager {
         proxyProperty = Bindings.createObjectBinding(
                 () -> {
                     String host = config().getProxyHost();
-                    Integer port = Lang.toIntOrNull(config().getProxyPort());
-                    if (!config().hasProxy() || StringUtils.isBlank(host) || port == null || config().getProxyType() == Proxy.Type.DIRECT) {
+                    int port = config().getProxyPort();
+                    if (!config().hasProxy() || StringUtils.isBlank(host) || config().getProxyType() == Proxy.Type.DIRECT) {
                         return Proxy.NO_PROXY;
                     } else {
+                        if (port < 0 || port > 0xFFFF) {
+                            LOG.warning("Illegal proxy port: " + port);
+                            return Proxy.NO_PROXY;
+                        }
                         return new Proxy(config().getProxyType(), new InetSocketAddress(host, port));
                     }
                 },

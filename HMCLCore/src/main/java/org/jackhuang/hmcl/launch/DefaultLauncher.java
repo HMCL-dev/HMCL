@@ -162,11 +162,11 @@ public class DefaultLauncher extends Launcher {
         if (options.isFullscreen())
             res.add("--fullscreen");
 
-        if (StringUtils.isNotBlank(options.getProxyHost()) && StringUtils.isNotBlank(options.getProxyPort())) {
+        if (StringUtils.isNotBlank(options.getProxyHost())) {
             res.add("--proxyHost");
             res.add(options.getProxyHost());
             res.add("--proxyPort");
-            res.add(options.getProxyPort());
+            res.add(String.valueOf(options.getProxyPort()));
             if (StringUtils.isNotBlank(options.getProxyUser()) && StringUtils.isNotBlank(options.getProxyPass())) {
                 res.add("--proxyUser");
                 res.add(options.getProxyUser());

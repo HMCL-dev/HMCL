@@ -43,7 +43,7 @@ public class LaunchOptions implements Serializable {
     private String serverIp;
     private String wrapper;
     private String proxyHost;
-    private String proxyPort;
+    private int proxyPort;
     private String proxyUser;
     private String proxyPass;
     private boolean noGeneratedJVMArgs;
@@ -160,7 +160,7 @@ public class LaunchOptions implements Serializable {
     /**
      * the port of the proxy address.
      */
-    public String getProxyPort() {
+    public int getProxyPort() {
         return proxyPort;
     }
 
@@ -275,7 +275,7 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setProxyPort(String proxyPort) {
+        public Builder setProxyPort(int proxyPort) {
             options.proxyPort = proxyPort;
             return this;
         }

@@ -96,7 +96,11 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
 
         // ==== Proxy ====
         txtProxyHost.textProperty().bindBidirectional(config().proxyHostProperty());
-        txtProxyPort.textProperty().bindBidirectional(config().proxyPortProperty());
+        txtProxyPort.textProperty().bindBidirectional(config().proxyPortProperty(),
+                SafeStringConverter.fromInteger()
+                        .restrict(it -> it >= 0 && it <= 0xFFFF)
+                        .fallbackTo(0)
+                        .asPredicate(Validator.addTo(txtProxyPort)));
         txtProxyUsername.textProperty().bindBidirectional(config().proxyUserProperty());
         txtProxyPassword.textProperty().bindBidirectional(config().proxyPassProperty());
 
