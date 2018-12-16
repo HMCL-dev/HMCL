@@ -528,7 +528,7 @@ public final class VersionSetting {
 
     public LaunchOptions toLaunchOptions(File gameDir) throws InterruptedException {
         JavaVersion javaVersion = Optional.ofNullable(getJavaVersion()).orElse(JavaVersion.fromCurrentEnvironment());
-        return new LaunchOptions.Builder()
+        LaunchOptions.Builder builder = new LaunchOptions.Builder()
                 .setGameDir(gameDir)
                 .setJava(javaVersion)
                 .setVersionName(Metadata.TITLE)
@@ -543,13 +543,17 @@ public final class VersionSetting {
                 .setFullscreen(isFullscreen())
                 .setServerIp(getServerIp())
                 .setWrapper(getWrapper())
-                .setProxyHost(config().getProxyHost())
-                .setProxyPort(config().getProxyPort())
-                .setProxyUser(config().getProxyUser())
-                .setProxyPass(config().getProxyPass())
                 .setPrecalledCommand(getPreLaunchCommand())
-                .setNoGeneratedJVMArgs(isNoJVMArgs())
-                .create();
+                .setNoGeneratedJVMArgs(isNoJVMArgs());
+        if (config().hasProxy()) {
+            builder.setProxyHost(config().getProxyHost());
+            builder.setProxyPort(config().getProxyPort());
+            if (config().hasProxyAuth()) {
+                builder.setProxyUser(config().getProxyUser());
+                builder.setProxyPass(config().getProxyPass());
+            }
+        }
+        return builder.create();
     }
 
     public static class Serializer implements JsonSerializer<VersionSetting>, JsonDeserializer<VersionSetting> {
