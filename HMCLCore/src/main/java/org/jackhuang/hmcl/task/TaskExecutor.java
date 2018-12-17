@@ -185,10 +185,14 @@ public final class TaskExecutor {
                 variables.set(taskResult.getId(), taskResult.getResult());
             }
 
-            if (!executeTasks(task.getDependencies()) && task.isRelyingOnDependencies()) {
+            boolean doDependenciesSucceeded = executeTasks(task.getDependencies());
+            if (!doDependenciesSucceeded && task.isRelyingOnDependencies()) {
                 Logging.LOG.severe("Subtasks failed for " + task.getName());
                 throw new SilentException();
             }
+
+            if (doDependenciesSucceeded)
+                task.setDependenciesSucceeded();
 
             try {
                 task.getScheduler().schedule(task::postExecute).get();

@@ -95,6 +95,16 @@ public abstract class Task {
         dependentsSucceeded = true;
     }
 
+    private boolean dependenciesSucceeded = false;
+
+    public boolean isDependenciesSucceeded() {
+        return dependenciesSucceeded;
+    }
+
+    void setDependenciesSucceeded() {
+        dependenciesSucceeded = true;
+    }
+
     /**
      * True if requires all {@link #getDependents} finishing successfully.
      * <p>
