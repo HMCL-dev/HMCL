@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -111,7 +112,7 @@ public final class CurseInstallTask extends Task {
     public void execute() throws Exception {
         if (config != null)
             for (CurseManifestFile oldCurseManifestFile : config.getManifest().getFiles()) {
-                if (oldCurseManifestFile.getFileName() == null) continue;
+                if (StringUtils.isBlank(oldCurseManifestFile.getFileName())) continue;
                 File oldFile = new File(run, "mods/" + oldCurseManifestFile.getFileName());
                 if (!oldFile.exists()) continue;
                 if (manifest.getFiles().stream().noneMatch(oldCurseManifestFile::equals))
