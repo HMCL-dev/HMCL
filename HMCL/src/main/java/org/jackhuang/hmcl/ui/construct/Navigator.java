@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.util.Logging;
 
 import java.util.Optional;
 import java.util.Stack;
+import java.util.logging.Level;
 
 public class Navigator extends StackPane {
     private static final String PROPERTY_DIALOG_CLOSE_HANDLER = Navigator.class.getName() + ".closeListener";
@@ -94,10 +95,14 @@ public class Navigator extends StackPane {
         if (!initialized)
             throw new IllegalStateException("Navigator must have a root page");
 
+        if (stack.peek() != from) {
+            // Allow page to be closed multiple times.
+            Logging.LOG.log(Level.INFO, "Closing already closed page: " + from, new Throwable());
+            return;
+        }
+
         Logging.LOG.info("Closed page " + from);
 
-        if (stack.peek() != from)
-            throw new IllegalStateException();
         stack.pop();
         Node node = stack.peek();
 
