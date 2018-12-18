@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXProgressBar;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
@@ -27,6 +28,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.Optional;
@@ -66,10 +68,23 @@ public class TaskExecutorDialogPane extends StackPane {
     }
 
     public void setExecutor(TaskExecutor executor) {
+        setExecutor(executor, true);
+    }
+
+    public void setExecutor(TaskExecutor executor, boolean autoClose) {
         this.executor = executor;
 
-        if (executor != null)
+        if (executor != null) {
             taskListPane.setExecutor(executor);
+
+            if (autoClose)
+                executor.addTaskListener(new TaskListener() {
+                    @Override
+                    public void onStop(boolean success, TaskExecutor executor) {
+                        Platform.runLater(() -> fireEvent(new DialogCloseEvent()));
+                    }
+                });
+        }
     }
 
     public StringProperty titleProperty() {

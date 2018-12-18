@@ -126,10 +126,7 @@ public final class LeftPaneController extends AdvancedListBox {
                                     AtomicReference<Region> region = new AtomicReference<>();
                                     Modpack modpack = var.get("modpack");
                                     TaskExecutor executor = ModpackHelper.getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack)
-                                            .with(Task.of(Schedulers.javafx(), () -> {
-                                                region.get().fireEvent(new DialogCloseEvent());
-                                                checkAccount();
-                                            })).executor();
+                                            .with(Task.of(Schedulers.javafx(), this::checkAccount)).executor();
                                     region.set(Controllers.taskDialog(executor, i18n("modpack.installing"), ""));
                                     executor.start();
                                 })).start();

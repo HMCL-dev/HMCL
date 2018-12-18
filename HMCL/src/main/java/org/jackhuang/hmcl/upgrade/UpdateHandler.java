@@ -106,7 +106,6 @@ public final class UpdateHandler {
         Region dialog = Controllers.taskDialog(executor, i18n("message.downloading"), "", null);
         thread(() -> {
             boolean success = executor.test();
-            Platform.runLater(() -> dialog.fireEvent(new DialogCloseEvent()));
 
             if (success) {
                 try {

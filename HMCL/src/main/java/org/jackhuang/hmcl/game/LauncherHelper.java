@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.CurseCompletionException;
 import org.jackhuang.hmcl.mod.CurseCompletionTask;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
-import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -197,7 +196,7 @@ public final class LauncherHelper {
                 }))
                 .executor();
 
-        launchingStepsPane.setExecutor(executor);
+        launchingStepsPane.setExecutor(executor, false);
         executor.addTaskListener(new TaskListener() {
             final AtomicInteger finished = new AtomicInteger(0);
 

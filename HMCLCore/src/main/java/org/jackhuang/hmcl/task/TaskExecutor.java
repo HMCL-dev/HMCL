@@ -257,8 +257,7 @@ public final class TaskExecutor {
         @Override
         public void run() {
             try {
-                if (Thread.currentThread().getName().contains("pool"))
-                    Thread.currentThread().setName(task.getName());
+                Thread.currentThread().setName(task.getName());
                 if (!executeTask(task))
                     success.set(false);
             } finally {
