@@ -94,6 +94,8 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("modpack.type.curse.completion"));
                 } else if (task instanceof ModpackInstallTask) {
                     task.setName(i18n("modpack.installing"));
+                } else if (task instanceof ModpackUpdateTask) {
+                    task.setName(i18n("modpack.update"));
                 } else if (task instanceof CurseInstallTask) {
                     task.setName(i18n("modpack.install", i18n("modpack.type.curse")));
                 } else if (task instanceof MultiMCModpackInstallTask) {

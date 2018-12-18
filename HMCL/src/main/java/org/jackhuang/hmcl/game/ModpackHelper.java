@@ -129,17 +129,17 @@ public final class ModpackHelper {
                 if (!(modpack.getManifest() instanceof CurseManifest))
                     throw new MismatchedModpackTypeException(CurseInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
 
-                return new CurseInstallTask(profile.getDependency(), zipFile, modpack, (CurseManifest) modpack.getManifest(), name);
+                return new ModpackUpdateTask(profile.getRepository(), name, new CurseInstallTask(profile.getDependency(), zipFile, modpack, (CurseManifest) modpack.getManifest(), name));
             case MultiMCModpackInstallTask.MODPACK_TYPE:
                 if (!(modpack.getManifest() instanceof MultiMCInstanceConfiguration))
                     throw new MismatchedModpackTypeException(MultiMCModpackInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
 
-                return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, modpack, (MultiMCInstanceConfiguration) modpack.getManifest(), name);
+                return new ModpackUpdateTask(profile.getRepository(), name, new MultiMCModpackInstallTask(profile.getDependency(), zipFile, modpack, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
             case HMCLModpackInstallTask.MODPACK_TYPE:
                 if (!(modpack.getManifest() instanceof HMCLModpackManifest))
                     throw new MismatchedModpackTypeException(HMCLModpackInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
 
-                return new HMCLModpackInstallTask(profile, zipFile, modpack, name);
+                return new ModpackUpdateTask(profile.getRepository(), name, new HMCLModpackInstallTask(profile, zipFile, modpack, name));
             default:
                 throw new UnsupportedModpackException();
         }

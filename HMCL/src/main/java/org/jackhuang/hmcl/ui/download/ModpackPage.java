@@ -86,6 +86,12 @@ public final class ModpackPage extends StackPane implements WizardPage {
 
         File selectedFile;
 
+        Optional<String> name = tryCast(controller.getSettings().get(MODPACK_NAME), String.class);
+        if (name.isPresent()) {
+            txtModpackName.setText(name.get());
+            txtModpackName.setDisable(true);
+        }
+
         Optional<File> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), File.class);
         if (filePath.isPresent()) {
             selectedFile = filePath.get();
@@ -112,14 +118,17 @@ public final class ModpackPage extends StackPane implements WizardPage {
                     lblName.setText(manifest.getName());
                     lblVersion.setText(manifest.getVersion());
                     lblAuthor.setText(manifest.getAuthor());
-                    txtModpackName.setText(manifest.getName() + (StringUtils.isBlank(manifest.getVersion()) ? "" : "-" + manifest.getVersion()));
 
                     lblModpackLocation.setText(selectedFile.getAbsolutePath());
-                    txtModpackName.getValidators().addAll(
-                            new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().hasVersion(str) && StringUtils.isNotBlank(str)),
-                            new Validator(i18n("version.forbidden_name"), str -> !profile.getRepository().forbidsVersion(str))
-                    );
-                    txtModpackName.textProperty().addListener(e -> btnInstall.setDisable(!txtModpackName.validate()));
+
+                    if (!name.isPresent()) {
+                        txtModpackName.setText(manifest.getName() + (StringUtils.isBlank(manifest.getVersion()) ? "" : "-" + manifest.getVersion()));
+                        txtModpackName.getValidators().addAll(
+                                new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().hasVersion(str) && StringUtils.isNotBlank(str)),
+                                new Validator(i18n("version.forbidden_name"), str -> !profile.getRepository().forbidsVersion(str))
+                        );
+                        txtModpackName.textProperty().addListener(e -> btnInstall.setDisable(!txtModpackName.validate()));
+                    }
                 }, e -> {
                     Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
                     Platform.runLater(controller::onEnd);

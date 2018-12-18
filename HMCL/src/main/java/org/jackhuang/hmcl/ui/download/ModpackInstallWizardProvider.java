@@ -20,7 +20,9 @@ package org.jackhuang.hmcl.ui.download;
 import javafx.scene.Node;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.CurseCompletionException;
+import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -33,6 +35,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -41,20 +44,32 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class ModpackInstallWizardProvider implements WizardProvider {
     private final Profile profile;
     private final File file;
+    private final String updateVersion;
 
     public ModpackInstallWizardProvider(Profile profile) {
-        this(profile, null);
+        this(profile, null, null);
     }
 
     public ModpackInstallWizardProvider(Profile profile, File modpackFile) {
+        this(profile, modpackFile, null);
+    }
+
+    public ModpackInstallWizardProvider(Profile profile, String updateVersion) {
+        this(profile, null, updateVersion);
+    }
+
+    public ModpackInstallWizardProvider(Profile profile, File modpackFile, String updateVersion) {
         this.profile = profile;
         this.file = modpackFile;
+        this.updateVersion = updateVersion;
     }
 
     @Override
     public void start(Map<String, Object> settings) {
         if (file != null)
             settings.put(ModpackPage.MODPACK_FILE, file);
+        if (updateVersion != null)
+            settings.put(ModpackPage.MODPACK_NAME, updateVersion);
         settings.put(PROFILE, profile);
     }
 
@@ -67,8 +82,21 @@ public class ModpackInstallWizardProvider implements WizardProvider {
         String name = tryCast(settings.get(ModpackPage.MODPACK_NAME), String.class).orElse(null);
         if (selected == null || modpack == null || name == null) return null;
 
-        return ModpackHelper.getInstallTask(profile, selected, name, modpack)
-                .then(Task.of(Schedulers.javafx(), () -> profile.setSelectedVersion(name)));
+        if (updateVersion != null) {
+            try {
+                return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
+            } catch (UnsupportedModpackException e) {
+                Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
+            } catch (MismatchedModpackTypeException e) {
+                Controllers.dialog(i18n("modpack.mismatched_type"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
+            } catch (IOException e) {
+                Controllers.dialog(i18n("modpack.invalid"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
+            }
+            return null;
+        } else {
+            return ModpackHelper.getInstallTask(profile, selected, name, modpack)
+                    .then(Task.of(Schedulers.javafx(), () -> profile.setSelectedVersion(name)));
+        }
     }
 
     @Override

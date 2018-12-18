@@ -17,32 +17,22 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
-import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.MessageBox;
+import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -82,29 +72,7 @@ public class Versions {
     }
 
     public static void updateVersion(Profile profile, String version) {
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle(i18n("modpack.choose"));
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
-        File selectedFile = chooser.showOpenDialog(Controllers.getStage());
-        if (selectedFile != null) {
-            Task.ofResult("encoding", () -> CompressingUtils.findSuitableEncoding(selectedFile.toPath()))
-                    .then(Task.of(Schedulers.javafx(), var -> {
-                        AtomicReference<Region> region = new AtomicReference<>();
-                        try {
-                            TaskExecutor executor = ModpackHelper.getUpdateTask(profile, selectedFile, var.get("encoding"), version, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(version)))
-                                    .then(Task.of(Schedulers.javafx(), () -> region.get().fireEvent(new DialogCloseEvent()))).executor();
-                            region.set(Controllers.taskDialog(executor, i18n("modpack.update"), ""));
-                            executor.start();
-                        } catch (UnsupportedModpackException e) {
-                            Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
-                        } catch (MismatchedModpackTypeException e) {
-                            Controllers.dialog(i18n("modpack.mismatched_type"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
-                        } catch (IOException e) {
-                            Controllers.dialog(i18n("modpack.invalid"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
-                        }
-                    })).start();
-
-        }
+        Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, version));
     }
 
     public static void cleanVersion(Profile profile, String id) {
