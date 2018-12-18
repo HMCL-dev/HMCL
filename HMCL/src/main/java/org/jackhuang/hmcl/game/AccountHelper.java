@@ -75,6 +75,9 @@ public final class AccountHelper {
         File file = getSkinFile(uuid);
         if (file.exists()) {
             Image original = new Image("file:" + file.getAbsolutePath());
+            if (original.isError())
+                return getDefaultSkin(uuid, scaleRatio);
+
             return new Image("file:" + file.getAbsolutePath(),
                     original.getWidth() * scaleRatio,
                     original.getHeight() * scaleRatio,
@@ -154,8 +157,11 @@ public final class AccountHelper {
 
         if (account.getCharacter() == null) return;
         File file = getSkinFile(account.getUUID());
-        if (!refresh && file.exists())
-            return;
+        if (!refresh && file.exists()) {
+            Image original = new Image("file:" + file.getAbsolutePath());
+            if (!original.isError())
+                return;
+        }
         Optional<Texture> texture = account.getSkin();
         if (!texture.isPresent()) return;
         String url = texture.get().getUrl();
