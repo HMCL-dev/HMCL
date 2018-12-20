@@ -27,6 +27,7 @@ import javafx.scene.image.Image;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -79,6 +80,14 @@ public class WorldListItem extends Control {
         }
 
         Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller -> new WorldExportPage(world, file.toPath(), controller::onFinish)));
+    }
+
+    public void reveal() {
+        try {
+            FXUtils.openFolder(world.getFile().toFile());
+        } catch (UnsupportedOperationException e) {
+            e.printStackTrace();
+        }
     }
 
     public void manageDatapacks() {

@@ -65,7 +65,8 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
 
         menu.getContent().setAll(
                 new IconedMenuItem(FXUtils.limitingSize(SVG.gear(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.datapack"), FXUtils.withJFXPopupClosing(skinnable::manageDatapacks, popup)),
-                new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.export"), FXUtils.withJFXPopupClosing(skinnable::export, popup)));
+                new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.export"), FXUtils.withJFXPopupClosing(skinnable::export, popup)),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.folderOpen(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.reveal"), FXUtils.withJFXPopupClosing(skinnable::reveal, popup)));
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
