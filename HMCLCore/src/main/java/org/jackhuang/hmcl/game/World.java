@@ -88,7 +88,7 @@ public class World {
     }
 
     private void loadFromZip() throws IOException {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file)) {
+        try (FileSystem fs = CompressingUtils.readonly(file).setAutoDetectEncoding(true).build()) {
             Path root = Files.list(fs.getPath("/")).filter(Files::isDirectory).findAny()
                     .orElseThrow(() -> new IOException("Not a valid world zip file"));
 

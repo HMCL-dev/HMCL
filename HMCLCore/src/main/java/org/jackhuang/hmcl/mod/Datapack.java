@@ -118,7 +118,7 @@ public class Datapack {
     }
 
     public void loadFromZip() throws IOException {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(path)) {
+        try (FileSystem fs = CompressingUtils.readonly(path).setAutoDetectEncoding(true).build()) {
             Path datapacks = fs.getPath("/datapacks/");
             Path mcmeta = fs.getPath("pack.mcmeta");
             if (Files.exists(datapacks)) { // multiple datapacks
