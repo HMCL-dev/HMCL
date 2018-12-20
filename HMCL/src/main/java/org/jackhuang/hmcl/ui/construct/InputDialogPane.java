@@ -38,15 +38,20 @@ public class InputDialogPane extends StackPane {
     private Label content;
     @FXML
     private Label lblCreationWarning;
+    @FXML
+    private SpinnerPane acceptPane;
 
     public InputDialogPane(String text, FutureCallback<String> onResult) {
         FXUtils.loadFXML(this, "/assets/fxml/input-dialog.fxml");
         content.setText(text);
         cancelButton.setOnMouseClicked(e -> fireEvent(new DialogCloseEvent()));
         acceptButton.setOnMouseClicked(e -> {
+            acceptPane.showSpinner();
             onResult.call(textField.getText(), () -> {
+                acceptPane.hideSpinner();
                 fireEvent(new DialogCloseEvent());
             }, msg -> {
+                acceptPane.hideSpinner();
                 lblCreationWarning.setText(msg);
             });
         });
