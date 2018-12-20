@@ -37,6 +37,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
@@ -50,11 +51,13 @@ import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
@@ -62,6 +65,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -443,6 +447,34 @@ public final class FXUtils {
 
             return reference.get();
         }
+    }
+
+    public static void applyDragListener(Node node, FileFilter filter, Consumer<List<File>> callback) {
+        applyDragListener(node, filter, callback, null);
+    }
+
+    public static void applyDragListener(Node node, FileFilter filter, Consumer<List<File>> callback, Runnable dragDropped) {
+        node.setOnDragOver(event -> {
+            if (event.getGestureSource() != node && event.getDragboard().hasFiles()) {
+                if (event.getDragboard().getFiles().stream().anyMatch(filter::accept))
+                    event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+            }
+            event.consume();
+        });
+
+        node.setOnDragDropped(event -> {
+            List<File> files = event.getDragboard().getFiles();
+            if (files != null) {
+                List<File> acceptFiles = files.stream().filter(filter::accept).collect(Collectors.toList());
+                if (!acceptFiles.isEmpty()) {
+                    callback.accept(acceptFiles);
+                    event.setDropCompleted(true);
+                }
+            }
+            if (dragDropped != null)
+                dragDropped.run();
+            event.consume();
+        });
     }
 
     public static <T> StringConverter<T> stringConverter(Function<T, String> func) {

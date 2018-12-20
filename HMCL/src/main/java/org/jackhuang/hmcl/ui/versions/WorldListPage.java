@@ -23,13 +23,14 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPage;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.logging.Level;
@@ -41,6 +42,9 @@ public class WorldListPage extends ListPage<WorldListItem> {
     private Path savesDir;
 
     public WorldListPage() {
+        FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
+            installWorld(modpacks.get(0));
+        });
     }
 
     public void loadVersion(Profile profile, String id) {
@@ -58,10 +62,14 @@ public class WorldListPage extends ListPage<WorldListItem> {
         List<File> res = chooser.showOpenMultipleDialog(Controllers.getStage());
 
         if (res == null || res.isEmpty()) return;
+        installWorld(res.get(0));
+    }
+
+    public void installWorld(File zipFile) {
         try {
             // Only accept one world file because user is required to confirm the new world name
             // Or too many input dialogs are popped.
-            World world = new World(res.get(0).toPath());
+            World world = new World(zipFile.toPath());
 
             Controllers.inputDialog(i18n("world.name.enter"), (name, resolve, reject) -> {
                 Task.of(() -> world.install(savesDir, name))
@@ -77,7 +85,7 @@ public class WorldListPage extends ListPage<WorldListItem> {
             }).setInitialText(world.getWorldName());
 
         } catch (IOException | IllegalArgumentException e) {
-            Logging.LOG.log(Level.WARNING, "Unable to parse datapack file " + res.get(0), e);
+            Logging.LOG.log(Level.WARNING, "Unable to parse datapack file " + zipFile, e);
         }
     }
 }

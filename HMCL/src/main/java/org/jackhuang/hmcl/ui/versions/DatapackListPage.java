@@ -19,10 +19,10 @@ package org.jackhuang.hmcl.ui.versions;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.scene.input.TransferMode;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.Datapack;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Logging;
@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -60,34 +59,17 @@ public class DatapackListPage extends ListPage<DatapackListItem> implements Deco
                     }
                 })));
 
-        setOnDragOver(event -> {
-            if (event.getGestureSource() != this && event.getDragboard().hasFiles())
-                event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
-            event.consume();
-        });
-
-        setOnDragDropped(event -> {
-            List<File> files = event.getDragboard().getFiles();
-            if (files != null) {
-                Collection<File> mods = files.stream()
-                        .filter(it -> Objects.equals("zip", FileUtils.getExtension(it)))
-                        .collect(Collectors.toList());
-                if (!mods.isEmpty()) {
-                    mods.forEach(it -> {
-                        try {
-                            Datapack zip = new Datapack(it.toPath());
-                            zip.loadFromZip();
-                            zip.installTo(worldDir);
-                        } catch (IOException | IllegalArgumentException e) {
-                            Logging.LOG.log(Level.WARNING, "Unable to parse datapack file " + it, e);
-                        }
-                    });
-                    event.setDropCompleted(true);
+        FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)), mods -> {
+            mods.forEach(it -> {
+                try {
+                    Datapack zip = new Datapack(it.toPath());
+                    zip.loadFromZip();
+                    zip.installTo(worldDir);
+                } catch (IOException | IllegalArgumentException e) {
+                    Logging.LOG.log(Level.WARNING, "Unable to parse datapack file " + it, e);
                 }
-            }
-            datapack.loadFromDir();
-            event.consume();
-        });
+            });
+        }, datapack::loadFromDir);
     }
 
     @Override

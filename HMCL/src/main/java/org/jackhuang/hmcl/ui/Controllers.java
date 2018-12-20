@@ -21,7 +21,6 @@ import com.jfoenix.concurrency.JFXUtilities;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
-import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
@@ -140,27 +139,9 @@ public final class Controllers {
     public static MainPage getMainPage() {
         if (mainPage == null) {
             MainPage mainPage = new MainPage();
-            mainPage.setOnDragOver(event -> {
-                if (event.getGestureSource() != mainPage && event.getDragboard().hasFiles()) {
-                    if (event.getDragboard().getFiles().stream().anyMatch(it -> "zip".equals(FileUtils.getExtension(it))))
-                        event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
-                }
-                event.consume();
-            });
-
-            mainPage.setOnDragDropped(event -> {
-                List<File> files = event.getDragboard().getFiles();
-                if (files != null) {
-                    List<File> modpacks = files.stream()
-                            .filter(it -> "zip".equals(FileUtils.getExtension(it)))
-                            .collect(Collectors.toList());
-                    if (!modpacks.isEmpty()) {
-                        File modpack = modpacks.get(0);
-                        Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
-                        event.setDropCompleted(true);
-                    }
-                }
-                event.consume();
+            FXUtils.applyDragListener(mainPage, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
+                File modpack = modpacks.get(0);
+                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
             });
 
             FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), version -> {

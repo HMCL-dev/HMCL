@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXTabPane;
-import javafx.scene.input.TransferMode;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.ModInfo;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -35,11 +34,9 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -50,31 +47,15 @@ public final class ModListPage extends ListPage<ModItem> {
     private String versionId;
 
     public ModListPage() {
-        setOnDragOver(event -> {
-            if (event.getGestureSource() != this && event.getDragboard().hasFiles())
-                event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
-            event.consume();
-        });
-
-        setOnDragDropped(event -> {
-            List<File> files = event.getDragboard().getFiles();
-            if (files != null) {
-                Collection<File> mods = files.stream()
-                        .filter(it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)))
-                        .collect(Collectors.toList());
-                if (!mods.isEmpty()) {
-                    mods.forEach(it -> {
-                        try {
-                            modManager.addMod(versionId, it);
-                        } catch (IOException | IllegalArgumentException e) {
-                            Logging.LOG.log(Level.WARNING, "Unable to parse mod file " + it, e);
-                        }
-                    });
-                    loadMods(modManager, versionId);
-                    event.setDropCompleted(true);
+        FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)), mods -> {
+            mods.forEach(it -> {
+                try {
+                    modManager.addMod(versionId, it);
+                } catch (IOException | IllegalArgumentException e) {
+                    Logging.LOG.log(Level.WARNING, "Unable to parse mod file " + it, e);
                 }
-            }
-            event.consume();
+            });
+            loadMods(modManager, versionId);
         });
     }
 
