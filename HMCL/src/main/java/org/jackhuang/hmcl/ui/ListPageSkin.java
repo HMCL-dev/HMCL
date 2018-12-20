@@ -72,7 +72,21 @@ public class ListPageSkin extends SkinBase<ListPage> {
                 btnAdd.setGraphic(SVG.plus(Theme.whiteFillBinding(), -1, -1));
                 btnAdd.setOnMouseClicked(e -> skinnable.add());
 
+                JFXButton btnRefresh = new JFXButton();
+                FXUtils.setLimitWidth(btnRefresh, 40);
+                FXUtils.setLimitHeight(btnRefresh, 40);
+                btnRefresh.getStyleClass().setAll("jfx-button-raised-round");
+                btnRefresh.setButtonType(JFXButton.ButtonType.RAISED);
+                btnRefresh.setGraphic(SVG.refresh(Theme.whiteFillBinding(), -1, -1));
+                btnRefresh.setOnMouseClicked(e -> skinnable.refresh());
+
                 vBox.getChildren().setAll(btnAdd);
+
+                FXUtils.onChangeAndOperate(skinnable.refreshableProperty(),
+                        refreshable -> {
+                            if (refreshable) vBox.getChildren().setAll(btnRefresh, btnAdd);
+                            else vBox.getChildren().setAll(btnAdd);
+                        });
             }
 
             contentPane.getChildren().setAll(scrollPane, vBox);

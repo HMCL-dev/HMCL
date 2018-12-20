@@ -47,6 +47,8 @@ public final class ModListPage extends ListPage<ModItem> {
     private String versionId;
 
     public ModListPage() {
+        setRefreshable(true);
+
         FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)), mods -> {
             mods.forEach(it -> {
                 try {
@@ -57,6 +59,11 @@ public final class ModListPage extends ListPage<ModItem> {
             });
             loadMods(modManager, versionId);
         });
+    }
+
+    @Override
+    public void refresh() {
+        loadMods(modManager, versionId);
     }
 
     public void loadVersion(Profile profile, String id) {
