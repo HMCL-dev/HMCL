@@ -87,17 +87,27 @@ public class World {
         return gameVersion;
     }
 
+    private void loadFromZipImpl(Path root) throws IOException {
+        Path levelDat = root.resolve("level.dat");
+        if (!Files.exists(levelDat))
+            throw new IllegalArgumentException("Not a valid world zip file since level.dat cannot be found.");
+
+        getWorldName(levelDat);
+    }
+
     private void loadFromZip() throws IOException {
         try (FileSystem fs = CompressingUtils.readonly(file).setAutoDetectEncoding(true).build()) {
+            Path cur = fs.getPath("/level.dat");
+            if (Files.isRegularFile(cur)) {
+                fileName = FileUtils.getName(file);
+                loadFromZipImpl(fs.getPath("/"));
+                return;
+            }
+
             Path root = Files.list(fs.getPath("/")).filter(Files::isDirectory).findAny()
                     .orElseThrow(() -> new IOException("Not a valid world zip file"));
-
-            Path levelDat = root.resolve("level.dat");
-            if (!Files.exists(levelDat))
-                throw new IllegalArgumentException("Not a valid world zip file since level.dat cannot be found.");
-
             fileName = FileUtils.getName(root);
-            getWorldName(levelDat);
+            loadFromZipImpl(root);
         }
     }
 
@@ -149,17 +159,24 @@ public class World {
         }
 
         if (Files.isRegularFile(file)) {
-            String subDirectoryName;
-            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file)) {
-                List<Path> subDirs = Files.list(fs.getPath("/")).collect(Collectors.toList());
-                if (subDirs.size() != 1) {
-                    throw new IOException("World zip malformed");
+            try (FileSystem fs = CompressingUtils.readonly(file).setAutoDetectEncoding(true).build()) {
+                Path cur = fs.getPath("/level.dat");
+                if (Files.isRegularFile(cur)) {
+                    fileName = FileUtils.getName(file);
+
+                    new Unzipper(file, worldDir).unzip();
+                } else {
+                    List<Path> subDirs = Files.list(fs.getPath("/")).collect(Collectors.toList());
+                    if (subDirs.size() != 1) {
+                        throw new IOException("World zip malformed");
+                    }
+                    String subDirectoryName = FileUtils.getName(subDirs.get(0));
+                    new Unzipper(file, worldDir)
+                            .setSubDirectory("/" + subDirectoryName + "/")
+                            .unzip();
                 }
-                subDirectoryName = FileUtils.getName(subDirs.get(0));
+
             }
-            new Unzipper(file, worldDir)
-                    .setSubDirectory("/" + subDirectoryName + "/")
-                    .unzip();
             new World(worldDir).rename(name);
         } else if (Files.isDirectory(file)) {
             FileUtils.copyDirectory(file, worldDir);

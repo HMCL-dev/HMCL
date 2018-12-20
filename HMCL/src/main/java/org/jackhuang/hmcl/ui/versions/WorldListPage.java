@@ -85,7 +85,8 @@ public class WorldListPage extends ListPage<WorldListItem> {
             }).setInitialText(world.getWorldName());
 
         } catch (IOException | IllegalArgumentException e) {
-            Logging.LOG.log(Level.WARNING, "Unable to parse datapack file " + zipFile, e);
+            Logging.LOG.log(Level.WARNING, "Unable to parse world file " + zipFile, e);
+            Controllers.dialog(i18n("world.import.invalid"));
         }
     }
 }
