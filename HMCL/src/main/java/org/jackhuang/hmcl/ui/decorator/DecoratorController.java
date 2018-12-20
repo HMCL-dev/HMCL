@@ -42,14 +42,12 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
-import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AddAuthlibInjectorServerPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.FutureCallback;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -59,7 +57,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import static java.util.stream.Collectors.toList;
@@ -357,45 +354,6 @@ public class DecoratorController {
                 dialogPane = null;
             }
         }
-    }
-
-    public void showDialog(String text) {
-        showDialog(text, null);
-    }
-
-    public void showDialog(String text, String title) {
-        showDialog(text, title, MessageBox.INFORMATION_MESSAGE);
-    }
-
-    public void showDialog(String text, String title, int type) {
-        showDialog(text, title, type, null);
-    }
-
-    public void showDialog(String text, String title, int type, Runnable onAccept) {
-        showDialog(new MessageDialogPane(text, title, type, onAccept));
-    }
-
-    public void showConfirmDialog(String text, String title, Runnable onAccept, Runnable onCancel) {
-        showDialog(new MessageDialogPane(text, title, onAccept, onCancel));
-    }
-
-    public InputDialogPane showInputDialog(String text, FutureCallback<String> onResult) {
-        InputDialogPane pane = new InputDialogPane(text, onResult);
-        showDialog(pane);
-        return pane;
-    }
-
-    public Region showTaskDialog(TaskExecutor executor, String title, String subtitle) {
-        return showTaskDialog(executor, title, subtitle, null);
-    }
-
-    public Region showTaskDialog(TaskExecutor executor, String title, String subtitle, Consumer<Region> onCancel) {
-        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
-        pane.setTitle(title);
-        pane.setSubtitle(subtitle);
-        pane.setExecutor(executor);
-        showDialog(pane);
-        return pane;
     }
 
     // ==== Wizard ====

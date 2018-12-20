@@ -18,11 +18,15 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
+import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -73,6 +77,15 @@ public class Versions {
 
     public static void updateVersion(Profile profile, String version) {
         Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, version));
+    }
+
+    public static void updateGameAssets(Profile profile, String version) {
+        Version resolvedVersion = profile.getRepository().getResolvedVersion(version);
+        TaskExecutor executor = new GameAssetIndexDownloadTask(profile.getDependency(), resolvedVersion)
+                .then(new GameAssetDownloadTask(profile.getDependency(), resolvedVersion))
+                .executor();
+        Controllers.taskDialog(executor, i18n("version.manage.redownload_assets_index"));
+        executor.start();
     }
 
     public static void cleanVersion(Profile profile, String id) {

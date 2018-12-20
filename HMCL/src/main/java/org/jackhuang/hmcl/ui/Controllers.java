@@ -258,6 +258,10 @@ public final class Controllers {
         return pane;
     }
 
+    public static Region taskDialog(TaskExecutor executor, String title) {
+        return taskDialog(executor, title, "");
+    }
+
     public static Region taskDialog(TaskExecutor executor, String title, String subtitle) {
         return taskDialog(executor, title, subtitle, null);
     }

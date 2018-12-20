@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -103,7 +102,7 @@ public final class UpdateHandler {
         Task task = new HMCLDownloadTask(version, downloaded);
 
         TaskExecutor executor = task.executor();
-        Region dialog = Controllers.taskDialog(executor, i18n("message.downloading"), "", null);
+        Region dialog = Controllers.taskDialog(executor, i18n("message.downloading"));
         thread(() -> {
             boolean success = executor.test();
 

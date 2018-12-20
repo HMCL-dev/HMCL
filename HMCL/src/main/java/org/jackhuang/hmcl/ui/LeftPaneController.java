@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.account.AddAccountPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.profile.ProfileAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
@@ -127,7 +126,7 @@ public final class LeftPaneController extends AdvancedListBox {
                                     Modpack modpack = var.get("modpack");
                                     TaskExecutor executor = ModpackHelper.getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack)
                                             .with(Task.of(Schedulers.javafx(), this::checkAccount)).executor();
-                                    region.set(Controllers.taskDialog(executor, i18n("modpack.installing"), ""));
+                                    region.set(Controllers.taskDialog(executor, i18n("modpack.installing")));
                                     executor.start();
                                 })).start();
                     }
