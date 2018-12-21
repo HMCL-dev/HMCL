@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.scene.Node;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 public class IconedMenuItem extends IconedItem {
 
@@ -26,5 +27,10 @@ public class IconedMenuItem extends IconedItem {
 
         getStyleClass().setAll("iconed-menu-item");
         setOnMouseClicked(e -> action.run());
+    }
+
+    public IconedMenuItem addTooltip(String tooltip) {
+        FXUtils.installTooltip(this, tooltip);
+        return this;
     }
 }
