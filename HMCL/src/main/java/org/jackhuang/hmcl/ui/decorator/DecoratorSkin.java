@@ -32,6 +32,7 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -73,8 +74,12 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
         BorderPane root = new BorderPane();
         root.getStyleClass().setAll("jfx-decorator", "resize-border");
-        root.setMaxHeight(519);
-        root.setMaxWidth(800);
+        root.setPrefHeight(519);
+        root.setPrefWidth(800);
+        root.setMaxHeight(Region.USE_PREF_SIZE);
+        root.setMinHeight(Region.USE_PREF_SIZE);
+        root.setMaxWidth(Region.USE_PREF_SIZE);
+        root.setMinWidth(Region.USE_PREF_SIZE);
 
         StackPane drawerWrapper = new StackPane();
         skinnable.setDrawerWrapper(drawerWrapper);
