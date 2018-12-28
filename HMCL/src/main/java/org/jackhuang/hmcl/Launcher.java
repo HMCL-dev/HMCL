@@ -39,6 +39,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static org.jackhuang.hmcl.Extension.PLUGIN_MANAGER;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -67,6 +68,8 @@ public final class Launcher extends Application {
                 UpdateChecker.init();
 
                 primaryStage.show();
+
+                PLUGIN_MANAGER.startPlugins();
             });
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
@@ -96,6 +99,8 @@ public final class Launcher extends Application {
 
     public static void stopApplication() {
         LOG.info("Stopping application.\n" + StringUtils.getStackTrace(Thread.currentThread().getStackTrace()));
+
+        PLUGIN_MANAGER.stopPlugins();
 
         JFXUtilities.runInFX(() -> {
             if (Controllers.getStage() == null)

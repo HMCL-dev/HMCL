@@ -31,6 +31,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.Extension.PLUGIN_MANAGER;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -53,6 +54,8 @@ public final class Main {
         if (UpdateHandler.processArguments(args)) {
             return;
         }
+
+        PLUGIN_MANAGER.loadPlugins();
 
         Launcher.main(args);
     }
