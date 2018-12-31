@@ -679,7 +679,9 @@
 *******************************************************************************/
 
 .jfx-list-cell:odd,
-.jfx-list-cell:even {
+.jfx-list-cell:even,
+.list-cell:odd,
+.list-cell:even {
     -fx-background-color: WHITE;
 }
 
@@ -1095,7 +1097,7 @@
 *******************************************************************************/
 
 .jfx-combo-box {
-    -jfx-focus-color: -fx-base-check-color;
+   -jfx-focus-color: -fx-base-check-color;
 }
 
 .jfx-combo-box-warning {

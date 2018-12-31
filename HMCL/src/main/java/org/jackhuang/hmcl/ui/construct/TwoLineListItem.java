@@ -53,6 +53,7 @@ public class TwoLineListItem extends StackPane {
     }
 
     public TwoLineListItem() {
+        setMouseTransparent(true);
         Label lblTitle = new Label();
         lblTitle.textFillProperty().bind(titleFill);
         lblTitle.fontProperty().bind(titleFont);
