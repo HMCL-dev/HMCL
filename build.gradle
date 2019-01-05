@@ -45,3 +45,5 @@ subprojects {
         ext.year = Calendar.getInstance().get(Calendar.YEAR)
     }
 }
+
+defaultTasks 'clean', 'build'
