@@ -23,7 +23,10 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ImmediateBooleanProperty;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Objects;
+import java.util.logging.Level;
 
 /**
  *
@@ -31,7 +34,7 @@ import java.util.Objects;
  */
 public final class ModInfo implements Comparable<ModInfo> {
 
-    private File file;
+    private Path file;
     private final String name;
     private final String description;
     private final String authors;
@@ -41,16 +44,12 @@ public final class ModInfo implements Comparable<ModInfo> {
     private final String fileName;
     private final ImmediateBooleanProperty activeProperty;
 
-    public ModInfo(File file, String name) {
-        this(file, name, "");
+    public ModInfo(ModManager modManager, File file, String name, String description) {
+        this(modManager, file, name, description, "", "", "", "");
     }
 
-    public ModInfo(File file, String name, String description) {
-        this(file, name, description, "", "", "", "");
-    }
-
-    public ModInfo(File file, String name, String description, String authors, String version, String gameVersion, String url) {
-        this.file = file;
+    public ModInfo(ModManager modManager, File file, String name, String description, String authors, String version, String gameVersion, String url) {
+        this.file = file.toPath();
         this.name = name;
         this.description = description;
         this.authors = authors;
@@ -58,26 +57,26 @@ public final class ModInfo implements Comparable<ModInfo> {
         this.gameVersion = gameVersion;
         this.url = url;
 
-        activeProperty = new ImmediateBooleanProperty(this, "active", !DISABLED_EXTENSION.equals(FileUtils.getExtension(file))) {
+        activeProperty = new ImmediateBooleanProperty(this, "active", !modManager.isDisabled(file)) {
             @Override
             protected void invalidated() {
-                File f = ModInfo.this.file.getAbsoluteFile(), newF;
-                if (DISABLED_EXTENSION.equals(FileUtils.getExtension(f)))
-                    newF = new File(f.getParentFile(), FileUtils.getNameWithoutExtension(f));
-                else
-                    newF = new File(f.getParentFile(), f.getName() + "." + DISABLED_EXTENSION);
+                Path path = ModInfo.this.file.toAbsolutePath();
 
-                if (f.renameTo(newF))
-                    ModInfo.this.file = newF;
-                else
-                    Logging.LOG.severe("Unable to rename file " + f + " to " + newF);
+                try {
+                    if (get())
+                    	ModInfo.this.file = modManager.enableMod(path);
+                    else
+                    	ModInfo.this.file = modManager.disableMod(path);
+                } catch (IOException e) {
+                    Logging.LOG.log(Level.SEVERE, "Unable to invert state of mod file " + path, e);
+                }
             }
         };
 
         fileName = StringUtils.substringBeforeLast(isActive() ? file.getName() : FileUtils.getNameWithoutExtension(file), '.');
     }
 
-    public File getFile() {
+    public Path getFile() {
         return file;
     }
 
@@ -135,48 +134,4 @@ public final class ModInfo implements Comparable<ModInfo> {
     public int hashCode() {
         return Objects.hash(getFileName());
     }
-
-    public static boolean isFileMod(File file) {
-        String name = file.getName();
-        if (isDisabled(file))
-            name = FileUtils.getNameWithoutExtension(file);
-        return name.endsWith(".zip") || name.endsWith(".jar") || name.endsWith(".litemod");
-    }
-
-    public static ModInfo fromFile(File modFile) {
-        File file = isDisabled(modFile) ? new File(modFile.getAbsoluteFile().getParentFile(), FileUtils.getNameWithoutExtension(modFile)) : modFile;
-        String description, extension = FileUtils.getExtension(file);
-        switch (extension) {
-            case "zip":
-            case "jar":
-                try {
-                    return ForgeModMetadata.fromFile(modFile);
-                } catch (Exception ignore) {
-                }
-
-                try {
-                    return RiftModMetadata.fromFile(modFile);
-                } catch (Exception ignore) {
-                }
-
-                description = "";
-                break;
-            case "litemod":
-                try {
-                    return LiteModMetadata.fromFile(modFile);
-                } catch (Exception ignore) {
-                    description = "LiteLoader Mod";
-                }
-                break;
-            default:
-                throw new IllegalArgumentException("File " + modFile + " is not a mod file.");
-        }
-        return new ModInfo(modFile, FileUtils.getNameWithoutExtension(modFile), description);
-    }
-
-    public static boolean isDisabled(File file) {
-        return DISABLED_EXTENSION.equals(FileUtils.getExtension(file));
-    }
-
-    public static final String DISABLED_EXTENSION = "disabled";
 }

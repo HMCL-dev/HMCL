@@ -18,50 +18,97 @@
 package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.SimpleMultimap;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.function.Consumer;
 
 public final class ModManager {
     private final GameRepository repository;
-    private final SimpleMultimap<String, ModInfo> modCache = new SimpleMultimap<String, ModInfo>(HashMap::new, TreeSet::new);
+    private final String id;
+    private final TreeSet<ModInfo> modInfos = new TreeSet<>();
 
-    public ModManager(GameRepository repository) {
+    private boolean loaded = false;
+
+    public ModManager(GameRepository repository, String id) {
         this.repository = repository;
+        this.id = id;
     }
 
-    public void refreshMods(String id) {
-        modCache.removeKey(id);
-        File modsDirectory = new File(repository.getRunDirectory(id), "mods");
-        Consumer<File> puter = modFile -> Lang.ignoringException(() -> modCache.put(id, ModInfo.fromFile(modFile)));
-        Optional.ofNullable(modsDirectory.listFiles()).map(Arrays::stream).ifPresent(files -> files.forEach(modFile -> {
-            if (modFile.isDirectory() && VersionNumber.isIntVersionNumber(modFile.getName())) {
+    private Path getModsDirectory() {
+        return repository.getRunDirectory(id).toPath().resolve("mods");
+    }
+
+    private void addModInfo(File file) {
+        try {
+            modInfos.add(getModInfo(file));
+        } catch (IllegalArgumentException ignore) {
+        }
+    }
+
+    public ModInfo getModInfo(File modFile) {
+        File file = isDisabled(modFile) ? new File(modFile.getAbsoluteFile().getParentFile(), FileUtils.getNameWithoutExtension(modFile)) : modFile;
+        String description, extension = FileUtils.getExtension(file);
+        switch (extension) {
+            case "zip":
+            case "jar":
+                try {
+                    return ForgeModMetadata.fromFile(this, modFile);
+                } catch (Exception ignore) {
+                }
+
+                try {
+                    return RiftModMetadata.fromFile(this, modFile);
+                } catch (Exception ignore) {
+                }
+
+                description = "";
+                break;
+            case "litemod":
+                try {
+                    return LiteModMetadata.fromFile(this, modFile);
+                } catch (Exception ignore) {
+                    description = "LiteLoader Mod";
+                }
+                break;
+            default:
+                throw new IllegalArgumentException("File " + modFile + " is not a mod file.");
+        }
+        return new ModInfo(this, modFile, FileUtils.getNameWithoutExtension(modFile), description);
+    }
+
+    public void refreshMods() throws IOException {
+        modInfos.clear();
+        for (Path subitem : Files.newDirectoryStream(getModsDirectory())) {
+            if (Files.isDirectory(subitem) && VersionNumber.isIntVersionNumber(FileUtils.getName(subitem))) {
                 // If the folder name is game version, forge will search mod in this subdirectory
-                Optional.ofNullable(modFile.listFiles()).map(Arrays::stream).ifPresent(x -> x.forEach(puter));
+                for (Path subsubitem : Files.newDirectoryStream(subitem))
+                    addModInfo(subsubitem.toFile());
             } else {
-                puter.accept(modFile);
+                addModInfo(subitem.toFile());
             }
-        }));
+        }
+        loaded = true;
     }
 
-    public Collection<ModInfo> getMods(String id) {
-        if (!modCache.containsKey(id))
-            refreshMods(id);
-        return modCache.get(id);
+    public Collection<ModInfo> getMods() throws IOException {
+        if (!loaded)
+            refreshMods();
+        return modInfos;
     }
 
-    public void addMod(String id, File file) throws IOException {
-        if (!ModInfo.isFileMod(file))
+    public void addMod(File file) throws IOException {
+        if (!isFileMod(file))
             throw new IllegalArgumentException("File " + file + " is not a valid mod file.");
 
-        if (!modCache.containsKey(id))
-            refreshMods(id);
+        if (!loaded)
+            refreshMods();
 
         File modsDirectory = new File(repository.getRunDirectory(id), "mods");
         if (!FileUtils.makeDirectory(modsDirectory))
@@ -70,12 +117,55 @@ public final class ModManager {
         File newFile = new File(modsDirectory, file.getName());
         FileUtils.copyFile(file, newFile);
 
-        modCache.put(id, ModInfo.fromFile(newFile));
+        addModInfo(newFile);
     }
 
-    public boolean removeMods(String id, ModInfo... modInfos) {
-        boolean result = Arrays.stream(modInfos).reduce(true, (acc, modInfo) -> acc && modInfo.getFile().delete(), Boolean::logicalAnd);
-        refreshMods(id);
-        return result;
+    public void removeMods(ModInfo... modInfos) throws IOException {
+        for (ModInfo modInfo : modInfos) {
+            Files.deleteIfExists(modInfo.getFile());
+        }
+        refreshMods();
     }
+
+    public Path disableMod(Path file) throws IOException {
+        Path disabled = file.getParent().resolve(StringUtils.addSuffix(FileUtils.getName(file), DISABLED_EXTENSION));
+        if (Files.exists(file))
+            Files.move(file, disabled, StandardCopyOption.REPLACE_EXISTING);
+        return disabled;
+    }
+
+    public Path enableMod(Path file) throws IOException {
+        Path enabled = file.getParent().resolve(StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION));
+        if (Files.exists(file))
+            Files.move(file, enabled, StandardCopyOption.REPLACE_EXISTING);
+        return enabled;
+    }
+
+    public boolean isDisabled(File file) {
+        return file.getPath().endsWith(DISABLED_EXTENSION);
+    }
+
+    public boolean isFileMod(File file) {
+        String name = file.getName();
+        if (isDisabled(file))
+            name = FileUtils.getNameWithoutExtension(file);
+        return name.endsWith(".zip") || name.endsWith(".jar") || name.endsWith(".litemod");
+    }
+
+    /**
+     * Check if "mods" directory has mod file named "fileName" no matter the mod is disabled or not
+     *
+     * @param fileName name of the file whose existence is being checked
+     * @return true if the file exists
+     */
+    public boolean hasSimpleMod(String fileName) {
+        return Files.exists(getModsDirectory().resolve(StringUtils.removeSuffix(fileName, DISABLED_EXTENSION)))
+                || Files.exists(getModsDirectory().resolve(StringUtils.addSuffix(fileName, DISABLED_EXTENSION)));
+    }
+
+    public Path getSimpleModPath(String fileName) {
+        return getModsDirectory().resolve(fileName);
+    }
+
+    public static final String DISABLED_EXTENSION = ".disabled";
 }

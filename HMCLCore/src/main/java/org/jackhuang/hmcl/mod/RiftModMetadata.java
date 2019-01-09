@@ -60,14 +60,14 @@ public final class RiftModMetadata {
         return authors;
     }
 
-    public static ModInfo fromFile(File modFile) throws IOException, JsonParseException {
+    public static ModInfo fromFile(ModManager modManager, File modFile) throws IOException, JsonParseException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.toPath())) {
             Path mcmod = fs.getPath("riftmod.json");
             if (Files.notExists(mcmod))
                 throw new IOException("File " + modFile + " is not a Forge mod.");
             RiftModMetadata metadata = JsonUtils.fromNonNullJson(IOUtils.readFullyAsString(Files.newInputStream(mcmod)), RiftModMetadata.class);
             String authors = metadata.getAuthors() == null ? "" : String.join(", ", metadata.getAuthors());
-            return new ModInfo(modFile, metadata.getName(), "",
+            return new ModInfo(modManager, modFile, metadata.getName(), "",
                     authors, "", "", "");
         }
     }

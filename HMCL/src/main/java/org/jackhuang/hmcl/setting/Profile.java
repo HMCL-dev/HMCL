@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.javafx.ImmediateObjectProperty;
@@ -52,7 +51,6 @@ import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 public final class Profile implements Observable {
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private final HMCLGameRepository repository;
-    private final ModManager modManager;
 
     private final StringProperty selectedVersion = new SimpleStringProperty();
 
@@ -136,7 +134,6 @@ public final class Profile implements Observable {
         this.name = new ImmediateStringProperty(this, "name", name);
         gameDir = new ImmediateObjectProperty<>(this, "gameDir", initialGameDir);
         repository = new HMCLGameRepository(this, initialGameDir);
-        modManager = new ModManager(repository);
         this.global.set(global == null ? new VersionSetting() : global);
         this.selectedVersion.set(selectedVersion);
         this.useRelativePath.set(useRelativePath);
@@ -164,10 +161,6 @@ public final class Profile implements Observable {
 
     public HMCLGameRepository getRepository() {
         return repository;
-    }
-
-    public ModManager getModManager() {
-        return modManager;
     }
 
     public DefaultDependencyManager getDependency() {

@@ -44,7 +44,6 @@ public final class ModListPage extends ListPage<ModItem> {
 
     private JFXTabPane parentTab;
     private ModManager modManager;
-    private String versionId;
 
     public ModListPage() {
         setRefreshable(true);
@@ -52,41 +51,44 @@ public final class ModListPage extends ListPage<ModItem> {
         FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)), mods -> {
             mods.forEach(it -> {
                 try {
-                    modManager.addMod(versionId, it);
+                    modManager.addMod(it);
                 } catch (IOException | IllegalArgumentException e) {
                     Logging.LOG.log(Level.WARNING, "Unable to parse mod file " + it, e);
                 }
             });
-            loadMods(modManager, versionId);
+            loadMods(modManager);
         });
     }
 
     @Override
     public void refresh() {
-        loadMods(modManager, versionId);
+        loadMods(modManager);
     }
 
     public void loadVersion(Profile profile, String id) {
-        loadMods(profile.getModManager(), id);
+        loadMods(profile.getRepository().getModManager(id));
     }
 
-    public void loadMods(ModManager modManager, String versionId) {
+    public void loadMods(ModManager modManager) {
         this.modManager = modManager;
-        this.versionId = versionId;
         Task.of(variables -> {
             synchronized (ModListPage.this) {
                 JFXUtilities.runInFX(() -> loadingProperty().set(true));
 
-                modManager.refreshMods(versionId);
+                modManager.refreshMods();
 
                 // Surprisingly, if there are a great number of mods, this processing will cause a long UI pause,
                 // constructing UI elements.
                 // We must do this asynchronously.
                 LinkedList<ModItem> list = new LinkedList<>();
-                for (ModInfo modInfo : modManager.getMods(versionId)) {
+                for (ModInfo modInfo : modManager.getMods()) {
                     ModItem item = new ModItem(modInfo, i -> {
-                        modManager.removeMods(versionId, modInfo);
-                        loadMods(modManager, versionId);
+                        try {
+                            modManager.removeMods(modInfo);
+                        } catch (IOException ignore) {
+                            // Fail to remove mods if the game is running or the mod is absent.
+                        }
+                        loadMods(modManager);
                     });
                     modInfo.activeProperty().addListener((a, b, newValue) -> {
                         if (newValue)
@@ -126,7 +128,7 @@ public final class ModListPage extends ListPage<ModItem> {
         Task.of(variables -> {
             for (File file : res) {
                 try {
-                    modManager.addMod(versionId, file);
+                    modManager.addMod(file);
                     succeeded.add(file.getName());
                 } catch (Exception e) {
                     Logging.LOG.log(Level.WARNING, "Unable to add mod " + file, e);
@@ -142,7 +144,7 @@ public final class ModListPage extends ListPage<ModItem> {
             if (!failed.isEmpty())
                 prompt.add(i18n("mods.add.failed", String.join(", ", failed)));
             Controllers.dialog(String.join("\n", prompt), i18n("mods.add"));
-            loadMods(modManager, versionId);
+            loadMods(modManager);
         })).start();
     }
 

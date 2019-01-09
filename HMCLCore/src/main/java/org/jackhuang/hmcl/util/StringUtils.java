@@ -146,6 +146,13 @@ public final class StringUtils {
             return prefix + str;
     }
 
+    public static String addSuffix(String str, String suffix) {
+        if (str.endsWith(suffix))
+            return str;
+        else
+            return str + suffix;
+    }
+
     public static String removePrefix(String str, String... prefixes) {
         for (String prefix : prefixes)
             if (str.startsWith(prefix))

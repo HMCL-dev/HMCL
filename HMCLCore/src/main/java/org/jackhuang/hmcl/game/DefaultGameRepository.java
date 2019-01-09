@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.event.*;
+import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ToStringBuilder;
@@ -364,6 +365,10 @@ public class DefaultGameRepository implements GameRepository {
 
     public boolean isModpack(String version) {
         return getModpackConfiguration(version).exists();
+    }
+
+    public ModManager getModManager(String version) {
+        return new ModManager(this, version);
     }
 
     @Override

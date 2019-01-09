@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.mod;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.*;
@@ -45,8 +45,8 @@ import java.util.stream.Collectors;
  */
 public final class CurseCompletionTask extends Task {
 
-    private final DefaultDependencyManager dependencyManager;
-    private final GameRepository repository;
+    private final DefaultGameRepository repository;
+    private final ModManager modManager;
     private final String version;
     private CurseManifest manifest = null;
     private final List<Task> dependents = new LinkedList<>();
@@ -70,8 +70,8 @@ public final class CurseCompletionTask extends Task {
      * @param manifest          the CurseForgeModpack manifest.
      */
     public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version, CurseManifest manifest) {
-        this.dependencyManager = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
+        this.modManager = repository.getModManager(version);
         this.version = version;
         this.manifest = manifest;
 
@@ -101,7 +101,6 @@ public final class CurseCompletionTask extends Task {
             return;
 
         File root = repository.getVersionRoot(version);
-        File run = repository.getRunDirectory(version);
 
         AtomicBoolean flag = new AtomicBoolean(true);
         AtomicInteger finished = new AtomicInteger(0);
@@ -140,9 +139,9 @@ public final class CurseCompletionTask extends Task {
 
         for (CurseManifestFile file : newManifest.getFiles())
             if (StringUtils.isNotBlank(file.getFileName())) {
-                File dest = new File(run, "mods/" + file.getFileName());
-                if (!dest.exists())
-                    dependencies.add(new FileDownloadTask(file.getUrl(), dest));
+                if (!modManager.hasSimpleMod(file.getFileName())) {
+                    dependencies.add(new FileDownloadTask(file.getUrl(), modManager.getSimpleModPath(file.getFileName()).toFile()));
+                }
             }
 
         // Let this task fail if the curse manifest has not been completed.
