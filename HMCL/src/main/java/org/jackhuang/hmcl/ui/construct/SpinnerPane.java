@@ -19,7 +19,9 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXSpinner;
 import javafx.beans.DefaultProperty;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
@@ -32,19 +34,29 @@ public class SpinnerPane extends StackPane {
     private final JFXSpinner spinner = new JFXSpinner();
     private final StackPane contentPane = new StackPane();
     private final ObjectProperty<Node> content = new SimpleObjectProperty<>(this, "content");
+    private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading") {
+    	protected void invalidated() {
+    		if (get())
+    	        transitionHandler.setContent(spinner, ContainerAnimations.FADE.getAnimationProducer());
+    		else
+    	        transitionHandler.setContent(contentPane, ContainerAnimations.FADE.getAnimationProducer());
+    	}
+    };
 
     public SpinnerPane() {
+    	getStyleClass().add("spinner-pane");
+    	
         getChildren().setAll(contentPane);
 
         content.addListener((a, b, newValue) -> contentPane.getChildren().setAll(newValue));
     }
 
     public void showSpinner() {
-        transitionHandler.setContent(spinner, ContainerAnimations.FADE.getAnimationProducer());
+    	setLoading(true);
     }
 
     public void hideSpinner() {
-        transitionHandler.setContent(contentPane, ContainerAnimations.FADE.getAnimationProducer());
+    	setLoading(false);
     }
 
     public Node getContent() {
@@ -57,5 +69,17 @@ public class SpinnerPane extends StackPane {
 
     public void setContent(Node content) {
         this.content.set(content);
+    }
+
+    public boolean isLoading() {
+    	return loading.get();
+    }
+    
+    public BooleanProperty loadingProperty() {
+    	return loading;
+    }
+    
+    public void setLoading(boolean loading) {
+    	this.loading.set(loading);
     }
 }

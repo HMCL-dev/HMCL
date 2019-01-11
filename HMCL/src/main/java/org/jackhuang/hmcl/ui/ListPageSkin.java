@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXScrollPane;
-import com.jfoenix.controls.JFXSpinner;
+
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -28,17 +28,14 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
-public class ListPageSkin extends SkinBase<ListPage> {
+public class ListPageSkin extends SkinBase<ListPage<?>> {
 
     public ListPageSkin(ListPage<?> skinnable) {
         super(skinnable);
 
-        StackPane rootPane = new StackPane();
-
-        JFXSpinner spinner = new JFXSpinner();
-        spinner.setRadius(16);
-        spinner.getStyleClass().setAll("materialDesign-purple", "first-spinner");
+        SpinnerPane spinnerPane = new SpinnerPane();
 
         StackPane contentPane = new StackPane();
         {
@@ -56,7 +53,7 @@ public class ListPageSkin extends SkinBase<ListPage> {
                 scrollPane.setContent(list);
                 JFXScrollPane.smoothScrolling(scrollPane);
             }
-
+            
             VBox vBox = new VBox();
             {
                 vBox.setAlignment(Pos.BOTTOM_RIGHT);
@@ -92,13 +89,9 @@ public class ListPageSkin extends SkinBase<ListPage> {
             contentPane.getChildren().setAll(scrollPane, vBox);
         }
 
-        rootPane.getChildren().setAll(contentPane);
+        spinnerPane.loadingProperty().bind(skinnable.loadingProperty());
+        spinnerPane.setContent(contentPane);
 
-        skinnable.loadingProperty().addListener((a, b, newValue) -> {
-            if (newValue) rootPane.getChildren().setAll(spinner);
-            else rootPane.getChildren().setAll(contentPane);
-        });
-
-        getChildren().setAll(rootPane);
+        getChildren().setAll(spinnerPane);
     }
 }
