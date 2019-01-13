@@ -126,7 +126,7 @@ public final class GetTask extends TaskResult<String> {
                 }
 
                 if (size > 0 && size != read)
-                    throw new IllegalStateException("Not completed! Readed: " + read + ", total size: " + size);
+                    throw new IOException("Not completed! Readed: " + read + ", total size: " + size);
 
                 String result = baos.toString(charset.name());
                 setResult(result);
