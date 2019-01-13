@@ -103,6 +103,7 @@ public final class MultiMCModpackInstallTask extends Task {
         }
 
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/" + manifest.getName() + "/minecraft", any -> true, config));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/" + manifest.getName() + "/.minecraft", any -> true, config));
     }
     
     @Override
