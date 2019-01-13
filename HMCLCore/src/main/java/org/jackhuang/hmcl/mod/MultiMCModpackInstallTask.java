@@ -63,7 +63,6 @@ public final class MultiMCModpackInstallTask extends Task {
         this.name = name;
         this.repository = dependencyManager.getGameRepository();
 
-        File run = repository.getRunDirectory(name);
         File json = repository.getModpackConfiguration(name);
         if (repository.hasVersion(name) && !json.exists())
             throw new IllegalArgumentException("Version " + name + " already exists.");
@@ -89,6 +88,17 @@ public final class MultiMCModpackInstallTask extends Task {
             if (event.isFailed())
                 repository.removeVersionFromDisk(name);
         });
+    }
+    
+    @Override
+    public List<Task> getDependencies() {
+        return dependencies;
+    }
+
+    @Override
+    public void preExecute() throws Exception {
+        File run = repository.getRunDirectory(name);
+        File json = repository.getModpackConfiguration(name);
 
         ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
         try {
@@ -102,15 +112,14 @@ public final class MultiMCModpackInstallTask extends Task {
         } catch (JsonParseException | IOException ignore) {
         }
 
-        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/" + manifest.getName() + "/minecraft", any -> true, config));
-        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/" + manifest.getName() + "/.minecraft", any -> true, config));
+        try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setEncoding(modpack.getEncoding()).build()) {
+            if (Files.exists(fs.getPath("/" + manifest.getName() + "/.minecraft")))
+                dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/" + manifest.getName() + "/.minecraft", any -> true, config));
+            else if (Files.exists(fs.getPath("/" + manifest.getName() + "/minecraft")))
+                dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/" + manifest.getName() + "/minecraft", any -> true, config));
+        }
     }
-    
-    @Override
-    public List<Task> getDependencies() {
-        return dependencies;
-    }
-    
+
     @Override
     public List<Task> getDependents() {
         return dependents;
