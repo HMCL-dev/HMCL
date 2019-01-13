@@ -90,8 +90,13 @@ public final class Controllers {
 
     // FXThread
     public static GameList getGameListPage() {
-        if (gameListPage == null)
+        if (gameListPage == null) {
             gameListPage = new GameList();
+            FXUtils.applyDragListener(gameListPage, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
+                File modpack = modpacks.get(0);
+                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
+            });
+        }
         return gameListPage;
     }
 
