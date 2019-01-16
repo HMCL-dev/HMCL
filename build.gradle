@@ -6,6 +6,7 @@ buildscript {
     dependencies {
         classpath 'org.tukaani:xz:1.8'
         classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.15.0'
+        classpath "org.openjfx:javafx-plugin:0.0.+"
     }
 }
 
@@ -16,6 +17,7 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
     apply plugin: 'com.github.hierynomus.license'
+    apply plugin: 'org.openjfx.javafxplugin'
 
     repositories {
         mavenCentral()

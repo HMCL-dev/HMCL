@@ -1,0 +1,3 @@
+javafx {
+    modules = ['javafx.controls']
+}
