@@ -66,7 +66,7 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
                     if (!duplicates.add(mirror))
                         continue;
 
-                    boolean isPre = element.getPatch() != null && (element.getPatch().equals("pre") || element.getPatch().startsWith("alpha"));
+                    boolean isPre = element.getPatch() != null && (element.getPatch().startsWith("pre") || element.getPatch().startsWith("alpha"));
 
                     if (StringUtils.isBlank(element.getGameVersion()))
                         continue;
