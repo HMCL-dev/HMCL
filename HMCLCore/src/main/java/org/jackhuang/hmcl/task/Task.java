@@ -376,7 +376,7 @@ public abstract class Task {
     }
 
     public static <V> TaskResult<V> ofResult(String id, ExceptionalFunction<AutoTypingMap<String>, V, ?> closure) {
-        return new TaskCallable2<>(id, closure);
+        return new TaskCallable<>(id, closure);
     }
 
     private static ExceptionalFunction<AutoTypingMap<String>, Task, ?> convert(Task t) {
