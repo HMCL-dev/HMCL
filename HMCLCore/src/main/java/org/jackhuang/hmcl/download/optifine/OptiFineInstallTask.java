@@ -86,6 +86,7 @@ public final class OptiFineInstallTask extends TaskResult<Version> {
         if (version.getMainClass() == null || !version.getMainClass().startsWith("net.minecraft.launchwrapper."))
             libraries.add(0, new Library("net.minecraft", "launchwrapper", "1.12"));
 
+        // --tweakClass will be added in MaintainTask
         setResult(version
                 .setLibraries(Lang.merge(version.getLibraries(), libraries))
                 .setMainClass("net.minecraft.launchwrapper.Launch")

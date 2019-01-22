@@ -76,10 +76,11 @@ public final class LiteLoaderInstallTask extends TaskResult<Version> {
 
         Version tempVersion = version.setLibraries(Lang.merge(remote.getLibraries(), Collections.singleton(library)));
 
+        // --tweakClass will be added in MaintainTask
         setResult(version
                 .setMainClass("net.minecraft.launchwrapper.Launch")
                 .setLibraries(Lang.merge(tempVersion.getLibraries(), version.getLibraries()))
-                .setLogging(Collections.emptyMap())
+                .setLogging(Collections.emptyMap()) // Mods may log in malformed format, causing XML parser to crash. So we suppress using official log4j configuration
         );
 
         dependencies.add(dependencyManager.checkLibraryCompletionAsync(tempVersion));
