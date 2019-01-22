@@ -17,6 +17,13 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.util.ReflectionHelper;
+import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
+import org.jackhuang.hmcl.util.function.ExceptionalFunction;
+
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * A task that has a result.
  *
@@ -35,4 +42,62 @@ public abstract class TaskResult<V> extends Task {
     }
 
     public abstract String getId();
+
+    public <R, E extends Exception> TaskResult<R> thenResult(ExceptionalFunction<V, R, E> task) {
+        return thenResult(Schedulers.defaultScheduler(), task);
+    }
+
+    public <R, E extends Exception> TaskResult<R> thenResult(Scheduler scheduler, ExceptionalFunction<V, R, E> task) {
+        return thenResult(ReflectionHelper.getCaller().toString(), scheduler, task);
+    }
+
+    public <R, E extends Exception> TaskResult<R> thenResult(String id, Scheduler scheduler, ExceptionalFunction<V, R, E> task) {
+        return new Subtask<>(id, scheduler, task);
+    }
+
+    public <T extends Exception, K extends Exception> Task finalizedResult(Scheduler scheduler, ExceptionalConsumer<V, T> success, ExceptionalConsumer<Exception, K> failure) {
+        return finalized(scheduler, variables -> success.accept(getResult()), failure);
+    }
+
+    public Task finalizedResult(Scheduler scheduler, FinalizedCallback<V> callback) {
+        return new FinalizedTask(this, scheduler,
+                (variables, isDependentsSucceeded) -> callback.execute(getResult(), isDependentsSucceeded),
+                ReflectionHelper.getCaller().toString());
+    }
+
+    private class Subtask<R> extends TaskResult<R> {
+        private final String id;
+        private final Scheduler scheduler;
+        private final ExceptionalFunction<V, R, ?> callable;
+
+        public Subtask(String id, Scheduler scheduler, ExceptionalFunction<V, R, ?> callable) {
+            this.id = id;
+            this.scheduler = scheduler;
+            this.callable = callable;
+        }
+
+        @Override
+        public Collection<? extends Task> getDependents() {
+            return Collections.singleton(TaskResult.this);
+        }
+
+        @Override
+        public String getId() {
+            return id;
+        }
+
+        @Override
+        public Scheduler getScheduler() {
+            return scheduler;
+        }
+
+        @Override
+        public void execute() throws Exception {
+            setResult(callable.apply(TaskResult.this.getResult()));
+        }
+    }
+
+    public interface FinalizedCallback<V> {
+        void execute(V result, boolean isDependentsSucceeded) throws Exception;
+    }
 }

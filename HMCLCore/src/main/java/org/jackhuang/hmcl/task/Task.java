@@ -371,6 +371,10 @@ public abstract class Task {
         return new CoupleTask<>(null, b, true);
     }
 
+    public static <V> TaskResult<V> ofResult(Callable<V> callable) {
+        return ofResult("", callable);
+    }
+
     public static <V> TaskResult<V> ofResult(String id, Callable<V> callable) {
         return new TaskCallable<>(id, callable);
     }
