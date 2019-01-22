@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.io.Zipper;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -194,7 +195,7 @@ public class World {
     }
 
     private static CompoundTag parseLevelDat(Path path) throws IOException {
-        try (InputStream is = new GZIPInputStream(Files.newInputStream(path))) {
+        try (InputStream is = new BufferedInputStream(new GZIPInputStream(Files.newInputStream(path)))) {
             Tag nbt = NBTIO.readTag(is);
             if (nbt instanceof CompoundTag)
                 return (CompoundTag) nbt;
