@@ -207,7 +207,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                         else navLeft.getChildren().setAll(backNavButton);
                     });
 
-                    skinnable.showCloseAsHomeProperty().addListener((a, b, newValue) -> {
+                    FXUtils.onChangeAndOperate(skinnable.showCloseAsHomeProperty(), (newValue) -> {
                         if (newValue)
                             closeNavButton.setGraphic(SVG.home(Theme.foregroundFillBinding(), -1, -1));
                         else
