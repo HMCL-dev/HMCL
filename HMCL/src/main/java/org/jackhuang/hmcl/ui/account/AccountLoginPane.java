@@ -59,25 +59,19 @@ public class AccountLoginPane extends StackPane {
         String password = txtPassword.getText();
         progressBar.setVisible(true);
         lblCreationWarning.setText("");
-        Task.ofResult("login", () -> {
-            try {
-                return oldAccount.logInWithPassword(password);
-            } catch (Exception e) {
-                return e;
-            }
-        }).subscribe(Schedulers.javafx(), variable -> {
-            Object account = variable.get("login");
-            if (account instanceof AuthInfo) {
-                success.accept(((AuthInfo) account));
-                fireEvent(new DialogCloseEvent());
-            } else if (account instanceof NoSelectedCharacterException) {
-                fireEvent(new DialogCloseEvent());
-            } else if (account instanceof Exception) {
-                lblCreationWarning.setText(AddAccountPane.accountException((Exception) account));
-            }
-
-            progressBar.setVisible(false);
-        });
+        Task.ofResult(() -> oldAccount.logInWithPassword(password))
+                .finalizedResult(Schedulers.javafx(), authInfo -> {
+                    success.accept(authInfo);
+                    fireEvent(new DialogCloseEvent());
+                    progressBar.setVisible(false);
+                }, e -> {
+                    if (e instanceof NoSelectedCharacterException) {
+                        fireEvent(new DialogCloseEvent());
+                    } else {
+                        lblCreationWarning.setText(AddAccountPane.accountException(e));
+                    }
+                    progressBar.setVisible(false);
+                }).start();
     }
 
     @FXML

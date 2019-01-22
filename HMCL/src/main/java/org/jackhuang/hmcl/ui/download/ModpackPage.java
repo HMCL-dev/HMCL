@@ -109,10 +109,9 @@ public final class ModpackPage extends StackPane implements WizardPage {
         }
 
         spinnerPane.showSpinner();
-        Task.ofResult("encoding", () -> CompressingUtils.findSuitableEncoding(selectedFile.toPath()))
-                .then(Task.ofResult("manifest", var ->
-                        manifest = ModpackHelper.readModpackManifest(selectedFile.toPath(), var.get("encoding"))))
-                .finalized(Schedulers.javafx(), var -> {
+        Task.ofResult(() -> CompressingUtils.findSuitableEncoding(selectedFile.toPath()))
+                .thenResult(encoding -> manifest = ModpackHelper.readModpackManifest(selectedFile.toPath(), encoding))
+                .finalizedResult(Schedulers.javafx(), manifest -> {
                     spinnerPane.hideSpinner();
                     controller.getSettings().put(MODPACK_MANIFEST, manifest);
                     lblName.setText(manifest.getName());

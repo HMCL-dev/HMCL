@@ -119,16 +119,16 @@ public final class LeftPaneController extends AdvancedListBox {
                 if (repository.getVersionCount() == 0) {
                     File modpackFile = new File("modpack.zip").getAbsoluteFile();
                     if (modpackFile.exists()) {
-                        Task.ofResult("encoding", () -> CompressingUtils.findSuitableEncoding(modpackFile.toPath()))
-                                .then(Task.ofResult("modpack", var -> ModpackHelper.readModpackManifest(modpackFile.toPath(), var.get("encoding"))))
-                                .then(Task.of(var -> {
+                        Task.ofResult(() -> CompressingUtils.findSuitableEncoding(modpackFile.toPath()))
+                                .thenResult(encoding -> ModpackHelper.readModpackManifest(modpackFile.toPath(), encoding))
+                                .thenResult(modpack -> {
                                     AtomicReference<Region> region = new AtomicReference<>();
-                                    Modpack modpack = var.get("modpack");
                                     TaskExecutor executor = ModpackHelper.getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack)
                                             .with(Task.of(Schedulers.javafx(), this::checkAccount)).executor();
                                     region.set(Controllers.taskDialog(executor, i18n("modpack.installing")));
                                     executor.start();
-                                })).start();
+                                    return null;
+                                }).start();
                     }
                 }
             }
