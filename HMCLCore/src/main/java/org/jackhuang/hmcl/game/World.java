@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -202,20 +203,20 @@ public class World {
         }
     }
 
-    public static List<World> getWorlds(Path savesDir) {
-        List<World> worlds = new ArrayList<>();
+    public static Stream<World> getWorlds(Path savesDir) {
         try {
             if (Files.exists(savesDir))
-                for (Path world : Files.newDirectoryStream(savesDir)) {
+                return Files.list(savesDir).flatMap(world -> {
                     try {
-                        worlds.add(new World(world));
+                        return Stream.of(new World(world));
                     } catch (IOException | IllegalArgumentException e) {
                         Logging.LOG.log(Level.WARNING, "Failed to read world " + world, e);
+                        return Stream.empty();
                     }
-                }
+                });
         } catch (IOException e) {
             Logging.LOG.log(Level.WARNING, "Failed to read saves", e);
         }
-        return worlds;
+        return Stream.empty();
     }
 }

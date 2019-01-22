@@ -50,8 +50,13 @@ public class WorldListPage extends ListPage<WorldListItem> {
     public void loadVersion(Profile profile, String id) {
         this.savesDir = profile.getRepository().getRunDirectory(id).toPath().resolve("saves");
 
-        itemsProperty().setAll(World.getWorlds(savesDir).stream()
-                .map(WorldListItem::new).collect(Collectors.toList()));
+        setLoading(true);
+        Task.ofResult(() -> World.getWorlds(savesDir).parallel().collect(Collectors.toList()))
+                .finalizedResult(Schedulers.javafx(), (result, isDependentsSucceeded) -> {
+                    setLoading(false);
+                    if (isDependentsSucceeded)
+                        itemsProperty().setAll(result.stream().map(WorldListItem::new).collect(Collectors.toList()));
+                }).start();
     }
 
     @Override
@@ -65,28 +70,26 @@ public class WorldListPage extends ListPage<WorldListItem> {
         installWorld(res.get(0));
     }
 
-    public void installWorld(File zipFile) {
-        try {
-            // Only accept one world file because user is required to confirm the new world name
-            // Or too many input dialogs are popped.
-            World world = new World(zipFile.toPath());
-
-            Controllers.inputDialog(i18n("world.name.enter"), (name, resolve, reject) -> {
-                Task.of(() -> world.install(savesDir, name))
-                        .finalized(Schedulers.javafx(), var -> {
-                            itemsProperty().add(new WorldListItem(new World(savesDir.resolve(name))));
-                            resolve.run();
-                        }, e -> {
-                            if (e instanceof FileAlreadyExistsException)
-                                reject.accept(i18n("world.import.failed", i18n("world.import.already_exists")));
-                            else
-                                reject.accept(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
-                        }).start();
-            }).setInitialText(world.getWorldName());
-
-        } catch (IOException | IllegalArgumentException e) {
-            Logging.LOG.log(Level.WARNING, "Unable to parse world file " + zipFile, e);
-            Controllers.dialog(i18n("world.import.invalid"));
-        }
+    private void installWorld(File zipFile) {
+        // Only accept one world file because user is required to confirm the new world name
+        // Or too many input dialogs are popped.
+        Task.ofResult(() -> new World(zipFile.toPath()))
+                .finalizedResult(Schedulers.javafx(), world -> {
+                    Controllers.inputDialog(i18n("world.name.enter"), (name, resolve, reject) -> {
+                        Task.of(() -> world.install(savesDir, name))
+                                .finalized(Schedulers.javafx(), var -> {
+                                    itemsProperty().add(new WorldListItem(new World(savesDir.resolve(name))));
+                                    resolve.run();
+                                }, e -> {
+                                    if (e instanceof FileAlreadyExistsException)
+                                        reject.accept(i18n("world.import.failed", i18n("world.import.already_exists")));
+                                    else
+                                        reject.accept(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
+                                }).start();
+                    }).setInitialText(world.getWorldName());
+                }, e -> {
+                    Logging.LOG.log(Level.WARNING, "Unable to parse world file " + zipFile, e);
+                    Controllers.dialog(i18n("world.import.invalid"));
+                }).start();
     }
 }
