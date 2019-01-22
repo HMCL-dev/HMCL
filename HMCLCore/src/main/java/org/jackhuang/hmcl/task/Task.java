@@ -145,6 +145,10 @@ public abstract class Task {
         this.variables = variables;
     }
 
+    public boolean doPreExecute() {
+        return false;
+    }
+
     /**
      * @throws InterruptedException if current thread is interrupted
      * @see Thread#isInterrupted
@@ -156,6 +160,10 @@ public abstract class Task {
      * @see Thread#isInterrupted
      */
     public abstract void execute() throws Exception;
+
+    public boolean doPostExecute() {
+        return false;
+    }
 
     /**
      * @throws InterruptedException if current thread is interrupted

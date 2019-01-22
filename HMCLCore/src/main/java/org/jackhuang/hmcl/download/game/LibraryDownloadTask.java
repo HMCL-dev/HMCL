@@ -105,6 +105,11 @@ public class LibraryDownloadTask extends Task {
     }
 
     @Override
+    public boolean doPreExecute() {
+        return true;
+    }
+
+    @Override
     public void preExecute() throws Exception {
         Optional<Path> libPath = cacheRepository.getLibrary(originalLibrary);
         if (libPath.isPresent()) {
@@ -133,6 +138,11 @@ public class LibraryDownloadTask extends Task {
         } catch (IOException e) {
             throw new LibraryDownloadException(library, e);
         }
+    }
+
+    @Override
+    public boolean doPostExecute() {
+        return true;
     }
 
     @Override

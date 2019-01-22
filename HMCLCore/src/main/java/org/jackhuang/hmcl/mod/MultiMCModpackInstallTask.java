@@ -97,6 +97,11 @@ public final class MultiMCModpackInstallTask extends Task {
     }
 
     @Override
+    public boolean doPreExecute() {
+        return true;
+    }
+
+    @Override
     public void preExecute() throws Exception {
         File run = repository.getRunDirectory(name);
         File json = repository.getModpackConfiguration(name);

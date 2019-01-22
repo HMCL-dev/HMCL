@@ -65,6 +65,11 @@ public class ModpackUpdateTask extends Task {
     }
 
     @Override
+    public boolean doPostExecute() {
+        return true;
+    }
+
+    @Override
     public void postExecute() throws Exception {
         if (isDependenciesSucceeded()) {
             // Keep backup game version for further repair.
