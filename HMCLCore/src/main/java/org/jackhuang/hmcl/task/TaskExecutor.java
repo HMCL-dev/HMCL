@@ -211,6 +211,7 @@ public final class TaskExecutor {
             task.onDone().fireEvent(new TaskEvent(this, task, false));
             taskListeners.forEach(it -> it.onFinished(task));
         } catch (InterruptedException e) {
+            task.setLastException(e);
             if (task.getSignificance().shouldLog()) {
                 Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName());
             }

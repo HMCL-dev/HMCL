@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.task;
 
 import javafx.application.Platform;
-import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.ReadOnlyDoubleWrapper;
-import javafx.beans.property.ReadOnlyStringProperty;
-import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.*;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.AutoTypingMap;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
@@ -58,14 +55,18 @@ public abstract class Task {
         this.significance = significance;
     }
 
-    private TaskState state = TaskState.READY;
+    private ReadOnlyObjectWrapper<TaskState> state = new ReadOnlyObjectWrapper<>(this, "state", TaskState.READY);
 
     public TaskState getState() {
-        return state;
+        return state.get();
     }
 
     void setState(TaskState state) {
-        this.state = state;
+        this.state.setValue(state);
+    }
+
+    public ReadOnlyObjectProperty<TaskState> stateProperty() {
+        return state.getReadOnlyProperty();
     }
 
     private Throwable lastException = null;

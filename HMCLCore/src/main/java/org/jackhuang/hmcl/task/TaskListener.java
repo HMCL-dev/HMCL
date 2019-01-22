@@ -38,6 +38,7 @@ public abstract class TaskListener implements EventListener {
     }
 
     public void onFailed(Task task, Throwable throwable) {
+        onFinished(task);
     }
 
     public void onStop(boolean success, TaskExecutor executor) {
