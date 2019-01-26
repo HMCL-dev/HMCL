@@ -32,6 +32,7 @@
                 <JFXComboBox fx:id="cboServers" promptText="%account.injector.empty" maxHeight="25" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 
                 <HBox GridPane.columnIndex="2" GridPane.rowIndex="1" spacing="8">
+                    <HBox fx:id="linksContainer" alignment="CENTER_LEFT"/>
                     <JFXButton fx:id="btnAddServer" styleClass="toggle-icon4" onMouseClicked="#onAddInjecterServer">
                         <graphic>
                             <javafx.scene.shape.SVGPath content="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />

@@ -21,7 +21,10 @@ import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.*;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.ListProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Hyperlink;
@@ -45,11 +48,15 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.javafx.MultiStepBinding;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 
+import static java.util.Collections.unmodifiableList;
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.*;
@@ -64,12 +71,13 @@ public class AddAccountPane extends StackPane {
     @FXML private JFXComboBox<AccountFactory<?>> cboType;
     @FXML private JFXComboBox<AuthlibInjectorServer> cboServers;
     @FXML private Label lblInjectorServer;
-    @FXML private Hyperlink linkManageInjectorServers;
-    @FXML private JFXDialogLayout layout;
     @FXML private JFXButton btnAccept;
     @FXML private JFXButton btnAddServer;
     @FXML private JFXButton btnManageServer;
     @FXML private SpinnerPane acceptPane;
+    @FXML private HBox linksContainer;
+
+    private ListProperty<Hyperlink> links = new SimpleListProperty<>();;
 
     public AddAccountPane() {
         FXUtils.loadFXML(this, "/assets/fxml/account-add.fxml");
@@ -118,6 +126,30 @@ public class AddAccountPane extends StackPane {
                 txtUsername.textProperty(),
                 txtPassword.textProperty(), txtPassword.visibleProperty(),
                 cboServers.getSelectionModel().selectedItemProperty(), cboServers.visibleProperty()));
+
+        // authlib-injector links
+        links.bind(MultiStepBinding.of(cboServers.getSelectionModel().selectedItemProperty())
+                .map(AddAccountPane::createHyperlinks)
+                .map(FXCollections::observableList));
+        Bindings.bindContent(linksContainer.getChildren(), links);
+        linksContainer.visibleProperty().bind(cboServers.visibleProperty());
+    }
+
+    private static final String[] ALLOWED_LINKS = { "register" };
+
+    public static List<Hyperlink> createHyperlinks(AuthlibInjectorServer server) {
+        Map<String, String> links = server.getLinks();
+        List<Hyperlink> result = new ArrayList<>();
+        for (String key : ALLOWED_LINKS) {
+            String value = links.get(key);
+            if (value != null) {
+                Hyperlink link = new Hyperlink(i18n("account.injector.link." + key));
+                FXUtils.installSlowTooltip(link, value);
+                link.setOnAction(e -> FXUtils.openLink(value));
+                result.add(link);
+            }
+        }
+        return unmodifiableList(result);
     }
 
     /**

@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.auth.authlibinjector;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.emptyMap;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.io.IOUtils.readFullyAsByteArray;
@@ -29,6 +30,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 
@@ -137,6 +140,7 @@ public class AuthlibInjectorServer implements Observable {
 
     @Nullable
     private transient String name;
+    private transient Map<String, String> links = emptyMap();
 
     private transient boolean metadataRefreshed;
     private transient ObservableHelper helper = new ObservableHelper(this);
@@ -160,6 +164,10 @@ public class AuthlibInjectorServer implements Observable {
     public String getName() {
         return Optional.ofNullable(name)
                 .orElse(url);
+    }
+
+    public Map<String, String> getLinks() {
+        return links;
     }
 
     public String fetchMetadataResponse() throws IOException {
@@ -201,6 +209,16 @@ public class AuthlibInjectorServer implements Observable {
 
             this.name = metaObject.flatMap(meta -> tryCast(meta.get("serverName"), JsonPrimitive.class).map(JsonPrimitive::getAsString))
                     .orElse(null);
+            this.links = metaObject.flatMap(meta -> tryCast(meta.get("links"), JsonObject.class))
+                    .map(linksObject -> {
+                        Map<String, String> converted = new LinkedHashMap<>();
+                        linksObject.entrySet().forEach(
+                                entry -> tryCast(entry.getValue(), JsonPrimitive.class).ifPresent(element -> {
+                                    converted.put(entry.getKey(), element.getAsString());
+                                }));
+                        return converted;
+                    })
+                    .orElse(emptyMap());
         }
     }
 
