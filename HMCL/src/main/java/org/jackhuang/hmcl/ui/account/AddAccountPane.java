@@ -56,6 +56,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -138,6 +139,10 @@ public class AddAccountPane extends StackPane {
     private static final String[] ALLOWED_LINKS = { "register" };
 
     public static List<Hyperlink> createHyperlinks(AuthlibInjectorServer server) {
+        if (server == null) {
+            return emptyList();
+        }
+
         Map<String, String> links = server.getLinks();
         List<Hyperlink> result = new ArrayList<>();
         for (String key : ALLOWED_LINKS) {
