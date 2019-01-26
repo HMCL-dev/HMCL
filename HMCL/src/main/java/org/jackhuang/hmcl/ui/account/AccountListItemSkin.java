@@ -21,9 +21,12 @@ import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
+
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -36,6 +39,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 
 public class AccountListItemSkin extends SkinBase<AccountListItem> {
 
@@ -69,7 +73,10 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         subtitle.getStyleClass().add("subtitle");
         subtitle.textProperty().bind(skinnable.subtitleProperty());
         if (skinnable.getAccount() instanceof AuthlibInjectorAccount) {
-            FXUtils.installTooltip(subtitle, ((AuthlibInjectorAccount) skinnable.getAccount()).getServer().toString());
+            Tooltip tooltip = new Tooltip();
+            AuthlibInjectorServer server = ((AuthlibInjectorAccount) skinnable.getAccount()).getServer();
+            tooltip.textProperty().bind(Bindings.createStringBinding(server::toString, server));
+            FXUtils.installSlowTooltip(subtitle, tooltip);
         }
         VBox item = new VBox(title, subtitle);
         item.getStyleClass().add("two-line-list-item");
@@ -84,7 +91,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         btnRefresh.setOnMouseClicked(e -> skinnable.refresh());
         btnRefresh.getStyleClass().add("toggle-icon4");
         btnRefresh.setGraphic(SVG.refresh(Theme.blackFillBinding(), -1, -1));
-        JFXUtilities.runInFX(() -> FXUtils.installTooltip(btnRefresh, i18n("button.refresh")));
+        JFXUtilities.runInFX(() -> FXUtils.installFastTooltip(btnRefresh, i18n("button.refresh")));
         right.getChildren().add(btnRefresh);
 
         JFXButton btnRemove = new JFXButton();
@@ -92,7 +99,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
         btnRemove.setGraphic(SVG.delete(Theme.blackFillBinding(), -1, -1));
-        JFXUtilities.runInFX(() -> FXUtils.installTooltip(btnRemove, i18n("button.delete")));
+        JFXUtilities.runInFX(() -> FXUtils.installFastTooltip(btnRemove, i18n("button.delete")));
         right.getChildren().add(btnRemove);
         root.setRight(right);
 

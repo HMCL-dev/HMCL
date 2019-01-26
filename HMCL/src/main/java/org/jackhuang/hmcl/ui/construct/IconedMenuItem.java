@@ -30,7 +30,7 @@ public class IconedMenuItem extends IconedItem {
     }
 
     public IconedMenuItem addTooltip(String tooltip) {
-        FXUtils.installTooltip(this, tooltip);
+        FXUtils.installFastTooltip(this, tooltip);
         return this;
     }
 }

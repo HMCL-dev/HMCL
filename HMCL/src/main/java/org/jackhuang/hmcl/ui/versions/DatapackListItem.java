@@ -44,7 +44,7 @@ public class DatapackListItem extends BorderPane {
         setCenter(modItem);
 
         JFXButton btnRemove = new JFXButton();
-        FXUtils.installTooltip(btnRemove, i18n("datapack.remove"));
+        FXUtils.installFastTooltip(btnRemove, i18n("datapack.remove"));
         btnRemove.setOnMouseClicked(e -> deleteCallback.accept(this));
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
