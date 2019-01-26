@@ -104,20 +104,24 @@
     -fx-padding: 4 0 4 0;
 }
 
+.two-line-list-item > .title {
+	-fx-text-fill: black;
+	-fx-font-size: 15px;
+}
+
+.two-line-list-item > .subtitle {
+	-fx-text-fill: gray;
+}
+
 .bubble {
     -fx-background-color: gray;
     -fx-background-radius: 2px;
+    -fx-text-fill: white;
 }
 
-.bubble .two-line-list-item {
-    -jfx-title-fill: white;
-    -jfx-subtitle-fill: white;
-}
-
-.two-line-list-item {
-    -jfx-title-font-size: 15px;
-    -jfx-title-fill: black;
-    -jfx-subtitle-fill: gray;
+.bubble .two-line-list-item > .title,
+.bubble .two-line-list-item > .subtitle {
+	-fx-text-fill: white;
 }
 
 .window-title-bar .separator {
@@ -678,20 +682,12 @@
 *                                                                              *
 *******************************************************************************/
 
-.jfx-list-cell:odd,
-.jfx-list-cell:even,
-.list-cell:odd,
-.list-cell:even {
+.jfx-list-cell, .list-cell {
     -fx-background-color: WHITE;
 }
 
-.list-cell:selected, .jfx-list-cell:selected {
-    -fx-background-insets: 0.0;
-    -fx-text-fill: BLACK;
-}
-
-.jfx-list-cell:filled:hover,
-.jfx-list-cell:selected .label {
+.list-cell:selected, .jfx-list-cell:selected,
+.list-cell:hover, .jfx-list-cell:hover {
     -fx-text-fill: black;
 }
 
@@ -1109,29 +1105,8 @@
     -fx-fill: #D34336;
 }
 
-.combo-box-popup .list-view .jfx-list-cell .label,
-.combo-box-popup .list-view .jfx-list-cell:filled:hover .label {
-    -fx-text-fill: BLACK;
-}
-
-.combo-box-popup .list-view .jfx-list-cell .custom-jfx-list-view-icon,
-.combo-box-popup .list-view .jfx-list-cell:filled:hover .custom-jfx-list-view-icon,
-.combo-box-popup .list-view .jfx-list-cell:selected .custom-jfx-list-view-icon {
-    -fx-fill: -fx-base-color;
-}
-
-.combo-box-popup .list-view .jfx-list-cell:odd:selected > .jfx-rippler > StackPane,
-.combo-box-popup .list-view .jfx-list-cell:even:selected > .jfx-rippler > StackPane {
-    -fx-background-color: rgba(0.0, 0.0, 255.0, 0.2);
-}
-
 .combo-box-popup .list-view .jfx-list-cell {
     -fx-background-insets: 0.0;
-}
-
-.combo-box-popup .list-view .jfx-list-cell:odd,
-.combo-box-popup .list-view .jfx-list-cell:even {
-    -fx-background-color: WHITE;
 }
 
 .combo-box-popup .list-view .jfx-list-cell .jfx-rippler {

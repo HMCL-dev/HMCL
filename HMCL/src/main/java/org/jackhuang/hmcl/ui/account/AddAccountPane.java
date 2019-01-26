@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.*;
+
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.fxml.FXML;

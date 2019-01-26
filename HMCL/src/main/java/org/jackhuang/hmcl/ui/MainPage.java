@@ -87,11 +87,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 lblIcon.setGraphic(SVG.update(Theme.whiteFillBinding(), 20, 20));
 
                 TwoLineListItem prompt = new TwoLineListItem();
-                prompt.setTitleFill(Color.WHITE);
-                prompt.setSubtitleFill(Color.WHITE);
                 prompt.setSubtitle(i18n("update.bubble.subtitle"));
                 prompt.setPickOnBounds(false);
-                prompt.setStyle("-jfx-title-font-weight: BOLD;");
                 prompt.titleProperty().bind(latestVersionProperty());
 
                 hBox.getChildren().setAll(lblIcon, prompt);
