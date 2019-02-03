@@ -29,6 +29,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -118,14 +120,6 @@ public final class ConfigHolder {
         return new Config();
     }
 
-    private static InvocationDispatcher<String> configWriter = InvocationDispatcher.runOn(Lang::thread, content -> {
-        try {
-            writeToConfig(content);
-        } catch (IOException e) {
-            LOG.log(Level.SEVERE, "Failed to save config", e);
-        }
-    });
-
     private static void writeToConfig(String content) throws IOException {
         LOG.info("Saving config");
         synchronized (configLocation) {
@@ -133,8 +127,30 @@ public final class ConfigHolder {
         }
     }
 
+    // Ensure sequential execution of threads
+    private static ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+    // Ensure sequential execution of threads
+    private static class ConfigWriteThread implements Runnable {
+        String content;
+
+        ConfigWriteThread(String content) {
+            this.content = content;
+        }
+
+        @Override
+        public void run() {
+            try {
+                writeToConfig(content);
+            } catch (IOException e) {
+                LOG.log(Level.SEVERE, "Failed to save config", e);
+            }
+        }
+    }
+
     static void markConfigDirty() {
-        configWriter.accept(configInstance.toJson());
+        // Ensure sequential execution of threads
+        executorService.execute(new ConfigWriteThread(configInstance.toJson()));
     }
 
     private static void saveConfigSync() throws IOException {
