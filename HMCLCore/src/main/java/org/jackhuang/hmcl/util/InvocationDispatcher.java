@@ -33,7 +33,9 @@ public class InvocationDispatcher<ARG> implements Consumer<ARG> {
 
     public static <ARG> InvocationDispatcher<ARG> runOn(Consumer<Runnable> executor, Consumer<ARG> action) {
         return new InvocationDispatcher<>(arg -> executor.accept(() -> {
-            action.accept(arg.get());
+            synchronized (action) {
+                action.accept(arg.get());
+            }
         }));
     }
 
