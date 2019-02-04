@@ -110,7 +110,7 @@ public class YggdrasilService {
         if (characterToSelect != null) {
             if (response.getSelectedProfile() == null ||
                     !response.getSelectedProfile().getId().equals(characterToSelect.getId())) {
-                throw new AuthenticationException("Failed to select character");
+                throw new ServerResponseMalformedException("Failed to select character");
             }
         }
 

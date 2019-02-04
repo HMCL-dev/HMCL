@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.auth.CharacterDeletedException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.NoCharacterException;
+import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
 public class YggdrasilAccount extends Account {
@@ -65,6 +66,7 @@ public class YggdrasilAccount extends Account {
                     acquiredSession.getAccessToken(),
                     acquiredSession.getClientToken(),
                     characterToSelect);
+            // response validity has been checked in refresh()
         } else {
             session = acquiredSession;
         }
@@ -94,8 +96,9 @@ public class YggdrasilAccount extends Account {
             if (service.validate(session.getAccessToken(), session.getClientToken())) {
                 authenticated = true;
             } else {
+                YggdrasilSession acquiredSession;
                 try {
-                    session = service.refresh(session.getAccessToken(), session.getClientToken(), null);
+                    acquiredSession = service.refresh(session.getAccessToken(), session.getClientToken(), null);
                 } catch (RemoteAuthenticationException e) {
                     if ("ForbiddenOperationException".equals(e.getRemoteName())) {
                         throw new CredentialExpiredException(e);
@@ -103,6 +106,12 @@ public class YggdrasilAccount extends Account {
                         throw e;
                     }
                 }
+                if (acquiredSession.getSelectedProfile() == null ||
+                        !acquiredSession.getSelectedProfile().getId().equals(characterUUID)) {
+                    throw new ServerResponseMalformedException("Selected profile changed");
+                }
+
+                session = acquiredSession;
 
                 authenticated = true;
                 invalidate();
