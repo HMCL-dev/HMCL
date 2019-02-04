@@ -60,16 +60,7 @@
                         <Label text="%settings.advanced.launcher_visible" BorderPane.alignment="CENTER_LEFT"/>
                     </left>
                     <right>
-                        <JFXComboBox fx:id="cboLauncherVisibility" BorderPane.alignment="CENTER_RIGHT" FXUtils.limitWidth="300">
-                            <items>
-                                <FXCollections fx:factory="observableArrayList">
-                                    <Label text="%settings.advanced.launcher_visibility.close"/>
-                                    <Label text="%settings.advanced.launcher_visibility.hide"/>
-                                    <Label text="%settings.advanced.launcher_visibility.keep"/>
-                                    <Label text="%settings.advanced.launcher_visibility.hide_reopen"/>
-                                </FXCollections>
-                            </items>
-                        </JFXComboBox>
+                        <JFXComboBox fx:id="cboLauncherVisibility" BorderPane.alignment="CENTER_RIGHT" FXUtils.limitWidth="300" />
                     </right>
                 </BorderPane>
 
