@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,14 +144,20 @@ public class AuthlibInjectorServer implements Observable {
     private transient Map<String, String> links = emptyMap();
 
     private transient boolean metadataRefreshed;
-    private transient ObservableHelper helper = new ObservableHelper(this);
+    private final transient ObservableHelper helper = new ObservableHelper(this);
+    private final transient YggdrasilService yggdrasilService;
 
     public AuthlibInjectorServer(String url) {
         this.url = url;
+        this.yggdrasilService = new YggdrasilService(new AuthlibInjectorProvider(url));
     }
 
     public String getUrl() {
         return url;
+    }
+
+    public YggdrasilService getYggdrasilService() {
+        return yggdrasilService;
     }
 
     public Optional<String> getMetadataResponse() {
@@ -220,6 +227,10 @@ public class AuthlibInjectorServer implements Observable {
                     })
                     .orElse(emptyMap());
         }
+    }
+
+    public void invalidateMetadataCache() {
+        metadataRefreshed = false;
     }
 
     @Override

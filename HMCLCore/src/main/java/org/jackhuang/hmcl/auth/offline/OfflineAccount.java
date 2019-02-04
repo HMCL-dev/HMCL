@@ -25,10 +25,10 @@ import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
@@ -41,15 +41,13 @@ public class OfflineAccount extends Account {
     private final String username;
     private final UUID uuid;
 
-    OfflineAccount(String username, UUID uuid) {
-        Objects.requireNonNull(username);
-        Objects.requireNonNull(uuid);
+    protected OfflineAccount(String username, UUID uuid) {
+        this.username = requireNonNull(username);
+        this.uuid = requireNonNull(uuid);
 
-        this.username = username;
-        this.uuid = uuid;
-
-        if (StringUtils.isBlank(username))
+        if (StringUtils.isBlank(username)) {
             throw new IllegalArgumentException("Username cannot be blank");
+        }
     }
 
     @Override
@@ -68,10 +66,7 @@ public class OfflineAccount extends Account {
     }
 
     @Override
-    public AuthInfo logIn() throws AuthenticationException {
-        if (StringUtils.isBlank(username))
-            throw new AuthenticationException("Username cannot be empty");
-
+    public AuthInfo logIn() {
         return new AuthInfo(username, uuid, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), "{}");
     }
 
@@ -82,7 +77,7 @@ public class OfflineAccount extends Account {
 
     @Override
     public Optional<AuthInfo> playOffline() {
-        return Optional.empty();
+        return Optional.of(logIn());
     }
 
     @Override
@@ -91,11 +86,6 @@ public class OfflineAccount extends Account {
                 pair("uuid", UUIDTypeAdapter.fromUUID(uuid)),
                 pair("username", username)
         );
-    }
-
-    @Override
-    public void clearCache() {
-        // Nothing to clear.
     }
 
     @Override

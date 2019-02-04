@@ -29,7 +29,6 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -39,23 +38,20 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.game.AccountHelper;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.javafx.MultiStepBinding;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.logging.Level;
-
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Objects.requireNonNull;
@@ -89,7 +85,7 @@ public class AddAccountPane extends StackPane {
         cboServers.getItems().addListener(onInvalidating(this::selectDefaultServer));
         selectDefaultServer();
 
-        cboType.getItems().setAll(Accounts.FACTORY_OFFLINE, Accounts.FACTORY_YGGDRASIL, Accounts.FACTORY_AUTHLIB_INJECTOR);
+        cboType.getItems().setAll(Accounts.FACTORY_OFFLINE, Accounts.FACTORY_MOJANG, Accounts.FACTORY_AUTHLIB_INJECTOR);
         cboType.setConverter(stringConverter(Accounts::getLocalizedLoginTypeName));
         // try selecting the preferred login type
         cboType.getSelectionModel().select(
@@ -268,24 +264,11 @@ public class AddAccountPane extends StackPane {
         }
 
         @Override
-        public GameProfile select(Account account, List<GameProfile> names) throws NoSelectedCharacterException {
-            if (!(account instanceof YggdrasilAccount))
-                return CharacterSelector.DEFAULT.select(account, names);
-            YggdrasilAccount yggdrasilAccount = (YggdrasilAccount) account;
-
-            for (GameProfile profile : names) {
-                Image image;
-                final int scaleRatio = 4;
-                try {
-                    image = AccountHelper.getSkinImmediately(yggdrasilAccount, profile, scaleRatio);
-                } catch (Exception e) {
-                    Logging.LOG.log(Level.WARNING, "Failed to get skin for " + profile.getName(), e);
-                    image = AccountHelper.getDefaultSkin(profile.getId(), scaleRatio);
-                }
-
+        public GameProfile select(YggdrasilService service, List<GameProfile> profiles) throws NoSelectedCharacterException {
+            for (GameProfile profile : profiles) {
                 ImageView portraitView = new ImageView();
                 portraitView.setSmooth(false);
-                portraitView.setImage(AccountHelper.getHead(image, scaleRatio));
+                portraitView.imageProperty().bind(TexturesLoader.fxAvatarBinding(service, profile.getId(), 32));
                 FXUtils.limitSize(portraitView, 32, 32);
 
                 IconedItem accountItem = new IconedItem(portraitView, profile.getName());
@@ -302,11 +285,11 @@ public class AddAccountPane extends StackPane {
                 latch.await();
 
                 if (selectedProfile == null)
-                    throw new NoSelectedCharacterException(account);
+                    throw new NoSelectedCharacterException();
 
                 return selectedProfile;
             } catch (InterruptedException ignore) {
-                throw new NoSelectedCharacterException(account);
+                throw new NoSelectedCharacterException();
             } finally {
                 JFXUtilities.runInFX(() -> Selector.this.fireEvent(new DialogCloseEvent()));
             }

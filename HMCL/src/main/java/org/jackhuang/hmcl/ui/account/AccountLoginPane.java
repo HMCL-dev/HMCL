@@ -37,8 +37,7 @@ public class AccountLoginPane extends StackPane {
     private final Consumer<AuthInfo> success;
     private final Runnable failed;
 
-    @FXML
-    private Label lblUsername;
+    @FXML private Label lblUsername;
     @FXML private JFXPasswordField txtPassword;
     @FXML private Label lblCreationWarning;
     @FXML private JFXProgressBar progressBar;

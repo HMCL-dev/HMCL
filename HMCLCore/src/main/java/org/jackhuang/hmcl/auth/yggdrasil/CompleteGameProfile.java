@@ -19,44 +19,41 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Map;
 import java.util.UUID;
 
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
-import org.jackhuang.hmcl.util.gson.Validation;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 
 /**
- * @author huangyuhui
+ * @author yushijinhun
  */
 @Immutable
-public class GameProfile implements Validation {
+public class CompleteGameProfile extends GameProfile {
 
-    @JsonAdapter(UUIDTypeAdapter.class)
-    private final UUID id;
+    @JsonAdapter(PropertyMapSerializer.class)
+    private final Map<String, String> properties;
 
-    private final String name;
-
-    public GameProfile(UUID id, String name) {
-        this.id = requireNonNull(id);
-        this.name = requireNonNull(name);
+    public CompleteGameProfile(UUID id, String name, Map<String, String> properties) {
+        super(id, name);
+        this.properties = requireNonNull(properties);
     }
 
-    public UUID getId() {
-        return id;
+    public CompleteGameProfile(GameProfile profile, Map<String, String> properties) {
+        this(profile.getId(), profile.getName(), properties);
     }
 
-    public String getName() {
-        return name;
+    public Map<String, String> getProperties() {
+        return properties;
     }
 
     @Override
     public void validate() throws JsonParseException {
-        if (id == null)
-            throw new JsonParseException("Game profile id cannot be null");
-        if (name == null)
-            throw new JsonParseException("Game profile name cannot be null");
+        super.validate();
+
+        if (properties == null)
+            throw new JsonParseException("Game profile properties cannot be null");
     }
 }

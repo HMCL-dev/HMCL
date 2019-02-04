@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.authlibinjector.SimpleAuthlibInjectorArtifactProvider;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
-import org.jackhuang.hmcl.auth.yggdrasil.MojangYggdrasilProvider;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -63,7 +62,7 @@ public final class Accounts {
     private Accounts() {}
 
     public static final OfflineAccountFactory FACTORY_OFFLINE = OfflineAccountFactory.INSTANCE;
-    public static final YggdrasilAccountFactory FACTORY_YGGDRASIL = new YggdrasilAccountFactory(MojangYggdrasilProvider.INSTANCE);
+    public static final YggdrasilAccountFactory FACTORY_MOJANG = YggdrasilAccountFactory.MOJANG;
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(createAuthlibInjectorArtifactProvider(), Accounts::getOrCreateAuthlibInjectorServer);
 
     // ==== login type / account factory mapping ====
@@ -71,7 +70,7 @@ public final class Accounts {
     private static final Map<AccountFactory<?>, String> factory2type = new HashMap<>();
     static {
         type2factory.put("offline", FACTORY_OFFLINE);
-        type2factory.put("yggdrasil", FACTORY_YGGDRASIL);
+        type2factory.put("yggdrasil", FACTORY_MOJANG);
         type2factory.put("authlibInjector", FACTORY_AUTHLIB_INJECTOR);
 
         type2factory.forEach((type, factory) -> factory2type.put(factory, type));
@@ -94,7 +93,7 @@ public final class Accounts {
         else if (account instanceof AuthlibInjectorAccount)
             return FACTORY_AUTHLIB_INJECTOR;
         else if (account instanceof YggdrasilAccount)
-            return FACTORY_YGGDRASIL;
+            return FACTORY_MOJANG;
         else
             throw new IllegalArgumentException("Failed to determine account type: " + account);
     }
@@ -279,7 +278,7 @@ public final class Accounts {
     // ==== Login type name i18n ===
     private static Map<AccountFactory<?>, String> unlocalizedLoginTypeNames = mapOf(
             pair(Accounts.FACTORY_OFFLINE, "account.methods.offline"),
-            pair(Accounts.FACTORY_YGGDRASIL, "account.methods.yggdrasil"),
+            pair(Accounts.FACTORY_MOJANG, "account.methods.yggdrasil"),
             pair(Accounts.FACTORY_AUTHLIB_INJECTOR, "account.methods.authlib_injector"));
 
     public static String getLocalizedLoginTypeName(AccountFactory<?> factory) {

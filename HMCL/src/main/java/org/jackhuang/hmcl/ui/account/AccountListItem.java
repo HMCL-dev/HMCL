@@ -25,10 +25,8 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.game.AccountHelper;
+import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.task.Schedulers;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -56,11 +54,7 @@ public class AccountListItem extends RadioButton {
             title.set(account.getUsername() + " - " + account.getCharacter());
         subtitle.set(subtitleString.toString());
 
-        final int scaleRatio = 4;
-        Image image = account instanceof YggdrasilAccount ?
-                AccountHelper.getSkin((YggdrasilAccount) account, scaleRatio) :
-                AccountHelper.getDefaultSkin(account.getUUID(), scaleRatio);
-        this.image.set(AccountHelper.getHead(image, scaleRatio));
+        image.bind(TexturesLoader.fxAvatarBinding(account, 32));
     }
 
     @Override
@@ -69,19 +63,7 @@ public class AccountListItem extends RadioButton {
     }
 
     public void refresh() {
-        if (account instanceof YggdrasilAccount) {
-            // progressBar.setVisible(true);
-            AccountHelper.refreshSkinAsync((YggdrasilAccount) account)
-                    .finalized(Schedulers.javafx(), (variables, isDependentsSucceeded) -> {
-                        // progressBar.setVisible(false);
-
-                        if (isDependentsSucceeded) {
-                            final int scaleRatio = 4;
-                            Image image = AccountHelper.getSkin((YggdrasilAccount) account, scaleRatio);
-                            this.image.set(AccountHelper.getHead(image, scaleRatio));
-                        }
-                    }).start();
-        }
+        account.clearCache();
     }
 
     public void remove() {

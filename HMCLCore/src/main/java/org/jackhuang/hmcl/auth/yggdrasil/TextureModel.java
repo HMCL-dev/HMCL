@@ -15,13 +15,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.auth;
+package org.jackhuang.hmcl.auth.yggdrasil;
 
-/**
- * This exception gets threw when authenticating a yggdrasil account and there is no valid character.
- * (A account may hold more than one characters.)
- */
-public final class NoCharacterException extends AuthenticationException {
-    public NoCharacterException() {
+import java.util.Map;
+import java.util.UUID;
+
+public enum TextureModel {
+    STEVE("default"), ALEX("slim");
+
+    public final String modelName;
+
+    private TextureModel(String modelName) {
+        this.modelName = modelName;
+    }
+
+    public static TextureModel detectModelName(Map<String, String> metadata) {
+        if (metadata != null && "slim".equals(metadata.get("model"))) {
+            return ALEX;
+        } else {
+            return STEVE;
+        }
+    }
+
+    public static TextureModel detectUUID(UUID uuid) {
+        return (uuid.hashCode() & 1) == 1 ? ALEX : STEVE;
     }
 }

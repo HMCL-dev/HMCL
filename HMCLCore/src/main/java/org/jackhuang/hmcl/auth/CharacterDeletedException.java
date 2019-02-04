@@ -17,27 +17,10 @@
  */
 package org.jackhuang.hmcl.auth;
 
-import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
-
-import java.util.List;
-import java.util.UUID;
-
 /**
- * Select character by name.
+ * Thrown when a previously existing character cannot be found.
  */
-public class SpecificCharacterSelector implements CharacterSelector {
-    private UUID uuid;
-
-    /**
-     * Constructor.
-     * @param uuid character's uuid.
-     */
-    public SpecificCharacterSelector(UUID uuid) {
-        this.uuid = uuid;
-    }
-
-    @Override
-    public GameProfile select(Account account, List<GameProfile> names) throws NoSelectedCharacterException {
-        return names.stream().filter(profile -> profile.getId().equals(uuid)).findAny().orElseThrow(() -> new NoSelectedCharacterException(account));
+public final class CharacterDeletedException extends AuthenticationException {
+    public CharacterDeletedException() {
     }
 }

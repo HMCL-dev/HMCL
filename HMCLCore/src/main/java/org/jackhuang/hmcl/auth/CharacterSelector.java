@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.auth;
 
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 
 import java.util.List;
 
@@ -33,7 +34,6 @@ public interface CharacterSelector {
      * @throws NoSelectedCharacterException if cannot select any character may because user close the selection window or cancel the selection.
      * @return your choice of game profile.
      */
-    GameProfile select(Account account, List<GameProfile> names) throws NoSelectedCharacterException;
+    GameProfile select(YggdrasilService yggdrasilService, List<GameProfile> names) throws NoSelectedCharacterException;
 
-    CharacterSelector DEFAULT = (account, names) -> names.stream().findFirst().orElseThrow(() -> new NoSelectedCharacterException(account));
 }

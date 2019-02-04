@@ -33,6 +33,10 @@ public class ObservableHelper implements Observable, InvalidationListener {
     private List<InvalidationListener> listeners = new CopyOnWriteArrayList<>();
     private Observable source;
 
+    public ObservableHelper() {
+        this.source = this;
+    }
+
     public ObservableHelper(Observable source) {
         this.source = source;
     }

@@ -20,11 +20,9 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 
@@ -34,10 +32,12 @@ import static org.jackhuang.hmcl.util.Lang.tryCast;
  */
 public class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
 
-    private final YggdrasilProvider provider;
+    public static final YggdrasilAccountFactory MOJANG = new YggdrasilAccountFactory(YggdrasilService.MOJANG);
 
-    public YggdrasilAccountFactory(YggdrasilProvider provider) {
-        this.provider = provider;
+    private YggdrasilService service;
+
+    public YggdrasilAccountFactory(YggdrasilService service) {
+        this.service = service;
     }
 
     @Override
@@ -46,9 +46,7 @@ public class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
         Objects.requireNonNull(username);
         Objects.requireNonNull(password);
 
-        YggdrasilAccount account = new YggdrasilAccount(new YggdrasilService(provider), username, null, null);
-        account.logInWithPassword(password, selector);
-        return account;
+        return new YggdrasilAccount(service, username, password, selector);
     }
 
     @Override
@@ -60,10 +58,14 @@ public class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
         String username = tryCast(storage.get("username"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have username"));
 
-        return new YggdrasilAccount(new YggdrasilService(provider), username, session.getSelectedProfile().getId(), session);
-    }
+        tryCast(storage.get("profileProperties"), Map.class).ifPresent(
+                it -> {
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> properties = it;
+                    GameProfile selected = session.getSelectedProfile();
+                    service.getProfileRepository().put(selected.getId(), new CompleteGameProfile(selected, properties));
+                });
 
-    public static String randomToken() {
-        return UUIDTypeAdapter.fromUUID(UUID.randomUUID());
+        return new YggdrasilAccount(service, username, session);
     }
 }
