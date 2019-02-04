@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.account;
 import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.*;
 
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ListProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -246,7 +247,7 @@ public class AddAccountPane extends StackPane {
         private final CountDownLatch latch = new CountDownLatch(1);
         private GameProfile selectedProfile = null;
 
-        {
+        public Selector() {
             setStyle("-fx-padding: 8px;");
 
             cancel.setText(i18n("button.cancel"));
@@ -265,21 +266,22 @@ public class AddAccountPane extends StackPane {
 
         @Override
         public GameProfile select(YggdrasilService service, List<GameProfile> profiles) throws NoSelectedCharacterException {
-            for (GameProfile profile : profiles) {
-                ImageView portraitView = new ImageView();
-                portraitView.setSmooth(false);
-                portraitView.imageProperty().bind(TexturesLoader.fxAvatarBinding(service, profile.getId(), 32));
-                FXUtils.limitSize(portraitView, 32, 32);
+            Platform.runLater(() -> {
+                for (GameProfile profile : profiles) {
+                    ImageView portraitView = new ImageView();
+                    portraitView.setSmooth(false);
+                    portraitView.imageProperty().bind(TexturesLoader.fxAvatarBinding(service, profile.getId(), 32));
+                    FXUtils.limitSize(portraitView, 32, 32);
 
-                IconedItem accountItem = new IconedItem(portraitView, profile.getName());
-                accountItem.setOnMouseClicked(e -> {
-                    selectedProfile = profile;
-                    latch.countDown();
-                });
-                listBox.add(accountItem);
-            }
-
-            JFXUtilities.runInFX(() -> Controllers.dialog(this));
+                    IconedItem accountItem = new IconedItem(portraitView, profile.getName());
+                    accountItem.setOnMouseClicked(e -> {
+                        selectedProfile = profile;
+                        latch.countDown();
+                    });
+                    listBox.add(accountItem);
+                }
+                Controllers.dialog(this);
+            });
 
             try {
                 latch.await();
