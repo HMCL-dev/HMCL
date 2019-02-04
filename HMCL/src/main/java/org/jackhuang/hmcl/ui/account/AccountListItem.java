@@ -17,18 +17,27 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.StringBinding;
 import javafx.beans.property.*;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.AuthenticationException;
+import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.ui.DialogController;
 
+import static org.jackhuang.hmcl.util.Lang.thread;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+
+import java.util.logging.Level;
 
 public class AccountListItem extends RadioButton {
 
@@ -42,17 +51,22 @@ public class AccountListItem extends RadioButton {
         getStyleClass().clear();
         setUserData(account);
 
-        StringBuilder subtitleString = new StringBuilder(Accounts.getLocalizedLoginTypeName(Accounts.getAccountFactory(account)));
+        String loginTypeName = Accounts.getLocalizedLoginTypeName(Accounts.getAccountFactory(account));
         if (account instanceof AuthlibInjectorAccount) {
             AuthlibInjectorServer server = ((AuthlibInjectorAccount) account).getServer();
-            subtitleString.append(", ").append(i18n("account.injector.server")).append(": ").append(server.getName());
+            subtitle.bind(Bindings.concat(
+                    loginTypeName, ", ", i18n("account.injector.server"), ": ",
+                    Bindings.createStringBinding(server::getName, server)));
+        } else {
+            subtitle.set(loginTypeName);
         }
 
-        if (account instanceof OfflineAccount)
-            title.set(account.getCharacter());
-        else
-            title.set(account.getUsername() + " - " + account.getCharacter());
-        subtitle.set(subtitleString.toString());
+        StringBinding characterName = Bindings.createStringBinding(account::getCharacter, account);
+        if (account instanceof OfflineAccount) {
+            title.bind(characterName);
+        } else {
+            title.bind(Bindings.concat(account.getUsername(), " - ", characterName));
+        }
 
         image.bind(TexturesLoader.fxAvatarBinding(account, 32));
     }
@@ -64,6 +78,19 @@ public class AccountListItem extends RadioButton {
 
     public void refresh() {
         account.clearCache();
+        thread(() -> {
+            try {
+                account.logIn();
+            } catch (CredentialExpiredException e) {
+                try {
+                    DialogController.logIn(account);
+                } catch (Exception e1) {
+                    LOG.log(Level.WARNING, "Failed to refresh " + account + " with password", e1);
+                }
+            } catch (AuthenticationException e) {
+                LOG.log(Level.WARNING, "Failed to refresh " + account + " with token", e);
+            }
+        });
     }
 
     public void remove() {

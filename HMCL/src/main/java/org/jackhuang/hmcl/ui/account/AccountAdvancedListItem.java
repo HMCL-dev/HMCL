@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.image.Image;
@@ -37,12 +38,13 @@ public class AccountAdvancedListItem extends AdvancedListItem {
         protected void invalidated() {
             Account account = get();
             if (account == null) {
+                titleProperty().unbind();
                 setTitle(i18n("account.missing"));
                 setSubtitle(i18n("account.missing.add"));
                 imageProperty().unbind();
                 setImage(new Image("/assets/img/craft_table.png"));
             } else {
-                setTitle(account.getCharacter());
+                titleProperty().bind(Bindings.createStringBinding(account::getCharacter, account));
                 setSubtitle(accountSubtitle(account));
                 imageProperty().bind(TexturesLoader.fxAvatarBinding(account, 32));
             }
