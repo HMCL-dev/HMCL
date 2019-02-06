@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.effects.JFXDepthManager;
+
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
@@ -33,17 +35,17 @@ public final class AuthlibInjectorServerItem extends BorderPane {
     private final AuthlibInjectorServer server;
 
     private final Label lblServerName = new Label();
-    private final Label lblServerIp = new Label();
+    private final Label lblServerUrl = new Label();
 
     public AuthlibInjectorServerItem(AuthlibInjectorServer server, Consumer<AuthlibInjectorServerItem> deleteCallback) {
         this.server = server;
 
         lblServerName.setStyle("-fx-font-size: 15;");
-        lblServerIp.setStyle("-fx-font-size: 10;");
+        lblServerUrl.setStyle("-fx-font-size: 10;");
 
         VBox center = new VBox();
         BorderPane.setAlignment(center, Pos.CENTER);
-        center.getChildren().addAll(lblServerName, lblServerIp);
+        center.getChildren().addAll(lblServerName, lblServerUrl);
         setCenter(center);
 
         JFXButton right = new JFXButton();
@@ -55,8 +57,8 @@ public final class AuthlibInjectorServerItem extends BorderPane {
 
         setStyle("-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;");
         JFXDepthManager.setDepth(this, 1);
-        lblServerName.setText(server.getName());
-        lblServerIp.setText(server.getUrl());
+        lblServerName.textProperty().bind(Bindings.createStringBinding(server::getName, server));
+        lblServerUrl.setText(server.getUrl());
     }
 
     public AuthlibInjectorServer getServer() {

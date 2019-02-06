@@ -40,10 +40,7 @@ public final class Texture {
         return url;
     }
 
-    public String getMetadata(String key) {
-        if (metadata == null)
-            return null;
-        else
-            return metadata.get(key);
+    public Map<String, String> getMetadata() {
+        return metadata;
     }
 }

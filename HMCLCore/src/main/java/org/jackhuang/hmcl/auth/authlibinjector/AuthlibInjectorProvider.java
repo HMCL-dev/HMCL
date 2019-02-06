@@ -56,4 +56,9 @@ public class AuthlibInjectorProvider implements YggdrasilProvider {
     public URL getProfilePropertiesURL(UUID uuid) {
         return NetworkUtils.toURL(apiRoot + "sessionserver/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid));
     }
+
+    @Override
+    public String toString() {
+        return apiRoot;
+    }
 }

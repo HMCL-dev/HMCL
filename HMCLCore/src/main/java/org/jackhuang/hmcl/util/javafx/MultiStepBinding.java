@@ -19,9 +19,14 @@ package org.jackhuang.hmcl.util.javafx;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Objects;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.jackhuang.hmcl.util.InvocationDispatcher;
+
+import javafx.application.Platform;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.value.ObservableValue;
 
@@ -53,6 +58,10 @@ public abstract class MultiStepBinding<T, U> extends ObjectBinding<U> {
         return new FlatMappedBinding<>(map(mapper), nullAlternative);
     }
 
+    public <V> MultiStepBinding<?, V> asyncMap(Function<U, V> mapper, V initial, Executor executor) {
+        return new AsyncMappedBinding<>(this, mapper, executor, initial);
+    }
+
     private static class SimpleBinding<T> extends MultiStepBinding<T, T> {
 
         public SimpleBinding(ObservableValue<T> predecessor) {
@@ -67,6 +76,11 @@ public abstract class MultiStepBinding<T, U> extends ObjectBinding<U> {
         @Override
         public <V> MultiStepBinding<?, V> map(Function<T, V> mapper) {
             return new MappedBinding<>(predecessor, mapper);
+        }
+
+        @Override
+        public <V> MultiStepBinding<?, V> asyncMap(Function<T, V> mapper, V initial, Executor executor) {
+            return new AsyncMappedBinding<>(predecessor, mapper, executor, initial);
         }
     }
 
@@ -118,5 +132,53 @@ public abstract class MultiStepBinding<T, U> extends ObjectBinding<U> {
                 return currentObservable.getValue();
             }
         }
+    }
+
+    private static class AsyncMappedBinding<T, U> extends MultiStepBinding<T, U> {
+
+        private final InvocationDispatcher<T> dispatcher;
+
+        private boolean initialized = false;
+        private T prev;
+        private U value;
+
+        public AsyncMappedBinding(ObservableValue<T> predecessor, Function<T, U> mapper, Executor executor, U initial) {
+            super(predecessor);
+            this.value = initial;
+
+            dispatcher = InvocationDispatcher.runOn(executor, arg -> {
+                synchronized (this) {
+                    if (initialized && Objects.equals(arg, prev)) {
+                        return;
+                    }
+                }
+                U newValue = mapper.apply(arg);
+                synchronized (this) {
+                    prev = arg;
+                    value = newValue;
+                    initialized = true;
+                }
+                Platform.runLater(this::invalidate);
+            });
+        }
+
+        // called on FX thread, this method is serial
+        @Override
+        protected U computeValue() {
+            T currentPrev = predecessor.getValue();
+            U value;
+            boolean updateNeeded = false;
+            synchronized (this) {
+                value = this.value;
+                if (!initialized || !Objects.equals(currentPrev, prev)) {
+                    updateNeeded = true;
+                }
+            }
+            if (updateNeeded) {
+                dispatcher.accept(currentPrev);
+            }
+            return value;
+        }
+
     }
 }

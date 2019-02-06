@@ -18,7 +18,10 @@
 package org.jackhuang.hmcl.util;
 
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
@@ -170,6 +173,17 @@ public final class Lang {
             thread.setName(name);
         thread.start();
         return thread;
+    }
+
+    public static ThreadPoolExecutor threadPool(String name, boolean daemon, int threads, long timeout, TimeUnit timeunit) {
+        AtomicInteger counter = new AtomicInteger(1);
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(0, threads, timeout, timeunit, new LinkedBlockingQueue<>(), r -> {
+            Thread t = new Thread(r, name + "-" + counter.getAndIncrement());
+            t.setDaemon(daemon);
+            return t;
+        });
+        pool.allowsCoreThreadTimeOut();
+        return pool;
     }
 
     public static int parseInt(Object string, int defaultValue) {

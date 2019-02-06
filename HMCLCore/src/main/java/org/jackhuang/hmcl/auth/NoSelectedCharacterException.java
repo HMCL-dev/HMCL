@@ -25,17 +25,6 @@ package org.jackhuang.hmcl.auth;
  * @author huangyuhui
  */
 public final class NoSelectedCharacterException extends AuthenticationException {
-    private final Account account;
-
-    /**
-     *
-     * @param account the error yggdrasil account.
-     */
-    public NoSelectedCharacterException(Account account) {
-        this.account = account;
-    }
-
-    public Account getAccount() {
-        return account;
+    public NoSelectedCharacterException() {
     }
 }
