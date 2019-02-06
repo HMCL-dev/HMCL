@@ -15,24 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.game;
+package org.jackhuang.hmcl.util.gson;
 
 /**
- * What's circle dependency?
- * When C inherits from B, and B inherits from something else, and finally inherits from C again.
- *
- * @author huangyuhui
+ * This exception gets thrown by implementations of {@link Validation#validate()} if you want to replace
+ * the nullable JSON-parsed object which does not satisfy the constraint with null value.
+ * @see Validation
  */
-public final class CircleDependencyException extends GameException {
+public final class TolerableValidationException extends Exception {
 
-    public CircleDependencyException() {
-    }
-
-    public CircleDependencyException(String message) {
-        super(message);
-    }
-
-    public CircleDependencyException(String message, Throwable cause) {
-        super(message, cause);
+    public TolerableValidationException() {
     }
 }

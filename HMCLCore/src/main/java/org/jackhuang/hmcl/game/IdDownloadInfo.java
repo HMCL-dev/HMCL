@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 
 /**
  *
@@ -54,7 +55,7 @@ public class IdDownloadInfo extends DownloadInfo {
     }
 
     @Override
-    public void validate() throws JsonParseException {
+    public void validate() throws JsonParseException, TolerableValidationException {
         super.validate();
 
         if (StringUtils.isBlank(id))
