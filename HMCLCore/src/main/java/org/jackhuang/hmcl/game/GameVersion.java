@@ -17,12 +17,17 @@
  */
 package org.jackhuang.hmcl.game;
 
+import com.google.gson.JsonParseException;
+import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jenkinsci.constant_pool_scanner.ConstantPool;
 import org.jenkinsci.constant_pool_scanner.ConstantPoolScanner;
 import org.jenkinsci.constant_pool_scanner.ConstantType;
 import org.jenkinsci.constant_pool_scanner.StringConstant;
 
+import javax.swing.text.html.Option;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -37,6 +42,15 @@ import java.util.stream.StreamSupport;
  * @author huangyuhui
  */
 public final class GameVersion {
+    private static Optional<String> getVersionFromJson(Path versionJson) {
+        try {
+            MinecraftVersion version = JsonUtils.fromNonNullJson(FileUtils.readText(versionJson), MinecraftVersion.class);
+            return Optional.of(version.name);
+        } catch (IOException | JsonParseException | NullPointerException e) {
+            return Optional.empty();
+        }
+    }
+
     private static Optional<String> getVersionOfClassMinecraft(byte[] bytecode) throws IOException {
         ConstantPool pool = ConstantPoolScanner.parse(bytecode, ConstantType.STRING);
 
@@ -74,6 +88,13 @@ public final class GameVersion {
             return Optional.empty();
 
         try (FileSystem gameJar = CompressingUtils.createReadOnlyZipFileSystem(file.toPath())) {
+            Path versionJson = gameJar.getPath("version.json");
+            if (Files.exists(versionJson)) {
+                Optional<String> result = getVersionFromJson(versionJson);
+                if (result.isPresent())
+                    return result;
+            }
+
             Path minecraft = gameJar.getPath("net/minecraft/client/Minecraft.class");
             if (Files.exists(minecraft)) {
                 Optional<String> result = getVersionOfClassMinecraft(Files.readAllBytes(minecraft));
@@ -87,5 +108,25 @@ public final class GameVersion {
         } catch (IOException e) {
             return Optional.empty();
         }
+    }
+
+    private static final class MinecraftVersion {
+        public String name;
+
+        @SerializedName("release_target")
+        public String releaseTarget;
+
+        public String id;
+
+        public boolean stable;
+
+        @SerializedName("world_version")
+        public int worldVersion;
+
+        @SerializedName("protocol_version")
+        public int protocolVersion;
+
+        @SerializedName("pack_version")
+        public int packVersion;
     }
 }
