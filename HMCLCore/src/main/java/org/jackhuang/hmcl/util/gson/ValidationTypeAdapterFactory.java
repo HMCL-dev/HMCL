@@ -45,6 +45,7 @@ public final class ValidationTypeAdapterFactory implements TypeAdapterFactory {
                         ((Validation) t).validate();
                     } catch (TolerableValidationException e) {
                         delegate.write(writer, null);
+                        return;
                     }
                 }
 
