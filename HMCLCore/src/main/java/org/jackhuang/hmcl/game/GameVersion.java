@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.game;
 
+import static org.jackhuang.hmcl.util.Logging.LOG;
+
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -27,7 +29,6 @@ import org.jenkinsci.constant_pool_scanner.ConstantPoolScanner;
 import org.jenkinsci.constant_pool_scanner.ConstantType;
 import org.jenkinsci.constant_pool_scanner.StringConstant;
 
-import javax.swing.text.html.Option;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -35,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -45,8 +47,9 @@ public final class GameVersion {
     private static Optional<String> getVersionFromJson(Path versionJson) {
         try {
             MinecraftVersion version = JsonUtils.fromNonNullJson(FileUtils.readText(versionJson), MinecraftVersion.class);
-            return Optional.of(version.name);
-        } catch (IOException | JsonParseException | NullPointerException e) {
+            return Optional.ofNullable(version.name);
+        } catch (IOException | JsonParseException e) {
+            LOG.log(Level.WARNING, "Failed to parse version.json", e);
             return Optional.empty();
         }
     }
