@@ -23,7 +23,7 @@
     <ProjectGuid>{672B1019-E741-4C0D-A986-627E2ACE157B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>HMCL</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>7.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -152,19 +152,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="HMCL.h" />
+    <ClInclude Include="java.h" />
+    <ClInclude Include="main.h" />
+    <ClInclude Include="os.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="Version.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="HMCL.cpp" />
+    <ClCompile Include="java.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="os.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="HMCL.rc" />
