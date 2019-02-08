@@ -127,7 +127,7 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
         }
     }
 
-    private class AuthlibInjectorVersionInfo {
+    private static class AuthlibInjectorVersionInfo {
         @SerializedName("build_number")
         public int buildNumber;
 

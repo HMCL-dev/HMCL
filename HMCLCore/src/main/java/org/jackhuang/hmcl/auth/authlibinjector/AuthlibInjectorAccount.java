@@ -115,7 +115,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         return new Arguments().addJVMArguments(
                 "-javaagent:" + artifact.getLocation().toString() + "=" + server.getUrl(),
                 "-Dauthlibinjector.side=client",
-                "-Dorg.to2mbn.authlibinjector.config.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta.getBytes(UTF_8)));
+                "-Dauthlibinjector.yggdrasil.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta.getBytes(UTF_8)));
     }
 
     @Override
