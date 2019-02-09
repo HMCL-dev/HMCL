@@ -536,62 +536,24 @@
 *                                                                              *
 *******************************************************************************/
 
-.custom-jfx-button-raised .jfx-rippler {
-    -jfx-rippler-fill: YELLOW;
-}
-
-.custom-jfx-button-raised {
-    -fx-padding: 0.7em 0.57em;
-    -fx-font-size: 14.0px;
-    -jfx-button-type: RAISED;
-    -fx-background-color: rgb(102.0, 153.0, 102.0);
-    -fx-pref-width: 200.0;
-    -fx-text-fill: WHITE;
-}
-
-.circle-jfx-button-raised .jfx-rippler {
-    -jfx-rippler-fill: YELLOW;
-}
-
-.circle-jfx-button-raised {
-    -fx-padding: 0.7em 0.57em;
-    -fx-font-size: 14.0px;
-    -jfx-button-type: RAISED;
-    -fx-background-color: rgb(102.0, 153.0, 102.0);
-    -fx-pref-width: 200.0;
-    -fx-text-fill: WHITE;
-    -jfx-mask-type: CIRCLE;
-}
-
 .jfx-button-raised {
-    -fx-text-fill: white;
     -fx-background-color: -fx-base-color;
-    -fx-font-size: 14px;
 }
 
-.jfx-button-raised .jfx-rippler {
-    -jfx-rippler-fill: white;
-}
-
-.jfx-button-raised .label {
-    -fx-text-fill: white;
+.jfx-button-raised, .jfx-button-raised * {
+    -fx-text-fill: -fx-base-text-fill;
     -fx-font-size: 14px;
 }
 
 .jfx-button-border {
-    -fx-text-fill: -fx-base-color;
     -fx-border-color: gray;
     -fx-border-radius: 5px;
     -fx-border-width: 0.2px;
     -fx-padding: 8px;
 }
 
-.jfx-button-border .jfx-rippler {
-    -jfx-rippler-fill: -fx-base-check-color;
-}
-
-.jfx-button-border .label {
-    -fx-text-fill: -fx-base-color;
+.jfx-button-border, .jfx-button-border * {
+    -fx-text-fill: -fx-base-darker-color;
 }
 
 .jfx-button-raised-round {
