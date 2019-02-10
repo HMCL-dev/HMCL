@@ -117,7 +117,7 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public Version readVersionJson(File file) throws IOException, JsonParseException {
-        return JsonUtils.GSON.fromJson(FileUtils.readText(file), Version.class);
+        return JsonUtils.fromNonNullJson(FileUtils.readText(file), Version.class);
     }
 
     @Override
@@ -221,7 +221,7 @@ public class DefaultGameRepository implements GameRepository {
 
                 Version version;
                 try {
-                    version = Objects.requireNonNull(readVersionJson(json));
+                    version = readVersionJson(json);
                 } catch (Exception e) {
                     LOG.log(Level.WARNING, "Malformed version json " + id, e);
                     // JsonSyntaxException or IOException or NullPointerException(!!)
@@ -229,7 +229,7 @@ public class DefaultGameRepository implements GameRepository {
                         return Stream.empty();
 
                     try {
-                        version = Objects.requireNonNull(readVersionJson(json));
+                        version = readVersionJson(json);
                     } catch (Exception e2) {
                         LOG.log(Level.SEVERE, "User corrected version json is still malformed", e2);
                         return Stream.empty();

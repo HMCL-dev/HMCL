@@ -20,7 +20,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	if (ERROR_SUCCESS != MyGetModuleFileName(NULL, exeName))
 		return 1;
 
-
+	// TODO: check whether the bundled JRE is valid.
 	// First try the Java packaged together.
 	bool is64Bit = false;
 	GetArch(is64Bit); // if failed to determine architecture of operating system, consider 32-bit.

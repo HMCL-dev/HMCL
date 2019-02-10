@@ -17,14 +17,15 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
+import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
+
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
-import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 
 /**
  *
@@ -198,14 +199,6 @@ public final class Lang {
         try {
             if (string == null) return null;
             return Integer.parseInt(string.toString());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    public static Double toDoubleOrNull(Object string) {
-        try {
-            return Double.parseDouble(string.toString());
         } catch (NumberFormatException e) {
             return null;
         }

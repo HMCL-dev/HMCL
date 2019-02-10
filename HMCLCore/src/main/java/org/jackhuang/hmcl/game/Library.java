@@ -45,13 +45,13 @@ public class Library implements Comparable<Library> {
     private final String classifier;
     private final String url;
     private final LibrariesDownloadInfo downloads;
-    private final LibraryDownloadInfo download;
+    private transient final LibraryDownloadInfo download;
     private final ExtractRules extract;
     private final Map<OperatingSystem, String> natives;
     private final List<CompatibilityRule> rules;
     private final List<String> checksums;
 
-    private final String path;
+    private transient final String path;
 
     public Library(String groupId, String artifactId, String version) {
         this(groupId, artifactId, version, null, null, null);

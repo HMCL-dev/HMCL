@@ -25,6 +25,7 @@ import java.util.*;
 /**
  * Copied from org.apache.maven.artifact.versioning.ComparableVersion
  * Apache License 2.0
+ * @see <a href="http://maven.apache.org/pom.html#Version_Order_Specification">Specification</a>
  */
 public class VersionNumber implements Comparable<VersionNumber> {
 

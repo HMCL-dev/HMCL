@@ -80,13 +80,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    @Override
-    public void refreshVersions() {
-        EventBus.EVENT_BUS.fireEvent(new RefreshingVersionsEvent(this));
-        refreshVersionsImpl();
-        EventBus.EVENT_BUS.fireEvent(new RefreshedVersionsEvent(this));
-    }
-
     public void changeDirectory(File newDirectory) {
         setBaseDirectory(newDirectory);
         refreshVersionsAsync().start();
