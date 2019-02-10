@@ -20,18 +20,18 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.mod.ModManager;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
-
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Stream;
+
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 /**
  * An implementation of classic Minecraft game repository.
@@ -80,6 +80,10 @@ public class DefaultGameRepository implements GameRepository {
     @Override
     public File getLibraryFile(Version version, Library lib) {
         return new File(getBaseDirectory(), "libraries/" + lib.getPath());
+    }
+
+    public Path getArtifactFile(Version version, Artifact artifact) {
+        return artifact.getPath(getBaseDirectory().toPath().resolve("libraries"));
     }
 
     @Override
@@ -265,10 +269,8 @@ public class DefaultGameRepository implements GameRepository {
         if (EventBus.EVENT_BUS.fireEvent(new RefreshingVersionsEvent(this)) == Event.Result.DENY)
             return;
 
-        Schedulers.newThread().schedule(() -> {
-            refreshVersionsImpl();
-            EventBus.EVENT_BUS.fireEvent(new RefreshedVersionsEvent(this));
-        });
+        refreshVersionsImpl();
+        EventBus.EVENT_BUS.fireEvent(new RefreshedVersionsEvent(this));
     }
 
     @Override

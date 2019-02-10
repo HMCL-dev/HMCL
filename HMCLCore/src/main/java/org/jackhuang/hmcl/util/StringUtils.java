@@ -17,14 +17,14 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
-
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 /**
  *
@@ -126,6 +126,10 @@ public final class StringUtils {
     public static String substringAfter(String str, String delimiter, String missingDelimiterValue) {
         int index = str.indexOf(delimiter);
         return index == -1 ? missingDelimiterValue : str.substring(index + delimiter.length());
+    }
+
+    public static boolean isSurrounded(String str, String prefix, String suffix) {
+        return str.startsWith(prefix) && str.endsWith(suffix);
     }
 
     public static String removeSurrounding(String str, String delimiter) {

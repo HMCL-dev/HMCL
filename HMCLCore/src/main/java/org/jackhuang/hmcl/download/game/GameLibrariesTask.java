@@ -36,6 +36,7 @@ public final class GameLibrariesTask extends Task {
 
     private final AbstractDependencyManager dependencyManager;
     private final Version version;
+    private final List<Library> libraries;
     private final List<Task> dependencies = new LinkedList<>();
 
     /**
@@ -45,8 +46,20 @@ public final class GameLibrariesTask extends Task {
      * @param version the <b>resolved</b> version
      */
     public GameLibrariesTask(AbstractDependencyManager dependencyManager, Version version) {
+        this(dependencyManager, version, version.getLibraries());
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
+     * @param version the <b>resolved</b> version
+     */
+    public GameLibrariesTask(AbstractDependencyManager dependencyManager, Version version, List<Library> libraries) {
         this.dependencyManager = dependencyManager;
         this.version = version;
+        this.libraries = libraries;
+
         setSignificance(TaskSignificance.MODERATE);
     }
 
@@ -57,7 +70,7 @@ public final class GameLibrariesTask extends Task {
 
     @Override
     public void execute() {
-        version.getLibraries().stream().filter(Library::appliesToCurrentEnvironment).forEach(library -> {
+        libraries.stream().filter(Library::appliesToCurrentEnvironment).forEach(library -> {
             File file = dependencyManager.getGameRepository().getLibraryFile(version, library);
             if (!file.exists())
                 dependencies.add(new LibraryDownloadTask(dependencyManager, file, library));
