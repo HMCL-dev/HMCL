@@ -161,6 +161,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
             return new Image("file:" + iconFile.getAbsolutePath());
         else if ("net.minecraft.launchwrapper.Launch".equals(version.getMainClass()))
             return new Image("/assets/img/furnace.png");
+        else if ("cpw.mods.modlauncher.Launcher".equals(version.getMainClass()))
+            return new Image("/assets/img/furnace.png");
         else
             return new Image("/assets/img/grass.png");
     }

@@ -44,7 +44,7 @@ public class MaintainTask extends TaskResult<Version> {
             return maintainGameWithLaunchWrapper(version);
         } else {
             // Vanilla Minecraft does not need maintain
-            // Forge 1.13.2 support not implemented.
+            // Forge 1.13 support not implemented, not compatible with OptiFine currently.
             return version;
         }
     }
