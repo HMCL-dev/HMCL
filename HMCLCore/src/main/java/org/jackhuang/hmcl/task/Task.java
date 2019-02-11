@@ -339,10 +339,6 @@ public abstract class Task {
         });
     }
 
-    public static Task empty() {
-        return of(ExceptionalConsumer.empty());
-    }
-
     public static Task of(String name, ExceptionalRunnable<?> runnable) {
         return of(name, ExceptionalConsumer.fromRunnable(runnable));
     }

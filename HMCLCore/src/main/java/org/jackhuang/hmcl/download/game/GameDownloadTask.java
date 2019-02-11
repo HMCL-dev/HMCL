@@ -55,14 +55,18 @@ public final class GameDownloadTask extends Task {
     @Override
     public void execute() {
         File jar = dependencyManager.getGameRepository().getVersionJar(version);
-        
-        dependencies.add(new FileDownloadTask(
+
+        FileDownloadTask task = new FileDownloadTask(
                 NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(version.getDownloadInfo().getUrl())),
                 jar,
                 IntegrityCheck.of(CacheRepository.SHA1, version.getDownloadInfo().getSha1()))
                 .setCaching(true)
-                .setCacheRepository(dependencyManager.getCacheRepository())
-                .setCandidate(dependencyManager.getCacheRepository().getCommonDirectory().resolve("jars").resolve(gameVersion + ".jar")));
+                .setCacheRepository(dependencyManager.getCacheRepository());
+
+        if (gameVersion != null)
+            task.setCandidate(dependencyManager.getCacheRepository().getCommonDirectory().resolve("jars").resolve(gameVersion + ".jar"));
+
+        dependencies.add(task);
     }
     
 }
