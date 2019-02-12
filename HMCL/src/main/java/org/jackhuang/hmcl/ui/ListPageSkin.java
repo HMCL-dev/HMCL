@@ -19,12 +19,13 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXScrollPane;
-
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SkinBase;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Theme;
@@ -36,6 +37,7 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
         super(skinnable);
 
         SpinnerPane spinnerPane = new SpinnerPane();
+        Pane placeholder = new Pane();
 
         StackPane contentPane = new StackPane();
         {
@@ -48,9 +50,12 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
                 list.setSpacing(10);
                 list.setPadding(new Insets(10));
 
+                VBox content = new VBox();
+                content.getChildren().setAll(list, placeholder);
+
                 Bindings.bindContent(list.getChildren(), skinnable.itemsProperty());
 
-                scrollPane.setContent(list);
+                scrollPane.setContent(content);
                 JFXScrollPane.smoothScrolling(scrollPane);
             }
             
@@ -86,7 +91,13 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
                         });
             }
 
-            contentPane.getChildren().setAll(scrollPane, vBox);
+            // Keep a blank space to prevent buttons from blocking up mod items.
+            BorderPane group = new BorderPane();
+            group.setPickOnBounds(false);
+            group.setBottom(vBox);
+            placeholder.minHeightProperty().bind(vBox.heightProperty());
+
+            contentPane.getChildren().setAll(scrollPane, group);
         }
 
         spinnerPane.loadingProperty().bind(skinnable.loadingProperty());
