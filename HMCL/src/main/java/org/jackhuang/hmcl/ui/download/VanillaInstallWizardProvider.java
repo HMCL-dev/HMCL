@@ -21,6 +21,7 @@ import javafx.scene.Node;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -73,7 +74,9 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         settings.put("failure_callback", new FailureCallback() {
             @Override
             public void onFail(Map<String, Object> settings, Exception exception, Runnable next) {
-                if (exception instanceof DownloadException) {
+                if (exception instanceof LibraryDownloadException) {
+                    Controllers.dialog(i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().getName()) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageBox.ERROR_MESSAGE, next);
+                } else if (exception instanceof DownloadException) {
                     Controllers.dialog(StringUtils.getStackTrace(exception), i18n("install.failed.downloading"), MessageBox.ERROR_MESSAGE, next);
                 } else {
                     Controllers.dialog(StringUtils.getStackTrace(exception), i18n("install.failed"), MessageBox.ERROR_MESSAGE, next);
