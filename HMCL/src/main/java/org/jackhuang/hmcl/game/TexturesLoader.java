@@ -180,12 +180,9 @@ public final class TexturesLoader {
                 faceOffset, faceOffset, size - faceOffset, size - faceOffset,
                 8 * scale, 8 * scale, 16 * scale, 16 * scale,
                 null);
-
-        if (skin.getWidth() == skin.getHeight()) {
-            g.drawImage(skin,
-                    0, 0, size, size,
-                    40 * scale, 8 * scale, 48 * scale, 16 * scale, null);
-        }
+        g.drawImage(skin,
+                0, 0, size, size,
+                40 * scale, 8 * scale, 48 * scale, 16 * scale, null);
 
         g.dispose();
         return avatar;
