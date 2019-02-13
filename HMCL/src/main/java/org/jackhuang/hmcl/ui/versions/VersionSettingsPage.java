@@ -108,15 +108,15 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         FXUtils.smoothScrolling(scroll);
 
-        Task.of(variables -> variables.set("list", JavaVersion.getJavas()))
-                .subscribe(Schedulers.javafx(), variables -> {
-                    javaItem.loadChildren(
-                            (variables.<List<JavaVersion>>get("list")).stream()
-                                    .map(javaVersion -> javaItem.createChildren(javaVersion.getVersion() + i18n("settings.game.java_directory.bit", javaVersion.getPlatform().getBit()), javaVersion.getBinary().toString(), javaVersion))
-                                    .collect(Collectors.toList()));
-                    javaItemsLoaded = true;
-                    initializeSelectedJava();
-                });
+        Task.ofResult(JavaVersion::getJavas).thenResult(Schedulers.javafx(), list -> {
+            javaItem.loadChildren(list.stream()
+                    .map(javaVersion -> javaItem.createChildren(javaVersion.getVersion() + i18n("settings.game.java_directory.bit",
+                            javaVersion.getPlatform().getBit()), javaVersion.getBinary().toString(), javaVersion))
+                    .collect(Collectors.toList()));
+            javaItemsLoaded = true;
+            initializeSelectedJava();
+            return null;
+        }).start();
 
         javaItem.setSelectedData(null);
         javaItem.setFallbackData(JavaVersion.fromCurrentEnvironment());
