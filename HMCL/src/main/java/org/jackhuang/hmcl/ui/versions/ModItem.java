@@ -52,7 +52,7 @@ public final class ModItem extends BorderPane {
         btnRemove.setOnMouseClicked(e -> deleteCallback.accept(this));
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
-        btnRemove.setGraphic(SVG.close(Theme.blackFillBinding(), 15, 15));
+        btnRemove.setGraphic(SVG.delete(Theme.blackFillBinding(), 15, 15));
         setRight(btnRemove);
 
         setStyle("-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;");
