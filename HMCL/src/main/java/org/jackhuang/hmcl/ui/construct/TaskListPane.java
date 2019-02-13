@@ -17,15 +17,11 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXProgressBar;
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
-import javafx.geometry.Insets;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
@@ -45,16 +41,15 @@ import java.util.Map;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class TaskListPane extends StackPane {
-    private final JFXListView<Task> listBox = new JFXListView<>();
+    private final AdvancedListBox listBox = new AdvancedListBox();
     private final Map<Task, ProgressListNode> nodes = new HashMap<>();
     private final ReadOnlyIntegerWrapper finishedTasks = new ReadOnlyIntegerWrapper();
     private final ReadOnlyIntegerWrapper totTasks = new ReadOnlyIntegerWrapper();
 
     public TaskListPane() {
-        getChildren().setAll(listBox);
+        listBox.setSpacing(0);
 
-        listBox.setPadding(Insets.EMPTY);
-        listBox.setCellFactory(listView -> new ProgressListNode());
+        getChildren().setAll(listBox);
     }
 
     public ReadOnlyIntegerProperty finishedTasksProperty() {
@@ -70,7 +65,7 @@ public final class TaskListPane extends StackPane {
             @Override
             public void onStart() {
                 Platform.runLater(() -> {
-                    listBox.getItems().clear();
+                    listBox.clear();
                     finishedTasks.set(0);
                     totTasks.set(0);
                 });
@@ -112,66 +107,64 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("modpack.scan"));
                 }
 
-                Platform.runLater(() -> listBox.getItems().add(task));
+                ProgressListNode node = new ProgressListNode(task);
+                nodes.put(task, node);
+                Platform.runLater(() -> listBox.add(node));
             }
 
             @Override
             public void onFinished(Task task) {
+                ProgressListNode node = nodes.remove(task);
+                if (node == null)
+                    return;
+                node.unbind();
                 Platform.runLater(() -> {
-                    if (listBox.getItems().remove(task))
-                        finishedTasks.set(finishedTasks.getValue() + 1);
+                    listBox.remove(node);
+                    finishedTasks.set(finishedTasks.getValue() + 1);
+                });
+            }
+
+            @Override
+            public void onFailed(Task task, Throwable throwable) {
+                ProgressListNode node = nodes.remove(task);
+                if (node == null)
+                    return;
+                Platform.runLater(() -> {
+                    node.setThrowable(throwable);
+                    finishedTasks.set(finishedTasks.getValue() + 1);
                 });
             }
         });
     }
 
-    private static class ProgressListNode extends ListCell<Task> {
-        private final BorderPane borderPane = new BorderPane();
+    private static class ProgressListNode extends BorderPane {
         private final JFXProgressBar bar = new JFXProgressBar();
         private final Label title = new Label();
         private final Label state = new Label();
 
-        {
-            borderPane.setLeft(title);
-            borderPane.setRight(state);
-            borderPane.setBottom(bar);
-            borderPane.setMinWidth(0);
-            borderPane.setPrefWidth(1);
+        public ProgressListNode(Task task) {
+            bar.progressProperty().bind(task.progressProperty());
+            title.setText(task.getName());
+            state.textProperty().bind(task.messageProperty());
 
-            setPadding(Insets.EMPTY);
+            setLeft(title);
+            setRight(state);
+            setBottom(bar);
 
             bar.minWidthProperty().bind(widthProperty());
             bar.prefWidthProperty().bind(widthProperty());
             bar.maxWidthProperty().bind(widthProperty());
         }
 
-        @Override
-        protected void updateItem(Task item, boolean empty) {
-            boolean wasEmpty = isEmpty();
-            Task oldTask = getItem();
+        public void unbind() {
+            bar.progressProperty().unbind();
+            state.textProperty().unbind();
+        }
 
-            if (!wasEmpty && oldTask != null) {
-                bar.progressProperty().unbind();
-                state.textProperty().unbind();
-            }
-
-            super.updateItem(item, empty);
-
-            if (empty || item == null) {
-                setGraphic(null);
-            } else {
-                setGraphic(borderPane);
-                bar.visibleProperty().bind(Bindings.createBooleanBinding(() -> item.progressProperty().get() != -1, item.progressProperty()));
-                bar.progressProperty().bind(item.progressProperty());
-                state.textProperty().bind(Bindings.createObjectBinding(() -> {
-                    if (item.getState() == Task.TaskState.FAILED) {
-                        return item.getLastException().getLocalizedMessage();
-                    } else {
-                        return item.messageProperty().get();
-                    }
-                }, item.messageProperty(), item.stateProperty()));
-                title.setText(item.getName());
-            }
+        public void setThrowable(Throwable throwable) {
+            unbind();
+            state.setText(throwable.getLocalizedMessage());
+            bar.setProgress(0);
         }
     }
 }

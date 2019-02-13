@@ -22,6 +22,7 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 
 /**
@@ -74,8 +75,8 @@ public class DownloadInfo implements Validation {
     }
 
     @Override
-    public void validate() throws JsonParseException {
+    public void validate() throws JsonParseException, TolerableValidationException {
         if (StringUtils.isBlank(url))
-            throw new JsonParseException("DownloadInfo url can not be null");
+            throw new TolerableValidationException();
     }
 }

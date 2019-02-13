@@ -54,7 +54,7 @@ public class DefaultGameBuilder extends GameBuilder {
             version = version.setId(name).setJar(null);
             variables.set("version", version);
             Task result = downloadGameAsync(gameVersion, version).then(new ParallelTask(
-                    new GameAssetDownloadTask(dependencyManager, version),
+                    new GameAssetDownloadTask(dependencyManager, version, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY),
                     new GameLibrariesTask(dependencyManager, version) // Game libraries will be downloaded for multiple times partly, this time is for vanilla libraries.
             ).with(new VersionJsonSaveTask(dependencyManager.getGameRepository(), version))); // using [with] because download failure here are tolerant.
 

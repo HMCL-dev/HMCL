@@ -36,5 +36,5 @@ public interface Validation {
      *
      * @throws JsonParseException if fields are filled in wrong format or wrong type.
      */
-    void validate() throws JsonParseException;
+    void validate() throws JsonParseException, TolerableValidationException;
 }

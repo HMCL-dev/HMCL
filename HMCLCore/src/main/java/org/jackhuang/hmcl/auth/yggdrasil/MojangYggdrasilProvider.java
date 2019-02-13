@@ -24,7 +24,6 @@ import java.net.URL;
 import java.util.UUID;
 
 public class MojangYggdrasilProvider implements YggdrasilProvider {
-    public static final MojangYggdrasilProvider INSTANCE = new MojangYggdrasilProvider();
 
     @Override
     public URL getAuthenticationURL() {
@@ -49,5 +48,10 @@ public class MojangYggdrasilProvider implements YggdrasilProvider {
     @Override
     public URL getProfilePropertiesURL(UUID uuid) {
         return NetworkUtils.toURL("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid));
+    }
+
+    @Override
+    public String toString() {
+        return "mojang";
     }
 }

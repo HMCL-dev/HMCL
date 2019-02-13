@@ -80,13 +80,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    @Override
-    public void refreshVersions() {
-        EventBus.EVENT_BUS.fireEvent(new RefreshingVersionsEvent(this));
-        refreshVersionsImpl();
-        EventBus.EVENT_BUS.fireEvent(new RefreshedVersionsEvent(this));
-    }
-
     public void changeDirectory(File newDirectory) {
         setBaseDirectory(newDirectory);
         refreshVersionsAsync().start();
@@ -167,6 +160,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (iconFile.exists())
             return new Image("file:" + iconFile.getAbsolutePath());
         else if ("net.minecraft.launchwrapper.Launch".equals(version.getMainClass()))
+            return new Image("/assets/img/furnace.png");
+        else if ("cpw.mods.modlauncher.Launcher".equals(version.getMainClass()))
             return new Image("/assets/img/furnace.png");
         else
             return new Image("/assets/img/grass.png");

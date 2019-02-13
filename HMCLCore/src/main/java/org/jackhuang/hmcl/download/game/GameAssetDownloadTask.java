@@ -53,13 +53,13 @@ public final class GameAssetDownloadTask extends Task {
      * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
      * @param version the <b>resolved</b> version
      */
-    public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, Version version) {
+    public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, Version version, boolean forceDownloadingIndex) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.assetIndexInfo = version.getAssetIndex();
         this.assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
 
-        if (!assetIndexFile.exists())
+        if (!assetIndexFile.exists() || forceDownloadingIndex)
             dependents.add(new GameAssetIndexDownloadTask(dependencyManager, version));
     }
 
@@ -99,5 +99,7 @@ public final class GameAssetDownloadTask extends Task {
                 updateProgress(++progress, index.getObjects().size());
             }
     }
-    
+
+    public static final boolean DOWNLOAD_INDEX_FORCIBLY = true;
+    public static final boolean DOWNLOAD_INDEX_IF_NECESSARY = false;
 }

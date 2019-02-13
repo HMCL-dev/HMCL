@@ -234,8 +234,20 @@ public final class FXUtils {
         }
     }
 
-    public static void installTooltip(Node node, String tooltip) {
-        installTooltip(node, 0, 5000, 0, new Tooltip(tooltip));
+    public static void installFastTooltip(Node node, Tooltip tooltip) {
+        installTooltip(node, 50, 5000, 0, tooltip);
+    }
+
+    public static void installFastTooltip(Node node, String tooltip) {
+        installFastTooltip(node, new Tooltip(tooltip));
+    }
+
+    public static void installSlowTooltip(Node node, Tooltip tooltip) {
+        installTooltip(node, 500, 5000, 0, tooltip);
+    }
+
+    public static void installSlowTooltip(Node node, String tooltip) {
+        installSlowTooltip(node, new Tooltip(tooltip));
     }
 
     public static void installTooltip(Node node, double openDelay, double visibleDelay, double closeDelay, Tooltip tooltip) {

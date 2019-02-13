@@ -24,27 +24,27 @@ import static javafx.collections.FXCollections.singletonObservableList;
 import org.jackhuang.hmcl.util.javafx.MultiStepBinding;
 
 import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXListCell;
 
 import javafx.beans.NamedArg;
 import javafx.beans.binding.Bindings;
-import javafx.scene.control.ListCell;
 import javafx.scene.text.Font;
 
 public class FontComboBox extends JFXComboBox<String> {
 
     private boolean loaded = false;
 
-    public FontComboBox(@NamedArg(value = "fontSize", defaultValue = "12.0") double fontSize,
-                        @NamedArg(value = "enableStyle", defaultValue = "false") boolean enableStyle) {
+    public FontComboBox(@NamedArg(value = "fontSize", defaultValue = "12.0") double fontSize) {
         styleProperty().bind(Bindings.concat("-fx-font-family: \"", valueProperty(), "\""));
 
-        setCellFactory(listView -> new ListCell<String>() {
+        setCellFactory(listView -> new JFXListCell<String>() {
             @Override
-            protected void updateItem(String item, boolean empty) {
+            public void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                if (item != null) {
+                if (!empty) {
                     setText(item);
-                    setFont(new Font(item, fontSize));
+                    setGraphic(null);
+                    setStyle("-fx-font-family: \"" + item + "\"");
                 }
             }
         });

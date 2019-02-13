@@ -33,9 +33,6 @@ public final class UUIDTypeAdapter extends TypeAdapter<UUID> {
 
     public static final UUIDTypeAdapter INSTANCE = new UUIDTypeAdapter();
 
-    private UUIDTypeAdapter() {
-    }
-
     @Override
     public void write(JsonWriter writer, UUID value) throws IOException {
         writer.value(value == null ? null : fromUUID(value));

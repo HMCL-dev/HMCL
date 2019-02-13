@@ -35,6 +35,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
+import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -60,6 +61,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VersionSettingsPage extends StackPane implements DecoratorPage {
@@ -85,7 +87,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     @FXML private ComponentList advancedSettingsPane;
     @FXML private ComponentList componentList;
     @FXML private ComponentList iconPickerItemWrapper;
-    @FXML private JFXComboBox<?> cboLauncherVisibility;
+    @FXML private JFXComboBox<LauncherVisibility> cboLauncherVisibility;
     @FXML private JFXCheckBox chkFullscreen;
     @FXML private Label lblPhysicalMemory;
     @FXML private JFXToggleButton chkNoJVMArgs;
@@ -100,6 +102,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
     public VersionSettingsPage() {
         FXUtils.loadFXML(this, "/assets/fxml/version/version-settings.fxml");
+
+        cboLauncherVisibility.getItems().setAll(LauncherVisibility.values());
+        cboLauncherVisibility.setConverter(stringConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase())));
     }
 
     @FXML

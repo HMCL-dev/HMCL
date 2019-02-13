@@ -40,6 +40,16 @@ public class MaintainTask extends TaskResult<Version> {
     }
 
     public static Version maintain(Version version) {
+        if (version.getMainClass().contains("launchwrapper")) {
+            return maintainGameWithLaunchWrapper(version);
+        } else {
+            // Vanilla Minecraft does not need maintain
+            // Forge 1.13 support not implemented, not compatible with OptiFine currently.
+            return version;
+        }
+    }
+
+    private static Version maintainGameWithLaunchWrapper(Version version) {
         LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
         VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
 

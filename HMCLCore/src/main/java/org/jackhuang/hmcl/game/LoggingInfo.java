@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 
 /**
@@ -66,7 +67,7 @@ public final class LoggingInfo implements Validation {
     }
 
     @Override
-    public void validate() throws JsonParseException {
+    public void validate() throws JsonParseException, TolerableValidationException {
         file.validate();
         if (StringUtils.isBlank(argument))
             throw new JsonParseException("LoggingInfo.argument is empty.");

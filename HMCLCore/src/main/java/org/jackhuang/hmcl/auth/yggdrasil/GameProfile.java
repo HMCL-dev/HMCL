@@ -17,36 +17,31 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.gson.Validation;
+import static java.util.Objects.requireNonNull;
 
 import java.util.UUID;
 
+import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.gson.Validation;
+
+import com.google.gson.JsonParseException;
+import com.google.gson.annotations.JsonAdapter;
+
 /**
- *
  * @author huangyuhui
  */
 @Immutable
-public final class GameProfile implements Validation {
+public class GameProfile implements Validation {
 
+    @JsonAdapter(UUIDTypeAdapter.class)
     private final UUID id;
-    private final String name;
-    private final PropertyMap properties;
 
-    public GameProfile() {
-        this(null, null);
-    }
+    private final String name;
 
     public GameProfile(UUID id, String name) {
-        this(id, name, new PropertyMap());
-    }
-
-    public GameProfile(UUID id, String name, PropertyMap properties) {
-        this.id = id;
-        this.name = name;
-        this.properties = properties;
+        this.id = requireNonNull(id);
+        this.name = requireNonNull(name);
     }
 
     public UUID getId() {
@@ -57,18 +52,11 @@ public final class GameProfile implements Validation {
         return name;
     }
 
-    /**
-     * @return nullable
-     */
-    public PropertyMap getProperties() {
-        return properties;
-    }
-
     @Override
     public void validate() throws JsonParseException {
         if (id == null)
-            throw new JsonParseException("Game profile id cannot be null or malformed");
-        if (StringUtils.isBlank(name))
-            throw new JsonParseException("Game profile name cannot be null or blank");
+            throw new JsonParseException("Game profile id cannot be null");
+        if (name == null)
+            throw new JsonParseException("Game profile name cannot be null");
     }
 }

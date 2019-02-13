@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util;
 
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -31,9 +32,11 @@ import java.util.function.Supplier;
  */
 public class InvocationDispatcher<ARG> implements Consumer<ARG> {
 
-    public static <ARG> InvocationDispatcher<ARG> runOn(Consumer<Runnable> executor, Consumer<ARG> action) {
-        return new InvocationDispatcher<>(arg -> executor.accept(() -> {
-            action.accept(arg.get());
+    public static <ARG> InvocationDispatcher<ARG> runOn(Executor executor, Consumer<ARG> action) {
+        return new InvocationDispatcher<>(arg -> executor.execute(() -> {
+            synchronized (action) {
+                action.accept(arg.get());
+            }
         }));
     }
 

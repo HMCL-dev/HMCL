@@ -40,8 +40,14 @@ public final class ValidationTypeAdapterFactory implements TypeAdapterFactory {
         return new TypeAdapter<T>() {
             @Override
             public void write(JsonWriter writer, T t) throws IOException {
-                if (t instanceof Validation)
-                    ((Validation) t).validate();
+                if (t instanceof Validation) {
+                    try {
+                        ((Validation) t).validate();
+                    } catch (TolerableValidationException e) {
+                        delegate.write(writer, null);
+                        return;
+                    }
+                }
 
                 delegate.write(writer, t);
             }
@@ -49,8 +55,13 @@ public final class ValidationTypeAdapterFactory implements TypeAdapterFactory {
             @Override
             public T read(JsonReader reader) throws IOException {
                 T t = delegate.read(reader);
-                if (t instanceof Validation)
-                    ((Validation) t).validate();
+                if (t instanceof Validation) {
+                    try {
+                        ((Validation) t).validate();
+                    } catch (TolerableValidationException e) {
+                        return null;
+                    }
+                }
                 return t;
             }
         };

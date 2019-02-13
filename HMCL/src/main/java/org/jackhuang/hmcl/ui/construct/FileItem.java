@@ -61,7 +61,7 @@ public class FileItem extends BorderPane {
         right.setGraphic(SVG.pencil(Theme.blackFillBinding(), 15, 15));
         right.getStyleClass().add("toggle-icon4");
         right.setOnMouseClicked(e -> onExplore());
-        FXUtils.installTooltip(right, i18n("button.edit"));
+        FXUtils.installFastTooltip(right, i18n("button.edit"));
         setRight(right);
 
         Tooltip tip = new Tooltip();

@@ -47,7 +47,7 @@ public final class ModItem extends BorderPane {
 
         JFXButton btnRemove = new JFXButton();
         JFXUtilities.runInFX(() -> {
-            FXUtils.installTooltip(btnRemove, i18n("mods.remove"));
+            FXUtils.installFastTooltip(btnRemove, i18n("mods.remove"));
         });
         btnRemove.setOnMouseClicked(e -> deleteCallback.accept(this));
         btnRemove.getStyleClass().add("toggle-icon4");

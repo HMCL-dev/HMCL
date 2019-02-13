@@ -63,7 +63,7 @@ public final class ImagePickerItem extends BorderPane {
         deleteButton.onMouseClickedProperty().bind(onDeleteButtonClicked);
         deleteButton.getStyleClass().add("toggle-icon4");
 
-        FXUtils.installTooltip(selectButton, i18n("button.edit"));
+        FXUtils.installFastTooltip(selectButton, i18n("button.edit"));
 
         HBox hBox = new HBox();
         hBox.getChildren().setAll(imageView, selectButton, deleteButton);

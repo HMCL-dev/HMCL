@@ -22,13 +22,6 @@ package org.jackhuang.hmcl.auth;
  * (A account may hold more than one characters.)
  */
 public final class NoCharacterException extends AuthenticationException {
-    private final Account account;
-
-    public NoCharacterException(Account account) {
-        this.account = account;
-    }
-
-    public Account getAccount() {
-        return account;
+    public NoCharacterException() {
     }
 }

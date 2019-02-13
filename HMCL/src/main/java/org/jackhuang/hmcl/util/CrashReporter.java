@@ -103,7 +103,10 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                     "-- System Details --\n" +
                     "  Operating System: " + System.getProperty("os.name") + ' ' + OperatingSystem.SYSTEM_VERSION + "\n" +
                     "  Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor") + "\n" +
-                    "  Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor") + "\n";
+                    "  Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor") + "\n" +
+                    "  JVM Max Memory: " + Runtime.getRuntime().maxMemory() + "\n" +
+                    "  JVM Total Memory: " + Runtime.getRuntime().totalMemory() + "\n" +
+                    "  JVM Free Memory: " + Runtime.getRuntime().freeMemory() + "\n";
 
             LOG.log(Level.SEVERE, text);
 

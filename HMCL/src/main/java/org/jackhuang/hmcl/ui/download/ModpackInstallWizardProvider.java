@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
+import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.CurseCompletionException;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
@@ -111,6 +112,8 @@ public class ModpackInstallWizardProvider implements WizardProvider {
                     } else {
                         Controllers.dialog(i18n("modpack.type.curse.tolerable_error"), i18n("install.success"), MessageBox.INFORMATION_MESSAGE, next);
                     }
+                } else if (exception instanceof LibraryDownloadException) {
+                    Controllers.dialog(i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().getName()) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageBox.ERROR_MESSAGE, next);
                 } else if (exception instanceof DownloadException) {
                     Controllers.dialog(StringUtils.getStackTrace(exception), i18n("install.failed.downloading"), MessageBox.ERROR_MESSAGE, next);
                 } else {

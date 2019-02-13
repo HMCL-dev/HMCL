@@ -19,10 +19,7 @@ package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
-import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
-import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.download.game.LibrariesUniqueTask;
-import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
+import org.jackhuang.hmcl.download.game.*;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
@@ -74,7 +71,13 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     @Override
     public Task checkGameCompletionAsync(Version version) {
         return new ParallelTask(
-                new GameAssetDownloadTask(this, version),
+                Task.ofThen(var -> {
+                    if (!repository.getVersionJar(version).exists())
+                        return new GameDownloadTask(this, null, version);
+                    else
+                        return null;
+                }),
+                new GameAssetDownloadTask(this, version, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY),
                 new GameLibrariesTask(this, version)
         );
     }

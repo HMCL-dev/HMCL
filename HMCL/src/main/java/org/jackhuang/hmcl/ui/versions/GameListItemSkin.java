@@ -73,7 +73,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             btnUpgrade.setOnMouseClicked(e -> skinnable.update());
             btnUpgrade.getStyleClass().add("toggle-icon4");
             btnUpgrade.setGraphic(SVG.update(Theme.blackFillBinding(), -1, -1));
-            JFXUtilities.runInFX(() -> FXUtils.installTooltip(btnUpgrade, i18n("version.update")));
+            JFXUtilities.runInFX(() -> FXUtils.installFastTooltip(btnUpgrade, i18n("version.update")));
             right.getChildren().add(btnUpgrade);
         }
 

@@ -17,11 +17,15 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
+
+import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  *
@@ -172,6 +176,17 @@ public final class Lang {
         return thread;
     }
 
+    public static ThreadPoolExecutor threadPool(String name, boolean daemon, int threads, long timeout, TimeUnit timeunit) {
+        AtomicInteger counter = new AtomicInteger(1);
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(0, threads, timeout, timeunit, new LinkedBlockingQueue<>(), r -> {
+            Thread t = new Thread(r, name + "-" + counter.getAndIncrement());
+            t.setDaemon(daemon);
+            return t;
+        });
+        pool.allowsCoreThreadTimeOut();
+        return pool;
+    }
+
     public static int parseInt(Object string, int defaultValue) {
         try {
             return Integer.parseInt(string.toString());
@@ -184,14 +199,6 @@ public final class Lang {
         try {
             if (string == null) return null;
             return Integer.parseInt(string.toString());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    public static Double toDoubleOrNull(Object string) {
-        try {
-            return Double.parseDouble(string.toString());
         } catch (NumberFormatException e) {
             return null;
         }

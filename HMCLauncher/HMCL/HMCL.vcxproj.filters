@@ -24,7 +24,16 @@
     <ClInclude Include="Resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="HMCL.h">
+    <ClInclude Include="main.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Version.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="java.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="os.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -32,7 +41,16 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="HMCL.cpp">
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Version.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="java.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="os.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

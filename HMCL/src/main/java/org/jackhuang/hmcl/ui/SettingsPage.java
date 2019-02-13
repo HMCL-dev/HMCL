@@ -129,7 +129,7 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
                         config().commonDirectoryProperty(), config().commonDirTypeProperty()));
 
         // ==== Update ====
-        FXUtils.installTooltip(btnUpdate, i18n("update.tooltip"));
+        FXUtils.installFastTooltip(btnUpdate, i18n("update.tooltip"));
         updateListener = any -> {
             btnUpdate.setVisible(UpdateChecker.isOutdated());
 

@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.util.ToStringBuilder;
@@ -36,14 +35,19 @@ import java.util.concurrent.ExecutionException;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class AuthlibInjectorAccount extends YggdrasilAccount {
-    private AuthlibInjectorServer server;
+    private final AuthlibInjectorServer server;
     private AuthlibInjectorArtifactProvider downloader;
 
-    protected AuthlibInjectorAccount(YggdrasilService service, AuthlibInjectorServer server, AuthlibInjectorArtifactProvider downloader, String username, UUID characterUUID, YggdrasilSession session) {
-        super(service, username, characterUUID, session);
-
-        this.downloader = downloader;
+    public AuthlibInjectorAccount(AuthlibInjectorServer server, AuthlibInjectorArtifactProvider downloader, String username, String password, CharacterSelector selector) throws AuthenticationException {
+        super(server.getYggdrasilService(), username, password, selector);
         this.server = server;
+        this.downloader = downloader;
+    }
+
+    public AuthlibInjectorAccount(AuthlibInjectorServer server, AuthlibInjectorArtifactProvider downloader, String username, YggdrasilSession session) {
+        super(server.getYggdrasilService(), username, session);
+        this.server = server;
+        this.downloader = downloader;
     }
 
     @Override
@@ -52,8 +56,8 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     }
 
     @Override
-    protected AuthInfo logInWithPassword(String password, CharacterSelector selector) throws AuthenticationException {
-        return inject(() -> super.logInWithPassword(password, selector));
+    public synchronized AuthInfo logInWithPassword(String password) throws AuthenticationException {
+        return inject(() -> super.logInWithPassword(password));
     }
 
     @Override
@@ -111,7 +115,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         return new Arguments().addJVMArguments(
                 "-javaagent:" + artifact.getLocation().toString() + "=" + server.getUrl(),
                 "-Dauthlibinjector.side=client",
-                "-Dorg.to2mbn.authlibinjector.config.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta.getBytes(UTF_8)));
+                "-Dauthlibinjector.yggdrasil.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta.getBytes(UTF_8)));
     }
 
     @Override
@@ -119,6 +123,12 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         Map<Object, Object> map = super.toStorage();
         map.put("serverBaseURL", server.getUrl());
         return map;
+    }
+
+    @Override
+    public void clearCache() {
+        super.clearCache();
+        server.invalidateMetadataCache();
     }
 
     public AuthlibInjectorServer getServer() {

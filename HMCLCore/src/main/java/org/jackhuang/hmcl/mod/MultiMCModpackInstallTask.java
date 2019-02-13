@@ -40,7 +40,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -133,7 +132,7 @@ public final class MultiMCModpackInstallTask extends Task {
     
     @Override
     public void execute() throws Exception {
-        Version version = Objects.requireNonNull(repository.readVersionJson(name));
+        Version version = repository.readVersionJson(name);
 
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(zipFile.toPath())) {
             Path root = Files.list(fs.getPath("/")).filter(Files::isDirectory).findAny()

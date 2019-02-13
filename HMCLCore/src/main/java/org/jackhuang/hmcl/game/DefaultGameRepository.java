@@ -20,17 +20,18 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.mod.ModManager;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Stream;
+
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 /**
  * An implementation of classic Minecraft game repository.
@@ -81,6 +82,10 @@ public class DefaultGameRepository implements GameRepository {
         return new File(getBaseDirectory(), "libraries/" + lib.getPath());
     }
 
+    public Path getArtifactFile(Version version, Artifact artifact) {
+        return artifact.getPath(getBaseDirectory().toPath().resolve("libraries"));
+    }
+
     @Override
     public File getRunDirectory(String id) {
         return getBaseDirectory();
@@ -112,7 +117,7 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public Version readVersionJson(File file) throws IOException, JsonParseException {
-        return JsonUtils.GSON.fromJson(FileUtils.readText(file), Version.class);
+        return JsonUtils.fromNonNullJson(FileUtils.readText(file), Version.class);
     }
 
     @Override
@@ -171,13 +176,13 @@ public class DefaultGameRepository implements GameRepository {
         List<File> jsons = FileUtils.listFilesByExtension(removedFile, "json");
         jsons.forEach(f -> {
             if (!f.delete())
-                Logging.LOG.warning("Unable to delete file " + f);
+                LOG.warning("Unable to delete file " + f);
         });
         // remove the version from version list regardless of whether the directory was removed successfully or not.
         try {
             FileUtils.deleteDirectory(removedFile);
         } catch (IOException e) {
-            Logging.LOG.log(Level.WARNING, "Unable to remove version folder: " + file, e);
+            LOG.log(Level.WARNING, "Unable to remove version folder: " + file, e);
         }
         return true;
     }
@@ -202,25 +207,31 @@ public class DefaultGameRepository implements GameRepository {
                 // we will find the only json and rename it to correct name.
                 if (!json.exists()) {
                     List<File> jsons = FileUtils.listFilesByExtension(dir, "json");
-                    if (jsons.size() == 1)
+                    if (jsons.size() == 1) {
+                        LOG.info("Renaming json file " + jsons.get(0) + " to " + json);
                         if (!jsons.get(0).renameTo(json)) {
-                            Logging.LOG.warning("Cannot rename json file " + jsons.get(0) + " to " + json + ", ignoring version " + id);
+                            LOG.warning("Cannot rename json file, ignoring version " + id);
                             return Stream.empty();
                         }
+                    } else {
+                        LOG.info("No available json file found, ignoring version " + id);
+                        return Stream.empty();
+                    }
                 }
 
                 Version version;
                 try {
-                    version = Objects.requireNonNull(readVersionJson(json));
+                    version = readVersionJson(json);
                 } catch (Exception e) {
+                    LOG.log(Level.WARNING, "Malformed version json " + id, e);
                     // JsonSyntaxException or IOException or NullPointerException(!!)
                     if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json, id)) != Event.Result.ALLOW)
                         return Stream.empty();
 
                     try {
-                        version = Objects.requireNonNull(readVersionJson(json));
+                        version = readVersionJson(json);
                     } catch (Exception e2) {
-                        Logging.LOG.log(Level.SEVERE, "User corrected version json is still malformed");
+                        LOG.log(Level.SEVERE, "User corrected version json is still malformed", e2);
                         return Stream.empty();
                     }
                 }
@@ -230,7 +241,7 @@ public class DefaultGameRepository implements GameRepository {
                     try {
                         FileUtils.writeText(json, JsonUtils.GSON.toJson(version));
                     } catch (Exception e) {
-                        Logging.LOG.log(Level.WARNING, "Ignoring version " + id + " because wrong id " + version.getId() + " is set and cannot correct it.");
+                        LOG.log(Level.WARNING, "Ignoring version " + id + " because wrong id " + version.getId() + " is set and cannot correct it.", e);
                         return Stream.empty();
                     }
                 }
@@ -246,7 +257,7 @@ public class DefaultGameRepository implements GameRepository {
                         EventBus.EVENT_BUS.fireEvent(new LoadedOneVersionEvent(this, resolved)) != Event.Result.DENY)
                     versions.put(version.getId(), version);
             } catch (VersionNotFoundException e) {
-                Logging.LOG.log(Level.WARNING, "Ignoring version " + version.getId() + " because it inherits from a nonexistent version.");
+                LOG.log(Level.WARNING, "Ignoring version " + version.getId() + " because it inherits from a nonexistent version.");
             }
         }
 
@@ -258,10 +269,8 @@ public class DefaultGameRepository implements GameRepository {
         if (EventBus.EVENT_BUS.fireEvent(new RefreshingVersionsEvent(this)) == Event.Result.DENY)
             return;
 
-        Schedulers.newThread().schedule(() -> {
-            refreshVersionsImpl();
-            EventBus.EVENT_BUS.fireEvent(new RefreshedVersionsEvent(this));
-        });
+        refreshVersionsImpl();
+        EventBus.EVENT_BUS.fireEvent(new RefreshedVersionsEvent(this));
     }
 
     @Override
@@ -278,7 +287,7 @@ public class DefaultGameRepository implements GameRepository {
         try {
             return reconstructAssets(version, assetId);
         } catch (IOException | JsonParseException e) {
-            Logging.LOG.log(Level.SEVERE, "Unable to reconstruct asset directory", e);
+            LOG.log(Level.SEVERE, "Unable to reconstruct asset directory", e);
             return getAssetDirectory(version, assetId);
         }
     }

@@ -20,7 +20,8 @@ package org.jackhuang.hmcl.auth.authlibinjector;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import java.util.Map;
 import java.util.Objects;
@@ -48,10 +49,7 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
 
         AuthlibInjectorServer server = (AuthlibInjectorServer) additionalData;
 
-        AuthlibInjectorAccount account = new AuthlibInjectorAccount(new YggdrasilService(new AuthlibInjectorProvider(server.getUrl())),
-                server, downloader, username, null, null);
-        account.logInWithPassword(password, selector);
-        return account;
+        return new AuthlibInjectorAccount(server, downloader, username, password, selector);
     }
 
     @Override
@@ -67,7 +65,14 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
 
         AuthlibInjectorServer server = serverLookup.apply(apiRoot);
 
-        return new AuthlibInjectorAccount(new YggdrasilService(new AuthlibInjectorProvider(server.getUrl())),
-                server, downloader, username, session.getSelectedProfile().getId(), session);
+        tryCast(storage.get("profileProperties"), Map.class).ifPresent(
+                it -> {
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> properties = it;
+                    GameProfile selected = session.getSelectedProfile();
+                    server.getYggdrasilService().getProfileRepository().put(selected.getId(), new CompleteGameProfile(selected, properties));
+                });
+
+        return new AuthlibInjectorAccount(server, downloader, username, session);
     }
 }

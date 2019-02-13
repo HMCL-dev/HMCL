@@ -18,23 +18,31 @@
 package org.jackhuang.hmcl.auth.yggdrasil;
 
 import com.google.gson.JsonParseException;
+
+import java.util.Map;
+
+import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
  * @author huang
  */
+@Immutable
 public final class User implements Validation {
 
     private final String id;
-    private final PropertyMap properties;
+
+    @Nullable
+    private final Map<String, String> properties;
 
     public User(String id) {
         this(id, null);
     }
 
-    public User(String id, PropertyMap properties) {
+    public User(String id, Map<String, String> properties) {
         this.id = id;
         this.properties = properties;
     }
@@ -43,7 +51,7 @@ public final class User implements Validation {
         return id;
     }
 
-    public PropertyMap getProperties() {
+    public Map<String, String> getProperties() {
         return properties;
     }
 
@@ -52,5 +60,4 @@ public final class User implements Validation {
         if (StringUtils.isBlank(id))
             throw new JsonParseException("User id cannot be empty.");
     }
-
 }

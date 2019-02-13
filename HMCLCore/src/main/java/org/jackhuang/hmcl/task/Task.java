@@ -18,7 +18,10 @@
 package org.jackhuang.hmcl.task;
 
 import javafx.application.Platform;
-import javafx.beans.property.*;
+import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.beans.property.ReadOnlyDoubleWrapper;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.AutoTypingMap;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
@@ -55,18 +58,14 @@ public abstract class Task {
         this.significance = significance;
     }
 
-    private ReadOnlyObjectWrapper<TaskState> state = new ReadOnlyObjectWrapper<>(this, "state", TaskState.READY);
+    private TaskState state = TaskState.READY;
 
     public TaskState getState() {
-        return state.get();
+        return state;
     }
 
     void setState(TaskState state) {
-        this.state.setValue(state);
-    }
-
-    public ReadOnlyObjectProperty<TaskState> stateProperty() {
-        return state.getReadOnlyProperty();
+        this.state = state;
     }
 
     private Throwable lastException = null;
@@ -338,10 +337,6 @@ public abstract class Task {
                     failure.accept(variables.get(TaskExecutor.LAST_EXCEPTION_ID));
             }
         });
-    }
-
-    public static Task empty() {
-        return of(ExceptionalConsumer.empty());
     }
 
     public static Task of(String name, ExceptionalRunnable<?> runnable) {

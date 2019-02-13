@@ -359,7 +359,7 @@ public abstract class SettingsView extends StackPane {
                                 HBox hBox = new HBox();
                                 hBox.setSpacing(3);
 
-                                cboFont = new FontComboBox(12, false);
+                                cboFont = new FontComboBox(12);
                                 txtFontSize = new JFXTextField();
                                 FXUtils.setLimitWidth(txtFontSize, 50);
                                 hBox.getChildren().setAll(cboFont, txtFontSize);

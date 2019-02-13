@@ -81,8 +81,7 @@ public class Versions {
 
     public static void updateGameAssets(Profile profile, String version) {
         Version resolvedVersion = profile.getRepository().getResolvedVersion(version);
-        TaskExecutor executor = new GameAssetIndexDownloadTask(profile.getDependency(), resolvedVersion)
-                .then(new GameAssetDownloadTask(profile.getDependency(), resolvedVersion))
+        TaskExecutor executor = new GameAssetDownloadTask(profile.getDependency(), resolvedVersion, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY)
                 .executor();
         Controllers.taskDialog(executor, i18n("version.manage.redownload_assets_index"));
         executor.start();

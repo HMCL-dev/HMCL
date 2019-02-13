@@ -275,6 +275,22 @@ public final class FileUtils {
         Files.copy(srcFile.toPath(), destFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
     }
 
+    public static void copyFile(Path srcFile, Path destFile)
+            throws IOException {
+        Objects.requireNonNull(srcFile, "Source must not be null");
+        Objects.requireNonNull(destFile, "Destination must not be null");
+        if (!Files.exists(srcFile))
+            throw new FileNotFoundException("Source '" + srcFile + "' does not exist");
+        if (Files.isDirectory(srcFile))
+            throw new IOException("Source '" + srcFile + "' exists but is a directory");
+        Path parentFile = destFile.getParent();
+        Files.createDirectories(parentFile);
+        if (Files.exists(destFile) && !Files.isWritable(destFile))
+            throw new IOException("Destination '" + destFile + "' exists but is read-only");
+
+        Files.copy(srcFile, destFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
+    }
+
     public static void moveFile(File srcFile, File destFile) throws IOException {
         copyFile(srcFile, destFile);
         srcFile.delete();
