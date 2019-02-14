@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include "Version.h"
 
-Version::Version(const std::wstring & rawString)
+using namespace std;
+
+Version::Version(const wstring & rawString)
 {
 	int idx = 0;
 	ver[0] = ver[1] = ver[2] = ver[3] = 0;

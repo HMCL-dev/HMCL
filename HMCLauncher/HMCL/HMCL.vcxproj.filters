@@ -36,6 +36,9 @@
     <ClInclude Include="os.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="lang.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

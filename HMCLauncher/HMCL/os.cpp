@@ -106,3 +106,36 @@ bool GetArch(bool & is64Bit)
 #error _WIN64 and _WIN32 are both undefined.
 #endif
 }
+
+bool MyGetFileVersionInfo(const std::wstring & filePath, Version &version)
+{
+	DWORD verHandle = 0;
+	UINT size = 0;
+	LPBYTE lpBuffer = NULL;
+	VS_FIXEDFILEINFO *pFileInfo;
+	DWORD dwSize = GetFileVersionInfoSize(filePath.c_str(), NULL);
+
+	if (!dwSize)
+		return false;
+
+	LPBYTE data = new BYTE[dwSize];
+	if (!GetFileVersionInfo(filePath.c_str(), 0, dwSize, data))
+	{
+		delete[] data;
+		return false;
+	}
+
+	if (!VerQueryValue(data, TEXT("\\"), (LPVOID*)&pFileInfo, &size))
+	{
+		delete[] data;
+		return false;
+	}
+
+	version = Version{
+		(pFileInfo->dwFileVersionMS >> 16) & 0xFFFF,
+		(pFileInfo->dwFileVersionMS >> 0) & 0xFFFF,
+		(pFileInfo->dwFileVersionLS >> 16) & 0xFFFF,
+		(pFileInfo->dwFileVersionLS >> 0) & 0xFFFF
+	};
+	return true;
+}

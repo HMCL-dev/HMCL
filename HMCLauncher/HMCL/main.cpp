@@ -2,14 +2,28 @@
 #include "main.h"
 #include "os.h"
 #include "java.h"
+#include "lang.h"
 
 using namespace std;
 
+Version J8(TEXT("8")), J11(TEXT("11"));
 
-void LaunchJVM(const wstring &javaPath, const wstring &jarPath)
+void RawLaunchJVM(const wstring &javaPath, const wstring &jarPath)
 {
 	if (MyCreateProcess(L"\"" + javaPath + L"\" -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15 -jar \"" + jarPath + L"\""))
 		exit(EXIT_SUCCESS);
+}
+
+void LaunchJVM(const wstring &javaPath, const wstring &jarPath)
+{
+	Version javaVersion(L"");
+	if (!MyGetFileVersionInfo(javaPath, javaVersion))
+		return;
+
+	if (J8 <= javaVersion && javaVersion < J11)
+	{
+		RawLaunchJVM(javaPath, jarPath);
+	}
 }
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
@@ -36,9 +50,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
 	if (FindJava(path))
 		LaunchJVM(path + L"\\bin\\javaw.exe", exeName);
-
-	// Try java in PATH
-	LaunchJVM(L"javaw", exeName);
 
 	// Or we try to search Java in C:\Program Files.
 	{
@@ -72,8 +83,10 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 		}
 	}
 
-	MessageBox(NULL, L"Java installation cannot be found in this computer, please download it from https://java.com \n"
-		L"未能在这台电脑上找到Java 8~Java 10，请从 https://java.com 下载安装Java", L"Error", MB_ICONERROR | MB_OK);
+	// Try java in PATH
+	RawLaunchJVM(L"javaw", exeName);
+
+	MessageBox(NULL, ERROR_PROMPT, L"Error", MB_ICONERROR | MB_OK);
 	ShellExecute(0, 0, L"https://java.com/", 0, 0, SW_SHOW);
 	return 1;
 }

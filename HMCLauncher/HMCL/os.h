@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <windows.h>
+#include "Version.h"
 
 const int MAX_KEY_LENGTH = 255;
 const int MAX_VALUE_NAME = 16383;
@@ -21,3 +22,5 @@ bool MyCreateProcess(const std::wstring &command);
 bool FindFirstFileExists(LPCWSTR lpPath, DWORD dwFilter);
 
 bool GetArch(bool &is64Bit);
+
+bool MyGetFileVersionInfo(const std::wstring &filePath, Version &version);

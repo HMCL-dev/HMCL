@@ -58,7 +58,7 @@ bool FindJavaByRegistryKey(HKEY rootKey, LPCWSTR subKey, std::wstring & path)
 		{
 			if (Version(javaVer) < JAVA_8)
 				oldJavaFound = true;
-			else if (!(Version(javaVer) < JAVA_11))
+			else if (JAVA_11 <= Version(javaVer))
 				newJavaFound = true;
 			else
 				flag = true;
