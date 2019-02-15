@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.concurrency.JFXUtilities;
+import com.jfoenix.utils.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXProgressBar;
 import javafx.application.Platform;

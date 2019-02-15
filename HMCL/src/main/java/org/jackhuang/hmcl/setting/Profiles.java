@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.jfoenix.concurrency.JFXUtilities;
+import com.jfoenix.utils.JFXUtilities;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.*;

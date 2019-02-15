@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl;
 
-import com.jfoenix.concurrency.JFXUtilities;
+import com.jfoenix.utils.JFXUtilities;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;

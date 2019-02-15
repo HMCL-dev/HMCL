@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.wizard;
 
-import com.jfoenix.concurrency.JFXUtilities;
+import com.jfoenix.utils.JFXUtilities;
 import javafx.beans.property.StringProperty;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;

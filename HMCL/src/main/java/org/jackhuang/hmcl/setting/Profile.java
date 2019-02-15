@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
-import com.jfoenix.concurrency.JFXUtilities;
+import com.jfoenix.utils.JFXUtilities;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;

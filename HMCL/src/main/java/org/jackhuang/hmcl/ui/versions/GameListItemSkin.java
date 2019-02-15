@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.concurrency.JFXUtilities;
+import com.jfoenix.utils.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXRadioButton;
@@ -87,7 +87,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         right.getChildren().add(btnManage);
         root.setRight(right);
 
-        root.setStyle("-fx-background-color: white; -fx-padding: 8 8 8 0;");
+        root.setStyle("-fx-background-color: white; -fx-padding: 8 8 8 12;");
         JFXDepthManager.setDepth(root, 1);
 
         getChildren().setAll(root);

@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.concurrency.JFXUtilities;
+import com.jfoenix.utils.JFXUtilities;
 import com.jfoenix.controls.JFXTabPane;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ListProperty;

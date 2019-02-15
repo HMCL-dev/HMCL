@@ -502,6 +502,10 @@
 *                                                                              *
 *******************************************************************************/
 
+.jfx-button {
+    -jfx-disable-visual-focus: true;
+}
+
 .jfx-button-raised {
     -fx-background-color: -fx-base-color;
 }
