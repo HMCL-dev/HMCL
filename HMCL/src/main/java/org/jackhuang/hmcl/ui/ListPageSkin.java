@@ -37,6 +37,7 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
         super(skinnable);
 
         SpinnerPane spinnerPane = new SpinnerPane();
+        spinnerPane.getStyleClass().add("large-spinner-pane");
         Pane placeholder = new Pane();
 
         StackPane contentPane = new StackPane();

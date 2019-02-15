@@ -124,7 +124,6 @@ public final class ModManager {
         for (ModInfo modInfo : modInfos) {
             Files.deleteIfExists(modInfo.getFile());
         }
-        refreshMods();
     }
 
     public Path disableMod(Path file) throws IOException {

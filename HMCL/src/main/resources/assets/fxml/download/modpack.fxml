@@ -14,7 +14,7 @@
     <fx:define>
         <Insets fx:id="insets" bottom="12" />
     </fx:define>
-    <SpinnerPane fx:id="spinnerPane">
+    <SpinnerPane fx:id="spinnerPane" styleClass="large-spinner-pane">
         <VBox fx:id="borderPane" alignment="CENTER" FXUtils.limitWidth="500">
             <HBox style="-fx-padding: 0 0 16 5;"><Label text="%modpack.task.install" /></HBox>
             <ComponentList>

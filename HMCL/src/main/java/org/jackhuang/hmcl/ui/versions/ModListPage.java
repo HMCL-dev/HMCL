@@ -19,6 +19,15 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.concurrency.JFXUtilities;
 import com.jfoenix.controls.JFXTabPane;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.control.Control;
+import javafx.scene.control.Skin;
+import javafx.scene.control.TreeItem;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.ModInfo;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -37,16 +46,18 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class ModListPage extends ListPage<ModItem> {
+public final class ModListPage extends Control {
+    private final ListProperty<ModListPageSkin.ModInfoObject> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
+    private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading", false);
 
     private JFXTabPane parentTab;
     private ModManager modManager;
 
     public ModListPage() {
-        setRefreshable(true);
 
         FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)), mods -> {
             mods.forEach(it -> {
@@ -61,6 +72,10 @@ public final class ModListPage extends ListPage<ModItem> {
     }
 
     @Override
+    protected Skin<?> createDefaultSkin() {
+        return new ModListPageSkin(this);
+    }
+
     public void refresh() {
         loadMods(modManager);
     }
@@ -71,50 +86,22 @@ public final class ModListPage extends ListPage<ModItem> {
 
     public void loadMods(ModManager modManager) {
         this.modManager = modManager;
-        Task.of(variables -> {
+        Task.ofResult("list", variables -> {
             synchronized (ModListPage.this) {
                 JFXUtilities.runInFX(() -> loadingProperty().set(true));
-
                 modManager.refreshMods();
-
-                // Surprisingly, if there are a great number of mods, this processing will cause a long UI pause,
-                // constructing UI elements.
-                // We must do this asynchronously.
-                LinkedList<ModItem> list = new LinkedList<>();
-                for (ModInfo modInfo : modManager.getMods()) {
-                    ModItem item = new ModItem(modInfo, i -> {
-                        try {
-                            modManager.removeMods(modInfo);
-                        } catch (IOException ignore) {
-                            // Fail to remove mods if the game is running or the mod is absent.
-                        }
-                        loadMods(modManager);
-                    });
-                    modInfo.activeProperty().addListener((a, b, newValue) -> {
-                        if (newValue)
-                            item.getStyleClass().remove("disabled");
-                        else
-                            item.getStyleClass().add("disabled");
-                    });
-                    if (!modInfo.isActive())
-                        item.getStyleClass().add("disabled");
-
-                    list.add(item);
-                }
-
-                variables.set("list", list);
+                return new LinkedList<>(modManager.getMods());
             }
-        }).finalized(Schedulers.javafx(), (variables, isDependentsSucceeded) -> {
+        }).finalizedResult(Schedulers.javafx(), (list, isDependentsSucceeded) -> {
             loadingProperty().set(false);
             if (isDependentsSucceeded)
                 FXUtils.onWeakChangeAndOperate(parentTab.getSelectionModel().selectedItemProperty(), newValue -> {
                     if (newValue != null && newValue.getUserData() == ModListPage.this)
-                        itemsProperty().setAll(variables.<List<ModItem>>get("list"));
+                        itemsProperty().setAll(list.stream().map(ModListPageSkin.ModInfoObject::new).collect(Collectors.toList()));
                 });
         }).start();
     }
 
-    @Override
     public void add() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("mods.choose_mod"));
@@ -150,5 +137,55 @@ public final class ModListPage extends ListPage<ModItem> {
 
     public void setParentTab(JFXTabPane parentTab) {
         this.parentTab = parentTab;
+    }
+
+    public void removeSelectedMods(ObservableList<TreeItem<ModListPageSkin.ModInfoObject>> selectedItems) {
+        try {
+            modManager.removeMods(selectedItems.stream()
+                    .map(TreeItem::getValue)
+                    .map(ModListPageSkin.ModInfoObject::getModInfo)
+                    .toArray(ModInfo[]::new));
+            loadMods(modManager);
+        } catch (IOException ignore) {
+            // Fail to remove mods if the game is running or the mod is absent.
+        }
+    }
+
+    public void enableSelectedMods(ObservableList<TreeItem<ModListPageSkin.ModInfoObject>> selectedItems) {
+        selectedItems.stream()
+                .map(TreeItem::getValue)
+                .map(ModListPageSkin.ModInfoObject::getModInfo)
+                .forEach(info -> info.setActive(true));
+    }
+
+    public void disableSelectedMods(ObservableList<TreeItem<ModListPageSkin.ModInfoObject>> selectedItems) {
+        selectedItems.stream()
+                .map(TreeItem::getValue)
+                .map(ModListPageSkin.ModInfoObject::getModInfo)
+                .forEach(info -> info.setActive(false));
+    }
+
+    public ObservableList<ModListPageSkin.ModInfoObject> getItems() {
+        return items.get();
+    }
+
+    public void setItems(ObservableList<ModListPageSkin.ModInfoObject> items) {
+        this.items.set(items);
+    }
+
+    public ListProperty<ModListPageSkin.ModInfoObject> itemsProperty() {
+        return items;
+    }
+
+    public boolean isLoading() {
+        return loading.get();
+    }
+
+    public void setLoading(boolean loading) {
+        this.loading.set(loading);
+    }
+
+    public BooleanProperty loadingProperty() {
+        return loading;
     }
 }

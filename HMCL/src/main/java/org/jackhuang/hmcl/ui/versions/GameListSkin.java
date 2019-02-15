@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXScrollPane;
-import com.jfoenix.controls.JFXSpinner;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
@@ -31,8 +30,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Theme;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 public class GameListSkin extends SkinBase<GameList> {
@@ -91,10 +90,9 @@ public class GameListSkin extends SkinBase<GameList> {
         }
 
         {
-            StackPane center = new StackPane();
-
-            JFXSpinner spinner = new JFXSpinner();
-            spinner.getStyleClass().setAll("first-spinner");
+            SpinnerPane center = new SpinnerPane();
+            center.loadingProperty().bind(skinnable.loadingProperty());
+            center.getStyleClass().add("large-spinner-pane");
 
             ScrollPane scrollPane = new ScrollPane();
             scrollPane.setFitToWidth(true);
@@ -109,9 +107,7 @@ public class GameListSkin extends SkinBase<GameList> {
             scrollPane.setContent(gameList);
             JFXScrollPane.smoothScrolling(scrollPane);
 
-            FXUtils.onChangeAndOperate(skinnable.loadingProperty(),
-                    loading -> center.getChildren().setAll(loading ? spinner : scrollPane));
-
+            center.setContent(scrollPane);
             root.setCenter(center);
         }
 

@@ -876,6 +876,14 @@
     -fx-stroke-width: 3.0;
 }
 
+.large-spinner-pane .jfx-spinner {
+    -jfx-radius: 20;
+}
+
+.large-spinner-pane .jfx-spinner {
+    -fx-stroke-width: 5.0;
+}
+
 .second-spinner {
     -jfx-radius: 30;
 }
@@ -1028,7 +1036,7 @@
 
 .tree-table-view .column-header .label {
     -fx-text-fill: #949494;
-    -fx-padding: 16 0 16 0;
+    -fx-padding: 8 0 8 0;
 }
 
 .tree-table-view .column-header .arrow, .tree-table-view .column-header .sort-order-dot {
@@ -1046,8 +1054,8 @@
 
 .tree-table-view .tree-table-cell {
     -fx-border-width: 0 0 0 0;
-    -fx-padding: 16 0 16 0;
-    -fx-alignment: top-center;
+    -fx-padding: 8 0 8 0;
+    /*-fx-alignment: top-center;*/
 }
 
 .tree-table-view .column-overlay {
