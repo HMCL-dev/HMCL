@@ -47,12 +47,11 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
     @Override
     public Task refreshAsync(DownloadProvider downloadProvider) {
         final GetTask task = new GetTask(NetworkUtils.toURL(downloadProvider.injectURL(FORGE_LIST)));
-        final List<Task> dependents = Collections.singletonList(task);
         return new Task() {
 
             @Override
             public Collection<Task> getDependents() {
-                return dependents;
+                return Collections.singleton(task);
             }
 
             @Override

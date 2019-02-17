@@ -46,6 +46,14 @@ public abstract class VersionList<T extends RemoteVersion> {
         return !versions.isEmpty();
     }
 
+    /**
+     * True if the version list that contains the remote versions which depends on the specific game version has been loaded.
+     * @param gameVersion the remote version depends on
+     */
+    public boolean isLoaded(String gameVersion) {
+        return !versions.get(gameVersion).isEmpty();
+    }
+
     public abstract boolean hasType();
 
     protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -55,6 +63,15 @@ public abstract class VersionList<T extends RemoteVersion> {
      * @return the task to reload the remote version list.
      */
     public abstract Task refreshAsync(DownloadProvider downloadProvider);
+
+    /**
+     * @param gameVersion the remote version depends on
+     * @param downloadProvider DownloadProvider
+     * @return the task to reload the remote version list.
+     */
+    public Task refreshAsync(String gameVersion, DownloadProvider downloadProvider) {
+        return refreshAsync(downloadProvider);
+    }
 
     public Task loadAsync(DownloadProvider downloadProvider) {
         return Task.ofThen(variables -> {
@@ -67,6 +84,20 @@ public abstract class VersionList<T extends RemoteVersion> {
                 lock.readLock().unlock();
             }
             return loaded ? null : refreshAsync(downloadProvider);
+        });
+    }
+
+    public Task loadAsync(String gameVersion, DownloadProvider downloadProvider) {
+        return Task.ofThen(variables -> {
+            lock.readLock().lock();
+            boolean loaded;
+
+            try {
+                loaded = isLoaded(gameVersion);
+            } finally {
+                lock.readLock().unlock();
+            }
+            return loaded ? null : refreshAsync(gameVersion, downloadProvider);
         });
     }
 

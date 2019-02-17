@@ -123,7 +123,7 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
     @Override
     public void refresh() {
         getChildren().setAll(spinner);
-        executor = versionList.refreshAsync(downloadProvider).finalized((variables, isDependentsSucceeded) -> {
+        executor = versionList.refreshAsync(gameVersion, downloadProvider).finalized((variables, isDependentsSucceeded) -> {
             if (isDependentsSucceeded) {
                 List<VersionsPageItem> items = loadVersions();
 

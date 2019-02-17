@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.download.forge.ForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.forge.ForgeVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList;
@@ -44,7 +45,7 @@ public class MojangDownloadProvider implements DownloadProvider {
             case "game":
                 return GameVersionList.INSTANCE;
             case "forge":
-                return ForgeVersionList.INSTANCE;
+                return ForgeBMCLVersionList.INSTANCE;
             case "liteloader":
                 return LiteLoaderVersionList.INSTANCE;
             case "optifine":
@@ -56,6 +57,7 @@ public class MojangDownloadProvider implements DownloadProvider {
 
     @Override
     public String injectURL(String baseURL) {
-        return baseURL;
+        return baseURL
+                .replaceFirst("https?://files\\.minecraftforge\\.net/maven", "https://bmclapi2.bangbang93.com/maven");
     }
 }

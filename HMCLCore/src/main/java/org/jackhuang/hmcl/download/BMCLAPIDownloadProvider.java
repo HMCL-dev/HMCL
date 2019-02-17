@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.download.forge.ForgeVersionList;
+import org.jackhuang.hmcl.download.forge.ForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderBMCLVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
@@ -44,7 +44,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
             case "game":
                 return GameVersionList.INSTANCE;
             case "forge":
-                return ForgeVersionList.INSTANCE;
+                return ForgeBMCLVersionList.INSTANCE;
             case "liteloader":
                 return LiteLoaderBMCLVersionList.INSTANCE;
             case "optifine":

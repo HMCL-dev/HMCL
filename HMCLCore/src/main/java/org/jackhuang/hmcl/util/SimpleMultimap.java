@@ -88,4 +88,11 @@ public final class SimpleMultimap<K, V> {
     public void clear() {
         map.clear();
     }
+
+    public void clear(K key) {
+        if (map.containsKey(key))
+            map.get(key).clear();
+        else
+            map.put(key, valuer.get());
+    }
 }

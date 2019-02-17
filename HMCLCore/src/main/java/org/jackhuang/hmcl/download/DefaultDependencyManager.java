@@ -90,7 +90,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     @Override
     public Task installLibraryAsync(String gameVersion, Version version, String libraryId, String libraryVersion) {
         VersionList<?> versionList = getVersionList(libraryId);
-        return versionList.loadAsync(getDownloadProvider())
+        return versionList.loadAsync(gameVersion, getDownloadProvider())
                 .then(variables -> installLibraryAsync(version, versionList.getVersion(gameVersion, libraryVersion)
                         .orElseThrow(() -> new IllegalStateException("Remote library " + libraryId + " has no version " + libraryVersion))));
     }
