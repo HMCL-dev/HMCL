@@ -73,7 +73,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         Decorator skinnable = getSkinnable();
 
         BorderPane root = new BorderPane();
-        root.getStyleClass().setAll("jfx-decorator", "resize-border");
+        root.getStyleClass().addAll("jfx-decorator", "resize-border");
         root.setPrefHeight(519);
         root.setPrefWidth(800);
         root.setMaxHeight(Region.USE_PREF_SIZE);
@@ -83,7 +83,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
         StackPane drawerWrapper = new StackPane();
         skinnable.setDrawerWrapper(drawerWrapper);
-        drawerWrapper.getStyleClass().setAll("jfx-decorator-drawer");
+        drawerWrapper.getStyleClass().add("jfx-decorator-drawer");
         drawerWrapper.backgroundProperty().bind(skinnable.backgroundProperty());
         FXUtils.setOverflowHidden(drawerWrapper, true);
         {
@@ -92,10 +92,10 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             {
                 BorderPane leftRootPane = new BorderPane();
                 FXUtils.setLimitWidth(leftRootPane, 200);
-                leftRootPane.getStyleClass().setAll("jfx-decorator-content-container");
+                leftRootPane.getStyleClass().add("jfx-decorator-content-container");
 
                 StackPane drawerContainer = new StackPane();
-                drawerContainer.getStyleClass().setAll("gray-background");
+                drawerContainer.getStyleClass().add("gray-background");
                 Bindings.bindContent(drawerContainer.getChildren(), skinnable.drawerProperty());
                 leftRootPane.setCenter(drawerContainer);
 
@@ -111,7 +111,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
             {
                 contentPlaceHolder = new StackPane();
-                contentPlaceHolder.getStyleClass().setAll("jfx-decorator-content-container");
+                contentPlaceHolder.getStyleClass().add("jfx-decorator-content-container");
                 contentPlaceHolder.backgroundProperty().bind(skinnable.contentBackgroundProperty());
                 FXUtils.setOverflowHidden(contentPlaceHolder, true);
                 Bindings.bindContent(contentPlaceHolder.getChildren(), skinnable.contentProperty());
@@ -189,14 +189,14 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 {
                     JFXButton backNavButton = new JFXButton();
                     backNavButton.setGraphic(SVG.back(Theme.foregroundFillBinding(), -1, -1));
-                    backNavButton.getStyleClass().setAll("jfx-decorator-button");
+                    backNavButton.getStyleClass().add("jfx-decorator-button");
                     backNavButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
                     backNavButton.onActionProperty().bind(skinnable.onBackNavButtonActionProperty());
                     backNavButton.visibleProperty().bind(skinnable.canBackProperty());
 
                     closeNavButton = new JFXButton();
                     closeNavButton.setGraphic(SVG.close(Theme.foregroundFillBinding(), -1, -1));
-                    closeNavButton.getStyleClass().setAll("jfx-decorator-button");
+                    closeNavButton.getStyleClass().add("jfx-decorator-button");
                     closeNavButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
                     closeNavButton.onActionProperty().bind(skinnable.onCloseNavButtonActionProperty());
 
@@ -219,7 +219,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 VBox navCenter = new VBox();
                 navCenter.setAlignment(Pos.CENTER_LEFT);
                 Label titleLabel = new Label();
-                titleLabel.getStyleClass().setAll("jfx-decorator-title");
+                titleLabel.getStyleClass().add("jfx-decorator-title");
                 titleLabel.textProperty().bind(skinnable.drawerTitleProperty());
                 navCenter.getChildren().setAll(titleLabel);
                 navBar.setCenter(navCenter);
@@ -228,7 +228,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 navRight.setAlignment(Pos.CENTER_RIGHT);
                 refreshNavButton = new JFXButton();
                 refreshNavButton.setGraphic(SVG.refresh(Theme.foregroundFillBinding(), -1, -1));
-                refreshNavButton.getStyleClass().setAll("jfx-decorator-button");
+                refreshNavButton.getStyleClass().add("jfx-decorator-button");
                 refreshNavButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
                 refreshNavButton.onActionProperty().bind(skinnable.onRefreshNavButtonActionProperty());
                 refreshNavButton.visibleProperty().bind(skinnable.canRefreshProperty());
@@ -251,12 +251,12 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 StackPane pane = new StackPane(minus);
                 pane.setAlignment(Pos.CENTER);
                 btnMin.setGraphic(pane);
-                btnMin.getStyleClass().setAll("jfx-decorator-button");
+                btnMin.getStyleClass().add("jfx-decorator-button");
                 btnMin.setOnAction(e -> skinnable.minimize());
 
                 JFXButton btnClose = new JFXButton();
                 btnClose.setGraphic(SVG.close(Theme.foregroundFillBinding(), -1, -1));
-                btnClose.getStyleClass().setAll("jfx-decorator-button");
+                btnClose.getStyleClass().add("jfx-decorator-button");
                 btnClose.setOnAction(e -> skinnable.close());
 
                 buttonsContainer.getChildren().setAll(separator, btnMin, btnClose);

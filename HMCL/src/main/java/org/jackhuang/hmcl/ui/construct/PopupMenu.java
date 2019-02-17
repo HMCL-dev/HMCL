@@ -64,7 +64,7 @@ public class PopupMenu extends Control {
     public static Node wrapPopupMenuItem(Node node) {
         StackPane pane = new StackPane();
         pane.getChildren().setAll(node);
-        pane.getStyleClass().setAll("menu-container");
+        pane.getStyleClass().add("menu-container");
         node.setMouseTransparent(true);
         return new RipplerContainer(pane);
     }

@@ -346,7 +346,7 @@
 }
 
 .jfx-tool-bar .jfx-decorator-button {
-    -fx-cursor: head;
+    -fx-cursor: hand;
 }
 
 .jfx-tool-bar Label {
@@ -504,6 +504,7 @@
 
 .jfx-button {
     -jfx-disable-visual-focus: true;
+    -fx-cursor: hand;
 }
 
 .jfx-button-raised {

@@ -52,7 +52,7 @@ public class DecoratorWizardDisplayer extends StackPane implements TaskExecutorD
         wizardController.setProvider(provider);
         wizardController.onStart();
 
-        getStyleClass().setAll("white-background");
+        getStyleClass().add("white-background");
     }
 
     @Override

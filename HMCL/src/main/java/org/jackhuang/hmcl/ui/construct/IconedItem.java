@@ -45,7 +45,7 @@ public class IconedItem extends RipplerContainer {
             hBox.getChildren().add(icon);
         }
 
-        hBox.getStyleClass().setAll("iconed-item-container");
+        hBox.getStyleClass().add("iconed-item-container");
         Label textLabel = new Label();
         textLabel.setId("label");
         textLabel.setMouseTransparent(true);

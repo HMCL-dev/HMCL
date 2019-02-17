@@ -83,7 +83,7 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER);
         right.setMouseTransparent(true);
-        right.getStyleClass().setAll("toggle-icon4");
+        right.getStyleClass().add("toggle-icon4");
         FXUtils.setLimitWidth(right, 40);
         FXUtils.onChangeAndOperate(skinnable.rightGraphicProperty(),
                 newGraphic -> {
@@ -99,7 +99,7 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
                 visible -> root.setRight(visible ? right : null));
 
         stackPane.setStyle("-fx-padding: 10 16 10 16;");
-        stackPane.getStyleClass().setAll("transparent");
+        stackPane.getStyleClass().add("transparent");
         stackPane.setPickOnBounds(false);
         stackPane.getChildren().setAll(root);
 

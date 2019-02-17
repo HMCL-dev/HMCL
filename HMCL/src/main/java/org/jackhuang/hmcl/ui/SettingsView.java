@@ -83,7 +83,7 @@ public abstract class SettingsView extends StackPane {
 
                         lblUpdate = new Label(i18n("update"));
                         lblUpdateSub = new Label();
-                        lblUpdateSub.getStyleClass().setAll("subtitle-label");
+                        lblUpdateSub.getStyleClass().add("subtitle-label");
 
                         headerLeft.getChildren().setAll(lblUpdate, lblUpdateSub);
                         updatePane.setHeaderLeft(headerLeft);
@@ -92,7 +92,7 @@ public abstract class SettingsView extends StackPane {
                     {
                         btnUpdate = new JFXButton();
                         btnUpdate.setOnMouseClicked(e -> onUpdate());
-                        btnUpdate.getStyleClass().setAll("toggle-icon4");
+                        btnUpdate.getStyleClass().add("toggle-icon4");
                         btnUpdate.setGraphic(SVG.update(Theme.blackFillBinding(), 20, 20));
 
                         updatePane.setHeaderRight(btnUpdate);
@@ -124,7 +124,7 @@ public abstract class SettingsView extends StackPane {
 
                         Label help = new Label(i18n("help"));
                         Label helpSubtitle = new Label(i18n("help.detail"));
-                        helpSubtitle.getStyleClass().setAll("subtitle-label");
+                        helpSubtitle.getStyleClass().add("subtitle-label");
 
                         headerLeft.getChildren().setAll(help, helpSubtitle);
                         updatePane.setLeft(headerLeft);
@@ -133,7 +133,7 @@ public abstract class SettingsView extends StackPane {
                     {
                         JFXButton btnExternal = new JFXButton();
                         btnExternal.setOnMouseClicked(e -> onHelp());
-                        btnExternal.getStyleClass().setAll("toggle-icon4");
+                        btnExternal.getStyleClass().add("toggle-icon4");
                         btnExternal.setGraphic(SVG.openInNew(Theme.blackFillBinding(), -1, -1));
 
                         updatePane.setRight(btnExternal);
@@ -337,7 +337,7 @@ public abstract class SettingsView extends StackPane {
                     {
                         JFXButton logButton = new JFXButton(i18n("settings.launcher.launcher_log.export"));
                         logButton.setOnMouseClicked(e -> onExportLogs());
-                        logButton.getStyleClass().setAll("jfx-button-border");
+                        logButton.getStyleClass().add("jfx-button-border");
 
                         logPane.setHeaderRight(logButton);
                     }

@@ -58,7 +58,7 @@ public class ModListPageSkin extends SkinBase<ModListPage> {
 
         {
             HBox toolbar = new HBox();
-            toolbar.getStyleClass().setAll("jfx-tool-bar-second");
+            toolbar.getStyleClass().add("jfx-tool-bar-second");
             JFXDepthManager.setDepth(toolbar, 1);
             toolbar.setPickOnBounds(false);
 
