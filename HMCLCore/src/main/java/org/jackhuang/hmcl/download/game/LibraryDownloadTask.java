@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download.game;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
@@ -88,10 +89,10 @@ public class LibraryDownloadTask extends Task {
         if (cached) return;
 
         if (!isDependentsSucceeded()) {
-            // Since FileDownloadTask wraps the actual exception with another IOException.
+            // Since FileDownloadTask wraps the actual exception with DownloadException.
             // We should extract it letting the error message clearer.
             Throwable t = task.getLastException();
-            if (t.getCause() != null)
+            if (t instanceof DownloadException)
                 throw new LibraryDownloadException(library, t.getCause());
             else
                 throw new LibraryDownloadException(library, t);

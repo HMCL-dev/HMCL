@@ -18,21 +18,18 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
-import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.CurseCompletionException;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -112,12 +109,8 @@ public class ModpackInstallWizardProvider implements WizardProvider {
                     } else {
                         Controllers.dialog(i18n("modpack.type.curse.tolerable_error"), i18n("install.success"), MessageBox.INFORMATION_MESSAGE, next);
                     }
-                } else if (exception instanceof LibraryDownloadException) {
-                    Controllers.dialog(i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().getName()) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageBox.ERROR_MESSAGE, next);
-                } else if (exception instanceof DownloadException) {
-                    Controllers.dialog(StringUtils.getStackTrace(exception), i18n("install.failed.downloading"), MessageBox.ERROR_MESSAGE, next);
                 } else {
-                    Controllers.dialog(StringUtils.getStackTrace(exception), i18n("install.failed"), MessageBox.ERROR_MESSAGE, next);
+                    InstallerWizardProvider.alertFailureMessage(exception, next);
                 }
             }
         });

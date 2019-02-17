@@ -21,12 +21,17 @@ import javafx.scene.Node;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.Map;
 
@@ -82,7 +87,7 @@ public final class InstallerWizardProvider implements WizardProvider {
     @Override
     public Object finish(Map<String, Object> settings) {
         settings.put("success_message", i18n("install.success"));
-        settings.put("failure_message", i18n("install.failed"));
+        settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> alertFailureMessage(exception, next));
 
         Task ret = Task.ofResult("version", () -> version);
 
@@ -114,4 +119,13 @@ public final class InstallerWizardProvider implements WizardProvider {
         return true;
     }
 
+    public static void alertFailureMessage(Exception exception, Runnable next) {
+        if (exception instanceof LibraryDownloadException) {
+            Controllers.dialog(i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().getName()) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageBox.ERROR_MESSAGE, next);
+        } else if (exception instanceof DownloadException) {
+            Controllers.dialog(i18n("install.failed.downloading.detail", ((DownloadException) exception).getUrl()) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageBox.ERROR_MESSAGE, next);
+        } else {
+            Controllers.dialog(StringUtils.getStackTrace(exception), i18n("install.failed"), MessageBox.ERROR_MESSAGE, next);
+        }
+    }
 }
