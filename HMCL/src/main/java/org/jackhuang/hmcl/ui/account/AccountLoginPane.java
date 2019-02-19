@@ -31,6 +31,9 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 
 import java.util.function.Consumer;
+import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class AccountLoginPane extends StackPane {
     private final Account oldAccount;
@@ -64,6 +67,7 @@ public class AccountLoginPane extends StackPane {
                     fireEvent(new DialogCloseEvent());
                     progressBar.setVisible(false);
                 }, e -> {
+                    LOG.log(Level.INFO, "Failed to login with password: " + oldAccount, e);
                     if (e instanceof NoSelectedCharacterException) {
                         fireEvent(new DialogCloseEvent());
                     } else {
