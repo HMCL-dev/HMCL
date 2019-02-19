@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 
 import java.util.Map;
 
+import com.google.gson.annotations.JsonAdapter;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
@@ -36,13 +37,14 @@ public final class User implements Validation {
     private final String id;
 
     @Nullable
+    @JsonAdapter(PropertyMapSerializer.class)
     private final Map<String, String> properties;
 
     public User(String id) {
         this(id, null);
     }
 
-    public User(String id, Map<String, String> properties) {
+    public User(String id, @Nullable Map<String, String> properties) {
         this.id = id;
         this.properties = properties;
     }
@@ -51,6 +53,7 @@ public final class User implements Validation {
         return id;
     }
 
+    @Nullable
     public Map<String, String> getProperties() {
         return properties;
     }
