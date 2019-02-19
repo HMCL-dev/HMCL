@@ -25,6 +25,7 @@ import com.jfoenix.controls.JFXSpinner;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.fxml.FXML;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -43,7 +44,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-public final class VersionsPage extends StackPane implements WizardPage, Refreshable {
+public final class VersionsPage extends BorderPane implements WizardPage, Refreshable {
     private final String gameVersion;
     private final DownloadProvider downloadProvider;
     private final String libraryId;
@@ -59,6 +60,8 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
     @FXML
     private StackPane emptyPane;
     @FXML
+    private StackPane root;
+    @FXML
     private JFXCheckBox chkRelease;
     @FXML
     private JFXCheckBox chkSnapshot;
@@ -69,7 +72,7 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
     @FXML
     private VBox centrePane;
 
-    private final TransitionHandler transitionHandler = new TransitionHandler(this);
+    private final TransitionHandler transitionHandler;
     private final VersionList<?> versionList;
     private TaskExecutor executor;
 
@@ -82,6 +85,8 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
         this.versionList = downloadProvider.getVersionListById(libraryId);
 
         FXUtils.loadFXML(this, "/assets/fxml/download/versions.fxml");
+
+        transitionHandler = new TransitionHandler(root);
 
         if (versionList.hasType()) {
             centrePane.getChildren().setAll(checkPane, list);
@@ -122,7 +127,7 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
 
     @Override
     public void refresh() {
-        getChildren().setAll(spinner);
+        transitionHandler.setContent(spinner, ContainerAnimations.FADE.getAnimationProducer());
         executor = versionList.refreshAsync(gameVersion, downloadProvider).finalized((variables, isDependentsSucceeded) -> {
             if (isDependentsSucceeded) {
                 List<VersionsPageItem> items = loadVersions();
@@ -169,4 +174,9 @@ public final class VersionsPage extends StackPane implements WizardPage, Refresh
 
     @FXML
     private void onBack() { controller.onPrev(true); }
+
+    @FXML
+    private void onSponsor() {
+        FXUtils.openLink("https://hmcl.huangyuhui.net/api/redirect/bmclapi_sponsor");
+    }
 }

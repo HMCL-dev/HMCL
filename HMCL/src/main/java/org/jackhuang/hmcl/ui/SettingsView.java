@@ -21,6 +21,7 @@ import com.jfoenix.controls.*;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
+import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
@@ -75,6 +76,19 @@ public abstract class SettingsView extends StackPane {
             {
                 ComponentList settingsPane = new ComponentList();
                 {
+                    {
+                        StackPane sponsorPane = new StackPane();
+                        sponsorPane.setCursor(Cursor.HAND);
+                        sponsorPane.setOnMouseClicked(e -> onSponsor());
+                        {
+                            Label label = new Label(i18n("sponsor.hmcl"));
+                            label.setWrapText(true);
+                            label.prefWidthProperty().bind(sponsorPane.widthProperty());
+                            sponsorPane.getChildren().add(label);
+                        }
+                        settingsPane.getContent().add(sponsorPane);
+                    }
+
                     ComponentSublist updatePane = new ComponentSublist();
                     updatePane.setTitle(i18n("update"));
                     updatePane.setHasSubtitle(true);
@@ -491,4 +505,5 @@ public abstract class SettingsView extends StackPane {
     protected abstract void onUpdate();
     protected abstract void onHelp();
     protected abstract void onExportLogs();
+    protected abstract void onSponsor();
 }

@@ -132,6 +132,16 @@
     -fx-fill: -fx-base-darker-color;
 }
 
+.sponsor-pane {
+    -fx-padding: 16;
+    -fx-background-color: white;
+    -fx-cursor: hand;
+}
+
+.sponsor-pane .label {
+    -fx-wrap-text: true;
+}
+
 /*******************************************************************************
  *                                                                             *
  * JFX Tab Pane                                                                *
