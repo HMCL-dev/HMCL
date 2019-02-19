@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXRippler;
-import javafx.animation.Transition;
 import javafx.beans.DefaultProperty;
 import javafx.beans.InvalidationListener;
 import javafx.beans.NamedArg;
@@ -64,68 +63,28 @@ public class RipplerContainer extends StackPane {
             mask.resize(buttonContainer.getWidth() - buttonContainer.snappedRightInset() - buttonContainer.snappedLeftInset(), buttonContainer.getHeight() - buttonContainer.snappedBottomInset() - buttonContainer.snappedTopInset());
             return mask;
         }
-
-        @Override
-        protected void initListeners() {
-            this.ripplerPane.setOnMousePressed(event -> {
-                if (releaseManualRippler != null)
-                    releaseManualRippler.run();
-                releaseManualRippler = null;
-                createRipple(event.getX(), event.getY());
-            });
-        }
     };
 
-    private Transition clickedAnimation;
     private final CornerRadii defaultRadii = new CornerRadii(3);
-    private Runnable releaseManualRippler;
 
     public RipplerContainer(@NamedArg("container") Node container) {
         setContainer(container);
 
         getStyleClass().add(DEFAULT_STYLE_CLASS);
         buttonContainer.getChildren().add(buttonRippler);
-        setOnMousePressed(event -> {
-            if (clickedAnimation != null) {
-                clickedAnimation.setRate(1);
-                clickedAnimation.play();
-            }
-        });
-        setOnMouseReleased(event -> {
-            if (clickedAnimation != null) {
-                clickedAnimation.setRate(-1);
-                clickedAnimation.play();
-            }
-        });
         focusedProperty().addListener((a, b, newValue) -> {
             if (newValue) {
                 if (!isPressed())
-                    buttonRippler.showOverlay();
+                    buttonRippler.setOverlayVisible(true);
             } else {
-                buttonRippler.hideOverlay();
+                buttonRippler.setOverlayVisible(false);
             }
         });
-        pressedProperty().addListener(o -> buttonRippler.hideOverlay());
+        pressedProperty().addListener(o -> buttonRippler.setOverlayVisible(false));
         setPickOnBounds(false);
 
         buttonContainer.setPickOnBounds(false);
-        buttonContainer.shapeProperty().bind(shapeProperty());
-        buttonContainer.borderProperty().bind(borderProperty());
-        buttonContainer.backgroundProperty().bind(Bindings.createObjectBinding(() -> {
-            if (getBackground() == null || isJavaDefaultBackground(getBackground()) || isJavaDefaultClickedBackground(getBackground()))
-                setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, defaultRadii, null)));
-
-            try {
-                return new Background(new BackgroundFill(getBackground() != null ? getBackground().getFills().get(0).getFill() : Color.TRANSPARENT,
-                        getBackground() != null ? getBackground().getFills().get(0).getRadii() : defaultRadii, Insets.EMPTY));
-            } catch (Exception e) {
-                return getBackground();
-            }
-        }, backgroundProperty()));
-
-        ripplerFillProperty().addListener((a, b, newValue) -> buttonRippler.setRipplerFill(newValue));
-        if (getBackground() == null || isJavaDefaultBackground(getBackground()))
-            setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, defaultRadii, null)));
+        buttonRippler.ripplerFillProperty().bind(ripplerFillProperty());
 
         containerProperty().addListener(o -> updateChildren());
         updateChildren();
@@ -151,24 +110,6 @@ public class RipplerContainer extends StackPane {
 
         for (int i = 1; i < getChildren().size(); ++i)
             getChildren().get(i).setPickOnBounds(false);
-    }
-
-    private boolean isJavaDefaultBackground(Background background) {
-        try {
-            String firstFill = background.getFills().get(0).getFill().toString();
-            return "0xffffffba".equals(firstFill) || "0xffffffbf".equals(firstFill) || "0xffffffbd".equals(firstFill);
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private boolean isJavaDefaultClickedBackground(Background background) {
-        try {
-            String firstFill = background.getFills().get(0).getFill().toString();
-            return "0x039ed3ff".equals(firstFill);
-        } catch (Exception e) {
-            return false;
-        }
     }
 
     public Node getContainer() {
