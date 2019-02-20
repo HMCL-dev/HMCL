@@ -85,13 +85,15 @@ public final class ModManager {
 
     public void refreshMods() throws IOException {
         modInfos.clear();
-        for (Path subitem : Files.newDirectoryStream(getModsDirectory())) {
-            if (Files.isDirectory(subitem) && VersionNumber.isIntVersionNumber(FileUtils.getName(subitem))) {
-                // If the folder name is game version, forge will search mod in this subdirectory
-                for (Path subsubitem : Files.newDirectoryStream(subitem))
-                    addModInfo(subsubitem.toFile());
-            } else {
-                addModInfo(subitem.toFile());
+        if (Files.isDirectory(getModsDirectory())) {
+            for (Path subitem : Files.newDirectoryStream(getModsDirectory())) {
+                if (Files.isDirectory(subitem) && VersionNumber.isIntVersionNumber(FileUtils.getName(subitem))) {
+                    // If the folder name is game version, forge will search mod in this subdirectory
+                    for (Path subsubitem : Files.newDirectoryStream(subitem))
+                        addModInfo(subsubitem.toFile());
+                } else {
+                    addModInfo(subitem.toFile());
+                }
             }
         }
         loaded = true;
