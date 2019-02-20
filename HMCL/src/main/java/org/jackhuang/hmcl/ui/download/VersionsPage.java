@@ -128,7 +128,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     @Override
     public void refresh() {
         transitionHandler.setContent(spinner, ContainerAnimations.FADE.getAnimationProducer());
-        executor = versionList.refreshAsync(gameVersion, downloadProvider).finalized((variables, isDependentsSucceeded) -> {
+        executor = versionList.refreshAsync(gameVersion, downloadProvider).finalized((variables, isDependentsSucceeded, exception) -> {
             if (isDependentsSucceeded) {
                 List<VersionsPageItem> items = loadVersions();
 
@@ -147,7 +147,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     }
                 });
             } else {
-                LOG.log(Level.WARNING, "Failed to fetch versions list", (Throwable) variables.get("lastException"));
+                LOG.log(Level.WARNING, "Failed to fetch versions list", exception);
                 Platform.runLater(() -> {
                     transitionHandler.setContent(failedPane, ContainerAnimations.FADE.getAnimationProducer());
                 });

@@ -61,7 +61,7 @@ public abstract class TaskResult<V> extends Task {
 
     public Task finalizedResult(Scheduler scheduler, FinalizedCallback<V> callback) {
         return new FinalizedTask(this, scheduler,
-                (variables, isDependentsSucceeded) -> callback.execute(getResult(), isDependentsSucceeded),
+                (variables, isDependentsSucceeded, exception) -> callback.execute(getResult(), isDependentsSucceeded, exception),
                 ReflectionHelper.getCaller().toString());
     }
 
@@ -98,6 +98,6 @@ public abstract class TaskResult<V> extends Task {
     }
 
     public interface FinalizedCallback<V> {
-        void execute(V result, boolean isDependentsSucceeded) throws Exception;
+        void execute(V result, boolean isDependentsSucceeded, Exception exception) throws Exception;
     }
 }

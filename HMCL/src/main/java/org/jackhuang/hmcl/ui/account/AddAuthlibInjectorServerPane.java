@@ -106,7 +106,7 @@ public class AddAuthlibInjectorServerPane extends StackPane implements DialogAwa
 
         Task.of(() -> {
             serverBeingAdded = AuthlibInjectorServer.locateServer(url);
-        }).finalized(Schedulers.javafx(), (variables, isDependentsSucceeded) -> {
+        }).finalized(Schedulers.javafx(), (variables, isDependentsSucceeded, exception) -> {
             addServerPane.setDisable(false);
             nextPane.hideSpinner();
 
@@ -118,7 +118,6 @@ public class AddAuthlibInjectorServerPane extends StackPane implements DialogAwa
 
                 transitionHandler.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT.getAnimationProducer());
             } else {
-                Exception exception = variables.get("lastException");
                 LOG.log(Level.WARNING, "Failed to resolve auth server: " + url, exception);
                 lblCreationWarning.setText(resolveFetchExceptionMessage(exception));
             }

@@ -68,13 +68,13 @@ public abstract class Task {
         this.state = state;
     }
 
-    private Throwable lastException = null;
+    private Exception lastException;
 
-    public Throwable getLastException() {
+    public Exception getLastException() {
         return lastException;
     }
 
-    void setLastException(Throwable e) {
+    void setLastException(Exception e) {
         lastException = e;
     }
 
@@ -321,7 +321,7 @@ public abstract class Task {
     }
 
     public final <T extends Exception, K extends Exception> Task finalized(Scheduler scheduler, ExceptionalConsumer<AutoTypingMap<String>, T> success, ExceptionalConsumer<Exception, K> failure) {
-        return finalized(scheduler, (variables, isDependentsSucceeded) -> {
+        return finalized(scheduler, (variables, isDependentsSucceeded, exception) -> {
             if (isDependentsSucceeded) {
                 if (success != null)
                     try {
@@ -331,10 +331,9 @@ public abstract class Task {
                         if (failure != null)
                             failure.accept(e);
                     }
-            }
-            else {
+            } else {
                 if (failure != null)
-                    failure.accept(variables.get(TaskExecutor.LAST_EXCEPTION_ID));
+                    failure.accept(exception);
             }
         });
     }

@@ -20,5 +20,5 @@ package org.jackhuang.hmcl.task;
 import org.jackhuang.hmcl.util.AutoTypingMap;
 
 public interface FinalizedCallback {
-    void execute(AutoTypingMap<String> variables, boolean isDependentsSucceeded) throws Exception;
+    void execute(AutoTypingMap<String> variables, boolean isDependentsSucceeded, Exception exception) throws Exception;
 }

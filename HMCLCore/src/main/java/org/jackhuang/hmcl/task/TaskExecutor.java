@@ -234,7 +234,6 @@ public final class TaskExecutor {
         } catch (Exception e) {
             task.setLastException(e);
             lastException = e;
-            variables.set(LAST_EXCEPTION_ID, e);
             if (task.getSignificance().shouldLog()) {
                 Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
             }
@@ -279,6 +278,4 @@ public final class TaskExecutor {
         }
 
     }
-
-    public static final String LAST_EXCEPTION_ID = "lastException";
 }

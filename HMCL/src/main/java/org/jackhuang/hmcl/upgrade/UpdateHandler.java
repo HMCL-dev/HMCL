@@ -121,8 +121,7 @@ public final class UpdateHandler {
                 }
 
             } else {
-                Throwable e = task.getLastException();
-                LOG.log(Level.WARNING, "Failed to update to " + version, e);
+                LOG.log(Level.WARNING, "Failed to update to " + version, executor.getLastException());
                 Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageBox.ERROR_MESSAGE));
             }
         });

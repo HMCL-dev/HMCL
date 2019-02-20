@@ -27,7 +27,7 @@ import java.util.Collections;
  */
 final class FinalizedTask extends Task {
 
-    private final Collection<Task> dependents;
+    private final Task pred;
     private final FinalizedCallback callback;
     private final Scheduler scheduler;
 
@@ -38,7 +38,7 @@ final class FinalizedTask extends Task {
      * @param callback a callback that returns the task runs after pred, succ will be executed asynchronously. You can do something that relies on the result of pred.
      */
     public FinalizedTask(Task pred, Scheduler scheduler, FinalizedCallback callback, String name) {
-        this.dependents = Collections.singleton(pred);
+        this.pred = pred;
         this.scheduler = scheduler;
         this.callback = callback;
 
@@ -53,7 +53,7 @@ final class FinalizedTask extends Task {
 
     @Override
     public void execute() throws Exception {
-        callback.execute(getVariables(), isDependentsSucceeded());
+        callback.execute(getVariables(), isDependentsSucceeded(), pred.getLastException());
 
         if (!isDependentsSucceeded())
             throw new SilentException();
@@ -61,7 +61,7 @@ final class FinalizedTask extends Task {
 
     @Override
     public Collection<Task> getDependents() {
-        return dependents;
+        return Collections.singleton(pred);
     }
 
     @Override

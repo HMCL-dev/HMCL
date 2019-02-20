@@ -35,6 +35,7 @@ public interface Validation {
      * Throw an exception when values are malformed.
      *
      * @throws JsonParseException if fields are filled in wrong format or wrong type.
+     * @throws TolerableValidationException if we want to replace this object with null (i.e. the object does not fulfill the constraints).
      */
     void validate() throws JsonParseException, TolerableValidationException;
 }
