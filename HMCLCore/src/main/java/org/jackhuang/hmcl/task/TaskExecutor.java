@@ -24,7 +24,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 /**
@@ -65,7 +64,7 @@ public final class TaskExecutor {
     public TaskExecutor start() {
         taskListeners.forEach(TaskListener::onStart);
         workerQueue.add(scheduler.schedule(() -> {
-            boolean flag = executeTasks(Collections.singleton(firstTask), new AtomicReference<>());
+            boolean flag = executeTasks(Collections.singleton(firstTask));
             taskListeners.forEach(it -> it.onStop(flag, this));
         }));
         return this;
@@ -75,7 +74,7 @@ public final class TaskExecutor {
         taskListeners.forEach(TaskListener::onStart);
         AtomicBoolean flag = new AtomicBoolean(true);
         Future<?> future = scheduler.schedule(() -> {
-            flag.set(executeTasks(Collections.singleton(firstTask), new AtomicReference<>()));
+            flag.set(executeTasks(Collections.singleton(firstTask)));
             taskListeners.forEach(it -> it.onStop(flag.get(), this));
         });
         workerQueue.add(future);
@@ -101,7 +100,7 @@ public final class TaskExecutor {
         }
     }
 
-    private boolean executeTasks(Collection<? extends Task> tasks, AtomicReference<Exception> exception) throws InterruptedException {
+    private boolean executeTasks(Collection<? extends Task> tasks) throws InterruptedException {
         if (tasks.isEmpty())
             return true;
 
@@ -129,8 +128,6 @@ public final class TaskExecutor {
         } catch (InterruptedException e) {
             return false;
         }
-
-        exception.set(tasks.stream().map(Task::getLastException).filter(Objects::nonNull).findAny().orElse(null));
         return success.get() && !canceled;
     }
 
@@ -163,10 +160,11 @@ public final class TaskExecutor {
                 }
             }
 
-            AtomicReference<Exception> dependentsException = new AtomicReference<>();
-            boolean doDependentsSucceeded = executeTasks(task.getDependents(), dependentsException);
+            Collection<? extends Task> dependents = task.getDependents();
+            boolean doDependentsSucceeded = executeTasks(dependents);
+            Exception dependentsException = dependents.stream().map(Task::getLastException).filter(Objects::nonNull).findAny().orElse(null);
             if (!doDependentsSucceeded && task.isRelyingOnDependents() || canceled) {
-                task.setLastException(dependentsException.get());
+                task.setLastException(dependentsException);
                 throw new SilentException();
             }
 
@@ -193,11 +191,12 @@ public final class TaskExecutor {
                 variables.set(taskResult.getId(), taskResult.getResult());
             }
 
-            AtomicReference<Exception> dependenciesException = new AtomicReference<>();
-            boolean doDependenciesSucceeded = executeTasks(task.getDependencies(), dependenciesException);
+            Collection<? extends Task> dependencies = task.getDependencies();
+            boolean doDependenciesSucceeded = executeTasks(dependencies);
+            Exception dependenciesException = dependencies.stream().map(Task::getLastException).filter(Objects::nonNull).findAny().orElse(null);
             if (!doDependenciesSucceeded && task.isRelyingOnDependencies()) {
                 Logging.LOG.severe("Subtasks failed for " + task.getName());
-                task.setLastException(dependenciesException.get());
+                task.setLastException(dependenciesException);
                 throw new SilentException();
             }
 
