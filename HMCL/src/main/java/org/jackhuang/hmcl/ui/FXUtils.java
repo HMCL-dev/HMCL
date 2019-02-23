@@ -48,6 +48,7 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
+import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
@@ -331,7 +332,7 @@ public final class FXUtils {
     }
 
     public static void bindInt(JFXTextField textField, Property<Number> property) {
-        textField.textProperty().bindBidirectional(property, SafeIntStringConverter.INSTANCE);
+        textField.textProperty().bindBidirectional(property, SafeStringConverter.fromInteger());
     }
 
     public static void unbindInt(JFXTextField textField, Property<Number> property) {
