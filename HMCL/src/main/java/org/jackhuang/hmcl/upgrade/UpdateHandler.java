@@ -102,7 +102,7 @@ public final class UpdateHandler {
         Task task = new HMCLDownloadTask(version, downloaded);
 
         TaskExecutor executor = task.executor();
-        Region dialog = Controllers.taskDialog(executor, i18n("message.downloading"));
+        Controllers.taskDialog(executor, i18n("message.downloading"));
         thread(() -> {
             boolean success = executor.test();
 
@@ -121,7 +121,8 @@ public final class UpdateHandler {
                 }
 
             } else {
-                LOG.log(Level.WARNING, "Failed to update to " + version, executor.getLastException());
+                Throwable e = executor.getLastException();
+                LOG.log(Level.WARNING, "Failed to update to " + version, e);
                 Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageBox.ERROR_MESSAGE));
             }
         });
