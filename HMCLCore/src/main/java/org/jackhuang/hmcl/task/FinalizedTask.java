@@ -37,13 +37,12 @@ final class FinalizedTask extends Task {
      * @param pred the task that runs before succ.
      * @param callback a callback that returns the task runs after pred, succ will be executed asynchronously. You can do something that relies on the result of pred.
      */
-    public FinalizedTask(Task pred, Scheduler scheduler, FinalizedCallback callback, String name) {
+    public FinalizedTask(Task pred, Scheduler scheduler, FinalizedCallback callback) {
         this.pred = pred;
         this.scheduler = scheduler;
         this.callback = callback;
 
         setSignificance(TaskSignificance.MODERATE);
-        setName(name);
     }
 
     @Override
@@ -53,7 +52,7 @@ final class FinalizedTask extends Task {
 
     @Override
     public void execute() throws Exception {
-        callback.execute(getVariables(), isDependentsSucceeded(), pred.getLastException());
+        callback.execute(isDependentsSucceeded(), pred.getLastException());
 
         if (!isDependentsSucceeded())
             throw new SilentException();

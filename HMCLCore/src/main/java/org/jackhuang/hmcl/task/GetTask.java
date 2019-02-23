@@ -72,11 +72,6 @@ public final class GetTask extends TaskResult<String> {
         return Schedulers.io();
     }
 
-    @Override
-    public String getId() {
-        return id;
-    }
-
     public GetTask setCacheRepository(CacheRepository repository) {
         this.repository = repository;
         return this;

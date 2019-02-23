@@ -168,8 +168,8 @@ public class DefaultGameRepository implements GameRepository {
 
         versions.remove(id);
 
-        if (FileUtils.isMovingToTrashSupported()) {
-            return FileUtils.moveToTrash(removedFile);
+        if (FileUtils.isMovingToTrashSupported() && FileUtils.moveToTrash(removedFile)) {
+            return true;
         }
 
         // remove json files first to ensure HMCL will not recognize this folder as a valid version.

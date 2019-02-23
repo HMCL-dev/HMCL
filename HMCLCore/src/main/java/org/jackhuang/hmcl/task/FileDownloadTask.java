@@ -33,6 +33,7 @@ import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.Optional;
@@ -212,7 +213,7 @@ public class FileDownloadTask extends Task {
                 break;
             }
 
-            File temp = null;
+            Path temp = null;
 
             try {
                 updateProgress(0);
@@ -242,15 +243,15 @@ public class FileDownloadTask extends Task {
                 if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
                     throw new IOException("Could not make directory " + file.getAbsoluteFile().getParent());
 
-                temp = FileUtils.createTempFile();
-                rFile = new RandomAccessFile(temp, "rw");
+                temp = Files.createTempFile(null, null);
+                rFile = new RandomAccessFile(temp.toFile(), "rw");
 
                 MessageDigest digest = integrityCheck == null ? null : integrityCheck.createDigest();
 
                 stream = con.getInputStream();
                 int lastDownloaded = 0, downloaded = 0;
                 long lastTime = System.currentTimeMillis();
-                byte buffer[] = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
+                byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
                 while (true) {
                     if (Thread.interrupted()) {
                         Thread.currentThread().interrupt();
@@ -283,16 +284,15 @@ public class FileDownloadTask extends Task {
 
                 // Restore temp file to original name.
                 if (Thread.interrupted()) {
-                    temp.delete();
+                    temp.toFile().delete();
                     Thread.currentThread().interrupt();
                     break;
                 } else {
-                    if (file.exists() && !file.delete())
-                        throw new IOException("Unable to delete existent file " + file);
+                    Files.deleteIfExists(file.toPath());
                     if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
                         throw new IOException("Unable to make parent directory " + file);
                     try {
-                        FileUtils.moveFile(temp, file);
+                        FileUtils.moveFile(temp.toFile(), file);
                     } catch (Exception e) {
                         throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
                     }
@@ -321,7 +321,7 @@ public class FileDownloadTask extends Task {
                 return;
             } catch (IOException | IllegalStateException e) {
                 if (temp != null)
-                    temp.delete();
+                    temp.toFile().delete();
                 exception = e;
             } finally {
                 closeFiles();

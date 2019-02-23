@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.LibraryDownloadInfo;
@@ -59,11 +58,6 @@ public final class LiteLoaderInstallTask extends TaskResult<Version> {
     @Override
     public Collection<Task> getDependencies() {
         return dependencies;
-    }
-
-    @Override
-    public String getId() {
-        return "version";
     }
 
     @Override

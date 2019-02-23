@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.ListPage;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -86,13 +85,13 @@ public final class ModListPage extends Control {
 
     public void loadMods(ModManager modManager) {
         this.modManager = modManager;
-        Task.ofResult("list", variables -> {
+        Task.ofResult(() -> {
             synchronized (ModListPage.this) {
                 JFXUtilities.runInFX(() -> loadingProperty().set(true));
                 modManager.refreshMods();
                 return new LinkedList<>(modManager.getMods());
             }
-        }).finalizedResult(Schedulers.javafx(), (list, isDependentsSucceeded, exception) -> {
+        }).finalized(Schedulers.javafx(), (list, isDependentsSucceeded, exception) -> {
             loadingProperty().set(false);
             if (isDependentsSucceeded)
                 FXUtils.onWeakChangeAndOperate(parentTab.getSelectionModel().selectedItemProperty(), newValue -> {
@@ -112,7 +111,7 @@ public final class ModListPage extends Control {
         List<String> succeeded = new LinkedList<>();
         List<String> failed = new LinkedList<>();
         if (res == null) return;
-        Task.of(variables -> {
+        Task.of(() -> {
             for (File file : res) {
                 try {
                     modManager.addMod(file);
@@ -124,7 +123,7 @@ public final class ModListPage extends Control {
                     // Actually addMod will not throw exceptions because FileChooser has already filtered files.
                 }
             }
-        }).with(Task.of(Schedulers.javafx(), variables -> {
+        }).with(Task.of(Schedulers.javafx(), () -> {
             List<String> prompt = new LinkedList<>();
             if (!succeeded.isEmpty())
                 prompt.add(i18n("mods.add.success", String.join(", ", succeeded)));

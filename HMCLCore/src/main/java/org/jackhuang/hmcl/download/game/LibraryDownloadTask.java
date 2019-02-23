@@ -225,16 +225,16 @@ public class LibraryDownloadTask extends Task {
         int x = decompressed.length;
         int len = decompressed[(x - 8)] & 0xFF | (decompressed[(x - 7)] & 0xFF) << 8 | (decompressed[(x - 6)] & 0xFF) << 16 | (decompressed[(x - 5)] & 0xFF) << 24;
 
-        File temp = FileUtils.createTempFile("minecraft", ".pack");
+        Path temp = Files.createTempFile("minecraft", ".pack");
 
         byte[] checksums = Arrays.copyOfRange(decompressed, decompressed.length - len - 8, decompressed.length - 8);
 
-        OutputStream out = new FileOutputStream(temp);
-        out.write(decompressed, 0, decompressed.length - len - 8);
-        out.close();
+        try (OutputStream out = Files.newOutputStream(temp)) {
+            out.write(decompressed, 0, decompressed.length - len - 8);
+        }
 
         try (FileOutputStream jarBytes = new FileOutputStream(dest); JarOutputStream jos = new JarOutputStream(jarBytes)) {
-            Pack200.newUnpacker().unpack(temp, jos);
+            Pack200.newUnpacker().unpack(temp.toFile(), jos);
 
             JarEntry checksumsFile = new JarEntry("checksums.sha1");
             checksumsFile.setTime(0L);
@@ -243,6 +243,6 @@ public class LibraryDownloadTask extends Task {
             jos.closeEntry();
         }
 
-        temp.delete();
+        Files.delete(temp);
     }
 }

@@ -28,7 +28,7 @@ import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.ParallelTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.AutoTypingMap;
+import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 
 /**
@@ -71,7 +71,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     @Override
     public Task checkGameCompletionAsync(Version version) {
         return new ParallelTask(
-                Task.ofThen(var -> {
+                Task.ofThen(() -> {
                     if (!repository.getVersionJar(version).exists())
                         return new GameDownloadTask(this, null, version);
                     else
@@ -88,36 +88,32 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public Task installLibraryAsync(String gameVersion, Version version, String libraryId, String libraryVersion) {
+    public TaskResult<Version> installLibraryAsync(String gameVersion, Version version, String libraryId, String libraryVersion) {
         VersionList<?> versionList = getVersionList(libraryId);
         return versionList.loadAsync(gameVersion, getDownloadProvider())
-                .then(variables -> installLibraryAsync(version, versionList.getVersion(gameVersion, libraryVersion)
+                .thenTaskResult(() -> installLibraryAsync(version, versionList.getVersion(gameVersion, libraryVersion)
                         .orElseThrow(() -> new IllegalStateException("Remote library " + libraryId + " has no version " + libraryVersion))));
     }
 
     @Override
-    public Task installLibraryAsync(Version version, RemoteVersion libraryVersion) {
+    public TaskResult<Version> installLibraryAsync(Version oldVersion, RemoteVersion libraryVersion) {
+        TaskResult<Version> task;
         if (libraryVersion instanceof ForgeRemoteVersion)
-            return new ForgeInstallTask(this, version, (ForgeRemoteVersion) libraryVersion)
-                    .then(variables -> new LibrariesUniqueTask(variables.get("version")))
-                    .then(variables -> new MaintainTask(variables.get("version")))
-                    .then(variables -> new VersionJsonSaveTask(repository, variables.get("version")));
+            task = new ForgeInstallTask(this, oldVersion, (ForgeRemoteVersion) libraryVersion);
         else if (libraryVersion instanceof LiteLoaderRemoteVersion)
-            return new LiteLoaderInstallTask(this, version, (LiteLoaderRemoteVersion) libraryVersion)
-                    .then(variables -> new LibrariesUniqueTask(variables.get("version")))
-                    .then(variables -> new MaintainTask(variables.get("version")))
-                    .then(variables -> new VersionJsonSaveTask(repository, variables.get("version")));
+            task = new LiteLoaderInstallTask(this, oldVersion, (LiteLoaderRemoteVersion) libraryVersion);
         else if (libraryVersion instanceof OptiFineRemoteVersion)
-            return new OptiFineInstallTask(this, version, (OptiFineRemoteVersion) libraryVersion)
-                    .then(variables -> new LibrariesUniqueTask(variables.get("version")))
-                    .then(variables -> new MaintainTask(variables.get("version")))
-                    .then(variables -> new VersionJsonSaveTask(repository, variables.get("version")));
+            task = new OptiFineInstallTask(this, oldVersion, (OptiFineRemoteVersion) libraryVersion);
         else
             throw new IllegalArgumentException("Remote library " + libraryVersion + " is unrecognized.");
+        return task
+                .thenTaskResult(LibrariesUniqueTask::new)
+                .thenTaskResult(MaintainTask::new)
+                .thenTaskResult(newVersion -> new VersionJsonSaveTask(repository, newVersion));
     }
 
 
-    public ExceptionalFunction<AutoTypingMap<String>, Task, ?> installLibraryAsync(RemoteVersion libraryVersion) {
-        return var -> installLibraryAsync(var.get("version"), libraryVersion);
+    public ExceptionalFunction<Version, TaskResult<Version>, ?> installLibraryAsync(RemoteVersion libraryVersion) {
+        return version -> installLibraryAsync(version, libraryVersion);
     }
 }

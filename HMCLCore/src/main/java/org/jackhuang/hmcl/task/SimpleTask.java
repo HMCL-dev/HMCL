@@ -17,8 +17,7 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.util.AutoTypingMap;
-import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
+import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 
 /**
  *
@@ -26,16 +25,16 @@ import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
  */
 class SimpleTask extends Task {
 
-    private final ExceptionalConsumer<AutoTypingMap<String>, ?> consumer;
+    private final ExceptionalRunnable<?> closure;
     private final Scheduler scheduler;
 
-    public SimpleTask(String name, ExceptionalConsumer<AutoTypingMap<String>, ?> consumer, Scheduler scheduler) {
-        this.consumer = consumer;
+    public SimpleTask(String name, ExceptionalRunnable<?> closure, Scheduler scheduler) {
+        this.closure = closure;
         this.scheduler = scheduler;
 
         if (name == null) {
             setSignificance(TaskSignificance.MINOR);
-            setName(consumer.toString());
+            setName(closure.toString());
         } else {
             setName(name);
         }
@@ -48,6 +47,6 @@ class SimpleTask extends Task {
 
     @Override
     public void execute() throws Exception {
-        consumer.accept(getVariables());
+        closure.run();
     }
 }

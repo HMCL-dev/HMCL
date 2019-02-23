@@ -18,57 +18,53 @@
 package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.AutoTypingMap;
-import org.jackhuang.hmcl.util.function.ExceptionalFunction;
+import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * A task that combines two tasks and make sure [pred] runs before succ.
  *
  * @author huangyuhui
  */
-final class CoupleTask<P extends Task> extends Task {
+final class CoupleTask extends Task {
 
     private final boolean relyingOnDependents;
-    private final Collection<Task> dependents;
-    private final List<Task> dependencies = new LinkedList<>();
-    private final ExceptionalFunction<AutoTypingMap<String>, Task, ?> succ;
+    private final Task pred;
+    private Task succ;
+    private final ExceptionalSupplier<Task, ?> supplier;
 
     /**
      * A task that combines two tasks and make sure pred runs before succ.
      *
-     * @param pred the task that runs before succ.
-     * @param succ a callback that returns the task runs after pred, succ will be executed asynchronously. You can do something that relies on the result of pred.
+     * @param pred the task that runs before supplier.
+     * @param supplier a callback that returns the task runs after pred, succ will be executed asynchronously. You can do something that relies on the result of pred.
      * @param relyingOnDependents true if this task chain will be broken when task pred fails.
      */
-    public CoupleTask(P pred, ExceptionalFunction<AutoTypingMap<String>, Task, ?> succ, boolean relyingOnDependents) {
-        this.dependents = pred == null ? Collections.emptySet() : Collections.singleton(pred);
-        this.succ = succ;
+    CoupleTask(Task pred, ExceptionalSupplier<Task, ?> supplier, boolean relyingOnDependents) {
+        this.pred = pred;
+        this.supplier = supplier;
         this.relyingOnDependents = relyingOnDependents;
 
         setSignificance(TaskSignificance.MODERATE);
-        setName(succ.toString());
+        setName(supplier.toString());
     }
 
     @Override
     public void execute() throws Exception {
-        setName(succ.toString());
-        Task task = succ.apply(getVariables());
-        if (task != null)
-            dependencies.add(task);
+        setName(supplier.toString());
+        succ = supplier.get();
     }
 
     @Override
     public Collection<Task> getDependents() {
-        return dependents;
+        return pred == null ? Collections.emptySet() : Collections.singleton(pred);
     }
 
     @Override
     public Collection<Task> getDependencies() {
-        return dependencies;
+        return succ == null ? Collections.emptySet() : Collections.singleton(succ);
     }
 
     @Override

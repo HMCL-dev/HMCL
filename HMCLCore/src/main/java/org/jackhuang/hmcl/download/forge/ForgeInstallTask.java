@@ -83,11 +83,6 @@ public final class ForgeInstallTask extends TaskResult<Version> {
     }
 
     @Override
-    public String getId() {
-        return "version";
-    }
-
-    @Override
     public boolean isRelyingOnDependencies() {
         return false;
     }

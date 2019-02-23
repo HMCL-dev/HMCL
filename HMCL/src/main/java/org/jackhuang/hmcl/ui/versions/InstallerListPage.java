@@ -54,7 +54,7 @@ public class InstallerListPage extends ListPage<InstallerItem> {
             LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
             newList.remove(library);
             new MaintainTask(version.setLibraries(newList))
-                    .then(variables -> new VersionJsonSaveTask(profile.getRepository(), variables.get(MaintainTask.ID)))
+                    .then(maintainedVersion -> new VersionJsonSaveTask(profile.getRepository(), maintainedVersion))
                     .with(profile.getRepository().refreshVersionsAsync())
                     .with(Task.of(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId)))
                     .start();

@@ -33,15 +33,9 @@ import java.util.stream.Collectors;
 
 public class LibrariesUniqueTask extends TaskResult<Version> {
     private final Version version;
-    private final String id;
 
     public LibrariesUniqueTask(Version version) {
-        this(version, "version");
-    }
-
-    public LibrariesUniqueTask(Version version, String id) {
         this.version = version;
-        this.id = id;
     }
 
     @Override
@@ -98,10 +92,5 @@ public class LibrariesUniqueTask extends TaskResult<Version> {
         }
 
         setResult(version.setLibraries(multimap.values().stream().sorted().collect(Collectors.toList())));
-    }
-
-    @Override
-    public String getId() {
-        return id;
     }
 }
