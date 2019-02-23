@@ -220,4 +220,8 @@ public final class Lang {
         consumer.accept(t);
         return t;
     }
+
+    public static void handleUncaughtException(Throwable e) {
+        Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+    }
 }

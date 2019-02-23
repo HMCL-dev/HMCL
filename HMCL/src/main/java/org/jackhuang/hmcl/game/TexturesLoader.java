@@ -35,6 +35,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -163,20 +164,23 @@ public final class TexturesLoader {
                                 return Optional.empty();
                             }
                         })
-                        .flatMap(it -> Optional.ofNullable(it.get(TextureType.SKIN))))
+                        .flatMap(it -> Optional.ofNullable(it.get(TextureType.SKIN)))
+                        .filter(it -> StringUtils.isNotBlank(it.getUrl())))
                 .asyncMap(it -> {
                     if (it.isPresent()) {
                         Texture texture = it.get();
-                        try {
-                            return loadTexture(texture);
-                        } catch (IOException e) {
-                            LOG.log(Level.WARNING, "Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
-                            return getDefaultSkin(TextureModel.detectModelName(texture.getMetadata()));
-                        }
+                        return CompletableFuture.supplyAsync(() -> {
+                            try {
+                                return loadTexture(texture);
+                            } catch (IOException e) {
+                                LOG.log(Level.WARNING, "Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
+                                return uuidFallback;
+                            }
+                        }, POOL);
                     } else {
-                        return uuidFallback;
+                        return CompletableFuture.completedFuture(uuidFallback);
                     }
-                }, uuidFallback, POOL);
+                }, uuidFallback);
     }
     // ====
 

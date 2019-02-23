@@ -18,13 +18,13 @@
 package org.jackhuang.hmcl.util.javafx;
 
 import static java.util.Objects.requireNonNull;
+import static org.jackhuang.hmcl.util.Lang.handleUncaughtException;
 
 import java.util.Objects;
-import java.util.concurrent.Executor;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.jackhuang.hmcl.util.InvocationDispatcher;
 
 import javafx.application.Platform;
 import javafx.beans.binding.ObjectBinding;
@@ -58,8 +58,8 @@ public abstract class MultiStepBinding<T, U> extends ObjectBinding<U> {
         return new FlatMappedBinding<>(map(mapper), nullAlternative);
     }
 
-    public <V> MultiStepBinding<?, V> asyncMap(Function<U, V> mapper, V initial, Executor executor) {
-        return new AsyncMappedBinding<>(this, mapper, executor, initial);
+    public <V> MultiStepBinding<?, V> asyncMap(Function<U, CompletableFuture<V>> mapper, V initial) {
+        return new AsyncMappedBinding<>(this, mapper, initial);
     }
 
     private static class SimpleBinding<T> extends MultiStepBinding<T, T> {
@@ -79,8 +79,8 @@ public abstract class MultiStepBinding<T, U> extends ObjectBinding<U> {
         }
 
         @Override
-        public <V> MultiStepBinding<?, V> asyncMap(Function<T, V> mapper, V initial, Executor executor) {
-            return new AsyncMappedBinding<>(predecessor, mapper, executor, initial);
+        public <V> MultiStepBinding<?, V> asyncMap(Function<T, CompletableFuture<V>> mapper, V initial) {
+            return new AsyncMappedBinding<>(predecessor, mapper, initial);
         }
     }
 
@@ -136,49 +136,79 @@ public abstract class MultiStepBinding<T, U> extends ObjectBinding<U> {
 
     private static class AsyncMappedBinding<T, U> extends MultiStepBinding<T, U> {
 
-        private final InvocationDispatcher<T> dispatcher;
-
         private boolean initialized = false;
         private T prev;
         private U value;
 
-        public AsyncMappedBinding(ObservableValue<T> predecessor, Function<T, U> mapper, Executor executor, U initial) {
+        private final Function<T, CompletableFuture<U>> mapper;
+        private T computingPrev;
+        private boolean computing = false;
+
+        public AsyncMappedBinding(ObservableValue<T> predecessor, Function<T, CompletableFuture<U>> mapper, U initial) {
             super(predecessor);
             this.value = initial;
+            this.mapper = mapper;
+        }
 
-            dispatcher = InvocationDispatcher.runOn(executor, arg -> {
-                synchronized (this) {
-                    if (initialized && Objects.equals(arg, prev)) {
-                        return;
-                    }
+        private void tryUpdateValue(T currentPrev) {
+            synchronized (this) {
+                if ((initialized && Objects.equals(prev, currentPrev))
+                        || isComputing(currentPrev)) {
+                    return;
                 }
-                U newValue = mapper.apply(arg);
-                synchronized (this) {
-                    prev = arg;
-                    value = newValue;
-                    initialized = true;
+                computing = true;
+                computingPrev = currentPrev;
+            }
+
+            CompletableFuture<U> task;
+            try {
+                task = requireNonNull(mapper.apply(currentPrev));
+            } catch (Throwable e) {
+                valueUpdateFailed(currentPrev);
+                throw e;
+            }
+
+            task.handle((result, e) -> {
+                if (e == null) {
+                    valueUpdate(currentPrev, result);
+                    Platform.runLater(this::invalidate);
+                } else {
+                    handleUncaughtException(e);
+                    valueUpdateFailed(currentPrev);
                 }
-                Platform.runLater(this::invalidate);
+                return null;
             });
         }
 
-        // called on FX thread, this method is serial
-        @Override
-        protected U computeValue() {
-            T currentPrev = predecessor.getValue();
-            U value;
-            boolean updateNeeded = false;
+        private void valueUpdate(T currentPrev, U computed) {
             synchronized (this) {
-                value = this.value;
-                if (!initialized || !Objects.equals(currentPrev, prev)) {
-                    updateNeeded = true;
+                if (isComputing(currentPrev)) {
+                    computing = false;
+                    computingPrev = null;
+                    prev = currentPrev;
+                    value = computed;
+                    initialized = true;
                 }
             }
-            if (updateNeeded) {
-                dispatcher.accept(currentPrev);
-            }
-            return value;
         }
 
+        private void valueUpdateFailed(T currentPrev) {
+            synchronized (this) {
+                if (isComputing(currentPrev)) {
+                    computing = false;
+                    computingPrev = null;
+                }
+            }
+        }
+
+        private boolean isComputing(T prev) {
+            return computing && Objects.equals(prev, computingPrev);
+        }
+
+        @Override
+        protected U computeValue() {
+            tryUpdateValue(predecessor.getValue());
+            return value;
+        }
     }
 }
