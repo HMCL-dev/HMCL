@@ -55,14 +55,12 @@ public abstract class TaskResult<V> extends Task {
         return new Subtask<>(id, scheduler, task);
     }
 
-    public <T extends Exception, K extends Exception> Task finalizedResult(Scheduler scheduler, ExceptionalConsumer<V, T> success, ExceptionalConsumer<Exception, K> failure) {
-        return finalized(scheduler, variables -> success.accept(getResult()), failure);
+    public <T extends Exception, K extends Exception> Task finalized(Scheduler scheduler, ExceptionalConsumer<V, T> success, ExceptionalConsumer<Exception, K> failure) {
+        return finalized(scheduler, () -> success.accept(getResult()), failure);
     }
 
-    public Task finalizedResult(Scheduler scheduler, FinalizedCallback<V> callback) {
-        return new FinalizedTask(this, scheduler,
-                (variables, isDependentsSucceeded, exception) -> callback.execute(getResult(), isDependentsSucceeded, exception),
-                ReflectionHelper.getCaller().toString());
+    public Task finalized(Scheduler scheduler, FinalizedCallback<V> callback) {
+        return finalized(scheduler, ((isDependentsSucceeded, exception) -> callback.execute(getResult(), isDependentsSucceeded, exception)));
     }
 
     private class Subtask<R> extends TaskResult<R> {

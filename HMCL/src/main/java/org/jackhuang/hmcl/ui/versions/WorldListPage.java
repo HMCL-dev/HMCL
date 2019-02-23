@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
 import java.util.List;
@@ -52,7 +51,7 @@ public class WorldListPage extends ListPage<WorldListItem> {
 
         setLoading(true);
         Task.ofResult(() -> World.getWorlds(savesDir).parallel().collect(Collectors.toList()))
-                .finalizedResult(Schedulers.javafx(), (result, isDependentsSucceeded, exception) -> {
+                .finalized(Schedulers.javafx(), (result, isDependentsSucceeded, exception) -> {
                     setLoading(false);
                     if (isDependentsSucceeded)
                         itemsProperty().setAll(result.stream().map(WorldListItem::new).collect(Collectors.toList()));
@@ -74,10 +73,10 @@ public class WorldListPage extends ListPage<WorldListItem> {
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
         Task.ofResult(() -> new World(zipFile.toPath()))
-                .finalizedResult(Schedulers.javafx(), world -> {
+                .finalized(Schedulers.javafx(), world -> {
                     Controllers.inputDialog(i18n("world.name.enter"), (name, resolve, reject) -> {
                         Task.of(() -> world.install(savesDir, name))
-                                .finalized(Schedulers.javafx(), var -> {
+                                .finalized(Schedulers.javafx(), () -> {
                                     itemsProperty().add(new WorldListItem(new World(savesDir.resolve(name))));
                                     resolve.run();
                                 }, e -> {

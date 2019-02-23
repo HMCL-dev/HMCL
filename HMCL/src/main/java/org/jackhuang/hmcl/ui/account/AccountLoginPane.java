@@ -62,7 +62,7 @@ public class AccountLoginPane extends StackPane {
         progressBar.setVisible(true);
         lblCreationWarning.setText("");
         Task.ofResult(() -> oldAccount.logInWithPassword(password))
-                .finalizedResult(Schedulers.javafx(), authInfo -> {
+                .finalized(Schedulers.javafx(), authInfo -> {
                     success.accept(authInfo);
                     fireEvent(new DialogCloseEvent());
                     progressBar.setVisible(false);

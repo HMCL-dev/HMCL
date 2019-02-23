@@ -320,12 +320,13 @@ public abstract class Task {
         return new FinalizedTask(this, scheduler, b, ReflectionHelper.getCaller().toString());
     }
 
-    public final <T extends Exception, K extends Exception> Task finalized(Scheduler scheduler, ExceptionalConsumer<AutoTypingMap<String>, T> success, ExceptionalConsumer<Exception, K> failure) {
-        return finalized(scheduler, (variables, isDependentsSucceeded, exception) -> {
+    // T, K here is necessary, or javac cannot infer type of failure
+    public final <T extends Exception, K extends Exception> Task finalized(Scheduler scheduler, ExceptionalRunnable<T> success, ExceptionalConsumer<Exception, K> failure) {
+        return finalized(scheduler, (isDependentsSucceeded, exception) -> {
             if (isDependentsSucceeded) {
                 if (success != null)
                     try {
-                        success.accept(variables);
+                        success.run();
                     } catch (Exception e) {
                         Logging.LOG.log(Level.WARNING, "Failed to execute " + success, e);
                         if (failure != null)
@@ -420,5 +421,9 @@ public abstract class Task {
         EXECUTED,
         SUCCEEDED,
         FAILED
+    }
+
+    public interface FinalizedCallback {
+        void execute(boolean isDependentsSucceeded, Exception exception) throws Exception;
     }
 }

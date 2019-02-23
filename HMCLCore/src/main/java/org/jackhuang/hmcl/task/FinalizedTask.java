@@ -53,7 +53,7 @@ final class FinalizedTask extends Task {
 
     @Override
     public void execute() throws Exception {
-        callback.execute(getVariables(), isDependentsSucceeded(), pred.getLastException());
+        callback.execute(isDependentsSucceeded(), pred.getLastException());
 
         if (!isDependentsSucceeded())
             throw new SilentException();
