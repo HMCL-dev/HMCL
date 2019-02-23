@@ -23,15 +23,9 @@ import org.jackhuang.hmcl.task.TaskResult;
 public class MaintainTask extends TaskResult<Version> {
 
     private final Version version;
-    private final String id;
 
     public MaintainTask(Version version) {
-        this(version, ID);
-    }
-
-    public MaintainTask(Version version, String id) {
         this.version = version;
-        this.id = id;
     }
 
     @Override
@@ -76,11 +70,4 @@ public class MaintainTask extends TaskResult<Version> {
 
         return builder.build();
     }
-
-    @Override
-    public String getId() {
-        return id;
-    }
-
-    public static final String ID = "version";
 }

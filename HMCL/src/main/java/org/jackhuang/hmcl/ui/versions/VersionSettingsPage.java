@@ -57,7 +57,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -113,14 +113,13 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         FXUtils.smoothScrolling(scroll);
 
-        Task.ofResult(JavaVersion::getJavas).thenResult(Schedulers.javafx(), list -> {
+        Task.ofResult(JavaVersion::getJavas).thenVoid(Schedulers.javafx(), list -> {
             javaItem.loadChildren(list.stream()
                     .map(javaVersion -> javaItem.createChildren(javaVersion.getVersion() + i18n("settings.game.java_directory.bit",
                             javaVersion.getPlatform().getBit()), javaVersion.getBinary().toString(), javaVersion))
                     .collect(Collectors.toList()));
             javaItemsLoaded = true;
             initializeSelectedJava();
-            return null;
         }).start();
 
         javaItem.setSelectedData(null);
@@ -268,10 +267,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     }
 
     private void initJavaSubtitle(VersionSetting versionSetting) {
-        Task.of(variables -> variables.set("java", versionSetting.getJavaVersion()))
-                .subscribe(Task.of(Schedulers.javafx(),
-                        variables -> javaItem.setSubtitle(variables.<JavaVersion>getOptional("java")
-                                .map(JavaVersion::getBinary).map(Path::toString).orElse("Invalid Java Directory"))));
+        Task.ofResult(versionSetting::getJavaVersion)
+                .thenVoid(Schedulers.javafx(), javaVersion -> javaItem.setSubtitle(Optional.ofNullable(javaVersion)
+                        .map(JavaVersion::getBinary).map(Path::toString).orElse("Invalid Java Directory")))
+                .start();
     }
 
     @FXML

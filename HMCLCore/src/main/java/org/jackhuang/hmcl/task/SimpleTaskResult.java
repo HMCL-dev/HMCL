@@ -17,24 +17,30 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.util.AutoTypingMap;
+import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 
-public final class SimpleTaskResult<V> extends TaskResult<V> {
-    private final String id;
-    private final ExceptionalSupplier<V, ?> supplier;
+import java.util.concurrent.Callable;
 
-    public SimpleTaskResult(String id, ExceptionalSupplier<V, ?> supplier) {
-        this.id = id;
-        this.supplier = supplier;
+/**
+ *
+ * @author huangyuhui
+ */
+class SimpleTaskResult<V> extends TaskResult<V> {
+
+    private final Callable<V> callable;
+
+    public SimpleTaskResult(Callable<V> callable) {
+        this.callable = callable;
+    }
+
+    public SimpleTaskResult(ExceptionalSupplier<V, ?> supplier) {
+        this.callable = supplier.toCallable();
     }
 
     @Override
     public void execute() throws Exception {
-        setResult(supplier.get());
-    }
-
-    @Override
-    public String getId() {
-        return id;
+        setResult(callable.call());
     }
 }

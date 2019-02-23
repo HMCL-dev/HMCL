@@ -122,14 +122,14 @@ public final class LauncherHelper {
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
         TaskExecutor executor = Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))
-                .then(variables -> {
+                .then(() -> {
                     if (setting.isNotCheckGame())
                         return null;
                     else
                         return dependencyManager.checkGameCompletionAsync(version);
                 })
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.MODS)))
-                .then(var -> {
+                .then(() -> {
                     try {
                         ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
                         if ("Curse".equals(configuration.getType()))
@@ -141,44 +141,42 @@ public final class LauncherHelper {
                     }
                 })
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN)))
-                .then(Task.of(i18n("account.methods"), variables -> {
+                .thenTaskResult(() -> Task.ofResult(i18n("account.methods"), () -> {
                     try {
-                        variables.set("account", account.logIn());
+                        return account.logIn();
                     } catch (CredentialExpiredException e) {
                         LOG.info("Credential has expired: " + e);
-                        variables.set("account", DialogController.logIn(account));
+                        return DialogController.logIn(account);
                     } catch (AuthenticationException e) {
                         LOG.warning("Authentication failed, try playing offline: " + e);
-                        variables.set("account",
-                                account.playOffline().orElseThrow(() -> e));
+                        return account.playOffline().orElseThrow(() -> e);
                     }
                 }))
-                .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LAUNCHING)))
-                .then(Task.of(variables -> {
-                    variables.set("launcher", new HMCLGameLauncher(
-                            repository,
-                            selectedVersion,
-                            variables.get("account"),
-                            setting.toLaunchOptions(profile.getGameDir()),
-                            launcherVisibility == LauncherVisibility.CLOSE
-                                    ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(variables.get("account"), setting, gameVersion.isPresent())
-                    ));
-                }))
-                .then(variables -> {
-                    DefaultLauncher launcher = variables.get("launcher");
+                .thenResult(Schedulers.javafx(), authInfo -> {
+                    emitStatus(LoadingState.LAUNCHING);
+                    return authInfo;
+                })
+                .thenResult(authInfo -> new HMCLGameLauncher(
+                        repository,
+                        selectedVersion,
+                        authInfo,
+                        setting.toLaunchOptions(profile.getGameDir()),
+                        launcherVisibility == LauncherVisibility.CLOSE
+                                ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
+                                : new HMCLProcessListener(authInfo, setting, gameVersion.isPresent())
+                ))
+                .thenTaskResult(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
                         return new LaunchTask<>(launcher::launch).setName(i18n("version.launch"));
                     } else {
-                        return new LaunchTask<>(() -> {
+                        return new LaunchTask<ManagedProcess>(() -> {
                             launcher.makeLaunchScript(scriptFile);
                             return null;
                         }).setName(i18n("version.launch_script"));
                     }
                 })
-                .then(Task.of(variables -> {
+                .thenVoid(process -> { // process is LaunchTask's result
                     if (scriptFile == null) {
-                        ManagedProcess process = variables.get(LaunchTask.LAUNCH_ID);
                         PROCESSES.add(process);
                         if (launcherVisibility == LauncherVisibility.CLOSE)
                             Launcher.stopApplication();
@@ -187,13 +185,13 @@ public final class LauncherHelper {
                                 process.stop();
                                 it.fireEvent(new DialogCloseEvent());
                             });
-                    } else
+                    } else {
                         Platform.runLater(() -> {
                             launchingStepsPane.fireEvent(new DialogCloseEvent());
                             Controllers.dialog(i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
                         });
-
-                }))
+                    }
+                })
                 .executor();
 
         launchingStepsPane.setExecutor(executor, false);
@@ -429,13 +427,6 @@ public final class LauncherHelper {
         public void execute() throws Exception {
             setResult(supplier.get());
         }
-
-        @Override
-        public String getId() {
-            return LAUNCH_ID;
-        }
-
-        static final String LAUNCH_ID = "launch";
     }
 
     /**

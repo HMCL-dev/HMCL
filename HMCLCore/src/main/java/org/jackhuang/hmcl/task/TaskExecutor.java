@@ -38,7 +38,6 @@ public final class TaskExecutor {
     private Exception lastException;
     private final AtomicInteger totTask = new AtomicInteger(0);
     private final ConcurrentLinkedQueue<Future<?>> workerQueue = new ConcurrentLinkedQueue<>();
-    private final AutoTypingMap<String> variables = new AutoTypingMap<>(new HashMap<>());
     private Scheduler scheduler = Schedulers.newThread();
 
     public TaskExecutor(Task task) {
@@ -147,8 +146,6 @@ public final class TaskExecutor {
         boolean flag = false;
 
         try {
-            task.setVariables(variables);
-
             if (task.doPreExecute()) {
                 try {
                     task.getScheduler().schedule(task::preExecute).get();
@@ -184,11 +181,6 @@ public final class TaskExecutor {
                     throw e;
             } finally {
                 task.setState(Task.TaskState.EXECUTED);
-            }
-
-            if (task instanceof TaskResult<?>) {
-                TaskResult<?> taskResult = (TaskResult<?>) task;
-                variables.set(taskResult.getId(), taskResult.getResult());
             }
 
             Collection<? extends Task> dependencies = task.getDependencies();
@@ -238,8 +230,6 @@ public final class TaskExecutor {
             }
             task.onDone().fireEvent(new TaskEvent(this, task, true));
             taskListeners.forEach(it -> it.onFailed(task, e));
-        } finally {
-            task.setVariables(null);
         }
         task.setState(flag ? Task.TaskState.SUCCEEDED : Task.TaskState.FAILED);
         return flag;
@@ -247,10 +237,6 @@ public final class TaskExecutor {
 
     public int getRunningTasks() {
         return totTask.get();
-    }
-
-    public AutoTypingMap<String> getVariables() {
-        return variables;
     }
 
     private class Invoker implements ExceptionalRunnable<Exception> {

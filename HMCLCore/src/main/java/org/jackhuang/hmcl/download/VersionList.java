@@ -74,7 +74,7 @@ public abstract class VersionList<T extends RemoteVersion> {
     }
 
     public Task loadAsync(DownloadProvider downloadProvider) {
-        return Task.ofThen(variables -> {
+        return Task.ofThen(() -> {
             lock.readLock().lock();
             boolean loaded;
 
@@ -88,7 +88,7 @@ public abstract class VersionList<T extends RemoteVersion> {
     }
 
     public Task loadAsync(String gameVersion, DownloadProvider downloadProvider) {
-        return Task.ofThen(variables -> {
+        return Task.ofThen(() -> {
             lock.readLock().lock();
             boolean loaded;
 

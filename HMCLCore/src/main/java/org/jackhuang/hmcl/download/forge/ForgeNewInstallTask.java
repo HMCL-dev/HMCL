@@ -90,11 +90,6 @@ public class ForgeNewInstallTask extends TaskResult<Version> {
     }
 
     @Override
-    public String getId() {
-        return "version";
-    }
-
-    @Override
     public boolean doPreExecute() {
         return true;
     }

@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -31,7 +31,7 @@ import java.io.IOException;
  *
  * @author huangyuhui
  */
-public final class VersionJsonSaveTask extends Task {
+public final class VersionJsonSaveTask extends TaskResult<Version> {
 
     private final DefaultGameRepository repository;
     private final Version version;
@@ -47,6 +47,7 @@ public final class VersionJsonSaveTask extends Task {
         this.version = version;
 
         setSignificance(TaskSignificance.MODERATE);
+        setResult(version);
     }
 
     @Override

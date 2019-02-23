@@ -23,13 +23,12 @@ import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import org.jackhuang.hmcl.event.EventManager;
-import org.jackhuang.hmcl.util.AutoTypingMap;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ReflectionHelper;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
-import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
+import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -132,16 +131,6 @@ public abstract class Task {
     public Task setName(String name) {
         this.name = name;
         return this;
-    }
-
-    private AutoTypingMap<String> variables = null;
-
-    public AutoTypingMap<String> getVariables() {
-        return variables;
-    }
-
-    void setVariables(AutoTypingMap<String> variables) {
-        this.variables = variables;
     }
 
     public boolean doPreExecute() {
@@ -280,16 +269,8 @@ public abstract class Task {
         new TaskExecutor(then(subscriber)).start();
     }
 
-    public final void subscribe(Scheduler scheduler, ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
-        subscribe(of(scheduler, closure));
-    }
-
     public final void subscribe(Scheduler scheduler, ExceptionalRunnable<?> closure) {
-        subscribe(of(scheduler, ExceptionalConsumer.fromRunnable(closure)));
-    }
-
-    public final void subscribe(ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
-        subscribe(of(closure));
+        subscribe(of(scheduler, closure));
     }
 
     public final void subscribe(ExceptionalRunnable<?> closure) {
@@ -300,16 +281,36 @@ public abstract class Task {
         return then(convert(b));
     }
 
-    public final Task then(ExceptionalFunction<AutoTypingMap<String>, Task, ?> b) {
-        return new CoupleTask<>(this, b, true);
+    public final Task then(ExceptionalSupplier<Task, ?> b) {
+        return new CoupleTask(this, b, true);
+    }
+
+    public final <R> TaskResult<R> thenResult(Callable<R> supplier) {
+        return thenTaskResult(() -> Task.ofResult(supplier));
+    }
+
+    public final <R> TaskResult<R> thenTaskResult(ExceptionalSupplier<TaskResult<R>, ?> taskSupplier) {
+        return new TaskResult<R>() {
+            TaskResult<R> then;
+
+            @Override
+            public void execute() throws Exception {
+                then = taskSupplier.get().storeTo(this::setResult);
+            }
+
+            @Override
+            public Collection<? extends Task> getDependencies() {
+                return then == null ? Collections.emptyList() : Collections.singleton(then);
+            }
+        };
     }
 
     public final Task with(Task b) {
         return with(convert(b));
     }
 
-    public final <E extends Exception> Task with(ExceptionalFunction<AutoTypingMap<String>, Task, E> b) {
-        return new CoupleTask<>(this, b, false);
+    public final <E extends Exception> Task with(ExceptionalSupplier<Task, E> b) {
+        return new CoupleTask(this, b, false);
     }
 
     public final Task finalized(FinalizedCallback b) {
@@ -317,7 +318,7 @@ public abstract class Task {
     }
 
     public final Task finalized(Scheduler scheduler, FinalizedCallback b) {
-        return new FinalizedTask(this, scheduler, b, ReflectionHelper.getCaller().toString());
+        return new FinalizedTask(this, scheduler, b).setName(getCaller());
     }
 
     // T, K here is necessary, or javac cannot infer type of failure
@@ -339,58 +340,38 @@ public abstract class Task {
         });
     }
 
-    public static Task of(String name, ExceptionalRunnable<?> runnable) {
-        return of(name, ExceptionalConsumer.fromRunnable(runnable));
-    }
-
-    public static Task of(ExceptionalRunnable<?> runnable) {
-        return of(ExceptionalConsumer.fromRunnable(runnable));
-    }
-
-    public static Task of(String name, ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
-        return of(name, Schedulers.defaultScheduler(), closure);
-    }
-
-    public static Task of(ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
+    public static Task of(ExceptionalRunnable<?> closure) {
         return of(Schedulers.defaultScheduler(), closure);
     }
 
-    public static Task of(String name, Scheduler scheduler, ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
-        return new SimpleTask(name, closure, scheduler);
-    }
-
-    public static Task of(Scheduler scheduler, ExceptionalConsumer<AutoTypingMap<String>, ?> closure) {
-        return of(ReflectionHelper.getCaller().toString(), scheduler, closure);
-    }
-
-    public static Task of(String name, Scheduler scheduler, ExceptionalRunnable<?> closure) {
-        return new SimpleTask(name, ExceptionalConsumer.fromRunnable(closure), scheduler);
+    public static Task of(String name, ExceptionalRunnable<?> closure) {
+        return of(name, Schedulers.defaultScheduler(), closure);
     }
 
     public static Task of(Scheduler scheduler, ExceptionalRunnable<?> closure) {
-        return of(ReflectionHelper.getCaller().toString(), scheduler, closure);
+        return of(getCaller(), scheduler, closure);
     }
 
-    public static Task ofThen(ExceptionalFunction<AutoTypingMap<String>, Task, ?> b) {
-        return new CoupleTask<>(null, b, true);
+    public static Task of(String name, Scheduler scheduler, ExceptionalRunnable<?> closure) {
+        return new SimpleTask(name, closure, scheduler);
+    }
+
+    public static Task ofThen(ExceptionalSupplier<Task, ?> b) {
+        return new CoupleTask(null, b, true);
     }
 
     public static <V> TaskResult<V> ofResult(Callable<V> callable) {
-        return ofResult("", callable);
+        return ofResult(getCaller(), callable);
     }
 
-    public static <V> TaskResult<V> ofResult(String id, Callable<V> callable) {
-        return new TaskCallable<>(id, callable);
+    public static <V> TaskResult<V> ofResult(String name, Callable<V> callable) {
+        return new SimpleTaskResult<>(callable).setName(name);
     }
 
-    public static <V> TaskResult<V> ofResult(String id, ExceptionalFunction<AutoTypingMap<String>, V, ?> closure) {
-        return new TaskCallable<>(id, closure);
-    }
-
-    private static ExceptionalFunction<AutoTypingMap<String>, Task, ?> convert(Task t) {
-        return new ExceptionalFunction<AutoTypingMap<String>, Task, Exception>() {
+    private static ExceptionalSupplier<Task, ?> convert(Task t) {
+        return new ExceptionalSupplier<Task, Exception>() {
             @Override
-            public Task apply(AutoTypingMap<String> autoTypingMap) {
+            public Task get() {
                 return t;
             }
 
@@ -425,5 +406,9 @@ public abstract class Task {
 
     public interface FinalizedCallback {
         void execute(boolean isDependentsSucceeded, Exception exception) throws Exception;
+    }
+
+    static String getCaller() {
+        return ReflectionHelper.getCaller(packageName -> !"org.jackhuang.hmcl.task".equals(packageName)).toString();
     }
 }

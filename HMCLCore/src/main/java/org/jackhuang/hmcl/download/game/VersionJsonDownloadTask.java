@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.util.Collection;
@@ -32,7 +33,7 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class VersionJsonDownloadTask extends Task {
+public final class VersionJsonDownloadTask extends TaskResult<String> {
     private final String gameVersion;
     private final DefaultDependencyManager dependencyManager;
     private final List<Task> dependents = new LinkedList<>();
@@ -65,8 +66,6 @@ public final class VersionJsonDownloadTask extends Task {
         RemoteVersion remoteVersion = gameVersionList.getVersions(gameVersion).stream().findFirst()
                 .orElseThrow(() -> new IllegalStateException("Cannot find specific version " + gameVersion + " in remote repository"));
         String jsonURL = dependencyManager.getDownloadProvider().injectURL(remoteVersion.getUrl());
-        dependencies.add(new GetTask(NetworkUtils.toURL(jsonURL), ID));
+        dependencies.add(new GetTask(NetworkUtils.toURL(jsonURL)).storeTo(this::setResult));
     }
-    
-    public static final String ID = "raw_version_json";
 }
