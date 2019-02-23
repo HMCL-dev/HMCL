@@ -20,7 +20,9 @@ package org.jackhuang.hmcl.mod;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.javafx.ImmediateBooleanProperty;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +44,7 @@ public final class ModInfo implements Comparable<ModInfo> {
     private final String gameVersion;
     private final String url;
     private final String fileName;
-    private final ImmediateBooleanProperty activeProperty;
+    private final BooleanProperty activeProperty;
 
     public ModInfo(ModManager modManager, File file, String name, String description) {
         this(modManager, file, name, description, "", "", "", "");
@@ -57,7 +59,7 @@ public final class ModInfo implements Comparable<ModInfo> {
         this.gameVersion = gameVersion;
         this.url = url;
 
-        activeProperty = new ImmediateBooleanProperty(this, "active", !modManager.isDisabled(file)) {
+        activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
             @Override
             protected void invalidated() {
                 Path path = ModInfo.this.file.toAbsolutePath();
@@ -104,7 +106,7 @@ public final class ModInfo implements Comparable<ModInfo> {
         return url;
     }
 
-    public ImmediateBooleanProperty activeProperty() {
+    public BooleanProperty activeProperty() {
         return activeProperty;
     }
 

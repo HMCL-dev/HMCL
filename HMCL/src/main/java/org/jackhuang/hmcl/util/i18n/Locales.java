@@ -58,10 +58,6 @@ public final class Locales {
 
     public static final List<SupportedLocale> LOCALES = Lang.immutableListOf(DEFAULT, EN, ZH_CN, ZH);
 
-    public static SupportedLocale getLocale(int index) {
-        return Lang.get(LOCALES, index).orElse(DEFAULT);
-    }
-
     public static SupportedLocale getLocaleByName(String name) {
         if (name == null) return DEFAULT;
         switch (name.toLowerCase()) {

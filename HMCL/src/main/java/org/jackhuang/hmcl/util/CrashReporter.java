@@ -18,9 +18,11 @@
 package org.jackhuang.hmcl.util;
 
 import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.CrashWindow;
-import org.jackhuang.hmcl.ui.construct.MessageBox;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -69,7 +71,10 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                     String info = entry.getValue();
                     LOG.severe(info);
                     try {
-                        MessageBox.show(info);
+                        Alert alert = new Alert(AlertType.INFORMATION, info);
+                        alert.setTitle(i18n("message.info"));
+                        alert.setHeaderText(i18n("message.info"));
+                        alert.showAndWait();
                     } catch (Throwable t) {
                         LOG.log(Level.SEVERE, "Unable to show message", t);
                     }

@@ -57,7 +57,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -71,7 +70,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private Profile profile;
     private String versionId;
     private boolean javaItemsLoaded;
-    private InvalidationListener specificSettingsListener;
 
     @FXML private VBox rootPane;
     @FXML private ScrollPane scroll;
@@ -99,6 +97,12 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     @FXML private ImagePickerItem iconPickerItem;
     @FXML private JFXCheckBox chkEnableSpecificSettings;
     @FXML private BorderPane settingsTypePane;
+
+    private InvalidationListener specificSettingsListener = any -> {
+        chkEnableSpecificSettings.setSelected(!lastVersionSetting.isUsesGlobal());
+    };
+
+    private InvalidationListener javaListener = any -> initJavaSubtitle();
 
     public VersionSettingsPage() {
         FXUtils.loadFXML(this, "/assets/fxml/version/version-settings.fxml");
@@ -148,10 +152,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             Platform.runLater(() -> loadVersion(profile, versionId));
         });
 
-        specificSettingsListener = o -> {
-            chkEnableSpecificSettings.setSelected(!lastVersionSetting.isUsesGlobal());
-        };
-
         componentList.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
         advancedSettingsPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
     }
@@ -193,6 +193,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbindEnum(cboLauncherVisibility);
 
             lastVersionSetting.usesGlobalProperty().removeListener(specificSettingsListener);
+            lastVersionSetting.javaDirProperty().removeListener(javaListener);
+            lastVersionSetting.javaProperty().removeListener(javaListener);
 
             gameDirItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.gameDirTypeProperty());
             gameDirItem.subtitleProperty().unbind();
@@ -232,9 +234,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             }
         });
 
-        versionSetting.javaDirProperty().setChangedListener(it -> initJavaSubtitle(versionSetting));
-        versionSetting.javaProperty().setChangedListener(it -> initJavaSubtitle(versionSetting));
-        initJavaSubtitle(versionSetting);
+        versionSetting.javaDirProperty().addListener(javaListener);
+        versionSetting.javaProperty().addListener(javaListener);
 
         gameDirItem.selectedDataProperty().bindBidirectional(versionSetting.gameDirTypeProperty());
         gameDirItem.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath()).normalize().toString(),
@@ -243,6 +244,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         lastVersionSetting = versionSetting;
 
         initializeSelectedJava();
+        initJavaSubtitle();
 
         loadIcon();
     }
@@ -267,11 +269,14 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         }
     }
 
-    private void initJavaSubtitle(VersionSetting versionSetting) {
+    private void initJavaSubtitle() {
+        VersionSetting versionSetting = lastVersionSetting;
+        if (versionSetting == null)
+            return;
         Task.of(variables -> variables.set("java", versionSetting.getJavaVersion()))
                 .subscribe(Task.of(Schedulers.javafx(),
                         variables -> javaItem.setSubtitle(variables.<JavaVersion>getOptional("java")
-                                .map(JavaVersion::getBinary).map(Path::toString).orElse("Invalid Java Directory"))));
+                                .map(JavaVersion::getBinary).map(Path::toString).orElse("Invalid Java Path"))));
     }
 
     @FXML

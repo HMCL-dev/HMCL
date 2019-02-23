@@ -33,8 +33,6 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.javafx.ImmediateObjectProperty;
-import org.jackhuang.hmcl.util.javafx.ImmediateStringProperty;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 
 import java.io.File;
@@ -90,9 +88,9 @@ public final class Profile implements Observable {
         return global.get();
     }
 
-    private final ImmediateStringProperty name;
+    private final SimpleStringProperty name;
 
-    public ImmediateStringProperty nameProperty() {
+    public StringProperty nameProperty() {
         return name;
     }
 
@@ -131,8 +129,8 @@ public final class Profile implements Observable {
     }
 
     public Profile(String name, File initialGameDir, VersionSetting global, String selectedVersion, boolean useRelativePath) {
-        this.name = new ImmediateStringProperty(this, "name", name);
-        gameDir = new ImmediateObjectProperty<>(this, "gameDir", initialGameDir);
+        this.name = new SimpleStringProperty(this, "name", name);
+        gameDir = new SimpleObjectProperty<>(this, "gameDir", initialGameDir);
         repository = new HMCLGameRepository(this, initialGameDir);
         this.global.set(global == null ? new VersionSetting() : global);
         this.selectedVersion.set(selectedVersion);

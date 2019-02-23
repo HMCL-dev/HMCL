@@ -201,11 +201,11 @@ public final class LogWindow extends Stage {
             if (!flag)
                 cboLines.getSelectionModel().select(0);
 
-            btnFatals.textProperty().bind(Bindings.createStringBinding(() -> Integer.toString(fatal.get()) + " fatals", fatal));
-            btnErrors.textProperty().bind(Bindings.createStringBinding(() -> Integer.toString(error.get()) + " errors", error));
-            btnWarns.textProperty().bind(Bindings.createStringBinding(() -> Integer.toString(warn.get()) + " warns", warn));
-            btnInfos.textProperty().bind(Bindings.createStringBinding(() -> Integer.toString(info.get()) + " infos", info));
-            btnDebugs.textProperty().bind(Bindings.createStringBinding(() -> Integer.toString(debug.get()) + " debugs", debug));
+            btnFatals.textProperty().bind(Bindings.concat(fatal, " fatals"));
+            btnErrors.textProperty().bind(Bindings.concat(error, " errors"));
+            btnWarns.textProperty().bind(Bindings.concat(warn, " warns"));
+            btnInfos.textProperty().bind(Bindings.concat(info, " infos"));
+            btnDebugs.textProperty().bind(Bindings.concat(debug, " debugs"));
 
             btnFatals.selectedProperty().addListener(o -> specificChanged());
             btnErrors.selectedProperty().addListener(o -> specificChanged());

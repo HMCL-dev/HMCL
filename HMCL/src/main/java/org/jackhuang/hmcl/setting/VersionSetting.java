@@ -21,13 +21,18 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 
 import javafx.beans.InvalidationListener;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.javafx.ImmediateBooleanProperty;
-import org.jackhuang.hmcl.util.javafx.ImmediateIntegerProperty;
-import org.jackhuang.hmcl.util.javafx.ImmediateObjectProperty;
-import org.jackhuang.hmcl.util.javafx.ImmediateStringProperty;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -60,9 +65,9 @@ public final class VersionSetting {
         this.global = global;
     }
 
-    private final ImmediateBooleanProperty usesGlobalProperty = new ImmediateBooleanProperty(this, "usesGlobal", false);
+    private final BooleanProperty usesGlobalProperty = new SimpleBooleanProperty(this, "usesGlobal", false);
 
-    public ImmediateBooleanProperty usesGlobalProperty() {
+    public BooleanProperty usesGlobalProperty() {
         return usesGlobalProperty;
     }
 
@@ -84,9 +89,9 @@ public final class VersionSetting {
 
     // java
 
-    private final ImmediateStringProperty javaProperty = new ImmediateStringProperty(this, "java", "");
+    private final StringProperty javaProperty = new SimpleStringProperty(this, "java", "");
 
-    public ImmediateStringProperty javaProperty() {
+    public StringProperty javaProperty() {
         return javaProperty;
     }
 
@@ -110,7 +115,7 @@ public final class VersionSetting {
         setDefaultJavaPath(null);
     }
 
-    private final ImmediateStringProperty defaultJavaPathProperty = new ImmediateStringProperty(this, "defaultJavaPath", "");
+    private final StringProperty defaultJavaPathProperty = new SimpleStringProperty(this, "defaultJavaPath", "");
 
     /**
      * Path to Java executable, or null if user customizes java directory.
@@ -124,9 +129,9 @@ public final class VersionSetting {
         defaultJavaPathProperty.set(defaultJavaPath);
     }
 
-    private final ImmediateStringProperty javaDirProperty = new ImmediateStringProperty(this, "javaDir", "");
+    private final StringProperty javaDirProperty = new SimpleStringProperty(this, "javaDir", "");
 
-    public ImmediateStringProperty javaDirProperty() {
+    public StringProperty javaDirProperty() {
         return javaDirProperty;
     }
 
@@ -141,9 +146,9 @@ public final class VersionSetting {
         javaDirProperty.set(javaDir);
     }
 
-    private final ImmediateStringProperty wrapperProperty = new ImmediateStringProperty(this, "wrapper", "");
+    private final StringProperty wrapperProperty = new SimpleStringProperty(this, "wrapper", "");
 
-    public ImmediateStringProperty wrapperProperty() {
+    public StringProperty wrapperProperty() {
         return wrapperProperty;
     }
 
@@ -158,9 +163,9 @@ public final class VersionSetting {
         wrapperProperty.set(wrapper);
     }
 
-    private final ImmediateStringProperty permSizeProperty = new ImmediateStringProperty(this, "permSize", "");
+    private final StringProperty permSizeProperty = new SimpleStringProperty(this, "permSize", "");
 
-    public ImmediateStringProperty permSizeProperty() {
+    public StringProperty permSizeProperty() {
         return permSizeProperty;
     }
 
@@ -175,9 +180,9 @@ public final class VersionSetting {
         permSizeProperty.set(permSize);
     }
 
-    private final ImmediateIntegerProperty maxMemoryProperty = new ImmediateIntegerProperty(this, "maxMemory", OperatingSystem.SUGGESTED_MEMORY);
+    private final IntegerProperty maxMemoryProperty = new SimpleIntegerProperty(this, "maxMemory", OperatingSystem.SUGGESTED_MEMORY);
 
-    public ImmediateIntegerProperty maxMemoryProperty() {
+    public IntegerProperty maxMemoryProperty() {
         return maxMemoryProperty;
     }
 
@@ -195,9 +200,9 @@ public final class VersionSetting {
     /**
      * The minimum memory that JVM can allocate for heap.
      */
-    private final ImmediateObjectProperty<Integer> minMemoryProperty = new ImmediateObjectProperty<>(this, "minMemory", null);
+    private final ObjectProperty<Integer> minMemoryProperty = new SimpleObjectProperty<>(this, "minMemory", null);
 
-    public ImmediateObjectProperty<Integer> minMemoryProperty() {
+    public ObjectProperty<Integer> minMemoryProperty() {
         return minMemoryProperty;
     }
 
@@ -209,9 +214,9 @@ public final class VersionSetting {
         minMemoryProperty.set(minMemory);
     }
 
-    private final ImmediateStringProperty preLaunchCommandProperty = new ImmediateStringProperty(this, "precalledCommand", "");
+    private final StringProperty preLaunchCommandProperty = new SimpleStringProperty(this, "precalledCommand", "");
 
-    public ImmediateStringProperty preLaunchCommandProperty() {
+    public StringProperty preLaunchCommandProperty() {
         return preLaunchCommandProperty;
     }
 
@@ -229,9 +234,9 @@ public final class VersionSetting {
 
     // options
 
-    private final ImmediateStringProperty javaArgsProperty = new ImmediateStringProperty(this, "javaArgs", "");
+    private final StringProperty javaArgsProperty = new SimpleStringProperty(this, "javaArgs", "");
 
-    public ImmediateStringProperty javaArgsProperty() {
+    public StringProperty javaArgsProperty() {
         return javaArgsProperty;
     }
 
@@ -246,9 +251,9 @@ public final class VersionSetting {
         javaArgsProperty.set(javaArgs);
     }
 
-    private final ImmediateStringProperty minecraftArgsProperty = new ImmediateStringProperty(this, "minecraftArgs", "");
+    private final StringProperty minecraftArgsProperty = new SimpleStringProperty(this, "minecraftArgs", "");
 
-    public ImmediateStringProperty minecraftArgsProperty() {
+    public StringProperty minecraftArgsProperty() {
         return minecraftArgsProperty;
     }
 
@@ -263,9 +268,9 @@ public final class VersionSetting {
         minecraftArgsProperty.set(minecraftArgs);
     }
 
-    private final ImmediateBooleanProperty noJVMArgsProperty = new ImmediateBooleanProperty(this, "noJVMArgs", false);
+    private final BooleanProperty noJVMArgsProperty = new SimpleBooleanProperty(this, "noJVMArgs", false);
 
-    public ImmediateBooleanProperty noJVMArgsProperty() {
+    public BooleanProperty noJVMArgsProperty() {
         return noJVMArgsProperty;
     }
 
@@ -280,9 +285,9 @@ public final class VersionSetting {
         noJVMArgsProperty.set(noJVMArgs);
     }
 
-    private final ImmediateBooleanProperty notCheckJVMProperty = new ImmediateBooleanProperty(this, "notCheckJVM", false);
+    private final BooleanProperty notCheckJVMProperty = new SimpleBooleanProperty(this, "notCheckJVM", false);
 
-    public ImmediateBooleanProperty notCheckJVMProperty() {
+    public BooleanProperty notCheckJVMProperty() {
         return notCheckJVMProperty;
     }
 
@@ -297,9 +302,9 @@ public final class VersionSetting {
         notCheckJVMProperty.set(notCheckJVM);
     }
 
-    private final ImmediateBooleanProperty notCheckGameProperty = new ImmediateBooleanProperty(this, "notCheckGame", false);
+    private final BooleanProperty notCheckGameProperty = new SimpleBooleanProperty(this, "notCheckGame", false);
 
-    public ImmediateBooleanProperty notCheckGameProperty() {
+    public BooleanProperty notCheckGameProperty() {
         return notCheckGameProperty;
     }
 
@@ -314,9 +319,9 @@ public final class VersionSetting {
         notCheckGameProperty.set(notCheckGame);
     }
 
-    private final ImmediateBooleanProperty showLogsProperty = new ImmediateBooleanProperty(this, "showLogs", false);
+    private final BooleanProperty showLogsProperty = new SimpleBooleanProperty(this, "showLogs", false);
 
-    public ImmediateBooleanProperty showLogsProperty() {
+    public BooleanProperty showLogsProperty() {
         return showLogsProperty;
     }
 
@@ -333,14 +338,14 @@ public final class VersionSetting {
 
     // Minecraft settings.
 
-    private final ImmediateStringProperty serverIpProperty = new ImmediateStringProperty(this, "serverIp", "");
+    private final StringProperty serverIpProperty = new SimpleStringProperty(this, "serverIp", "");
 
-    public ImmediateStringProperty serverIpProperty() {
+    public StringProperty serverIpProperty() {
         return serverIpProperty;
     }
 
     /**
-     * The server ip that will be entered after Minecraft successfully loaded immediately.
+     * The server ip that will be entered after Minecraft successfully loaded ly.
      *
      * Format: ip:port or without port.
      */
@@ -353,9 +358,9 @@ public final class VersionSetting {
     }
 
 
-    private final ImmediateBooleanProperty fullscreenProperty = new ImmediateBooleanProperty(this, "fullscreen", false);
+    private final BooleanProperty fullscreenProperty = new SimpleBooleanProperty(this, "fullscreen", false);
 
-    public ImmediateBooleanProperty fullscreenProperty() {
+    public BooleanProperty fullscreenProperty() {
         return fullscreenProperty;
     }
 
@@ -370,9 +375,9 @@ public final class VersionSetting {
         fullscreenProperty.set(fullscreen);
     }
 
-    private final ImmediateIntegerProperty widthProperty = new ImmediateIntegerProperty(this, "width", 854);
+    private final IntegerProperty widthProperty = new SimpleIntegerProperty(this, "width", 854);
 
-    public ImmediateIntegerProperty widthProperty() {
+    public IntegerProperty widthProperty() {
         return widthProperty;
     }
 
@@ -392,9 +397,9 @@ public final class VersionSetting {
     }
 
 
-    private final ImmediateIntegerProperty heightProperty = new ImmediateIntegerProperty(this, "height", 480);
+    private final IntegerProperty heightProperty = new SimpleIntegerProperty(this, "height", 480);
 
-    public ImmediateIntegerProperty heightProperty() {
+    public IntegerProperty heightProperty() {
         return heightProperty;
     }
 
@@ -417,9 +422,9 @@ public final class VersionSetting {
      * 0 - .minecraft<br/>
      * 1 - .minecraft/versions/&lt;version&gt;/<br/>
      */
-    private final ImmediateObjectProperty<EnumGameDirectory> gameDirTypeProperty = new ImmediateObjectProperty<>(this, "gameDirType", EnumGameDirectory.ROOT_FOLDER);
+    private final ObjectProperty<EnumGameDirectory> gameDirTypeProperty = new SimpleObjectProperty<>(this, "gameDirType", EnumGameDirectory.ROOT_FOLDER);
 
-    public ImmediateObjectProperty<EnumGameDirectory> gameDirTypeProperty() {
+    public ObjectProperty<EnumGameDirectory> gameDirTypeProperty() {
         return gameDirTypeProperty;
     }
 
@@ -434,9 +439,9 @@ public final class VersionSetting {
     /**
      * Your custom gameDir
      */
-    private final ImmediateStringProperty gameDirProperty = new ImmediateStringProperty(this, "gameDir", "");
+    private final StringProperty gameDirProperty = new SimpleStringProperty(this, "gameDir", "");
 
-    public ImmediateStringProperty gameDirProperty() {
+    public StringProperty gameDirProperty() {
         return gameDirProperty;
     }
 
@@ -455,9 +460,9 @@ public final class VersionSetting {
      * 1 - Hide the launcher when the game starts.<br/>
      * 2 - Keep the launcher open.<br/>
      */
-    private final ImmediateObjectProperty<LauncherVisibility> launcherVisibilityProperty = new ImmediateObjectProperty<>(this, "launcherVisibility", LauncherVisibility.HIDE);
+    private final ObjectProperty<LauncherVisibility> launcherVisibilityProperty = new SimpleObjectProperty<>(this, "launcherVisibility", LauncherVisibility.HIDE);
 
-    public ImmediateObjectProperty<LauncherVisibility> launcherVisibilityProperty() {
+    public ObjectProperty<LauncherVisibility> launcherVisibilityProperty() {
         return launcherVisibilityProperty;
     }
 

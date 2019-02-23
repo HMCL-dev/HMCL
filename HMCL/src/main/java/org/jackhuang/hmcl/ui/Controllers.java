@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountList;
 import org.jackhuang.hmcl.ui.account.AuthlibInjectorServersPage;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.profile.ProfileList;
@@ -223,14 +224,14 @@ public final class Controllers {
     }
 
     public static void dialog(String text, String title) {
-        dialog(text, title, MessageBox.INFORMATION_MESSAGE);
+        dialog(text, title, MessageType.INFORMATION);
     }
 
-    public static void dialog(String text, String title, int type) {
+    public static void dialog(String text, String title, MessageType type) {
         dialog(text, title, type, null);
     }
 
-    public static void dialog(String text, String title, int type, Runnable onAccept) {
+    public static void dialog(String text, String title, MessageType type, Runnable onAccept) {
         dialog(new MessageDialogPane(text, title, type, onAccept));
     }
 

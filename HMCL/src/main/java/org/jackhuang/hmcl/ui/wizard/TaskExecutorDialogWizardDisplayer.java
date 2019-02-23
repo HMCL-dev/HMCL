@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.MessageBox;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.StringUtils;
 
@@ -67,9 +67,9 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
                         pane.fireEvent(new DialogCloseEvent());
                         if (success) {
                             if (settings.containsKey("success_message") && settings.get("success_message") instanceof String)
-                                Controllers.dialog((String) settings.get("success_message"), null, MessageBox.FINE_MESSAGE, () -> onEnd());
+                                Controllers.dialog((String) settings.get("success_message"), null, MessageType.FINE, () -> onEnd());
                             else if (!settings.containsKey("forbid_success_message"))
-                                Controllers.dialog(i18n("message.success"), null, MessageBox.FINE_MESSAGE, () -> onEnd());
+                                Controllers.dialog(i18n("message.success"), null, MessageType.FINE, () -> onEnd());
                         } else {
                             if (executor.getLastException() == null)
                                 return;
@@ -77,9 +77,9 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
                             if (settings.get("failure_callback") instanceof WizardProvider.FailureCallback)
                                 ((WizardProvider.FailureCallback)settings.get("failure_callback")).onFail(settings, executor.getLastException(), () -> onEnd());
                             else if (settings.get("failure_message") instanceof String)
-                                Controllers.dialog(appendix, (String) settings.get("failure_message"), MessageBox.ERROR_MESSAGE, () -> onEnd());
+                                Controllers.dialog(appendix, (String) settings.get("failure_message"), MessageType.ERROR, () -> onEnd());
                             else if (!settings.containsKey("forbid_failure_message"))
-                                Controllers.dialog(appendix, i18n("wizard.failed"), MessageBox.ERROR_MESSAGE, () -> onEnd());
+                                Controllers.dialog(appendix, i18n("wizard.failed"), MessageType.ERROR, () -> onEnd());
                         }
 
                     });

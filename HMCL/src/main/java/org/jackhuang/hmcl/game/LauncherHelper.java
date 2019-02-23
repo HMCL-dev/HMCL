@@ -38,7 +38,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.LogWindow;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.MessageBox;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Logging;
@@ -236,7 +236,7 @@ public final class LauncherHelper {
                                 }
                                 Controllers.dialog(message,
                                         scriptFile == null ? i18n("launch.failed") : i18n("version.launch_script.failed"),
-                                        MessageBox.ERROR_MESSAGE);
+                                        MessageType.ERROR);
                             }
                         }
                     });
@@ -263,7 +263,7 @@ public final class LauncherHelper {
         VersionNumber gameVersion = VersionNumber.asVersion(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)).orElse("Unknown"));
         JavaVersion java = setting.getJavaVersion();
         if (java == null) {
-            Controllers.dialog(i18n("launch.wrong_javadir"), i18n("message.warning"), MessageBox.WARNING_MESSAGE, onAccept);
+            Controllers.dialog(i18n("launch.wrong_javadir"), i18n("message.warning"), MessageType.WARNING, onAccept);
             setting.setJava(null);
             setting.setDefaultJavaPath(null);
             java = JavaVersion.fromCurrentEnvironment();
@@ -282,10 +282,10 @@ public final class LauncherHelper {
                 if (gameVersion.compareTo(VersionNumber.asVersion("1.13")) >= 0) {
                     // Minecraft 1.13 and later versions only support Java 8 or later.
                     // Terminate launching operation.
-                    Controllers.dialog(i18n("launch.advice.java8_1_13"), i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
+                    Controllers.dialog(i18n("launch.advice.java8_1_13"), i18n("message.error"), MessageType.ERROR, null);
                 } else {
                     // Most mods require Java 8 or later version.
-                    Controllers.dialog(i18n("launch.advice.newer_java"), i18n("message.warning"), MessageBox.WARNING_MESSAGE, onAccept);
+                    Controllers.dialog(i18n("launch.advice.newer_java"), i18n("message.warning"), MessageType.WARNING, onAccept);
                 }
                 flag = true;
             }
@@ -301,10 +301,10 @@ public final class LauncherHelper {
             if (java8.isPresent()) {
                 java8required = true;
                 setting.setJavaVersion(java8.get());
-                Controllers.dialog(i18n("launch.advice.java9") + "\n" + i18n("launch.advice.corrected"), i18n("message.info"), MessageBox.INFORMATION_MESSAGE, onAccept);
+                Controllers.dialog(i18n("launch.advice.java9") + "\n" + i18n("launch.advice.corrected"), i18n("message.info"), MessageType.INFORMATION, onAccept);
                 flag = true;
             } else {
-                Controllers.dialog(i18n("launch.advice.java9") + "\n" + i18n("launch.advice.uncorrected"), i18n("message.error"), MessageBox.ERROR_MESSAGE, null);
+                Controllers.dialog(i18n("launch.advice.java9") + "\n" + i18n("launch.advice.uncorrected"), i18n("message.error"), MessageType.ERROR, null);
                 flag = true;
             }
         }
@@ -319,7 +319,7 @@ public final class LauncherHelper {
                 newJavaRequired = true;
                 setting.setJavaVersion(java8.get());
             } else {
-                Controllers.dialog(i18n("launch.advice.java8_51_1_13"), i18n("message.warning"), MessageBox.WARNING_MESSAGE, onAccept);
+                Controllers.dialog(i18n("launch.advice.java8_51_1_13"), i18n("message.warning"), MessageType.WARNING, onAccept);
                 flag = true;
             }
         }
@@ -351,7 +351,7 @@ public final class LauncherHelper {
             if (java64.isPresent()) {
                 setting.setJavaVersion(java64.get());
             } else {
-                Controllers.dialog(i18n("launch.advice.different_platform"), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+                Controllers.dialog(i18n("launch.advice.different_platform"), i18n("message.error"), MessageType.ERROR, onAccept);
                 flag = true;
             }
         }
@@ -361,13 +361,13 @@ public final class LauncherHelper {
                 setting.getMaxMemory() > 1.5 * 1024) {
             // 1.5 * 1024 is an inaccurate number.
             // Actual memory limit depends on operating system and memory.
-            Controllers.dialog(i18n("launch.advice.too_large_memory_for_32bit"), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+            Controllers.dialog(i18n("launch.advice.too_large_memory_for_32bit"), i18n("message.error"), MessageType.ERROR, onAccept);
             flag = true;
         }
 
         // Cannot allocate too much memory exceeding free space.
         if (!flag && OperatingSystem.TOTAL_MEMORY > 0 && OperatingSystem.TOTAL_MEMORY < setting.getMaxMemory()) {
-            Controllers.dialog(i18n("launch.advice.not_enough_space", OperatingSystem.TOTAL_MEMORY), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+            Controllers.dialog(i18n("launch.advice.not_enough_space", OperatingSystem.TOTAL_MEMORY), i18n("message.error"), MessageType.ERROR, onAccept);
             flag = true;
         }
 
@@ -379,7 +379,7 @@ public final class LauncherHelper {
                                     VersionNumber.VERSION_COMPARATOR.compare(it.getVersion(), "1.12.2-14.23.5.2773") < 0);
             boolean hasLiteLoader = version.getLibraries().stream().anyMatch(it -> it.is("com.mumfrey", "liteloader"));
             if (hasForge2760 && hasLiteLoader && gameVersion.compareTo(VersionNumber.asVersion("1.12.2")) == 0) {
-                Controllers.dialog(i18n("launch.advice.forge2760_liteloader"), i18n("message.error"), MessageBox.ERROR_MESSAGE, onAccept);
+                Controllers.dialog(i18n("launch.advice.forge2760_liteloader"), i18n("message.error"), MessageType.ERROR, onAccept);
                 flag = true;
             }
         }

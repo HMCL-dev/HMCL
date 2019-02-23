@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 
 import java.util.*;
@@ -76,13 +75,6 @@ public final class Lang {
         }
     }
 
-    public static void ignoringException(ExceptionalRunnable<?> runnable) {
-        try {
-            runnable.run();
-        } catch (Exception ignore) {
-        }
-    }
-
     /**
      * Cast {@code obj} to V dynamically.
      * @param obj the object reference to be cast.
@@ -96,20 +88,6 @@ public final class Lang {
         } else {
             return Optional.empty();
         }
-    }
-
-    /**
-     * Get the element at the specific position {@code index} in {@code list}.
-     *
-     * @param index the index of element to be return
-     * @param <V> the type of elements in {@code list}
-     * @return the element at the specific position, null if index is out of bound.
-     */
-    public static <V> Optional<V> get(List<V> list, int index) {
-        if (index < 0 || index >= list.size())
-            return Optional.empty();
-        else
-            return Optional.ofNullable(list.get(index));
     }
 
     /**

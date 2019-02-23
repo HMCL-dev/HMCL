@@ -33,7 +33,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WebStage;
-import org.jackhuang.hmcl.ui.construct.MessageBox;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -129,7 +129,7 @@ public final class ModpackPage extends StackPane implements WizardPage {
                         txtModpackName.textProperty().addListener(e -> btnInstall.setDisable(!txtModpackName.validate()));
                     }
                 }, e -> {
-                    Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageBox.ERROR_MESSAGE);
+                    Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageType.ERROR);
                     Platform.runLater(controller::onEnd);
                 }).start();
     }

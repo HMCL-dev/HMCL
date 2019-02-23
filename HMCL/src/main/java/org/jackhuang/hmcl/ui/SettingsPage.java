@@ -31,7 +31,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.*;
-import org.jackhuang.hmcl.ui.construct.MessageBox;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
@@ -228,7 +228,7 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
             try {
                 Files.write(logFile, Logging.getRawLogs());
             } catch (IOException e) {
-                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + e, null, MessageBox.ERROR_MESSAGE));
+                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + e, null, MessageType.ERROR));
                 LOG.log(Level.WARNING, "Failed to export logs", e);
                 return;
             }

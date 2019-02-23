@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * This task is to save the version json.
@@ -52,8 +51,6 @@ public final class VersionJsonSaveTask extends Task {
     @Override
     public void execute() throws Exception {
         File json = repository.getVersionJson(version.getId()).getAbsoluteFile();
-        if (!FileUtils.makeFile(json))
-            throw new IOException("Cannot create file " + json);
         FileUtils.writeText(json, JsonUtils.GSON.toJson(version));
     }
 }
