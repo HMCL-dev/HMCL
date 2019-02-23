@@ -294,6 +294,11 @@ public abstract class Task {
             TaskResult<R> then;
 
             @Override
+            public Collection<? extends Task> getDependents() {
+                return Collections.singleton(Task.this);
+            }
+
+            @Override
             public void execute() throws Exception {
                 then = taskSupplier.get().storeTo(this::setResult);
             }

@@ -21,8 +21,9 @@ import java.io.*;
 import java.nio.charset.Charset;
 
 /**
+ * This utility class consists of some util methods operating on InputStream/OutputStream.
  *
- * @author huang
+ * @author huangyuhui
  */
 public final class IOUtils {
 
@@ -31,12 +32,26 @@ public final class IOUtils {
 
     public static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
 
+    /**
+     * Read all bytes to a buffer from given input stream. The stream will not be closed.
+     *
+     * @param stream the InputStream being read.
+     * @return all bytes read from the stream
+     * @throws IOException if an I/O error occurs.
+     */
     public static byte[] readFullyWithoutClosing(InputStream stream) throws IOException {
         ByteArrayOutputStream result = new ByteArrayOutputStream();
         copyTo(stream, result);
         return result.toByteArray();
     }
 
+    /**
+     * Read all bytes to a buffer from given input stream, and close the input stream finally.
+     *
+     * @param stream the InputStream being read, closed finally.
+     * @return all bytes read from the stream
+     * @throws IOException if an I/O error occurs.
+     */
     public static ByteArrayOutputStream readFully(InputStream stream) throws IOException {
         try (InputStream is = stream) {
             ByteArrayOutputStream result = new ByteArrayOutputStream();

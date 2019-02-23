@@ -53,8 +53,6 @@ public final class VersionJsonSaveTask extends TaskResult<Version> {
     @Override
     public void execute() throws Exception {
         File json = repository.getVersionJson(version.getId()).getAbsoluteFile();
-        if (!FileUtils.makeFile(json))
-            throw new IOException("Cannot create file " + json);
         FileUtils.writeText(json, JsonUtils.GSON.toJson(version));
     }
 }
