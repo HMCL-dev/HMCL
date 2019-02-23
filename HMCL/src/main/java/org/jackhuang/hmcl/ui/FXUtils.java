@@ -510,6 +510,7 @@ public final class FXUtils {
             public void updateItem(T item, boolean empty) {
                 super.updateItem(item, empty);
                 if (!empty) {
+                    setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
                     setGraphic(graphicBuilder.apply(item));
                 }
             }
