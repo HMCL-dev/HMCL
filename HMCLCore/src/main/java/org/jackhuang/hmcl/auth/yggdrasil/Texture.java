@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.auth.yggdrasil;
 
 import org.jackhuang.hmcl.util.Immutable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -36,10 +37,12 @@ public final class Texture {
         this.metadata = metadata;
     }
 
+    @Nullable
     public String getUrl() {
         return url;
     }
 
+    @Nullable
     public Map<String, String> getMetadata() {
         return metadata;
     }

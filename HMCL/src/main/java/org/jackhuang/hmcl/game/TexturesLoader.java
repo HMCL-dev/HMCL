@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.game;
 
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
+import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
@@ -48,6 +50,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.MultiStepBinding;
 
 import javafx.beans.binding.Bindings;
@@ -69,8 +72,8 @@ public final class TexturesLoader {
         private final Map<String, String> metadata;
 
         public LoadedTexture(BufferedImage image, Map<String, String> metadata) {
-            this.image = image;
-            this.metadata = metadata;
+            this.image = requireNonNull(image);
+            this.metadata = requireNonNull(metadata);
         }
 
         public BufferedImage getImage() {
@@ -98,6 +101,10 @@ public final class TexturesLoader {
     }
 
     public static LoadedTexture loadTexture(Texture texture) throws IOException {
+        if (StringUtils.isBlank(texture.getUrl())) {
+            throw new IOException("Texture url is empty");
+        }
+
         Path file = getTexturePath(texture);
         if (!Files.isRegularFile(file)) {
             // download it
@@ -118,7 +125,11 @@ public final class TexturesLoader {
         try (InputStream in = Files.newInputStream(file)) {
             img = ImageIO.read(in);
         }
-        return new LoadedTexture(img, texture.getMetadata());
+        Map<String, String> metadata = texture.getMetadata();
+        if (metadata == null) {
+            metadata = emptyMap();
+        }
+        return new LoadedTexture(img, metadata);
     }
     // ====
 
