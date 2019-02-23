@@ -53,7 +53,7 @@ public final class ExtendedProperties {
 
     private static <T> ObjectProperty<T> createPropertyForSelectionModel(Object bean, Property<? extends SelectionModel<T>> modelProperty) {
         return new ReadWriteComposedProperty<>(bean, "extra.selectedItem",
-                MultiStepBinding.of(modelProperty)
+                BindingMapping.of(modelProperty)
                         .flatMap(SelectionModel::selectedItemProperty),
                 obj -> modelProperty.getValue().select(obj));
     }
@@ -107,7 +107,7 @@ public final class ExtendedProperties {
         };
 
         ReadWriteComposedProperty<T> property = new ReadWriteComposedProperty<>(toggleGroup, "extra.selectedItem",
-                MultiStepBinding.of(selectedTogglePropertyFor(toggleGroup))
+                BindingMapping.of(selectedTogglePropertyFor(toggleGroup))
                         .map(mapper),
                 itemSelector);
 

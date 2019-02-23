@@ -35,6 +35,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -75,7 +76,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         if (skinnable.getAccount() instanceof AuthlibInjectorAccount) {
             Tooltip tooltip = new Tooltip();
             AuthlibInjectorServer server = ((AuthlibInjectorAccount) skinnable.getAccount()).getServer();
-            tooltip.textProperty().bind(Bindings.createStringBinding(server::toString, server));
+            tooltip.textProperty().bind(BindingMapping.of(server, AuthlibInjectorServer::toString));
             FXUtils.installSlowTooltip(subtitle, tooltip);
         }
         VBox item = new VBox(title, subtitle);

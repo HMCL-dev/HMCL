@@ -52,7 +52,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.javafx.MultiStepBinding;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
@@ -154,7 +154,7 @@ public final class TexturesLoader {
 
     public static ObjectBinding<LoadedTexture> skinBinding(YggdrasilService service, UUID uuid) {
         LoadedTexture uuidFallback = getDefaultSkin(TextureModel.detectUUID(uuid));
-        return MultiStepBinding.of(service.getProfileRepository().binding(uuid))
+        return BindingMapping.of(service.getProfileRepository().binding(uuid))
                 .map(profile -> profile
                         .flatMap(it -> {
                             try {
@@ -204,7 +204,7 @@ public final class TexturesLoader {
     }
 
     public static ObjectBinding<Image> fxAvatarBinding(YggdrasilService service, UUID uuid, int size) {
-        return MultiStepBinding.of(skinBinding(service, uuid))
+        return BindingMapping.of(skinBinding(service, uuid))
                 .map(it -> toAvatar(it.image, size))
                 .map(img -> SwingFXUtils.toFXImage(img, null));
     }

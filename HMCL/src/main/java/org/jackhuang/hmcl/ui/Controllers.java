@@ -45,7 +45,7 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.javafx.MultiStepBinding;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -158,7 +158,7 @@ public final class Controllers {
             });
             mainPage.showUpdateProperty().bind(UpdateChecker.outdatedProperty());
             mainPage.latestVersionProperty().bind(
-                    MultiStepBinding.of(UpdateChecker.latestVersionProperty())
+                    BindingMapping.of(UpdateChecker.latestVersionProperty())
                             .map(version -> version == null ? "" : i18n("update.bubble.title", version.getVersion())));
 
             Profiles.registerVersionsListener(profile -> {

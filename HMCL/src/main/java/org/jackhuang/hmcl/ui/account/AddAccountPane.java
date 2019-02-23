@@ -47,7 +47,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.javafx.MultiStepBinding;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -126,7 +126,7 @@ public class AddAccountPane extends StackPane {
                 cboServers.getSelectionModel().selectedItemProperty(), cboServers.visibleProperty()));
 
         // authlib-injector links
-        links.bind(MultiStepBinding.of(cboServers.getSelectionModel().selectedItemProperty())
+        links.bind(BindingMapping.of(cboServers.getSelectionModel().selectedItemProperty())
                 .map(AddAccountPane::createHyperlinks)
                 .map(FXCollections::observableList));
         Bindings.bindContent(linksContainer.getChildren(), links);

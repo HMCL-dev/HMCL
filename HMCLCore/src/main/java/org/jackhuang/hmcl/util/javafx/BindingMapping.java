@@ -27,42 +27,52 @@ import java.util.function.Supplier;
 
 
 import javafx.application.Platform;
+import javafx.beans.Observable;
+import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.value.ObservableValue;
 
 /**
  * @author yushijinhun
  */
-public abstract class MultiStepBinding<T, U> extends ObjectBinding<U> {
+public abstract class BindingMapping<T, U> extends ObjectBinding<U> {
 
-    public static <T> MultiStepBinding<?, T> of(ObservableValue<T> property) {
+    @SuppressWarnings("unchecked")
+    public static <T> BindingMapping<?, T> of(ObservableValue<T> property) {
+        if (property instanceof BindingMapping) {
+            return (BindingMapping<?, T>) property;
+        }
         return new SimpleBinding<>(property);
+    }
+
+    public static <S extends Observable, T> BindingMapping<?, T> of(S watched, Function<S, T> mapper) {
+        return of(Bindings.createObjectBinding(() -> mapper.apply(watched), watched));
     }
 
     protected final ObservableValue<T> predecessor;
 
-    public MultiStepBinding(ObservableValue<T> predecessor) {
+    public BindingMapping(ObservableValue<T> predecessor) {
         this.predecessor = requireNonNull(predecessor);
         bind(predecessor);
     }
 
-    public <V> MultiStepBinding<?, V> map(Function<U, V> mapper) {
+    public <V> BindingMapping<?, V> map(Function<U, V> mapper) {
         return new MappedBinding<>(this, mapper);
     }
 
-    public <V> MultiStepBinding<?, V> flatMap(Function<U, ? extends ObservableValue<V>> mapper) {
+    public <V> BindingMapping<?, V> flatMap(Function<U, ? extends ObservableValue<V>> mapper) {
         return flatMap(mapper, null);
     }
 
-    public <V> MultiStepBinding<?, V> flatMap(Function<U, ? extends ObservableValue<V>> mapper, Supplier<V> nullAlternative) {
+    public <V> BindingMapping<?, V> flatMap(Function<U, ? extends ObservableValue<V>> mapper, Supplier<V> nullAlternative) {
         return new FlatMappedBinding<>(map(mapper), nullAlternative);
     }
 
-    public <V> MultiStepBinding<?, V> asyncMap(Function<U, CompletableFuture<V>> mapper, V initial) {
+    public <V> BindingMapping<?, V> asyncMap(Function<U, CompletableFuture<V>> mapper, V initial) {
         return new AsyncMappedBinding<>(this, mapper, initial);
     }
 
-    private static class SimpleBinding<T> extends MultiStepBinding<T, T> {
+    private static class SimpleBinding<T> extends BindingMapping<T, T> {
 
         public SimpleBinding(ObservableValue<T> predecessor) {
             super(predecessor);
@@ -74,17 +84,17 @@ public abstract class MultiStepBinding<T, U> extends ObjectBinding<U> {
         }
 
         @Override
-        public <V> MultiStepBinding<?, V> map(Function<T, V> mapper) {
+        public <V> BindingMapping<?, V> map(Function<T, V> mapper) {
             return new MappedBinding<>(predecessor, mapper);
         }
 
         @Override
-        public <V> MultiStepBinding<?, V> asyncMap(Function<T, CompletableFuture<V>> mapper, V initial) {
+        public <V> BindingMapping<?, V> asyncMap(Function<T, CompletableFuture<V>> mapper, V initial) {
             return new AsyncMappedBinding<>(predecessor, mapper, initial);
         }
     }
 
-    private static class MappedBinding<T, U> extends MultiStepBinding<T, U> {
+    private static class MappedBinding<T, U> extends BindingMapping<T, U> {
 
         private final Function<T, U> mapper;
 
@@ -99,7 +109,7 @@ public abstract class MultiStepBinding<T, U> extends ObjectBinding<U> {
         }
     }
 
-    private static class FlatMappedBinding<T extends ObservableValue<U>, U> extends MultiStepBinding<T, U> {
+    private static class FlatMappedBinding<T extends ObservableValue<U>, U> extends BindingMapping<T, U> {
 
         private final Supplier<U> nullAlternative;
         private T lastObservable = null;
@@ -134,7 +144,7 @@ public abstract class MultiStepBinding<T, U> extends ObjectBinding<U> {
         }
     }
 
-    private static class AsyncMappedBinding<T, U> extends MultiStepBinding<T, U> {
+    private static class AsyncMappedBinding<T, U> extends BindingMapping<T, U> {
 
         private boolean initialized = false;
         private T prev;

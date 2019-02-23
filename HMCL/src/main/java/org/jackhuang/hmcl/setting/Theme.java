@@ -27,6 +27,7 @@ import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.io.File;
 import java.io.IOException;
@@ -132,7 +133,8 @@ public class Theme {
     }
 
     public static ObjectBinding<Color> foregroundFillBinding() {
-        return Bindings.createObjectBinding(() -> config().getTheme().getForegroundColor(), config().themeProperty());
+        return BindingMapping.of(config().themeProperty())
+                .map(Theme::getForegroundColor);
     }
 
     public static ObjectBinding<Color> blackFillBinding() {
