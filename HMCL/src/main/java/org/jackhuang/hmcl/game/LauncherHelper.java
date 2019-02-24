@@ -141,7 +141,7 @@ public final class LauncherHelper {
                     }
                 })
                 .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN)))
-                .thenTaskResult(() -> Task.ofResult(i18n("account.methods"), () -> {
+                .thenCompose(() -> Task.ofResult(i18n("account.methods"), () -> {
                     try {
                         return account.logIn();
                     } catch (CredentialExpiredException e) {
@@ -152,11 +152,11 @@ public final class LauncherHelper {
                         return account.playOffline().orElseThrow(() -> e);
                     }
                 }))
-                .thenResult(Schedulers.javafx(), authInfo -> {
+                .thenApply(Schedulers.javafx(), authInfo -> {
                     emitStatus(LoadingState.LAUNCHING);
                     return authInfo;
                 })
-                .thenResult(authInfo -> new HMCLGameLauncher(
+                .thenApply(authInfo -> new HMCLGameLauncher(
                         repository,
                         selectedVersion,
                         authInfo,
@@ -165,7 +165,7 @@ public final class LauncherHelper {
                                 ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
                                 : new HMCLProcessListener(authInfo, setting, gameVersion.isPresent())
                 ))
-                .thenTaskResult(launcher -> { // launcher is prev task's result
+                .thenCompose(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
                         return new LaunchTask<>(launcher::launch).setName(i18n("version.launch"));
                     } else {
@@ -175,7 +175,7 @@ public final class LauncherHelper {
                         }).setName(i18n("version.launch_script"));
                     }
                 })
-                .thenVoid(process -> { // process is LaunchTask's result
+                .thenAccept(process -> { // process is LaunchTask's result
                     if (scriptFile == null) {
                         PROCESSES.add(process);
                         if (launcherVisibility == LauncherVisibility.CLOSE)

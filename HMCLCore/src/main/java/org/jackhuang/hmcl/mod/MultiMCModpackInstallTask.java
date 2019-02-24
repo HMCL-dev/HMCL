@@ -156,7 +156,7 @@ public final class MultiMCModpackInstallTask extends Task {
                 }
         }
 
-        dependencies.add(new MaintainTask(version).thenTaskResult(maintainedVersion -> new VersionJsonSaveTask(repository, maintainedVersion)));
+        dependencies.add(new MaintainTask(version).thenCompose(maintainedVersion -> new VersionJsonSaveTask(repository, maintainedVersion)));
         dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/" + manifest.getName() + "/minecraft", manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)));
     }
 

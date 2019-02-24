@@ -265,18 +265,6 @@ public abstract class Task {
         return executor().test();
     }
 
-    public final void subscribe(Task subscriber) {
-        new TaskExecutor(then(subscriber)).start();
-    }
-
-    public final void subscribe(Scheduler scheduler, ExceptionalRunnable<?> closure) {
-        subscribe(of(scheduler, closure));
-    }
-
-    public final void subscribe(ExceptionalRunnable<?> closure) {
-        subscribe(of(closure));
-    }
-
     public final Task then(Task b) {
         return then(convert(b));
     }
@@ -285,13 +273,29 @@ public abstract class Task {
         return new CoupleTask(this, b, true);
     }
 
-    public final <R> TaskResult<R> thenResult(Callable<R> supplier) {
-        return thenTaskResult(() -> Task.ofResult(supplier));
+    /**
+     * Returns a new TaskResult that, when this task completes
+     * normally, is executed using the default Scheduler.
+     *
+     * @param fn the function to use to compute the value of the returned TaskResult
+     * @param <U> the function's return type
+     * @return the new TaskResult
+     */
+    public final <U> TaskResult<U> thenSupply(Callable<U> fn) {
+        return thenCompose(() -> Task.ofResult(fn));
     }
 
-    public final <R> TaskResult<R> thenTaskResult(ExceptionalSupplier<TaskResult<R>, ?> taskSupplier) {
-        return new TaskResult<R>() {
-            TaskResult<R> then;
+    /**
+     * Returns a new TaskResult that, when this task completes
+     * normally, is executed.
+     *
+     * @param fn the function returning a new TaskResult
+     * @param <U> the type of the returned TaskResult's result
+     * @return the TaskResult
+     */
+    public final <U> TaskResult<U> thenCompose(ExceptionalSupplier<TaskResult<U>, ?> fn) {
+        return new TaskResult<U>() {
+            TaskResult<U> then;
 
             @Override
             public Collection<? extends Task> getDependents() {
@@ -300,7 +304,7 @@ public abstract class Task {
 
             @Override
             public void execute() throws Exception {
-                then = taskSupplier.get().storeTo(this::setResult);
+                then = fn.get().storeTo(this::setResult);
             }
 
             @Override
@@ -318,17 +322,87 @@ public abstract class Task {
         return new CoupleTask(this, b, false);
     }
 
-    public final Task finalized(FinalizedCallback b) {
-        return finalized(Schedulers.defaultScheduler(), b);
+    /**
+     * Returns a new Task with the same exception as this task, that executes
+     * the given action when this task completes.
+     *
+     * <p>When this task is complete, the given action is invoked, a boolean
+     * value represents the execution status of this task, and the exception
+     * (or {@code null} if none) of this task as arguments.  The returned task
+     * is completed when the action returns.  If the supplied action itself
+     * encounters an exception, then the returned task exceptionally completes
+     * with this exception unless this task also completed exceptionally.
+     *
+     * @param action the action to perform
+     * @return the new Task
+     */
+    public final Task whenComplete(FinalizedCallback action) {
+        return whenComplete(Schedulers.defaultScheduler(), action);
     }
 
-    public final Task finalized(Scheduler scheduler, FinalizedCallback b) {
-        return new FinalizedTask(this, scheduler, b).setName(getCaller());
+    /**
+     * Returns a new Task with the same exception as this task, that executes
+     * the given action when this task completes.
+     *
+     * <p>When this task is complete, the given action is invoked, a boolean
+     * value represents the execution status of this task, and the exception
+     * (or {@code null} if none) of this task as arguments.  The returned task
+     * is completed when the action returns.  If the supplied action itself
+     * encounters an exception, then the returned task exceptionally completes
+     * with this exception unless this task also completed exceptionally.
+     *
+     * @param action the action to perform
+     * @param scheduler the executor to use for asynchronous execution
+     * @return the new Task
+     */
+    public final Task whenComplete(Scheduler scheduler, FinalizedCallback action) {
+        return new Task() {
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
+            @Override
+            public Scheduler getScheduler() {
+                return scheduler;
+            }
+
+            @Override
+            public void execute() throws Exception {
+                action.execute(isDependentsSucceeded(), Task.this.getLastException());
+
+                if (!isDependentsSucceeded())
+                    throw new SilentException();
+            }
+
+            @Override
+            public Collection<Task> getDependents() {
+                return Collections.singleton(Task.this);
+            }
+
+            @Override
+            public boolean isRelyingOnDependents() {
+                return false;
+            }
+        }.setName(getCaller());
     }
 
-    // T, K here is necessary, or javac cannot infer type of failure
-    public final <T extends Exception, K extends Exception> Task finalized(Scheduler scheduler, ExceptionalRunnable<T> success, ExceptionalConsumer<Exception, K> failure) {
-        return finalized(scheduler, (isDependentsSucceeded, exception) -> {
+    /**
+     * Returns a new Task with the same exception as this task, that executes
+     * the given actions when this task completes.
+     *
+     * <p>When this task is complete, the given success action is invoked, the
+     * given failure action is invoked with the exception of this task.  The
+     * returned task is completed when the action returns.  If the supplied
+     * action itself encounters an exception, then the returned task exceptionally
+     * completes with this exception unless this task also
+     * completed exceptionally.
+     *
+     * @param success the action to perform when this task successfully completed
+     * @param failure the action to perform when this task exceptionally returned
+     * @return the new Task
+     */
+    public final <E1 extends Exception, E2 extends Exception> Task whenComplete(Scheduler scheduler, ExceptionalRunnable<E1> success, ExceptionalConsumer<Exception, E2> failure) {
+        return whenComplete(scheduler, (isDependentsSucceeded, exception) -> {
             if (isDependentsSucceeded) {
                 if (success != null)
                     try {

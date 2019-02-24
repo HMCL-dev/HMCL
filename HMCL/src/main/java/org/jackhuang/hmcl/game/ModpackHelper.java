@@ -110,13 +110,13 @@ public final class ModpackHelper {
 
         if (modpack.getManifest() instanceof CurseManifest)
             return new CurseInstallTask(profile.getDependency(), zipFile, modpack, ((CurseManifest) modpack.getManifest()), name)
-                    .finalized(Schedulers.defaultScheduler(), success, failure);
+                    .whenComplete(Schedulers.defaultScheduler(), success, failure);
         else if (modpack.getManifest() instanceof HMCLModpackManifest)
             return new HMCLModpackInstallTask(profile, zipFile, modpack, name)
-                    .finalized(Schedulers.defaultScheduler(), success, failure);
+                    .whenComplete(Schedulers.defaultScheduler(), success, failure);
         else if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
             return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, modpack, ((MultiMCInstanceConfiguration) modpack.getManifest()), name)
-                    .finalized(Schedulers.defaultScheduler(), success, failure)
+                    .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .then(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
         else throw new IllegalStateException("Unrecognized modpack: " + modpack);
     }

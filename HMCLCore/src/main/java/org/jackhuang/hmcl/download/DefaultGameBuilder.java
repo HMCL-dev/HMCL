@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.ParallelTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskResult;
-import org.jackhuang.hmcl.util.AutoTypingMap;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
@@ -50,7 +49,7 @@ public class DefaultGameBuilder extends GameBuilder {
 
     @Override
     public Task buildAsync() {
-        return new VersionJsonDownloadTask(gameVersion, dependencyManager).thenTaskResult(rawJson -> {
+        return new VersionJsonDownloadTask(gameVersion, dependencyManager).thenCompose(rawJson -> {
             Version original = JsonUtils.GSON.fromJson(rawJson, Version.class);
             Version version = original.setId(name).setJar(null);
             Task vanillaTask = downloadGameAsync(gameVersion, version).then(new ParallelTask(
@@ -58,20 +57,20 @@ public class DefaultGameBuilder extends GameBuilder {
                     new GameLibrariesTask(dependencyManager, version) // Game libraries will be downloaded for multiple times partly, this time is for vanilla libraries.
             ).with(new VersionJsonSaveTask(dependencyManager.getGameRepository(), version))); // using [with] because download failure here are tolerant.
 
-            TaskResult<Version> libraryTask = vanillaTask.thenResult(() -> version);
+            TaskResult<Version> libraryTask = vanillaTask.thenSupply(() -> version);
 
             if (toolVersions.containsKey("forge"))
-                libraryTask = libraryTask.thenTaskResult(libraryTaskHelper(gameVersion, "forge"));
+                libraryTask = libraryTask.thenCompose(libraryTaskHelper(gameVersion, "forge"));
             if (toolVersions.containsKey("liteloader"))
-                libraryTask = libraryTask.thenTaskResult(libraryTaskHelper(gameVersion, "liteloader"));
+                libraryTask = libraryTask.thenCompose(libraryTaskHelper(gameVersion, "liteloader"));
             if (toolVersions.containsKey("optifine"))
-                libraryTask = libraryTask.thenTaskResult(libraryTaskHelper(gameVersion, "optifine"));
+                libraryTask = libraryTask.thenCompose(libraryTaskHelper(gameVersion, "optifine"));
 
             for (RemoteVersion remoteVersion : remoteVersions)
-                libraryTask = libraryTask.thenTaskResult(dependencyManager.installLibraryAsync(remoteVersion));
+                libraryTask = libraryTask.thenCompose(dependencyManager.installLibraryAsync(remoteVersion));
 
             return libraryTask;
-        }).finalized((isDependentsSucceeded, exception) -> {
+        }).whenComplete((isDependentsSucceeded, exception) -> {
             if (!isDependentsSucceeded)
                 dependencyManager.getGameRepository().getVersionRoot(name).delete();
         });

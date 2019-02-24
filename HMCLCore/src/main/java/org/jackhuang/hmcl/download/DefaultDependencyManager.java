@@ -91,7 +91,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     public TaskResult<Version> installLibraryAsync(String gameVersion, Version version, String libraryId, String libraryVersion) {
         VersionList<?> versionList = getVersionList(libraryId);
         return versionList.loadAsync(gameVersion, getDownloadProvider())
-                .thenTaskResult(() -> installLibraryAsync(version, versionList.getVersion(gameVersion, libraryVersion)
+                .thenCompose(() -> installLibraryAsync(version, versionList.getVersion(gameVersion, libraryVersion)
                         .orElseThrow(() -> new IllegalStateException("Remote library " + libraryId + " has no version " + libraryVersion))));
     }
 
@@ -107,9 +107,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         else
             throw new IllegalArgumentException("Remote library " + libraryVersion + " is unrecognized.");
         return task
-                .thenTaskResult(LibrariesUniqueTask::new)
-                .thenTaskResult(MaintainTask::new)
-                .thenTaskResult(newVersion -> new VersionJsonSaveTask(repository, newVersion));
+                .thenCompose(LibrariesUniqueTask::new)
+                .thenCompose(MaintainTask::new)
+                .thenCompose(newVersion -> new VersionJsonSaveTask(repository, newVersion));
     }
 
 

@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -120,8 +119,8 @@ public final class LeftPaneController extends AdvancedListBox {
                     File modpackFile = new File("modpack.zip").getAbsoluteFile();
                     if (modpackFile.exists()) {
                         Task.ofResult(() -> CompressingUtils.findSuitableEncoding(modpackFile.toPath()))
-                                .thenResult(encoding -> ModpackHelper.readModpackManifest(modpackFile.toPath(), encoding))
-                                .thenVoid(modpack -> {
+                                .thenApply(encoding -> ModpackHelper.readModpackManifest(modpackFile.toPath(), encoding))
+                                .thenAccept(modpack -> {
                                     AtomicReference<Region> region = new AtomicReference<>();
                                     TaskExecutor executor = ModpackHelper.getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack)
                                             .with(Task.of(Schedulers.javafx(), this::checkAccount)).executor();

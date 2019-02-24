@@ -133,6 +133,7 @@ public final class TaskExecutor {
     private boolean executeTask(Task task) {
         if (canceled) {
             task.setState(Task.TaskState.FAILED);
+            task.setLastException(new CancellationException());
             return false;
         }
 
@@ -221,7 +222,7 @@ public final class TaskExecutor {
             task.onDone().fireEvent(new TaskEvent(this, task, true));
             taskListeners.forEach(it -> it.onFailed(task, e));
         } catch (SilentException | RejectedExecutionException e) {
-            // do nothing
+            task.setLastException(e);
         } catch (Exception e) {
             task.setLastException(e);
             lastException = e;

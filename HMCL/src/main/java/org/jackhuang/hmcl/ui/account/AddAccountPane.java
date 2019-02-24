@@ -196,7 +196,7 @@ public class AddAccountPane extends StackPane {
         Object additionalData = getAuthAdditionalData();
 
         Task.ofResult(() -> factory.create(new Selector(), username, password, additionalData))
-                .finalized(Schedulers.javafx(), account -> {
+                .whenComplete(Schedulers.javafx(), account -> {
                     int oldIndex = Accounts.getAccounts().indexOf(account);
                     if (oldIndex == -1) {
                         Accounts.getAccounts().add(account);
