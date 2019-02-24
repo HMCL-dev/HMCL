@@ -38,7 +38,7 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class CurseInstallTask extends Task {
+public final class CurseInstallTask extends Task<Void> {
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
@@ -48,8 +48,8 @@ public final class CurseInstallTask extends Task {
     private final String name;
     private final File run;
     private final ModpackConfiguration<CurseManifest> config;
-    private final List<Task> dependents = new LinkedList<>();
-    private final List<Task> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
 
     /**
      * Constructor.
@@ -99,12 +99,12 @@ public final class CurseInstallTask extends Task {
     }
 
     @Override
-    public Collection<Task> getDependents() {
+    public Collection<Task<?>> getDependents() {
         return dependents;
     }
 
     @Override
-    public Collection<Task> getDependencies() {
+    public Collection<Task<?>> getDependencies() {
         return dependencies;
     }
 

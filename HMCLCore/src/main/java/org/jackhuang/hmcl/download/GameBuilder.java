@@ -72,5 +72,5 @@ public abstract class GameBuilder {
     /**
      * @return the task that can build thw whole Minecraft environment
      */
-    public abstract Task buildAsync();
+    public abstract Task<?> buildAsync();
 }

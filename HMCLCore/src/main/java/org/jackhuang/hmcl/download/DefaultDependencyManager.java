@@ -26,9 +26,7 @@ import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.task.ParallelTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 
 /**
@@ -69,9 +67,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public Task checkGameCompletionAsync(Version version) {
-        return new ParallelTask(
-                Task.ofThen(() -> {
+    public Task<?> checkGameCompletionAsync(Version version) {
+        return Task.allOf(
+                Task.composeAsync(() -> {
                     if (!repository.getVersionJar(version).exists())
                         return new GameDownloadTask(this, null, version);
                     else
@@ -83,12 +81,12 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public Task checkLibraryCompletionAsync(Version version) {
+    public Task<?> checkLibraryCompletionAsync(Version version) {
         return new GameLibrariesTask(this, version);
     }
 
     @Override
-    public TaskResult<Version> installLibraryAsync(String gameVersion, Version version, String libraryId, String libraryVersion) {
+    public Task<Version> installLibraryAsync(String gameVersion, Version version, String libraryId, String libraryVersion) {
         VersionList<?> versionList = getVersionList(libraryId);
         return versionList.loadAsync(gameVersion, getDownloadProvider())
                 .thenCompose(() -> installLibraryAsync(version, versionList.getVersion(gameVersion, libraryVersion)
@@ -96,8 +94,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public TaskResult<Version> installLibraryAsync(Version oldVersion, RemoteVersion libraryVersion) {
-        TaskResult<Version> task;
+    public Task<Version> installLibraryAsync(Version oldVersion, RemoteVersion libraryVersion) {
+        Task<Version> task;
         if (libraryVersion instanceof ForgeRemoteVersion)
             task = new ForgeInstallTask(this, oldVersion, (ForgeRemoteVersion) libraryVersion);
         else if (libraryVersion instanceof LiteLoaderRemoteVersion)
@@ -113,7 +111,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
 
-    public ExceptionalFunction<Version, TaskResult<Version>, ?> installLibraryAsync(RemoteVersion libraryVersion) {
+    public ExceptionalFunction<Version, Task<Version>, ?> installLibraryAsync(RemoteVersion libraryVersion) {
         return version -> installLibraryAsync(version, libraryVersion);
     }
 }

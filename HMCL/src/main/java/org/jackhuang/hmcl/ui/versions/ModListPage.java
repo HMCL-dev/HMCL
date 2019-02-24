@@ -85,7 +85,7 @@ public final class ModListPage extends Control {
 
     public void loadMods(ModManager modManager) {
         this.modManager = modManager;
-        Task.ofResult(() -> {
+        Task.supplyAsync(() -> {
             synchronized (ModListPage.this) {
                 JFXUtilities.runInFX(() -> loadingProperty().set(true));
                 modManager.refreshMods();
@@ -111,7 +111,7 @@ public final class ModListPage extends Control {
         List<String> succeeded = new LinkedList<>();
         List<String> failed = new LinkedList<>();
         if (res == null) return;
-        Task.of(() -> {
+        Task.runAsync(() -> {
             for (File file : res) {
                 try {
                     modManager.addMod(file);
@@ -123,7 +123,7 @@ public final class ModListPage extends Control {
                     // Actually addMod will not throw exceptions because FileChooser has already filtered files.
                 }
             }
-        }).with(Task.of(Schedulers.javafx(), () -> {
+        }).withRun(Schedulers.javafx(), () -> {
             List<String> prompt = new LinkedList<>();
             if (!succeeded.isEmpty())
                 prompt.add(i18n("mods.add.success", String.join(", ", succeeded)));
@@ -131,7 +131,7 @@ public final class ModListPage extends Control {
                 prompt.add(i18n("mods.add.failed", String.join(", ", failed)));
             Controllers.dialog(String.join("\n", prompt), i18n("mods.add"));
             loadMods(modManager);
-        })).start();
+        }).start();
     }
 
     public void setParentTab(JFXTabPane parentTab) {

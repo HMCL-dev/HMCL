@@ -47,7 +47,7 @@ import static org.jackhuang.hmcl.util.DigestUtils.getDigest;
  *
  * @author huangyuhui
  */
-public class FileDownloadTask extends Task {
+public class FileDownloadTask extends Task<Void> {
 
     public static class IntegrityCheck {
         private String algorithm;

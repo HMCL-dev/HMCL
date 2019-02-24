@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -34,14 +33,14 @@ import java.util.Collections;
  *
  * @author huangyuhui
  */
-public final class ForgeInstallTask extends TaskResult<Version> {
+public final class ForgeInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
     private Path installer;
     private final ForgeRemoteVersion remote;
-    private Task dependent;
-    private TaskResult<Version> dependency;
+    private Task<Void> dependent;
+    private Task<Version> dependency;
 
     public ForgeInstallTask(DefaultDependencyManager dependencyManager, Version version, ForgeRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
@@ -73,18 +72,13 @@ public final class ForgeInstallTask extends TaskResult<Version> {
     }
 
     @Override
-    public Collection<Task> getDependents() {
+    public Collection<Task<?>> getDependents() {
         return Collections.singleton(dependent);
     }
 
     @Override
-    public Collection<Task> getDependencies() {
+    public Collection<Task<?>> getDependencies() {
         return Collections.singleton(dependency);
-    }
-
-    @Override
-    public boolean isRelyingOnDependencies() {
-        return false;
     }
 
     @Override

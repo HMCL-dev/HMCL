@@ -121,15 +121,15 @@ public final class LauncherHelper {
         Version version = MaintainTask.maintain(repository.getResolvedVersion(selectedVersion));
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
-        TaskExecutor executor = Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))
-                .then(() -> {
+        TaskExecutor executor = Task.runAsync(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))
+                .thenCompose(() -> {
                     if (setting.isNotCheckGame())
                         return null;
                     else
                         return dependencyManager.checkGameCompletionAsync(version);
                 })
-                .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.MODS)))
-                .then(() -> {
+                .thenRun(Schedulers.javafx(), () -> emitStatus(LoadingState.MODS))
+                .thenCompose(() -> {
                     try {
                         ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
                         if ("Curse".equals(configuration.getType()))
@@ -140,8 +140,8 @@ public final class LauncherHelper {
                         return null;
                     }
                 })
-                .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN)))
-                .thenCompose(() -> Task.ofResult(i18n("account.methods"), () -> {
+                .thenRun(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN))
+                .thenSupply(i18n("account.methods"), () -> {
                     try {
                         return account.logIn();
                     } catch (CredentialExpiredException e) {
@@ -151,7 +151,7 @@ public final class LauncherHelper {
                         LOG.warning("Authentication failed, try playing offline: " + e);
                         return account.playOffline().orElseThrow(() -> e);
                     }
-                }))
+                })
                 .thenApply(Schedulers.javafx(), authInfo -> {
                     emitStatus(LoadingState.LAUNCHING);
                     return authInfo;
@@ -199,7 +199,7 @@ public final class LauncherHelper {
             final AtomicInteger finished = new AtomicInteger(0);
 
             @Override
-            public void onFinished(Task task) {
+            public void onFinished(Task<?> task) {
                 finished.incrementAndGet();
                 int runningTasks = executor.getRunningTasks();
                 Platform.runLater(() -> launchingStepsPane.setProgress(1.0 * finished.get() / runningTasks));
@@ -416,7 +416,7 @@ public final class LauncherHelper {
         }
     }
 
-    private static class LaunchTask<T> extends TaskResult<T> {
+    private static class LaunchTask<T> extends Task<T> {
         private final ExceptionalSupplier<T, Exception> supplier;
 
         public LaunchTask(ExceptionalSupplier<T, Exception> supplier) {

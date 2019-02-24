@@ -205,7 +205,7 @@ public final class Controllers {
             dialog(i18n("launcher.cache_directory.invalid"));
         }
 
-        Task.of(JavaVersion::initialize).start();
+        Task.runAsync(JavaVersion::initialize).start();
 
         scene = new Scene(decorator.getDecorator(), 800, 519);
         scene.getStylesheets().setAll(config().getTheme().getStylesheets());

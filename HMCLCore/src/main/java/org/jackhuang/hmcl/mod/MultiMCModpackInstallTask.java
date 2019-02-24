@@ -46,15 +46,15 @@ import java.util.Optional;
  *
  * @author huangyuhui
  */
-public final class MultiMCModpackInstallTask extends Task {
+public final class MultiMCModpackInstallTask extends Task<Void> {
 
     private final File zipFile;
     private final Modpack modpack;
     private final MultiMCInstanceConfiguration manifest;
     private final String name;
     private final DefaultGameRepository repository;
-    private final List<Task> dependencies = new LinkedList<>();
-    private final List<Task> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new LinkedList<>();
     
     public MultiMCModpackInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, MultiMCInstanceConfiguration manifest, String name) {
         this.zipFile = zipFile;
@@ -91,7 +91,7 @@ public final class MultiMCModpackInstallTask extends Task {
     }
     
     @Override
-    public List<Task> getDependencies() {
+    public List<Task<?>> getDependencies() {
         return dependencies;
     }
 
@@ -126,7 +126,7 @@ public final class MultiMCModpackInstallTask extends Task {
     }
 
     @Override
-    public List<Task> getDependents() {
+    public List<Task<?>> getDependents() {
         return dependents;
     }
     

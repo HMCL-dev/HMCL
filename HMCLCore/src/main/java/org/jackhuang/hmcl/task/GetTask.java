@@ -36,33 +36,27 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  *
- * @author huang
+ * @author huangyuhui
  */
-public final class GetTask extends TaskResult<String> {
+public final class GetTask extends Task<String> {
 
     private final URL url;
     private final Charset charset;
     private final int retry;
-    private final String id;
     private CacheRepository repository = CacheRepository.getInstance();
 
     public GetTask(URL url) {
-        this(url, ID);
+        this(url, UTF_8);
     }
 
-    public GetTask(URL url, String id) {
-        this(url, id, UTF_8);
+    public GetTask(URL url, Charset charset) {
+        this(url, charset, 5);
     }
 
-    public GetTask(URL url, String id, Charset charset) {
-        this(url, id, charset, 5);
-    }
-
-    public GetTask(URL url, String id, Charset charset, int retry) {
+    public GetTask(URL url, Charset charset, int retry) {
         this.url = url;
         this.charset = charset;
         this.retry = retry;
-        this.id = id;
 
         setName(url.toString());
     }
@@ -137,10 +131,5 @@ public final class GetTask extends TaskResult<String> {
         if (exception != null)
             throw new DownloadException(url, exception);
     }
-
-    /**
-     * The default task result ID.
-     */
-    public static final String ID = "http_get";
 
 }

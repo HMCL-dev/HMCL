@@ -32,12 +32,12 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class GameLibrariesTask extends Task {
+public final class GameLibrariesTask extends Task<Void> {
 
     private final AbstractDependencyManager dependencyManager;
     private final Version version;
     private final List<Library> libraries;
-    private final List<Task> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
 
     /**
      * Constructor.
@@ -64,7 +64,7 @@ public final class GameLibrariesTask extends Task {
     }
 
     @Override
-    public List<Task> getDependencies() {
+    public List<Task<?>> getDependencies() {
         return dependencies;
     }
 

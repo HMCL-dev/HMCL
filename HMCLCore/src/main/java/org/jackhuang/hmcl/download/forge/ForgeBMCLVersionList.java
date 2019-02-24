@@ -46,21 +46,21 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
     }
 
     @Override
-    public Task loadAsync(DownloadProvider downloadProvider) {
+    public Task<?> loadAsync(DownloadProvider downloadProvider) {
         throw new UnsupportedOperationException("ForgeBMCLVersionList does not support loading the entire Forge remote version list.");
     }
 
     @Override
-    public Task refreshAsync(DownloadProvider downloadProvider) {
+    public Task<?> refreshAsync(DownloadProvider downloadProvider) {
         throw new UnsupportedOperationException("ForgeBMCLVersionList does not support loading the entire Forge remote version list.");
     }
 
     @Override
-    public Task refreshAsync(String gameVersion, DownloadProvider downloadProvider) {
+    public Task<?> refreshAsync(String gameVersion, DownloadProvider downloadProvider) {
         final GetTask task = new GetTask(NetworkUtils.toURL("https://bmclapi2.bangbang93.com/forge/minecraft/" + gameVersion));
-        return new Task() {
+        return new Task<Void>() {
             @Override
-            public Collection<Task> getDependents() {
+            public Collection<Task<?>> getDependents() {
                 return Collections.singleton(task);
             }
 

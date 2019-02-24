@@ -27,15 +27,11 @@ public interface ExceptionalRunnable<E extends Exception> {
 
     void run() throws E;
 
-    default Callable<?> toCallable() {
+    default Callable<Void> toCallable() {
         return () -> {
             run();
             return null;
         };
-    }
-
-    static ExceptionalRunnable<?> fromRunnable(Runnable r) {
-        return r::run;
     }
 
 }

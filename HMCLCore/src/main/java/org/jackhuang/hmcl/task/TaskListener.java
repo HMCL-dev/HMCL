@@ -28,16 +28,16 @@ public abstract class TaskListener implements EventListener {
     public void onStart() {
     }
 
-    public void onReady(Task task) {
+    public void onReady(Task<?> task) {
     }
 
-    public void onRunning(Task task) {
+    public void onRunning(Task<?> task) {
     }
 
-    public void onFinished(Task task) {
+    public void onFinished(Task<?> task) {
     }
 
-    public void onFailed(Task task, Throwable throwable) {
+    public void onFailed(Task<?> task, Throwable throwable) {
         onFinished(task);
     }
 

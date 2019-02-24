@@ -42,7 +42,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class TaskListPane extends StackPane {
     private final AdvancedListBox listBox = new AdvancedListBox();
-    private final Map<Task, ProgressListNode> nodes = new HashMap<>();
+    private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
     private final ReadOnlyIntegerWrapper finishedTasks = new ReadOnlyIntegerWrapper();
     private final ReadOnlyIntegerWrapper totTasks = new ReadOnlyIntegerWrapper();
 
@@ -72,12 +72,12 @@ public final class TaskListPane extends StackPane {
             }
 
             @Override
-            public void onReady(Task task) {
+            public void onReady(Task<?> task) {
                 Platform.runLater(() -> totTasks.set(totTasks.getValue() + 1));
             }
 
             @Override
-            public void onRunning(Task task) {
+            public void onRunning(Task<?> task) {
                 if (!task.getSignificance().shouldShow())
                     return;
 
@@ -113,7 +113,7 @@ public final class TaskListPane extends StackPane {
             }
 
             @Override
-            public void onFinished(Task task) {
+            public void onFinished(Task<?> task) {
                 ProgressListNode node = nodes.remove(task);
                 if (node == null)
                     return;
@@ -125,7 +125,7 @@ public final class TaskListPane extends StackPane {
             }
 
             @Override
-            public void onFailed(Task task, Throwable throwable) {
+            public void onFailed(Task<?> task, Throwable throwable) {
                 ProgressListNode node = nodes.remove(task);
                 if (node == null)
                     return;
@@ -142,7 +142,7 @@ public final class TaskListPane extends StackPane {
         private final Label title = new Label();
         private final Label state = new Label();
 
-        public ProgressListNode(Task task) {
+        public ProgressListNode(Task<?> task) {
             bar.progressProperty().bind(task.progressProperty());
             title.setText(task.getName());
             state.textProperty().bind(task.messageProperty());

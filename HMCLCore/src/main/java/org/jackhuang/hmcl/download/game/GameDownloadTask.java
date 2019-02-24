@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -33,11 +34,11 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class GameDownloadTask extends Task {
+public final class GameDownloadTask extends Task<Void> {
     private final DefaultDependencyManager dependencyManager;
     private final String gameVersion;
     private final Version version;
-    private final List<Task> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
 
     public GameDownloadTask(DefaultDependencyManager dependencyManager, String gameVersion, Version version) {
         this.dependencyManager = dependencyManager;
@@ -48,7 +49,7 @@ public final class GameDownloadTask extends Task {
     }
 
     @Override
-    public List<Task> getDependencies() {
+    public Collection<Task<?>> getDependencies() {
         return dependencies;
     }
 

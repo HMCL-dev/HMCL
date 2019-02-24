@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -90,7 +89,7 @@ public final class InstallerWizardProvider implements WizardProvider {
         settings.put("success_message", i18n("install.success"));
         settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> alertFailureMessage(exception, next));
 
-        TaskResult<Version> ret = Task.ofResult(() -> version);
+        Task<Version> ret = Task.supplyAsync(() -> version);
 
         if (settings.containsKey("forge"))
             ret = ret.thenCompose(profile.getDependency().installLibraryAsync((RemoteVersion) settings.get("forge")));
@@ -101,7 +100,7 @@ public final class InstallerWizardProvider implements WizardProvider {
         if (settings.containsKey("optifine"))
             ret = ret.thenCompose(profile.getDependency().installLibraryAsync((RemoteVersion) settings.get("optifine")));
 
-        return ret.then(profile.getRepository().refreshVersionsAsync());
+        return ret.thenCompose(profile.getRepository().refreshVersionsAsync());
     }
 
     @Override

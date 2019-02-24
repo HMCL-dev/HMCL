@@ -27,5 +27,5 @@ public interface WizardDisplayer {
     void onEnd();
     void onCancel();
     void navigateTo(Node page, Navigation.NavigationDirection nav);
-    void handleTask(Map<String, Object> settings, Task task);
+    void handleTask(Map<String, Object> settings, Task<?> task);
 }

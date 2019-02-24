@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.LibraryDownloadInfo;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.util.Collection;
@@ -36,13 +35,13 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class LiteLoaderInstallTask extends TaskResult<Version> {
+public final class LiteLoaderInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
     private final LiteLoaderRemoteVersion remote;
-    private final List<Task> dependents = new LinkedList<>();
-    private final List<Task> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
 
     public LiteLoaderInstallTask(DefaultDependencyManager dependencyManager, Version version, LiteLoaderRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
@@ -51,12 +50,12 @@ public final class LiteLoaderInstallTask extends TaskResult<Version> {
     }
 
     @Override
-    public Collection<Task> getDependents() {
+    public Collection<Task<?>> getDependents() {
         return dependents;
     }
 
     @Override
-    public Collection<Task> getDependencies() {
+    public Collection<Task<?>> getDependencies() {
         return dependencies;
     }
 

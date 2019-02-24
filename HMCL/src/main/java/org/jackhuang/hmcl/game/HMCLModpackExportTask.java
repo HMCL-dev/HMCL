@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * Export the game to a mod pack file.
  */
-public class HMCLModpackExportTask extends Task {
+public class HMCLModpackExportTask extends Task<Void> {
     private final DefaultGameRepository repository;
     private final String version;
     private final List<String> whitelist;

@@ -60,8 +60,8 @@ public final class ExportWizardProvider implements WizardProvider {
         List<File> launcherJar = Launcher.getCurrentJarFiles();
         boolean includeLauncher = (Boolean) settings.get(ModpackInfoPage.MODPACK_INCLUDE_LAUNCHER) && launcherJar != null;
 
-        return new Task() {
-            Task dependency = null;
+        return new Task<Void>() {
+            Task<?> dependency = null;
 
             @Override
             public void execute() throws Exception {
@@ -80,7 +80,7 @@ public final class ExportWizardProvider implements WizardProvider {
                         ), tempModpack);
 
                 if (includeLauncher) {
-                    dependency = dependency.then(Task.of(() -> {
+                    dependency = dependency.thenRun(() -> {
                         try (Zipper zip = new Zipper(modpackFile.toPath())) {
                             Config exported = new Config();
 
@@ -109,12 +109,12 @@ public final class ExportWizardProvider implements WizardProvider {
                             for (File jar : launcherJar)
                                 zip.putFile(jar, jar.getName());
                         }
-                    }));
+                    });
                 }
             }
 
             @Override
-            public Collection<? extends Task> getDependencies() {
+            public Collection<Task<?>> getDependencies() {
                 return Collections.singleton(dependency);
             }
         };

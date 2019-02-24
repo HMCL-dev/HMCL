@@ -71,7 +71,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
         settings.put(PROFILE, profile);
     }
 
-    private Task finishModpackInstallingAsync(Map<String, Object> settings) {
+    private Task<Void> finishModpackInstallingAsync(Map<String, Object> settings) {
         if (!settings.containsKey(ModpackPage.MODPACK_FILE))
             return null;
 
@@ -93,7 +93,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
             return null;
         } else {
             return ModpackHelper.getInstallTask(profile, selected, name, modpack)
-                    .then(Task.of(Schedulers.javafx(), () -> profile.setSelectedVersion(name)));
+                    .thenRun(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
         }
     }
 

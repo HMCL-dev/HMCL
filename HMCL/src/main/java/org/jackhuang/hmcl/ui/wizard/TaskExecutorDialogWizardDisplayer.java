@@ -35,7 +35,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplayer {
 
     @Override
-    default void handleTask(Map<String, Object> settings, Task task) {
+    default void handleTask(Map<String, Object> settings, Task<?> task) {
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(it -> {
             it.fireEvent(new DialogCloseEvent());
             onEnd();

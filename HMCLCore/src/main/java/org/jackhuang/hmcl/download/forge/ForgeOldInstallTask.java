@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.download.forge;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
@@ -31,21 +30,21 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class ForgeOldInstallTask extends TaskResult<Version> {
+public class ForgeOldInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
     private final Path installer;
-    private final List<Task> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
 
-    public ForgeOldInstallTask(DefaultDependencyManager dependencyManager, Version version, Path installer) {
+    ForgeOldInstallTask(DefaultDependencyManager dependencyManager, Version version, Path installer) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.installer = installer;
     }
 
     @Override
-    public List<Task> getDependencies() {
+    public List<Task<?>> getDependencies() {
         return dependencies;
     }
 

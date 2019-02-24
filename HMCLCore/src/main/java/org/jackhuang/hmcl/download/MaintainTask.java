@@ -18,9 +18,9 @@
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.task.TaskResult;
+import org.jackhuang.hmcl.task.Task;
 
-public class MaintainTask extends TaskResult<Version> {
+public class MaintainTask extends Task<Version> {
 
     private final Version version;
 

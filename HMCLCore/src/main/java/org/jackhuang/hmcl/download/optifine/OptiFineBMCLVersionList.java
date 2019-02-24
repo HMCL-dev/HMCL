@@ -46,11 +46,11 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
     }
 
     @Override
-    public Task refreshAsync(DownloadProvider downloadProvider) {
+    public Task<?> refreshAsync(DownloadProvider downloadProvider) {
         GetTask task = new GetTask(NetworkUtils.toURL("http://bmclapi2.bangbang93.com/optifine/versionlist"));
-        return new Task() {
+        return new Task<Void>() {
             @Override
-            public Collection<Task> getDependents() {
+            public Collection<Task<?>> getDependents() {
                 return Collections.singleton(task);
             }
 

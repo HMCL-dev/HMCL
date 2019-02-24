@@ -99,7 +99,7 @@ public final class UpdateHandler {
             return;
         }
 
-        Task task = new HMCLDownloadTask(version, downloaded);
+        Task<?> task = new HMCLDownloadTask(version, downloaded);
 
         TaskExecutor executor = task.executor();
         Controllers.taskDialog(executor, i18n("message.downloading"));

@@ -38,14 +38,14 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class GameAssetDownloadTask extends Task {
+public final class GameAssetDownloadTask extends Task<Void> {
     
     private final AbstractDependencyManager dependencyManager;
     private final Version version;
     private final AssetIndexInfo assetIndexInfo;
     private final File assetIndexFile;
-    private final List<Task> dependents = new LinkedList<>();
-    private final List<Task> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
 
     /**
      * Constructor.
@@ -64,12 +64,12 @@ public final class GameAssetDownloadTask extends Task {
     }
 
     @Override
-    public Collection<Task> getDependents() {
+    public Collection<Task<?>> getDependents() {
         return dependents;
     }
 
     @Override
-    public Collection<Task> getDependencies() {
+    public Collection<Task<?>> getDependencies() {
         return dependencies;
     }
     

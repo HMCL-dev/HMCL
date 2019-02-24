@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.task.Task;
 
 import java.util.Objects;
 
-public final class MultiMCInstallVersionSettingTask extends Task {
+public final class MultiMCInstallVersionSettingTask extends Task<Void> {
     private final Profile profile;
     private final MultiMCInstanceConfiguration manifest;
     private final String version;

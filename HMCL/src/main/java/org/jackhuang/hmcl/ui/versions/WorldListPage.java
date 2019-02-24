@@ -50,7 +50,7 @@ public class WorldListPage extends ListPage<WorldListItem> {
         this.savesDir = profile.getRepository().getRunDirectory(id).toPath().resolve("saves");
 
         setLoading(true);
-        Task.ofResult(() -> World.getWorlds(savesDir).parallel().collect(Collectors.toList()))
+        Task.supplyAsync(() -> World.getWorlds(savesDir).parallel().collect(Collectors.toList()))
                 .whenComplete(Schedulers.javafx(), (result, isDependentSucceeded, exception) -> {
                     setLoading(false);
                     if (isDependentSucceeded)
@@ -72,10 +72,10 @@ public class WorldListPage extends ListPage<WorldListItem> {
     private void installWorld(File zipFile) {
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
-        Task.ofResult(() -> new World(zipFile.toPath()))
+        Task.supplyAsync(() -> new World(zipFile.toPath()))
                 .whenComplete(Schedulers.javafx(), world -> {
                     Controllers.inputDialog(i18n("world.name.enter"), (name, resolve, reject) -> {
-                        Task.of(() -> world.install(savesDir, name))
+                        Task.runAsync(() -> world.install(savesDir, name))
                                 .whenComplete(Schedulers.javafx(), () -> {
                                     itemsProperty().add(new WorldListItem(new World(savesDir.resolve(name))));
                                     resolve.run();

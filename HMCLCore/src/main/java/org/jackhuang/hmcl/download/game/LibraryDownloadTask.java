@@ -45,7 +45,7 @@ import java.util.logging.Level;
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
 import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
-public class LibraryDownloadTask extends Task {
+public class LibraryDownloadTask extends Task<Void> {
     private FileDownloadTask task;
     protected final File jar;
     protected final DefaultCacheRepository cacheRepository;
@@ -74,7 +74,7 @@ public class LibraryDownloadTask extends Task {
     }
 
     @Override
-    public Collection<? extends Task> getDependents() {
+    public Collection<Task<?>> getDependents() {
         if (cached) return Collections.emptyList();
         else return Collections.singleton(task);
     }
