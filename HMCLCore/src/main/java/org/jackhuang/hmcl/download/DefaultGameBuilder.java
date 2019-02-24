@@ -70,8 +70,8 @@ public class DefaultGameBuilder extends GameBuilder {
                 libraryTask = libraryTask.thenCompose(dependencyManager.installLibraryAsync(remoteVersion));
 
             return libraryTask;
-        }).whenComplete((isDependentsSucceeded, exception) -> {
-            if (!isDependentsSucceeded)
+        }).whenComplete((isDependentSucceeded, exception) -> {
+            if (!isDependentSucceeded)
                 dependencyManager.getGameRepository().getVersionRoot(name).delete();
         });
     }

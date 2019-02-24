@@ -91,7 +91,7 @@ public final class ModListPage extends Control {
                 modManager.refreshMods();
                 return new LinkedList<>(modManager.getMods());
             }
-        }).whenComplete(Schedulers.javafx(), (list, isDependentsSucceeded, exception) -> {
+        }).whenComplete(Schedulers.javafx(), (list, isDependentSucceeded, exception) -> {
             loadingProperty().set(false);
             if (isDependentsSucceeded)
                 FXUtils.onWeakChangeAndOperate(parentTab.getSelectionModel().selectedItemProperty(), newValue -> {

@@ -211,7 +211,7 @@ public abstract class TaskResult<T> extends Task {
      * @return the new Task
      */
     public Task whenComplete(Scheduler scheduler, FinalizedCallback<T> action) {
-        return whenComplete(scheduler, ((isDependentsSucceeded, exception) -> action.execute(getResult(), isDependentsSucceeded, exception)));
+        return whenComplete(scheduler, ((isDependentSucceeded, exception) -> action.execute(getResult(), isDependentSucceeded, exception)));
     }
 
     private class Subtask<R> extends TaskResult<R> {
@@ -242,6 +242,6 @@ public abstract class TaskResult<T> extends Task {
     }
 
     public interface FinalizedCallback<V> {
-        void execute(V result, boolean isDependentsSucceeded, Exception exception) throws Exception;
+        void execute(V result, boolean isDependentSucceeded, Exception exception) throws Exception;
     }
 }

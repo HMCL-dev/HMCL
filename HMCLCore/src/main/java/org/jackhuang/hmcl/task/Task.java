@@ -354,7 +354,8 @@ public abstract class Task {
      *
      * <p>When this task is complete, the given action is invoked, a boolean
      * value represents the execution status of this task, and the exception
-     * (or {@code null} if none) of this task as arguments.  The returned task
+     * (or {@code null} if none, which means when isDependentSucceeded is false,
+     * exception may be null) of this task as arguments.  The returned task
      * is completed when the action returns.  If the supplied action itself
      * encounters an exception, then the returned task exceptionally completes
      * with this exception unless this task also completed exceptionally.
@@ -415,8 +416,8 @@ public abstract class Task {
      * @return the new Task
      */
     public final <E1 extends Exception, E2 extends Exception> Task whenComplete(Scheduler scheduler, ExceptionalRunnable<E1> success, ExceptionalConsumer<Exception, E2> failure) {
-        return whenComplete(scheduler, (isDependentsSucceeded, exception) -> {
-            if (isDependentsSucceeded) {
+        return whenComplete(scheduler, (isDependentSucceeded, exception) -> {
+            if (isDependentSucceeded) {
                 if (success != null)
                     try {
                         success.run();
@@ -497,7 +498,7 @@ public abstract class Task {
     }
 
     public interface FinalizedCallback {
-        void execute(boolean isDependentsSucceeded, Exception exception) throws Exception;
+        void execute(boolean isDependentSucceeded, Exception exception) throws Exception;
     }
 
     static String getCaller() {
