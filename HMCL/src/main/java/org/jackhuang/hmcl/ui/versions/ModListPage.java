@@ -93,7 +93,7 @@ public final class ModListPage extends Control {
             }
         }).whenComplete(Schedulers.javafx(), (list, isDependentSucceeded, exception) -> {
             loadingProperty().set(false);
-            if (isDependentsSucceeded)
+            if (isDependentSucceeded)
                 FXUtils.onWeakChangeAndOperate(parentTab.getSelectionModel().selectedItemProperty(), newValue -> {
                     if (newValue != null && newValue.getUserData() == ModListPage.this)
                         itemsProperty().setAll(list.stream().map(ModListPageSkin.ModInfoObject::new).collect(Collectors.toList()));

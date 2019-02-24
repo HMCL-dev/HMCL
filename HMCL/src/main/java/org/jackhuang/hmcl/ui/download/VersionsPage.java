@@ -129,7 +129,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     public void refresh() {
         transitionHandler.setContent(spinner, ContainerAnimations.FADE.getAnimationProducer());
         executor = versionList.refreshAsync(gameVersion, downloadProvider).whenComplete((isDependentSucceeded, exception) -> {
-            if (isDependentsSucceeded) {
+            if (isDependentSucceeded) {
                 List<VersionsPageItem> items = loadVersions();
 
                 Platform.runLater(() -> {

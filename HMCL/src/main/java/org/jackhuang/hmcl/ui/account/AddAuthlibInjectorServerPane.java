@@ -110,7 +110,7 @@ public class AddAuthlibInjectorServerPane extends StackPane implements DialogAwa
             addServerPane.setDisable(false);
             nextPane.hideSpinner();
 
-            if (isDependentsSucceeded) {
+            if (isDependentSucceeded) {
                 lblServerName.setText(serverBeingAdded.getName());
                 lblServerUrl.setText(serverBeingAdded.getUrl());
 
