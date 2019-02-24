@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 
 /**
@@ -154,8 +155,15 @@ public abstract class Task {
     }
 
     /**
+     * This method will be called after dependency tasks terminated all together.
+     *
+     * You can check whether dependencies succeed in this method by calling
+     * {@link Task#isDependenciesSucceeded()} no matter when
+     * {@link Task#isRelyingOnDependencies()} returns true or false.
+     *
      * @throws InterruptedException if current thread is interrupted
      * @see Thread#isInterrupted
+     * @see Task#isDependenciesSucceeded()
      */
     public void postExecute() throws Exception {}
 
@@ -370,8 +378,13 @@ public abstract class Task {
             public void execute() throws Exception {
                 action.execute(isDependentsSucceeded(), Task.this.getLastException());
 
-                if (!isDependentsSucceeded())
-                    throw new SilentException();
+                if (!isDependentsSucceeded()) {
+                    setSignificance(TaskSignificance.MINOR);
+                    if (Task.this.getLastException() == null)
+                        throw new CancellationException();
+                    else
+                        throw Task.this.getLastException();
+                }
             }
 
             @Override

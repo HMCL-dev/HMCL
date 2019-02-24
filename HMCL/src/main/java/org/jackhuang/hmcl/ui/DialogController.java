@@ -20,17 +20,18 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.utils.JFXUtilities;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
+import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.task.SilentException;
 import org.jackhuang.hmcl.ui.account.AccountLoginPane;
 
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class DialogController {
 
-    public static AuthInfo logIn(Account account) throws Exception {
+    public static AuthInfo logIn(Account account) throws CancellationException, AuthenticationException, InterruptedException {
         if (account instanceof YggdrasilAccount) {
             CountDownLatch latch = new CountDownLatch(1);
             AtomicReference<AuthInfo> res = new AtomicReference<>(null);
@@ -42,7 +43,7 @@ public final class DialogController {
                 Controllers.dialog(pane);
             });
             latch.await();
-            return Optional.ofNullable(res.get()).orElseThrow(SilentException::new);
+            return Optional.ofNullable(res.get()).orElseThrow(CancellationException::new);
         }
         return account.logIn();
     }

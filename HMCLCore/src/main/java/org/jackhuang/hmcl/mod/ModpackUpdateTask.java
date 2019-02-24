@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.task.SilentException;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -50,11 +49,6 @@ public class ModpackUpdateTask extends Task {
     }
 
     @Override
-    public boolean isRelyingOnDependencies() {
-        return false;
-    }
-
-    @Override
     public Collection<? extends Task> getDependencies() {
         return Collections.singleton(updateTask);
     }
@@ -78,8 +72,6 @@ public class ModpackUpdateTask extends Task {
             repository.removeVersionFromDisk(id);
 
             FileUtils.copyDirectory(backupFolder, repository.getVersionRoot(id).toPath());
-
-            throw new SilentException();
         }
     }
 }

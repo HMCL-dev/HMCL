@@ -37,6 +37,7 @@ import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 
 public class AccountListItem extends RadioButton {
@@ -84,6 +85,8 @@ public class AccountListItem extends RadioButton {
             } catch (CredentialExpiredException e) {
                 try {
                     DialogController.logIn(account);
+                } catch (CancellationException e1) {
+                    // ignore cancellation
                 } catch (Exception e1) {
                     LOG.log(Level.WARNING, "Failed to refresh " + account + " with password", e1);
                 }

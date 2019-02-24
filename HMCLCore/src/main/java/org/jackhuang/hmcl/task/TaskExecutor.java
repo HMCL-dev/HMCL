@@ -163,7 +163,7 @@ public final class TaskExecutor {
             Exception dependentsException = dependents.stream().map(Task::getLastException).filter(Objects::nonNull).findAny().orElse(null);
             if (!doDependentsSucceeded && task.isRelyingOnDependents() || canceled) {
                 task.setLastException(dependentsException);
-                throw new SilentException();
+                throw new CancellationException();
             }
 
             if (doDependentsSucceeded)
@@ -187,11 +187,6 @@ public final class TaskExecutor {
             Collection<? extends Task> dependencies = task.getDependencies();
             boolean doDependenciesSucceeded = executeTasks(dependencies);
             Exception dependenciesException = dependencies.stream().map(Task::getLastException).filter(Objects::nonNull).findAny().orElse(null);
-            if (!doDependenciesSucceeded && task.isRelyingOnDependencies()) {
-                Logging.LOG.severe("Subtasks failed for " + task.getName());
-                task.setLastException(dependenciesException);
-                throw new SilentException();
-            }
 
             if (doDependenciesSucceeded)
                 task.setDependenciesSucceeded();
@@ -205,6 +200,12 @@ public final class TaskExecutor {
                     else
                         throw e;
                 }
+            }
+
+            if (!doDependenciesSucceeded && task.isRelyingOnDependencies()) {
+                Logging.LOG.severe("Subtasks failed for " + task.getName());
+                task.setLastException(dependenciesException);
+                throw new CancellationException();
             }
 
             flag = true;
@@ -221,8 +222,9 @@ public final class TaskExecutor {
             }
             task.onDone().fireEvent(new TaskEvent(this, task, true));
             taskListeners.forEach(it -> it.onFailed(task, e));
-        } catch (SilentException | RejectedExecutionException e) {
-            task.setLastException(e);
+        } catch (CancellationException | RejectedExecutionException e) {
+            if (task.getLastException() == null)
+                task.setLastException(e);
         } catch (Exception e) {
             task.setLastException(e);
             lastException = e;
