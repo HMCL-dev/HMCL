@@ -60,7 +60,7 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
         final GetTask task = new GetTask(NetworkUtils.toURL("https://bmclapi2.bangbang93.com/forge/minecraft/" + gameVersion));
         return new Task() {
             @Override
-            public Collection<? extends Task> getDependents() {
+            public Collection<Task> getDependents() {
                 return Collections.singleton(task);
             }
 
@@ -104,7 +104,6 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
         private final String branch;
         private final String mcversion;
         private final String version;
-        private final int build;
         private final List<File> files;
 
         /**
@@ -112,14 +111,13 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
          */
         @SuppressWarnings("unused")
         public ForgeVersion() {
-            this(null, null, null, 0, null);
+            this(null, null, null, null);
         }
 
-        public ForgeVersion(String branch, String mcversion, String version, int build, List<File> files) {
+        public ForgeVersion(String branch, String mcversion, String version, List<File> files) {
             this.branch = branch;
             this.mcversion = mcversion;
             this.version = version;
-            this.build = build;
             this.files = files;
         }
 
@@ -133,10 +131,6 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
 
         public String getVersion() {
             return version;
-        }
-
-        public int getBuild() {
-            return build;
         }
 
         public List<File> getFiles() {
