@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
@@ -25,11 +26,20 @@ import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.setting.Profile;
 
+import static org.jackhuang.hmcl.util.Lang.handleUncaught;
+import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 public class GameItem extends Control {
+
+    private static final ThreadPoolExecutor POOL_VERSION_RESOLVE = threadPool("VersionResolve", true, 1, 1, TimeUnit.SECONDS);
+
     private final Profile profile;
     private final String version;
     private final StringProperty title = new SimpleStringProperty();
@@ -40,16 +50,19 @@ public class GameItem extends Control {
         this.profile = profile;
         this.version = id;
 
-        String game = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(id)).orElse("Unknown");
-
-        StringBuilder libraries = new StringBuilder(game);
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getVersion(id));
-        analyzer.getForge().ifPresent(library -> libraries.append(", ").append(i18n("install.installer.forge")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)forge", ""))));
-        analyzer.getLiteLoader().ifPresent(library -> libraries.append(", ").append(i18n("install.installer.liteloader")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)liteloader", ""))));
-        analyzer.getOptiFine().ifPresent(library -> libraries.append(", ").append(i18n("install.installer.optifine")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)optifine", ""))));
+        // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
+        CompletableFuture.supplyAsync(() -> GameVersion.minecraftVersion(profile.getRepository().getVersionJar(id)).orElse("Unknown"), POOL_VERSION_RESOLVE)
+                .thenAcceptAsync(game -> {
+                    StringBuilder libraries = new StringBuilder(game);
+                    LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getVersion(id));
+                    analyzer.getForge().ifPresent(library -> libraries.append(", ").append(i18n("install.installer.forge")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)forge", ""))));
+                    analyzer.getLiteLoader().ifPresent(library -> libraries.append(", ").append(i18n("install.installer.liteloader")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)liteloader", ""))));
+                    analyzer.getOptiFine().ifPresent(library -> libraries.append(", ").append(i18n("install.installer.optifine")).append(": ").append(modifyVersion(game, library.getVersion().replaceAll("(?i)optifine", ""))));
+                    subtitle.set(libraries.toString());
+                }, Platform::runLater)
+                .exceptionally(handleUncaught);
 
         title.set(id);
-        subtitle.set(libraries.toString());
         image.set(profile.getRepository().getVersionIconImage(version));
     }
 

@@ -25,6 +25,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  *
@@ -198,6 +199,16 @@ public final class Lang {
         consumer.accept(t);
         return t;
     }
+
+    /**
+     * This is a useful function to prevent exceptions being eaten when using CompletableFuture.
+     * You can write:
+     * ... .exceptionally(handleUncaught);
+     */
+    public static final Function<Throwable, Void> handleUncaught = e -> {
+        handleUncaughtException(e);
+        return null;
+    };
 
     public static void handleUncaughtException(Throwable e) {
         Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
