@@ -73,14 +73,14 @@ public abstract class Task<T> {
     }
 
     // last exception
-    private Exception lastException;
+    private Exception exception;
 
-    public Exception getLastException() {
-        return lastException;
+    public Exception getException() {
+        return exception;
     }
 
-    void setLastException(Exception e) {
-        lastException = e;
+    void setException(Exception e) {
+        exception = e;
     }
 
     /**
@@ -595,14 +595,14 @@ public abstract class Task<T> {
 
             @Override
             public void execute() throws Exception {
-                action.execute(isDependentsSucceeded(), Task.this.getLastException());
+                action.execute(isDependentsSucceeded(), Task.this.getException());
 
                 if (!isDependentsSucceeded()) {
                     setSignificance(TaskSignificance.MINOR);
-                    if (Task.this.getLastException() == null)
+                    if (Task.this.getException() == null)
                         throw new CancellationException();
                     else
-                        throw Task.this.getLastException();
+                        throw Task.this.getException();
                 }
             }
 

@@ -33,7 +33,7 @@ public final class TaskExecutor {
 
     private final Task<?> firstTask;
     private final List<TaskListener> taskListeners = new LinkedList<>();
-    private Exception lastException;
+    private Exception exception;
     private final AtomicInteger totTask = new AtomicInteger(0);
     private CompletableFuture<Boolean> future;
 
@@ -45,8 +45,8 @@ public final class TaskExecutor {
         taskListeners.add(taskListener);
     }
 
-    public Exception getLastException() {
-        return lastException;
+    public Exception getException() {
+        return exception;
     }
 
     public TaskExecutor start() {
@@ -148,7 +148,7 @@ public final class TaskExecutor {
             boolean isDependentsSucceeded = dependentsException == null;
 
             if (!isDependentsSucceeded && task.isRelyingOnDependents()) {
-                task.setLastException(dependentsException);
+                task.setException(dependentsException);
                 rethrow(dependentsException);
             }
 
@@ -174,7 +174,7 @@ public final class TaskExecutor {
 
             if (!isDependenciesSucceeded && task.isRelyingOnDependencies()) {
                 Logging.LOG.severe("Subtasks failed for " + task.getName());
-                task.setLastException(dependenciesException);
+                task.setException(dependenciesException);
                 rethrow(dependenciesException);
             }
 
@@ -193,18 +193,18 @@ public final class TaskExecutor {
                 throw new UncheckedThrowable(throwable);
             Exception e = throwable instanceof UncheckedException ? (Exception) throwable.getCause() : (Exception) throwable;
             if (e instanceof InterruptedException) {
-                task.setLastException(e);
+                task.setException(e);
                 if (task.getSignificance().shouldLog()) {
                     Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName());
                 }
                 task.onDone().fireEvent(new TaskEvent(this, task, true));
                 taskListeners.forEach(it -> it.onFailed(task, e));
             } else if (e instanceof CancellationException || e instanceof RejectedExecutionException) {
-                if (task.getLastException() == null)
-                    task.setLastException(e);
+                if (task.getException() == null)
+                    task.setException(e);
             } else {
-                task.setLastException(e);
-                lastException = e;
+                task.setException(e);
+                exception = e;
                 if (task.getSignificance().shouldLog()) {
                     Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
                 }

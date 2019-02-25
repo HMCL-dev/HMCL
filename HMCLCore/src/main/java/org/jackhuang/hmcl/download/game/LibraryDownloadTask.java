@@ -91,7 +91,7 @@ public class LibraryDownloadTask extends Task<Void> {
         if (!isDependentsSucceeded()) {
             // Since FileDownloadTask wraps the actual exception with DownloadException.
             // We should extract it letting the error message clearer.
-            Throwable t = task.getLastException();
+            Exception t = task.getException();
             if (t instanceof DownloadException)
                 throw new LibraryDownloadException(library, t.getCause());
             else

@@ -213,7 +213,7 @@ public final class LauncherHelper {
                         // because onStop will be invoked if tasks fail when the executor service shut down.
                         if (!Controllers.isStopped()) {
                             launchingStepsPane.fireEvent(new DialogCloseEvent());
-                            Exception ex = executor.getLastException();
+                            Exception ex = executor.getException();
                             if (ex != null) {
                                 String message;
                                 if (ex instanceof CurseCompletionException) {
