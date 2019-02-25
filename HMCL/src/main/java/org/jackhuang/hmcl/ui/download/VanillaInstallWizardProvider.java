@@ -59,7 +59,7 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         if (settings.containsKey("optifine"))
             builder.version((RemoteVersion) settings.get("optifine"));
 
-        return builder.buildAsync().whenComplete((a, b) -> profile.getRepository().refreshVersions())
+        return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
                 .thenRun(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
     }
 

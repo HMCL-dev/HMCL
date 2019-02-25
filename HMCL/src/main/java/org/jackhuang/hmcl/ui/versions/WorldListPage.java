@@ -51,9 +51,9 @@ public class WorldListPage extends ListPage<WorldListItem> {
 
         setLoading(true);
         Task.supplyAsync(() -> World.getWorlds(savesDir).parallel().collect(Collectors.toList()))
-                .whenComplete(Schedulers.javafx(), (result, isDependentSucceeded, exception) -> {
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     setLoading(false);
-                    if (isDependentSucceeded)
+                    if (exception == null)
                         itemsProperty().setAll(result.stream().map(WorldListItem::new).collect(Collectors.toList()));
                 }).start();
     }

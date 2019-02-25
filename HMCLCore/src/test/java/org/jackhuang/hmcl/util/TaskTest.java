@@ -11,8 +11,8 @@ public class TaskTest {
                 Task.allOf(Task.runAsync(() -> {
                     throw new Exception();
                 }))
-        )).whenComplete(((isDependentSucceeded, exception) -> {
-            Assert.assertFalse(isDependentSucceeded);
+        )).whenComplete((exception -> {
+            Assert.assertFalse(exception == null);
         })).test();
     }
 }

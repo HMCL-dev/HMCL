@@ -19,9 +19,9 @@ package org.jackhuang.hmcl.task;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -29,9 +29,9 @@ import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
  */
 class SchedulerImpl extends Scheduler {
 
-    private final Consumer<Runnable> executor;
+    private final Executor executor;
 
-    public SchedulerImpl(Consumer<Runnable> executor) {
+    public SchedulerImpl(Executor executor) {
         this.executor = executor;
     }
 
@@ -40,7 +40,7 @@ class SchedulerImpl extends Scheduler {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Exception> wrapper = new AtomicReference<>();
 
-        executor.accept(() -> {
+        executor.execute(() -> {
             try {
                 block.run();
             } catch (Exception e) {
@@ -81,7 +81,7 @@ class SchedulerImpl extends Scheduler {
             }
 
             @Override
-            public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            public Void get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
                 if (!latch.await(timeout, unit))
                     throw new TimeoutException();
                 return getImpl();

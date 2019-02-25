@@ -595,7 +595,10 @@ public abstract class Task<T> {
 
             @Override
             public void execute() throws Exception {
-                action.execute(isDependentsSucceeded(), Task.this.getException());
+                if (isDependentsSucceeded() != (Task.this.getException() == null))
+                    throw new AssertionError("When dependents succeeded, Task.exception must be nonnull.");
+
+                action.execute(Task.this.getException());
 
                 if (!isDependentsSucceeded()) {
                     setSignificance(TaskSignificance.MINOR);
@@ -634,7 +637,7 @@ public abstract class Task<T> {
      * @return the new Task
      */
     public Task<Void> whenComplete(Scheduler scheduler, FinalizedCallbackWithResult<T> action) {
-        return whenComplete(scheduler, ((isDependentSucceeded, exception) -> action.execute(getResult(), isDependentSucceeded, exception)));
+        return whenComplete(scheduler, (exception -> action.execute(getResult(), exception)));
     }
 
     /**
@@ -653,8 +656,8 @@ public abstract class Task<T> {
      * @return the new Task
      */
     public final <E1 extends Exception, E2 extends Exception> Task<Void> whenComplete(Scheduler scheduler, ExceptionalRunnable<E1> success, ExceptionalConsumer<Exception, E2> failure) {
-        return whenComplete(scheduler, (isDependentSucceeded, exception) -> {
-            if (isDependentSucceeded) {
+        return whenComplete(scheduler, exception -> {
+            if (exception == null) {
                 if (success != null)
                     try {
                         success.run();
@@ -805,11 +808,11 @@ public abstract class Task<T> {
     }
 
     public interface FinalizedCallback {
-        void execute(boolean isDependentSucceeded, Exception exception) throws Exception;
+        void execute(Exception exception) throws Exception;
     }
 
     public interface FinalizedCallbackWithResult<T> {
-        void execute(T result, boolean isDependentSucceeded, Exception exception) throws Exception;
+        void execute(T result, Exception exception) throws Exception;
     }
 
     private static String getCaller() {
