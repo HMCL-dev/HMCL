@@ -163,7 +163,7 @@ public final class LauncherHelper {
                         setting.toLaunchOptions(profile.getGameDir()),
                         launcherVisibility == LauncherVisibility.CLOSE
                                 ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                : new HMCLProcessListener(authInfo, setting, gameVersion.isPresent())
+                                : new HMCLProcessListener(authInfo, gameVersion.isPresent())
                 ))
                 .thenCompose(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
@@ -436,7 +436,6 @@ public final class LauncherHelper {
      */
     class HMCLProcessListener implements ProcessListener {
 
-        private final VersionSetting setting;
         private final Map<String, String> forbiddenTokens;
         private ManagedProcess process;
         private boolean lwjgl;
@@ -445,8 +444,7 @@ public final class LauncherHelper {
         private final LinkedList<Pair<String, Log4jLevel>> logs;
         private final CountDownLatch latch = new CountDownLatch(1);
 
-        public HMCLProcessListener(AuthInfo authInfo, VersionSetting setting, boolean detectWindow) {
-            this.setting = setting;
+        public HMCLProcessListener(AuthInfo authInfo, boolean detectWindow) {
             this.detectWindow = detectWindow;
 
             if (authInfo == null)

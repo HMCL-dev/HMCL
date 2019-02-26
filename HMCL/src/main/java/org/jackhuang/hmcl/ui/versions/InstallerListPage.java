@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.ListPage;

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.upgrade;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import javafx.application.Platform;
+
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Task;

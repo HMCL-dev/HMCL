@@ -20,12 +20,10 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.mod.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
-import org.jackhuang.hmcl.task.Scheduler;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 
 import java.util.Objects;
-import java.util.concurrent.Executor;
 
 public final class MultiMCInstallVersionSettingTask extends Task<Void> {
     private final Profile profile;

@@ -17,10 +17,14 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -108,15 +112,12 @@ public final class TaskExecutor {
                 })
                 .thenApplyAsync(unused -> (Exception) null)
                 .exceptionally(throwable -> {
-                    if (!(throwable instanceof CompletionException))
-                        throw new AssertionError();
-
                     Throwable resolved = resolveException(throwable);
                     if (resolved instanceof Exception) {
                         return (Exception) resolved;
                     } else {
                         // If an error occurred, we just rethrow it.
-                        throw (CompletionException) throwable;
+                        throw new CompletionException(throwable);
                     }
                 });
     }
@@ -137,9 +138,7 @@ public final class TaskExecutor {
                         return CompletableFuture.completedFuture(null);
                     }
                 })
-                .thenComposeAsync(unused -> {
-                    return executeTasks(task.getDependents());
-                })
+                .thenComposeAsync(unused -> executeTasks(task.getDependents()))
                 .thenComposeAsync(dependentsException -> {
                     boolean isDependentsSucceeded = dependentsException == null;
 
@@ -160,9 +159,7 @@ public final class TaskExecutor {
                         rethrow(throwable);
                     });
                 })
-                .thenComposeAsync(unused -> {
-                    return executeTasks(task.getDependencies());
-                })
+                .thenComposeAsync(unused -> executeTasks(task.getDependencies()))
                 .thenComposeAsync(dependenciesException -> {
                     boolean isDependenciesSucceeded = dependenciesException == null;
 
@@ -176,7 +173,7 @@ public final class TaskExecutor {
                         return CompletableFuture.completedFuture(dependenciesException);
                     }
                 })
-                .thenApplyAsync(dependenciesException -> {
+                .thenAcceptAsync(dependenciesException -> {
                     boolean isDependenciesSucceeded = dependenciesException == null;
 
                     if (!isDependenciesSucceeded && task.isRelyingOnDependencies()) {
@@ -193,14 +190,8 @@ public final class TaskExecutor {
                     taskListeners.forEach(it -> it.onFinished(task));
 
                     task.setState(Task.TaskState.SUCCEEDED);
-
-                    return null;
                 })
-                .thenApplyAsync(unused -> null)
                 .exceptionally(throwable -> {
-                    if (!(throwable instanceof CompletionException))
-                        throw new AssertionError();
-
                     Throwable resolved = resolveException(throwable);
                     if (resolved instanceof Exception) {
                         Exception e = (Exception) resolved;
@@ -226,7 +217,7 @@ public final class TaskExecutor {
                         task.setState(Task.TaskState.FAILED);
                     }
 
-                    throw (CompletionException) throwable; // rethrow error
+                    throw new CompletionException(resolved); // rethrow error
                 });
     }
 

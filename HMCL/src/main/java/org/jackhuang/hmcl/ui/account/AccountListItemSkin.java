@@ -22,7 +22,6 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 
-import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;

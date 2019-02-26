@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.versions;
 
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
-import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.game.Version;
