@@ -3,10 +3,14 @@ package org.jackhuang.hmcl.util;
 import javafx.embed.swing.JFXPanel;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -67,5 +71,37 @@ public class TaskTest {
 
         Assert.assertTrue("Task does not succeed", result);
         Assert.assertTrue("ThenAccept has not been executed", flag.get());
+    }
+
+    @Test
+    public void testCancellation() {
+        Task<?> task = Task.runAsync(() -> Thread.sleep(200));
+        TaskExecutor executor = task.executor();
+        Lang.thread(() -> {
+            try {
+                Thread.sleep(100);
+                executor.cancel();
+            } catch (InterruptedException e) {
+                Assume.assumeNoException(e);
+            }
+        });
+        Assert.assertFalse("Task should fail because we have cancelled it", executor.test());
+        Assert.assertNull("CancellationException should not be recorded.", executor.getException());
+        Assert.assertNull("CancellationException should not be recorded.", task.getException());
+    }
+
+    @Test
+    public void testRejectedExecutionException() {
+        Schedulers.defaultScheduler();
+        Schedulers.shutdown();
+
+        Task<?> task = Task.runAsync(() -> {
+            Thread.sleep(1000);
+        });
+
+        boolean result = task.test();
+
+        Assert.assertFalse("Task should fail since ExecutorService is shut down and RejectedExecutionException should be thrown", result);
+        Assert.assertTrue("RejectedExecutionException should be recorded", task.getException() instanceof RejectedExecutionException);
     }
 }

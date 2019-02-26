@@ -76,6 +76,11 @@ public abstract class Task<T> {
     // last exception
     private Exception exception;
 
+    /**
+     * When task has been cancelled, task.exception will be null.
+     *
+     * @return the exception thrown during execution, possibly from dependents or dependencies.
+     */
     public final Exception getException() {
         return exception;
     }

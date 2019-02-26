@@ -80,8 +80,10 @@ public final class TaskExecutor {
             return future.get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-        } catch (ExecutionException | CancellationException e) {
-            e.printStackTrace();
+        } catch (ExecutionException ignore) {
+            // We have dealt with ExecutionException in exception handling and uncaught exception handler.
+        } catch (CancellationException e) {
+            Logging.LOG.log(Level.INFO, "Task " + firstTask + " has been cancelled.", e);
         }
         return false;
     }
@@ -202,8 +204,6 @@ public final class TaskExecutor {
                             }
                             task.onDone().fireEvent(new TaskEvent(this, task, true));
                             taskListeners.forEach(it -> it.onFailed(task, e));
-                        } else if (e instanceof CancellationException || e instanceof RejectedExecutionException) {
-                            task.setException(e);
                         } else {
                             task.setException(e);
                             exception = e;
