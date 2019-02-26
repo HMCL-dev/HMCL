@@ -58,7 +58,7 @@ public final class TaskExecutor {
                     return success;
                 })
                 .exceptionally(e -> {
-                    Lang.handleUncaughtException(e instanceof UncheckedThrowable ? e.getCause() : e);
+                    Lang.handleUncaughtException(resolveException(e));
                     return false;
                 });
         return this;
@@ -101,11 +101,15 @@ public final class TaskExecutor {
                 })
                 .thenApplyAsync(unused -> (Exception) null)
                 .exceptionally(throwable -> {
-                    if (throwable instanceof Exception) {
-                        return (Exception) throwable;
+                    if (!(throwable instanceof CompletionException))
+                        throw new AssertionError();
+
+                    Throwable resolved = resolveException(throwable);
+                    if (resolved instanceof Exception) {
+                        return (Exception) resolved;
                     } else {
                         // If an error occurred, we just rethrow it.
-                        throw new UncheckedThrowable(throwable);
+                        throw (CompletionException) throwable;
                     }
                 });
     }
@@ -117,20 +121,15 @@ public final class TaskExecutor {
     private static void scheduleTo(Scheduler scheduler, ExceptionalRunnable<?> runnable, Runnable finalize) {
         try {
             scheduler.schedule(runnable).get();
-        } catch (ExecutionException e) {
-            if (e.getCause() instanceof Exception)
-                rethrow(e.getCause());
-            else
-                throw new UncheckedException(e);
-        } catch (InterruptedException e) {
-            throw new UncheckedException(e);
+        } catch (ExecutionException | InterruptedException e) {
+            throw new CompletionException(e);
         } finally {
             if (finalize != null)
                 finalize.run();
         }
     }
 
-    private CompletableFuture<Object> executeTask(Task<?> task) {
+    private CompletableFuture<?> executeTask(Task<?> task) {
         return CompletableFuture.completedFuture(null).thenComposeAsync(unused -> {
             task.setState(Task.TaskState.READY);
 
@@ -188,33 +187,36 @@ public final class TaskExecutor {
             task.setState(Task.TaskState.SUCCEEDED);
 
             return null;
-        }).exceptionally(throwable -> {
-            if (!(throwable instanceof Exception))
-                throw new UncheckedThrowable(throwable);
-            Exception e = throwable instanceof UncheckedException ? (Exception) throwable.getCause() : (Exception) throwable;
-            if (e instanceof InterruptedException) {
-                task.setException(e);
-                if (task.getSignificance().shouldLog()) {
-                    Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName());
-                }
-                task.onDone().fireEvent(new TaskEvent(this, task, true));
-                taskListeners.forEach(it -> it.onFailed(task, e));
-            } else if (e instanceof CancellationException || e instanceof RejectedExecutionException) {
-                if (task.getException() == null)
+        }).thenApplyAsync(unused -> null).exceptionally(throwable -> {
+            if (!(throwable instanceof CompletionException))
+                throw new AssertionError();
+
+            Throwable resolved = resolveException(throwable);
+            if (resolved instanceof Exception) {
+                Exception e = (Exception) resolved;
+                if (e instanceof InterruptedException) {
                     task.setException(e);
-            } else {
-                task.setException(e);
-                exception = e;
-                if (task.getSignificance().shouldLog()) {
-                    Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
+                    if (task.getSignificance().shouldLog()) {
+                        Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName());
+                    }
+                    task.onDone().fireEvent(new TaskEvent(this, task, true));
+                    taskListeners.forEach(it -> it.onFailed(task, e));
+                } else if (e instanceof CancellationException || e instanceof RejectedExecutionException) {
+                    task.setException(e);
+                } else {
+                    task.setException(e);
+                    exception = e;
+                    if (task.getSignificance().shouldLog()) {
+                        Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
+                    }
+                    task.onDone().fireEvent(new TaskEvent(this, task, true));
+                    taskListeners.forEach(it -> it.onFailed(task, e));
                 }
-                task.onDone().fireEvent(new TaskEvent(this, task, true));
-                taskListeners.forEach(it -> it.onFailed(task, e));
+
+                task.setState(Task.TaskState.FAILED);
             }
 
-            task.setState(Task.TaskState.FAILED);
-
-            throw new UncheckedException(e);
+            throw (CompletionException) throwable; // rethrow error
         });
     }
 
@@ -222,27 +224,20 @@ public final class TaskExecutor {
         return totTask.get();
     }
 
-    private static class UncheckedException extends RuntimeException {
-
-        UncheckedException(Exception exception) {
-            super(exception);
-        }
-    }
-
-    private static class UncheckedThrowable extends RuntimeException {
-
-        UncheckedThrowable(Throwable throwable) {
-            super(throwable);
-        }
+    private static Throwable resolveException(Throwable e) {
+        if (e instanceof ExecutionException || e instanceof CompletionException)
+            return resolveException(e.getCause());
+        else
+            return e;
     }
 
     private static void rethrow(Throwable e) {
-        if (e instanceof RuntimeException) { // including UncheckedException and UncheckedThrowable
+        if (e instanceof ExecutionException || e instanceof CompletionException) { // including UncheckedException and UncheckedThrowable
+            rethrow(e.getCause());
+        } else if (e instanceof RuntimeException) {
             throw (RuntimeException) e;
-        } else if (e instanceof Exception) {
-            throw new UncheckedException((Exception) e);
         } else {
-            throw new UncheckedThrowable(e);
+            throw new CompletionException(e);
         }
     }
 }
