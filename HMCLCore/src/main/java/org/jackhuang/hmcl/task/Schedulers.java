@@ -17,8 +17,10 @@
  */
 package org.jackhuang.hmcl.task;
 
+import javafx.application.Platform;
 import org.jackhuang.hmcl.util.Logging;
 
+import javax.swing.*;
 import java.util.concurrent.*;
 
 /**
@@ -32,7 +34,7 @@ public final class Schedulers {
 
     private static volatile ExecutorService CACHED_EXECUTOR;
 
-    private static synchronized ExecutorService getCachedExecutorService() {
+    public static synchronized Executor newThread() {
         if (CACHED_EXECUTOR == null)
             CACHED_EXECUTOR = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
                     60, TimeUnit.SECONDS, new SynchronousQueue<>(), Executors.defaultThreadFactory());
@@ -42,7 +44,7 @@ public final class Schedulers {
 
     private static volatile ExecutorService IO_EXECUTOR;
 
-    private static synchronized ExecutorService getIOExecutorService() {
+    public static synchronized Executor io() {
         if (IO_EXECUTOR == null)
             IO_EXECUTOR = Executors.newFixedThreadPool(6, runnable -> {
                 Thread thread = Executors.defaultThreadFactory().newThread(runnable);
@@ -55,7 +57,7 @@ public final class Schedulers {
 
     private static volatile ExecutorService SINGLE_EXECUTOR;
 
-    private static synchronized ExecutorService getSingleExecutorService() {
+    public static synchronized Executor computation() {
         if (SINGLE_EXECUTOR == null)
             SINGLE_EXECUTOR = Executors.newSingleThreadExecutor(runnable -> {
                 Thread thread = Executors.defaultThreadFactory().newThread(runnable);
@@ -66,53 +68,17 @@ public final class Schedulers {
         return SINGLE_EXECUTOR;
     }
 
-    private static final Scheduler IMMEDIATE = new SchedulerImpl(Runnable::run);
-
-    public static Scheduler immediate() {
-        return IMMEDIATE;
+    public static Executor javafx() {
+        return Platform::runLater;
     }
 
-    private static Scheduler NEW_THREAD;
-
-    public static synchronized Scheduler newThread() {
-        if (NEW_THREAD == null)
-            NEW_THREAD = new SchedulerExecutorService(getCachedExecutorService());
-        return NEW_THREAD;
+    public static Executor swing() {
+        return SwingUtilities::invokeLater;
     }
 
-    private static Scheduler IO;
-
-    public static synchronized Scheduler io() {
-        if (IO == null)
-            IO = new SchedulerExecutorService(getIOExecutorService());
-        return IO;
-    }
-
-    private static Scheduler COMPUTATION;
-
-    public static synchronized Scheduler computation() {
-        if (COMPUTATION == null)
-            COMPUTATION = new SchedulerExecutorService(getSingleExecutorService());
-        return COMPUTATION;
-    }
-
-    private static final Scheduler JAVAFX = new SchedulerImpl(javafx.application.Platform::runLater);
-
-    public static Scheduler javafx() {
-        return JAVAFX;
-    }
-
-    private static final Scheduler SWING = new SchedulerImpl(javax.swing.SwingUtilities::invokeLater);
-
-    public static Scheduler swing() {
-        return SWING;
-    }
-
-    public static synchronized Scheduler defaultScheduler() {
+    public static Executor defaultScheduler() {
         return newThread();
     }
-
-    static final Scheduler NONE = new SchedulerImpl(any -> {});
 
     public static synchronized void shutdown() {
         Logging.LOG.info("Shutting down executor services.");

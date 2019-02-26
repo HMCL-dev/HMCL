@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 
 import java.util.Objects;
+import java.util.concurrent.Executor;
 
 public final class MultiMCInstallVersionSettingTask extends Task<Void> {
     private final Profile profile;
@@ -35,11 +36,8 @@ public final class MultiMCInstallVersionSettingTask extends Task<Void> {
         this.profile = profile;
         this.manifest = manifest;
         this.version = version;
-    }
 
-    @Override
-    public Scheduler getScheduler() {
-        return Schedulers.javafx();
+        setExecutor(Schedulers.javafx());
     }
 
     @Override

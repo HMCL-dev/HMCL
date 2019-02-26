@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
@@ -57,37 +58,44 @@ public abstract class Task<T> {
         return significance;
     }
 
-    public void setSignificance(TaskSignificance significance) {
+    public final void setSignificance(TaskSignificance significance) {
         this.significance = significance;
     }
 
     // state
     private TaskState state = TaskState.READY;
 
-    public TaskState getState() {
+    public final TaskState getState() {
         return state;
     }
 
-    void setState(TaskState state) {
+    final void setState(TaskState state) {
         this.state = state;
     }
 
     // last exception
     private Exception exception;
 
-    public Exception getException() {
+    public final Exception getException() {
         return exception;
     }
 
-    void setException(Exception e) {
+    final void setException(Exception e) {
         exception = e;
     }
 
+    private Executor executor = Schedulers.defaultScheduler();
+
     /**
-     * The scheduler that decides how this task runs.
+     * The executor that decides how this task runs.
      */
-    public Scheduler getScheduler() {
-        return Schedulers.defaultScheduler();
+    public final Executor getExecutor() {
+        return executor;
+    }
+
+    public final Task<T> setExecutor(Executor executor) {
+        this.executor = executor;
+        return this;
     }
 
     // dependents succeeded
@@ -140,6 +148,14 @@ public abstract class Task<T> {
     public Task<T> setName(String name) {
         this.name = name;
         return this;
+    }
+
+    @Override
+    public String toString() {
+        if (getClass().getName().equals(getName()))
+            return getName();
+        else
+            return getClass().getName() + "[" + getName() + "]";
     }
 
     // result
@@ -314,7 +330,7 @@ public abstract class Task<T> {
 
     /**
      * Returns a new Task that, when this task completes
-     * normally, is executed using the default Scheduler, with this
+     * normally, is executed using the default Executor, with this
      * task's result as the argument to the supplied function.
      *
      * @param fn the function to use to compute the value of the returned Task
@@ -327,36 +343,36 @@ public abstract class Task<T> {
 
     /**
      * Returns a new Task that, when this task completes
-     * normally, is executed using the supplied Scheduler, with this
+     * normally, is executed using the supplied Executor, with this
      * task's result as the argument to the supplied function.
      *
-     * @param scheduler the executor to use for asynchronous execution
+     * @param executor the executor to use for asynchronous execution
      * @param fn the function to use to compute the value of the returned Task
      * @param <U> the function's return type
      * @return the new Task
      */
-    public <U, E extends Exception> Task<U> thenApply(Scheduler scheduler, ExceptionalFunction<T, U, E> fn) {
-        return thenApply(getCaller(), scheduler, fn);
+    public <U, E extends Exception> Task<U> thenApply(Executor executor, ExceptionalFunction<T, U, E> fn) {
+        return thenApply(getCaller(), executor, fn);
     }
 
     /**
      * Returns a new Task that, when this task completes
-     * normally, is executed using the supplied Scheduler, with this
+     * normally, is executed using the supplied Executor, with this
      * task's result as the argument to the supplied function.
      *
      * @param name the name of this new Task for displaying
-     * @param scheduler the executor to use for asynchronous execution
+     * @param executor the executor to use for asynchronous execution
      * @param fn the function to use to compute the value of the returned Task
      * @param <U> the function's return type
      * @return the new Task
      */
-    public <U, E extends Exception> Task<U> thenApply(String name, Scheduler scheduler, ExceptionalFunction<T, U, E> fn) {
-        return new UniApply<>(name, scheduler, fn);
+    public <U, E extends Exception> Task<U> thenApply(String name, Executor executor, ExceptionalFunction<T, U, E> fn) {
+        return new UniApply<>(fn).setExecutor(executor).setName(name);
     }
 
     /**
      * Returns a new Task that, when this task completes
-     * normally, is executed using the default Scheduler, with this
+     * normally, is executed using the default Executor, with this
      * task's result as the argument to the supplied action.
      *
      * @param action the action to perform before completing the
@@ -369,29 +385,29 @@ public abstract class Task<T> {
 
     /**
      * Returns a new Task that, when this task completes
-     * normally, is executed using the supplied Scheduler, with this
+     * normally, is executed using the supplied Executor, with this
      * task's result as the argument to the supplied action.
      *
      * @param action the action to perform before completing the returned Task
-     * @param scheduler the executor to use for asynchronous execution
+     * @param executor the executor to use for asynchronous execution
      * @return the new Task
      */
-    public <E extends Exception> Task<Void> thenAccept(Scheduler scheduler, ExceptionalConsumer<T, E> action) {
-        return thenAccept(getCaller(), scheduler, action);
+    public <E extends Exception> Task<Void> thenAccept(Executor executor, ExceptionalConsumer<T, E> action) {
+        return thenAccept(getCaller(), executor, action);
     }
 
     /**
      * Returns a new Task that, when this task completes
-     * normally, is executed using the supplied Scheduler, with this
+     * normally, is executed using the supplied Executor, with this
      * task's result as the argument to the supplied action.
      *
      * @param name the name of this new Task for displaying
      * @param action the action to perform before completing the returned Task
-     * @param scheduler the executor to use for asynchronous execution
+     * @param executor the executor to use for asynchronous execution
      * @return the new Task
      */
-    public <E extends Exception> Task<Void> thenAccept(String name, Scheduler scheduler, ExceptionalConsumer<T, E> action) {
-        return thenApply(name, scheduler, result -> {
+    public <E extends Exception> Task<Void> thenAccept(String name, Executor executor, ExceptionalConsumer<T, E> action) {
+        return thenApply(name, executor, result -> {
             action.accept(result);
             return null;
         });
@@ -399,7 +415,7 @@ public abstract class Task<T> {
 
     /**
      * Returns a new Task that, when this task completes
-     * normally, executes the given action using the default Scheduler.
+     * normally, executes the given action using the default Executor.
      *
      * @param action the action to perform before completing the
      * returned Task
@@ -411,29 +427,29 @@ public abstract class Task<T> {
 
     /**
      * Returns a new Task that, when this task completes
-     * normally, executes the given action using the supplied Scheduler.
+     * normally, executes the given action using the supplied Executor.
      *
      * @param action the action to perform before completing the
      * returned Task
-     * @param scheduler the executor to use for asynchronous execution
+     * @param executor the executor to use for asynchronous execution
      * @return the new Task
      */
-    public <E extends Exception> Task<Void> thenRun(Scheduler scheduler, ExceptionalRunnable<E> action) {
-        return thenRun(getCaller(), scheduler, action);
+    public <E extends Exception> Task<Void> thenRun(Executor executor, ExceptionalRunnable<E> action) {
+        return thenRun(getCaller(), executor, action);
     }
 
     /**
      * Returns a new Task that, when this task completes
-     * normally, executes the given action using the supplied Scheduler.
+     * normally, executes the given action using the supplied Executor.
      *
      * @param name the name of this new Task for displaying
      * @param action the action to perform before completing the
      * returned Task
-     * @param scheduler the executor to use for asynchronous execution
+     * @param executor the executor to use for asynchronous execution
      * @return the new Task
      */
-    public <E extends Exception> Task<Void> thenRun(String name, Scheduler scheduler, ExceptionalRunnable<E> action) {
-        return thenApply(name, scheduler, ignore -> {
+    public <E extends Exception> Task<Void> thenRun(String name, Executor executor, ExceptionalRunnable<E> action) {
+        return thenApply(name, executor, ignore -> {
             action.run();
             return null;
         });
@@ -441,7 +457,7 @@ public abstract class Task<T> {
 
     /**
      * Returns a new Task that, when this task completes
-     * normally, is executed using the default Scheduler.
+     * normally, is executed using the default Executor.
      *
      * @param fn the function to use to compute the value of the returned Task
      * @param <U> the function's return type
@@ -453,7 +469,7 @@ public abstract class Task<T> {
 
     /**
      * Returns a new Task that, when this task completes
-     * normally, is executed using the default Scheduler.
+     * normally, is executed using the default Executor.
      *
      * @param name the name of this new Task for displaying
      * @param fn the function to use to compute the value of the returned Task
@@ -511,7 +527,7 @@ public abstract class Task<T> {
 
     /**
      * Returns a new Task that, when this task completes
-     * normally, executes the given action using the default Scheduler.
+     * normally, executes the given action using the default Executor.
      *
      * @param action the action to perform before completing the
      * returned Task
@@ -523,29 +539,29 @@ public abstract class Task<T> {
 
     /**
      * Returns a new Task that, when this task completes
-     * normally, executes the given action using the supplied Scheduler.
+     * normally, executes the given action using the supplied Executor.
      *
      * @param action the action to perform before completing the
      * returned Task
-     * @param scheduler the executor to use for asynchronous execution
+     * @param executor the executor to use for asynchronous execution
      * @return the new Task
      */
-    public <E extends Exception> Task<Void> withRun(Scheduler scheduler, ExceptionalRunnable<E> action) {
-        return withRun(getCaller(), scheduler, action);
+    public <E extends Exception> Task<Void> withRun(Executor executor, ExceptionalRunnable<E> action) {
+        return withRun(getCaller(), executor, action);
     }
 
     /**
      * Returns a new Task that, when this task completes
-     * normally, executes the given action using the supplied Scheduler.
+     * normally, executes the given action using the supplied Executor.
      *
      * @param name the name of this new Task for displaying
      * @param action the action to perform before completing the
      * returned Task
-     * @param scheduler the executor to use for asynchronous execution
+     * @param executor the executor to use for asynchronous execution
      * @return the new Task
      */
-    public <E extends Exception> Task<Void> withRun(String name, Scheduler scheduler, ExceptionalRunnable<E> action) {
-        return new UniCompose<>(() -> Task.runAsync(name, scheduler, action), false);
+    public <E extends Exception> Task<Void> withRun(String name, Executor executor, ExceptionalRunnable<E> action) {
+        return new UniCompose<>(() -> Task.runAsync(name, executor, action), false);
     }
 
     /**
@@ -579,18 +595,13 @@ public abstract class Task<T> {
      * with this exception unless this task also completed exceptionally.
      *
      * @param action the action to perform
-     * @param scheduler the executor to use for asynchronous execution
+     * @param executor the executor to use for asynchronous execution
      * @return the new Task
      */
-    public final Task<Void> whenComplete(Scheduler scheduler, FinalizedCallback action) {
+    public final Task<Void> whenComplete(Executor executor, FinalizedCallback action) {
         return new Task<Void>() {
             {
                 setSignificance(TaskSignificance.MODERATE);
-            }
-
-            @Override
-            public Scheduler getScheduler() {
-                return scheduler;
             }
 
             @Override
@@ -618,7 +629,7 @@ public abstract class Task<T> {
             public boolean isRelyingOnDependents() {
                 return false;
             }
-        }.setName(getCaller());
+        }.setExecutor(executor).setName(getCaller());
     }
 
     /**
@@ -636,8 +647,8 @@ public abstract class Task<T> {
      * @param action the action to perform
      * @return the new Task
      */
-    public Task<Void> whenComplete(Scheduler scheduler, FinalizedCallbackWithResult<T> action) {
-        return whenComplete(scheduler, (exception -> action.execute(getResult(), exception)));
+    public Task<Void> whenComplete(Executor executor, FinalizedCallbackWithResult<T> action) {
+        return whenComplete(executor, (exception -> action.execute(getResult(), exception)));
     }
 
     /**
@@ -655,8 +666,8 @@ public abstract class Task<T> {
      * @param failure the action to perform when this task exceptionally returned
      * @return the new Task
      */
-    public final <E1 extends Exception, E2 extends Exception> Task<Void> whenComplete(Scheduler scheduler, ExceptionalRunnable<E1> success, ExceptionalConsumer<Exception, E2> failure) {
-        return whenComplete(scheduler, exception -> {
+    public final <E1 extends Exception, E2 extends Exception> Task<Void> whenComplete(Executor executor, ExceptionalRunnable<E1> success, ExceptionalConsumer<Exception, E2> failure) {
+        return whenComplete(executor, exception -> {
             if (exception == null) {
                 if (success != null)
                     try {
@@ -688,8 +699,8 @@ public abstract class Task<T> {
      * @param failure the action to perform when this task exceptionally returned
      * @return the new Task
      */
-    public <E1 extends Exception, E2 extends Exception> Task<Void> whenComplete(Scheduler scheduler, ExceptionalConsumer<T, E1> success, ExceptionalConsumer<Exception, E2> failure) {
-        return whenComplete(scheduler, () -> success.accept(getResult()), failure);
+    public <E1 extends Exception, E2 extends Exception> Task<Void> whenComplete(Executor executor, ExceptionalConsumer<T, E1> success, ExceptionalConsumer<Exception, E2> failure) {
+        return whenComplete(executor, () -> success.accept(getResult()), failure);
     }
 
     public static Task<Void> runAsync(ExceptionalRunnable<?> closure) {
@@ -700,12 +711,12 @@ public abstract class Task<T> {
         return runAsync(name, Schedulers.defaultScheduler(), closure);
     }
 
-    public static Task<Void> runAsync(Scheduler scheduler, ExceptionalRunnable<?> closure) {
-        return runAsync(getCaller(), scheduler, closure);
+    public static Task<Void> runAsync(Executor executor, ExceptionalRunnable<?> closure) {
+        return runAsync(getCaller(), executor, closure);
     }
 
-    public static Task<Void> runAsync(String name, Scheduler scheduler, ExceptionalRunnable<?> closure) {
-        return new SimpleTask<>(closure.toCallable(), scheduler).setName(name);
+    public static Task<Void> runAsync(String name, Executor executor, ExceptionalRunnable<?> closure) {
+        return new SimpleTask<>(closure.toCallable()).setExecutor(executor).setName(name);
     }
 
     public static <T> Task<T> composeAsync(ExceptionalSupplier<Task<T>, ?> fn) {
@@ -730,16 +741,16 @@ public abstract class Task<T> {
         return supplyAsync(getCaller(), callable);
     }
 
-    public static <V> Task<V> supplyAsync(Scheduler scheduler, Callable<V> callable) {
-        return supplyAsync(getCaller(), scheduler, callable);
+    public static <V> Task<V> supplyAsync(Executor executor, Callable<V> callable) {
+        return supplyAsync(getCaller(), executor, callable);
     }
 
     public static <V> Task<V> supplyAsync(String name, Callable<V> callable) {
         return supplyAsync(name, Schedulers.defaultScheduler(), callable);
     }
 
-    public static <V> Task<V> supplyAsync(String name, Scheduler scheduler, Callable<V> callable) {
-        return new SimpleTask<>(callable, scheduler).setName(name);
+    public static <V> Task<V> supplyAsync(String name, Executor executor, Callable<V> callable) {
+        return new SimpleTask<>(callable).setExecutor(executor).setName(name);
     }
 
     /**
@@ -822,16 +833,9 @@ public abstract class Task<T> {
     private static final class SimpleTask<T> extends Task<T> {
 
         private final Callable<T> callable;
-        private final Scheduler scheduler;
 
-        SimpleTask(Callable<T> callable, Scheduler scheduler) {
+        SimpleTask(Callable<T> callable) {
             this.callable = callable;
-            this.scheduler = scheduler;
-        }
-
-        @Override
-        public Scheduler getScheduler() {
-            return scheduler;
         }
 
         @Override
@@ -841,24 +845,15 @@ public abstract class Task<T> {
     }
 
     private class UniApply<R> extends Task<R> {
-        private final Scheduler scheduler;
         private final ExceptionalFunction<T, R, ?> callable;
 
-        UniApply(String name, Scheduler scheduler, ExceptionalFunction<T, R, ?> callable) {
-            this.scheduler = scheduler;
+        UniApply(ExceptionalFunction<T, R, ?> callable) {
             this.callable = callable;
-
-            setName(name);
         }
 
         @Override
         public Collection<Task<?>> getDependents() {
             return Collections.singleton(Task.this);
-        }
-
-        @Override
-        public Scheduler getScheduler() {
-            return scheduler;
         }
 
         @Override

@@ -54,6 +54,12 @@ public final class TaskExecutor {
         future = executeTasks(Collections.singleton(firstTask))
                 .thenApplyAsync(exception -> {
                     boolean success = exception == null;
+
+                    if (!success) {
+                        // We log exception stacktrace because some of exceptions occurred because of bugs.
+                        Logging.LOG.log(Level.WARNING, "An exception occurred in task execution", exception);
+                    }
+
                     taskListeners.forEach(it -> it.onStop(success, this));
                     return success;
                 })
@@ -71,6 +77,7 @@ public final class TaskExecutor {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (ExecutionException | CancellationException e) {
+            e.printStackTrace();
         }
         return false;
     }
@@ -114,110 +121,113 @@ public final class TaskExecutor {
                 });
     }
 
-    private static void scheduleTo(Scheduler scheduler, ExceptionalRunnable<?> runnable) {
-        scheduleTo(scheduler, runnable, null);
-    }
-
-    private static void scheduleTo(Scheduler scheduler, ExceptionalRunnable<?> runnable, Runnable finalize) {
-        try {
-            scheduler.schedule(runnable).get();
-        } catch (ExecutionException | InterruptedException e) {
-            throw new CompletionException(e);
-        } finally {
-            if (finalize != null)
-                finalize.run();
-        }
-    }
-
     private CompletableFuture<?> executeTask(Task<?> task) {
-        return CompletableFuture.completedFuture(null).thenComposeAsync(unused -> {
-            task.setState(Task.TaskState.READY);
+        return CompletableFuture.completedFuture(null)
+                .thenComposeAsync(unused -> {
+                    task.setState(Task.TaskState.READY);
 
-            if (task.getSignificance().shouldLog())
-                Logging.LOG.log(Level.FINE, "Executing task: " + task.getName());
+                    if (task.getSignificance().shouldLog())
+                        Logging.LOG.log(Level.FINE, "Executing task: " + task.getName());
 
-            taskListeners.forEach(it -> it.onReady(task));
+                    taskListeners.forEach(it -> it.onReady(task));
 
-            if (task.doPreExecute()) {
-                scheduleTo(task.getScheduler(), task::preExecute);
-            }
-
-            return executeTasks(task.getDependents());
-        }).thenComposeAsync(dependentsException -> {
-            boolean isDependentsSucceeded = dependentsException == null;
-
-            if (!isDependentsSucceeded && task.isRelyingOnDependents()) {
-                task.setException(dependentsException);
-                rethrow(dependentsException);
-            }
-
-            if (isDependentsSucceeded)
-                task.setDependentsSucceeded();
-
-            scheduleTo(task.getScheduler(), () -> {
-                task.setState(Task.TaskState.RUNNING);
-                taskListeners.forEach(it -> it.onRunning(task));
-                task.execute();
-            }, () -> task.setState(Task.TaskState.EXECUTED));
-
-            return executeTasks(task.getDependencies());
-        }).thenApplyAsync(dependenciesException -> {
-            boolean isDependenciesSucceeded = dependenciesException == null;
-
-            if (isDependenciesSucceeded)
-                task.setDependenciesSucceeded();
-
-            if (task.doPostExecute()) {
-                scheduleTo(task.getScheduler(), task::postExecute);
-            }
-
-            if (!isDependenciesSucceeded && task.isRelyingOnDependencies()) {
-                Logging.LOG.severe("Subtasks failed for " + task.getName());
-                task.setException(dependenciesException);
-                rethrow(dependenciesException);
-            }
-
-            if (task.getSignificance().shouldLog()) {
-                Logging.LOG.log(Level.FINER, "Task finished: " + task.getName());
-            }
-
-            task.onDone().fireEvent(new TaskEvent(this, task, false));
-            taskListeners.forEach(it -> it.onFinished(task));
-
-            task.setState(Task.TaskState.SUCCEEDED);
-
-            return null;
-        }).thenApplyAsync(unused -> null).exceptionally(throwable -> {
-            if (!(throwable instanceof CompletionException))
-                throw new AssertionError();
-
-            Throwable resolved = resolveException(throwable);
-            if (resolved instanceof Exception) {
-                Exception e = (Exception) resolved;
-                if (e instanceof InterruptedException) {
-                    task.setException(e);
-                    if (task.getSignificance().shouldLog()) {
-                        Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName());
+                    if (task.doPreExecute()) {
+                        return CompletableFuture.runAsync(wrap(task::preExecute), task.getExecutor());
+                    } else {
+                        return CompletableFuture.completedFuture(null);
                     }
-                    task.onDone().fireEvent(new TaskEvent(this, task, true));
-                    taskListeners.forEach(it -> it.onFailed(task, e));
-                } else if (e instanceof CancellationException || e instanceof RejectedExecutionException) {
-                    task.setException(e);
-                } else {
-                    task.setException(e);
-                    exception = e;
-                    if (task.getSignificance().shouldLog()) {
-                        Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
+                })
+                .thenComposeAsync(unused -> {
+                    return executeTasks(task.getDependents());
+                })
+                .thenComposeAsync(dependentsException -> {
+                    boolean isDependentsSucceeded = dependentsException == null;
+
+                    if (!isDependentsSucceeded && task.isRelyingOnDependents()) {
+                        task.setException(dependentsException);
+                        rethrow(dependentsException);
                     }
-                    task.onDone().fireEvent(new TaskEvent(this, task, true));
-                    taskListeners.forEach(it -> it.onFailed(task, e));
-                }
 
-                task.setState(Task.TaskState.FAILED);
-            }
+                    if (isDependentsSucceeded)
+                        task.setDependentsSucceeded();
 
-            throw (CompletionException) throwable; // rethrow error
-        });
+                    return CompletableFuture.runAsync(wrap(() -> {
+                        task.setState(Task.TaskState.RUNNING);
+                        taskListeners.forEach(it -> it.onRunning(task));
+                        task.execute();
+                    }), task.getExecutor()).whenComplete((unused, throwable) -> {
+                        task.setState(Task.TaskState.EXECUTED);
+                        rethrow(throwable);
+                    });
+                })
+                .thenComposeAsync(unused -> {
+                    return executeTasks(task.getDependencies());
+                })
+                .thenComposeAsync(dependenciesException -> {
+                    boolean isDependenciesSucceeded = dependenciesException == null;
+
+                    if (isDependenciesSucceeded)
+                        task.setDependenciesSucceeded();
+
+                    if (task.doPostExecute()) {
+                        return CompletableFuture.runAsync(wrap(task::postExecute), task.getExecutor())
+                                .thenApply(unused -> dependenciesException);
+                    } else {
+                        return CompletableFuture.completedFuture(dependenciesException);
+                    }
+                })
+                .thenApplyAsync(dependenciesException -> {
+                    boolean isDependenciesSucceeded = dependenciesException == null;
+
+                    if (!isDependenciesSucceeded && task.isRelyingOnDependencies()) {
+                        Logging.LOG.severe("Subtasks failed for " + task.getName());
+                        task.setException(dependenciesException);
+                        rethrow(dependenciesException);
+                    }
+
+                    if (task.getSignificance().shouldLog()) {
+                        Logging.LOG.log(Level.FINER, "Task finished: " + task.getName());
+                    }
+
+                    task.onDone().fireEvent(new TaskEvent(this, task, false));
+                    taskListeners.forEach(it -> it.onFinished(task));
+
+                    task.setState(Task.TaskState.SUCCEEDED);
+
+                    return null;
+                })
+                .thenApplyAsync(unused -> null)
+                .exceptionally(throwable -> {
+                    if (!(throwable instanceof CompletionException))
+                        throw new AssertionError();
+
+                    Throwable resolved = resolveException(throwable);
+                    if (resolved instanceof Exception) {
+                        Exception e = (Exception) resolved;
+                        if (e instanceof InterruptedException) {
+                            task.setException(e);
+                            if (task.getSignificance().shouldLog()) {
+                                Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName());
+                            }
+                            task.onDone().fireEvent(new TaskEvent(this, task, true));
+                            taskListeners.forEach(it -> it.onFailed(task, e));
+                        } else if (e instanceof CancellationException || e instanceof RejectedExecutionException) {
+                            task.setException(e);
+                        } else {
+                            task.setException(e);
+                            exception = e;
+                            if (task.getSignificance().shouldLog()) {
+                                Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
+                            }
+                            task.onDone().fireEvent(new TaskEvent(this, task, true));
+                            taskListeners.forEach(it -> it.onFailed(task, e));
+                        }
+
+                        task.setState(Task.TaskState.FAILED);
+                    }
+
+                    throw (CompletionException) throwable; // rethrow error
+                });
     }
 
     public int getRunningTasks() {
@@ -232,6 +242,8 @@ public final class TaskExecutor {
     }
 
     private static void rethrow(Throwable e) {
+        if (e == null)
+            return;
         if (e instanceof ExecutionException || e instanceof CompletionException) { // including UncheckedException and UncheckedThrowable
             rethrow(e.getCause());
         } else if (e instanceof RuntimeException) {
@@ -239,5 +251,15 @@ public final class TaskExecutor {
         } else {
             throw new CompletionException(e);
         }
+    }
+
+    private static Runnable wrap(ExceptionalRunnable<?> runnable) {
+        return () -> {
+            try {
+                runnable.run();
+            } catch (Exception e) {
+                rethrow(e);
+            }
+        };
     }
 }

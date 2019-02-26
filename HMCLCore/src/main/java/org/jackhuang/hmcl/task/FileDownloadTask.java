@@ -37,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;
@@ -124,6 +125,7 @@ public class FileDownloadTask extends Task<Void> {
         this.retry = retry;
 
         setName(file.getName());
+        setExecutor(Schedulers.io());
     }
 
     private void closeFiles() {
@@ -143,11 +145,6 @@ public class FileDownloadTask extends Task<Void> {
                 Logging.LOG.log(Level.WARNING, "Failed to close stream", e);
             }
         stream = null;
-    }
-
-    @Override
-    public Scheduler getScheduler() {
-        return Schedulers.io();
     }
 
     public EventManager<FailedEvent<URL>> getOnFailed() {

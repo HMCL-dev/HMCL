@@ -102,7 +102,7 @@ public final class LauncherHelper {
             try {
                 checkGameState(profile, setting, version, () -> {
                     Controllers.dialog(launchingStepsPane);
-                    Schedulers.newThread().schedule(this::launch0);
+                    Schedulers.newThread().execute(this::launch0);
                 });
             } catch (InterruptedException ignore) {
             }

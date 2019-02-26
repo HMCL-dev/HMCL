@@ -30,6 +30,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.concurrent.Executor;
 import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -59,11 +60,7 @@ public final class GetTask extends Task<String> {
         this.retry = retry;
 
         setName(url.toString());
-    }
-
-    @Override
-    public Scheduler getScheduler() {
-        return Schedulers.io();
+        setExecutor(Schedulers.io());
     }
 
     public GetTask setCacheRepository(CacheRepository repository) {

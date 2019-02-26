@@ -1,6 +1,9 @@
 package org.jackhuang.hmcl.util;
 
+import javafx.embed.swing.JFXPanel;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -21,7 +24,7 @@ public class TaskTest {
                 }))
         )).whenComplete(Assert::assertNull).test());
 
-        Assert.assertTrue(throwable.get() instanceof Error);
+        Assert.assertTrue("Error has not been thrown to uncaught exception handler", throwable.get() instanceof Error);
     }
 
     /**
@@ -29,11 +32,13 @@ public class TaskTest {
      */
     @Test
     public void testWhenComplete() {
-        Assert.assertFalse(Task.supplyAsync(() -> {
+        boolean result = Task.supplyAsync(() -> {
             throw new IllegalStateException();
         }).whenComplete(exception -> {
             Assert.assertTrue(exception instanceof IllegalStateException);
-        }).test());
+        }).test();
+
+        Assert.assertFalse("Task should fail at this case", result);
     }
 
     @Test
@@ -45,7 +50,22 @@ public class TaskTest {
             bool.set(true);
         }).test();
 
-        Assert.assertTrue(success);
-        Assert.assertTrue(bool.get());
+        Assert.assertTrue("Task should success because withRun will ignore previous exception", success);
+        Assert.assertTrue("withRun should be executed", bool.get());
+    }
+
+    @Test
+    public void testThenAccept() {
+        new JFXPanel(); // init JavaFX Toolkit
+        AtomicBoolean flag = new AtomicBoolean();
+        boolean result = Task.supplyAsync(JavaVersion::fromCurrentEnvironment)
+                .thenAccept(Schedulers.javafx(), javaVersion -> {
+                    flag.set(true);
+                    Assert.assertEquals(javaVersion, JavaVersion.fromCurrentEnvironment());
+                })
+                .test();
+
+        Assert.assertTrue("Task does not succeed", result);
+        Assert.assertTrue("ThenAccept has not been executed", flag.get());
     }
 }
