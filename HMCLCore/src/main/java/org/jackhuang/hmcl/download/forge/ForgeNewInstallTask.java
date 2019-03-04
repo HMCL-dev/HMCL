@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
+import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskResult;
@@ -122,6 +123,9 @@ public class ForgeNewInstallTask extends TaskResult<Version> {
 
     @Override
     public void execute() throws Exception {
+        if ("net.minecraft.launchwrapper.Launch".equals(version.getMainClass()))
+            throw new OptiFineInstallTask.UnsupportedOptiFineInstallationException();
+
         Path temp  = Files.createTempDirectory("forge_installer");
         int finished = 0;
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {

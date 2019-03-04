@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
+import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
@@ -125,6 +126,8 @@ public final class InstallerWizardProvider implements WizardProvider {
             Controllers.dialog(i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().getName()) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageType.ERROR, next);
         } else if (exception instanceof DownloadException) {
             Controllers.dialog(i18n("install.failed.downloading.detail", ((DownloadException) exception).getUrl()) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageType.ERROR, next);
+        } else if (exception instanceof OptiFineInstallTask.UnsupportedOptiFineInstallationException) {
+            Controllers.dialog(i18n("install.failed.optifine_conflict"), i18n("install.failed"), MessageType.ERROR, next);
         } else {
             Controllers.dialog(StringUtils.getStackTrace(exception), i18n("install.failed"), MessageType.ERROR, next);
         }

@@ -84,11 +84,6 @@ public final class ForgeInstallTask extends TaskResult<Version> {
     }
 
     @Override
-    public boolean isRelyingOnDependencies() {
-        return false;
-    }
-
-    @Override
     public void execute() {
         if (VersionNumber.VERSION_COMPARATOR.compare("1.13", remote.getGameVersion()) <= 0)
             dependency = new ForgeNewInstallTask(dependencyManager, version, installer);

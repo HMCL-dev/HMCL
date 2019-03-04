@@ -66,6 +66,9 @@ public final class OptiFineInstallTask extends TaskResult<Version> {
 
     @Override
     public void execute() {
+        if ("cpw.mods.modlauncher.Launcher".equals(version.getMainClass()))
+            throw new UnsupportedOptiFineInstallationException();
+
         String remoteVersion = remote.getGameVersion() + "_" + remote.getSelfVersion();
 
         Library library = new Library(
@@ -90,4 +93,6 @@ public final class OptiFineInstallTask extends TaskResult<Version> {
         dependencies.add(dependencyManager.checkLibraryCompletionAsync(version.setLibraries(libraries)));
     }
 
+    public static class UnsupportedOptiFineInstallationException extends UnsupportedOperationException {
+    }
 }
