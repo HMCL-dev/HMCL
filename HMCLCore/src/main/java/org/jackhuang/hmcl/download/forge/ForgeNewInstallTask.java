@@ -107,6 +107,14 @@ public class ForgeNewInstallTask extends TaskResult<Version> {
                     FileUtils.copyFile(file, dest);
                 }
             }
+
+            {
+                Path mainJar = profile.getPath().getPath(fs.getPath("maven"));
+                if (Files.exists(mainJar)) {
+                    Path dest = gameRepository.getArtifactFile(version, profile.getPath());
+                    FileUtils.copyFile(mainJar, dest);
+                }
+            }
         }
 
         dependents.add(new GameLibrariesTask(dependencyManager, version, profile.getLibraries()));

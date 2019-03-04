@@ -140,7 +140,7 @@ public final class CurseCompletionTask extends Task {
         for (CurseManifestFile file : newManifest.getFiles())
             if (StringUtils.isNotBlank(file.getFileName())) {
                 if (!modManager.hasSimpleMod(file.getFileName())) {
-                    dependencies.add(new FileDownloadTask(file.getUrl(), modManager.getSimpleModPath(file.getFileName()).toFile()));
+                    dependencies.add(new FileDownloadTask(file.getUrl(), modManager.getSimpleModPath(file.getFileName()).toFile()).setCaching(true));
                 }
             }
 

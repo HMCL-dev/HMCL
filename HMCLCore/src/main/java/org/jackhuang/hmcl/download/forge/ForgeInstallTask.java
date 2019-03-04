@@ -58,7 +58,8 @@ public final class ForgeInstallTask extends TaskResult<Version> {
     public void preExecute() throws Exception {
         installer = Files.createTempFile("forge-installer", ".jar");
 
-        dependent = new FileDownloadTask(NetworkUtils.toURL(remote.getUrl()), installer.toFile());
+        dependent = new FileDownloadTask(NetworkUtils.toURL(remote.getUrl()), installer.toFile())
+                .setCaching(true);
     }
 
     @Override

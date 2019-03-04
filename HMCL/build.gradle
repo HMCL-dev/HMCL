@@ -112,7 +112,7 @@ def createExecutable(String suffix, String header) {
 
 processResources {
     ext.convertToBSS = { String resource ->
-        exclude resource
+        // exclude resource
         doFirst {
             def cssFile = new File(this.projectDir, "src/main/resources/" + resource)
             def bssFile = new File(this.projectDir, "build/compiled-resources/" + resource[0..-4] + "bss")

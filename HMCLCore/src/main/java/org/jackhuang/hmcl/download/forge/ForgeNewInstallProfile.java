@@ -34,14 +34,16 @@ public class ForgeNewInstallProfile {
     private final int spec;
     private final String minecraft;
     private final String json;
+    private final Artifact path;
     private final List<Library> libraries;
     private final List<Processor> processors;
     private final Map<String, Datum> data;
 
-    public ForgeNewInstallProfile(int spec, String minecraft, String json, List<Library> libraries, List<Processor> processors, Map<String, Datum> data) {
+    public ForgeNewInstallProfile(int spec, String minecraft, String json, Artifact path, List<Library> libraries, List<Processor> processors, Map<String, Datum> data) {
         this.spec = spec;
         this.minecraft = minecraft;
         this.json = json;
+        this.path = path;
         this.libraries = libraries;
         this.processors = processors;
         this.data = data;
@@ -67,6 +69,14 @@ public class ForgeNewInstallProfile {
      */
     public String getJson() {
         return json;
+    }
+
+    /**
+     * Maven artifact path for the main jar to install.
+     * @return artifact path of the main jar.
+     */
+    public Artifact getPath() {
+        return path;
     }
 
     /**
