@@ -72,7 +72,7 @@ public class DefaultGameBuilder extends GameBuilder {
             return libraryTask;
         }).whenComplete((isDependentSucceeded, exception) -> {
             if (!isDependentSucceeded)
-                dependencyManager.getGameRepository().getVersionRoot(name).delete();
+                dependencyManager.getGameRepository().removeVersionFromDisk(name);
         });
     }
 
