@@ -78,7 +78,7 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                             continue;
                         String jar = null;
                         for (ForgeVersion.File file : version.getFiles())
-                            if ("installer".equals(file.getCategory())) {
+                            if ("installer".equals(file.getCategory()) && "jar".equals(file.getFormat())) {
                                 String classifier = gameVersion + "-" + version.getVersion()
                                         + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
                                 String fileName = "forge-" + classifier + "-" + file.getCategory() + "." + file.getFormat();
