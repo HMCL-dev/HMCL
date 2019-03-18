@@ -30,9 +30,11 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.text.TextAlignment;
 import javafx.util.Callback;
 import org.jackhuang.hmcl.mod.ModInfo;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.JFXCheckBoxTreeTableCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
@@ -52,6 +54,9 @@ public class ModListPageSkin extends SkinBase<ModListPage> {
 
     public ModListPageSkin(ModListPage skinnable) {
         super(skinnable);
+
+        StackPane pane = new StackPane();
+        pane.getStyleClass().addAll("notice-pane", "white-background");
 
         BorderPane root = new BorderPane();
         JFXTreeTableView<ModInfoObject> tableView = new JFXTreeTableView<>();
@@ -140,7 +145,15 @@ public class ModListPageSkin extends SkinBase<ModListPage> {
             root.setCenter(center);
         }
 
-        getChildren().setAll(root);
+        Label label = new Label(i18n("mods.not_modded"));
+        label.prefWidthProperty().bind(pane.widthProperty().add(-100));
+
+        FXUtils.onChangeAndOperate(skinnable.moddedProperty(), modded -> {
+            if (modded) pane.getChildren().setAll(root);
+            else pane.getChildren().setAll(label);
+        });
+
+        getChildren().setAll(pane);
     }
 
     private <T> void setupCellValueFactory(JFXTreeTableColumn<ModInfoObject, T> column, Function<ModInfoObject, ObservableValue<T>> mapper) {

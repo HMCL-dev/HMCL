@@ -24,11 +24,11 @@
                 <JFXListView fx:id="list" styleClass="jfx-list-view" VBox.vgrow="ALWAYS">
                 </JFXListView>
             </VBox>
-            <StackPane fx:id="failedPane">
-                <Label onMouseClicked="#onRefresh" style="-fx-text-fill: #0079FF; -fx-font-size: 20;" text="%download.failed.refresh" />
+            <StackPane fx:id="failedPane" styleClass="notice-pane">
+                <Label onMouseClicked="#onRefresh" text="%download.failed.refresh" />
             </StackPane>
-            <StackPane fx:id="emptyPane">
-                <Label onMouseClicked="#onBack" style="-fx-text-fill: #0079FF; -fx-font-size: 20;" text="%download.failed.empty" />
+            <StackPane fx:id="emptyPane" styleClass="notice-pane">
+                <Label onMouseClicked="#onBack" text="%download.failed.empty" />
             </StackPane>
         </StackPane>
     </center>

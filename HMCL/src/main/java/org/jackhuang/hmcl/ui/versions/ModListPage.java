@@ -28,6 +28,7 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.TreeItem;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.mod.ModInfo;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.setting.Profile;
@@ -52,9 +53,11 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class ModListPage extends Control {
     private final ListProperty<ModListPageSkin.ModInfoObject> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
     private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading", false);
+    private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
 
     private JFXTabPane parentTab;
     private ModManager modManager;
+    private LibraryAnalyzer libraryAnalyzer;
 
     public ModListPage() {
 
@@ -80,10 +83,12 @@ public final class ModListPage extends Control {
     }
 
     public void loadVersion(Profile profile, String id) {
+        libraryAnalyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedVersion(id));
+        modded.set(libraryAnalyzer.hasForge() || libraryAnalyzer.hasLiteLoader());
         loadMods(profile.getRepository().getModManager(id));
     }
 
-    public void loadMods(ModManager modManager) {
+    private void loadMods(ModManager modManager) {
         this.modManager = modManager;
         Task.ofResult(() -> {
             synchronized (ModListPage.this) {
@@ -186,5 +191,17 @@ public final class ModListPage extends Control {
 
     public BooleanProperty loadingProperty() {
         return loading;
+    }
+
+    public boolean isModded() {
+        return modded.get();
+    }
+
+    public BooleanProperty moddedProperty() {
+        return modded;
+    }
+
+    public void setModded(boolean modded) {
+        this.modded.set(modded);
     }
 }

@@ -57,8 +57,11 @@
     -fx-text-fill: -fx-base-text-fill;
 }
 
-.rippler-container= .label {
-    -fx-text-fill: white;
+.notice-pane > .label {
+    -fx-text-fill: #0079FF;
+    -fx-font-size: 20;
+    -fx-wrap-text: true;
+    -fx-text-alignment: CENTER;
 }
 
 .class-title {
@@ -1010,7 +1013,7 @@
 }
 
 .white-background {
-    -fx-background-color: rgba(255, 255, 255);
+    -fx-background-color: rgb(255, 255, 255);
 }
 
 /*******************************************************************************
@@ -1115,7 +1118,7 @@
 }
 
 .tree-table-row-group {
-    -fx-background-color: rgba(230, 230, 230);
+    -fx-background-color: rgb(230, 230, 230);
 }
 
 .tree-table-view .menu-item:focused {
