@@ -213,4 +213,8 @@ public final class StringUtils {
 
         return result;
     }
+
+    public static String parseColorEscapes(String original) {
+        return original.replaceAll("\u00A7\\d", "");
+    }
 }

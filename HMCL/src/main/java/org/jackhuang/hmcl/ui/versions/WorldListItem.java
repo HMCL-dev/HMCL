@@ -35,6 +35,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class WorldListItem extends Control {
@@ -48,7 +49,7 @@ public class WorldListItem extends Control {
         this.world = world;
         this.simpleDateFormat = new SimpleDateFormat(i18n("world.time"));
 
-        title.set(world.getWorldName());
+        title.set(parseColorEscapes(world.getWorldName()));
         subtitle.set(i18n("world.description", world.getFileName(), simpleDateFormat.format(new Date(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
     }
 
