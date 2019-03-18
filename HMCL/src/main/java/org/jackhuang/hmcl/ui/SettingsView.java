@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
 import javafx.geometry.HPos;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Cursor;
@@ -72,7 +73,7 @@ public abstract class SettingsView extends StackPane {
 
         {
             VBox rootPane = new VBox();
-            rootPane.setStyle("-fx-padding: 18;");
+            rootPane.setPadding(new Insets(36, 18, 36, 18));
             {
                 ComponentList settingsPane = new ComponentList();
                 {
@@ -80,12 +81,31 @@ public abstract class SettingsView extends StackPane {
                         StackPane sponsorPane = new StackPane();
                         sponsorPane.setCursor(Cursor.HAND);
                         sponsorPane.setOnMouseClicked(e -> onSponsor());
+
+                        GridPane gridPane = new GridPane();
+
+                        ColumnConstraints col = new ColumnConstraints();
+                        col.setHgrow(Priority.SOMETIMES);
+                        col.setMaxWidth(Double.POSITIVE_INFINITY);
+
+                        gridPane.getColumnConstraints().setAll(col);
+
+                        RowConstraints row = new RowConstraints();
+                        row.setMinHeight(Double.NEGATIVE_INFINITY);
+                        row.setValignment(VPos.TOP);
+                        row.setVgrow(Priority.SOMETIMES);
+                        gridPane.getRowConstraints().setAll(row);
+
                         {
                             Label label = new Label(i18n("sponsor.hmcl"));
                             label.setWrapText(true);
-                            label.prefWidthProperty().bind(sponsorPane.widthProperty());
-                            sponsorPane.getChildren().add(label);
+                            label.setTextAlignment(TextAlignment.JUSTIFY);
+                            GridPane.setRowIndex(label, 0);
+                            GridPane.setColumnIndex(label, 0);
+                            gridPane.getChildren().add(label);
                         }
+
+                        sponsorPane.getChildren().setAll(gridPane);
                         settingsPane.getContent().add(sponsorPane);
                     }
 
