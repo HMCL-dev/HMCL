@@ -41,16 +41,10 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
 import java.util.function.Function;
 
+import static org.jackhuang.hmcl.ui.SVG.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class ModListPageSkin extends SkinBase<ModListPage> {
-
-    private static Node wrap(Node node) {
-        StackPane stackPane = new StackPane();
-        stackPane.setPadding(new Insets(0, 5, 0, 2));
-        stackPane.getChildren().setAll(node);
-        return stackPane;
-    }
 
     public ModListPageSkin(ModListPage skinnable) {
         super(skinnable);

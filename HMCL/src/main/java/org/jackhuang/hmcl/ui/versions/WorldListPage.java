@@ -17,7 +17,16 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.control.Control;
+import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -37,28 +46,60 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class WorldListPage extends ListPage<WorldListItem> {
+public class WorldListPage extends Control {
+    private final ListProperty<WorldListItem> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
+    private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading", false);
+    private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
+
     private Path savesDir;
+    private List<World> worlds;
+    private Profile profile;
+    private String id;
+    private String gameVersion;
 
     public WorldListPage() {
         FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
             installWorld(modpacks.get(0));
         });
-    }
 
-    public void loadVersion(Profile profile, String id) {
-        this.savesDir = profile.getRepository().getRunDirectory(id).toPath().resolve("saves");
-
-        setLoading(true);
-        Task.ofResult(() -> World.getWorlds(savesDir).parallel().collect(Collectors.toList()))
-                .whenComplete(Schedulers.javafx(), (result, isDependentSucceeded, exception) -> {
-                    setLoading(false);
-                    if (isDependentSucceeded)
-                        itemsProperty().setAll(result.stream().map(WorldListItem::new).collect(Collectors.toList()));
-                }).start();
+        showAll.addListener(e -> {
+            if (worlds != null)
+                itemsProperty().setAll(worlds.stream()
+                        .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
+                        .map(WorldListItem::new).collect(Collectors.toList()));
+        });
     }
 
     @Override
+    protected Skin<?> createDefaultSkin() {
+        return new WorldListPageSkin(this);
+    }
+
+    public void loadVersion(Profile profile, String id) {
+        this.profile = profile;
+        this.id = id;
+        this.savesDir = profile.getRepository().getRunDirectory(id).toPath().resolve("saves");
+        refresh();
+    }
+
+    public void refresh() {
+        if (profile == null || id == null)
+            return;
+
+        setLoading(true);
+        Task
+                .of(() -> gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(id)).orElse(null))
+                .thenSupply(() -> World.getWorlds(savesDir).parallel().collect(Collectors.toList()))
+                .whenComplete(Schedulers.javafx(), (result, isDependentSucceeded, exception) -> {
+                    worlds = result;
+                    setLoading(false);
+                    if (isDependentSucceeded)
+                        itemsProperty().setAll(result.stream()
+                                .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
+                                .map(WorldListItem::new).collect(Collectors.toList()));
+                }).start();
+    }
+
     public void add() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("world.import.choose"));
@@ -90,5 +131,41 @@ public class WorldListPage extends ListPage<WorldListItem> {
                     Logging.LOG.log(Level.WARNING, "Unable to parse world file " + zipFile, e);
                     Controllers.dialog(i18n("world.import.invalid"));
                 }).start();
+    }
+
+    public boolean isShowAll() {
+        return showAll.get();
+    }
+
+    public BooleanProperty showAllProperty() {
+        return showAll;
+    }
+
+    public void setShowAll(boolean showAll) {
+        this.showAll.set(showAll);
+    }
+
+    public ObservableList<WorldListItem> getItems() {
+        return items.get();
+    }
+
+    public ListProperty<WorldListItem> itemsProperty() {
+        return items;
+    }
+
+    public void setItems(ObservableList<WorldListItem> items) {
+        this.items.set(items);
+    }
+
+    public boolean isLoading() {
+        return loading.get();
+    }
+
+    public BooleanProperty loadingProperty() {
+        return loading;
+    }
+
+    public void setLoading(boolean loading) {
+        this.loading.set(loading);
     }
 }

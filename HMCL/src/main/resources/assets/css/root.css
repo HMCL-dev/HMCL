@@ -382,6 +382,8 @@
     -fx-pref-height: 42;
     -fx-padding: 2 2 2 2;
     -fx-background-color: -fx-base-check-color;
+    -fx-alignment: CENTER-LEFT;
+    -fx-spacing: 8;
 }
 
 .jfx-tool-bar-second .jfx-rippler {

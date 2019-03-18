@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import javafx.beans.binding.ObjectBinding;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -27,6 +28,13 @@ import javafx.scene.shape.SVGPath;
 
 public final class SVG {
     private SVG() {
+    }
+
+    public static Node wrap(Node node) {
+        StackPane stackPane = new StackPane();
+        stackPane.setPadding(new Insets(0, 5, 0, 2));
+        stackPane.getChildren().setAll(node);
+        return stackPane;
     }
 
     private static Node createSVGPath(String d, ObjectBinding<? extends Paint> fill, double width, double height) {
