@@ -30,9 +30,9 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.ListPage;
 import org.jackhuang.hmcl.ui.download.InstallerWizardProvider;
+import org.jackhuang.hmcl.ui.download.UpdateInstallerWizardProvider;
 
 import java.util.LinkedList;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -42,37 +42,50 @@ public class InstallerListPage extends ListPage<InstallerItem> {
     private Profile profile;
     private String versionId;
     private Version version;
+    private String gameVersion;
 
     public void loadVersion(Profile profile, String versionId) {
         this.profile = profile;
         this.versionId = versionId;
         this.version = profile.getRepository().getResolvedVersion(versionId);
+        this.gameVersion = null;
 
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
+        Task.ofResult(() -> {
+            gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)).orElse(null);
 
-        Function<Library, Consumer<InstallerItem>> removeAction = library -> x -> {
-            LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
-            newList.remove(library);
-            new MaintainTask(version.setLibraries(newList))
-                    .then(maintainedVersion -> new VersionJsonSaveTask(profile.getRepository(), maintainedVersion))
-                    .with(profile.getRepository().refreshVersionsAsync())
-                    .with(Task.of(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId)))
-                    .start();
-        };
+            return LibraryAnalyzer.analyze(version);
+        }).thenAccept(Schedulers.javafx(), analyzer -> {
+            Function<Library, Consumer<InstallerItem>> removeAction = library -> x -> {
+                LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
+                newList.remove(library);
+                new MaintainTask(version.setLibraries(newList))
+                        .then(maintainedVersion -> new VersionJsonSaveTask(profile.getRepository(), maintainedVersion))
+                        .with(profile.getRepository().refreshVersionsAsync())
+                        .with(Task.of(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId)))
+                        .start();
+            };
 
-        itemsProperty().clear();
-        analyzer.getForge().ifPresent(library -> itemsProperty().add(new InstallerItem("Forge", library.getVersion(), removeAction.apply(library))));
-        analyzer.getLiteLoader().ifPresent(library -> itemsProperty().add(new InstallerItem("LiteLoader", library.getVersion(), removeAction.apply(library))));
-        analyzer.getOptiFine().ifPresent(library -> itemsProperty().add(new InstallerItem("OptiFine", library.getVersion(), removeAction.apply(library))));
+            itemsProperty().clear();
+            analyzer.getForge().ifPresent(library -> itemsProperty().add(
+                    new InstallerItem("Forge", library.getVersion(), () -> {
+                        Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "forge", library));
+                    }, removeAction.apply(library))));
+            analyzer.getLiteLoader().ifPresent(library -> itemsProperty().add(
+                    new InstallerItem("LiteLoader", library.getVersion(), () -> {
+                        Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "liteloader", library));
+                    }, removeAction.apply(library))));
+            analyzer.getOptiFine().ifPresent(library -> itemsProperty().add(
+                    new InstallerItem("OptiFine", library.getVersion(), () -> {
+                        Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "optifine", library));
+                    }, removeAction.apply(library))));
+        }).start();
     }
 
     @Override
     public void add() {
-        Optional<String> gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version));
-
-        if (!gameVersion.isPresent())
+        if (gameVersion == null)
             Controllers.dialog(i18n("version.cannot_read"));
         else
-            Controllers.getDecorator().startWizard(new InstallerWizardProvider(profile, gameVersion.get(), version));
+            Controllers.getDecorator().startWizard(new InstallerWizardProvider(profile, gameVersion, version));
     }
 }

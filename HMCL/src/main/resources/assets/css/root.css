@@ -995,7 +995,8 @@
 }
 
 .jfx-decorator-title {
-    -fx-text-fill: -fx-base-text-fill; -fx-font-size: 15;
+    -fx-text-fill: -fx-base-text-fill;
+    -fx-font-size: 15;
 }
 
 .resize-border {

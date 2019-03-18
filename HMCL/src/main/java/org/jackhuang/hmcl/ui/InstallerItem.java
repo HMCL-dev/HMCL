@@ -17,10 +17,13 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.controls.JFXButton;
 import com.jfoenix.effects.JFXDepthManager;
-import javafx.fxml.FXML;
-import javafx.scene.control.Label;
+import javafx.geometry.Pos;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
 import java.util.function.Consumer;
 
@@ -30,26 +33,37 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  * @author huangyuhui
  */
 public class InstallerItem extends BorderPane {
-    private final Consumer<InstallerItem> deleteCallback;
 
-    @FXML
-    private Label lblInstallerArtifact;
-
-    @FXML
-    private Label lblInstallerVersion;
-
-    public InstallerItem(String artifact, String version, Consumer<InstallerItem> deleteCallback) {
-        this.deleteCallback = deleteCallback;
-        FXUtils.loadFXML(this, "/assets/fxml/version/installer-item.fxml");
-
+    public InstallerItem(String artifact, String version, Runnable upgrade, Consumer<InstallerItem> deleteCallback) {
+        getStyleClass().add("two-line-list-item");
         setStyle("-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;");
         JFXDepthManager.setDepth(this, 1);
-        lblInstallerArtifact.setText(artifact);
-        lblInstallerVersion.setText(i18n("archive.version") + ": " + version);
+
+        {
+            TwoLineListItem item = new TwoLineListItem();
+            item.setTitle(artifact);
+            item.setSubtitle(i18n("archive.version") + ": " + version);
+            setCenter(item);
+        }
+
+        {
+            HBox hBox = new HBox();
+
+            JFXButton upgradeButton = new JFXButton();
+            upgradeButton.setGraphic(SVG.update(Theme.blackFillBinding(), -1, -1));
+            upgradeButton.getStyleClass().add("toggle-icon4");
+            FXUtils.installFastTooltip(upgradeButton, i18n("install.change_version"));
+            upgradeButton.setOnMouseClicked(e -> upgrade.run());
+
+            JFXButton deleteButton = new JFXButton();
+            deleteButton.setGraphic(SVG.close(Theme.blackFillBinding(), -1, -1));
+            deleteButton.getStyleClass().add("toggle-icon4");
+            deleteButton.setOnMouseClicked(e -> deleteCallback.accept(this));
+
+            hBox.setAlignment(Pos.CENTER_RIGHT);
+            hBox.getChildren().setAll(upgradeButton, deleteButton);
+            setRight(hBox);
+        }
     }
 
-    @FXML
-    private void onDelete() {
-        deleteCallback.accept(this);
-    }
 }
