@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.utils.JFXUtilities;
 import com.jfoenix.controls.JFXTabPane;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ListProperty;
@@ -47,6 +46,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModListPage extends Control {
@@ -87,7 +87,7 @@ public final class ModListPage extends Control {
         this.modManager = modManager;
         Task.ofResult(() -> {
             synchronized (ModListPage.this) {
-                JFXUtilities.runInFX(() -> loadingProperty().set(true));
+                runInFX(() -> loadingProperty().set(true));
                 modManager.refreshMods();
                 return new LinkedList<>(modManager.getMods());
             }

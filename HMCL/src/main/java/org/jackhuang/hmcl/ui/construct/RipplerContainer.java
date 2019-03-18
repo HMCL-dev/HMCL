@@ -75,12 +75,12 @@ public class RipplerContainer extends StackPane {
         focusedProperty().addListener((a, b, newValue) -> {
             if (newValue) {
                 if (!isPressed())
-                    buttonRippler.setOverlayVisible(true);
+                    buttonRippler.showOverlay();
             } else {
-                buttonRippler.setOverlayVisible(false);
+                buttonRippler.hideOverlay();
             }
         });
-        pressedProperty().addListener(o -> buttonRippler.setOverlayVisible(false));
+        pressedProperty().addListener(o -> buttonRippler.hideOverlay());
         setPickOnBounds(false);
 
         buttonContainer.setPickOnBounds(false);

@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl;
 
-import com.jfoenix.utils.JFXUtilities;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
@@ -25,7 +24,9 @@ import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.CrashReporter;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
@@ -39,6 +40,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -97,7 +99,7 @@ public final class Launcher extends Application {
     public static void stopApplication() {
         LOG.info("Stopping application.\n" + StringUtils.getStackTrace(Thread.currentThread().getStackTrace()));
 
-        JFXUtilities.runInFX(() -> {
+        runInFX(() -> {
             if (Controllers.getStage() == null)
                 return;
             Controllers.getStage().close();
@@ -111,7 +113,7 @@ public final class Launcher extends Application {
     public static void stopWithoutPlatform() {
         LOG.info("Stopping application without JavaFX Toolkit.\n" + StringUtils.getStackTrace(Thread.currentThread().getStackTrace()));
 
-        JFXUtilities.runInFX(() -> {
+        runInFX(() -> {
             if (Controllers.getStage() == null)
                 return;
             Controllers.getStage().close();

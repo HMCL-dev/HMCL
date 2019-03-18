@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.utils.JFXUtilities;
 import javafx.application.Platform;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Region;
@@ -43,6 +42,7 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class LeftPaneController extends AdvancedListBox {
@@ -111,7 +111,7 @@ public final class LeftPaneController extends AdvancedListBox {
     private boolean checkedModpack = false;
 
     private void onRefreshedVersions(HMCLGameRepository repository) {
-        JFXUtilities.runInFX(() -> {
+        runInFX(() -> {
             if (!checkedModpack) {
                 checkedModpack = true;
 

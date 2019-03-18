@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.utils.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXProgressBar;
 import javafx.application.Platform;
@@ -33,6 +32,8 @@ import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.Optional;
 import java.util.function.Consumer;
+
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 
 public class TaskExecutorDialogPane extends StackPane {
     private TaskExecutor executor;
@@ -121,6 +122,6 @@ public class TaskExecutorDialogPane extends StackPane {
     public void setCancel(Consumer<Region> onCancel) {
         this.onCancel = onCancel;
 
-        JFXUtilities.runInFX(() -> btnCancel.setDisable(onCancel == null));
+        runInFX(() -> btnCancel.setDisable(onCancel == null));
     }
 }

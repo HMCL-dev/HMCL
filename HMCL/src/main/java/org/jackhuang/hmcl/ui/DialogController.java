@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.utils.JFXUtilities;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
@@ -29,13 +28,15 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+
 public final class DialogController {
 
     public static AuthInfo logIn(Account account) throws CancellationException, AuthenticationException, InterruptedException {
         if (account instanceof YggdrasilAccount) {
             CountDownLatch latch = new CountDownLatch(1);
             AtomicReference<AuthInfo> res = new AtomicReference<>(null);
-            JFXUtilities.runInFX(() -> {
+            runInFX(() -> {
                 AccountLoginPane pane = new AccountLoginPane(account, it -> {
                         res.set(it);
                         latch.countDown();

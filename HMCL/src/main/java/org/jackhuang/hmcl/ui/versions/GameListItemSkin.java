@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.utils.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXRadioButton;
@@ -33,6 +32,7 @@ import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameListItemSkin extends SkinBase<GameListItem> {
@@ -73,7 +73,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             btnUpgrade.setOnMouseClicked(e -> skinnable.update());
             btnUpgrade.getStyleClass().add("toggle-icon4");
             btnUpgrade.setGraphic(SVG.update(Theme.blackFillBinding(), -1, -1));
-            JFXUtilities.runInFX(() -> FXUtils.installFastTooltip(btnUpgrade, i18n("version.update")));
+            runInFX(() -> FXUtils.installFastTooltip(btnUpgrade, i18n("version.update")));
             right.getChildren().add(btnUpgrade);
         }
 

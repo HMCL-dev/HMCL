@@ -17,12 +17,9 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.utils.JFXUtilities;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
-
-import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
@@ -31,16 +28,15 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 
 public class AccountListItemSkin extends SkinBase<AccountListItem> {
 
@@ -92,7 +88,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         btnRefresh.setOnMouseClicked(e -> skinnable.refresh());
         btnRefresh.getStyleClass().add("toggle-icon4");
         btnRefresh.setGraphic(SVG.refresh(Theme.blackFillBinding(), -1, -1));
-        JFXUtilities.runInFX(() -> FXUtils.installFastTooltip(btnRefresh, i18n("button.refresh")));
+        runInFX(() -> FXUtils.installFastTooltip(btnRefresh, i18n("button.refresh")));
         right.getChildren().add(btnRefresh);
 
         JFXButton btnRemove = new JFXButton();
@@ -100,7 +96,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
         btnRemove.setGraphic(SVG.delete(Theme.blackFillBinding(), -1, -1));
-        JFXUtilities.runInFX(() -> FXUtils.installFastTooltip(btnRemove, i18n("button.delete")));
+        runInFX(() -> FXUtils.installFastTooltip(btnRemove, i18n("button.delete")));
         right.getChildren().add(btnRemove);
         root.setRight(right);
 

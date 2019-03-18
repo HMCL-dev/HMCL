@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.utils.JFXUtilities;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -43,6 +42,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameList extends Control implements DecoratorPage {
@@ -55,7 +55,7 @@ public class GameList extends Control implements DecoratorPage {
     public GameList() {
         EventBus.EVENT_BUS.channel(RefreshingVersionsEvent.class).register(event -> {
             if (event.getSource() == Profiles.getSelectedProfile().getRepository())
-                JFXUtilities.runInFX(() -> loading.set(true));
+                runInFX(() -> loading.set(true));
         });
 
         Profiles.registerVersionsListener(this::loadVersions);
@@ -72,7 +72,7 @@ public class GameList extends Control implements DecoratorPage {
                         .thenComparing(a -> VersionNumber.asVersion(a.getId())))
                 .map(version -> new GameListItem(toggleGroup, profile, version.getId()))
                 .collect(Collectors.toList());
-        JFXUtilities.runInFX(() -> {
+        runInFX(() -> {
             if (profile == Profiles.getSelectedProfile()) {
                 loading.set(false);
                 items.setAll(children);

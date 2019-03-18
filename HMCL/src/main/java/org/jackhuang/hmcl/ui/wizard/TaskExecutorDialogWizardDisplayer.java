@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.wizard;
 
-import com.jfoenix.utils.JFXUtilities;
 import javafx.beans.property.StringProperty;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -30,6 +29,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.Map;
 
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplayer {
@@ -59,11 +59,11 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
                 pane.setSubtitle((String) subtitle);
         }
 
-        JFXUtilities.runInFX(() -> {
+        runInFX(() -> {
             TaskExecutor executor = task.executor(new TaskListener() {
                 @Override
                 public void onStop(boolean success, TaskExecutor executor) {
-                    JFXUtilities.runInFX(() -> {
+                    runInFX(() -> {
                         pane.fireEvent(new DialogCloseEvent());
                         if (success) {
                             if (settings.containsKey("success_message") && settings.get("success_message") instanceof String)

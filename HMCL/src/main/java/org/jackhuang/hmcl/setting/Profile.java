@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
-import com.jfoenix.utils.JFXUtilities;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -32,7 +31,7 @@ import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 
 import java.io.File;
@@ -40,6 +39,7 @@ import java.lang.reflect.Type;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 
 /**
  *
@@ -144,7 +144,7 @@ public final class Profile implements Observable {
     }
 
     private void checkSelectedVersion() {
-        JFXUtilities.runInFX(() -> {
+        runInFX(() -> {
             if (!repository.isLoaded()) return;
             String newValue = selectedVersion.get();
             if (!repository.hasVersion(newValue)) {

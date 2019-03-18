@@ -17,9 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.utils.JFXUtilities;
-import com.jfoenix.controls.*;
-
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXPasswordField;
+import com.jfoenix.controls.JFXTextField;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ListProperty;
@@ -53,6 +54,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Objects.requireNonNull;
@@ -293,7 +295,7 @@ public class AddAccountPane extends StackPane {
             } catch (InterruptedException ignore) {
                 throw new NoSelectedCharacterException();
             } finally {
-                JFXUtilities.runInFX(() -> Selector.this.fireEvent(new DialogCloseEvent()));
+                runInFX(() -> Selector.this.fireEvent(new DialogCloseEvent()));
             }
         }
     }

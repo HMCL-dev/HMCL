@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.utils.JFXUtilities;
 import com.jfoenix.controls.*;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
@@ -44,7 +43,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
@@ -73,6 +72,14 @@ import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 public final class FXUtils {
     private FXUtils() {
+    }
+
+    public static void runInFX(Runnable runnable) {
+        if (Platform.isFxApplicationThread()) {
+            runnable.run();
+        } else {
+            Platform.runLater(runnable);
+        }
     }
 
     public static void checkFxUserThread() {
@@ -252,7 +259,7 @@ public final class FXUtils {
     }
 
     public static void installTooltip(Node node, double openDelay, double visibleDelay, double closeDelay, Tooltip tooltip) {
-        JFXUtilities.runInFX(() -> {
+        runInFX(() -> {
             try {
                 // Java 8
                 Class<?> behaviorClass = Class.forName("javafx.scene.control.Tooltip$TooltipBehavior");

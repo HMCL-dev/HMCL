@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.jfoenix.utils.JFXUtilities;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
@@ -36,6 +35,7 @@ import java.util.stream.Collectors;
 import static javafx.collections.FXCollections.observableArrayList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Profiles {
@@ -162,7 +162,7 @@ public final class Profiles {
         });
 
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
-            JFXUtilities.runInFX(() -> {
+            runInFX(() -> {
                 Profile profile = selectedProfile.get();
                 if (profile != null && profile.getRepository() == event.getSource()) {
                     selectedVersion.bind(profile.selectedVersionProperty());
