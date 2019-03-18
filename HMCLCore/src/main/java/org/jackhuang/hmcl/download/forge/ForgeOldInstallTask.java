@@ -42,6 +42,8 @@ public class ForgeOldInstallTask extends TaskResult<Version> {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.installer = installer;
+
+        setSignificance(TaskSignificance.MINOR);
     }
 
     @Override

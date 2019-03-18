@@ -67,6 +67,8 @@ public class ForgeNewInstallTask extends TaskResult<Version> {
         this.gameRepository = dependencyManager.getGameRepository();
         this.version = version;
         this.installer = installer;
+
+        setSignificance(TaskSignificance.MINOR);
     }
 
     private <E extends Exception> String parseLiteral(String literal, Map<String, String> var, ExceptionalFunction<String, String, E> plainConverter) throws E {
