@@ -140,7 +140,7 @@ task makePack(dependsOn: jar) {
 
 task makePackXz(dependsOn: makePack) doLast {
     def packXz = new File(makePack.outputPath.parentFile, makePack.outputPath.name + ".xz")
-    new XZOutputStream(packXz.newOutputStream(), new LZMA2Options(6)).withCloseable { it << makePack.outputPath.bytes }
+    new XZOutputStream(packXz.newOutputStream(), new LZMA2Options(5)).withCloseable { it << makePack.outputPath.bytes }
     createChecksum(packXz)
 }
 
