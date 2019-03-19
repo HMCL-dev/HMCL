@@ -19,11 +19,15 @@ package org.jackhuang.hmcl.ui.versions;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.ObservableList;
+import javafx.scene.control.Skin;
+import javafx.scene.control.TreeItem;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.Datapack;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.ListPage;
+import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -32,15 +36,18 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class DatapackListPage extends ListPage<DatapackListItem> implements DecoratorPage {
+public class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> implements DecoratorPage {
     private final StringProperty title = new SimpleStringProperty();
     private final Path worldDir;
     private final Datapack datapack;
+
+    private final ObservableList<DatapackListPageSkin.DatapackInfoObject> items;
 
     public DatapackListPage(String worldName, Path worldDir) {
         this.worldDir = worldDir;
@@ -50,14 +57,7 @@ public class DatapackListPage extends ListPage<DatapackListItem> implements Deco
         datapack = new Datapack(worldDir.resolve("datapacks"));
         datapack.loadFromDir();
 
-        setItems(MappedObservableList.create(datapack.getInfo(),
-                pack -> new DatapackListItem(pack, item -> {
-                    try {
-                        datapack.deletePack(pack);
-                    } catch (IOException e) {
-                        Logging.LOG.warning("Failed to delete datapack");
-                    }
-                })));
+        setItems(items = MappedObservableList.create(datapack.getInfo(), DatapackListPageSkin.DatapackInfoObject::new));
 
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)), mods -> {
             mods.forEach(it -> {
@@ -69,7 +69,19 @@ public class DatapackListPage extends ListPage<DatapackListItem> implements Deco
                     Logging.LOG.log(Level.WARNING, "Unable to parse datapack file " + it, e);
                 }
             });
-        }, datapack::loadFromDir);
+        }, this::refresh);
+    }
+
+    @Override
+    protected Skin<?> createDefaultSkin() {
+        return new DatapackListPageSkin(this);
+    }
+
+    public void refresh() {
+        setLoading(true);
+        Task.of(datapack::loadFromDir)
+                .with(Task.of(() -> setLoading(false)))
+                .start();
     }
 
     @Override
@@ -77,7 +89,6 @@ public class DatapackListPage extends ListPage<DatapackListItem> implements Deco
         return title;
     }
 
-    @Override
     public void add() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("datapack.choose_datapack"));
@@ -96,5 +107,33 @@ public class DatapackListPage extends ListPage<DatapackListItem> implements Deco
             });
 
         datapack.loadFromDir();
+    }
+
+    void removeSelected(ObservableList<TreeItem<DatapackListPageSkin.DatapackInfoObject>> selectedItems) {
+        selectedItems.stream()
+                .map(TreeItem::getValue)
+                .map(DatapackListPageSkin.DatapackInfoObject::getPackInfo)
+                .forEach(pack -> {
+                    try {
+                        datapack.deletePack(pack);
+                    } catch (IOException e) {
+                        // Fail to remove mods if the game is running or the datapack is absent.
+                        Logging.LOG.warning("Failed to delete datapack " + pack);
+                    }
+                });
+    }
+
+    void enableSelected(ObservableList<TreeItem<DatapackListPageSkin.DatapackInfoObject>> selectedItems) {
+        selectedItems.stream()
+                .map(TreeItem::getValue)
+                .map(DatapackListPageSkin.DatapackInfoObject::getPackInfo)
+                .forEach(info -> info.setActive(true));
+    }
+
+    void disableSelected(ObservableList<TreeItem<DatapackListPageSkin.DatapackInfoObject>> selectedItems) {
+        selectedItems.stream()
+                .map(TreeItem::getValue)
+                .map(DatapackListPageSkin.DatapackInfoObject::getPackInfo)
+                .forEach(info -> info.setActive(false));
     }
 }

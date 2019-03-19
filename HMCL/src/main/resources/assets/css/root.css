@@ -1025,6 +1025,12 @@
 *                                                                              *
 *******************************************************************************/
 
+.no-header .column-header-background {
+    -fx-max-height: 0;
+    -fx-pref-height: 0;
+    -fx-min-height: 0;
+}
+
 .tree-table-view {
     -fx-tree-table-color: rgba(82, 100, 174, 0.4);
     -fx-tree-table-rippler-color: rgba(82, 100, 174, 0.6);
@@ -1075,7 +1081,7 @@
 
 .tree-table-view .tree-table-cell {
     -fx-border-width: 0 0 0 0;
-    -fx-padding: 8 0 8 0;
+    -fx-padding: 0 0 0 0;
     /*-fx-alignment: top-center;*/
 }
 

@@ -27,35 +27,29 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.mod.ModInfo;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.mod.Datapack;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.JFXCheckBoxTreeTableCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import static org.jackhuang.hmcl.ui.FXUtils.setupCellValueFactory;
 import static org.jackhuang.hmcl.ui.FXUtils.wrapMargin;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton;
-import static org.jackhuang.hmcl.util.StringUtils.isNotBlank;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-class ModListPageSkin extends SkinBase<ModListPage> {
+class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
-    ModListPageSkin(ModListPage skinnable) {
+    DatapackListPageSkin(DatapackListPage skinnable) {
         super(skinnable);
 
-        StackPane pane = new StackPane();
-        pane.getStyleClass().addAll("notice-pane", "white-background");
-
         BorderPane root = new BorderPane();
-        JFXTreeTableView<ModInfoObject> tableView = new JFXTreeTableView<>();
+        JFXTreeTableView<DatapackInfoObject> tableView = new JFXTreeTableView<>();
 
         {
             HBox toolbar = new HBox();
@@ -64,7 +58,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             toolbar.setPickOnBounds(false);
 
             toolbar.getChildren().add(createToolbarButton(i18n("button.refresh"), SVG::refresh, skinnable::refresh));
-            toolbar.getChildren().add(createToolbarButton(i18n("mods.add"), SVG::plus, skinnable::add));
+            toolbar.getChildren().add(createToolbarButton(i18n("datapack.add"), SVG::plus, skinnable::add));
             toolbar.getChildren().add(createToolbarButton(i18n("mods.remove"), SVG::delete, () ->
                     skinnable.removeSelected(tableView.getSelectionModel().getSelectedItems())));
             toolbar.getChildren().add(createToolbarButton(i18n("mods.enable"), SVG::check, () ->
@@ -79,21 +73,21 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            tableView.getStyleClass().add("no-header");
+            tableView.getStyleClass().addAll("no-header");
             tableView.setShowRoot(false);
             tableView.setEditable(true);
             tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             tableView.setRoot(new RecursiveTreeItem<>(skinnable.getItems(), RecursiveTreeObject::getChildren));
 
-            JFXTreeTableColumn<ModInfoObject, Boolean> activeColumn = new JFXTreeTableColumn<>();
-            setupCellValueFactory(activeColumn, ModInfoObject::activeProperty);
+            JFXTreeTableColumn<DatapackInfoObject, Boolean> activeColumn = new JFXTreeTableColumn<>();
+            setupCellValueFactory(activeColumn, DatapackInfoObject::activeProperty);
             activeColumn.setCellFactory(c -> new JFXCheckBoxTreeTableCell<>());
             activeColumn.setEditable(true);
             activeColumn.setMaxWidth(40);
             activeColumn.setMinWidth(40);
 
-            JFXTreeTableColumn<ModInfoObject, Node> detailColumn = new JFXTreeTableColumn<>();
-            setupCellValueFactory(detailColumn, ModInfoObject::nodeProperty);
+            JFXTreeTableColumn<DatapackInfoObject, Node> detailColumn = new JFXTreeTableColumn<>();
+            setupCellValueFactory(detailColumn, DatapackInfoObject::nodeProperty);
 
             tableView.getColumns().setAll(activeColumn, detailColumn);
 
@@ -102,33 +96,19 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             root.setCenter(center);
         }
 
-        Label label = new Label(i18n("mods.not_modded"));
-        label.prefWidthProperty().bind(pane.widthProperty().add(-100));
-
-        FXUtils.onChangeAndOperate(skinnable.moddedProperty(), modded -> {
-            if (modded) pane.getChildren().setAll(root);
-            else pane.getChildren().setAll(label);
-        });
-
-        getChildren().setAll(pane);
+        getChildren().setAll(root);
     }
 
-    static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> {
+    static class DatapackInfoObject extends RecursiveTreeObject<DatapackInfoObject> {
         private final BooleanProperty active;
-        private final ModInfo modInfo;
+        private final Datapack.Pack packInfo;
         private final ObjectProperty<Node> node;
 
-        ModInfoObject(ModInfo modInfo) {
-            this.modInfo = modInfo;
-            this.active = modInfo.activeProperty();
-            StringBuilder message = new StringBuilder(modInfo.getName());
-            if (isNotBlank(modInfo.getVersion()))
-                message.append(", ").append(i18n("archive.version")).append(": ").append(modInfo.getVersion());
-            if (isNotBlank(modInfo.getGameVersion()))
-                message.append(", ").append(i18n("archive.game_version")).append(": ").append(modInfo.getGameVersion());
-            if (isNotBlank(modInfo.getAuthors()))
-                message.append(", ").append(i18n("archive.author")).append(": ").append(modInfo.getAuthors());
-            this.node = new SimpleObjectProperty<>(wrapMargin(new TwoLineListItem(modInfo.getFileName(), message.toString()), new Insets(8, 0, 8, 0)));
+        DatapackInfoObject(Datapack.Pack packInfo) {
+            this.packInfo = packInfo;
+            this.active = packInfo.activeProperty();
+            this.node = new SimpleObjectProperty<>(wrapMargin(new TwoLineListItem(packInfo.getId(), StringUtils.parseColorEscapes(packInfo.getDescription())),
+                    new Insets(8, 0, 8, 0)));
         }
 
         BooleanProperty activeProperty() {
@@ -139,8 +119,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             return node;
         }
 
-        ModInfo getModInfo() {
-            return modInfo;
+        Datapack.Pack getPackInfo() {
+            return packInfo;
         }
     }
 }

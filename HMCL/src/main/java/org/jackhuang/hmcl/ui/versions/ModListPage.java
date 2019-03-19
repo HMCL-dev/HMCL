@@ -19,12 +19,8 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXTabPane;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ListProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleListProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.TreeItem;
 import javafx.stage.FileChooser;
@@ -36,6 +32,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -50,9 +47,7 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class ModListPage extends Control {
-    private final ListProperty<ModListPageSkin.ModInfoObject> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
-    private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading", false);
+public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> {
     private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
 
     private JFXTabPane parentTab;
@@ -143,7 +138,7 @@ public final class ModListPage extends Control {
         this.parentTab = parentTab;
     }
 
-    public void removeSelectedMods(ObservableList<TreeItem<ModListPageSkin.ModInfoObject>> selectedItems) {
+    public void removeSelected(ObservableList<TreeItem<ModListPageSkin.ModInfoObject>> selectedItems) {
         try {
             modManager.removeMods(selectedItems.stream()
                     .map(TreeItem::getValue)
@@ -155,42 +150,18 @@ public final class ModListPage extends Control {
         }
     }
 
-    public void enableSelectedMods(ObservableList<TreeItem<ModListPageSkin.ModInfoObject>> selectedItems) {
+    public void enableSelected(ObservableList<TreeItem<ModListPageSkin.ModInfoObject>> selectedItems) {
         selectedItems.stream()
                 .map(TreeItem::getValue)
                 .map(ModListPageSkin.ModInfoObject::getModInfo)
                 .forEach(info -> info.setActive(true));
     }
 
-    public void disableSelectedMods(ObservableList<TreeItem<ModListPageSkin.ModInfoObject>> selectedItems) {
+    public void disableSelected(ObservableList<TreeItem<ModListPageSkin.ModInfoObject>> selectedItems) {
         selectedItems.stream()
                 .map(TreeItem::getValue)
                 .map(ModListPageSkin.ModInfoObject::getModInfo)
                 .forEach(info -> info.setActive(false));
-    }
-
-    public ObservableList<ModListPageSkin.ModInfoObject> getItems() {
-        return items.get();
-    }
-
-    public void setItems(ObservableList<ModListPageSkin.ModInfoObject> items) {
-        this.items.set(items);
-    }
-
-    public ListProperty<ModListPageSkin.ModInfoObject> itemsProperty() {
-        return items;
-    }
-
-    public boolean isLoading() {
-        return loading.get();
-    }
-
-    public void setLoading(boolean loading) {
-        this.loading.set(loading);
-    }
-
-    public BooleanProperty loadingProperty() {
-        return loading;
     }
 
     public boolean isModded() {

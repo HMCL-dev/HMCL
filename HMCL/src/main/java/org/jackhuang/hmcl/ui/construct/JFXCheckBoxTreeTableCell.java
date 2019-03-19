@@ -26,11 +26,12 @@ import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TreeTableCell;
+import javafx.scene.layout.StackPane;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 
 public class JFXCheckBoxTreeTableCell<S,T> extends TreeTableCell<S,T> {
-
+    private final StackPane pane;
     private final CheckBox checkBox;
     private boolean showLabel;
     private ObservableValue<Boolean> booleanProperty;
@@ -49,6 +50,8 @@ public class JFXCheckBoxTreeTableCell<S,T> extends TreeTableCell<S,T> {
             final StringConverter<T> converter) {
         this.getStyleClass().add("check-box-tree-table-cell");
         this.checkBox = new JFXCheckBox();
+        this.pane = new StackPane(checkBox);
+        this.pane.setAlignment(Pos.CENTER);
         setGraphic(null);
         setSelectedStateCallback(getSelectedProperty);
         setConverter(converter);
@@ -101,7 +104,8 @@ public class JFXCheckBoxTreeTableCell<S,T> extends TreeTableCell<S,T> {
             if (showLabel) {
                 setText(c.toString(item));
             }
-            setGraphic(checkBox);
+
+            setGraphic(pane);
 
             if (booleanProperty instanceof BooleanProperty) {
                 checkBox.selectedProperty().unbindBidirectional((BooleanProperty)booleanProperty);

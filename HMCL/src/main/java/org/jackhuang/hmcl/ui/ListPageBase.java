@@ -18,32 +18,38 @@
 package org.jackhuang.hmcl.ui;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ListProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.scene.Node;
-import javafx.scene.control.Skin;
+import javafx.beans.property.SimpleListProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.control.Control;
 
-public abstract class ListPage<T extends Node> extends ListPageBase<T> {
-    private final BooleanProperty refreshable = new SimpleBooleanProperty(this, "refreshable", false);
+public class ListPageBase<T> extends Control {
+    private final ListProperty<T> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
+    private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading", false);
 
-    public abstract void add();
-
-    public void refresh() {
+    public ObservableList<T> getItems() {
+        return items.get();
     }
 
-    @Override
-    protected Skin<?> createDefaultSkin() {
-        return new ListPageSkin(this);
+    public void setItems(ObservableList<T> items) {
+        this.items.set(items);
     }
 
-    public boolean isRefreshable() {
-        return refreshable.get();
+    public ListProperty<T> itemsProperty() {
+        return items;
     }
 
-    public BooleanProperty refreshableProperty() {
-        return refreshable;
+    public boolean isLoading() {
+        return loading.get();
     }
 
-    public void setRefreshable(boolean refreshable) {
-        this.refreshable.set(refreshable);
+    public void setLoading(boolean loading) {
+        this.loading.set(loading);
+    }
+
+    public BooleanProperty loadingProperty() {
+        return loading;
     }
 }

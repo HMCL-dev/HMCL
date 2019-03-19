@@ -17,38 +17,32 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import com.jfoenix.controls.JFXCheckBox;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ListProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleListProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.scene.control.Control;
-import javafx.scene.control.Skin;
+import javafx.scene.Node;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.ListPage;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class WorldListPage extends Control {
-    private final ListProperty<WorldListItem> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
-    private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading", false);
+public class WorldListPage extends ListPageBase<WorldListItem> {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
 
     private Path savesDir;
@@ -71,8 +65,8 @@ public class WorldListPage extends Control {
     }
 
     @Override
-    protected Skin<?> createDefaultSkin() {
-        return new WorldListPageSkin(this);
+    protected ToolbarListPageSkin createDefaultSkin() {
+        return new WorldListPageSkin();
     }
 
     public void loadVersion(Profile profile, String id) {
@@ -145,27 +139,23 @@ public class WorldListPage extends Control {
         this.showAll.set(showAll);
     }
 
-    public ObservableList<WorldListItem> getItems() {
-        return items.get();
-    }
+    private class WorldListPageSkin extends ToolbarListPageSkin<WorldListPage> {
 
-    public ListProperty<WorldListItem> itemsProperty() {
-        return items;
-    }
+        WorldListPageSkin() {
+            super(WorldListPage.this);
+        }
 
-    public void setItems(ObservableList<WorldListItem> items) {
-        this.items.set(items);
-    }
+        @Override
+        protected List<Node> initializeToolbar(WorldListPage skinnable) {
+            JFXCheckBox chkShowAll = new JFXCheckBox();
+            chkShowAll.getStyleClass().add("jfx-tool-bar-checkbox");
+            chkShowAll.textFillProperty().bind(Theme.foregroundFillBinding());
+            chkShowAll.setText(i18n("world.show_all"));
+            chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
 
-    public boolean isLoading() {
-        return loading.get();
-    }
-
-    public BooleanProperty loadingProperty() {
-        return loading;
-    }
-
-    public void setLoading(boolean loading) {
-        this.loading.set(loading);
+            return Arrays.asList(chkShowAll,
+                    createToolbarButton(i18n("button.refresh"), SVG::refresh, skinnable::refresh),
+                    createToolbarButton(i18n("world.add"), SVG::plus, skinnable::add));
+        }
     }
 }

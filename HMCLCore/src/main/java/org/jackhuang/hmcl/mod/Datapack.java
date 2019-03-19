@@ -24,7 +24,8 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -128,7 +129,7 @@ public class Datapack {
                 isMultiple = false;
                 try {
                     PackMcMeta pack = JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class);
-                    info.add(new Pack(path, FileUtils.getNameWithoutExtension(path), pack.getPackInfo().getDescription(), this));
+                    Platform.runLater(() -> info.add(new Pack(path, FileUtils.getNameWithoutExtension(path), pack.getPackInfo().getDescription(), this)));
                 } catch (IOException | JsonParseException e) {
                     Logging.LOG.log(Level.WARNING, "Failed to read datapack " + path, e);
                 }
@@ -192,7 +193,7 @@ public class Datapack {
                 }
             }
 
-        this.info.setAll(info);
+        Platform.runLater(() -> this.info.setAll(info));
     }
 
     public static class Pack {

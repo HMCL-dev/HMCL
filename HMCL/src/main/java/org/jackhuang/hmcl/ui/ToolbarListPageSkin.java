@@ -15,64 +15,42 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.versions;
+package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXScrollPane;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SkinBase;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Theme;
-import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
-import static org.jackhuang.hmcl.ui.SVG.wrap;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import java.util.List;
 
-public class WorldListPageSkin extends SkinBase<WorldListPage> {
+public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>> extends SkinBase<T> {
 
-    public WorldListPageSkin(WorldListPage skinnable) {
+    public ToolbarListPageSkin(T skinnable) {
         super(skinnable);
 
         SpinnerPane spinnerPane = new SpinnerPane();
         spinnerPane.getStyleClass().add("large-spinner-pane");
 
-        BorderPane contentPane = new BorderPane();
+        BorderPane root = new BorderPane();
 
         {
             HBox toolbar = new HBox();
             toolbar.getStyleClass().add("jfx-tool-bar-second");
             JFXDepthManager.setDepth(toolbar, 1);
             toolbar.setPickOnBounds(false);
-
-            JFXCheckBox chkShowAll = new JFXCheckBox();
-            chkShowAll.getStyleClass().add("jfx-tool-bar-checkbox");
-            chkShowAll.textFillProperty().bind(Theme.foregroundFillBinding());
-            chkShowAll.setText(i18n("world.show_all"));
-            chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
-            toolbar.getChildren().add(chkShowAll);
-
-            JFXButton btnRefresh = new JFXButton();
-            btnRefresh.getStyleClass().add("jfx-tool-bar-button");
-            btnRefresh.textFillProperty().bind(Theme.foregroundFillBinding());
-            btnRefresh.setGraphic(wrap(SVG.refresh(Theme.foregroundFillBinding(), -1, -1)));
-            btnRefresh.setText(i18n("button.refresh"));
-            btnRefresh.setOnMouseClicked(e -> skinnable.refresh());
-            toolbar.getChildren().add(btnRefresh);
-
-            JFXButton btnAdd = new JFXButton();
-            btnAdd.getStyleClass().add("jfx-tool-bar-button");
-            btnAdd.textFillProperty().bind(Theme.foregroundFillBinding());
-            btnAdd.setGraphic(wrap(SVG.plus(Theme.foregroundFillBinding(), -1, -1)));
-            btnAdd.setText(i18n("world.add"));
-            btnAdd.setOnMouseClicked(e -> skinnable.add());
-            toolbar.getChildren().add(btnAdd);
-
-            contentPane.setTop(toolbar);
+            toolbar.getChildren().setAll(initializeToolbar(skinnable));
+            root.setTop(toolbar);
         }
 
         {
@@ -88,12 +66,31 @@ public class WorldListPageSkin extends SkinBase<WorldListPage> {
             scrollPane.setContent(content);
             JFXScrollPane.smoothScrolling(scrollPane);
 
-            contentPane.setCenter(scrollPane);
+            root.setCenter(scrollPane);
         }
 
         spinnerPane.loadingProperty().bind(skinnable.loadingProperty());
-        spinnerPane.setContent(contentPane);
+        spinnerPane.setContent(root);
 
         getChildren().setAll(spinnerPane);
     }
+
+    public static Node wrap(Node node) {
+        StackPane stackPane = new StackPane();
+        stackPane.setPadding(new Insets(0, 5, 0, 2));
+        stackPane.getChildren().setAll(node);
+        return stackPane;
+    }
+
+    public static JFXButton createToolbarButton(String text, SVG.SVGIcon creator, Runnable onClick) {
+        JFXButton ret = new JFXButton();
+        ret.getStyleClass().add("jfx-tool-bar-button");
+        ret.textFillProperty().bind(Theme.foregroundFillBinding());
+        ret.setGraphic(wrap(creator.createIcon(Theme.foregroundFillBinding(), -1, -1)));
+        ret.setText(text);
+        ret.setOnMouseClicked(e -> onClick.run());
+        return ret;
+    }
+
+    protected abstract List<Node> initializeToolbar(T skinnable);
 }

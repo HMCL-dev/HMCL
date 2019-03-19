@@ -18,10 +18,9 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import javafx.application.Platform;
-import javafx.beans.property.*;
-import javafx.collections.FXCollections;
-import javafx.scene.control.Control;
-import javafx.scene.control.Skin;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.scene.Node;
 import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
@@ -29,14 +28,14 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.WeakListenerHolder;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.download.VanillaInstallWizardProvider;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -45,17 +44,15 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class GameList extends Control implements DecoratorPage {
+public class GameList extends ListPageBase<GameListItem> implements DecoratorPage {
     private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(I18n.i18n("version.manage"));
-    private final BooleanProperty loading = new SimpleBooleanProperty(true);
-    private final ListProperty<GameListItem> items = new SimpleListProperty<>(FXCollections.observableArrayList());
 
     private ToggleGroup toggleGroup;
 
     public GameList() {
         EventBus.EVENT_BUS.channel(RefreshingVersionsEvent.class).register(event -> {
             if (event.getSource() == Profiles.getSelectedProfile().getRepository())
-                runInFX(() -> loading.set(true));
+                runInFX(() -> setLoading(true));
         });
 
         Profiles.registerVersionsListener(this::loadVersions);
@@ -74,8 +71,8 @@ public class GameList extends Control implements DecoratorPage {
                 .collect(Collectors.toList());
         runInFX(() -> {
             if (profile == Profiles.getSelectedProfile()) {
-                loading.set(false);
-                items.setAll(children);
+                setLoading(false);
+                itemsProperty().setAll(children);
                 children.forEach(GameListItem::checkSelection);
 
                 profile.selectedVersionProperty().addListener(listenerHolder.weak((a, b, newValue) -> {
@@ -97,8 +94,8 @@ public class GameList extends Control implements DecoratorPage {
     }
 
     @Override
-    protected Skin<?> createDefaultSkin() {
-        return new GameListSkin(this);
+    protected GameListSkin createDefaultSkin() {
+        return new GameListSkin();
     }
 
     void addNewGame() {
@@ -128,11 +125,20 @@ public class GameList extends Control implements DecoratorPage {
         return title.getReadOnlyProperty();
     }
 
-    public BooleanProperty loadingProperty() {
-        return loading;
-    }
+    private class GameListSkin extends ToolbarListPageSkin<GameList> {
 
-    public ListProperty<GameListItem> itemsProperty() {
-        return items;
+        public GameListSkin() {
+            super(GameList.this);
+        }
+
+        @Override
+        protected List<Node> initializeToolbar(GameList skinnable) {
+            return Arrays.asList(
+                    createToolbarButton(i18n("install.new_game"), SVG::plus, skinnable::addNewGame),
+                    createToolbarButton(i18n("install.modpack"), SVG::importIcon, skinnable::importModpack),
+                    createToolbarButton(i18n("button.refresh"), SVG::refresh, skinnable::refresh),
+                    createToolbarButton(i18n("settings.type.global.manage"), SVG::gear, skinnable::modifyGlobalGameSettings)
+            );
+        }
     }
 }
