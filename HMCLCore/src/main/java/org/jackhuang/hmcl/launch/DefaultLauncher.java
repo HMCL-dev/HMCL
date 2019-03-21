@@ -217,10 +217,18 @@ public class DefaultLauncher extends Launcher {
 
     public void decompressNatives(File destination) throws NotDecompressingNativesException {
         try {
+            FileUtils.cleanDirectory(destination);
             for (Library library : version.getLibraries())
                 if (library.isNative())
                     new Unzipper(repository.getLibraryFile(version, library), destination)
-                            .setFilter((destFile, isDirectory, zipEntry, path) -> library.getExtract().shouldExtract(path))
+                            .setFilter((zipEntry, isDirectory, destFile, path) -> {
+                                if (!isDirectory && Files.isRegularFile(destFile) && Files.size(destFile) == Files.size(zipEntry))
+                                    return false;
+                                String ext = FileUtils.getExtension(destFile);
+                                if (ext.equals("sha1") || ext.equals("git"))
+                                    return false;
+                                return library.getExtract().shouldExtract(path);
+                            })
                             .setReplaceExistentFile(true).unzip();
         } catch (IOException e) {
             throw new NotDecompressingNativesException(e);
@@ -247,7 +255,7 @@ public class DefaultLauncher extends Launcher {
 
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        File nativeFolder = Files.createTempDirectory("minecraft").toFile();
+        File nativeFolder = repository.getNativeDirectory(versionId);
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = generateCommandLine(nativeFolder).asList();

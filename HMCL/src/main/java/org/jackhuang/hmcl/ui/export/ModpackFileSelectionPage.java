@@ -73,9 +73,9 @@ public final class ModpackFileSelectionPage extends StackPane implements WizardP
         ModAdviser.ModSuggestion state = ModAdviser.ModSuggestion.SUGGESTED;
         if (basePath.length() > "minecraft/".length()) {
             state = adviser.advise(StringUtils.substringAfter(basePath, "minecraft/") + (file.isDirectory() ? "/" : ""), file.isDirectory());
-            if (file.isFile() && Objects.equals(FileUtils.getNameWithoutExtension(file), version))
+            if (file.isFile() && Objects.equals(FileUtils.getNameWithoutExtension(file), version)) // Ignore <version>.json, <version>.jar
                 state = ModAdviser.ModSuggestion.HIDDEN;
-            if (file.isDirectory() && Objects.equals(file.getName(), version + "-natives"))
+            if (file.isDirectory() && Objects.equals(file.getName(), version + "-natives")) // Ignore <version>-natives
                 state = ModAdviser.ModSuggestion.HIDDEN;
             if (state == ModAdviser.ModSuggestion.HIDDEN)
                 return null;

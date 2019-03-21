@@ -128,7 +128,7 @@ public class Unzipper {
                     String relativePath = root.relativize(dir).toString();
                     Path dirToCreate = dest.resolve(relativePath);
                     if (filter != null && !filter.accept(dir, true, dirToCreate, relativePath))
-                        return FileVisitResult.CONTINUE;
+                        return FileVisitResult.SKIP_SUBTREE;
                     if (Files.notExists(dirToCreate)) {
                         Files.createDirectory(dirToCreate);
                     }
@@ -139,6 +139,6 @@ public class Unzipper {
     }
 
     public interface FileFilter {
-        boolean accept(Path destPath, boolean isDirectory, Path zipEntry, String entryPath) throws IOException;
+        boolean accept(Path zipEntry, boolean isDirectory, Path destFile, String entryPath) throws IOException;
     }
 }
