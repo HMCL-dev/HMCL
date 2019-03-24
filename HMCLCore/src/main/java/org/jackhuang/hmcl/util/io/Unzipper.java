@@ -117,8 +117,12 @@ public class Unzipper {
                     Path destFile = dest.resolve(relativePath);
                     if (filter != null && !filter.accept(file, false, destFile, relativePath))
                         return FileVisitResult.CONTINUE;
-                    if (replaceExistentFile || Files.notExists(destFile))
-                        Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
+                    try {
+                        Files.copy(file, destFile, replaceExistentFile ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING} : new CopyOption[]{});
+                    } catch (FileAlreadyExistsException e) {
+                        if (replaceExistentFile)
+                            throw e;
+                    }
                     return FileVisitResult.CONTINUE;
                 }
 
@@ -129,9 +133,7 @@ public class Unzipper {
                     Path dirToCreate = dest.resolve(relativePath);
                     if (filter != null && !filter.accept(dir, true, dirToCreate, relativePath))
                         return FileVisitResult.SKIP_SUBTREE;
-                    if (Files.notExists(dirToCreate)) {
-                        Files.createDirectory(dirToCreate);
-                    }
+                    Files.createDirectories(dirToCreate);
                     return FileVisitResult.CONTINUE;
                 }
             });

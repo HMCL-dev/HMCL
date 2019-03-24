@@ -277,6 +277,15 @@ public final class FileUtils {
             throw exception;
     }
 
+    public static boolean cleanDirectoryQuietly(File directory) {
+        try {
+            cleanDirectory(directory);
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     public static void forceDelete(File file)
             throws IOException {
         if (file.isDirectory()) {
