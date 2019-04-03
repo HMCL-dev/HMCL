@@ -71,6 +71,7 @@ public class RipplerContainer extends StackPane {
         setContainer(container);
 
         getStyleClass().add(DEFAULT_STYLE_CLASS);
+        buttonRippler.setPosition(JFXRippler.RipplerPos.BACK);
         buttonContainer.getChildren().add(buttonRippler);
         focusedProperty().addListener((a, b, newValue) -> {
             if (newValue) {
