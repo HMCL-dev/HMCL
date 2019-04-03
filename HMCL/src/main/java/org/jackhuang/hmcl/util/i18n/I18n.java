@@ -57,4 +57,12 @@ public final class I18n {
         }
     }
 
+    public static boolean hasKey(String key) {
+        try {
+            getResourceBundle().getString(key);
+            return true;
+        } catch (MissingResourceException e) {
+            return false;
+        }
+    }
 }

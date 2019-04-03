@@ -21,10 +21,7 @@ import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.event.FailedEvent;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -233,7 +230,7 @@ public class FileDownloadTask extends Task {
                         repository.removeRemoteEntry(con);
                     }
                 } else if (con.getResponseCode() / 100 != 2) {
-                    throw new IOException("Server error, response code: " + con.getResponseCode());
+                    throw new ResponseCodeException(currentURL, con.getResponseCode());
                 }
 
                 int contentLength = con.getContentLength();

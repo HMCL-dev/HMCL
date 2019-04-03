@@ -34,6 +34,8 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.ResponseCodeException;
 
 import java.net.SocketTimeoutException;
 import java.util.Map;
@@ -128,6 +130,13 @@ public final class InstallerWizardProvider implements WizardProvider {
         } else if (exception instanceof DownloadException) {
             if (exception.getCause() instanceof SocketTimeoutException) {
                 Controllers.dialog(i18n("install.failed.downloading.timeout", ((DownloadException) exception).getUrl()), i18n("install.failed.downloading"), MessageType.ERROR, next);
+            } else if (exception.getCause() instanceof ResponseCodeException) {
+                ResponseCodeException responseCodeException = (ResponseCodeException) exception.getCause();
+                if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
+                    Controllers.dialog(i18n("download.code." + responseCodeException.getResponseCode()) + ", " + ((DownloadException) exception).getUrl() + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageType.ERROR, next);
+                } else {
+                    Controllers.dialog(i18n("install.failed.downloading.detail", ((DownloadException) exception).getUrl()) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageType.ERROR, next);
+                }
             } else {
                 Controllers.dialog(i18n("install.failed.downloading.detail", ((DownloadException) exception).getUrl()) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageType.ERROR, next);
             }
