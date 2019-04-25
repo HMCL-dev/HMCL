@@ -137,8 +137,12 @@ public final class TexturesLoader {
     // ==== Skins ====
     private final static Map<TextureModel, LoadedTexture> DEFAULT_SKINS = new EnumMap<>(TextureModel.class);
     static {
-        loadDefaultSkin("/assets/img/steve.png", TextureModel.STEVE);
-        loadDefaultSkin("/assets/img/alex.png", TextureModel.ALEX);
+        try {
+            loadDefaultSkin("/assets/img/steve.png", TextureModel.STEVE);
+            loadDefaultSkin("/assets/img/alex.png", TextureModel.ALEX);
+        } catch (UncheckedIOException e) {
+            throw new NoClassDefFoundError("Steve and alex default skin image is not found");
+        }
     }
     private static void loadDefaultSkin(String path, TextureModel model) {
         try (InputStream in = TexturesLoader.class.getResourceAsStream(path)) {
