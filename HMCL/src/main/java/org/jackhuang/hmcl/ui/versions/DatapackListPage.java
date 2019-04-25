@@ -24,6 +24,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.TreeItem;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.Datapack;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -80,7 +81,7 @@ public class DatapackListPage extends ListPageBase<DatapackListPageSkin.Datapack
     public void refresh() {
         setLoading(true);
         Task.of(datapack::loadFromDir)
-                .with(Task.of(() -> setLoading(false)))
+                .with(Task.of(Schedulers.javafx(), () -> setLoading(false)))
                 .start();
     }
 
