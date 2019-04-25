@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import javafx.application.Platform;
+import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
@@ -398,7 +399,10 @@ public final class LauncherHelper {
     private void checkExit() {
         switch (launcherVisibility) {
             case HIDE_AND_REOPEN:
-                Platform.runLater(Controllers.getStage()::show);
+                Platform.runLater(() -> {
+                    Optional.ofNullable(Controllers.getStage())
+                            .ifPresent(Stage::show);
+                });
                 break;
             case KEEP:
                 // No operations here
