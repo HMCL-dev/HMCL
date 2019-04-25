@@ -70,6 +70,10 @@ public final class IntegrityChecker {
             for (ZipEntry entry : zip.stream().toArray(ZipEntry[]::new)) {
                 String filename = entry.getName();
                 try (InputStream in = zip.getInputStream(entry)) {
+                    if (in == null) {
+                        throw new IOException("entry is null");
+                    }
+
                     if (SIGNATURE_FILE.equals(filename)) {
                         signature = IOUtils.readFullyAsByteArray(in);
                     } else {
