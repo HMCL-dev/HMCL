@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.w3c.dom.Document;
@@ -174,7 +175,7 @@ public final class LogWindow extends Stage {
             FXUtils.loadFXML(this, "/assets/fxml/log.fxml");
 
             engine = webView.getEngine();
-            engine.loadContent(Lang.ignoringException(() -> IOUtils.readFullyAsString(getClass().getResourceAsStream("/assets/log-window-content.html")))
+            engine.loadContent(Lang.ignoringException(() -> IOUtils.readFullyAsString(ResourceNotFoundError.getResourceAsStream("/assets/log-window-content.html")))
                     .replace("${FONT}", config().getFontSize() + "px \"" + config().getFontFamily() + "\""));
             engine.getLoadWorker().stateProperty().addListener((a, b, newValue) -> {
                 if (newValue == Worker.State.SUCCEEDED) {

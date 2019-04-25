@@ -25,6 +25,7 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
 
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
@@ -81,7 +82,7 @@ public class Theme {
         String css;
         try {
             File temp = File.createTempFile("hmcl", ".css");
-            FileUtils.writeText(temp, IOUtils.readFullyAsString(Theme.class.getResourceAsStream("/assets/css/custom.css"))
+            FileUtils.writeText(temp, IOUtils.readFullyAsString(ResourceNotFoundError.getResourceAsStream("/assets/css/custom.css"))
                     .replace("%base-color%", color)
                     .replace("%font-color%", getColorDisplayName(getForegroundColor())));
             css = temp.toURI().toString();
