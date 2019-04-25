@@ -87,7 +87,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         right.getChildren().add(btnManage);
         root.setRight(right);
 
-        root.setStyle("-fx-background-color: white; -fx-padding: 8 8 8 12;");
+        root.setStyle("-fx-background-color: white; -fx-padding: 8 8 8 0;");
         JFXDepthManager.setDepth(root, 1);
 
         getChildren().setAll(root);
