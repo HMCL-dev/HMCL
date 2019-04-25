@@ -15,25 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui;
+package org.jackhuang.hmcl.util;
 
-import javafx.scene.Scene;
-import javafx.scene.web.WebView;
-import javafx.stage.Stage;
-
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
-
-public class WebStage extends Stage {
-    private final WebView webView = new WebView();
-
-    public WebStage() {
-        setScene(new Scene(webView, 800, 480));
-        getScene().getStylesheets().addAll(config().getTheme().getStylesheets());
-        getIcons().add(newImage("/assets/img/icon.png"));
+/**
+ * Suppress the throwable when we make sure the resource cannot miss.
+ * @see CrashReporter
+ */
+public class ResourceNotFoundError extends Error {
+    public ResourceNotFoundError(String message) {
+        super(message);
     }
 
-    public WebView getWebView() {
-        return webView;
+    public ResourceNotFoundError(String message, Throwable cause) {
+        super(message, cause);
     }
 }

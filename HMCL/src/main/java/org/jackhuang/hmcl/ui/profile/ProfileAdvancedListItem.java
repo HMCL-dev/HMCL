@@ -19,12 +19,13 @@ package org.jackhuang.hmcl.ui.profile;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.scene.image.Image;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
+
+import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 
 public class ProfileAdvancedListItem extends AdvancedListItem {
     private ObjectProperty<Profile> profile = new SimpleObjectProperty<Profile>() {
@@ -41,7 +42,7 @@ public class ProfileAdvancedListItem extends AdvancedListItem {
     };
 
     public ProfileAdvancedListItem() {
-        setImage(new Image("/assets/img/craft_table.png"));
+        setImage(newImage("/assets/img/craft_table.png"));
         setRightGraphic(SVG.viewList(Theme.blackFillBinding(), -1, -1));
     }
 

@@ -34,6 +34,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
@@ -45,6 +46,7 @@ import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
@@ -481,6 +483,21 @@ public final class FXUtils {
             }
 
             return reference.get();
+        }
+    }
+
+    /**
+     * Suppress IllegalArgumentException since the url is supposed to be correct definitely.
+     * @param url the url of image. The image resource should be a file within the jar.
+     * @return the image resource within the jar.
+     * @see org.jackhuang.hmcl.util.CrashReporter
+     * @see ResourceNotFoundError
+     */
+    public static Image newImage(String url) {
+        try {
+            return new Image(url);
+        } catch (IllegalArgumentException e) {
+            throw new ResourceNotFoundError("Cannot access image: " + url, e);
         }
     }
 

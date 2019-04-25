@@ -17,13 +17,21 @@
  */
 package org.jackhuang.hmcl.game;
 
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.singletonMap;
-import static java.util.Objects.requireNonNull;
-import static org.jackhuang.hmcl.util.Lang.threadPool;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.image.Image;
+import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
+import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.util.ResourceNotFoundError;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
-import java.awt.Graphics2D;
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,24 +48,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
-import javax.imageio.ImageIO;
-
-import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
-import org.jackhuang.hmcl.auth.yggdrasil.Texture;
-import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
-import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
-import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.javafx.BindingMapping;
-
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ObjectBinding;
-import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.image.Image;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonMap;
+import static java.util.Objects.requireNonNull;
+import static org.jackhuang.hmcl.util.Lang.threadPool;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 /**
  * @author yushijinhun
@@ -141,7 +136,7 @@ public final class TexturesLoader {
             loadDefaultSkin("/assets/img/steve.png", TextureModel.STEVE);
             loadDefaultSkin("/assets/img/alex.png", TextureModel.ALEX);
         } catch (UncheckedIOException e) {
-            throw new NoClassDefFoundError("Steve and alex default skin image is not found");
+            throw new ResourceNotFoundError("Steve and alex default skin image is not found");
         }
     }
     private static void loadDefaultSkin(String path, TextureModel model) {

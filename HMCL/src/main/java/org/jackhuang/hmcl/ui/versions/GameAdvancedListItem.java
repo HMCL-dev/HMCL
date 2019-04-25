@@ -17,13 +17,13 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.scene.image.Image;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 
+import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameAdvancedListItem extends AdvancedListItem {
@@ -38,7 +38,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
             } else {
                 setTitle(i18n("version.empty"));
                 setSubtitle(i18n("version.empty.add"));
-                setImage(new Image("/assets/img/grass.png"));
+                setImage(newImage("/assets/img/grass.png"));
             }
         });
 

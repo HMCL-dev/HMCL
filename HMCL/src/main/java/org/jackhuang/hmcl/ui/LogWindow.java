@@ -25,7 +25,6 @@ import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
@@ -44,6 +43,7 @@ import org.w3c.dom.Node;
 import java.util.concurrent.CountDownLatch;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
@@ -65,7 +65,7 @@ public final class LogWindow extends Stage {
         setScene(new Scene(impl, 800, 480));
         getScene().getStylesheets().addAll(config().getTheme().getStylesheets());
         setTitle(i18n("logwindow.title"));
-        getIcons().add(new Image("/assets/img/icon.png"));
+        getIcons().add(newImage("/assets/img/icon.png"));
     }
 
     public LogWindow(String text) {

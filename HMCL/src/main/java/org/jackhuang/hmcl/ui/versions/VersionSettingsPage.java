@@ -34,11 +34,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.setting.EnumGameDirectory;
-import org.jackhuang.hmcl.setting.LauncherVisibility;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -61,6 +57,7 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -316,7 +313,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
     private void loadIcon() {
         if (versionId == null) {
-            iconPickerItem.setImage(new Image("/assets/img/grass.png"));
+            iconPickerItem.setImage(newImage("/assets/img/grass.png"));
             return;
         }
 
@@ -324,7 +321,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         if (iconFile.exists())
             iconPickerItem.setImage(new Image("file:" + iconFile.getAbsolutePath()));
         else
-            iconPickerItem.setImage(new Image("/assets/img/grass.png"));
+            iconPickerItem.setImage(newImage("/assets/img/grass.png"));
         FXUtils.limitSize(iconPickerItem.getImageView(), 32, 32);
     }
 

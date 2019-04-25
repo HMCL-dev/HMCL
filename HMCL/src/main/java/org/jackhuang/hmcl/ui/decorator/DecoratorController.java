@@ -45,7 +45,10 @@ import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AddAuthlibInjectorServerPane;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.DialogAware;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
+import org.jackhuang.hmcl.ui.construct.Navigator;
+import org.jackhuang.hmcl.ui.construct.StackContainerPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 
@@ -61,6 +64,7 @@ import java.util.logging.Level;
 
 import static java.util.stream.Collectors.toList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class DecoratorController {
@@ -92,7 +96,7 @@ public class DecoratorController {
         decorator.onRefreshNavButtonActionProperty().set(e -> refresh());
 
         welcomeView = new ImageView();
-        welcomeView.setImage(new Image("/assets/img/welcome.png"));
+        welcomeView.setImage(newImage("/assets/img/welcome.png"));
         welcomeView.setCursor(Cursor.HAND);
         FXUtils.limitSize(welcomeView, 796, 517);
         welcomeView.setOnMouseClicked(e -> {
@@ -152,7 +156,7 @@ public class DecoratorController {
                         config().backgroundImageProperty()));
     }
 
-    private Image defaultBackground = new Image("/assets/img/background.jpg");
+    private Image defaultBackground = newImage("/assets/img/background.jpg");
 
     /**
      * Load background image from bg/, background.png, background.jpg

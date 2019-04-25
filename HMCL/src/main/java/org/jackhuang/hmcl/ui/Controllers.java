@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui;
 
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.image.Image;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
@@ -60,6 +59,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -213,7 +213,7 @@ public final class Controllers {
         scene = new Scene(decorator.getDecorator(), 800, 519);
         scene.getStylesheets().setAll(config().getTheme().getStylesheets());
 
-        stage.getIcons().add(new Image("/assets/img/icon.png"));
+        stage.getIcons().add(newImage("/assets/img/icon.png"));
         stage.setTitle(Metadata.TITLE);
     }
 

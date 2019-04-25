@@ -22,7 +22,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
-import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -30,6 +29,7 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 
+import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
@@ -67,7 +67,7 @@ public class CrashWindow extends Stage {
 
         Scene scene = new Scene(pane, 800, 480);
         setScene(scene);
-        getIcons().add(new Image("/assets/img/icon.png"));
+        getIcons().add(newImage("/assets/img/icon.png"));
         setTitle(i18n("message.error"));
 
         setOnCloseRequest(e -> System.exit(1));

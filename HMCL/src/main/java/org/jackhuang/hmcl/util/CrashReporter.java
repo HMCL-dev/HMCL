@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.util;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.CrashWindow;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
@@ -52,6 +51,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             put("Location is not set", i18n("crash.NoClassDefFound"));
             put("UnsatisfiedLinkError", i18n("crash.user_fault"));
             put("java.lang.NoClassDefFoundError", i18n("crash.NoClassDefFound"));
+            put("org.jackhuang.hmcl.util.ResourceNotFoundError", i18n("crash.NoClassDefFound"));
             put("java.lang.VerifyError", i18n("crash.NoClassDefFound"));
             put("java.lang.NoSuchMethodError", i18n("crash.NoClassDefFound"));
             put("java.lang.NoSuchFieldError", i18n("crash.NoClassDefFound"));
