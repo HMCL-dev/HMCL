@@ -26,6 +26,9 @@ public interface WizardProvider {
     Object finish(Map<String, Object> settings);
     Node createPage(WizardController controller, int step, Map<String, Object> settings);
     boolean cancel();
+    default boolean cancelIfCannotGoBack() {
+        return false;
+    }
 
     interface FailureCallback {
         void onFail(Map<String, Object> settings, Exception exception, Runnable next);

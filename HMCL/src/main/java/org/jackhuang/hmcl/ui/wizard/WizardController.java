@@ -83,7 +83,12 @@ public class WizardController implements Navigation {
     @Override
     public void onPrev(boolean cleanUp) {
         if (!canPrev()) {
-            throw new IllegalStateException("Cannot go backward since this is the back page. Pages: " + pages);
+            if (provider.cancelIfCannotGoBack()) {
+                onCancel();
+                return;
+            } else {
+                throw new IllegalStateException("Cannot go backward since this is the back page. Pages: " + pages);
+            }
         }
 
         Node page = pages.pop();
