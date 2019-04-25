@@ -166,25 +166,29 @@ public class DefaultGameRepository implements GameRepository {
         if (!file.renameTo(removedFile))
             return false;
 
-        versions.remove(id);
-
-        if (FileUtils.isMovingToTrashSupported() && FileUtils.moveToTrash(removedFile)) {
-            return true;
-        }
-
-        // remove json files first to ensure HMCL will not recognize this folder as a valid version.
-        List<File> jsons = FileUtils.listFilesByExtension(removedFile, "json");
-        jsons.forEach(f -> {
-            if (!f.delete())
-                LOG.warning("Unable to delete file " + f);
-        });
-        // remove the version from version list regardless of whether the directory was removed successfully or not.
         try {
-            FileUtils.deleteDirectory(removedFile);
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "Unable to remove version folder: " + file, e);
+            versions.remove(id);
+
+            if (FileUtils.isMovingToTrashSupported() && FileUtils.moveToTrash(removedFile)) {
+                return true;
+            }
+
+            // remove json files first to ensure HMCL will not recognize this folder as a valid version.
+            List<File> jsons = FileUtils.listFilesByExtension(removedFile, "json");
+            jsons.forEach(f -> {
+                if (!f.delete())
+                    LOG.warning("Unable to delete file " + f);
+            });
+            // remove the version from version list regardless of whether the directory was removed successfully or not.
+            try {
+                FileUtils.deleteDirectory(removedFile);
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Unable to remove version folder: " + file, e);
+            }
+            return true;
+        } finally {
+            refreshVersionsAsync().start();
         }
-        return true;
     }
 
     protected void refreshVersionsImpl() {

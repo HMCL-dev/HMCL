@@ -50,9 +50,7 @@ public class Versions {
                 isMovingToTrashSupported ? i18n("version.manage.remove.confirm.trash", version, version + "_removed") :
                         i18n("version.manage.remove.confirm", version);
         Controllers.confirmDialog(message, i18n("message.confirm"), () -> {
-            if (profile.getRepository().removeVersionFromDisk(version)) {
-                profile.getRepository().refreshVersionsAsync().start();
-            }
+            profile.getRepository().removeVersionFromDisk(version);
         }, null);
     }
 
