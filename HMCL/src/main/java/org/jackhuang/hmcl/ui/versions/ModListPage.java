@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -142,6 +143,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         try {
             modManager.removeMods(selectedItems.stream()
                     .map(TreeItem::getValue)
+                    .filter(Objects::nonNull)
                     .map(ModListPageSkin.ModInfoObject::getModInfo)
                     .toArray(ModInfo[]::new));
             loadMods(modManager);
