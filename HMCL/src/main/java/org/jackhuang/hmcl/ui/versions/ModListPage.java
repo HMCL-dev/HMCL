@@ -80,7 +80,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
     public void loadVersion(Profile profile, String id) {
         libraryAnalyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedVersion(id));
-        modded.set(libraryAnalyzer.hasForge() || libraryAnalyzer.hasLiteLoader());
+        modded.set(libraryAnalyzer.hasModLoader());
         loadMods(profile.getRepository().getModManager(id));
     }
 

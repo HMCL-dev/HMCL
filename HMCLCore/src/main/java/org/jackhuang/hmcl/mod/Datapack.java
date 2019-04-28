@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.mod;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.annotations.SerializedName;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -27,7 +26,6 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
@@ -254,54 +252,6 @@ public class Datapack {
         }
     }
 
-    private static class PackMcMeta implements Validation {
-
-        @SerializedName("pack")
-        private final PackInfo pack;
-
-        public PackMcMeta() {
-            this(new PackInfo());
-        }
-
-        public PackMcMeta(PackInfo packInfo) {
-            this.pack = packInfo;
-        }
-
-        public PackInfo getPackInfo() {
-            return pack;
-        }
-
-        @Override
-        public void validate() throws JsonParseException {
-            if (pack == null)
-                throw new JsonParseException("pack cannot be null");
-        }
-
-        public static class PackInfo {
-            @SerializedName("pack_format")
-            private final int packFormat;
-
-            @SerializedName("description")
-            private final String description;
-
-            public PackInfo() {
-                this(0, "");
-            }
-
-            public PackInfo(int packFormat, String description) {
-                this.packFormat = packFormat;
-                this.description = description;
-            }
-
-            public int getPackFormat() {
-                return packFormat;
-            }
-
-            public String getDescription() {
-                return description;
-            }
-        }
-    }
 
     private static final String DISABLED_EXT = "disabled";
 }

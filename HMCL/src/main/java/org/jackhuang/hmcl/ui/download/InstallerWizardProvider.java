@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import java.net.SocketTimeoutException;
 import java.util.Map;
 
+import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class InstallerWizardProvider implements WizardProvider {
@@ -56,9 +57,9 @@ public final class InstallerWizardProvider implements WizardProvider {
         this.version = version;
 
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
-        forge = analyzer.getForge().map(Library::getVersion).orElse(null);
-        liteLoader = analyzer.getLiteLoader().map(Library::getVersion).orElse(null);
-        optiFine = analyzer.getOptiFine().map(Library::getVersion).orElse(null);
+        forge = analyzer.get(FORGE).map(Library::getVersion).orElse(null);
+        liteLoader = analyzer.get(LITELOADER).map(Library::getVersion).orElse(null);
+        optiFine = analyzer.get(OPTIFINE).map(Library::getVersion).orElse(null);
     }
 
     public Profile getProfile() {

@@ -64,7 +64,12 @@ public final class ModManager {
                 }
 
                 try {
-                    return RiftModMetadata.fromFile(this, modFile);
+                    return FabricModMetadata.fromFile(this, modFile);
+                } catch (Exception ignore) {
+                }
+
+                try {
+                    return PackMcMeta.fromFile(this, modFile);
                 } catch (Exception ignore) {
                 }
 

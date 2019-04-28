@@ -36,6 +36,7 @@ import java.util.LinkedList;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class InstallerListPage extends ListPage<InstallerItem> {
@@ -66,15 +67,15 @@ public class InstallerListPage extends ListPage<InstallerItem> {
             };
 
             itemsProperty().clear();
-            analyzer.getForge().ifPresent(library -> itemsProperty().add(
+            analyzer.get(FORGE).ifPresent(library -> itemsProperty().add(
                     new InstallerItem("Forge", library.getVersion(), () -> {
                         Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "forge", library));
                     }, removeAction.apply(library))));
-            analyzer.getLiteLoader().ifPresent(library -> itemsProperty().add(
+            analyzer.get(LITELOADER).ifPresent(library -> itemsProperty().add(
                     new InstallerItem("LiteLoader", library.getVersion(), () -> {
                         Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "liteloader", library));
                     }, removeAction.apply(library))));
-            analyzer.getOptiFine().ifPresent(library -> itemsProperty().add(
+            analyzer.get(OPTIFINE).ifPresent(library -> itemsProperty().add(
                     new InstallerItem("OptiFine", library.getVersion(), () -> {
                         Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "optifine", library));
                     }, removeAction.apply(library))));
