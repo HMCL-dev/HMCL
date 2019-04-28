@@ -100,6 +100,11 @@ public final class FileUtils {
         return StringUtils.removeSuffix(path.getFileName().toString(), "/", "\\");
     }
 
+    public static String getName(Path path, String candidate) {
+        if (path.getFileName() == null) return candidate;
+        else return getName(path);
+    }
+
     public static String readText(File file) throws IOException {
         return readText(file, UTF_8);
     }

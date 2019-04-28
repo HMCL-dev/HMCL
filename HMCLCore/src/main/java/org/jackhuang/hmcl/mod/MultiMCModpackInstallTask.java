@@ -135,8 +135,7 @@ public final class MultiMCModpackInstallTask extends Task {
         Version version = repository.readVersionJson(name);
 
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(zipFile.toPath())) {
-            Path root = Files.list(fs.getPath("/")).filter(Files::isDirectory).findAny()
-                    .orElseThrow(() -> new IOException("Not a valid MultiMC modpack"));
+            Path root = MultiMCInstanceConfiguration.getRootPath(fs.getPath("/"));
             Path patches = root.resolve("patches");
 
             if (Files.exists(patches))

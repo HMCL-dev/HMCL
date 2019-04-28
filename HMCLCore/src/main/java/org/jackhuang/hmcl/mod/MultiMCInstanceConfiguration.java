@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.mod;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -264,12 +265,23 @@ public final class MultiMCInstanceConfiguration {
         return mmcPack;
     }
 
+    private static boolean testPath(Path root) {
+        return Files.exists(root.resolve("instance.cfg"));
+    }
+
+    public static Path getRootPath(Path root) throws IOException {
+        if (testPath(root)) return root;
+        Path candidate = Files.list(root).filter(Files::isDirectory).findAny()
+                .orElseThrow(() -> new IOException("Not a valid MultiMC modpack"));
+        if (testPath(candidate)) return candidate;
+        throw new IOException("Not a valid MultiMC modpack");
+    }
+
     public static Modpack readMultiMCModpackManifest(Path modpackFile, Charset encoding) throws IOException {
-        MultiMCManifest manifest = MultiMCManifest.readMultiMCModpackManifest(modpackFile, encoding);
         try (FileSystem fs = CompressingUtils.readonly(modpackFile).setEncoding(encoding).build()) {
-            Path root = Files.list(fs.getPath("/")).filter(Files::isDirectory).findAny()
-                    .orElseThrow(() -> new IOException("Not a valid MultiMC modpack"));
-            String name = StringUtils.removeSuffix(root.normalize().getFileName().toString(), "/");
+            Path root = getRootPath(fs.getPath("/"));
+            MultiMCManifest manifest = MultiMCManifest.readMultiMCModpackManifest(root);
+            String name = FileUtils.getName(root, FileUtils.getNameWithoutExtension(modpackFile));
 
             Path instancePath = root.resolve("instance.cfg");
             if (Files.notExists(instancePath))
