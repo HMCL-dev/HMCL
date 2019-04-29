@@ -69,7 +69,7 @@ public final class LibraryAnalyzer {
         FORGE(true, Pattern.compile("net\\.minecraftforge"), Pattern.compile("forge")),
         LITELOADER(true, Pattern.compile("com\\.mumfrey"), Pattern.compile("liteloader")),
         OPTIFINE(false, Pattern.compile("(net\\.)?optifine"), Pattern.compile(".*")),
-        FABRIC(true, Pattern.compile("net\\.fabricmc"), Pattern.compile(".*"));
+        FABRIC(true, Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-loader"));
 
         private final Pattern group, artifact;
         private final boolean modLoader;

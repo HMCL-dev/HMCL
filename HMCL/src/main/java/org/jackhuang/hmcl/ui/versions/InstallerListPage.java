@@ -79,6 +79,7 @@ public class InstallerListPage extends ListPage<InstallerItem> {
                     new InstallerItem("OptiFine", library.getVersion(), () -> {
                         Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "optifine", library));
                     }, removeAction.apply(library))));
+            analyzer.get(FABRIC).ifPresent(library -> itemsProperty().add(new InstallerItem("Fabric", library.getVersion(), null, null)));
         }).start();
     }
 
