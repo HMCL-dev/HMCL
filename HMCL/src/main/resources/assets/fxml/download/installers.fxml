@@ -19,7 +19,7 @@
                     <graphic>
                         <BorderPane mouseTransparent="true">
                             <left>
-                                <Label fx:id="lblForge">Install Forge</Label>
+                                <Label fx:id="lblForge"/>
                             </left>
                             <right>
                                 <fx:include source="/assets/svg/arrow-right.fxml"/>
@@ -31,7 +31,7 @@
                     <graphic>
                         <BorderPane mouseTransparent="true">
                             <left>
-                                <Label fx:id="lblLiteLoader">Install LiteLoader</Label>
+                                <Label fx:id="lblLiteLoader"/>
                             </left>
                             <right>
                                 <fx:include source="/assets/svg/arrow-right.fxml"/>
@@ -43,7 +43,7 @@
                     <graphic>
                         <BorderPane mouseTransparent="true">
                             <left>
-                                <Label fx:id="lblOptiFine">Install OptiFine</Label>
+                                <Label fx:id="lblOptiFine"/>
                             </left>
                             <right>
                                 <fx:include source="/assets/svg/arrow-right.fxml"/>

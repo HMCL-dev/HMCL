@@ -27,6 +27,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.ListPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
@@ -35,21 +36,14 @@ import static org.jackhuang.hmcl.ui.FXUtils.loadFXML;
 import static org.jackhuang.hmcl.ui.FXUtils.smoothScrolling;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class AuthlibInjectorServersPage extends StackPane implements DecoratorPage {
+public class AuthlibInjectorServersPage extends ListPage<AuthlibInjectorServerItem> implements DecoratorPage {
     private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(this, "title", i18n("account.injector.manage.title"));
 
-    @FXML private ScrollPane scrollPane;
-    @FXML private VBox listPane;
-    @FXML private StackPane contentPane;
-
-    private ObservableList<AuthlibInjectorServerItem> serverItems;
+    private final ObservableList<AuthlibInjectorServerItem> serverItems;
 
     public AuthlibInjectorServersPage() {
-        loadFXML(this, "/assets/fxml/authlib-injector-servers.fxml");
-        smoothScrolling(scrollPane);
-
         serverItems = MappedObservableList.create(config().getAuthlibInjectorServers(), this::createServerItem);
-        Bindings.bindContent(listPane.getChildren(), serverItems);
+        Bindings.bindContent(itemsProperty(), serverItems);
     }
 
     private AuthlibInjectorServerItem createServerItem(AuthlibInjectorServer server) {
@@ -57,8 +51,8 @@ public class AuthlibInjectorServersPage extends StackPane implements DecoratorPa
                 item -> config().getAuthlibInjectorServers().remove(item.getServer()));
     }
 
-    @FXML
-    private void onAdd() {
+    @Override
+    public void add() {
         Controllers.dialog(new AddAuthlibInjectorServerPane());
     }
 
