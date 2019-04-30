@@ -21,6 +21,7 @@ import javafx.scene.Node;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.Library;
@@ -143,6 +144,11 @@ public final class InstallerWizardProvider implements WizardProvider {
             }
         } else if (exception instanceof OptiFineInstallTask.UnsupportedOptiFineInstallationException) {
             Controllers.dialog(i18n("install.failed.optifine_conflict"), i18n("install.failed"), MessageType.ERROR, next);
+        } else if (exception instanceof UnsupportedOperationException) {
+            Controllers.dialog(i18n("install.failed.install_online"), i18n("install.failed"), MessageType.ERROR, next);
+        } else if (exception instanceof VersionMismatchException) {
+            VersionMismatchException e = ((VersionMismatchException) exception);
+            Controllers.dialog(i18n("install.failed.version_mismatch", e.getExpect(), e.getActual()), i18n("install.failed"), MessageType.ERROR, next);
         } else {
             Controllers.dialog(StringUtils.getStackTrace(exception), i18n("install.failed"), MessageType.ERROR, next);
         }

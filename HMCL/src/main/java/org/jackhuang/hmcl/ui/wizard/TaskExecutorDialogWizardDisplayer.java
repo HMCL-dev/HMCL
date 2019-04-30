@@ -64,7 +64,6 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
                 @Override
                 public void onStop(boolean success, TaskExecutor executor) {
                     runInFX(() -> {
-                        pane.fireEvent(new DialogCloseEvent());
                         if (success) {
                             if (settings.containsKey("success_message") && settings.get("success_message") instanceof String)
                                 Controllers.dialog((String) settings.get("success_message"), null, MessageType.FINE, () -> onEnd());

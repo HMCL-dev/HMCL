@@ -17,10 +17,13 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
+import org.jackhuang.hmcl.util.gson.TolerableValidationException;
+import org.jackhuang.hmcl.util.gson.Validation;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,7 +32,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Immutable
-public class ForgeNewInstallProfile {
+public class ForgeNewInstallProfile implements Validation {
 
     private final int spec;
     private final String minecraft;
@@ -97,6 +100,8 @@ public class ForgeNewInstallProfile {
 
     /**
      * Data for processors.
+     *
+     * @return a mutable data map for processors.
      */
     public Map<String, String> getData() {
         if (data == null)
@@ -105,7 +110,13 @@ public class ForgeNewInstallProfile {
         return data.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getClient()));
     }
 
-    public static class Processor {
+    @Override
+    public void validate() throws JsonParseException, TolerableValidationException {
+        if (minecraft == null || json == null || path == null)
+            throw new JsonParseException("ForgeNewInstallProfile is malformed");
+    }
+
+    public static class Processor implements Validation {
         private final List<String> sides;
         private final Artifact jar;
         private final List<Artifact> classpath;
@@ -169,6 +180,12 @@ public class ForgeNewInstallProfile {
          */
         public Map<String, String> getOutputs() {
             return outputs == null ? Collections.emptyMap() : outputs;
+        }
+
+        @Override
+        public void validate() throws JsonParseException, TolerableValidationException {
+            if (jar == null)
+                throw new JsonParseException("Processor::jar cannot be null");
         }
     }
 

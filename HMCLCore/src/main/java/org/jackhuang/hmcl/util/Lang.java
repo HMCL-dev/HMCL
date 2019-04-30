@@ -91,6 +91,10 @@ public final class Lang {
         }
     }
 
+    public static <T> T getOrDefault(List<T> a, int index, T defaultValue) {
+        return index < 0 || index >= a.size() ? defaultValue : a.get(index);
+    }
+
     /**
      * Join two collections into one list.
      *
