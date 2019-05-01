@@ -132,6 +132,14 @@ public class ObservableCache<K, V, E extends Exception> {
     }
 
     public ObjectBinding<V> binding(K key) {
+        return binding(key, false);
+    }
+
+    /**
+     * @param quiet if true, calling get() on the returned binding won't toggle a query
+     */
+    public ObjectBinding<V> binding(K key, boolean quiet) {
+        // This method is thread-safe because ObservableHelper supports concurrent modification
         return Bindings.createObjectBinding(() -> {
             V result;
             boolean refresh;
@@ -144,7 +152,7 @@ public class ObservableCache<K, V, E extends Exception> {
                     refresh = invalidated.containsKey(key);
                 }
             }
-            if (refresh) {
+            if (!quiet && refresh) {
                 query(key, executor);
             }
             return result;

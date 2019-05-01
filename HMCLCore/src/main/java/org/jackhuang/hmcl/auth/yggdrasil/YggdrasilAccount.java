@@ -34,6 +34,8 @@ import org.jackhuang.hmcl.auth.NoCharacterException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
+import javafx.beans.binding.ObjectBinding;
+
 public class YggdrasilAccount extends Account {
 
     private final YggdrasilService service;
@@ -48,6 +50,8 @@ public class YggdrasilAccount extends Account {
         this.username = requireNonNull(username);
         this.characterUUID = requireNonNull(session.getSelectedProfile().getId());
         this.session = requireNonNull(session);
+
+        addProfilePropertiesListener();
     }
 
     protected YggdrasilAccount(YggdrasilService service, String username, String password, CharacterSelector selector) throws AuthenticationException {
@@ -73,6 +77,17 @@ public class YggdrasilAccount extends Account {
 
         characterUUID = session.getSelectedProfile().getId();
         authenticated = true;
+
+        addProfilePropertiesListener();
+    }
+
+    private ObjectBinding<Optional<CompleteGameProfile>> profilePropertiesBinding;
+    private void addProfilePropertiesListener() {
+        // binding() is thread-safe
+        // hold the binding so that it won't be garbage-collected
+        profilePropertiesBinding = service.getProfileRepository().binding(characterUUID, true);
+        // and it's safe to add a listener to an ObjectBinding which does not have any listener attached before (maybe tricky)
+        profilePropertiesBinding.addListener((a, b, c) -> this.invalidate());
     }
 
     @Override

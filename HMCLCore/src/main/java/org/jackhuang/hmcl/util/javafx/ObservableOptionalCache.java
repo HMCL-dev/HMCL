@@ -56,6 +56,10 @@ public class ObservableOptionalCache<K, V, E extends Exception> {
         return backed.binding(key);
     }
 
+    public ObjectBinding<Optional<V>> binding(K key, boolean quiet) {
+        return backed.binding(key, quiet);
+    }
+
     public void invalidate(K key) {
         backed.invalidate(key);
     }
