@@ -165,7 +165,13 @@ public class YggdrasilService {
         String encodedTextures = profile.getProperties().get("textures");
 
         if (encodedTextures != null) {
-            TextureResponse texturePayload = fromJson(new String(Base64.getDecoder().decode(encodedTextures), UTF_8), TextureResponse.class);
+            byte[] decodedBinary;
+            try {
+                decodedBinary = Base64.getDecoder().decode(encodedTextures);
+            } catch (IllegalArgumentException e) {
+                throw new ServerResponseMalformedException(e);
+            }
+            TextureResponse texturePayload = fromJson(new String(decodedBinary, UTF_8), TextureResponse.class);
             return Optional.ofNullable(texturePayload.textures);
         } else {
             return Optional.empty();
