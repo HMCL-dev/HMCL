@@ -20,9 +20,11 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
+import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 
@@ -63,7 +65,9 @@ public class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
                     @SuppressWarnings("unchecked")
                     Map<String, String> properties = it;
                     GameProfile selected = session.getSelectedProfile();
-                    service.getProfileRepository().put(selected.getId(), new CompleteGameProfile(selected, properties));
+                    ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository = service.getProfileRepository();
+                    profileRepository.put(selected.getId(), new CompleteGameProfile(selected, properties));
+                    profileRepository.invalidate(selected.getId());
                 });
 
         return new YggdrasilAccount(service, username, session);

@@ -23,8 +23,11 @@ import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
+import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
+
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -70,7 +73,9 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
                     @SuppressWarnings("unchecked")
                     Map<String, String> properties = it;
                     GameProfile selected = session.getSelectedProfile();
-                    server.getYggdrasilService().getProfileRepository().put(selected.getId(), new CompleteGameProfile(selected, properties));
+                    ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository = server.getYggdrasilService().getProfileRepository();
+                    profileRepository.put(selected.getId(), new CompleteGameProfile(selected, properties));
+                    profileRepository.invalidate(selected.getId());
                 });
 
         return new AuthlibInjectorAccount(server, downloader, username, session);
