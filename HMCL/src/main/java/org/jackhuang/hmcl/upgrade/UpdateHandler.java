@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.UpgradeDialog;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -91,41 +92,42 @@ public final class UpdateHandler {
     public static void updateFrom(RemoteVersion version) {
         checkFxUserThread();
 
-        Path downloaded;
-        try {
-            downloaded = Files.createTempFile("hmcl-update-", ".jar");
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to create temp file", e);
-            return;
-        }
+        Controllers.dialog(new UpgradeDialog(() -> {
+            Path downloaded;
+            try {
+                downloaded = Files.createTempFile("hmcl-update-", ".jar");
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to create temp file", e);
+                return;
+            }
 
-        Task task = new HMCLDownloadTask(version, downloaded);
+            Task task = new HMCLDownloadTask(version, downloaded);
 
-        TaskExecutor executor = task.executor();
-        Controllers.taskDialog(executor, i18n("message.downloading"));
-        thread(() -> {
-            boolean success = executor.test();
+            TaskExecutor executor = task.executor();
+            Controllers.taskDialog(executor, i18n("message.downloading"));
+            thread(() -> {
+                boolean success = executor.test();
 
-            if (success) {
-                try {
-                    if (!IntegrityChecker.isSelfVerified()) {
-                        throw new IOException("Current JAR is not verified");
+                if (success) {
+                    try {
+                        if (!IntegrityChecker.isSelfVerified()) {
+                            throw new IOException("Current JAR is not verified");
+                        }
+
+                        requestUpdate(downloaded, getCurrentLocation());
+                        System.exit(0);
+                    } catch (IOException e) {
+                        LOG.log(Level.WARNING, "Failed to update to " + version, e);
+                        Platform.runLater(() -> Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageType.ERROR));
                     }
 
-                    requestUpdate(downloaded, getCurrentLocation());
-                    System.exit(0);
-                } catch (IOException e) {
+                } else {
+                    Throwable e = executor.getLastException();
                     LOG.log(Level.WARNING, "Failed to update to " + version, e);
-                    Platform.runLater(() -> Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageType.ERROR));
-                    return;
+                    Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageType.ERROR));
                 }
-
-            } else {
-                Throwable e = executor.getLastException();
-                LOG.log(Level.WARNING, "Failed to update to " + version, e);
-                Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageType.ERROR));
-            }
-        });
+            });
+        }));
     }
 
     private static void applyUpdate(Path target) throws IOException {

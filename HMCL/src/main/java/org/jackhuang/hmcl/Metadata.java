@@ -35,6 +35,7 @@ public final class Metadata {
     public static final String UPDATE_URL = System.getProperty("hmcl.update_source.override", "https://hmcl.huangyuhui.net/api/update_link");
     public static final String CONTACT_URL = "https://hmcl.huangyuhui.net/contact";
     public static final String HELP_URL = "https://hmcl.huangyuhui.net/help";
+    public static final String CHANGELOG_URL = "https://hmcl.huangyuhui.net/changelog/";
     public static final String PUBLISH_URL = "http://www.mcbbs.net/thread-142335-1-1.html";
 
     public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
