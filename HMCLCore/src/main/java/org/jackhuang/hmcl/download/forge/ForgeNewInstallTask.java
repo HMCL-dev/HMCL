@@ -143,7 +143,7 @@ public class ForgeNewInstallTask extends TaskResult<Version> {
                 data.put(key, parseLiteral(value,
                         Collections.emptyMap(),
                         str -> {
-                            Path dest = temp.resolve(str);
+                            Path dest = Files.createTempFile(temp, null, null);
                             FileUtils.copyFile(fs.getPath(str), dest);
                             return dest.toString();
                         }));
