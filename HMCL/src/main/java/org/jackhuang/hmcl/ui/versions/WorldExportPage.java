@@ -74,6 +74,6 @@ public class WorldExportPage extends WizardSinglePage {
 
     @Override
     protected Object finish() {
-        return Task.of(i18n("world.export.wizard", worldName.get()), () -> world.export(Paths.get(path.get()), worldName.get()));
+        return Task.runAsync(i18n("world.export.wizard", worldName.get()), () -> world.export(Paths.get(path.get()), worldName.get()));
     }
 }

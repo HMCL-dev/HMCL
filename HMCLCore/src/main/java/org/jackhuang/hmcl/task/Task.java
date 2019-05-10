@@ -27,13 +27,17 @@ import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ReflectionHelper;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
+import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 /**
@@ -41,50 +45,65 @@ import java.util.logging.Level;
  *
  * @author huangyuhui
  */
-public abstract class Task {
+public abstract class Task<T> {
 
     private final EventManager<TaskEvent> onDone = new EventManager<>();
-
-    private TaskSignificance significance = TaskSignificance.MAJOR;
 
     /**
      * True if not logging when executing this task.
      */
+    private TaskSignificance significance = TaskSignificance.MAJOR;
+
     public final TaskSignificance getSignificance() {
         return significance;
     }
 
-    public void setSignificance(TaskSignificance significance) {
+    public final void setSignificance(TaskSignificance significance) {
         this.significance = significance;
     }
 
+    // state
     private TaskState state = TaskState.READY;
 
-    public TaskState getState() {
+    public final TaskState getState() {
         return state;
     }
 
-    void setState(TaskState state) {
+    final void setState(TaskState state) {
         this.state = state;
     }
 
-    private Exception lastException;
-
-    public Exception getLastException() {
-        return lastException;
-    }
-
-    void setLastException(Exception e) {
-        lastException = e;
-    }
+    // last exception
+    private Exception exception;
 
     /**
-     * The scheduler that decides how this task runs.
+     * When task has been cancelled, task.exception will be null.
+     *
+     * @return the exception thrown during execution, possibly from dependents or dependencies.
      */
-    public Scheduler getScheduler() {
-        return Schedulers.defaultScheduler();
+    public final Exception getException() {
+        return exception;
     }
 
+    final void setException(Exception e) {
+        exception = e;
+    }
+
+    private Executor executor = Schedulers.defaultScheduler();
+
+    /**
+     * The executor that decides how this task runs.
+     */
+    public final Executor getExecutor() {
+        return executor;
+    }
+
+    public final Task<T> setExecutor(Executor executor) {
+        this.executor = executor;
+        return this;
+    }
+
+    // dependents succeeded
     private boolean dependentsSucceeded = false;
 
     public boolean isDependentsSucceeded() {
@@ -95,6 +114,7 @@ public abstract class Task {
         dependentsSucceeded = true;
     }
 
+    // dependencies succeeded
     private boolean dependenciesSucceeded = false;
 
     public boolean isDependenciesSucceeded() {
@@ -123,17 +143,57 @@ public abstract class Task {
         return true;
     }
 
+    // name
     private String name = getClass().getName();
 
     public String getName() {
         return name;
     }
 
-    public Task setName(String name) {
+    public Task<T> setName(String name) {
         this.name = name;
         return this;
     }
 
+    @Override
+    public String toString() {
+        if (getClass().getName().equals(getName()))
+            return getName();
+        else
+            return getClass().getName() + "[" + getName() + "]";
+    }
+
+    // result
+    private T result;
+    private Consumer<T> resultConsumer;
+
+    /**
+     * Returns the result of this task.
+     *
+     * The result will be generated only if the execution is completed.
+     */
+    public T getResult() {
+        return result;
+    }
+
+    protected void setResult(T result) {
+        this.result = result;
+        if (resultConsumer != null)
+            resultConsumer.accept(result);
+    }
+
+    /**
+     * Sync the result of this task by given action.
+     *
+     * @param action the action to perform when result of this task changed
+     * @return this Task
+     */
+    public Task<T> storeTo(Consumer<T> action) {
+        this.resultConsumer = action;
+        return this;
+    }
+
+    // execution
     public boolean doPreExecute() {
         return false;
     }
@@ -171,7 +231,7 @@ public abstract class Task {
     /**
      * The collection of sub-tasks that should execute **before** this task running.
      */
-    public Collection<? extends Task> getDependents() {
+    public Collection<Task<?>> getDependents() {
         return Collections.emptySet();
     }
 
@@ -179,7 +239,7 @@ public abstract class Task {
      * The collection of sub-tasks that should execute **after** this task running.
      * Will not be executed if execution fails.
      */
-    public Collection<? extends Task> getDependencies() {
+    public Collection<Task<?>> getDependencies() {
         return Collections.emptySet();
     }
 
@@ -232,15 +292,15 @@ public abstract class Task {
         if (getSignificance().shouldLog())
             Logging.LOG.log(Level.FINE, "Executing task: " + getName());
 
-        for (Task task : getDependents())
+        for (Task<?> task : getDependents())
             doSubTask(task);
         execute();
-        for (Task task : getDependencies())
+        for (Task<?> task : getDependencies())
             doSubTask(task);
         onDone.fireEvent(new TaskEvent(this, this, false));
     }
 
-    private void doSubTask(Task task) throws Exception {
+    private void doSubTask(Task<?> task) throws Exception {
         message.bind(task.message);
         progress.bind(task.progress);
         task.run();
@@ -273,61 +333,240 @@ public abstract class Task {
         return executor().test();
     }
 
-    public final Task then(Task b) {
-        return then(convert(b));
-    }
-
-    public final Task then(ExceptionalSupplier<Task, ?> b) {
-        return new CoupleTask(this, b, true);
-    }
-
     /**
-     * Returns a new TaskResult that, when this task completes
-     * normally, is executed using the default Scheduler.
+     * Returns a new Task that, when this task completes
+     * normally, is executed using the default Executor, with this
+     * task's result as the argument to the supplied function.
      *
-     * @param fn the function to use to compute the value of the returned TaskResult
+     * @param fn the function to use to compute the value of the returned Task
      * @param <U> the function's return type
-     * @return the new TaskResult
+     * @return the new Task
      */
-    public final <U> TaskResult<U> thenSupply(Callable<U> fn) {
-        return thenCompose(() -> Task.ofResult(fn));
+    public <U, E extends Exception> Task<U> thenApply(ExceptionalFunction<T, U, E> fn) {
+        return thenApply(Schedulers.defaultScheduler(), fn);
     }
 
     /**
-     * Returns a new TaskResult that, when this task completes
+     * Returns a new Task that, when this task completes
+     * normally, is executed using the supplied Executor, with this
+     * task's result as the argument to the supplied function.
+     *
+     * @param executor the executor to use for asynchronous execution
+     * @param fn the function to use to compute the value of the returned Task
+     * @param <U> the function's return type
+     * @return the new Task
+     */
+    public <U, E extends Exception> Task<U> thenApply(Executor executor, ExceptionalFunction<T, U, E> fn) {
+        return thenApply(getCaller(), executor, fn);
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, is executed using the supplied Executor, with this
+     * task's result as the argument to the supplied function.
+     *
+     * @param name the name of this new Task for displaying
+     * @param executor the executor to use for asynchronous execution
+     * @param fn the function to use to compute the value of the returned Task
+     * @param <U> the function's return type
+     * @return the new Task
+     */
+    public <U, E extends Exception> Task<U> thenApply(String name, Executor executor, ExceptionalFunction<T, U, E> fn) {
+        return new UniApply<>(fn).setExecutor(executor).setName(name);
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, is executed using the default Executor, with this
+     * task's result as the argument to the supplied action.
+     *
+     * @param action the action to perform before completing the
+     * returned Task
+     * @return the new Task
+     */
+    public <E extends Exception> Task<Void> thenAccept(ExceptionalConsumer<T, E> action) {
+        return thenAccept(Schedulers.defaultScheduler(), action);
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, is executed using the supplied Executor, with this
+     * task's result as the argument to the supplied action.
+     *
+     * @param action the action to perform before completing the returned Task
+     * @param executor the executor to use for asynchronous execution
+     * @return the new Task
+     */
+    public <E extends Exception> Task<Void> thenAccept(Executor executor, ExceptionalConsumer<T, E> action) {
+        return thenAccept(getCaller(), executor, action);
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, is executed using the supplied Executor, with this
+     * task's result as the argument to the supplied action.
+     *
+     * @param name the name of this new Task for displaying
+     * @param action the action to perform before completing the returned Task
+     * @param executor the executor to use for asynchronous execution
+     * @return the new Task
+     */
+    public <E extends Exception> Task<Void> thenAccept(String name, Executor executor, ExceptionalConsumer<T, E> action) {
+        return thenApply(name, executor, result -> {
+            action.accept(result);
+            return null;
+        });
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, executes the given action using the default Executor.
+     *
+     * @param action the action to perform before completing the
+     * returned Task
+     * @return the new Task
+     */
+    public <E extends Exception> Task<Void> thenRun(ExceptionalRunnable<E> action) {
+        return thenRun(Schedulers.defaultScheduler(), action);
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, executes the given action using the supplied Executor.
+     *
+     * @param action the action to perform before completing the
+     * returned Task
+     * @param executor the executor to use for asynchronous execution
+     * @return the new Task
+     */
+    public <E extends Exception> Task<Void> thenRun(Executor executor, ExceptionalRunnable<E> action) {
+        return thenRun(getCaller(), executor, action);
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, executes the given action using the supplied Executor.
+     *
+     * @param name the name of this new Task for displaying
+     * @param action the action to perform before completing the
+     * returned Task
+     * @param executor the executor to use for asynchronous execution
+     * @return the new Task
+     */
+    public <E extends Exception> Task<Void> thenRun(String name, Executor executor, ExceptionalRunnable<E> action) {
+        return thenApply(name, executor, ignore -> {
+            action.run();
+            return null;
+        });
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, is executed using the default Executor.
+     *
+     * @param fn the function to use to compute the value of the returned Task
+     * @param <U> the function's return type
+     * @return the new Task
+     */
+    public final <U> Task<U> thenSupply(Callable<U> fn) {
+        return thenCompose(() -> Task.supplyAsync(fn));
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, is executed using the default Executor.
+     *
+     * @param name the name of this new Task for displaying
+     * @param fn the function to use to compute the value of the returned Task
+     * @param <U> the function's return type
+     * @return the new Task
+     */
+    public final <U> Task<U> thenSupply(String name, Callable<U> fn) {
+        return thenCompose(() -> Task.supplyAsync(name, fn));
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
      * normally, is executed.
      *
-     * @param fn the function returning a new TaskResult
-     * @param <U> the type of the returned TaskResult's result
-     * @return the TaskResult
+     * @param other the another Task
+     * @param <U> the type of the returned Task's result
+     * @return the Task
      */
-    public final <U> TaskResult<U> thenCompose(ExceptionalSupplier<TaskResult<U>, ?> fn) {
-        return new TaskResult<U>() {
-            TaskResult<U> then;
-
-            @Override
-            public Collection<? extends Task> getDependents() {
-                return Collections.singleton(Task.this);
-            }
-
-            @Override
-            public void execute() throws Exception {
-                then = fn.get().storeTo(this::setResult);
-            }
-
-            @Override
-            public Collection<? extends Task> getDependencies() {
-                return then == null ? Collections.emptyList() : Collections.singleton(then);
-            }
-        };
+    public final <U> Task<U> thenCompose(Task<U> other) {
+        return thenCompose(() -> other);
+    }
+    
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, is executed.
+     *
+     * @param fn the function returning a new Task
+     * @param <U> the type of the returned Task's result
+     * @return the Task
+     */
+    public final <U> Task<U> thenCompose(ExceptionalSupplier<Task<U>, ?> fn) {
+        return new UniCompose<>(fn, true);
     }
 
-    public final Task with(Task b) {
-        return with(convert(b));
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, is executed with result of this task as the argument
+     * to the supplied function.
+     *
+     * @param fn the function returning a new Task
+     * @param <U> the type of the returned Task's result
+     * @return the Task
+     */
+    public <U, E extends Exception> Task<U> thenCompose(ExceptionalFunction<T, Task<U>, E> fn) {
+        return new UniCompose<>(fn, true);
     }
 
-    public final <E extends Exception> Task with(ExceptionalSupplier<Task, E> b) {
-        return new CoupleTask(this, b, false);
+    public final <U> Task<U> withCompose(Task<U> other) {
+        return withCompose(() -> other);
+    }
+
+    public final <U, E extends Exception> Task<U> withCompose(ExceptionalSupplier<Task<U>, E> fn) {
+        return new UniCompose<>(fn, false);
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, executes the given action using the default Executor.
+     *
+     * @param action the action to perform before completing the
+     * returned Task
+     * @return the new Task
+     */
+    public <E extends Exception> Task<Void> withRun(ExceptionalRunnable<E> action) {
+        return withRun(Schedulers.defaultScheduler(), action);
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, executes the given action using the supplied Executor.
+     *
+     * @param action the action to perform before completing the
+     * returned Task
+     * @param executor the executor to use for asynchronous execution
+     * @return the new Task
+     */
+    public <E extends Exception> Task<Void> withRun(Executor executor, ExceptionalRunnable<E> action) {
+        return withRun(getCaller(), executor, action);
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, executes the given action using the supplied Executor.
+     *
+     * @param name the name of this new Task for displaying
+     * @param action the action to perform before completing the
+     * returned Task
+     * @param executor the executor to use for asynchronous execution
+     * @return the new Task
+     */
+    public <E extends Exception> Task<Void> withRun(String name, Executor executor, ExceptionalRunnable<E> action) {
+        return new UniCompose<>(() -> Task.runAsync(name, executor, action), false);
     }
 
     /**
@@ -344,7 +583,7 @@ public abstract class Task {
      * @param action the action to perform
      * @return the new Task
      */
-    public final Task whenComplete(FinalizedCallback action) {
+    public final Task<Void> whenComplete(FinalizedCallback action) {
         return whenComplete(Schedulers.defaultScheduler(), action);
     }
 
@@ -361,35 +600,33 @@ public abstract class Task {
      * with this exception unless this task also completed exceptionally.
      *
      * @param action the action to perform
-     * @param scheduler the executor to use for asynchronous execution
+     * @param executor the executor to use for asynchronous execution
      * @return the new Task
      */
-    public final Task whenComplete(Scheduler scheduler, FinalizedCallback action) {
-        return new Task() {
+    public final Task<Void> whenComplete(Executor executor, FinalizedCallback action) {
+        return new Task<Void>() {
             {
                 setSignificance(TaskSignificance.MODERATE);
             }
 
             @Override
-            public Scheduler getScheduler() {
-                return scheduler;
-            }
-
-            @Override
             public void execute() throws Exception {
-                action.execute(isDependentsSucceeded(), Task.this.getLastException());
+                if (isDependentsSucceeded() != (Task.this.getException() == null))
+                    throw new AssertionError("When dependents succeeded, Task.exception must be nonnull.");
+
+                action.execute(Task.this.getException());
 
                 if (!isDependentsSucceeded()) {
                     setSignificance(TaskSignificance.MINOR);
-                    if (Task.this.getLastException() == null)
+                    if (Task.this.getException() == null)
                         throw new CancellationException();
                     else
-                        throw Task.this.getLastException();
+                        throw Task.this.getException();
                 }
             }
 
             @Override
-            public Collection<Task> getDependents() {
+            public Collection<Task<?>> getDependents() {
                 return Collections.singleton(Task.this);
             }
 
@@ -397,7 +634,26 @@ public abstract class Task {
             public boolean isRelyingOnDependents() {
                 return false;
             }
-        }.setName(getCaller());
+        }.setExecutor(executor).setName(getCaller());
+    }
+
+    /**
+     * Returns a new Task with the same exception as this task, that executes
+     * the given action when this task completes.
+     *
+     * <p>When this task is complete, the given action is invoked with the
+     * result (or {@code null} if none), a boolean value represents the
+     * execution status of this task, and the exception (or {@code null}
+     * if none) of this task as arguments.  The returned task is completed
+     * when the action returns.  If the supplied action itself encounters an
+     * exception, then the returned task exceptionally completes with this
+     * exception unless this task also completed exceptionally.
+     *
+     * @param action the action to perform
+     * @return the new Task
+     */
+    public Task<Void> whenComplete(Executor executor, FinalizedCallbackWithResult<T> action) {
+        return whenComplete(executor, (exception -> action.execute(getResult(), exception)));
     }
 
     /**
@@ -415,9 +671,9 @@ public abstract class Task {
      * @param failure the action to perform when this task exceptionally returned
      * @return the new Task
      */
-    public final <E1 extends Exception, E2 extends Exception> Task whenComplete(Scheduler scheduler, ExceptionalRunnable<E1> success, ExceptionalConsumer<Exception, E2> failure) {
-        return whenComplete(scheduler, (isDependentSucceeded, exception) -> {
-            if (isDependentSucceeded) {
+    public final <E1 extends Exception, E2 extends Exception> Task<Void> whenComplete(Executor executor, ExceptionalRunnable<E1> success, ExceptionalConsumer<Exception, E2> failure) {
+        return whenComplete(executor, exception -> {
+            if (exception == null) {
                 if (success != null)
                     try {
                         success.run();
@@ -433,44 +689,114 @@ public abstract class Task {
         });
     }
 
-    public static Task of(ExceptionalRunnable<?> closure) {
-        return of(Schedulers.defaultScheduler(), closure);
+    /**
+     * Returns a new Task with the same exception as this task, that executes
+     * the given actions when this task completes.
+     *
+     * <p>When this task is complete, the given success action is invoked with
+     * the result, the given failure action is invoked with the exception of
+     * this task.  The returned task is completed when the action returns.  If
+     * the supplied action itself encounters an exception, then the returned
+     * task exceptionally completes with this exception unless this task also
+     * completed exceptionally.
+     *
+     * @param success the action to perform when this task successfully completed
+     * @param failure the action to perform when this task exceptionally returned
+     * @return the new Task
+     */
+    public <E1 extends Exception, E2 extends Exception> Task<Void> whenComplete(Executor executor, ExceptionalConsumer<T, E1> success, ExceptionalConsumer<Exception, E2> failure) {
+        return whenComplete(executor, () -> success.accept(getResult()), failure);
     }
 
-    public static Task of(String name, ExceptionalRunnable<?> closure) {
-        return of(name, Schedulers.defaultScheduler(), closure);
+    public static Task<Void> runAsync(ExceptionalRunnable<?> closure) {
+        return runAsync(Schedulers.defaultScheduler(), closure);
     }
 
-    public static Task of(Scheduler scheduler, ExceptionalRunnable<?> closure) {
-        return of(getCaller(), scheduler, closure);
+    public static Task<Void> runAsync(String name, ExceptionalRunnable<?> closure) {
+        return runAsync(name, Schedulers.defaultScheduler(), closure);
     }
 
-    public static Task of(String name, Scheduler scheduler, ExceptionalRunnable<?> closure) {
-        return new SimpleTask(name, closure, scheduler);
+    public static Task<Void> runAsync(Executor executor, ExceptionalRunnable<?> closure) {
+        return runAsync(getCaller(), executor, closure);
     }
 
-    public static Task ofThen(ExceptionalSupplier<Task, ?> b) {
-        return new CoupleTask(null, b, true);
+    public static Task<Void> runAsync(String name, Executor executor, ExceptionalRunnable<?> closure) {
+        return new SimpleTask<>(closure.toCallable()).setExecutor(executor).setName(name);
     }
 
-    public static <V> TaskResult<V> ofResult(Callable<V> callable) {
-        return ofResult(getCaller(), callable);
-    }
+    public static <T> Task<T> composeAsync(ExceptionalSupplier<Task<T>, ?> fn) {
+        return new Task<T>() {
+            Task<T> then;
 
-    public static <V> TaskResult<V> ofResult(String name, Callable<V> callable) {
-        return new SimpleTaskResult<>(callable).setName(name);
-    }
-
-    private static ExceptionalSupplier<Task, ?> convert(Task t) {
-        return new ExceptionalSupplier<Task, Exception>() {
             @Override
-            public Task get() {
-                return t;
+            public void execute() throws Exception {
+                then = fn.get();
+                if (then != null)
+                    then.storeTo(this::setResult);
             }
 
             @Override
-            public String toString() {
-                return t.getName();
+            public Collection<Task<?>> getDependencies() {
+                return then == null ? Collections.emptySet() : Collections.singleton(then);
+            }
+        };
+    }
+
+    public static <V> Task<V> supplyAsync(Callable<V> callable) {
+        return supplyAsync(getCaller(), callable);
+    }
+
+    public static <V> Task<V> supplyAsync(Executor executor, Callable<V> callable) {
+        return supplyAsync(getCaller(), executor, callable);
+    }
+
+    public static <V> Task<V> supplyAsync(String name, Callable<V> callable) {
+        return supplyAsync(name, Schedulers.defaultScheduler(), callable);
+    }
+
+    public static <V> Task<V> supplyAsync(String name, Executor executor, Callable<V> callable) {
+        return new SimpleTask<>(callable).setExecutor(executor).setName(name);
+    }
+
+    /**
+     * Returns a new Task that is completed when all of the given Tasks
+     * complete.  If any of the given Tasks complete exceptionally,
+     * then the returned Task also does so.  Otherwise, the results, if
+     * any, of the given Tasks are not reflected in the returned Task,
+     * but may be obtained by inspecting them individually. If no Tasks
+     * are provided, returns a Task completed with the value {@code null}.
+     *
+     * @param tasks the Tasks
+     * @return a new Task that is completed when all of the given Tasks complete
+     */
+    public static Task<Void> allOf(Task<?>... tasks) {
+        return allOf(Arrays.asList(tasks));
+    }
+
+    /**
+     * Returns a new Task that is completed when all of the given Tasks
+     * complete.  If any of the given Tasks complete exceptionally,
+     * then the returned Task also does so.  Otherwise, the results, if
+     * any, of the given Tasks are not reflected in the returned Task,
+     * but may be obtained by inspecting them individually. If no Tasks
+     * are provided, returns a Task completed with the value {@code null}.
+     *
+     * @param tasks the Tasks
+     * @return a new Task that is completed when all of the given Tasks complete
+     */
+    public static Task<Void> allOf(Collection<Task<?>> tasks) {
+        return new Task<Void>() {
+            {
+                setSignificance(TaskSignificance.MINOR);
+            }
+
+            @Override
+            public void execute() {
+            }
+
+            @Override
+            public Collection<Task<?>> getDependents() {
+                return tasks;
             }
         };
     }
@@ -498,10 +824,105 @@ public abstract class Task {
     }
 
     public interface FinalizedCallback {
-        void execute(boolean isDependentSucceeded, Exception exception) throws Exception;
+        void execute(Exception exception) throws Exception;
     }
 
-    static String getCaller() {
+    public interface FinalizedCallbackWithResult<T> {
+        void execute(T result, Exception exception) throws Exception;
+    }
+
+    private static String getCaller() {
         return ReflectionHelper.getCaller(packageName -> !"org.jackhuang.hmcl.task".equals(packageName)).toString();
+    }
+
+    private static final class SimpleTask<T> extends Task<T> {
+
+        private final Callable<T> callable;
+
+        SimpleTask(Callable<T> callable) {
+            this.callable = callable;
+        }
+
+        @Override
+        public void execute() throws Exception {
+            setResult(callable.call());
+        }
+    }
+
+    private class UniApply<R> extends Task<R> {
+        private final ExceptionalFunction<T, R, ?> callable;
+
+        UniApply(ExceptionalFunction<T, R, ?> callable) {
+            this.callable = callable;
+        }
+
+        @Override
+        public Collection<Task<?>> getDependents() {
+            return Collections.singleton(Task.this);
+        }
+
+        @Override
+        public void execute() throws Exception {
+            setResult(callable.apply(Task.this.getResult()));
+        }
+    }
+
+    /**
+     * A task that combines two tasks and make sure [pred] runs before succ.
+     *
+     * @author huangyuhui
+     */
+    private final class UniCompose<U> extends Task<U> {
+
+        private final boolean relyingOnDependents;
+        private Task<U> succ;
+        private final ExceptionalFunction<T, Task<U>, ?> fn;
+
+        /**
+         * A task that combines two tasks and make sure pred runs before succ.
+         *
+         * @param fn a callback that returns the task runs after pred, succ will be executed asynchronously. You can do something that relies on the result of pred.
+         * @param relyingOnDependents true if this task chain will be broken when task pred fails.
+         */
+        UniCompose(ExceptionalSupplier<Task<U>, ?> fn, boolean relyingOnDependents) {
+            this(result -> fn.get(), relyingOnDependents);
+        }
+
+        /**
+         * A task that combines two tasks and make sure pred runs before succ.
+         *
+         * @param fn a callback that returns the task runs after pred, succ will be executed asynchronously. You can do something that relies on the result of pred.
+         * @param relyingOnDependents true if this task chain will be broken when task pred fails.
+         */
+        UniCompose(ExceptionalFunction<T, Task<U>, ?> fn, boolean relyingOnDependents) {
+            this.fn = fn;
+            this.relyingOnDependents = relyingOnDependents;
+
+            setSignificance(TaskSignificance.MODERATE);
+            setName(fn.toString());
+        }
+
+        @Override
+        public void execute() throws Exception {
+            setName(fn.toString());
+            succ = fn.apply(Task.this.getResult());
+            if (succ != null)
+                succ.storeTo(this::setResult);
+        }
+
+        @Override
+        public Collection<Task<?>> getDependents() {
+            return Collections.singleton(Task.this);
+        }
+
+        @Override
+        public Collection<Task<?>> getDependencies() {
+            return succ == null ? Collections.emptySet() : Collections.singleton(succ);
+        }
+
+        @Override
+        public boolean isRelyingOnDependents() {
+            return relyingOnDependents;
+        }
     }
 }

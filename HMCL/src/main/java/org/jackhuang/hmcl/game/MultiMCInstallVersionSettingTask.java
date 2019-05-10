@@ -20,13 +20,12 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.mod.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
-import org.jackhuang.hmcl.task.Scheduler;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 
 import java.util.Objects;
 
-public final class MultiMCInstallVersionSettingTask extends Task {
+public final class MultiMCInstallVersionSettingTask extends Task<Void> {
     private final Profile profile;
     private final MultiMCInstanceConfiguration manifest;
     private final String version;
@@ -35,11 +34,8 @@ public final class MultiMCInstallVersionSettingTask extends Task {
         this.profile = profile;
         this.manifest = manifest;
         this.version = version;
-    }
 
-    @Override
-    public Scheduler getScheduler() {
-        return Schedulers.javafx();
+        setExecutor(Schedulers.javafx());
     }
 
     @Override

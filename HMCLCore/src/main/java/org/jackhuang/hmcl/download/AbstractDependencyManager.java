@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.util.CacheRepository;
-
 /**
  *
  * @author huangyuhui

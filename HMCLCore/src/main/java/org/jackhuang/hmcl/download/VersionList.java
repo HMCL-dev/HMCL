@@ -62,19 +62,19 @@ public abstract class VersionList<T extends RemoteVersion> {
      * @param downloadProvider DownloadProvider
      * @return the task to reload the remote version list.
      */
-    public abstract Task refreshAsync(DownloadProvider downloadProvider);
+    public abstract Task<?> refreshAsync(DownloadProvider downloadProvider);
 
     /**
      * @param gameVersion the remote version depends on
      * @param downloadProvider DownloadProvider
      * @return the task to reload the remote version list.
      */
-    public Task refreshAsync(String gameVersion, DownloadProvider downloadProvider) {
+    public Task<?> refreshAsync(String gameVersion, DownloadProvider downloadProvider) {
         return refreshAsync(downloadProvider);
     }
 
-    public Task loadAsync(DownloadProvider downloadProvider) {
-        return Task.ofThen(() -> {
+    public Task<?> loadAsync(DownloadProvider downloadProvider) {
+        return Task.composeAsync(() -> {
             lock.readLock().lock();
             boolean loaded;
 
@@ -87,8 +87,8 @@ public abstract class VersionList<T extends RemoteVersion> {
         });
     }
 
-    public Task loadAsync(String gameVersion, DownloadProvider downloadProvider) {
-        return Task.ofThen(() -> {
+    public Task<?> loadAsync(String gameVersion, DownloadProvider downloadProvider) {
+        return Task.composeAsync(() -> {
             lock.readLock().lock();
             boolean loaded;
 

@@ -43,14 +43,14 @@ import java.util.stream.Collectors;
  *
  * @author huangyuhui
  */
-public final class CurseCompletionTask extends Task {
+public final class CurseCompletionTask extends Task<Void> {
 
     private final DefaultGameRepository repository;
     private final ModManager modManager;
     private final String version;
     private CurseManifest manifest = null;
-    private final List<Task> dependents = new LinkedList<>();
-    private final List<Task> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
 
     /**
      * Constructor.
@@ -86,12 +86,12 @@ public final class CurseCompletionTask extends Task {
     }
 
     @Override
-    public Collection<Task> getDependencies() {
+    public Collection<Task<?>> getDependencies() {
         return dependencies;
     }
 
     @Override
-    public Collection<Task> getDependents() {
+    public Collection<Task<?>> getDependents() {
         return dependents;
     }
 
@@ -147,7 +147,7 @@ public final class CurseCompletionTask extends Task {
         // Let this task fail if the curse manifest has not been completed.
         // But continue other downloads.
         if (!flag.get() || notFound.get())
-            dependencies.add(Task.of(() -> {
+            dependencies.add(Task.runAsync(() -> {
                 if (notFound.get())
                     throw new CurseCompletionException(new FileNotFoundException());
                 else

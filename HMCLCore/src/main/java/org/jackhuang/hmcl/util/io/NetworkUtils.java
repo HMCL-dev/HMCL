@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.io;
 
 import java.io.*;
 import java.net.*;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;

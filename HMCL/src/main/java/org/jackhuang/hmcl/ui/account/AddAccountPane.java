@@ -197,7 +197,7 @@ public class AddAccountPane extends StackPane {
         AccountFactory<?> factory = cboType.getSelectionModel().getSelectedItem();
         Object additionalData = getAuthAdditionalData();
 
-        Task.ofResult(() -> factory.create(new Selector(), username, password, additionalData))
+        Task.supplyAsync(() -> factory.create(new Selector(), username, password, additionalData))
                 .whenComplete(Schedulers.javafx(), account -> {
                     int oldIndex = Accounts.getAccounts().indexOf(account);
                     if (oldIndex == -1) {

@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;
@@ -44,7 +45,7 @@ import static org.jackhuang.hmcl.util.DigestUtils.getDigest;
  *
  * @author huangyuhui
  */
-public class FileDownloadTask extends Task {
+public class FileDownloadTask extends Task<Void> {
 
     public static class IntegrityCheck {
         private String algorithm;
@@ -121,6 +122,7 @@ public class FileDownloadTask extends Task {
         this.retry = retry;
 
         setName(file.getName());
+        setExecutor(Schedulers.io());
     }
 
     private void closeFiles() {
@@ -140,11 +142,6 @@ public class FileDownloadTask extends Task {
                 Logging.LOG.log(Level.WARNING, "Failed to close stream", e);
             }
         stream = null;
-    }
-
-    @Override
-    public Scheduler getScheduler() {
-        return Schedulers.io();
     }
 
     public EventManager<FailedEvent<URL>> getOnFailed() {

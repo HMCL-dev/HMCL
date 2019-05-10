@@ -32,8 +32,8 @@ public interface AbstractWizardDisplayer extends WizardDisplayer {
     Queue<Object> getCancelQueue();
 
     @Override
-    default void handleTask(Map<String, Object> settings, Task task) {
-        TaskExecutor executor = task.with(Task.of(Schedulers.javafx(), this::navigateToSuccess)).executor();
+    default void handleTask(Map<String, Object> settings, Task<?> task) {
+        TaskExecutor executor = task.withRun(Schedulers.javafx(), this::navigateToSuccess).executor();
         TaskListPane pane = new TaskListPane();
         pane.setExecutor(executor);
         navigateTo(pane, Navigation.NavigationDirection.FINISH);

@@ -197,7 +197,7 @@ public final class Accounts {
 
         Account selected = selectedAccount.get();
         if (selected != null) {
-            Schedulers.io().schedule(() -> {
+            Schedulers.io().execute(() -> {
                 try {
                     selected.logIn();
                 } catch (AuthenticationException e) {
@@ -209,7 +209,7 @@ public final class Accounts {
         for (AuthlibInjectorServer server : config().getAuthlibInjectorServers()) {
             if (selected instanceof AuthlibInjectorAccount && ((AuthlibInjectorAccount) selected).getServer() == server)
                 continue;
-            Schedulers.io().schedule(() -> {
+            Schedulers.io().execute(() -> {
                 try {
                     server.fetchMetadataResponse();
                 } catch (IOException e) {

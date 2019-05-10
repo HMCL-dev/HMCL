@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.game.AssetIndexInfo;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
@@ -34,11 +33,11 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class GameAssetIndexDownloadTask extends Task {
+public final class GameAssetIndexDownloadTask extends Task<Void> {
 
     private final AbstractDependencyManager dependencyManager;
     private final Version version;
-    private final List<Task> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
 
     /**
      * Constructor.
@@ -53,7 +52,7 @@ public final class GameAssetIndexDownloadTask extends Task {
     }
 
     @Override
-    public List<Task> getDependencies() {
+    public List<Task<?>> getDependencies() {
         return dependencies;
     }
 

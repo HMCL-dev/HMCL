@@ -21,7 +21,6 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.svg.SVGGlyph;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
-import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -56,7 +55,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
     private double xOffset, yOffset, newX, newY, initX, initY;
     private boolean allowMove, isDragging;
-    private BoundingBox originalBox, maximizedBox;
 
     /**
      * Constructor for all SkinBase instances.

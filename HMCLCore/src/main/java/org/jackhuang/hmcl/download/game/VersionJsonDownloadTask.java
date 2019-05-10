@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.util.Collection;
@@ -33,11 +32,11 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class VersionJsonDownloadTask extends TaskResult<String> {
+public final class VersionJsonDownloadTask extends Task<String> {
     private final String gameVersion;
     private final DefaultDependencyManager dependencyManager;
-    private final List<Task> dependents = new LinkedList<>();
-    private final List<Task> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
     private final VersionList<?> gameVersionList;
 
     public VersionJsonDownloadTask(String gameVersion, DefaultDependencyManager dependencyManager) {
@@ -52,12 +51,12 @@ public final class VersionJsonDownloadTask extends TaskResult<String> {
     }
 
     @Override
-    public Collection<Task> getDependencies() {
+    public Collection<Task<?>> getDependencies() {
         return dependencies;
     }
 
     @Override
-    public Collection<Task> getDependents() {
+    public Collection<Task<?>> getDependents() {
         return dependents;
     }
 

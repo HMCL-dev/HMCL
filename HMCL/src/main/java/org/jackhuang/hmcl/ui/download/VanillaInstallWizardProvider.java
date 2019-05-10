@@ -43,7 +43,7 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         settings.put(PROFILE, profile);
     }
 
-    private Task finishVersionDownloadingAsync(Map<String, Object> settings) {
+    private Task<Void> finishVersionDownloadingAsync(Map<String, Object> settings) {
         GameBuilder builder = profile.getDependency().gameBuilder();
 
         String name = (String) settings.get("name");
@@ -59,8 +59,8 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         if (settings.containsKey("optifine"))
             builder.version((RemoteVersion) settings.get("optifine"));
 
-        return builder.buildAsync().whenComplete((a, b) -> profile.getRepository().refreshVersions())
-                .then(Task.of(Schedulers.javafx(), () -> profile.setSelectedVersion(name)));
+        return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
+                .thenRun(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
     }
 
     @Override

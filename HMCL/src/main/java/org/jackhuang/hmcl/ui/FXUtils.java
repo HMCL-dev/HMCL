@@ -397,7 +397,7 @@ public final class FXUtils {
      */
     @SuppressWarnings("unchecked")
     @Deprecated
-    public static void bindEnum(JFXComboBox<?> comboBox, Property<? extends Enum> property) {
+    public static void bindEnum(JFXComboBox<?> comboBox, Property<? extends Enum<?>> property) {
         unbindEnum(comboBox);
         ChangeListener<Number> listener = (a, b, newValue) ->
                 ((Property) property).setValue(property.getValue().getClass().getEnumConstants()[newValue.intValue()]);

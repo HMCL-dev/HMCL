@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.upgrade;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import javafx.application.Platform;
-import javafx.scene.layout.Region;
+
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Task;
@@ -101,7 +101,7 @@ public final class UpdateHandler {
                 return;
             }
 
-            Task task = new HMCLDownloadTask(version, downloaded);
+            Task<?> task = new HMCLDownloadTask(version, downloaded);
 
             TaskExecutor executor = task.executor();
             Controllers.taskDialog(executor, i18n("message.downloading"));
@@ -122,7 +122,7 @@ public final class UpdateHandler {
                     }
 
                 } else {
-                    Throwable e = executor.getLastException();
+                    Exception e = executor.getException();
                     LOG.log(Level.WARNING, "Failed to update to " + version, e);
                     Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageType.ERROR));
                 }

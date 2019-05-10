@@ -77,8 +77,8 @@ public interface GameRepository extends VersionProvider {
      */
     void refreshVersions();
 
-    default Task refreshVersionsAsync() {
-        return Task.of(this::refreshVersions);
+    default Task<Void> refreshVersionsAsync() {
+        return Task.runAsync(this::refreshVersions);
     }
 
     /**

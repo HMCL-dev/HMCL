@@ -80,9 +80,9 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                 LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
                 newList.remove(library);
                 new MaintainTask(version.setLibraries(newList))
-                        .then(maintainedVersion -> new VersionJsonSaveTask(profile.getRepository(), maintainedVersion))
-                        .with(profile.getRepository().refreshVersionsAsync())
-                        .with(Task.of(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId)))
+                        .thenCompose(maintainedVersion -> new VersionJsonSaveTask(profile.getRepository(), maintainedVersion))
+                        .withCompose(profile.getRepository().refreshVersionsAsync())
+                        .withRun(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId))
                         .start();
             };
 

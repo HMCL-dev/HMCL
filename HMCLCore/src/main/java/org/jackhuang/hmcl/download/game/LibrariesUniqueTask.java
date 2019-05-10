@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.download.game;
 import org.jackhuang.hmcl.game.CompatibilityRule;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.task.TaskResult;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -31,7 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class LibrariesUniqueTask extends TaskResult<Version> {
+public class LibrariesUniqueTask extends Task<Version> {
     private final Version version;
 
     public LibrariesUniqueTask(Version version) {

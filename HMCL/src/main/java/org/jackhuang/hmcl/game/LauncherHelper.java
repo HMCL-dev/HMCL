@@ -103,7 +103,7 @@ public final class LauncherHelper {
             try {
                 checkGameState(profile, setting, version, () -> {
                     Controllers.dialog(launchingStepsPane);
-                    Schedulers.newThread().schedule(this::launch0);
+                    Schedulers.newThread().execute(this::launch0);
                 });
             } catch (InterruptedException ignore) {
             }
@@ -122,15 +122,15 @@ public final class LauncherHelper {
         Version version = MaintainTask.maintain(repository.getResolvedVersion(selectedVersion));
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
-        TaskExecutor executor = Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))
-                .then(() -> {
+        TaskExecutor executor = Task.runAsync(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))
+                .thenCompose(() -> {
                     if (setting.isNotCheckGame())
                         return null;
                     else
                         return dependencyManager.checkGameCompletionAsync(version);
                 })
-                .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.MODS)))
-                .then(() -> {
+                .thenRun(Schedulers.javafx(), () -> emitStatus(LoadingState.MODS))
+                .thenCompose(() -> {
                     try {
                         ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
                         if ("Curse".equals(configuration.getType()))
@@ -141,8 +141,8 @@ public final class LauncherHelper {
                         return null;
                     }
                 })
-                .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN)))
-                .thenCompose(() -> Task.ofResult(i18n("account.methods"), () -> {
+                .thenRun(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN))
+                .thenSupply(i18n("account.methods"), () -> {
                     try {
                         return account.logIn();
                     } catch (CredentialExpiredException e) {
@@ -152,7 +152,7 @@ public final class LauncherHelper {
                         LOG.warning("Authentication failed, try playing offline: " + e);
                         return account.playOffline().orElseThrow(() -> e);
                     }
-                }))
+                })
                 .thenApply(Schedulers.javafx(), authInfo -> {
                     emitStatus(LoadingState.LAUNCHING);
                     return authInfo;
@@ -164,7 +164,7 @@ public final class LauncherHelper {
                         setting.toLaunchOptions(profile.getGameDir()),
                         launcherVisibility == LauncherVisibility.CLOSE
                                 ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                : new HMCLProcessListener(authInfo, setting, gameVersion.isPresent())
+                                : new HMCLProcessListener(authInfo, gameVersion.isPresent())
                 ))
                 .thenCompose(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
@@ -200,7 +200,7 @@ public final class LauncherHelper {
             final AtomicInteger finished = new AtomicInteger(0);
 
             @Override
-            public void onFinished(Task task) {
+            public void onFinished(Task<?> task) {
                 finished.incrementAndGet();
                 int runningTasks = executor.getRunningTasks();
                 Platform.runLater(() -> launchingStepsPane.setProgress(1.0 * finished.get() / runningTasks));
@@ -214,7 +214,7 @@ public final class LauncherHelper {
                         // because onStop will be invoked if tasks fail when the executor service shut down.
                         if (!Controllers.isStopped()) {
                             launchingStepsPane.fireEvent(new DialogCloseEvent());
-                            Exception ex = executor.getLastException();
+                            Exception ex = executor.getException();
                             if (ex != null) {
                                 String message;
                                 if (ex instanceof CurseCompletionException) {
@@ -420,7 +420,7 @@ public final class LauncherHelper {
         }
     }
 
-    private static class LaunchTask<T> extends TaskResult<T> {
+    private static class LaunchTask<T> extends Task<T> {
         private final ExceptionalSupplier<T, Exception> supplier;
 
         public LaunchTask(ExceptionalSupplier<T, Exception> supplier) {
@@ -440,7 +440,6 @@ public final class LauncherHelper {
      */
     class HMCLProcessListener implements ProcessListener {
 
-        private final VersionSetting setting;
         private final Map<String, String> forbiddenTokens;
         private ManagedProcess process;
         private boolean lwjgl;
@@ -449,8 +448,7 @@ public final class LauncherHelper {
         private final LinkedList<Pair<String, Log4jLevel>> logs;
         private final CountDownLatch latch = new CountDownLatch(1);
 
-        public HMCLProcessListener(AuthInfo authInfo, VersionSetting setting, boolean detectWindow) {
-            this.setting = setting;
+        public HMCLProcessListener(AuthInfo authInfo, boolean detectWindow) {
             this.detectWindow = detectWindow;
 
             if (authInfo == null)
