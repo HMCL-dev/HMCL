@@ -48,7 +48,7 @@ public final class CurseCompletionTask extends Task<Void> {
     private final DefaultGameRepository repository;
     private final ModManager modManager;
     private final String version;
-    private CurseManifest manifest = null;
+    private CurseManifest manifest;
     private final List<Task<?>> dependents = new LinkedList<>();
     private final List<Task<?>> dependencies = new LinkedList<>();
 

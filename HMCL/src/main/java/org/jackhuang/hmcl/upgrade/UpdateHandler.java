@@ -38,10 +38,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -161,9 +158,7 @@ public final class UpdateHandler {
         commandline.add(JavaVersion.fromCurrentEnvironment().getBinary().toString());
         commandline.add("-jar");
         commandline.add(jar.toAbsolutePath().toString());
-        for (String arg : appArgs) {
-            commandline.add(arg);
-        }
+        commandline.addAll(Arrays.asList(appArgs));
         LOG.info("Starting process: " + commandline);
         new ProcessBuilder(commandline)
                 .directory(Paths.get("").toAbsolutePath().toFile())
@@ -206,11 +201,7 @@ public final class UpdateHandler {
             StackTraceElement element = stacktrace[i];
             if (Main.class.getName().equals(element.getClassName())) {
                 // we've reached the main method
-                if (i + 1 == stacktrace.length) {
-                    return false;
-                } else {
-                    return true;
-                }
+                return i + 1 != stacktrace.length;
             }
         }
         return false;

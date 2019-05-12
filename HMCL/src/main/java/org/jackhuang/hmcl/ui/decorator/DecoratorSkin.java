@@ -123,16 +123,13 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         {
             StackPane container = new StackPane();
             Bindings.bindContent(container.getChildren(), skinnable.containerProperty());
-            ListChangeListener<Node> listener = new ListChangeListener<Node>() {
-                @Override
-                public void onChanged(Change<? extends Node> c) {
-                    if (skinnable.getContainer().isEmpty()) {
-                        container.setMouseTransparent(true);
-                        container.setVisible(false);
-                    } else {
-                        container.setMouseTransparent(false);
-                        container.setVisible(true);
-                    }
+            ListChangeListener<Node> listener = c -> {
+                if (skinnable.getContainer().isEmpty()) {
+                    container.setMouseTransparent(true);
+                    container.setVisible(false);
+                } else {
+                    container.setMouseTransparent(false);
+                    container.setVisible(true);
                 }
             };
             skinnable.containerProperty().addListener(listener);

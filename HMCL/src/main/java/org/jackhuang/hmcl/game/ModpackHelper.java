@@ -117,7 +117,7 @@ public final class ModpackHelper {
         else if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
             return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, modpack, ((MultiMCInstanceConfiguration) modpack.getManifest()), name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                    .thenCompose(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
+                    .thenComposeAsync(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
         else throw new IllegalStateException("Unrecognized modpack: " + modpack);
     }
 

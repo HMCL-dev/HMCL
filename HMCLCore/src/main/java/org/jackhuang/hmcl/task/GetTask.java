@@ -30,7 +30,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.concurrent.Executor;
 import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;

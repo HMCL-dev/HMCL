@@ -92,7 +92,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     public Task<Version> installLibraryAsync(String gameVersion, Version version, String libraryId, String libraryVersion) {
         VersionList<?> versionList = getVersionList(libraryId);
         return versionList.loadAsync(gameVersion, getDownloadProvider())
-                .thenCompose(() -> installLibraryAsync(version, versionList.getVersion(gameVersion, libraryVersion)
+                .thenComposeAsync(() -> installLibraryAsync(version, versionList.getVersion(gameVersion, libraryVersion)
                         .orElseThrow(() -> new IllegalStateException("Remote library " + libraryId + " has no version " + libraryVersion))));
     }
 
@@ -108,9 +108,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         else
             throw new IllegalArgumentException("Remote library " + libraryVersion + " is unrecognized.");
         return task
-                .thenCompose(LibrariesUniqueTask::new)
-                .thenCompose(MaintainTask::new)
-                .thenCompose(newVersion -> new VersionJsonSaveTask(repository, newVersion));
+                .thenComposeAsync(LibrariesUniqueTask::new)
+                .thenComposeAsync(MaintainTask::new)
+                .thenComposeAsync(newVersion -> new VersionJsonSaveTask(repository, newVersion));
     }
 
 
@@ -120,9 +120,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     public Task installLibraryAsync(Version oldVersion, Path installer) {
         return Task
-                .of(() -> {
-                })
-                .thenCompose(() -> {
+                .composeAsync(() -> {
                     try {
                         return ForgeInstallTask.install(this, oldVersion, installer);
                     } catch (IOException ignore) {
@@ -135,8 +133,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
                     throw new UnsupportedOperationException("Library cannot be recognized");
                 })
-                .thenCompose(LibrariesUniqueTask::new)
-                .thenCompose(MaintainTask::new)
-                .thenCompose(newVersion -> new VersionJsonSaveTask(repository, newVersion));
+                .thenComposeAsync(LibrariesUniqueTask::new)
+                .thenComposeAsync(MaintainTask::new)
+                .thenComposeAsync(newVersion -> new VersionJsonSaveTask(repository, newVersion));
     }
 }

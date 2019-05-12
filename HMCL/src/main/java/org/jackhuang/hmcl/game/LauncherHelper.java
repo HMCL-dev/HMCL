@@ -123,14 +123,14 @@ public final class LauncherHelper {
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
         TaskExecutor executor = Task.runAsync(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))
-                .thenCompose(() -> {
+                .thenComposeAsync(() -> {
                     if (setting.isNotCheckGame())
                         return null;
                     else
                         return dependencyManager.checkGameCompletionAsync(version);
                 })
-                .thenRun(Schedulers.javafx(), () -> emitStatus(LoadingState.MODS))
-                .thenCompose(() -> {
+                .thenRunAsync(Schedulers.javafx(), () -> emitStatus(LoadingState.MODS))
+                .thenComposeAsync(() -> {
                     try {
                         ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
                         if ("Curse".equals(configuration.getType()))
@@ -141,8 +141,8 @@ public final class LauncherHelper {
                         return null;
                     }
                 })
-                .thenRun(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN))
-                .thenSupply(i18n("account.methods"), () -> {
+                .thenRunAsync(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN))
+                .thenSupplyAsync(i18n("account.methods"), () -> {
                     try {
                         return account.logIn();
                     } catch (CredentialExpiredException e) {
@@ -153,11 +153,11 @@ public final class LauncherHelper {
                         return account.playOffline().orElseThrow(() -> e);
                     }
                 })
-                .thenApply(Schedulers.javafx(), authInfo -> {
+                .thenApplyAsync(Schedulers.javafx(), authInfo -> {
                     emitStatus(LoadingState.LAUNCHING);
                     return authInfo;
                 })
-                .thenApply(authInfo -> new HMCLGameLauncher(
+                .thenApplyAsync(authInfo -> new HMCLGameLauncher(
                         repository,
                         selectedVersion,
                         authInfo,
@@ -166,7 +166,7 @@ public final class LauncherHelper {
                                 ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
                                 : new HMCLProcessListener(authInfo, gameVersion.isPresent())
                 ))
-                .thenCompose(launcher -> { // launcher is prev task's result
+                .thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
                         return new LaunchTask<>(launcher::launch).setName(i18n("version.launch"));
                     } else {
@@ -176,7 +176,7 @@ public final class LauncherHelper {
                         }).setName(i18n("version.launch_script"));
                     }
                 })
-                .thenAccept(process -> { // process is LaunchTask's result
+                .thenAcceptAsync(process -> { // process is LaunchTask's result
                     if (scriptFile == null) {
                         PROCESSES.add(process);
                         if (launcherVisibility == LauncherVisibility.CLOSE)

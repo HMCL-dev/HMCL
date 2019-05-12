@@ -60,17 +60,18 @@ public class DatapackListPage extends ListPageBase<DatapackListPageSkin.Datapack
 
         setItems(items = MappedObservableList.create(datapack.getInfo(), DatapackListPageSkin.DatapackInfoObject::new));
 
-        FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)), mods -> {
-            mods.forEach(it -> {
-                try {
-                    Datapack zip = new Datapack(it.toPath());
-                    zip.loadFromZip();
-                    zip.installTo(worldDir);
-                } catch (IOException | IllegalArgumentException e) {
-                    Logging.LOG.log(Level.WARNING, "Unable to parse datapack file " + it, e);
-                }
-            });
-        }, this::refresh);
+        FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
+                mods -> mods.forEach(this::installSingleDatapack), this::refresh);
+    }
+
+    private void installSingleDatapack(File datapack) {
+        try {
+            Datapack zip = new Datapack(datapack.toPath());
+            zip.loadFromZip();
+            zip.installTo(worldDir);
+        } catch (IOException | IllegalArgumentException e) {
+            Logging.LOG.log(Level.WARNING, "Unable to parse datapack file " + datapack, e);
+        }
     }
 
     @Override
@@ -80,8 +81,8 @@ public class DatapackListPage extends ListPageBase<DatapackListPageSkin.Datapack
 
     public void refresh() {
         setLoading(true);
-        Task.of(datapack::loadFromDir)
-                .with(Task.of(Schedulers.javafx(), () -> setLoading(false)))
+        Task.runAsync(datapack::loadFromDir)
+                .withRunAsync(Schedulers.javafx(), () -> setLoading(false))
                 .start();
     }
 
@@ -97,15 +98,7 @@ public class DatapackListPage extends ListPageBase<DatapackListPageSkin.Datapack
         List<File> res = chooser.showOpenMultipleDialog(Controllers.getStage());
 
         if (res != null)
-            res.forEach(it -> {
-                try {
-                    Datapack zip = new Datapack(it.toPath());
-                    zip.loadFromZip();
-                    zip.installTo(worldDir);
-                } catch (IOException | IllegalArgumentException e) {
-                    Logging.LOG.log(Level.WARNING, "Unable to parse datapack file " + it, e);
-                }
-            });
+            res.forEach(this::installSingleDatapack);
 
         datapack.loadFromDir();
     }

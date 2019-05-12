@@ -47,7 +47,7 @@
         .trace { background-color: blue; }
     </style>
     <script>
-        var colors = ["fatal", "error", "warn", "info", "debug", "trace"]
+        var colors = ["fatal", "error", "warn", "info", "debug", "trace"];
         var limitedLogs = 100;
         function appendLog(log, level) {
             var e = document.createElement("div");
@@ -78,13 +78,13 @@
                 redisplay(c[i]);
         }
         function redisplay(div) {
-            var flag = false
+            var flag = false;
             for (var j = 0; j < colors.length; ++j) {
-                if (div.className == colors[j]) {
+                if (div.className === colors[j]) {
                     flag = true;
                     break;
                 }
-                div.hidden = div.className != colors[j];
+                div.hidden = div.className !== colors[j];
             }
             div.hidden = !flag;
         }

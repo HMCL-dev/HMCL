@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui;
 
 import javafx.application.Platform;
-import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -28,7 +27,6 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.account.AddAccountPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
@@ -39,7 +37,6 @@ import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
 import java.io.File;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -119,10 +116,10 @@ public final class LeftPaneController extends AdvancedListBox {
                     File modpackFile = new File("modpack.zip").getAbsoluteFile();
                     if (modpackFile.exists()) {
                         Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile.toPath()))
-                                .thenApply(encoding -> ModpackHelper.readModpackManifest(modpackFile.toPath(), encoding))
-                                .thenApply(modpack -> ModpackHelper.getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack)
-                                            .withRun(Schedulers.javafx(), this::checkAccount).executor())
-                                .thenAccept(Schedulers.javafx(), executor -> {
+                                .thenApplyAsync(encoding -> ModpackHelper.readModpackManifest(modpackFile.toPath(), encoding))
+                                .thenApplyAsync(modpack -> ModpackHelper.getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack)
+                                            .withRunAsync(Schedulers.javafx(), this::checkAccount).executor())
+                                .thenAcceptAsync(Schedulers.javafx(), executor -> {
                                     Controllers.taskDialog(executor, i18n("modpack.installing"));
                                     executor.start();
                                 }).start();

@@ -9,7 +9,6 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -50,12 +49,12 @@ public class TaskTest {
         AtomicBoolean bool = new AtomicBoolean();
         boolean success = Task.supplyAsync(() -> {
             throw new IllegalStateException();
-        }).withRun(() -> {
+        }).withRunAsync(() -> {
             bool.set(true);
         }).test();
 
-        Assert.assertTrue("Task should success because withRun will ignore previous exception", success);
-        Assert.assertTrue("withRun should be executed", bool.get());
+        Assert.assertTrue("Task should success because withRunAsync will ignore previous exception", success);
+        Assert.assertTrue("withRunAsync should be executed", bool.get());
     }
 
     @Test
@@ -63,7 +62,7 @@ public class TaskTest {
         new JFXPanel(); // init JavaFX Toolkit
         AtomicBoolean flag = new AtomicBoolean();
         boolean result = Task.supplyAsync(JavaVersion::fromCurrentEnvironment)
-                .thenAccept(Schedulers.javafx(), javaVersion -> {
+                .thenAcceptAsync(Schedulers.javafx(), javaVersion -> {
                     flag.set(true);
                     Assert.assertEquals(javaVersion, JavaVersion.fromCurrentEnvironment());
                 })

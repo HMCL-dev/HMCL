@@ -124,7 +124,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                     // Actually addMod will not throw exceptions because FileChooser has already filtered files.
                 }
             }
-        }).withRun(Schedulers.javafx(), () -> {
+        }).withRunAsync(Schedulers.javafx(), () -> {
             List<String> prompt = new LinkedList<>();
             if (!succeeded.isEmpty())
                 prompt.add(i18n("mods.add.success", String.join(", ", succeeded)));

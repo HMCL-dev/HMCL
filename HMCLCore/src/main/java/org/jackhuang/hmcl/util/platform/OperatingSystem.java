@@ -147,7 +147,7 @@ public enum OperatingSystem {
                 return Paths.get(home, "." + folder);
             case WINDOWS:
                 String appdata = System.getenv("APPDATA");
-                return Paths.get(Lang.nonNull(appdata, home), "." + folder);
+                return Paths.get(appdata == null ? home : appdata, "." + folder);
             case OSX:
                 return Paths.get(home, "Library", "Application Support", folder);
             default:

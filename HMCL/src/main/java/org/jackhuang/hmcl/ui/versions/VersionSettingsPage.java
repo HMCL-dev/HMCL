@@ -115,7 +115,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         FXUtils.smoothScrolling(scroll);
 
-        Task.supplyAsync(JavaVersion::getJavas).thenAccept(Schedulers.javafx(), list -> {
+        Task.supplyAsync(JavaVersion::getJavas).thenAcceptAsync(Schedulers.javafx(), list -> {
             javaItem.loadChildren(list.stream()
                     .map(javaVersion -> javaItem.createChildren(javaVersion.getVersion() + i18n("settings.game.java_directory.bit",
                             javaVersion.getPlatform().getBit()), javaVersion.getBinary().toString(), javaVersion))
@@ -271,7 +271,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         if (versionSetting == null)
             return;
         Task.supplyAsync(versionSetting::getJavaVersion)
-                .thenAccept(Schedulers.javafx(), javaVersion -> javaItem.setSubtitle(Optional.ofNullable(javaVersion)
+                .thenAcceptAsync(Schedulers.javafx(), javaVersion -> javaItem.setSubtitle(Optional.ofNullable(javaVersion)
                         .map(JavaVersion::getBinary).map(Path::toString).orElse("Invalid Java Path")))
                 .start();
     }

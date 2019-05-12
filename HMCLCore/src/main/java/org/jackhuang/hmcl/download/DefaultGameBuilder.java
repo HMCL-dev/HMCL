@@ -47,25 +47,25 @@ public class DefaultGameBuilder extends GameBuilder {
 
     @Override
     public Task<?> buildAsync() {
-        return new VersionJsonDownloadTask(gameVersion, dependencyManager).thenCompose(rawJson -> {
+        return new VersionJsonDownloadTask(gameVersion, dependencyManager).thenComposeAsync(rawJson -> {
             Version original = JsonUtils.GSON.fromJson(rawJson, Version.class);
             Version version = original.setId(name).setJar(null);
-            Task<?> vanillaTask = downloadGameAsync(gameVersion, version).thenCompose(Task.allOf(
+            Task<?> vanillaTask = downloadGameAsync(gameVersion, version).thenComposeAsync(Task.allOf(
                     new GameAssetDownloadTask(dependencyManager, version, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY),
                     new GameLibrariesTask(dependencyManager, version) // Game libraries will be downloaded for multiple times partly, this time is for vanilla libraries.
-            ).withCompose(new VersionJsonSaveTask(dependencyManager.getGameRepository(), version))); // using [with] because download failure here are tolerant.
+            ).withComposeAsync(new VersionJsonSaveTask(dependencyManager.getGameRepository(), version))); // using [with] because download failure here are tolerant.
 
-            Task<Version> libraryTask = vanillaTask.thenSupply(() -> version);
+            Task<Version> libraryTask = vanillaTask.thenSupplyAsync(() -> version);
 
             if (toolVersions.containsKey("forge"))
-                libraryTask = libraryTask.thenCompose(libraryTaskHelper(gameVersion, "forge"));
+                libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, "forge"));
             if (toolVersions.containsKey("liteloader"))
-                libraryTask = libraryTask.thenCompose(libraryTaskHelper(gameVersion, "liteloader"));
+                libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, "liteloader"));
             if (toolVersions.containsKey("optifine"))
-                libraryTask = libraryTask.thenCompose(libraryTaskHelper(gameVersion, "optifine"));
+                libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, "optifine"));
 
             for (RemoteVersion remoteVersion : remoteVersions)
-                libraryTask = libraryTask.thenCompose(dependencyManager.installLibraryAsync(remoteVersion));
+                libraryTask = libraryTask.thenComposeAsync(dependencyManager.installLibraryAsync(remoteVersion));
 
             return libraryTask;
         }).whenComplete(exception -> {

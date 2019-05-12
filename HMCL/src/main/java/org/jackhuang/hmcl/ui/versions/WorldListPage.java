@@ -83,7 +83,7 @@ public class WorldListPage extends ListPageBase<WorldListItem> {
         setLoading(true);
         Task
                 .runAsync(() -> gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(id)).orElse(null))
-                .thenSupply(() -> World.getWorlds(savesDir).parallel().collect(Collectors.toList()))
+                .thenSupplyAsync(() -> World.getWorlds(savesDir).parallel().collect(Collectors.toList()))
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     worlds = result;
                     setLoading(false);

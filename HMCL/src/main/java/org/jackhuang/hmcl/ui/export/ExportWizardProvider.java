@@ -80,7 +80,7 @@ public final class ExportWizardProvider implements WizardProvider {
                         ), tempModpack);
 
                 if (includeLauncher) {
-                    dependency = dependency.thenRun(() -> {
+                    dependency = dependency.thenRunAsync(() -> {
                         try (Zipper zip = new Zipper(modpackFile.toPath())) {
                             Config exported = new Config();
 

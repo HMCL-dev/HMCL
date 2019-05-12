@@ -46,7 +46,7 @@ public final class Main {
         checkDirectoryPath();
 
         // This environment check will take ~300ms
-        thread(() -> checkDSTRootCAX3(), "CA Certificate Check", true);
+        thread(Main::checkDSTRootCAX3, "CA Certificate Check", true);
 
         Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
 

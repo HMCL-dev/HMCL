@@ -63,8 +63,8 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
         newList.remove(oldLibrary);
         return new MaintainTask(version.setLibraries(newList))
-                .thenCompose(profile.getDependency().installLibraryAsync((RemoteVersion) settings.get(libraryId)))
-                .then(profile.getRepository().refreshVersionsAsync());
+                .thenComposeAsync(profile.getDependency().installLibraryAsync((RemoteVersion) settings.get(libraryId)))
+                .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
     }
 
     @Override

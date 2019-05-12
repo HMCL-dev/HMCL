@@ -71,18 +71,18 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         this.version = profile.getRepository().getResolvedVersion(versionId);
         this.gameVersion = null;
 
-        Task.ofResult(() -> {
+        Task.supplyAsync(() -> {
             gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)).orElse(null);
 
             return LibraryAnalyzer.analyze(version);
-        }).thenAccept(Schedulers.javafx(), analyzer -> {
+        }).thenAcceptAsync(Schedulers.javafx(), analyzer -> {
             Function<Library, Consumer<InstallerItem>> removeAction = library -> x -> {
                 LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
                 newList.remove(library);
                 new MaintainTask(version.setLibraries(newList))
-                        .thenCompose(maintainedVersion -> new VersionJsonSaveTask(profile.getRepository(), maintainedVersion))
-                        .withCompose(profile.getRepository().refreshVersionsAsync())
-                        .withRun(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId))
+                        .thenComposeAsync(maintainedVersion -> new VersionJsonSaveTask(profile.getRepository(), maintainedVersion))
+                        .withComposeAsync(profile.getRepository().refreshVersionsAsync())
+                        .withRunAsync(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId))
                         .start();
             };
 
@@ -118,8 +118,8 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
     }
 
     private void doInstallOffline(File file) {
-        Task task = profile.getDependency().installLibraryAsync(version, file.toPath())
-                .then(profile.getRepository().refreshVersionsAsync());
+        Task<?> task = profile.getDependency().installLibraryAsync(version, file.toPath())
+                .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
         task.setName(i18n("install.installer.install_offline"));
         TaskExecutor executor = task.executor(new TaskListener() {
             @Override
@@ -129,9 +129,9 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                         loadVersion(profile, versionId);
                         Controllers.dialog(i18n("install.success"));
                     } else {
-                        if (executor.getLastException() == null)
+                        if (executor.getException() == null)
                             return;
-                        InstallerWizardProvider.alertFailureMessage(executor.getLastException(), null);
+                        InstallerWizardProvider.alertFailureMessage(executor.getException(), null);
                     }
                 });
             }

@@ -77,7 +77,7 @@ public class AddAccountPane extends StackPane {
     @FXML private SpinnerPane acceptPane;
     @FXML private HBox linksContainer;
 
-    private ListProperty<Hyperlink> links = new SimpleListProperty<>();;
+    private ListProperty<Hyperlink> links = new SimpleListProperty<>();
 
     public AddAccountPane() {
         FXUtils.loadFXML(this, "/assets/fxml/account-add.fxml");

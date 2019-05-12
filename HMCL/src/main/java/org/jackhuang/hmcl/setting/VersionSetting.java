@@ -595,7 +595,7 @@ public final class VersionSetting {
 
         @Override
         public VersionSetting deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            if (json == null || json == JsonNull.INSTANCE || !(json instanceof JsonObject))
+            if (json == JsonNull.INSTANCE || !(json instanceof JsonObject))
                 return null;
             JsonObject obj = (JsonObject) json;
 

@@ -34,7 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.Optional;
-import java.util.concurrent.Executor;
 import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;

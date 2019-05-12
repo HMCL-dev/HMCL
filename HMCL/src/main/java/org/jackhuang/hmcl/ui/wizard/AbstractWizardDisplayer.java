@@ -33,7 +33,7 @@ public interface AbstractWizardDisplayer extends WizardDisplayer {
 
     @Override
     default void handleTask(Map<String, Object> settings, Task<?> task) {
-        TaskExecutor executor = task.withRun(Schedulers.javafx(), this::navigateToSuccess).executor();
+        TaskExecutor executor = task.withRunAsync(Schedulers.javafx(), this::navigateToSuccess).executor();
         TaskListPane pane = new TaskListPane();
         pane.setExecutor(executor);
         navigateTo(pane, Navigation.NavigationDirection.FINISH);

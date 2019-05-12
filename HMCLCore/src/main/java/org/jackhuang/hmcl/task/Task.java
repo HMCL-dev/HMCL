@@ -200,13 +200,13 @@ public abstract class Task<T> {
 
     /**
      * @throws InterruptedException if current thread is interrupted
-     * @see Thread#isInterrupted
+     * @see Thread#interrupted
      */
     public void preExecute() throws Exception {}
 
     /**
      * @throws InterruptedException if current thread is interrupted
-     * @see Thread#isInterrupted
+     * @see Thread#interrupted
      */
     public abstract void execute() throws Exception;
 
@@ -222,7 +222,7 @@ public abstract class Task<T> {
      * {@link Task#isRelyingOnDependencies()} returns true or false.
      *
      * @throws InterruptedException if current thread is interrupted
-     * @see Thread#isInterrupted
+     * @see Thread#interrupted
      * @see Task#isDependenciesSucceeded()
      */
     public void postExecute() throws Exception {}
@@ -342,8 +342,8 @@ public abstract class Task<T> {
      * @param <U> the function's return type
      * @return the new Task
      */
-    public <U, E extends Exception> Task<U> thenApply(ExceptionalFunction<T, U, E> fn) {
-        return thenApply(Schedulers.defaultScheduler(), fn);
+    public <U, E extends Exception> Task<U> thenApplyAsync(ExceptionalFunction<T, U, E> fn) {
+        return thenApplyAsync(Schedulers.defaultScheduler(), fn);
     }
 
     /**
@@ -356,8 +356,8 @@ public abstract class Task<T> {
      * @param <U> the function's return type
      * @return the new Task
      */
-    public <U, E extends Exception> Task<U> thenApply(Executor executor, ExceptionalFunction<T, U, E> fn) {
-        return thenApply(getCaller(), executor, fn);
+    public <U, E extends Exception> Task<U> thenApplyAsync(Executor executor, ExceptionalFunction<T, U, E> fn) {
+        return thenApplyAsync(getCaller(), executor, fn);
     }
 
     /**
@@ -371,7 +371,7 @@ public abstract class Task<T> {
      * @param <U> the function's return type
      * @return the new Task
      */
-    public <U, E extends Exception> Task<U> thenApply(String name, Executor executor, ExceptionalFunction<T, U, E> fn) {
+    public <U, E extends Exception> Task<U> thenApplyAsync(String name, Executor executor, ExceptionalFunction<T, U, E> fn) {
         return new UniApply<>(fn).setExecutor(executor).setName(name);
     }
 
@@ -384,8 +384,8 @@ public abstract class Task<T> {
      * returned Task
      * @return the new Task
      */
-    public <E extends Exception> Task<Void> thenAccept(ExceptionalConsumer<T, E> action) {
-        return thenAccept(Schedulers.defaultScheduler(), action);
+    public <E extends Exception> Task<Void> thenAcceptAsync(ExceptionalConsumer<T, E> action) {
+        return thenAcceptAsync(Schedulers.defaultScheduler(), action);
     }
 
     /**
@@ -397,8 +397,8 @@ public abstract class Task<T> {
      * @param executor the executor to use for asynchronous execution
      * @return the new Task
      */
-    public <E extends Exception> Task<Void> thenAccept(Executor executor, ExceptionalConsumer<T, E> action) {
-        return thenAccept(getCaller(), executor, action);
+    public <E extends Exception> Task<Void> thenAcceptAsync(Executor executor, ExceptionalConsumer<T, E> action) {
+        return thenAcceptAsync(getCaller(), executor, action);
     }
 
     /**
@@ -411,8 +411,8 @@ public abstract class Task<T> {
      * @param executor the executor to use for asynchronous execution
      * @return the new Task
      */
-    public <E extends Exception> Task<Void> thenAccept(String name, Executor executor, ExceptionalConsumer<T, E> action) {
-        return thenApply(name, executor, result -> {
+    public <E extends Exception> Task<Void> thenAcceptAsync(String name, Executor executor, ExceptionalConsumer<T, E> action) {
+        return thenApplyAsync(name, executor, result -> {
             action.accept(result);
             return null;
         });
@@ -426,8 +426,8 @@ public abstract class Task<T> {
      * returned Task
      * @return the new Task
      */
-    public <E extends Exception> Task<Void> thenRun(ExceptionalRunnable<E> action) {
-        return thenRun(Schedulers.defaultScheduler(), action);
+    public <E extends Exception> Task<Void> thenRunAsync(ExceptionalRunnable<E> action) {
+        return thenRunAsync(Schedulers.defaultScheduler(), action);
     }
 
     /**
@@ -439,8 +439,8 @@ public abstract class Task<T> {
      * @param executor the executor to use for asynchronous execution
      * @return the new Task
      */
-    public <E extends Exception> Task<Void> thenRun(Executor executor, ExceptionalRunnable<E> action) {
-        return thenRun(getCaller(), executor, action);
+    public <E extends Exception> Task<Void> thenRunAsync(Executor executor, ExceptionalRunnable<E> action) {
+        return thenRunAsync(getCaller(), executor, action);
     }
 
     /**
@@ -453,8 +453,8 @@ public abstract class Task<T> {
      * @param executor the executor to use for asynchronous execution
      * @return the new Task
      */
-    public <E extends Exception> Task<Void> thenRun(String name, Executor executor, ExceptionalRunnable<E> action) {
-        return thenApply(name, executor, ignore -> {
+    public <E extends Exception> Task<Void> thenRunAsync(String name, Executor executor, ExceptionalRunnable<E> action) {
+        return thenApplyAsync(name, executor, ignore -> {
             action.run();
             return null;
         });
@@ -468,8 +468,8 @@ public abstract class Task<T> {
      * @param <U> the function's return type
      * @return the new Task
      */
-    public final <U> Task<U> thenSupply(Callable<U> fn) {
-        return thenCompose(() -> Task.supplyAsync(fn));
+    public final <U> Task<U> thenSupplyAsync(Callable<U> fn) {
+        return thenComposeAsync(() -> Task.supplyAsync(fn));
     }
 
     /**
@@ -481,8 +481,8 @@ public abstract class Task<T> {
      * @param <U> the function's return type
      * @return the new Task
      */
-    public final <U> Task<U> thenSupply(String name, Callable<U> fn) {
-        return thenCompose(() -> Task.supplyAsync(name, fn));
+    public final <U> Task<U> thenSupplyAsync(String name, Callable<U> fn) {
+        return thenComposeAsync(() -> Task.supplyAsync(name, fn));
     }
 
     /**
@@ -493,8 +493,8 @@ public abstract class Task<T> {
      * @param <U> the type of the returned Task's result
      * @return the Task
      */
-    public final <U> Task<U> thenCompose(Task<U> other) {
-        return thenCompose(() -> other);
+    public final <U> Task<U> thenComposeAsync(Task<U> other) {
+        return thenComposeAsync(() -> other);
     }
     
     /**
@@ -505,7 +505,7 @@ public abstract class Task<T> {
      * @param <U> the type of the returned Task's result
      * @return the Task
      */
-    public final <U> Task<U> thenCompose(ExceptionalSupplier<Task<U>, ?> fn) {
+    public final <U> Task<U> thenComposeAsync(ExceptionalSupplier<Task<U>, ?> fn) {
         return new UniCompose<>(fn, true);
     }
 
@@ -518,15 +518,15 @@ public abstract class Task<T> {
      * @param <U> the type of the returned Task's result
      * @return the Task
      */
-    public <U, E extends Exception> Task<U> thenCompose(ExceptionalFunction<T, Task<U>, E> fn) {
+    public <U, E extends Exception> Task<U> thenComposeAsync(ExceptionalFunction<T, Task<U>, E> fn) {
         return new UniCompose<>(fn, true);
     }
 
-    public final <U> Task<U> withCompose(Task<U> other) {
-        return withCompose(() -> other);
+    public final <U> Task<U> withComposeAsync(Task<U> other) {
+        return withComposeAsync(() -> other);
     }
 
-    public final <U, E extends Exception> Task<U> withCompose(ExceptionalSupplier<Task<U>, E> fn) {
+    public final <U, E extends Exception> Task<U> withComposeAsync(ExceptionalSupplier<Task<U>, E> fn) {
         return new UniCompose<>(fn, false);
     }
 
@@ -538,8 +538,8 @@ public abstract class Task<T> {
      * returned Task
      * @return the new Task
      */
-    public <E extends Exception> Task<Void> withRun(ExceptionalRunnable<E> action) {
-        return withRun(Schedulers.defaultScheduler(), action);
+    public <E extends Exception> Task<Void> withRunAsync(ExceptionalRunnable<E> action) {
+        return withRunAsync(Schedulers.defaultScheduler(), action);
     }
 
     /**
@@ -551,8 +551,8 @@ public abstract class Task<T> {
      * @param executor the executor to use for asynchronous execution
      * @return the new Task
      */
-    public <E extends Exception> Task<Void> withRun(Executor executor, ExceptionalRunnable<E> action) {
-        return withRun(getCaller(), executor, action);
+    public <E extends Exception> Task<Void> withRunAsync(Executor executor, ExceptionalRunnable<E> action) {
+        return withRunAsync(getCaller(), executor, action);
     }
 
     /**
@@ -565,7 +565,7 @@ public abstract class Task<T> {
      * @param executor the executor to use for asynchronous execution
      * @return the new Task
      */
-    public <E extends Exception> Task<Void> withRun(String name, Executor executor, ExceptionalRunnable<E> action) {
+    public <E extends Exception> Task<Void> withRunAsync(String name, Executor executor, ExceptionalRunnable<E> action) {
         return new UniCompose<>(() -> Task.runAsync(name, executor, action), false);
     }
 
