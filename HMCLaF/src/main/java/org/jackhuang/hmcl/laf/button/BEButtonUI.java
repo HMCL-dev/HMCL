@@ -175,10 +175,10 @@ public class BEButtonUI extends BasicButtonUI implements Skin {
      */
     public static void paintXPButtonBackground(Graphics g, JComponent c) {
         AbstractButton b = (AbstractButton) c;
-        boolean toolbar = b.getParent() instanceof JToolBar;
+        b.getParent();
 
         if (b.isContentAreaFilled()) {
-            ButtonModel model = b.getModel();
+            b.getModel();
             Dimension d = c.getSize();
             int dx = 0;
             int dy = 0;
@@ -318,6 +318,8 @@ public class BEButtonUI extends BasicButtonUI implements Skin {
     }
 
     public static class BEEmptyBorder extends EmptyBorder implements UIResource {
+
+        private static final long serialVersionUID = 3304600080232586686L;
 
         public BEEmptyBorder(Insets m) {
             super(m.top + 2, m.left + 2, m.bottom + 2, m.right + 2);

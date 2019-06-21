@@ -55,8 +55,6 @@ public class BEComboBoxUI extends BasicComboBoxUI
 
     private static final Icon9Factory ICON_9 = new Icon9Factory("combo");
     private static final Dimension BTN_SIZE = new Dimension(17, 20);
-    private final Dimension btnSize = new Dimension(BTN_SIZE);
-
     public static ComponentUI createUI(JComponent c) {
         return new BEComboBoxUI();
     }

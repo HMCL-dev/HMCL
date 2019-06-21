@@ -23,7 +23,7 @@ import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicToggleButtonUI;
 
-import org.jackhuang.hmcl.laf.BEUtils;
+import org.jackhuang.hmcl.laf.utils.BEUtils;
 import org.jackhuang.hmcl.laf.utils.Icon9Factory;
 import org.jackhuang.hmcl.laf.utils.MySwingUtilities2;
 
