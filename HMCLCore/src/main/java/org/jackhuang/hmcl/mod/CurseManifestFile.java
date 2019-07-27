@@ -83,7 +83,7 @@ public final class CurseManifestFile implements Validation {
     }
 
     public URL getUrl() {
-        return url == null ? NetworkUtils.toURL("https://minecraft.curseforge.com/projects/" + projectID + "/files/" + fileID + "/download")
+        return url == null ? NetworkUtils.toURL("https://www.curseforge.com/minecraft/mc-mods/" + projectID + "/download/" + fileID + "/file")
                 : NetworkUtils.toURL(url);
     }
 
