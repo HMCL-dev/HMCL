@@ -18,8 +18,17 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.event.*;
+import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
+import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.event.EventBus;
+import org.jackhuang.hmcl.event.GameJsonParseFailedEvent;
+import org.jackhuang.hmcl.event.LoadedOneVersionEvent;
+import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
+import org.jackhuang.hmcl.event.RemoveVersionEvent;
+import org.jackhuang.hmcl.event.RenameVersionEvent;
 import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -27,7 +36,13 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -366,6 +381,10 @@ public class DefaultGameRepository implements GameRepository {
         }
 
         return assetsDir;
+    }
+
+    public Task<Version> save(Version version) {
+        return new VersionJsonSaveTask(this, version);
     }
 
     public boolean isLoaded() {

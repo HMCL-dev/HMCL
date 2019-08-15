@@ -17,13 +17,13 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.util.StringUtils;
+
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import org.jackhuang.hmcl.util.StringUtils;
 
 public final class CommandBuilder {
     private final OperatingSystem os;
@@ -39,9 +39,9 @@ public final class CommandBuilder {
 
     private String parse(String s) {
         if (OperatingSystem.WINDOWS == os) {
-            return parseWindows(s);
+            return parseBatch(s);
         } else {
-            return parseBash(s);
+            return parseShell(s);
         }
     }
 
@@ -96,9 +96,14 @@ public final class CommandBuilder {
             this.arg = arg;
             this.parse = parse;
         }
+
+        @Override
+        public String toString() {
+            return parse ? (OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS ? parseBatch(arg) : parseShell(arg)) : arg;
+        }
     }
 
-    private static String parseWindows(String s) {
+    private static String parseBatch(String s) {
         String escape = " \t\"^&<>|";
         if (StringUtils.containsOne(s, escape.toCharArray()))
             // The argument has not been quoted, add quotes.
@@ -111,7 +116,7 @@ public final class CommandBuilder {
         }
     }
 
-    private static String parseBash(String s) {
+    private static String parseShell(String s) {
         String escaping = " \t\"!#$&'()*,;<=>?[\\]^`{|}~";
         String escaped = "\"$&`";
         if (s.indexOf(' ') >= 0 || s.indexOf('\t') >= 0 || StringUtils.containsOne(s, escaping.toCharArray())) {

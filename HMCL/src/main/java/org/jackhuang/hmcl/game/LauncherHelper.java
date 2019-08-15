@@ -26,15 +26,22 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.MaintainTask;
+import org.jackhuang.hmcl.download.game.LibrariesUniqueTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
-import org.jackhuang.hmcl.launch.*;
+import org.jackhuang.hmcl.launch.NotDecompressingNativesException;
+import org.jackhuang.hmcl.launch.PermissionException;
+import org.jackhuang.hmcl.launch.ProcessCreationException;
+import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.mod.CurseCompletionException;
 import org.jackhuang.hmcl.mod.CurseCompletionTask;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
-import org.jackhuang.hmcl.task.*;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.LogWindow;
@@ -56,7 +63,13 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -119,7 +132,7 @@ public final class LauncherHelper {
     private void launch0() {
         HMCLGameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
-        Version version = MaintainTask.maintain(repository.getResolvedVersion(selectedVersion));
+        Version version = MaintainTask.maintain(LibrariesUniqueTask.unique(repository.getResolvedVersion(selectedVersion)));
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
         TaskExecutor executor = Task.runAsync(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))
@@ -159,7 +172,7 @@ public final class LauncherHelper {
                 })
                 .thenApplyAsync(authInfo -> new HMCLGameLauncher(
                         repository,
-                        selectedVersion,
+                        version.getPatches().isEmpty() ? repository.getResolvedVersion(selectedVersion) : version,
                         authInfo,
                         setting.toLaunchOptions(profile.getGameDir()),
                         launcherVisibility == LauncherVisibility.CLOSE

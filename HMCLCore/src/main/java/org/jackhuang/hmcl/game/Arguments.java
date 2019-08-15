@@ -21,8 +21,13 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -46,16 +51,18 @@ public final class Arguments {
         this.jvm = jvm;
     }
 
+    @Nullable
     public List<Argument> getGame() {
-        return game == null ? Collections.emptyList() : Collections.unmodifiableList(game);
+        return game == null ? null : Collections.unmodifiableList(game);
     }
 
     public Arguments withGame(List<Argument> game) {
         return new Arguments(game, jvm);
     }
 
+    @Nullable
     public List<Argument> getJvm() {
-        return jvm == null ? Collections.emptyList() : Collections.unmodifiableList(jvm);
+        return jvm == null ? null : Collections.unmodifiableList(jvm);
     }
 
     public Arguments withJvm(List<Argument> jvm) {
@@ -86,7 +93,9 @@ public final class Arguments {
         else if (b == null)
             return a;
         else
-            return new Arguments(Lang.merge(a.game, b.game), Lang.merge(a.jvm, b.jvm));
+            return new Arguments(
+                    a.game == null && b.game == null ? null : Lang.merge(a.game, b.game),
+                    a.jvm == null && b.jvm == null ? null : Lang.merge(a.jvm, b.jvm));
     }
 
     public static List<String> parseStringArguments(List<String> arguments, Map<String, String> keys) {

@@ -40,6 +40,10 @@ public class LibrariesUniqueTask extends Task<Version> {
 
     @Override
     public void execute() {
+        setResult(unique(version));
+    }
+
+    public static Version unique(Version version) {
         List<Library> libraries = new ArrayList<>(version.getLibraries());
 
         SimpleMultimap<String, Library> multimap = new SimpleMultimap<String, Library>(HashMap::new, LinkedList::new);
@@ -91,6 +95,6 @@ public class LibrariesUniqueTask extends Task<Version> {
             }
         }
 
-        setResult(version.setLibraries(multimap.values().stream().sorted().collect(Collectors.toList())));
+        return version.setLibraries(multimap.values().stream().sorted().collect(Collectors.toList()));
     }
 }

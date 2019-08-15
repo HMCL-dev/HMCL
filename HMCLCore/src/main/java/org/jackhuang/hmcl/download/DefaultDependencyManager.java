@@ -19,18 +19,22 @@ package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
-import org.jackhuang.hmcl.download.game.*;
+import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
+import org.jackhuang.hmcl.download.game.GameDownloadTask;
+import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.LinkedList;
 
 /**
  * Note: This class has no state.
@@ -90,6 +94,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     @Override
     public Task<Version> installLibraryAsync(String gameVersion, Version version, String libraryId, String libraryVersion) {
+        if (version.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
+
         VersionList<?> versionList = getVersionList(libraryId);
         return versionList.loadAsync(gameVersion, getDownloadProvider())
                 .thenComposeAsync(() -> installLibraryAsync(version, versionList.getVersion(gameVersion, libraryVersion)
@@ -98,6 +104,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     @Override
     public Task<Version> installLibraryAsync(Version oldVersion, RemoteVersion libraryVersion) {
+        if (oldVersion.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
+
         Task<Version> task;
         if (libraryVersion instanceof ForgeRemoteVersion)
             task = new ForgeInstallTask(this, oldVersion, (ForgeRemoteVersion) libraryVersion);
@@ -108,9 +116,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         else
             throw new IllegalArgumentException("Remote library " + libraryVersion + " is unrecognized.");
         return task
-                .thenComposeAsync(LibrariesUniqueTask::new)
-                .thenComposeAsync(MaintainTask::new)
-                .thenComposeAsync(newVersion -> new VersionJsonSaveTask(repository, newVersion));
+                .thenApplyAsync(oldVersion::addPatch)
+                .thenComposeAsync(repository::save);
     }
 
 
@@ -118,7 +125,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         return version -> installLibraryAsync(version, libraryVersion);
     }
 
-    public Task installLibraryAsync(Version oldVersion, Path installer) {
+    public Task<Version> installLibraryAsync(Version oldVersion, Path installer) {
+        if (oldVersion.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
+
         return Task
                 .composeAsync(() -> {
                     try {
@@ -133,8 +142,54 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
                     throw new UnsupportedOperationException("Library cannot be recognized");
                 })
-                .thenComposeAsync(LibrariesUniqueTask::new)
-                .thenComposeAsync(MaintainTask::new)
-                .thenComposeAsync(newVersion -> new VersionJsonSaveTask(repository, newVersion));
+                .thenApplyAsync(oldVersion::addPatch)
+                .thenComposeAsync(repository::save);
+    }
+
+    /**
+     * Remove installed library.
+     * Will try to remove libraries and patches.
+     *
+     * @param versionId version id
+     * @param libraryId forge/liteloader/optifine
+     * @return task to remove the specified library
+     */
+    public Task<Version> removeLibraryWithoutSavingAsync(String versionId, String libraryId) {
+        Version version = repository.getVersion(versionId); // to ensure version is not resolved
+
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
+        LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
+
+        switch (libraryId) {
+            case "forge":
+                analyzer.ifPresent(LibraryAnalyzer.LibraryType.FORGE, (library, libraryVersion) -> newList.remove(library));
+                version = version.removePatchById("net.minecraftforge");
+                break;
+            case "liteloader":
+                analyzer.ifPresent(LibraryAnalyzer.LibraryType.LITELOADER, (library, libraryVersion) -> newList.remove(library));
+                version = version.removePatchById("com.mumfrey.liteloader");
+                break;
+            case "optifine":
+                analyzer.ifPresent(LibraryAnalyzer.LibraryType.OPTIFINE, (library, libraryVersion) -> newList.remove(library));
+                version = version.removePatchById("net.optifine");
+                break;
+            case "fabric":
+                analyzer.ifPresent(LibraryAnalyzer.LibraryType.FABRIC, (library, libraryVersion) -> newList.remove(library));
+                version = version.removePatchById("net.fabricmc");
+                break;
+        }
+        return new MaintainTask(version.setLibraries(newList));
+    }
+
+    /**
+     * Remove installed library.
+     * Will try to remove libraries and patches.
+     *
+     * @param versionId version id
+     * @param libraryId forge/liteloader/optifine
+     * @return task to remove the specified library
+     */
+    public Task<Version> removeLibraryAsync(String versionId, String libraryId) {
+        return removeLibraryWithoutSavingAsync(versionId, libraryId).thenComposeAsync(repository::save);
     }
 }

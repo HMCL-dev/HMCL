@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
-import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.DownloadException;
@@ -56,10 +55,10 @@ public final class InstallerWizardProvider implements WizardProvider {
         this.gameVersion = gameVersion;
         this.version = version;
 
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
-        forge = analyzer.get(FORGE).map(Library::getVersion).orElse(null);
-        liteLoader = analyzer.get(LITELOADER).map(Library::getVersion).orElse(null);
-        optiFine = analyzer.get(OPTIFINE).map(Library::getVersion).orElse(null);
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version.resolve(profile.getRepository()));
+        forge = analyzer.getVersion(FORGE).orElse(null);
+        liteLoader = analyzer.getVersion(LITELOADER).orElse(null);
+        optiFine = analyzer.getVersion(OPTIFINE).orElse(null);
     }
 
     public Profile getProfile() {

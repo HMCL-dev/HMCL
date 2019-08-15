@@ -20,7 +20,10 @@ package org.jackhuang.hmcl.download.forge;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.Artifact;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
@@ -40,7 +43,14 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -258,15 +268,7 @@ public class ForgeNewInstallTask extends Task<Version> {
             }
         }
 
-        // resolve the version
-        SimpleVersionProvider provider = new SimpleVersionProvider();
-        provider.addVersion(version);
-
-        setResult(forgeVersion
-                .setInheritsFrom(version.getId())
-                .resolve(provider).setJar(null)
-                .setId(version.getId()).setLogging(Collections.emptyMap()));
-
+        setResult(forgeVersion);
         dependencies.add(dependencyManager.checkLibraryCompletionAsync(forgeVersion));
 
         FileUtils.deleteDirectory(temp.toFile());

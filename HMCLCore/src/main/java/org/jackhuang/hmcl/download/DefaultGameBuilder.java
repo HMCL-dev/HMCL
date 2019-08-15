@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.download.game.*;
+import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
+import org.jackhuang.hmcl.download.game.GameDownloadTask;
+import org.jackhuang.hmcl.download.game.GameLibrariesTask;
+import org.jackhuang.hmcl.download.game.VersionJsonDownloadTask;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
@@ -53,7 +56,7 @@ public class DefaultGameBuilder extends GameBuilder {
             Task<?> vanillaTask = downloadGameAsync(gameVersion, version).thenComposeAsync(Task.allOf(
                     new GameAssetDownloadTask(dependencyManager, version, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY),
                     new GameLibrariesTask(dependencyManager, version) // Game libraries will be downloaded for multiple times partly, this time is for vanilla libraries.
-            ).withComposeAsync(new VersionJsonSaveTask(dependencyManager.getGameRepository(), version))); // using [with] because download failure here are tolerant.
+            ).withComposeAsync(dependencyManager.getGameRepository().save(version))); // using [with] because download failure here are tolerant.
 
             Task<Version> libraryTask = vanillaTask.thenSupplyAsync(() -> version);
 

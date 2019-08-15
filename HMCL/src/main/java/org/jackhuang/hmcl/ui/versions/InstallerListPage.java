@@ -21,24 +21,25 @@ import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.download.MaintainTask;
-import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
 import org.jackhuang.hmcl.game.GameVersion;
-import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
-import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.InstallerItem;
+import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.ToolbarListPageSkin;
 import org.jackhuang.hmcl.ui.download.InstallerWizardProvider;
 import org.jackhuang.hmcl.ui.download.UpdateInstallerWizardProvider;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -68,38 +69,35 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
     public void loadVersion(Profile profile, String versionId) {
         this.profile = profile;
         this.versionId = versionId;
-        this.version = profile.getRepository().getResolvedVersion(versionId);
+        this.version = profile.getRepository().getVersion(versionId);
         this.gameVersion = null;
 
         Task.supplyAsync(() -> {
             gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)).orElse(null);
 
-            return LibraryAnalyzer.analyze(version);
+            return LibraryAnalyzer.analyze(profile.getRepository().getResolvedVersion(versionId));
         }).thenAcceptAsync(Schedulers.javafx(), analyzer -> {
-            Function<Library, Consumer<InstallerItem>> removeAction = library -> x -> {
-                LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
-                newList.remove(library);
-                new MaintainTask(version.setLibraries(newList))
-                        .thenComposeAsync(maintainedVersion -> new VersionJsonSaveTask(profile.getRepository(), maintainedVersion))
+            Function<String, Consumer<InstallerItem>> removeAction = libraryId -> x -> {
+                profile.getDependency().removeLibraryAsync(version.getId(), libraryId)
                         .withComposeAsync(profile.getRepository().refreshVersionsAsync())
                         .withRunAsync(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId))
                         .start();
             };
 
             itemsProperty().clear();
-            analyzer.get(FORGE).ifPresent(library -> itemsProperty().add(
-                    new InstallerItem("Forge", library.getVersion(), () -> {
-                        Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "forge", library));
-                    }, removeAction.apply(library))));
-            analyzer.get(LITELOADER).ifPresent(library -> itemsProperty().add(
-                    new InstallerItem("LiteLoader", library.getVersion(), () -> {
-                        Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "liteloader", library));
-                    }, removeAction.apply(library))));
-            analyzer.get(OPTIFINE).ifPresent(library -> itemsProperty().add(
-                    new InstallerItem("OptiFine", library.getVersion(), () -> {
-                        Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "optifine", library));
-                    }, removeAction.apply(library))));
-            analyzer.get(FABRIC).ifPresent(library -> itemsProperty().add(new InstallerItem("Fabric", library.getVersion(), null, null)));
+            analyzer.getVersion(FORGE).ifPresent(libraryVersion -> itemsProperty().add(
+                    new InstallerItem("Forge", libraryVersion, () -> {
+                        Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "forge", libraryVersion));
+                    }, removeAction.apply("forge"))));
+            analyzer.getVersion(LITELOADER).ifPresent(libraryVersion -> itemsProperty().add(
+                    new InstallerItem("LiteLoader", libraryVersion, () -> {
+                        Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "liteloader", libraryVersion));
+                    }, removeAction.apply("liteloader"))));
+            analyzer.getVersion(OPTIFINE).ifPresent(libraryVersion -> itemsProperty().add(
+                    new InstallerItem("OptiFine", libraryVersion, () -> {
+                        Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "optifine", libraryVersion));
+                    }, removeAction.apply("optifine"))));
+            analyzer.getVersion(FABRIC).ifPresent(libraryVersion -> itemsProperty().add(new InstallerItem("Fabric", libraryVersion, null, null)));
         }).start();
     }
 

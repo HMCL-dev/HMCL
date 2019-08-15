@@ -22,7 +22,6 @@ import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.MaintainTask;
-import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.game.VersionLibraryBuilder;
@@ -155,7 +154,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                 }
         }
 
-        dependencies.add(new MaintainTask(version).thenComposeAsync(maintainedVersion -> new VersionJsonSaveTask(repository, maintainedVersion)));
+        dependencies.add(new MaintainTask(version).thenComposeAsync(repository::save));
         dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/" + manifest.getName() + "/minecraft", manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)));
     }
 

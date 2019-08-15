@@ -79,7 +79,10 @@ public final class ForgeInstallTask extends Task<Version> {
     @Override
     public void postExecute() throws Exception {
         Files.deleteIfExists(installer);
-        setResult(dependency.getResult());
+        setResult(dependency.getResult()
+                .setPriority(10000)
+                .setId("net.minecraftforge")
+                .setVersion(remote.getSelfVersion()));
     }
 
     @Override
@@ -102,6 +105,7 @@ public final class ForgeInstallTask extends Task<Version> {
 
     /**
      * Install Forge library from existing local file.
+     * This method will try to identify this installer whether it is in old or new format.
      *
      * @param dependencyManager game repository
      * @param version version.json

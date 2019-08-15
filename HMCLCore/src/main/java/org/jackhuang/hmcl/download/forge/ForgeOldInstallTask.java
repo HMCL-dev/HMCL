@@ -18,15 +18,21 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -75,15 +81,7 @@ public class ForgeOldInstallTask extends Task<Version> {
                 IOUtils.copyTo(is, os);
             }
 
-            // resolve the version
-            SimpleVersionProvider provider = new SimpleVersionProvider();
-            provider.addVersion(version);
-
-            setResult(installProfile.getVersionInfo()
-                    .setInheritsFrom(version.getId())
-                    .resolve(provider).setJar(null)
-                    .setId(version.getId()).setLogging(Collections.emptyMap()));
-
+            setResult(installProfile.getVersionInfo());
             dependencies.add(dependencyManager.checkLibraryCompletionAsync(installProfile.getVersionInfo()));
         }
     }

@@ -18,11 +18,28 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.Validation;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -32,6 +49,8 @@ import java.util.logging.Level;
 public class Version implements Comparable<Version>, Validation {
 
     private final String id;
+    private final String version;
+    private final Integer priority;
     private final String minecraftArguments;
     private final Arguments arguments;
     private final String mainClass;
@@ -47,13 +66,20 @@ public class Version implements Comparable<Version>, Validation {
     private final Date time;
     private final Date releaseTime;
     private final int minimumLauncherVersion;
-    private final boolean hidden;
+    private final Boolean hidden;
+    private final List<Version> patches;
 
     private transient final boolean resolved;
 
-    public Version(boolean resolved, String id, String minecraftArguments, Arguments arguments, String mainClass, String inheritsFrom, String jar, AssetIndexInfo assetIndex, String assets, List<Library> libraries, List<CompatibilityRule> compatibilityRules, Map<DownloadType, DownloadInfo> downloads, Map<DownloadType, LoggingInfo> logging, ReleaseType type, Date time, Date releaseTime, int minimumLauncherVersion, boolean hidden) {
+    public Version(String id, String version, int priority, Arguments arguments, String mainClass, List<Library> libraries) {
+        this(false, id, version, priority, null, arguments, mainClass, null, null, null, null, libraries, null, null, null, null, null, null, 0, null, null);
+    }
+
+    public Version(boolean resolved, String id, String version, Integer priority, String minecraftArguments, Arguments arguments, String mainClass, String inheritsFrom, String jar, AssetIndexInfo assetIndex, String assets, List<Library> libraries, List<CompatibilityRule> compatibilityRules, Map<DownloadType, DownloadInfo> downloads, Map<DownloadType, LoggingInfo> logging, ReleaseType type, Date time, Date releaseTime, int minimumLauncherVersion, Boolean hidden, List<Version> patches) {
         this.resolved = resolved;
         this.id = id;
+        this.version = version;
+        this.priority = priority;
         this.minecraftArguments = minecraftArguments;
         this.arguments = arguments;
         this.mainClass = mainClass;
@@ -61,15 +87,16 @@ public class Version implements Comparable<Version>, Validation {
         this.jar = jar;
         this.assetIndex = assetIndex;
         this.assets = assets;
-        this.libraries = libraries == null ? new LinkedList<>() : new LinkedList<>(libraries);
+        this.libraries = libraries == null ? Collections.emptyList() : new LinkedList<>(libraries);
         this.compatibilityRules = compatibilityRules == null ? null : new LinkedList<>(compatibilityRules);
         this.downloads = downloads == null ? null : new HashMap<>(downloads);
         this.logging = logging == null ? null : new HashMap<>(logging);
         this.type = type;
-        this.time = time == null ? new Date() : (Date) time.clone();
-        this.releaseTime = releaseTime == null ? new Date() : (Date) releaseTime.clone();
+        this.time = time == null ? null : (Date) time.clone();
+        this.releaseTime = releaseTime == null ? null : (Date) releaseTime.clone();
         this.minimumLauncherVersion = minimumLauncherVersion;
         this.hidden = hidden;
+        this.patches = patches == null ? null : patches.isEmpty() ? null : new LinkedList<>(patches);
     }
 
     public Optional<String> getMinecraftArguments() {
@@ -92,8 +119,22 @@ public class Version implements Comparable<Version>, Validation {
         return id;
     }
 
+    /**
+     * Version of the patch.
+     * Exists only when this version object represents a patch.
+     * Example: 0.5.0.33 for fabric-loader, 28.0.46 for minecraft-forge.
+     */
+    @Nullable
+    public String getVersion() {
+        return version;
+    }
+
+    public int getPriority() {
+        return priority == null ? Integer.MIN_VALUE : priority;
+    }
+
     public ReleaseType getType() {
-        return type;
+        return type == null ? ReleaseType.UNKNOWN : type;
     }
 
     public Date getReleaseTime() {
@@ -113,7 +154,15 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     public boolean isHidden() {
-        return hidden;
+        return hidden == null ? false : hidden;
+    }
+
+    public boolean isResolved() {
+        return resolved;
+    }
+
+    public List<Version> getPatches() {
+        return patches == null ? Collections.emptyList() : patches;
     }
 
     public Map<DownloadType, LoggingInfo> getLogging() {
@@ -153,22 +202,12 @@ public class Version implements Comparable<Version>, Validation {
         return resolve(provider, new HashSet<>()).setResolved();
     }
 
-    protected Version resolve(VersionProvider provider, Set<String> resolvedSoFar) throws VersionNotFoundException {
-        if (inheritsFrom == null) {
-            return this.jar == null ? this.setJar(id) : this;
-        }
-
-        // To maximize the compatibility.
-        if (!resolvedSoFar.add(id)) {
-            Logging.LOG.log(Level.WARNING, "Found circular dependency versions: " + resolvedSoFar);
-            return this;
-        }
-
-        // It is supposed to auto install an version in getVersion.
-        Version parent = provider.getVersion(inheritsFrom).resolve(provider, resolvedSoFar);
+    protected Version merge(Version parent) {
         return new Version(
                 true,
                 id,
+                null,
+                null,
                 minecraftArguments == null ? parent.minecraftArguments : minecraftArguments,
                 Arguments.merge(parent.arguments, arguments),
                 mainClass == null ? parent.mainClass : mainClass,
@@ -184,43 +223,90 @@ public class Version implements Comparable<Version>, Validation {
                 time,
                 releaseTime,
                 Math.max(minimumLauncherVersion, parent.minimumLauncherVersion),
-                hidden);
+                hidden,
+                Lang.merge(parent.patches, patches));
+    }
+
+    protected Version resolve(VersionProvider provider, Set<String> resolvedSoFar) throws VersionNotFoundException {
+        Version thisVersion;
+
+        if (inheritsFrom == null) {
+            thisVersion = this.jar == null ? this.setJar(id) : this;
+        } else {
+            // To maximize the compatibility.
+            if (!resolvedSoFar.add(id)) {
+                Logging.LOG.log(Level.WARNING, "Found circular dependency versions: " + resolvedSoFar);
+                thisVersion = this.jar == null ? this.setJar(id) : this;
+            } else {
+                // It is supposed to auto install an version in getVersion.
+                thisVersion = merge(provider.getVersion(inheritsFrom).resolve(provider, resolvedSoFar));
+            }
+        }
+
+        if (patches != null && !patches.isEmpty()) {
+            // Assume patches themselves do not have patches recursively.
+            List<Version> sortedPatches = patches.stream()
+                    .sorted(Comparator.comparing(Version::getPriority))
+                    .collect(Collectors.toList());
+            for (Version patch : sortedPatches) {
+                thisVersion = patch.setJar(null).merge(thisVersion);
+            }
+        }
+
+        return thisVersion.setId(id);
     }
 
     private Version setResolved() {
-        return new Version(true, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden);
+        return new Version(true, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, patches);
     }
 
     public Version setId(String id) {
-        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden);
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, patches);
+    }
+
+    public Version setVersion(String version) {
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, patches);
+    }
+
+    public Version setPriority(Integer priority) {
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, patches);
     }
 
     public Version setMinecraftArguments(String minecraftArguments) {
-        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden);
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, patches);
     }
 
     public Version setArguments(Arguments arguments) {
-        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden);
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, patches);
     }
 
     public Version setMainClass(String mainClass) {
-        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden);
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, patches);
     }
 
     public Version setInheritsFrom(String inheritsFrom) {
-        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden);
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, patches);
     }
 
     public Version setJar(String jar) {
-        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden);
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, patches);
     }
 
     public Version setLibraries(List<Library> libraries) {
-        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden);
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, patches);
     }
 
     public Version setLogging(Map<DownloadType, LoggingInfo> logging) {
-        return new Version(resolved, id, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden);
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, patches);
+    }
+
+    public Version addPatch(Version patch) {
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, Lang.merge(patches, Collections.singleton(patch)));
+    }
+
+    public Version removePatchById(String patchId) {
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden,
+                patches == null ? null : patches.stream().filter(patch -> !patchId.equals(patch.getId())).collect(Collectors.toList()));
     }
 
     @Override

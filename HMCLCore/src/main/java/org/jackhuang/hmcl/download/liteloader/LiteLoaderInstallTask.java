@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.LibraryDownloadInfo;
@@ -67,16 +68,16 @@ public final class LiteLoaderInstallTask extends Task<Version> {
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(null, remote.getUrl()))
         );
 
-        Version tempVersion = version.setLibraries(Lang.merge(remote.getLibraries(), Collections.singleton(library)));
-
-        // --tweakClass will be added in MaintainTask
-        setResult(version
-                .setMainClass("net.minecraft.launchwrapper.Launch")
-                .setLibraries(Lang.merge(tempVersion.getLibraries(), version.getLibraries()))
+        setResult(new Version("com.mumfrey.liteloader",
+                remote.getSelfVersion(),
+                20000,
+                new Arguments().addGameArguments("--tweakClass", "com.mumfrey.liteloader.launch.LiteLoaderTweaker"),
+                "net.minecraft.launchwrapper.Launch",
+                Lang.merge(remote.getLibraries(), Collections.singleton(library)))
                 .setLogging(Collections.emptyMap()) // Mods may log in malformed format, causing XML parser to crash. So we suppress using official log4j configuration
         );
 
-        dependencies.add(dependencyManager.checkLibraryCompletionAsync(tempVersion));
+        dependencies.add(dependencyManager.checkLibraryCompletionAsync(version.setLibraries(getResult().getLibraries())));
     }
 
 }

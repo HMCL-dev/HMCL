@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DependencyManager;
-import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
 import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
@@ -90,7 +89,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     public void execute() throws Exception {
         String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
         Version version = JsonUtils.GSON.fromJson(json, Version.class).setId(name).setJar(null);
-        dependencies.add(new VersionJsonSaveTask(repository, version));
+        dependencies.add(repository.save(version));
         dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/minecraft", modpack, MODPACK_TYPE, repository.getModpackConfiguration(name)));
     }
 

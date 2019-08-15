@@ -19,16 +19,13 @@ package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 
-import java.util.LinkedList;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.ui.download.InstallerWizardProvider.alertFailureMessage;
@@ -39,14 +36,14 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     private final String gameVersion;
     private final Version version;
     private final String libraryId;
-    private final Library oldLibrary;
+    private final String oldLibraryVersion;
 
-    public UpdateInstallerWizardProvider(Profile profile, String gameVersion, Version version, String libraryId, Library oldLibrary) {
+    public UpdateInstallerWizardProvider(Profile profile, String gameVersion, Version version, String libraryId, String oldLibraryVersion) {
         this.profile = profile;
         this.gameVersion = gameVersion;
         this.version = version;
         this.libraryId = libraryId;
-        this.oldLibrary = oldLibrary;
+        this.oldLibraryVersion = oldLibraryVersion;
     }
 
     @Override
@@ -60,9 +57,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
 
         // We remove library but not save it,
         // so if installation failed will not break down current version.
-        LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
-        newList.remove(oldLibrary);
-        return new MaintainTask(version.setLibraries(newList))
+        return profile.getDependency().removeLibraryWithoutSavingAsync(version.getId(), libraryId)
                 .thenComposeAsync(profile.getDependency().installLibraryAsync((RemoteVersion) settings.get(libraryId)))
                 .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
     }
@@ -73,7 +68,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         switch (step) {
             case 0:
                 return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, provider, libraryId, () -> {
-                    Controllers.confirmDialog(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibrary.getVersion(), ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
+                    Controllers.confirmDialog(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
                             i18n("install.change_version"), controller::onFinish, controller::onCancel);
                 });
             default:
