@@ -89,7 +89,6 @@ public final class GameAssetDownloadTask extends Task<Void> {
                     String url = dependencyManager.getDownloadProvider().getAssetBaseURL() + assetObject.getLocation();
                     FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(url), file, new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.getHash()));
                     task.setName(assetObject.getHash());
-                    task.setCaching(true);
                     dependencies.add(task
                             .setCacheRepository(dependencyManager.getCacheRepository())
                             .setCaching(true)

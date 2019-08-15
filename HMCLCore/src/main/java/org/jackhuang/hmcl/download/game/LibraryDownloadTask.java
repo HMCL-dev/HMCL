@@ -128,12 +128,16 @@ public class LibraryDownloadTask extends Task<Void> {
         try {
             URL packXz = NetworkUtils.toURL(url + ".pack.xz");
             if (NetworkUtils.urlExists(packXz)) {
-                task = new FileDownloadTask(packXz, xzFile, null).setCaching(true);
+                task = new FileDownloadTask(packXz, xzFile, null)
+                        .setCacheRepository(cacheRepository)
+                        .setCaching(true);
                 xz = true;
             } else {
                 task = new FileDownloadTask(NetworkUtils.toURL(url),
                         jar,
-                        library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null).setCaching(true);
+                        library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null)
+                        .setCacheRepository(cacheRepository)
+                        .setCaching(true);
                 xz = false;
             }
         } catch (IOException e) {

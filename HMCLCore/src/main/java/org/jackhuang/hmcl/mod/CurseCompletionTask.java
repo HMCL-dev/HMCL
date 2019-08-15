@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
  */
 public final class CurseCompletionTask extends Task<Void> {
 
+    private final DefaultDependencyManager dependency;
     private final DefaultGameRepository repository;
     private final ModManager modManager;
     private final String version;
@@ -70,6 +71,7 @@ public final class CurseCompletionTask extends Task<Void> {
      * @param manifest          the CurseForgeModpack manifest.
      */
     public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version, CurseManifest manifest) {
+        this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
         this.modManager = repository.getModManager(version);
         this.version = version;
@@ -140,7 +142,9 @@ public final class CurseCompletionTask extends Task<Void> {
         for (CurseManifestFile file : newManifest.getFiles())
             if (StringUtils.isNotBlank(file.getFileName())) {
                 if (!modManager.hasSimpleMod(file.getFileName())) {
-                    dependencies.add(new FileDownloadTask(file.getUrl(), modManager.getSimpleModPath(file.getFileName()).toFile()).setCaching(true));
+                    dependencies.add(new FileDownloadTask(file.getUrl(), modManager.getSimpleModPath(file.getFileName()).toFile())
+                            .setCacheRepository(dependency.getCacheRepository())
+                            .setCaching(true));
                 }
             }
 
