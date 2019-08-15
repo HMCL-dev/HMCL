@@ -232,6 +232,12 @@ public class DefaultGameRepository implements GameRepository {
                             LOG.warning("Cannot rename json file, ignoring version " + id);
                             return Stream.empty();
                         }
+
+                        File jar = new File(dir, FileUtils.getNameWithoutExtension(jsons.get(0)) + ".jar");
+                        if (jar.exists() && !jar.renameTo(new File(dir, id + ".jar"))) {
+                            LOG.warning("Cannot rename jar file, ignoring version " + id);
+                            return Stream.empty();
+                        }
                     } else {
                         LOG.info("No available json file found, ignoring version " + id);
                         return Stream.empty();
