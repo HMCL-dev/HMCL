@@ -158,7 +158,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
         File iconFile = getVersionIconFile(id);
         if (iconFile.exists())
             return new Image("file:" + iconFile.getAbsolutePath());
-        else if (version.getMainClass() != null &&
+        else if (!version.getPatches().isEmpty() ||
+                version.getMainClass() != null &&
                 ("net.minecraft.launchwrapper.Launch".equals(version.getMainClass())
                         || version.getMainClass().startsWith("net.fabricmc")
                         || "cpw.mods.modlauncher.Launcher".equals(version.getMainClass())))

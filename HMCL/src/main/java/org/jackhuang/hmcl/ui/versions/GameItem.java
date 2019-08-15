@@ -55,7 +55,7 @@ public class GameItem extends Control {
         this.version = id;
 
         // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
-        CompletableFuture.supplyAsync(() -> GameVersion.minecraftVersion(profile.getRepository().getVersionJar(id)).orElse("Unknown"), POOL_VERSION_RESOLVE)
+        CompletableFuture.supplyAsync(() -> GameVersion.minecraftVersion(profile.getRepository().getVersionJar(id)).orElse(i18n("message.unknown")), POOL_VERSION_RESOLVE)
                 .thenAcceptAsync(game -> {
                     StringBuilder libraries = new StringBuilder(game);
                     LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getVersion(id));
