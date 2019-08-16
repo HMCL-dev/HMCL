@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.mod.MultiMCInstanceConfiguration;
+import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Schedulers;

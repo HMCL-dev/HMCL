@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.mod.CurseCompletionException;
+import org.jackhuang.hmcl.mod.curse.CurseCompletionException;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;

@@ -15,48 +15,49 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.mod;
+package org.jackhuang.hmcl.mod.curse;
 
-import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.gson.Validation;
 
-/**
- *
- * @author huangyuhui
- */
 @Immutable
-public final class CurseManifestModLoader implements Validation {
+public final class CurseMetaMod {
+    @SerializedName("Id")
+    private final int id;
 
-    @SerializedName("id")
-    private final String id;
+    @SerializedName("FileName")
+    private final String fileName;
 
-    @SerializedName("primary")
-    private final boolean primary;
+    @SerializedName("FileNameOnDisk")
+    private final String fileNameOnDisk;
 
-    public CurseManifestModLoader() {
-        this("", false);
+    @SerializedName("DownloadURL")
+    private final String downloadURL;
+
+    public CurseMetaMod() {
+        this(0, "", "", "");
     }
 
-    public CurseManifestModLoader(String id, boolean primary) {
+    public CurseMetaMod(int id, String fileName, String fileNameOnDisk, String downloadURL) {
         this.id = id;
-        this.primary = primary;
+        this.fileName = fileName;
+        this.fileNameOnDisk = fileNameOnDisk;
+        this.downloadURL = downloadURL;
     }
 
-    public String getId() {
+    public int getId() {
         return id;
     }
 
-    public boolean isPrimary() {
-        return primary;
+    public String getFileName() {
+        return fileName;
     }
 
-    @Override
-    public void validate() throws JsonParseException {
-        if (StringUtils.isBlank(id))
-            throw new JsonParseException("Curse Forge modpack manifest Mod loader id cannot be blank.");
+    public String getFileNameOnDisk() {
+        return fileNameOnDisk;
     }
 
+    public String getDownloadURL() {
+        return downloadURL;
+    }
 }

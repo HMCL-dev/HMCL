@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.mod;
+package org.jackhuang.hmcl.mod.multimc;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
@@ -25,6 +25,10 @@ import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.game.VersionLibraryBuilder;
+import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
+import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.ModpackConfiguration;
+import org.jackhuang.hmcl.mod.ModpackInstallTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
