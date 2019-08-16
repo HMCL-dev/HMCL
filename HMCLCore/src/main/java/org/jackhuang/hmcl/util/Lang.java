@@ -24,6 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -93,6 +94,12 @@ public final class Lang {
 
     public static <T> T getOrDefault(List<T> a, int index, T defaultValue) {
         return index < 0 || index >= a.size() ? defaultValue : a.get(index);
+    }
+
+    public static <T> T merge(T a, T b, BinaryOperator<T> operator) {
+        if (a == null) return b;
+        if (b == null) return a;
+        return operator.apply(a, b);
     }
 
     /**

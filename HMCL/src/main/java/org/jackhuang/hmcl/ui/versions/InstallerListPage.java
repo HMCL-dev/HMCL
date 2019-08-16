@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -85,19 +84,13 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
             };
 
             itemsProperty().clear();
-            analyzer.getVersion(FORGE).ifPresent(libraryVersion -> itemsProperty().add(
-                    new InstallerItem("Forge", libraryVersion, () -> {
-                        Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "forge", libraryVersion));
-                    }, removeAction.apply("forge"))));
-            analyzer.getVersion(LITELOADER).ifPresent(libraryVersion -> itemsProperty().add(
-                    new InstallerItem("LiteLoader", libraryVersion, () -> {
-                        Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "liteloader", libraryVersion));
-                    }, removeAction.apply("liteloader"))));
-            analyzer.getVersion(OPTIFINE).ifPresent(libraryVersion -> itemsProperty().add(
-                    new InstallerItem("OptiFine", libraryVersion, () -> {
-                        Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, "optifine", libraryVersion));
-                    }, removeAction.apply("optifine"))));
-            analyzer.getVersion(FABRIC).ifPresent(libraryVersion -> itemsProperty().add(new InstallerItem("Fabric", libraryVersion, null, null)));
+            for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
+                String libraryId = type.getPatchId();
+                analyzer.getVersion(type).ifPresent(libraryVersion -> itemsProperty().add(
+                        new InstallerItem(i18n("install.installer." + libraryId), libraryVersion, () -> {
+                            Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
+                        }, removeAction.apply(libraryId))));
+            }
         }).start();
     }
 

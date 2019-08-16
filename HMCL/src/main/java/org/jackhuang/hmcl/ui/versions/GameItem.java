@@ -33,7 +33,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.Lang.handleUncaught;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
@@ -58,10 +57,13 @@ public class GameItem extends Control {
         CompletableFuture.supplyAsync(() -> GameVersion.minecraftVersion(profile.getRepository().getVersionJar(id)).orElse(i18n("message.unknown")), POOL_VERSION_RESOLVE)
                 .thenAcceptAsync(game -> {
                     StringBuilder libraries = new StringBuilder(game);
-                    LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getVersion(id));
-                    analyzer.getVersion(FORGE).ifPresent(library -> libraries.append(", ").append(i18n("install.installer.forge")).append(": ").append(modifyVersion(game, library.replaceAll("(?i)forge", ""))));
-                    analyzer.getVersion(LITELOADER).ifPresent(library -> libraries.append(", ").append(i18n("install.installer.liteloader")).append(": ").append(modifyVersion(game, library.replaceAll("(?i)liteloader", ""))));
-                    analyzer.getVersion(OPTIFINE).ifPresent(library -> libraries.append(", ").append(i18n("install.installer.optifine")).append(": ").append(modifyVersion(game, library.replaceAll("(?i)optifine", ""))));
+                    LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedVersion(id));
+                    for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values())
+                        analyzer.getVersion(type).ifPresent(library ->
+                                libraries
+                                        .append(", ").append(i18n("install.installer." + type.name().toLowerCase()))
+                                        .append(": ").append(modifyVersion(game, library.replaceAll("(?i)" + type.name().toLowerCase(), ""))));
+
                     subtitle.set(libraries.toString());
                 }, Platform::runLater)
                 .exceptionally(handleUncaught);

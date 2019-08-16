@@ -134,7 +134,7 @@ public class ForgeNewInstallTask extends Task<Version> {
 
     @Override
     public void execute() throws Exception {
-        if ("net.minecraft.launchwrapper.Launch".equals(version.getMainClass()))
+        if ("net.minecraft.launchwrapper.Launch".equals(version.resolve(dependencyManager.getGameRepository()).getMainClass()))
             throw new OptiFineInstallTask.UnsupportedOptiFineInstallationException();
 
         Path temp  = Files.createTempDirectory("forge_installer");

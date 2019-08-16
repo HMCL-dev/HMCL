@@ -43,6 +43,9 @@ public class InstallersPage extends StackPane implements WizardPage {
     private VBox list;
 
     @FXML
+    private JFXButton btnFabric;
+
+    @FXML
     private JFXButton btnForge;
 
     @FXML
@@ -53,6 +56,9 @@ public class InstallersPage extends StackPane implements WizardPage {
 
     @FXML
     private Label lblGameVersion;
+
+    @FXML
+    private Label lblFabric;
 
     @FXML
     private Label lblForge;
@@ -81,20 +87,14 @@ public class InstallersPage extends StackPane implements WizardPage {
         txtName.textProperty().addListener(e -> btnInstall.setDisable(!txtName.validate()));
         txtName.setText(gameVersion);
 
-        btnForge.setOnMouseClicked(e -> {
-            controller.getSettings().put(INSTALLER_TYPE, 0);
-            controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.forge")), gameVersion, downloadProvider, "forge", () -> controller.onPrev(false)));
-        });
+        JFXButton[] buttons = new JFXButton[]{btnFabric, btnForge, btnLiteLoader, btnOptiFine};
+        String[] libraryIds = new String[]{"fabric", "forge", "liteloader", "optifine"};
 
-        btnLiteLoader.setOnMouseClicked(e -> {
-            controller.getSettings().put(INSTALLER_TYPE, 1);
-            controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.liteloader")), gameVersion, downloadProvider, "liteloader", () -> controller.onPrev(false)));
-        });
-
-        btnOptiFine.setOnMouseClicked(e -> {
-            controller.getSettings().put(INSTALLER_TYPE, 2);
-            controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.optifine")), gameVersion, downloadProvider, "optifine", () -> controller.onPrev(false)));
-        });
+        for (int i = 0; i < libraryIds.length; ++i) {
+            String libraryId = libraryIds[i];
+            buttons[i].setOnMouseClicked(e ->
+                    controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> controller.onPrev(false))));
+        }
     }
 
     @Override
@@ -109,25 +109,21 @@ public class InstallersPage extends StackPane implements WizardPage {
     @Override
     public void onNavigate(Map<String, Object> settings) {
         lblGameVersion.setText(i18n("install.new_game.current_game_version") + ": " + getVersion("game"));
-        if (controller.getSettings().containsKey("forge"))
-            lblForge.setText(i18n("install.installer.version", i18n("install.installer.forge")) + ": " + getVersion("forge"));
-        else
-            lblForge.setText(i18n("install.installer.not_installed", i18n("install.installer.forge")));
 
-        if (controller.getSettings().containsKey("liteloader"))
-            lblLiteLoader.setText(i18n("install.installer.version", i18n("install.installer.liteloader")) + ": " + getVersion("liteloader"));
-        else
-            lblLiteLoader.setText(i18n("install.installer.not_installed", i18n("install.installer.liteloader")));
+        Label[] labels = new Label[]{lblFabric, lblForge, lblLiteLoader, lblOptiFine};
+        String[] libraryIds = new String[]{"fabric", "forge", "liteloader", "optifine"};
 
-        if (controller.getSettings().containsKey("optifine"))
-            lblOptiFine.setText(i18n("install.installer.version", i18n("install.installer.optifine")) + ": " + getVersion("optifine"));
-        else
-            lblOptiFine.setText(i18n("install.installer.not_installed", i18n("install.installer.optifine")));
+        for (int i = 0; i < libraryIds.length; ++i) {
+            String libraryId = libraryIds[i];
+            if (controller.getSettings().containsKey(libraryId))
+                labels[i].setText(i18n("install.installer.version", i18n("install.installer." + libraryId)) + ": " + getVersion(libraryId));
+            else
+                labels[i].setText(i18n("install.installer.not_installed", i18n("install.installer." + libraryId)));
+        }
     }
 
     @Override
     public void cleanup(Map<String, Object> settings) {
-        settings.remove(INSTALLER_TYPE);
     }
 
     @FXML
@@ -135,6 +131,4 @@ public class InstallersPage extends StackPane implements WizardPage {
         controller.getSettings().put("name", txtName.getText());
         controller.onFinish();
     }
-
-    public static final String INSTALLER_TYPE = "INSTALLER_TYPE";
 }

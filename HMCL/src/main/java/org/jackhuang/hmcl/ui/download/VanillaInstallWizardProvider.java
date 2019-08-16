@@ -50,14 +50,9 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         builder.name(name);
         builder.gameVersion(((RemoteVersion) settings.get("game")).getGameVersion());
 
-        if (settings.containsKey("forge"))
-            builder.version((RemoteVersion) settings.get("forge"));
-
-        if (settings.containsKey("liteloader"))
-            builder.version((RemoteVersion) settings.get("liteloader"));
-
-        if (settings.containsKey("optifine"))
-            builder.version((RemoteVersion) settings.get("optifine"));
+        for (Map.Entry<String, Object> entry : settings.entrySet())
+            if (!"game".equals(entry.getKey()) && entry.getValue() instanceof RemoteVersion)
+                builder.version((RemoteVersion) entry.getValue());
 
         return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
                 .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));

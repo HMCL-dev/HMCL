@@ -40,6 +40,7 @@ public class MaintainTask extends Task<Version> {
         } else {
             // Vanilla Minecraft does not need maintain
             // Forge 1.13 support not implemented, not compatible with OptiFine currently.
+            // Fabric does not need maintain, nothing compatible with fabric now.
             return version;
         }
     }

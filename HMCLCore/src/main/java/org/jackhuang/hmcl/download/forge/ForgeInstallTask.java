@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.Version;
@@ -80,8 +81,8 @@ public final class ForgeInstallTask extends Task<Version> {
     public void postExecute() throws Exception {
         Files.deleteIfExists(installer);
         setResult(dependency.getResult()
-                .setPriority(10000)
-                .setId("net.minecraftforge")
+                .setPriority(30000)
+                .setId(LibraryAnalyzer.LibraryType.FORGE.getPatchId())
                 .setVersion(remote.getSelfVersion()));
     }
 

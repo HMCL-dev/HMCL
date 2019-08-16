@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
 import org.jackhuang.hmcl.game.Library;
@@ -68,9 +69,9 @@ public final class LiteLoaderInstallTask extends Task<Version> {
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(null, remote.getUrl()))
         );
 
-        setResult(new Version("com.mumfrey.liteloader",
+        setResult(new Version(LibraryAnalyzer.LibraryType.LITELOADER.getPatchId(),
                 remote.getSelfVersion(),
-                20000,
+                60000,
                 new Arguments().addGameArguments("--tweakClass", "com.mumfrey.liteloader.launch.LiteLoaderTweaker"),
                 "net.minecraft.launchwrapper.Launch",
                 Lang.merge(remote.getLibraries(), Collections.singleton(library)))

@@ -15,6 +15,18 @@
         </top>
         <center>
             <VBox fx:id="list" styleClass="jfx-list-view" maxHeight="150" maxWidth="300">
+                <JFXButton fx:id="btnFabric" prefWidth="${list.width}">
+                    <graphic>
+                        <BorderPane mouseTransparent="true">
+                            <left>
+                                <Label fx:id="lblFabric"/>
+                            </left>
+                            <right>
+                                <fx:include source="/assets/svg/arrow-right.fxml"/>
+                            </right>
+                        </BorderPane>
+                    </graphic>
+                </JFXButton>
                 <JFXButton fx:id="btnForge" prefWidth="${list.width}">
                     <graphic>
                         <BorderPane mouseTransparent="true">

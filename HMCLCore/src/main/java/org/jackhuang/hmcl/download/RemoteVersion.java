@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -73,6 +75,10 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
 
     public Type getVersionType() {
         return type;
+    }
+
+    public Task<Version> getInstallTask(DefaultDependencyManager dependencyManager, Version baseVersion) {
+        throw new UnsupportedOperationException(toString() + " cannot be installed yet");
     }
 
     @Override

@@ -15,19 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.download.liteloader;
+package org.jackhuang.hmcl.download.fabric;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 
-import java.util.Collection;
-
-public class LiteLoaderRemoteVersion extends RemoteVersion {
-    private final String tweakClass;
-    private final Collection<Library> libraries;
+public class FabricRemoteVersion extends RemoteVersion {
     /**
      * Constructor.
      *
@@ -35,23 +30,12 @@ public class LiteLoaderRemoteVersion extends RemoteVersion {
      * @param selfVersion the version string of the remote version.
      * @param url         the installer or universal jar URL.
      */
-    LiteLoaderRemoteVersion(String gameVersion, String selfVersion, String url, String tweakClass, Collection<Library> libraries) {
+    FabricRemoteVersion(String gameVersion, String selfVersion, String url) {
         super(gameVersion, selfVersion, url);
-
-        this.tweakClass = tweakClass;
-        this.libraries = libraries;
-    }
-
-    public Collection<Library> getLibraries() {
-        return libraries;
-    }
-
-    public String getTweakClass() {
-        return tweakClass;
     }
 
     @Override
     public Task<Version> getInstallTask(DefaultDependencyManager dependencyManager, Version baseVersion) {
-        return new LiteLoaderInstallTask(dependencyManager, baseVersion, this);
+        return new FabricInstallTask(dependencyManager, baseVersion, this);
     }
 }

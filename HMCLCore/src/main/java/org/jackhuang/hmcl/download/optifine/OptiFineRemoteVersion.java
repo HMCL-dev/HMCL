@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.download.optifine;
 
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.task.Task;
 
 import java.util.function.Supplier;
 
@@ -33,5 +36,10 @@ public class OptiFineRemoteVersion extends RemoteVersion {
     @Override
     public String getUrl() {
         return url.get();
+    }
+
+    @Override
+    public Task<Version> getInstallTask(DefaultDependencyManager dependencyManager, Version baseVersion) {
+        return new OptiFineInstallTask(dependencyManager, baseVersion, this);
     }
 }

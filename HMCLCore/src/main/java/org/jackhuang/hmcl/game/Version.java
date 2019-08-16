@@ -65,17 +65,17 @@ public class Version implements Comparable<Version>, Validation {
     private final ReleaseType type;
     private final Date time;
     private final Date releaseTime;
-    private final int minimumLauncherVersion;
+    private final Integer minimumLauncherVersion;
     private final Boolean hidden;
     private final List<Version> patches;
 
     private transient final boolean resolved;
 
     public Version(String id, String version, int priority, Arguments arguments, String mainClass, List<Library> libraries) {
-        this(false, id, version, priority, null, arguments, mainClass, null, null, null, null, libraries, null, null, null, null, null, null, 0, null, null);
+        this(false, id, version, priority, null, arguments, mainClass, null, null, null, null, libraries, null, null, null, null, null, null, null, null, null);
     }
 
-    public Version(boolean resolved, String id, String version, Integer priority, String minecraftArguments, Arguments arguments, String mainClass, String inheritsFrom, String jar, AssetIndexInfo assetIndex, String assets, List<Library> libraries, List<CompatibilityRule> compatibilityRules, Map<DownloadType, DownloadInfo> downloads, Map<DownloadType, LoggingInfo> logging, ReleaseType type, Date time, Date releaseTime, int minimumLauncherVersion, Boolean hidden, List<Version> patches) {
+    public Version(boolean resolved, String id, String version, Integer priority, String minecraftArguments, Arguments arguments, String mainClass, String inheritsFrom, String jar, AssetIndexInfo assetIndex, String assets, List<Library> libraries, List<CompatibilityRule> compatibilityRules, Map<DownloadType, DownloadInfo> downloads, Map<DownloadType, LoggingInfo> logging, ReleaseType type, Date time, Date releaseTime, Integer minimumLauncherVersion, Boolean hidden, List<Version> patches) {
         this.resolved = resolved;
         this.id = id;
         this.version = version;
@@ -150,7 +150,7 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     public int getMinimumLauncherVersion() {
-        return minimumLauncherVersion;
+        return minimumLauncherVersion == null ? 0 : minimumLauncherVersion;
     }
 
     public boolean isHidden() {
@@ -222,7 +222,7 @@ public class Version implements Comparable<Version>, Validation {
                 type,
                 time,
                 releaseTime,
-                Math.max(minimumLauncherVersion, parent.minimumLauncherVersion),
+                Lang.merge(minimumLauncherVersion, parent.minimumLauncherVersion, Math::max),
                 hidden,
                 Lang.merge(parent.patches, patches));
     }

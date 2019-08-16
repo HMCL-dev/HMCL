@@ -84,10 +84,10 @@ public final class LibraryAnalyzer {
     }
 
     public enum LibraryType {
-        FORGE(true, "net.minecraftforge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("forge")),
-        LITELOADER(true, "com.mumfrey.liteloader", Pattern.compile("com\\.mumfrey"), Pattern.compile("liteloader")),
-        OPTIFINE(false, "net.optifine", Pattern.compile("(net\\.)?optifine"), Pattern.compile(".*")),
-        FABRIC(true, "net.fabricmc", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-loader"));
+        FABRIC(true, "fabric", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-loader")),
+        FORGE(true, "forge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("forge")),
+        LITELOADER(true, "liteloader", Pattern.compile("com\\.mumfrey"), Pattern.compile("liteloader")),
+        OPTIFINE(false, "optifine", Pattern.compile("(net\\.)?optifine"), Pattern.compile("^(?!.*launchwrapper).*$"));
 
         private final boolean modLoader;
         private final String patchId;
@@ -102,6 +102,10 @@ public final class LibraryAnalyzer {
 
         public boolean isModLoader() {
             return modLoader;
+        }
+
+        public String getPatchId() {
+            return patchId;
         }
     }
 }

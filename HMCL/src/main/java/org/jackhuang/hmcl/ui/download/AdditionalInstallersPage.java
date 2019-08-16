@@ -23,6 +23,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -33,6 +34,7 @@ import org.jackhuang.hmcl.util.Lang;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class AdditionalInstallersPage extends StackPane implements WizardPage {
@@ -41,6 +43,8 @@ class AdditionalInstallersPage extends StackPane implements WizardPage {
 
     @FXML
     private VBox list;
+    @FXML
+    private JFXButton btnFabric;
     @FXML
     private JFXButton btnForge;
     @FXML
@@ -51,6 +55,8 @@ class AdditionalInstallersPage extends StackPane implements WizardPage {
     private Label lblGameVersion;
     @FXML
     private Label lblVersionName;
+    @FXML
+    private Label lblFabric;
     @FXML
     private Label lblForge;
     @FXML
@@ -69,26 +75,17 @@ class AdditionalInstallersPage extends StackPane implements WizardPage {
         lblGameVersion.setText(provider.getGameVersion());
         lblVersionName.setText(provider.getVersion().getId());
 
-        btnForge.setOnMouseClicked(e -> {
-            controller.getSettings().put(INSTALLER_TYPE, 0);
-            controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.forge")), provider.getGameVersion(), downloadProvider, "forge", () -> {
-                controller.onPrev(false);
-            }));
-        });
+        JFXButton[] buttons = new JFXButton[]{btnFabric, btnForge, btnLiteLoader, btnOptiFine};
+        String[] libraryIds = new String[]{"fabric", "forge", "liteloader", "optifine"};
 
-        btnLiteLoader.setOnMouseClicked(e -> {
-            controller.getSettings().put(INSTALLER_TYPE, 1);
-            controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.liteloader")), provider.getGameVersion(), downloadProvider, "liteloader", () -> {
-                controller.onPrev(false);
-            }));
-        });
-
-        btnOptiFine.setOnMouseClicked(e -> {
-            controller.getSettings().put(INSTALLER_TYPE, 2);
-            controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.optifine")), provider.getGameVersion(), downloadProvider, "optifine", () -> {
-                controller.onPrev(false);
-            }));
-        });
+        for (int i = 0; i < libraryIds.length; ++i) {
+            String libraryId = libraryIds[i];
+            buttons[i].setOnMouseClicked(e -> {
+                controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), provider.getGameVersion(), downloadProvider, libraryId, () -> {
+                    controller.onPrev(false);
+                }));
+            });
+        }
 
         btnInstall.setOnMouseClicked(e -> onInstall());
     }
@@ -109,30 +106,29 @@ class AdditionalInstallersPage extends StackPane implements WizardPage {
     @Override
     public void onNavigate(Map<String, Object> settings) {
         lblGameVersion.setText(i18n("install.new_game.current_game_version") + ": " + provider.getGameVersion());
-        btnForge.setDisable(provider.getForge() != null);
-        if (provider.getForge() != null || controller.getSettings().containsKey("forge"))
-            lblForge.setText(i18n("install.installer.version", i18n("install.installer.forge")) + ": " + Lang.nonNull(provider.getForge(), getVersion("forge")));
-        else
-            lblForge.setText(i18n("install.installer.not_installed", i18n("install.installer.forge")));
 
-        btnLiteLoader.setDisable(provider.getLiteLoader() != null);
-        if (provider.getLiteLoader() != null || controller.getSettings().containsKey("liteloader"))
-            lblLiteLoader.setText(i18n("install.installer.version", i18n("install.installer.liteloader")) + ": " + Lang.nonNull(provider.getLiteLoader(), getVersion("liteloader")));
-        else
-            lblLiteLoader.setText(i18n("install.installer.not_installed", i18n("install.installer.liteloader")));
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(provider.getVersion().resolve(provider.getProfile().getRepository()));
+        String fabric = analyzer.getVersion(FABRIC).orElse(null);
+        String forge = analyzer.getVersion(FORGE).orElse(null);
+        String liteLoader = analyzer.getVersion(LITELOADER).orElse(null);
+        String optiFine = analyzer.getVersion(OPTIFINE).orElse(null);
 
-        btnOptiFine.setDisable(provider.getOptiFine() != null);
-        if (provider.getOptiFine() != null || controller.getSettings().containsKey("optifine"))
-            lblOptiFine.setText(i18n("install.installer.version", i18n("install.installer.optifine")) + ": " + Lang.nonNull(provider.getOptiFine(), getVersion("optifine")));
-        else
-            lblOptiFine.setText(i18n("install.installer.not_installed", i18n("install.installer.optifine")));
+        JFXButton[] buttons = new JFXButton[]{btnFabric, btnForge, btnLiteLoader, btnOptiFine};
+        Label[] labels = new Label[]{lblFabric, lblForge, lblLiteLoader, lblOptiFine};
+        String[] libraryIds = new String[]{"fabric", "forge", "liteloader", "optifine"};
+        String[] versions = new String[]{fabric, forge, liteLoader, optiFine};
 
+        for (int i = 0; i < libraryIds.length; ++i) {
+            String libraryId = libraryIds[i];
+            buttons[i].setDisable(versions[i] != null);
+            if (versions[i] != null || controller.getSettings().containsKey(libraryId))
+                labels[i].setText(i18n("install.installer.version", i18n("install.installer." + libraryId)) + ": " + Lang.nonNull(versions[i], getVersion(libraryId)));
+            else
+                labels[i].setText(i18n("install.installer.not_installed", i18n("install.installer." + libraryId)));
+        }
     }
 
     @Override
     public void cleanup(Map<String, Object> settings) {
-        settings.remove(INSTALLER_TYPE);
     }
-
-    public static final String INSTALLER_TYPE = "INSTALLER_TYPE";
 }

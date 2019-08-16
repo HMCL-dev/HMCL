@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.optifine;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.GameVersion;
@@ -97,7 +98,7 @@ public final class OptiFineInstallTask extends Task<Version> {
     public void preExecute() throws Exception {
         if (!Arrays.asList("net.minecraft.client.main.Main",
                 "net.minecraft.launchwrapper.Launch")
-                .contains(version.getMainClass()))
+                .contains(version.resolve(dependencyManager.getGameRepository()).getMainClass()))
             throw new UnsupportedOptiFineInstallationException();
 
 
@@ -156,9 +157,9 @@ public final class OptiFineInstallTask extends Task<Version> {
         }
 
         setResult(new Version(
-                "net.optifine",
+                LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId(),
                 remote.getSelfVersion(),
-                30000,
+                90000,
                 new Arguments().addGameArguments("--tweakClass", "optifine.OptiFineTweaker"),
                 "net.minecraft.launchwrapper.Launch",
                 libraries

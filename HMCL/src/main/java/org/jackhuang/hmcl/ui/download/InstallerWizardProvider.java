@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
@@ -39,26 +38,17 @@ import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import java.net.SocketTimeoutException;
 import java.util.Map;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class InstallerWizardProvider implements WizardProvider {
     private final Profile profile;
     private final String gameVersion;
     private final Version version;
-    private final String forge;
-    private final String liteLoader;
-    private final String optiFine;
 
     public InstallerWizardProvider(Profile profile, String gameVersion, Version version) {
         this.profile = profile;
         this.gameVersion = gameVersion;
         this.version = version;
-
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version.resolve(profile.getRepository()));
-        forge = analyzer.getVersion(FORGE).orElse(null);
-        liteLoader = analyzer.getVersion(LITELOADER).orElse(null);
-        optiFine = analyzer.getVersion(OPTIFINE).orElse(null);
     }
 
     public Profile getProfile() {
@@ -73,18 +63,6 @@ public final class InstallerWizardProvider implements WizardProvider {
         return version;
     }
 
-    public String getForge() {
-        return forge;
-    }
-
-    public String getLiteLoader() {
-        return liteLoader;
-    }
-
-    public String getOptiFine() {
-        return optiFine;
-    }
-
     @Override
     public void start(Map<String, Object> settings) {
     }
@@ -96,14 +74,10 @@ public final class InstallerWizardProvider implements WizardProvider {
 
         Task<Version> ret = Task.supplyAsync(() -> version);
 
-        if (settings.containsKey("forge"))
-            ret = ret.thenComposeAsync(profile.getDependency().installLibraryAsync((RemoteVersion) settings.get("forge")));
-
-        if (settings.containsKey("liteloader"))
-            ret = ret.thenComposeAsync(profile.getDependency().installLibraryAsync((RemoteVersion) settings.get("liteloader")));
-
-        if (settings.containsKey("optifine"))
-            ret = ret.thenComposeAsync(profile.getDependency().installLibraryAsync((RemoteVersion) settings.get("optifine")));
+        for (Object value : settings.values()) {
+            if (value instanceof RemoteVersion)
+                ret = ret.thenComposeAsync(profile.getDependency().installLibraryAsync((RemoteVersion) value));
+        }
 
         return ret.thenComposeAsync(profile.getRepository().refreshVersionsAsync());
     }

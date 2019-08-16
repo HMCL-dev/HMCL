@@ -26,6 +26,8 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
+import java.util.Map;
+
 /**
  *
  * @author huangyuhui
@@ -60,12 +62,8 @@ public class DefaultGameBuilder extends GameBuilder {
 
             Task<Version> libraryTask = vanillaTask.thenSupplyAsync(() -> version);
 
-            if (toolVersions.containsKey("forge"))
-                libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, "forge"));
-            if (toolVersions.containsKey("liteloader"))
-                libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, "liteloader"));
-            if (toolVersions.containsKey("optifine"))
-                libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, "optifine"));
+            for (Map.Entry<String, String> entry : toolVersions.entrySet())
+                libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, entry.getKey(), entry.getValue()));
 
             for (RemoteVersion remoteVersion : remoteVersions)
                 libraryTask = libraryTask.thenComposeAsync(dependencyManager.installLibraryAsync(remoteVersion));
@@ -77,8 +75,8 @@ public class DefaultGameBuilder extends GameBuilder {
         });
     }
 
-    private ExceptionalFunction<Version, Task<Version>, ?> libraryTaskHelper(String gameVersion, String libraryId) {
-        return version -> dependencyManager.installLibraryAsync(gameVersion, version, libraryId, toolVersions.get(libraryId));
+    private ExceptionalFunction<Version, Task<Version>, ?> libraryTaskHelper(String gameVersion, String libraryId, String libraryVersion) {
+        return version -> dependencyManager.installLibraryAsync(gameVersion, version, libraryId, libraryVersion);
     }
 
     protected Task<Void> downloadGameAsync(String gameVersion, Version version) {

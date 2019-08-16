@@ -18,14 +18,10 @@
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
-import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
-import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
-import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
@@ -93,30 +89,21 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public Task<Version> installLibraryAsync(String gameVersion, Version version, String libraryId, String libraryVersion) {
-        if (version.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
+    public Task<Version> installLibraryAsync(String gameVersion, Version baseVersion, String libraryId, String libraryVersion) {
+        if (baseVersion.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
 
         VersionList<?> versionList = getVersionList(libraryId);
         return versionList.loadAsync(gameVersion, getDownloadProvider())
-                .thenComposeAsync(() -> installLibraryAsync(version, versionList.getVersion(gameVersion, libraryVersion)
+                .thenComposeAsync(() -> installLibraryAsync(baseVersion, versionList.getVersion(gameVersion, libraryVersion)
                         .orElseThrow(() -> new IllegalStateException("Remote library " + libraryId + " has no version " + libraryVersion))));
     }
 
     @Override
-    public Task<Version> installLibraryAsync(Version oldVersion, RemoteVersion libraryVersion) {
-        if (oldVersion.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
+    public Task<Version> installLibraryAsync(Version baseVersion, RemoteVersion libraryVersion) {
+        if (baseVersion.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
 
-        Task<Version> task;
-        if (libraryVersion instanceof ForgeRemoteVersion)
-            task = new ForgeInstallTask(this, oldVersion, (ForgeRemoteVersion) libraryVersion);
-        else if (libraryVersion instanceof LiteLoaderRemoteVersion)
-            task = new LiteLoaderInstallTask(this, oldVersion, (LiteLoaderRemoteVersion) libraryVersion);
-        else if (libraryVersion instanceof OptiFineRemoteVersion)
-            task = new OptiFineInstallTask(this, oldVersion, (OptiFineRemoteVersion) libraryVersion);
-        else
-            throw new IllegalArgumentException("Remote library " + libraryVersion + " is unrecognized.");
-        return task
-                .thenApplyAsync(oldVersion::addPatch)
+        return libraryVersion.getInstallTask(this, baseVersion)
+                .thenApplyAsync(baseVersion::addPatch)
                 .thenComposeAsync(repository::save);
     }
 
@@ -163,19 +150,19 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         switch (libraryId) {
             case "forge":
                 analyzer.ifPresent(LibraryAnalyzer.LibraryType.FORGE, (library, libraryVersion) -> newList.remove(library));
-                version = version.removePatchById("net.minecraftforge");
+                version = version.removePatchById(LibraryAnalyzer.LibraryType.FORGE.getPatchId());
                 break;
             case "liteloader":
                 analyzer.ifPresent(LibraryAnalyzer.LibraryType.LITELOADER, (library, libraryVersion) -> newList.remove(library));
-                version = version.removePatchById("com.mumfrey.liteloader");
+                version = version.removePatchById(LibraryAnalyzer.LibraryType.LITELOADER.getPatchId());
                 break;
             case "optifine":
                 analyzer.ifPresent(LibraryAnalyzer.LibraryType.OPTIFINE, (library, libraryVersion) -> newList.remove(library));
-                version = version.removePatchById("net.optifine");
+                version = version.removePatchById(LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId());
                 break;
             case "fabric":
                 analyzer.ifPresent(LibraryAnalyzer.LibraryType.FABRIC, (library, libraryVersion) -> newList.remove(library));
-                version = version.removePatchById("net.fabricmc");
+                version = version.removePatchById(LibraryAnalyzer.LibraryType.FABRIC.getPatchId());
                 break;
         }
         return new MaintainTask(version.setLibraries(newList));
