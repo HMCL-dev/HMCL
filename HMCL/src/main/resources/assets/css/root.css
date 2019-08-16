@@ -526,6 +526,12 @@
     -fx-background-color: -fx-base-color;
 }
 
+.jfx-button-raised .jfx-rippler {
+    -jfx-rippler-fill: white;
+    -jfx-mask-type: CIRCLE;
+    -fx-padding: 0.0;
+}
+
 .jfx-button-raised, .jfx-button-raised * {
     -fx-text-fill: -fx-base-text-fill;
     -fx-font-size: 14px;
