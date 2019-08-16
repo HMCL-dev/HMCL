@@ -20,14 +20,18 @@ package org.jackhuang.hmcl.ui.export;
 import javafx.scene.Node;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.game.HMCLModpackExportTask;
-import org.jackhuang.hmcl.game.HMCLModpackManager;
+import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.MultiMCInstanceConfiguration;
+import org.jackhuang.hmcl.mod.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
@@ -57,27 +61,37 @@ public final class ExportWizardProvider implements WizardProvider {
     public Object finish(Map<String, Object> settings) {
         @SuppressWarnings("unchecked")
         List<String> whitelist = (List<String>) settings.get(ModpackFileSelectionPage.MODPACK_FILE_SELECTION);
+        File modpackFile = (File) settings.get(ModpackInfoPage.MODPACK_FILE);
+        String modpackName = (String) settings.get(ModpackInfoPage.MODPACK_NAME);
+        String modpackAuthor = (String) settings.get(ModpackInfoPage.MODPACK_AUTHOR);
+        String modpackVersion = (String) settings.get(ModpackInfoPage.MODPACK_VERSION);
+        String modpackDescription = (String) settings.get(ModpackInfoPage.MODPACK_DESCRIPTION);
+        String modpackType = (String) settings.get(ModpackTypeSelectionPage.MODPACK_TYPE);
+        boolean includeLauncher = (Boolean) settings.get(ModpackInfoPage.MODPACK_INCLUDE_LAUNCHER);
+
+        switch (modpackType) {
+            case ModpackTypeSelectionPage.MODPACK_TYPE_HMCL:
+                return exportAsHMCL(whitelist, modpackFile, modpackName, modpackAuthor, modpackVersion, modpackDescription, includeLauncher);
+            case ModpackTypeSelectionPage.MODPACK_TYPE_MULTIMC:
+                return exportAsMultiMC(whitelist, modpackFile, modpackName, modpackAuthor, modpackVersion, modpackDescription);
+            default:
+                throw new IllegalStateException("Unrecognized modpack type " + modpackType);
+        }
+    }
+
+    private Task<?> exportAsHMCL(List<String> whitelist, File modpackFile, String modpackName, String modpackAuthor, String modpackVersion, String modpackDescription, boolean includeLauncherRaw) {
         List<File> launcherJar = Launcher.getCurrentJarFiles();
-        boolean includeLauncher = (Boolean) settings.get(ModpackInfoPage.MODPACK_INCLUDE_LAUNCHER) && launcherJar != null;
+        boolean includeLauncher = includeLauncherRaw && launcherJar != null;
 
         return new Task<Void>() {
             Task<?> dependency = null;
 
             @Override
             public void execute() throws Exception {
-                File modpackFile = (File) settings.get(ModpackInfoPage.MODPACK_FILE);
                 File tempModpack = includeLauncher ? Files.createTempFile("hmcl", ".zip").toFile() : modpackFile;
 
                 dependency = new HMCLModpackExportTask(profile.getRepository(), version, whitelist,
-                        new Modpack(
-                                (String) settings.get(ModpackInfoPage.MODPACK_NAME),
-                                (String) settings.get(ModpackInfoPage.MODPACK_AUTHOR),
-                                (String) settings.get(ModpackInfoPage.MODPACK_VERSION),
-                                null,
-                                (String) settings.get(ModpackInfoPage.MODPACK_DESCRIPTION),
-                                StandardCharsets.UTF_8,
-                                null
-                        ), tempModpack);
+                        new Modpack(modpackName, modpackAuthor, modpackVersion, null, modpackDescription, StandardCharsets.UTF_8, null), tempModpack);
 
                 if (includeLauncher) {
                     dependency = dependency.thenRunAsync(() -> {
@@ -120,11 +134,55 @@ public final class ExportWizardProvider implements WizardProvider {
         };
     }
 
+    private Task<?> exportAsMultiMC(List<String> whitelist, File modpackFile, String modpackName, String modpackAuthor, String modpackVersion, String modpackDescription) {
+        return new Task<Void>() {
+            Task<?> dependency;
+
+            @Override
+            public void execute() {
+                VersionSetting vs = profile.getVersionSetting(version);
+                dependency = new MultiMCModpackExportTask(profile.getRepository(), version, whitelist,
+                        new MultiMCInstanceConfiguration(
+                                "OneSix",
+                                modpackName + "-" + modpackVersion,
+                                null,
+                                Lang.toIntOrNull(vs.getPermSize()),
+                                vs.getWrapper(),
+                                vs.getPreLaunchCommand(),
+                                null,
+                                modpackDescription,
+                                null,
+                                vs.getJavaArgs(),
+                                vs.isFullscreen(),
+                                vs.getWidth(),
+                                vs.getHeight(),
+                                vs.getMaxMemory(),
+                                vs.getMinMemory(),
+                                vs.isShowLogs(),
+                                /* showConsoleOnError */ true,
+                                /* autoCloseConsole */ false,
+                                /* overrideMemory */ true,
+                                /* overrideJavaLocation */ false,
+                                /* overrideJavaArgs */ true,
+                                /* overrideConsole */ true,
+                                /* overrideCommands */ true,
+                                /* overrideWindow */ true
+                        ), modpackFile);
+            }
+
+            @Override
+            public Collection<Task<?>> getDependencies() {
+                return Collections.singleton(dependency);
+            }
+        };
+    }
+
     @Override
     public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
         switch (step) {
             case 0: return new ModpackInfoPage(controller, version);
-            case 1: return new ModpackFileSelectionPage(controller, profile, version, HMCLModpackManager::suggestMod);
+            case 1: return new ModpackFileSelectionPage(controller, profile, version, ModAdviser::suggestMod);
+            case 2: return new ModpackTypeSelectionPage(controller);
             default: throw new IllegalArgumentException("step");
         }
     }

@@ -17,7 +17,7 @@
         <bottom>
             <HBox alignment="CENTER_RIGHT" style="-fx-padding: 16 16 16 0;">
                 <JFXButton fx:id="btnNext" onMouseClicked="#onNext" prefWidth="100" prefHeight="40" buttonType="RAISED"
-                           text="%wizard.finish" styleClass="jfx-button-raised"/>
+                           text="%wizard.next" styleClass="jfx-button-raised"/>
             </HBox>
         </bottom>
     </BorderPane>

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Logging;
@@ -55,7 +56,7 @@ public class HMCLModpackExportTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
-        ArrayList<String> blackList = new ArrayList<>(HMCLModpackManager.MODPACK_BLACK_LIST);
+        ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
         blackList.add(version + ".jar");
         blackList.add(version + ".json");
         Logging.LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");

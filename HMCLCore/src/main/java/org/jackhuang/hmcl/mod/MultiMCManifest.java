@@ -113,17 +113,25 @@ public final class MultiMCManifest {
         @SerializedName("important")
         private final boolean important;
 
+        @SerializedName("dependencyOnly")
+        private final boolean dependencyOnly;
+
         @SerializedName("uid")
         private final String uid;
 
         @SerializedName("version")
         private final String version;
 
-        public MultiMCManifestComponent(String cachedName, List<MultiMCManifestCachedRequires> cachedRequires, String cachedVersion, boolean important, String uid, String version) {
+        public MultiMCManifestComponent(boolean important, boolean dependencyOnly, String uid, String version) {
+            this(null, null, null, important, dependencyOnly, uid, version);
+        }
+
+        public MultiMCManifestComponent(String cachedName, List<MultiMCManifestCachedRequires> cachedRequires, String cachedVersion, boolean important, boolean dependencyOnly, String uid, String version) {
             this.cachedName = cachedName;
             this.cachedRequires = cachedRequires;
             this.cachedVersion = cachedVersion;
             this.important = important;
+            this.dependencyOnly = dependencyOnly;
             this.uid = uid;
             this.version = version;
         }
@@ -142,6 +150,10 @@ public final class MultiMCManifest {
 
         public boolean isImportant() {
             return important;
+        }
+
+        public boolean isDependencyOnly() {
+            return dependencyOnly;
         }
 
         public String getUid() {

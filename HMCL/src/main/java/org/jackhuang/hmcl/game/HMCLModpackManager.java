@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -27,50 +26,11 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.List;
 
 /**
  * @author huangyuhui
  */
 public final class HMCLModpackManager {
-
-    public static final List<String> MODPACK_BLACK_LIST = Lang.immutableListOf(
-            "usernamecache.json", "usercache.json", // Minecraft
-            "launcher_profiles.json", "launcher.pack.lzma", // Minecraft Launcher
-            "pack.json", "launcher.jar", "hmclmc.log", "cache", // HMCL
-            "manifest.json", "minecraftinstance.json", ".curseclient", // Curse
-            "minetweaker.log", // Mods
-            "jars", "logs", "versions", "assets", "libraries", "crash-reports", "NVIDIA", "AMD", "screenshots", "natives", "native", "$native", "server-resource-packs", // Minecraft
-            "downloads", // Curse
-            "asm", "backups", "TCNodeTracker", "CustomDISkins", "data" // Mods
-    );
-    public static final List<String> MODPACK_SUGGESTED_BLACK_LIST = Lang.immutableListOf(
-            "fonts", // BetterFonts
-            "saves", "servers.dat", "options.txt", // Minecraft
-            "blueprints" /* BuildCraft */,
-            "optionsof.txt" /* OptiFine */,
-            "journeymap" /* JourneyMap */,
-            "optionsshaders.txt",
-            "mods/VoxelMods");
-
-    public static ModAdviser.ModSuggestion suggestMod(String fileName, boolean isDirectory) {
-        if (match(MODPACK_BLACK_LIST, fileName, isDirectory))
-            return ModAdviser.ModSuggestion.HIDDEN;
-        if (match(MODPACK_SUGGESTED_BLACK_LIST, fileName, isDirectory))
-            return ModAdviser.ModSuggestion.NORMAL;
-        else
-            return ModAdviser.ModSuggestion.SUGGESTED;
-    }
-
-    private static boolean match(List<String> l, String fileName, boolean isDirectory) {
-        for (String s : l)
-            if (isDirectory) {
-                if (fileName.startsWith(s + "/"))
-                    return true;
-            } else if (fileName.equals(s))
-                return true;
-        return false;
-    }
 
     /**
      * Read the manifest in a HMCL modpack.
