@@ -74,7 +74,6 @@ public class TaskTest {
         Assert.assertTrue("withRunAsync should be executed", bool.get());
     }
 
-    @Test
     public void testThenAccept() {
         new JFXPanel(); // init JavaFX Toolkit
         AtomicBoolean flag = new AtomicBoolean();
