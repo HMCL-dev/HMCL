@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 
 import java.util.*;
@@ -55,6 +56,15 @@ public final class Lang {
     @SafeVarargs
     public static <T> List<T> immutableListOf(T... elements) {
         return Collections.unmodifiableList(Arrays.asList(elements));
+    }
+
+    public static boolean test(ExceptionalRunnable<?> r) {
+        try {
+            r.run();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public static <E extends Exception> boolean test(ExceptionalSupplier<Boolean, E> r) {

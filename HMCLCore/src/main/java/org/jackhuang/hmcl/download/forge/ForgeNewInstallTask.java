@@ -35,11 +35,10 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -241,13 +240,7 @@ public class ForgeNewInstallTask extends Task<Version> {
                 command.addAll(args);
 
                 LOG.info("Executing external processor " + processor.getJar().toString() + ", command line: " + new CommandBuilder().addAll(command).toString());
-                Process process = new ProcessBuilder(command).start();
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                    for (String line; (line = reader.readLine()) != null;) {
-                        System.out.println(line);
-                    }
-                }
-                int exitCode = process.waitFor();
+                int exitCode = SystemUtils.callExternalProcess(command);
                 if (exitCode != 0)
                     throw new IllegalStateException("Game processor exited abnormally");
 

@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.game.Arguments;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
 import org.jackhuang.hmcl.game.Library;
@@ -31,6 +32,8 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jenkinsci.constant_pool_scanner.ConstantPool;
 import org.jenkinsci.constant_pool_scanner.ConstantPoolScanner;
 import org.jenkinsci.constant_pool_scanner.ConstantType;
@@ -42,7 +45,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -57,15 +59,17 @@ import static org.jackhuang.hmcl.util.Lang.getOrDefault;
  */
 public final class OptiFineInstallTask extends Task<Version> {
 
+    private final DefaultGameRepository gameRepository;
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
     private final OptiFineRemoteVersion remote;
     private final Path installer;
     private final List<Task<?>> dependents = new LinkedList<>();
     private final List<Task<?>> dependencies = new LinkedList<>();
-    private final File dest;
+    private Path dest;
 
     private final Library optiFineLibrary;
+    private final Library optiFineInstallerLibrary;
 
     public OptiFineInstallTask(DefaultDependencyManager dependencyManager, Version version, OptiFineRemoteVersion remoteVersion) {
         this(dependencyManager, version, remoteVersion, null);
@@ -73,20 +77,21 @@ public final class OptiFineInstallTask extends Task<Version> {
 
     public OptiFineInstallTask(DefaultDependencyManager dependencyManager, Version version, OptiFineRemoteVersion remoteVersion, Path installer) {
         this.dependencyManager = dependencyManager;
+        this.gameRepository = dependencyManager.getGameRepository();
         this.version = version;
         this.remote = remoteVersion;
         this.installer = installer;
 
         String mavenVersion = remote.getGameVersion() + "_" + remote.getSelfVersion();
 
-        optiFineLibrary = new Library(
-                "optifine", "OptiFine", mavenVersion, null, null,
+        optiFineLibrary = new Library("optifine", "OptiFine", mavenVersion);
+
+        optiFineInstallerLibrary = new Library(
+                "optifine", "OptiFine", mavenVersion, "installer", null,
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(
-                        "optifine/OptiFine/" + mavenVersion + "/OptiFine-" + mavenVersion + ".jar",
+                        "optifine/OptiFine/" + mavenVersion + "/OptiFine-" + mavenVersion + "-installer.jar",
                         remote.getUrl()))
         );
-
-        dest = dependencyManager.getGameRepository().getLibraryFile(version, optiFineLibrary);
     }
 
     @Override
@@ -96,18 +101,14 @@ public final class OptiFineInstallTask extends Task<Version> {
 
     @Override
     public void preExecute() throws Exception {
-        if (!Arrays.asList("net.minecraft.client.main.Main",
-                "net.minecraft.launchwrapper.Launch")
-                .contains(version.resolve(dependencyManager.getGameRepository()).getMainClass()))
-            throw new UnsupportedOptiFineInstallationException();
-
+        dest = Files.createTempFile("optifine-installer", ".jar");
 
         if (installer == null) {
-            dependents.add(new FileDownloadTask(NetworkUtils.toURL(remote.getUrl()), dest)
+            dependents.add(new FileDownloadTask(NetworkUtils.toURL(remote.getUrl()), dest.toFile())
                     .setCacheRepository(dependencyManager.getCacheRepository())
                     .setCaching(true));
         } else {
-            FileUtils.copyFile(installer, dest.toPath());
+            FileUtils.copyFile(installer, dest);
         }
     }
 
@@ -127,13 +128,31 @@ public final class OptiFineInstallTask extends Task<Version> {
     }
 
     @Override
-    public void execute() throws IOException {
+    public void execute() throws Exception {
         List<Library> libraries = new LinkedList<>();
         libraries.add(optiFineLibrary);
 
+        FileUtils.copyFile(dest, gameRepository.getLibraryFile(version, optiFineInstallerLibrary).toPath());
+
         // Install launch wrapper modified by OptiFine
         boolean hasLaunchWrapper = false;
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(dest.toPath())) {
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(dest)) {
+            if (Files.exists(fs.getPath("optifine/Patcher.class"))) {
+                int exitCode = SystemUtils.callExternalProcess(
+                        JavaVersion.fromCurrentEnvironment().getBinary().toString(),
+                        "-cp",
+                        dest.toString(),
+                        "optifine.Patcher",
+                        gameRepository.getVersionJar(version).getAbsolutePath(),
+                        dest.toString(),
+                        gameRepository.getLibraryFile(version, optiFineLibrary).toString()
+                );
+                if (exitCode != 0)
+                    throw new IllegalStateException("OptiFine patcher failed");
+            } else {
+                FileUtils.copyFile(dest, gameRepository.getLibraryFile(version, optiFineLibrary).toPath());
+            }
+
             Path launchWrapperVersionText = fs.getPath("launchwrapper-of.txt");
             if (Files.exists(launchWrapperVersionText)) {
                 String launchWrapperVersion = FileUtils.readText(launchWrapperVersionText).trim();
@@ -142,24 +161,24 @@ public final class OptiFineInstallTask extends Task<Version> {
                 Library launchWrapper = new Library("optifine", "launchwrapper-of", launchWrapperVersion);
 
                 if (Files.exists(launchWrapperJar)) {
-                    File launchWrapperFile = dependencyManager.getGameRepository().getLibraryFile(version, launchWrapper);
+                    File launchWrapperFile = gameRepository.getLibraryFile(version, launchWrapper);
                     FileUtils.makeDirectory(launchWrapperFile.getAbsoluteFile().getParentFile());
                     FileUtils.copyFile(launchWrapperJar, launchWrapperFile.toPath());
 
                     hasLaunchWrapper = true;
-                    libraries.add(0, launchWrapper);
+                    libraries.add(launchWrapper);
                 }
             }
         }
 
         if (!hasLaunchWrapper) {
-            libraries.add(0, new Library("net.minecraft", "launchwrapper", "1.12"));
+            libraries.add(new Library("net.minecraft", "launchwrapper", "1.12"));
         }
 
         setResult(new Version(
                 LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId(),
                 remote.getSelfVersion(),
-                90000,
+                10000,
                 new Arguments().addGameArguments("--tweakClass", "optifine.OptiFineTweaker"),
                 "net.minecraft.launchwrapper.Launch",
                 libraries
