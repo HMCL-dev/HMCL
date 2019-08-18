@@ -22,7 +22,9 @@ import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.control.SkinBase;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.setting.Theme;
@@ -49,7 +51,9 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         chkSelected.setToggleGroup(skinnable.getToggleGroup());
         root.setLeft(chkSelected);
 
-        root.setCenter(new GameItem(skinnable.getProfile(), skinnable.getVersion()));
+        GameItem gameItem = new GameItem(skinnable.getProfile(), skinnable.getVersion());
+        gameItem.setMouseTransparent(true);
+        root.setCenter(gameItem);
 
         PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
@@ -91,5 +95,16 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         JFXDepthManager.setDepth(root, 1);
 
         getChildren().setAll(root);
+
+        root.setCursor(Cursor.HAND);
+        root.setOnMouseClicked(e -> {
+            if (e.getButton() == MouseButton.PRIMARY) {
+                if (e.getClickCount() == 1) {
+                    skinnable.modifyGameSettings();
+                }
+            } else if (e.getButton() == MouseButton.SECONDARY) {
+                popup.show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
+            }
+        });
     }
 }
