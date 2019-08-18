@@ -537,6 +537,7 @@ public final class VersionSetting {
                 .setGameDir(gameDir)
                 .setJava(javaVersion)
                 .setVersionName(Metadata.TITLE)
+                .setVersionType(Metadata.TITLE)
                 .setProfileName(Metadata.TITLE)
                 .setMinecraftArgs(getMinecraftArgs())
                 .setJavaArgs(getJavaArgs())
