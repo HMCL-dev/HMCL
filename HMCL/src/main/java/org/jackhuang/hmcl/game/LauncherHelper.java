@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.MaintainTask;
-import org.jackhuang.hmcl.download.game.LibrariesUniqueTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.launch.NotDecompressingNativesException;
 import org.jackhuang.hmcl.launch.PermissionException;
@@ -132,7 +131,7 @@ public final class LauncherHelper {
     private void launch0() {
         HMCLGameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
-        Version version = MaintainTask.maintain(LibrariesUniqueTask.unique(repository.getResolvedVersion(selectedVersion)));
+        Version version = MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion));
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
         TaskExecutor executor = Task.runAsync(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))

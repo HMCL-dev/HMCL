@@ -79,7 +79,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void loadVersion(Profile profile, String id) {
-        libraryAnalyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedVersion(id));
+        libraryAnalyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id));
         modded.set(libraryAnalyzer.hasModLoader());
         loadMods(profile.getRepository().getModManager(id));
     }

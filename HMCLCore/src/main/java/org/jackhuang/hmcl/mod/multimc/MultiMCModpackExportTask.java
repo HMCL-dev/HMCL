@@ -78,7 +78,7 @@ public class MultiMCModpackExportTask extends Task<Void> {
                 return false;
             });
 
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedVersion(versionId));
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(versionId));
             String gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(versionId))
                     .orElseThrow(() ->  new IllegalStateException("Cannot parse the version of " + versionId));
             List<MultiMCManifest.MultiMCManifestComponent> components = new ArrayList<>();

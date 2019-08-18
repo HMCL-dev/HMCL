@@ -23,14 +23,12 @@ import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.LinkedList;
 
 /**
  * Note: This class has no state.
@@ -138,34 +136,17 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
      * Will try to remove libraries and patches.
      *
      * @param versionId version id
-     * @param libraryId forge/liteloader/optifine
+     * @param libraryId forge/liteloader/optifine/fabric
      * @return task to remove the specified library
      */
     public Task<Version> removeLibraryWithoutSavingAsync(String versionId, String libraryId) {
-        Version version = repository.getVersion(versionId); // to ensure version is not resolved
+        // MaintainTask requires version that does not inherits from any version.
+        // If we want to remove a library in dependent version, we should keep the dependents not changed
+        // So resolving this game version to preserve all information in this version.json is necessary.
+        Version version = repository.getResolvedPreservingPatchesVersion(versionId);
 
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
-        LinkedList<Library> newList = new LinkedList<>(version.getLibraries());
-
-        switch (libraryId) {
-            case "forge":
-                analyzer.ifPresent(LibraryAnalyzer.LibraryType.FORGE, (library, libraryVersion) -> newList.remove(library));
-                version = version.removePatchById(LibraryAnalyzer.LibraryType.FORGE.getPatchId());
-                break;
-            case "liteloader":
-                analyzer.ifPresent(LibraryAnalyzer.LibraryType.LITELOADER, (library, libraryVersion) -> newList.remove(library));
-                version = version.removePatchById(LibraryAnalyzer.LibraryType.LITELOADER.getPatchId());
-                break;
-            case "optifine":
-                analyzer.ifPresent(LibraryAnalyzer.LibraryType.OPTIFINE, (library, libraryVersion) -> newList.remove(library));
-                version = version.removePatchById(LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId());
-                break;
-            case "fabric":
-                analyzer.ifPresent(LibraryAnalyzer.LibraryType.FABRIC, (library, libraryVersion) -> newList.remove(library));
-                version = version.removePatchById(LibraryAnalyzer.LibraryType.FABRIC.getPatchId());
-                break;
-        }
-        return new MaintainTask(version.setLibraries(newList));
+        return Task.supplyAsync(() -> MaintainTask.maintain(repository, LibraryAnalyzer.analyze(version)
+                .removeLibrary(libraryId).build()));
     }
 
     /**
@@ -173,7 +154,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
      * Will try to remove libraries and patches.
      *
      * @param versionId version id
-     * @param libraryId forge/liteloader/optifine
+     * @param libraryId forge/liteloader/optifine/fabric
      * @return task to remove the specified library
      */
     public Task<Version> removeLibraryAsync(String versionId, String libraryId) {

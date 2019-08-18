@@ -21,43 +21,99 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.util.Pair;
 
-import java.util.Arrays;
-import java.util.EnumMap;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public final class LibraryAnalyzer {
-    private final Map<LibraryType, Pair<Library, String>> libraries;
+    private Version version;
+    private final Map<String, Pair<Library, String>> libraries;
 
-    private LibraryAnalyzer(Map<LibraryType, Pair<Library, String>> libraries) {
+    private LibraryAnalyzer(Version version, Map<String, Pair<Library, String>> libraries) {
+        this.version = version;
         this.libraries = libraries;
     }
 
     public Optional<String> getVersion(LibraryType type) {
+        return getVersion(type.getPatchId());
+    }
+
+    public Optional<String> getVersion(String type) {
         return Optional.ofNullable(libraries.get(type)).map(Pair::getValue);
     }
 
-    public void ifPresent(LibraryType type, BiConsumer<Library, String> consumer) {
-        if (libraries.containsKey(type)) {
-            Pair<Library, String> value = libraries.get(type);
-            consumer.accept(value.getKey(), value.getValue());
-        }
+    public void forEachLibrary(BiConsumer<String, String> callback) {
+        for (Map.Entry<String, Pair<Library, String>> entry : libraries.entrySet())
+            callback.accept(entry.getKey(), entry.getValue().getValue());
     }
 
     public boolean has(LibraryType type) {
+        return has(type.getPatchId());
+    }
+
+    public boolean has(String type) {
         return libraries.containsKey(type);
     }
 
     public boolean hasModLoader() {
-        return Arrays.stream(LibraryType.values())
-                .filter(LibraryType::isModLoader)
-                .anyMatch(this::has);
+        return libraries.keySet().stream().map(LibraryType::fromPatchId)
+                .filter(Objects::nonNull)
+                .anyMatch(LibraryType::isModLoader);
+    }
+
+    public boolean hasModLauncher() {
+        final String modLauncher = "cpw.mods.modlauncher.Launcher";
+        return modLauncher.equals(version.getMainClass()) || version.getPatches().stream().anyMatch(patch -> modLauncher.equals(patch.getMainClass()));
+    }
+
+    private Version removingMatchedLibrary(Version version, String libraryId) {
+        LibraryType type = LibraryType.fromPatchId(libraryId);
+        if (type == null) return version;
+
+        List<Library> libraries = new ArrayList<>();
+        for (Library library : version.getLibraries()) {
+            String groupId = library.getGroupId();
+            String artifactId = library.getArtifactId();
+
+            if (type.group.matcher(groupId).matches() && type.artifact.matcher(artifactId).matches()) {
+                // skip
+            } else {
+                libraries.add(library);
+            }
+        }
+        return version.setLibraries(libraries);
+    }
+
+    /**
+     * Remove library by library id
+     * @param libraryId patch id or "forge"/"optifine"/"liteloader"/"fabric"
+     * @return this
+     */
+    public LibraryAnalyzer removeLibrary(String libraryId) {
+        if (!has(libraryId)) return this;
+        version = removingMatchedLibrary(version, libraryId)
+                .setPatches(version.getPatches().stream()
+                        .filter(patch -> !libraryId.equals(patch.getId()))
+                        .map(patch -> removingMatchedLibrary(patch, libraryId))
+                        .collect(Collectors.toList()));
+        return this;
+    }
+
+    public Version build() {
+        return version;
     }
 
     public static LibraryAnalyzer analyze(Version version) {
-        Map<LibraryType, Pair<Library, String>> libraries = new EnumMap<>(LibraryType.class);
+        if (version.getInheritsFrom() != null)
+            throw new IllegalArgumentException("LibraryAnalyzer can only analyze independent game version");
+
+        Map<String, Pair<Library, String>> libraries = new HashMap<>();
 
         for (Library library : version.getLibraries()) {
             String groupId = library.getGroupId();
@@ -65,22 +121,17 @@ public final class LibraryAnalyzer {
 
             for (LibraryType type : LibraryType.values()) {
                 if (type.group.matcher(groupId).matches() && type.artifact.matcher(artifactId).matches()) {
-                    libraries.put(type, Pair.pair(library, library.getVersion()));
+                    libraries.put(type.getPatchId(), Pair.pair(library, library.getVersion()));
                     break;
                 }
             }
         }
 
         for (Version patch : version.getPatches()) {
-            for (LibraryType type : LibraryType.values()) {
-                if (type.patchId.equals(patch.getId())) {
-                    libraries.put(type, Pair.pair(null, patch.getVersion()));
-                    break;
-                }
-            }
+            libraries.put(patch.getId(), Pair.pair(null, patch.getVersion()));
         }
 
-        return new LibraryAnalyzer(libraries);
+        return new LibraryAnalyzer(version, libraries);
     }
 
     public enum LibraryType {
@@ -106,6 +157,13 @@ public final class LibraryAnalyzer {
 
         public String getPatchId() {
             return patchId;
+        }
+
+        public static LibraryType fromPatchId(String patchId) {
+            for (LibraryType type : values())
+                if (type.getPatchId().equals(patchId))
+                    return type;
+            return null;
         }
     }
 }

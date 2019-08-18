@@ -107,7 +107,7 @@ class AdditionalInstallersPage extends StackPane implements WizardPage {
     public void onNavigate(Map<String, Object> settings) {
         lblGameVersion.setText(i18n("install.new_game.current_game_version") + ": " + provider.getGameVersion());
 
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(provider.getVersion().resolve(provider.getProfile().getRepository()));
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(provider.getVersion().resolvePreservingPatches(provider.getProfile().getRepository()));
         String fabric = analyzer.getVersion(FABRIC).orElse(null);
         String forge = analyzer.getVersion(FORGE).orElse(null);
         String liteLoader = analyzer.getVersion(LITELOADER).orElse(null);

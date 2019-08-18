@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -161,6 +162,10 @@ public class Version implements Comparable<Version>, Validation {
         return resolved;
     }
 
+    public boolean isResolvedPreservingPatches() {
+        return inheritsFrom == null && !resolved;
+    }
+
     public List<Version> getPatches() {
         return patches == null ? Collections.emptyList() : patches;
     }
@@ -224,7 +229,7 @@ public class Version implements Comparable<Version>, Validation {
                 releaseTime,
                 Lang.merge(minimumLauncherVersion, parent.minimumLauncherVersion, Math::max),
                 hidden,
-                Lang.merge(parent.patches, patches));
+                Lang.merge(Lang.merge(parent.patches, Collections.singleton(this.clearPatches().setId("resolved." + getId()))), patches));
     }
 
     protected Version resolve(VersionProvider provider, Set<String> resolvedSoFar) throws VersionNotFoundException {
@@ -250,6 +255,36 @@ public class Version implements Comparable<Version>, Validation {
                     .collect(Collectors.toList());
             for (Version patch : sortedPatches) {
                 thisVersion = patch.setJar(null).merge(thisVersion);
+            }
+        }
+
+        return thisVersion.setId(id);
+    }
+
+    /**
+     * Resolve the version preserving all dependencies and patches.
+     */
+    public Version resolvePreservingPatches(VersionProvider provider) throws VersionNotFoundException {
+        return resolvePreservingPatches(provider, new HashSet<>());
+    }
+
+    protected Version mergePreservingPatches(Version parent) {
+        return parent.addPatch(this.clearPatches().setId("resolved." + getId())).addPatches(patches);
+    }
+
+    protected Version resolvePreservingPatches(VersionProvider provider, Set<String> resolvedSoFar) throws VersionNotFoundException {
+        Version thisVersion;
+
+        if (inheritsFrom == null) {
+            thisVersion = this.jar == null ? this.setJar(id) : this;
+        } else {
+            // To maximize the compatibility.
+            if (!resolvedSoFar.add(id)) {
+                Logging.LOG.log(Level.WARNING, "Found circular dependency versions: " + resolvedSoFar);
+                thisVersion = this.jar == null ? this.setJar(id) : this;
+            } else {
+                // It is supposed to auto install an version in getVersion.
+                thisVersion = mergePreservingPatches(provider.getVersion(inheritsFrom).resolvePreservingPatches(provider, resolvedSoFar));
             }
         }
 
@@ -300,13 +335,29 @@ public class Version implements Comparable<Version>, Validation {
         return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, patches);
     }
 
-    public Version addPatch(Version patch) {
-        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, Lang.merge(patches, Collections.singleton(patch)));
+    public Version setPatches(List<Version> patches) {
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, patches);
+    }
+
+    public Version addPatch(Version... additional) {
+        return addPatches(Arrays.asList(additional));
+    }
+
+    public Version addPatches(List<Version> additional) {
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, Lang.merge(patches, additional));
+    }
+
+    public Version clearPatches() {
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, null);
     }
 
     public Version removePatchById(String patchId) {
         return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden,
                 patches == null ? null : patches.stream().filter(patch -> !patchId.equals(patch.getId())).collect(Collectors.toList()));
+    }
+
+    public boolean hasPatch(String patchId) {
+        return patches != null && patches.stream().anyMatch(patch -> patchId.equals(patch.getId()));
     }
 
     @Override
