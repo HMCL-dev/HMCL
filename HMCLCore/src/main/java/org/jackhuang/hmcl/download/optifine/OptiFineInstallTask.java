@@ -186,7 +186,10 @@ public final class OptiFineInstallTask extends Task<Version> {
         Optional<String> gameVersion = GameVersion.minecraftVersion(jar);
         if (!gameVersion.isPresent()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            ConstantPool pool = ConstantPoolScanner.parse(Files.readAllBytes(fs.getPath("Config.class")), ConstantType.UTF8);
+            Path configClass = fs.getPath("Config.class");
+            if (!Files.exists(configClass)) configClass = fs.getPath("net/optifine/Config.class");
+            if (!Files.exists(configClass)) throw new IOException("Unrecognized installer");
+            ConstantPool pool = ConstantPoolScanner.parse(Files.readAllBytes(configClass), ConstantType.UTF8);
             List<String> constants = new ArrayList<>();
             pool.list(Utf8Constant.class).forEach(utf8 -> constants.add(utf8.get()));
             String mcVersion = getOrDefault(constants, constants.indexOf("MC_VERSION") + 1, null);
