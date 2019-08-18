@@ -23,7 +23,12 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -113,7 +118,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
             launchButton.setPrefHeight(55);
             launchButton.setButtonType(JFXButton.ButtonType.RAISED);
             launchButton.getStyleClass().add("jfx-button-raised");
-            launchButton.setOnMouseClicked(e -> launch());
+            launchButton.setOnAction(e -> launch());
+            launchButton.setDefaultButton(true);
             launchButton.setClip(new Rectangle(-100, -100, 310, 200));
             {
                 VBox graphic = new VBox();
