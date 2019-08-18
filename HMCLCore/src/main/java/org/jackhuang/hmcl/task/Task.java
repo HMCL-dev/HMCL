@@ -190,6 +190,7 @@ public abstract class Task<T> {
      */
     public Task<T> storeTo(Consumer<T> action) {
         this.resultConsumer = action;
+        action.accept(getResult());
         return this;
     }
 
