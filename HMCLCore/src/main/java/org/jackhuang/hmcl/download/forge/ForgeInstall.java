@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
+import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.util.Immutable;
 
 /**
@@ -28,7 +29,7 @@ public final class ForgeInstall {
 
     private final String profileName;
     private final String target;
-    private final String path;
+    private final Artifact path;
     private final String version;
     private final String filePath;
     private final String welcome;
@@ -40,7 +41,7 @@ public final class ForgeInstall {
         this(null, null, null, null, null, null, null, null, null);
     }
 
-    public ForgeInstall(String profileName, String target, String path, String version, String filePath, String welcome, String minecraft, String mirrorList, String logo) {
+    public ForgeInstall(String profileName, String target, Artifact path, String version, String filePath, String welcome, String minecraft, String mirrorList, String logo) {
         this.profileName = profileName;
         this.target = target;
         this.path = path;
@@ -60,7 +61,7 @@ public final class ForgeInstall {
         return target;
     }
 
-    public String getPath() {
+    public Artifact getPath() {
         return path;
     }
 

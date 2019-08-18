@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
@@ -41,12 +42,14 @@ public class ForgeOldInstallTask extends Task<Version> {
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
     private final Path installer;
+    private final String selfVersion;
     private final List<Task<?>> dependencies = new LinkedList<>();
 
-    ForgeOldInstallTask(DefaultDependencyManager dependencyManager, Version version, Path installer) {
+    ForgeOldInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.installer = installer;
+        this.selfVersion = selfVersion;
 
         setSignificance(TaskSignificance.MINOR);
     }
@@ -71,7 +74,7 @@ public class ForgeOldInstallTask extends Task<Version> {
             ForgeInstallProfile installProfile = JsonUtils.fromNonNullJson(json, ForgeInstallProfile.class);
 
             // unpack the universal jar in the installer file.
-            Library forgeLibrary = Library.fromName(installProfile.getInstall().getPath());
+            Library forgeLibrary = Library.fromName(installProfile.getInstall().getPath().toString());
             File forgeFile = dependencyManager.getGameRepository().getLibraryFile(version, forgeLibrary);
             if (!FileUtils.makeFile(forgeFile))
                 throw new IOException("Cannot make directory " + forgeFile.getParent());
@@ -81,7 +84,10 @@ public class ForgeOldInstallTask extends Task<Version> {
                 IOUtils.copyTo(is, os);
             }
 
-            setResult(installProfile.getVersionInfo());
+            setResult(installProfile.getVersionInfo()
+                    .setPriority(30000)
+                    .setId(LibraryAnalyzer.LibraryType.FORGE.getPatchId())
+                    .setVersion(selfVersion));
             dependencies.add(dependencyManager.checkLibraryCompletionAsync(installProfile.getVersionInfo()));
         }
     }

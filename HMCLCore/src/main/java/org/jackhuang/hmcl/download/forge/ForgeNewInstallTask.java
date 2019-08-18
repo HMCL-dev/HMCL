@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.Artifact;
@@ -70,12 +71,14 @@ public class ForgeNewInstallTask extends Task<Version> {
 
     private ForgeNewInstallProfile profile;
     private Version forgeVersion;
+    private final String selfVersion;
 
-    ForgeNewInstallTask(DefaultDependencyManager dependencyManager, Version version, Path installer) {
+    ForgeNewInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;
         this.gameRepository = dependencyManager.getGameRepository();
         this.version = version;
         this.installer = installer;
+        this.selfVersion = selfVersion;
 
         setSignificance(TaskSignificance.MINOR);
     }
@@ -268,7 +271,10 @@ public class ForgeNewInstallTask extends Task<Version> {
             }
         }
 
-        setResult(forgeVersion);
+        setResult(forgeVersion
+                .setPriority(30000)
+                .setId(LibraryAnalyzer.LibraryType.FORGE.getPatchId())
+                .setVersion(selfVersion));
         dependencies.add(dependencyManager.checkLibraryCompletionAsync(forgeVersion));
 
         FileUtils.deleteDirectory(temp.toFile());

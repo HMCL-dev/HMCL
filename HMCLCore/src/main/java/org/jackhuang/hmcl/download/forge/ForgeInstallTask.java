@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.Version;
@@ -38,6 +37,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+
+import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
+import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 
 /**
  *
@@ -80,10 +82,7 @@ public final class ForgeInstallTask extends Task<Version> {
     @Override
     public void postExecute() throws Exception {
         Files.deleteIfExists(installer);
-        setResult(dependency.getResult()
-                .setPriority(30000)
-                .setId(LibraryAnalyzer.LibraryType.FORGE.getPatchId())
-                .setVersion(remote.getSelfVersion()));
+        setResult(dependency.getResult());
     }
 
     @Override
@@ -99,9 +98,9 @@ public final class ForgeInstallTask extends Task<Version> {
     @Override
     public void execute() {
         if (VersionNumber.VERSION_COMPARATOR.compare("1.13", remote.getGameVersion()) <= 0)
-            dependency = new ForgeNewInstallTask(dependencyManager, version, installer);
+            dependency = new ForgeNewInstallTask(dependencyManager, version, remote.getSelfVersion(), installer);
         else
-            dependency = new ForgeOldInstallTask(dependencyManager, version, installer);
+            dependency = new ForgeOldInstallTask(dependencyManager, version, remote.getSelfVersion(), installer);
     }
 
     /**
@@ -125,15 +124,19 @@ public final class ForgeInstallTask extends Task<Version> {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());
-                return new ForgeNewInstallTask(dependencyManager, version, installer);
+                return new ForgeNewInstallTask(dependencyManager, version, modifyVersion(gameVersion.get(), profile.getPath().getVersion().replaceAll("(?i)forge", "")), installer);
             } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
                 ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getInstall().getMinecraft()))
                     throw new VersionMismatchException(profile.getInstall().getMinecraft(), gameVersion.get());
-                return new ForgeOldInstallTask(dependencyManager, version, installer);
+                return new ForgeOldInstallTask(dependencyManager, version, modifyVersion(gameVersion.get(), profile.getInstall().getPath().getVersion().replaceAll("(?i)forge", "")), installer);
             } else {
                 throw new IOException();
             }
         }
+    }
+
+    private static String modifyVersion(String gameVersion, String version) {
+        return removeSuffix(removePrefix(removeSuffix(removePrefix(version.replace(gameVersion, "").trim(), "-"), "-"), "_"), "_");
     }
 }
