@@ -44,6 +44,7 @@ public interface DownloadProvider {
      *
      * @param id the id of specific version list that this download provider provides. i.e. "forge", "liteloader", "game", "optifine"
      * @return the version list
+     * @throws IllegalArgumentException if the version list does not exist
      */
     VersionList<?> getVersionListById(String id);
 }

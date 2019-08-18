@@ -28,6 +28,7 @@ import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -57,12 +58,13 @@ public class GameItem extends Control {
         CompletableFuture.supplyAsync(() -> GameVersion.minecraftVersion(profile.getRepository().getVersionJar(id)).orElse(i18n("message.unknown")), POOL_VERSION_RESOLVE)
                 .thenAcceptAsync(game -> {
                     StringBuilder libraries = new StringBuilder(game);
-                    LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedVersion(id));
-                    for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values())
-                        analyzer.getVersion(type).ifPresent(library ->
-                                libraries
-                                        .append(", ").append(i18n("install.installer." + type.name().toLowerCase()))
-                                        .append(": ").append(modifyVersion(game, library.replaceAll("(?i)" + type.name().toLowerCase(), ""))));
+                    LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id));
+                    analyzer.forEachLibrary((libraryId, libraryVersion) -> {
+                        if (I18n.hasKey("install.installer." + libraryId))
+                            libraries
+                                    .append(", ").append(i18n("install.installer." + libraryId))
+                                    .append(": ").append(modifyVersion(game, libraryVersion.replaceAll("(?i)" + libraryId, "")));
+                    });
 
                     subtitle.set(libraries.toString());
                 }, Platform::runLater)

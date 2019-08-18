@@ -36,6 +36,8 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.ToolbarListPageSkin;
 import org.jackhuang.hmcl.ui.download.InstallerWizardProvider;
 import org.jackhuang.hmcl.ui.download.UpdateInstallerWizardProvider;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
@@ -74,7 +76,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         Task.supplyAsync(() -> {
             gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)).orElse(null);
 
-            return LibraryAnalyzer.analyze(profile.getRepository().getResolvedVersion(versionId));
+            return LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(versionId));
         }).thenAcceptAsync(Schedulers.javafx(), analyzer -> {
             Function<String, Consumer<InstallerItem>> removeAction = libraryId -> x -> {
                 profile.getDependency().removeLibraryAsync(version.getId(), libraryId)
@@ -84,13 +86,16 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
             };
 
             itemsProperty().clear();
-            for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
-                String libraryId = type.getPatchId();
-                analyzer.getVersion(type).ifPresent(libraryVersion -> itemsProperty().add(
-                        new InstallerItem(i18n("install.installer." + libraryId), libraryVersion, () -> {
+            analyzer.forEachLibrary((libraryId, libraryVersion) -> {
+                String title = I18n.hasKey("install.installer." + libraryId) ? i18n("install.installer." + libraryId) : libraryId;
+                if (Lang.test(() -> profile.getDependency().getVersionList(libraryId)))
+                    itemsProperty().add(
+                        new InstallerItem(title, libraryVersion, () -> {
                             Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
-                        }, removeAction.apply(libraryId))));
-            }
+                        }, removeAction.apply(libraryId)));
+                else
+                    itemsProperty().add(new InstallerItem(title, libraryVersion, null, removeAction.apply(libraryId)));
+            });
         }).start();
     }
 
