@@ -43,17 +43,17 @@ public final class GameLibrariesTask extends Task<Void> {
      * Constructor.
      *
      * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
-     * @param version the <b>resolved</b> version
+     * @param version the game version
      */
     public GameLibrariesTask(AbstractDependencyManager dependencyManager, Version version) {
-        this(dependencyManager, version, version.getLibraries());
+        this(dependencyManager, version, version.resolve(dependencyManager.getGameRepository()).getLibraries());
     }
 
     /**
      * Constructor.
      *
      * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
-     * @param version the <b>resolved</b> version
+     * @param version the game version
      */
     public GameLibrariesTask(AbstractDependencyManager dependencyManager, Version version, List<Library> libraries) {
         this.dependencyManager = dependencyManager;

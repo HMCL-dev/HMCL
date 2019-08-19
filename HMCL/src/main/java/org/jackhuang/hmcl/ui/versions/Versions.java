@@ -21,7 +21,6 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
@@ -77,8 +76,7 @@ public class Versions {
     }
 
     public static void updateGameAssets(Profile profile, String version) {
-        Version resolvedVersion = profile.getRepository().getResolvedVersion(version);
-        TaskExecutor executor = new GameAssetDownloadTask(profile.getDependency(), resolvedVersion, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY)
+        TaskExecutor executor = new GameAssetDownloadTask(profile.getDependency(), profile.getRepository().getVersion(version), GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY)
                 .executor();
         Controllers.taskDialog(executor, i18n("version.manage.redownload_assets_index"));
         executor.start();

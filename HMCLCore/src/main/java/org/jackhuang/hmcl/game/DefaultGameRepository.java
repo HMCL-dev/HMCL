@@ -160,7 +160,7 @@ public class DefaultGameRepository implements GameRepository {
             }
 
             if (fromVersion.getId().equals(fromVersion.getJar()))
-                fromVersion = fromVersion.setJar(to);
+                fromVersion = fromVersion.setJar(null);
             FileUtils.writeText(toJson, JsonUtils.GSON.toJson(fromVersion.setId(to)));
             return true;
         } catch (IOException | JsonParseException | VersionNotFoundException e) {

@@ -51,16 +51,16 @@ public final class GameAssetDownloadTask extends Task<Void> {
      * Constructor.
      *
      * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
-     * @param version the <b>resolved</b> version
+     * @param version the game version
      */
     public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, Version version, boolean forceDownloadingIndex) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
-        this.assetIndexInfo = version.getAssetIndex();
+        this.version = version.resolve(dependencyManager.getGameRepository());
+        this.assetIndexInfo = this.version.getAssetIndex();
         this.assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
 
         if (!assetIndexFile.exists() || forceDownloadingIndex)
-            dependents.add(new GameAssetIndexDownloadTask(dependencyManager, version));
+            dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.version));
     }
 
     @Override

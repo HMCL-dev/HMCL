@@ -43,7 +43,7 @@ public final class GameDownloadTask extends Task<Void> {
     public GameDownloadTask(DefaultDependencyManager dependencyManager, String gameVersion, Version version) {
         this.dependencyManager = dependencyManager;
         this.gameVersion = gameVersion;
-        this.version = version;
+        this.version = version.resolve(dependencyManager.getGameRepository());
 
         setSignificance(TaskSignificance.MODERATE);
     }

@@ -17,14 +17,9 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
-import org.jackhuang.hmcl.download.game.GameDownloadTask;
-import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.download.game.VersionJsonDownloadTask;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.util.Map;
 
@@ -52,24 +47,16 @@ public class DefaultGameBuilder extends GameBuilder {
 
     @Override
     public Task<?> buildAsync() {
-        return new VersionJsonDownloadTask(gameVersion, dependencyManager).thenComposeAsync(rawJson -> {
-            Version original = JsonUtils.GSON.fromJson(rawJson, Version.class);
-            Version version = original.setId(name).setJar(null);
-            Task<?> vanillaTask = downloadGameAsync(gameVersion, version).thenComposeAsync(Task.allOf(
-                    new GameAssetDownloadTask(dependencyManager, version, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY),
-                    new GameLibrariesTask(dependencyManager, version) // Game libraries will be downloaded for multiple times partly, this time is for vanilla libraries.
-            ).withComposeAsync(dependencyManager.getGameRepository().save(version))); // using [with] because download failure here are tolerant.
+        Task<Version> libraryTask = Task.supplyAsync(() -> new Version(name));
+        libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, "game", gameVersion));
 
-            Task<Version> libraryTask = vanillaTask.thenSupplyAsync(() -> version);
+        for (Map.Entry<String, String> entry : toolVersions.entrySet())
+            libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, entry.getKey(), entry.getValue()));
 
-            for (Map.Entry<String, String> entry : toolVersions.entrySet())
-                libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, entry.getKey(), entry.getValue()));
+        for (RemoteVersion remoteVersion : remoteVersions)
+            libraryTask = libraryTask.thenComposeAsync(dependencyManager.installLibraryAsync(remoteVersion));
 
-            for (RemoteVersion remoteVersion : remoteVersions)
-                libraryTask = libraryTask.thenComposeAsync(dependencyManager.installLibraryAsync(remoteVersion));
-
-            return libraryTask;
-        }).whenComplete(exception -> {
+        return libraryTask.whenComplete(exception -> {
             if (exception != null)
                 dependencyManager.getGameRepository().removeVersionFromDisk(name);
         });
@@ -78,9 +65,4 @@ public class DefaultGameBuilder extends GameBuilder {
     private ExceptionalFunction<Version, Task<Version>, ?> libraryTaskHelper(String gameVersion, String libraryId, String libraryVersion) {
         return version -> dependencyManager.installLibraryAsync(gameVersion, version, libraryId, libraryVersion);
     }
-
-    protected Task<Void> downloadGameAsync(String gameVersion, Version version) {
-        return new GameDownloadTask(dependencyManager, gameVersion, version);
-    }
-
 }

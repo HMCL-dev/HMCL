@@ -17,8 +17,11 @@
  */
 package org.jackhuang.hmcl.download.game;
 
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.ReleaseType;
+import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
 
 import java.util.Date;
@@ -45,6 +48,11 @@ public final class GameRemoteVersion extends RemoteVersion {
 
     public ReleaseType getType() {
         return type;
+    }
+
+    @Override
+    public Task<Version> getInstallTask(DefaultDependencyManager dependencyManager, Version baseVersion) {
+        return new GameInstallTask(dependencyManager, baseVersion, this);
     }
 
     @Override

@@ -88,13 +88,14 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
             itemsProperty().clear();
             analyzer.forEachLibrary((libraryId, libraryVersion) -> {
                 String title = I18n.hasKey("install.installer." + libraryId) ? i18n("install.installer." + libraryId) : libraryId;
-                if (Lang.test(() -> profile.getDependency().getVersionList(libraryId)))
+                Consumer<InstallerItem> action = "game".equals(libraryId) ? null : removeAction.apply(libraryId);
+                if (libraryVersion != null && Lang.test(() -> profile.getDependency().getVersionList(libraryId)))
                     itemsProperty().add(
-                        new InstallerItem(title, libraryVersion, () -> {
-                            Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
-                        }, removeAction.apply(libraryId)));
+                            new InstallerItem(title, libraryVersion, () -> {
+                                Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
+                            }, action));
                 else
-                    itemsProperty().add(new InstallerItem(title, libraryVersion, null, removeAction.apply(libraryId)));
+                    itemsProperty().add(new InstallerItem(title, libraryVersion, null, action));
             });
         }).start();
     }

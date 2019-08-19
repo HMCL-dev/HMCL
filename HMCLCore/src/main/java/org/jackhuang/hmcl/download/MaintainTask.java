@@ -56,7 +56,9 @@ public class MaintainTask extends Task<Version> {
         if (version.getInheritsFrom() != null)
             throw new IllegalArgumentException("MaintainTask requires independent game version");
 
-        if (version.resolve(null).getMainClass().contains("launchwrapper")) {
+        String mainClass = version.resolve(null).getMainClass();
+
+        if (mainClass != null && mainClass.contains("launchwrapper")) {
             return maintainOptiFineLibrary(repository, maintainGameWithLaunchWrapper(unique(version)));
         } else {
             // Vanilla Minecraft does not need maintain

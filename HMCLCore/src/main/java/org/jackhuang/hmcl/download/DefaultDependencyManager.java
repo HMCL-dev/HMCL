@@ -68,7 +68,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public Task<?> checkGameCompletionAsync(Version version) {
+    public Task<?> checkGameCompletionAsync(Version original) {
+        Version version = original.resolve(repository);
         return Task.allOf(
                 Task.composeAsync(() -> {
                     if (!repository.getVersionJar(version).exists())
