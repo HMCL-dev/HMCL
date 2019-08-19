@@ -60,10 +60,11 @@ public class GameItem extends Control {
                     StringBuilder libraries = new StringBuilder(game);
                     LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id));
                     analyzer.forEachLibrary((libraryId, libraryVersion) -> {
-                        if (I18n.hasKey("install.installer." + libraryId))
-                            libraries
-                                    .append(", ").append(i18n("install.installer." + libraryId))
-                                    .append(": ").append(modifyVersion(game, libraryVersion.replaceAll("(?i)" + libraryId, "")));
+                        if (I18n.hasKey("install.installer." + libraryId)) {
+                            libraries.append(", ").append(i18n("install.installer." + libraryId));
+                            if (libraryVersion != null)
+                                libraries.append(": ").append(modifyVersion("", libraryVersion.replaceAll("(?i)" + libraryId, "")));
+                        }
                     });
 
                     subtitle.set(libraries.toString());

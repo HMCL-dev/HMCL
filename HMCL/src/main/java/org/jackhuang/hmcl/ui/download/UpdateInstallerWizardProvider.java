@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -38,7 +39,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     private final String libraryId;
     private final String oldLibraryVersion;
 
-    public UpdateInstallerWizardProvider(Profile profile, String gameVersion, Version version, String libraryId, String oldLibraryVersion) {
+    public UpdateInstallerWizardProvider(@NotNull Profile profile, @NotNull String gameVersion, @NotNull Version version, @NotNull String libraryId, @NotNull String oldLibraryVersion) {
         this.profile = profile;
         this.gameVersion = gameVersion;
         this.version = version;
