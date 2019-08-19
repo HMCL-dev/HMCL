@@ -129,6 +129,10 @@ public final class Lang {
         return result;
     }
 
+    public static <T> List<T> copyList(List<T> list) {
+        return list == null ? null : list.isEmpty() ? null : new ArrayList<>(list);
+    }
+
     public static void executeDelayed(Runnable runnable, TimeUnit timeUnit, long timeout, boolean isDaemon) {
         thread(() -> {
             try {

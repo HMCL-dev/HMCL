@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.util.Pair;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,7 +49,7 @@ public final class LibraryAnalyzer {
         return Optional.ofNullable(libraries.get(type)).map(Pair::getValue);
     }
 
-    public void forEachLibrary(BiConsumer<String, String> callback) {
+    public void forEachLibrary(BiConsumer<String, @Nullable String> callback) {
         for (Map.Entry<String, Pair<Library, String>> entry : libraries.entrySet())
             callback.accept(entry.getKey(), entry.getValue().getValue());
     }
@@ -115,7 +116,7 @@ public final class LibraryAnalyzer {
 
         Map<String, Pair<Library, String>> libraries = new HashMap<>();
 
-        for (Library library : version.getLibraries()) {
+        for (Library library : version.resolve(null).getLibraries()) {
             String groupId = library.getGroupId();
             String artifactId = library.getArtifactId();
 
@@ -128,6 +129,7 @@ public final class LibraryAnalyzer {
         }
 
         for (Version patch : version.getPatches()) {
+            if (patch.isHidden()) continue;
             libraries.put(patch.getId(), Pair.pair(null, patch.getVersion()));
         }
 
@@ -135,6 +137,7 @@ public final class LibraryAnalyzer {
     }
 
     public enum LibraryType {
+        MINECRAFT(true, "game", Pattern.compile("^$"), Pattern.compile("^$")),
         FABRIC(true, "fabric", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-loader")),
         FORGE(true, "forge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("forge")),
         LITELOADER(true, "liteloader", Pattern.compile("com\\.mumfrey"), Pattern.compile("liteloader")),

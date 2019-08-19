@@ -33,7 +33,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -72,6 +71,19 @@ public class Version implements Comparable<Version>, Validation {
 
     private transient final boolean resolved;
 
+    public Version(String id) {
+        this(false, id, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, false, null);
+    }
+
+    /**
+     * Constructor for patch
+     * @param id patch id
+     * @param version patch version
+     * @param priority patch priority
+     * @param arguments patch additional arguments
+     * @param mainClass main class to override
+     * @param libraries additional libraries
+     */
     public Version(String id, String version, int priority, Arguments arguments, String mainClass, List<Library> libraries) {
         this(false, id, version, priority, null, arguments, mainClass, null, null, null, null, libraries, null, null, null, null, null, null, null, null, null);
     }
@@ -88,8 +100,8 @@ public class Version implements Comparable<Version>, Validation {
         this.jar = jar;
         this.assetIndex = assetIndex;
         this.assets = assets;
-        this.libraries = libraries == null ? Collections.emptyList() : new LinkedList<>(libraries);
-        this.compatibilityRules = compatibilityRules == null ? null : new LinkedList<>(compatibilityRules);
+        this.libraries = Lang.copyList(libraries);
+        this.compatibilityRules = Lang.copyList(compatibilityRules);
         this.downloads = downloads == null ? null : new HashMap<>(downloads);
         this.logging = logging == null ? null : new HashMap<>(logging);
         this.type = type;
@@ -97,7 +109,7 @@ public class Version implements Comparable<Version>, Validation {
         this.releaseTime = releaseTime == null ? null : (Date) releaseTime.clone();
         this.minimumLauncherVersion = minimumLauncherVersion;
         this.hidden = hidden;
-        this.patches = patches == null ? null : patches.isEmpty() ? null : new LinkedList<>(patches);
+        this.patches = Lang.copyList(patches);
     }
 
     public Optional<String> getMinecraftArguments() {
@@ -229,7 +241,7 @@ public class Version implements Comparable<Version>, Validation {
                 releaseTime,
                 Lang.merge(minimumLauncherVersion, parent.minimumLauncherVersion, Math::max),
                 hidden,
-                Lang.merge(Lang.merge(parent.patches, Collections.singleton(this.clearPatches().setId("resolved." + getId()))), patches));
+                Lang.merge(Lang.merge(parent.patches, Collections.singleton(this.clearPatches().setHidden(true).setId("resolved." + getId()))), patches));
     }
 
     protected Version resolve(VersionProvider provider, Set<String> resolvedSoFar) throws VersionNotFoundException {
@@ -269,19 +281,19 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     protected Version mergePreservingPatches(Version parent) {
-        return parent.addPatch(this.clearPatches().setId("resolved." + getId())).addPatches(patches);
+        return parent.addPatch(this.clearPatches().setHidden(true).setId("resolved." + getId())).addPatches(patches);
     }
 
     protected Version resolvePreservingPatches(VersionProvider provider, Set<String> resolvedSoFar) throws VersionNotFoundException {
         Version thisVersion;
 
         if (inheritsFrom == null) {
-            thisVersion = this.jar == null ? this.setJar(id) : this;
+            thisVersion = this;
         } else {
             // To maximize the compatibility.
             if (!resolvedSoFar.add(id)) {
                 Logging.LOG.log(Level.WARNING, "Found circular dependency versions: " + resolvedSoFar);
-                thisVersion = this.jar == null ? this.setJar(id) : this;
+                thisVersion = this;
             } else {
                 // It is supposed to auto install an version in getVersion.
                 thisVersion = mergePreservingPatches(provider.getVersion(inheritsFrom).resolvePreservingPatches(provider, resolvedSoFar));
@@ -292,6 +304,10 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     private Version setResolved() {
+        return new Version(true, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, patches);
+    }
+
+    private Version setHidden(Boolean hidden) {
         return new Version(true, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, patches);
     }
 
