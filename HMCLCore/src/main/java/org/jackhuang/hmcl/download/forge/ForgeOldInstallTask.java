@@ -74,7 +74,7 @@ public class ForgeOldInstallTask extends Task<Version> {
             ForgeInstallProfile installProfile = JsonUtils.fromNonNullJson(json, ForgeInstallProfile.class);
 
             // unpack the universal jar in the installer file.
-            Library forgeLibrary = Library.fromName(installProfile.getInstall().getPath().toString());
+            Library forgeLibrary = new Library(installProfile.getInstall().getPath());
             File forgeFile = dependencyManager.getGameRepository().getLibraryFile(version, forgeLibrary);
             if (!FileUtils.makeFile(forgeFile))
                 throw new IOException("Cannot make directory " + forgeFile.getParent());

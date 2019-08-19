@@ -21,6 +21,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.Arguments;
+import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.GetTask;
@@ -65,7 +66,7 @@ public final class FabricInstallTask extends Task<Version> {
 
     @Override
     public void preExecute() {
-        if (!Objects.equals("net.minecraft.client.main.Main", version.getMainClass()))
+        if (!Objects.equals("net.minecraft.client.main.Main", version.resolve(dependencyManager.getGameRepository()).getMainClass()))
             throw new UnsupportedFabricInstallationException();
     }
 
@@ -121,8 +122,8 @@ public final class FabricInstallTask extends Task<Version> {
             }
         }
 
-        libraries.add(new Library("net.fabricmc", "intermediary", gameVersion, null, "https://maven.fabricmc.net/", null));
-        libraries.add(new Library("net.fabricmc", "fabric-loader", loaderVersion, null, "https://maven.fabricmc.net/", null));
+        libraries.add(new Library(new Artifact("net.fabricmc", "intermediary", gameVersion), "https://maven.fabricmc.net/", null));
+        libraries.add(new Library(new Artifact("net.fabricmc", "fabric-loader", loaderVersion), "https://maven.fabricmc.net/", null));
 
         return new Version("net.fabricmc", loaderVersion, 30000, arguments, mainClass, libraries);
     }

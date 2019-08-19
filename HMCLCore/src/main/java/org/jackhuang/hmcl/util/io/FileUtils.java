@@ -199,7 +199,7 @@ public final class FileUtils {
         Files.walkFileTree(src, new SimpleFileVisitor<Path>(){
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Path destFile = dest.resolve(src.relativize(file));
+                Path destFile = dest.resolve(src.relativize(file).toString());
                 Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
 
                 return FileVisitResult.CONTINUE;
@@ -207,7 +207,7 @@ public final class FileUtils {
 
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                Path destDir = dest.resolve(src.relativize(dir));
+                Path destDir = dest.resolve(src.relativize(dir).toString());
                 Files.createDirectories(destDir);
 
                 return FileVisitResult.CONTINUE;

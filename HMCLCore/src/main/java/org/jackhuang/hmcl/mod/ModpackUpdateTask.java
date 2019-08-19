@@ -72,6 +72,8 @@ public class ModpackUpdateTask extends Task<Void> {
             repository.removeVersionFromDisk(id);
 
             FileUtils.copyDirectory(backupFolder, repository.getVersionRoot(id).toPath());
+
+            repository.refreshVersionsAsync().start();
         }
     }
 }

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download.liteloader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.Arguments;
+import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.LibraryDownloadInfo;
@@ -64,7 +65,7 @@ public final class LiteLoaderInstallTask extends Task<Version> {
     @Override
     public void execute() {
         Library library = new Library(
-                "com.mumfrey", "liteloader", remote.getSelfVersion(), null,
+                new Artifact("com.mumfrey", "liteloader", remote.getSelfVersion()),
                 "http://dl.liteloader.com/versions/",
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(null, remote.getUrl()))
         );

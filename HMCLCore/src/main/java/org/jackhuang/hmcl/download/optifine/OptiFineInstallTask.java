@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.game.Arguments;
+import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
@@ -84,10 +85,10 @@ public final class OptiFineInstallTask extends Task<Version> {
 
         String mavenVersion = remote.getGameVersion() + "_" + remote.getSelfVersion();
 
-        optiFineLibrary = new Library("optifine", "OptiFine", mavenVersion);
+        optiFineLibrary = new Library(new Artifact("optifine", "OptiFine", mavenVersion));
 
         optiFineInstallerLibrary = new Library(
-                "optifine", "OptiFine", mavenVersion, "installer", null,
+                new Artifact("optifine", "OptiFine", mavenVersion, "installer"), null,
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(
                         "optifine/OptiFine/" + mavenVersion + "/OptiFine-" + mavenVersion + "-installer.jar",
                         remote.getUrl()))
@@ -158,7 +159,7 @@ public final class OptiFineInstallTask extends Task<Version> {
                 String launchWrapperVersion = FileUtils.readText(launchWrapperVersionText).trim();
                 Path launchWrapperJar = fs.getPath("launchwrapper-of-" + launchWrapperVersion + ".jar");
 
-                Library launchWrapper = new Library("optifine", "launchwrapper-of", launchWrapperVersion);
+                Library launchWrapper = new Library(new Artifact("optifine", "launchwrapper-of", launchWrapperVersion));
 
                 if (Files.exists(launchWrapperJar)) {
                     File launchWrapperFile = gameRepository.getLibraryFile(version, launchWrapper);
@@ -172,7 +173,7 @@ public final class OptiFineInstallTask extends Task<Version> {
         }
 
         if (!hasLaunchWrapper) {
-            libraries.add(new Library("net.minecraft", "launchwrapper", "1.12"));
+            libraries.add(new Library(new Artifact("net.minecraft", "launchwrapper", "1.12")));
         }
 
         setResult(new Version(

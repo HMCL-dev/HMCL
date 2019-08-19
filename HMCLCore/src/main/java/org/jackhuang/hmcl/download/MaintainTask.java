@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.CompatibilityRule;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.Library;
@@ -37,10 +38,11 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 
 public class MaintainTask extends Task<Version> {
-
+    private final GameRepository repository;
     private final Version version;
 
-    public MaintainTask(Version version) {
+    public MaintainTask(GameRepository repository, Version version) {
+        this.repository = repository;
         this.version = version;
 
         if (version.getInheritsFrom() != null)
@@ -49,7 +51,7 @@ public class MaintainTask extends Task<Version> {
 
     @Override
     public void execute() {
-        setResult(maintain(null, version));
+        setResult(maintain(repository, version));
     }
 
     public static Version maintain(GameRepository repository, Version version) {
@@ -115,7 +117,7 @@ public class MaintainTask extends Task<Version> {
                     for (int i = 0; i < version.getLibraries().size(); ++i) {
                         Library library = libraries.get(i);
                         if (library.is("optifine", "OptiFine")) {
-                            Library newLibrary = new Library("optifine", "OptiFine", library.getVersion(), "installer", null, null);
+                            Library newLibrary = new Library(new Artifact("optifine", "OptiFine", library.getVersion(), "installer"));
                             if (repository.getLibraryFile(version, newLibrary).exists()) {
                                 libraries.set(i, null);
                                 // OptiFine should be loaded after Forge in classpath.

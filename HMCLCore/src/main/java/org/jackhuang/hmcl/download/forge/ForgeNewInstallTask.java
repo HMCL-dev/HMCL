@@ -88,7 +88,7 @@ public class ForgeNewInstallTask extends Task<Version> {
         else if (StringUtils.isSurrounded(literal, "'", "'"))
             return StringUtils.removeSurrounding(literal, "'");
         else if (StringUtils.isSurrounded(literal, "[", "]"))
-            return gameRepository.getArtifactFile(version, new Artifact(StringUtils.removeSurrounding(literal, "[", "]"))).toString();
+            return gameRepository.getArtifactFile(version, Artifact.fromDescriptor(StringUtils.removeSurrounding(literal, "[", "]"))).toString();
         else
             return plainConverter.apply(literal);
     }

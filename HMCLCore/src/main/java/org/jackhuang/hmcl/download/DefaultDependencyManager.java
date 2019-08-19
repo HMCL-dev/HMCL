@@ -146,8 +146,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         // So resolving this game version to preserve all information in this version.json is necessary.
         Version version = repository.getResolvedPreservingPatchesVersion(versionId);
 
-        return Task.supplyAsync(() -> MaintainTask.maintain(repository, LibraryAnalyzer.analyze(version)
-                .removeLibrary(libraryId).build()));
+        return Task.supplyAsync(() -> LibraryAnalyzer.analyze(version).removeLibrary(libraryId).build());
     }
 
     /**
