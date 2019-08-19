@@ -17,9 +17,8 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import static java.util.Collections.unmodifiableList;
-import static java.util.stream.Collectors.toList;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,8 +34,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import static java.util.Collections.unmodifiableList;
+import static java.util.stream.Collectors.toList;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 /**
  * Represents a Java installation.
@@ -114,11 +114,6 @@ public final class JavaVersion {
     public static JavaVersion fromExecutable(Path executable) throws IOException {
         Platform platform = Platform.BIT_32;
         String version = null;
-
-        // javaw is only used on windows
-        if ("javaw.exe".equalsIgnoreCase(executable.getFileName().toString())) {
-            executable = executable.resolveSibling("java.exe");
-        }
 
         executable = executable.toRealPath();
 
