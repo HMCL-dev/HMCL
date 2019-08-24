@@ -86,6 +86,12 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     private static Set<String> CAUGHT_EXCEPTIONS = newSetFromMap(new ConcurrentHashMap<>());
 
+    private final boolean showCrashWindow;
+
+    public CrashReporter(boolean showCrashWindow) {
+        this.showCrashWindow = showCrashWindow;
+    }
+
     @Override
     public void uncaughtException(Thread t, Throwable e) {
         LOG.log(Level.SEVERE, "Uncaught exception in thread " + t.getName(), e);
@@ -116,7 +122,9 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             LOG.log(Level.SEVERE, text);
 
             if (checkThrowable(e)) {
-                Platform.runLater(() -> new CrashWindow(text).show());
+                if (showCrashWindow) {
+                    Platform.runLater(() -> new CrashWindow(text).show());
+                }
                 if (!UpdateChecker.isOutdated() && IntegrityChecker.isSelfVerified()) {
                     reportToServer(text);
                 }

@@ -62,6 +62,13 @@ public final class TaskExecutor {
                     if (!success) {
                         // We log exception stacktrace because some of exceptions occurred because of bugs.
                         Logging.LOG.log(Level.WARNING, "An exception occurred in task execution", exception);
+
+                        Throwable resolvedException = resolveException(exception);
+                        if (resolvedException instanceof RuntimeException) {
+                            // Track uncaught RuntimeException which are thrown mostly by our mistake
+                            if (uncaughtExceptionHandler != null)
+                                uncaughtExceptionHandler.uncaughtException(Thread.currentThread(), resolvedException);
+                        }
                     }
 
                     taskListeners.forEach(it -> it.onStop(success, this));
@@ -252,5 +259,11 @@ public final class TaskExecutor {
                 rethrow(e);
             }
         };
+    }
+
+    private static Thread.UncaughtExceptionHandler uncaughtExceptionHandler = null;
+
+    public static void setUncaughtExceptionHandler(Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
+        TaskExecutor.uncaughtExceptionHandler = uncaughtExceptionHandler;
     }
 }

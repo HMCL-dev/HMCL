@@ -22,6 +22,7 @@ import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.CrashReporter;
@@ -77,6 +78,7 @@ public final class Launcher extends Application {
 
     public static void main(String[] args) {
         Thread.setDefaultUncaughtExceptionHandler(CRASH_REPORTER);
+        TaskExecutor.setUncaughtExceptionHandler(new CrashReporter(false));
 
         try {
             LOG.info("*** " + Metadata.TITLE + " ***");
@@ -142,5 +144,5 @@ public final class Launcher extends Application {
             return result;
     }
 
-    public static final CrashReporter CRASH_REPORTER = new CrashReporter();
+    public static final CrashReporter CRASH_REPORTER = new CrashReporter(true);
 }
