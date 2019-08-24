@@ -79,7 +79,7 @@ public final class LiteLoaderInstallTask extends Task<Version> {
                 .setLogging(Collections.emptyMap()) // Mods may log in malformed format, causing XML parser to crash. So we suppress using official log4j configuration
         );
 
-        dependencies.add(dependencyManager.checkLibraryCompletionAsync(version.setLibraries(getResult().getLibraries())));
+        dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult()));
     }
 
 }

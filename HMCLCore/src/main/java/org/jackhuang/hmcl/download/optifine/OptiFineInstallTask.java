@@ -185,7 +185,7 @@ public final class OptiFineInstallTask extends Task<Version> {
                 libraries
         ));
 
-        dependencies.add(dependencyManager.checkLibraryCompletionAsync(version.setLibraries(libraries)));
+        dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult()));
     }
 
     public static class UnsupportedOptiFineInstallationException extends UnsupportedOperationException {

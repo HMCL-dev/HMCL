@@ -84,7 +84,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     @Override
     public Task<?> checkLibraryCompletionAsync(Version version) {
-        return new GameLibrariesTask(this, version);
+        return new GameLibrariesTask(this, version, version.getLibraries());
     }
 
     @Override
