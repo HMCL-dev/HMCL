@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
@@ -482,7 +483,7 @@ public final class VersionSetting {
         else if (isUsesCustomJavaDir()) {
             try {
                 return JavaVersion.fromExecutable(Paths.get(getJavaDir()));
-            } catch (IOException e) {
+            } catch (IOException | InvalidPathException e) {
                 return null; // Custom Java Directory not found,
             }
         } else if (StringUtils.isNotBlank(getJava())) {
