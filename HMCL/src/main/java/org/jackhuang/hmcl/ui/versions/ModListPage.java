@@ -142,6 +142,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     public void removeSelected(ObservableList<TreeItem<ModListPageSkin.ModInfoObject>> selectedItems) {
         try {
             modManager.removeMods(selectedItems.stream()
+                    .filter(Objects::nonNull)
                     .map(TreeItem::getValue)
                     .filter(Objects::nonNull)
                     .map(ModListPageSkin.ModInfoObject::getModInfo)
