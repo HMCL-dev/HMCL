@@ -55,6 +55,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             put("java.lang.VerifyError", i18n("crash.NoClassDefFound"));
             put("java.lang.NoSuchMethodError", i18n("crash.NoClassDefFound"));
             put("java.lang.NoSuchFieldError", i18n("crash.NoClassDefFound"));
+            put("javax.imageio.IIOException", i18n("crash.NoClassDefFound"));
             put("netscape.javascript.JSException", i18n("crash.NoClassDefFound"));
             put("java.lang.IncompatibleClassChangeError", i18n("crash.NoClassDefFound"));
             put("java.lang.ClassFormatError", i18n("crash.NoClassDefFound"));
