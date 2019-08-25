@@ -149,7 +149,7 @@ public final class OptiFineInstallTask extends Task<Version> {
                         gameRepository.getLibraryFile(version, optiFineLibrary).toString()
                 );
                 if (exitCode != 0)
-                    throw new IllegalStateException("OptiFine patcher failed");
+                    throw new IOException("OptiFine patcher failed");
             } else {
                 FileUtils.copyFile(dest, gameRepository.getLibraryFile(version, optiFineLibrary).toPath());
             }
@@ -188,7 +188,7 @@ public final class OptiFineInstallTask extends Task<Version> {
         dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult()));
     }
 
-    public static class UnsupportedOptiFineInstallationException extends UnsupportedOperationException {
+    public static class UnsupportedOptiFineInstallationException extends Exception {
     }
 
     /**

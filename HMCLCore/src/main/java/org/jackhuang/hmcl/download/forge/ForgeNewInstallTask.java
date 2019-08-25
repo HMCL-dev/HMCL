@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -233,7 +234,7 @@ public class ForgeNewInstallTask extends Task<Version> {
                 List<String> args = processor.getArgs().stream().map(arg -> {
                     String parsed = parseLiteral(arg, data, ExceptionalFunction.identity());
                     if (parsed == null)
-                        throw new IllegalStateException("Invalid forge installation configuration");
+                        throw new IOException("Invalid forge installation configuration");
                     return parsed;
                 }).collect(Collectors.toList());
 
@@ -242,7 +243,7 @@ public class ForgeNewInstallTask extends Task<Version> {
                 LOG.info("Executing external processor " + processor.getJar().toString() + ", command line: " + new CommandBuilder().addAll(command).toString());
                 int exitCode = SystemUtils.callExternalProcess(command);
                 if (exitCode != 0)
-                    throw new IllegalStateException("Game processor exited abnormally");
+                    throw new IOException("Game processor exited abnormally");
 
                 for (Map.Entry<String, String> entry : outputs.entrySet()) {
                     Path artifact = Paths.get(entry.getKey());

@@ -54,6 +54,6 @@ public final class AssetObject implements Validation {
     @Override
     public void validate() throws JsonParseException {
         if (StringUtils.isBlank(hash) || hash.length() < 2)
-            throw new IllegalStateException("AssetObject hash cannot be blank.");
+            throw new JsonParseException("AssetObject hash cannot be blank.");
     }
 }

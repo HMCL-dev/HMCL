@@ -65,7 +65,7 @@ public final class FabricInstallTask extends Task<Version> {
     }
 
     @Override
-    public void preExecute() {
+    public void preExecute() throws Exception {
         if (!Objects.equals("net.minecraft.client.main.Main", version.resolve(dependencyManager.getGameRepository()).getMainClass()))
             throw new UnsupportedFabricInstallationException();
     }
@@ -128,6 +128,6 @@ public final class FabricInstallTask extends Task<Version> {
         return new Version("net.fabricmc", loaderVersion, 30000, arguments, mainClass, libraries);
     }
 
-    public static class UnsupportedFabricInstallationException extends UnsupportedOperationException {
+    public static class UnsupportedFabricInstallationException extends Exception {
     }
 }

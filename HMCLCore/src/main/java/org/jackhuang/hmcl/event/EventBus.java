@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.event;
 import org.jackhuang.hmcl.util.Logging;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
@@ -27,12 +28,11 @@ import java.util.HashMap;
  */
 public final class EventBus {
 
-    private final HashMap<Class<?>, EventManager<?>> events = new HashMap<>();
+    private final ConcurrentHashMap<Class<?>, EventManager<?>> events = new ConcurrentHashMap<>();
 
     @SuppressWarnings("unchecked")
     public <T extends Event> EventManager<T> channel(Class<T> clazz) {
-        if (!events.containsKey(clazz))
-            events.put(clazz, new EventManager<>());
+        events.putIfAbsent(clazz, new EventManager<>());
         return (EventManager<T>) events.get(clazz);
     }
 

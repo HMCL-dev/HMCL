@@ -292,7 +292,7 @@ public class FileDownloadTask extends Task<Void> {
                 }
 
                 if (downloaded != contentLength)
-                    throw new IllegalStateException("Unexpected file size: " + downloaded + ", expected: " + contentLength);
+                    throw new IOException("Unexpected file size: " + downloaded + ", expected: " + contentLength);
 
                 // Integrity check
                 if (integrityCheck != null) {
@@ -312,7 +312,7 @@ public class FileDownloadTask extends Task<Void> {
                 }
 
                 return;
-            } catch (IOException | IllegalStateException e) {
+            } catch (IOException e) {
                 if (temp != null)
                     temp.toFile().delete();
                 exception = e;

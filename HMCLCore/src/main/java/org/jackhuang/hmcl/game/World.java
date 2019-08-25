@@ -91,7 +91,7 @@ public class World {
     private void loadFromZipImpl(Path root) throws IOException {
         Path levelDat = root.resolve("level.dat");
         if (!Files.exists(levelDat))
-            throw new IllegalArgumentException("Not a valid world zip file since level.dat cannot be found.");
+            throw new IOException("Not a valid world zip file since level.dat cannot be found.");
 
         getWorldName(levelDat);
     }
@@ -116,6 +116,9 @@ public class World {
         CompoundTag nbt = parseLevelDat(levelDat);
 
         CompoundTag data = nbt.get("Data");
+        if (data == null)
+            throw new IOException("level.dat missing Data");
+
         if (data.get("LevelName") instanceof StringTag)
             worldName = data.<StringTag>get("LevelName").getValue();
         else
@@ -209,7 +212,7 @@ public class World {
                 return Files.list(savesDir).flatMap(world -> {
                     try {
                         return Stream.of(new World(world));
-                    } catch (IOException | IllegalArgumentException e) {
+                    } catch (IOException e) {
                         Logging.LOG.log(Level.WARNING, "Failed to read world " + world, e);
                         return Stream.empty();
                     }

@@ -64,7 +64,7 @@ public final class TaskExecutor {
                         Logging.LOG.log(Level.WARNING, "An exception occurred in task execution", exception);
 
                         Throwable resolvedException = resolveException(exception);
-                        if (resolvedException instanceof RuntimeException) {
+                        if (resolvedException instanceof RuntimeException && !(resolvedException instanceof CancellationException)) {
                             // Track uncaught RuntimeException which are thrown mostly by our mistake
                             if (uncaughtExceptionHandler != null)
                                 uncaughtExceptionHandler.uncaughtException(Thread.currentThread(), resolvedException);

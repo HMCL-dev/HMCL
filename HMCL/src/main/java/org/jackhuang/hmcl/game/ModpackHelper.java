@@ -123,7 +123,7 @@ public final class ModpackHelper {
             return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, modpack, ((MultiMCInstanceConfiguration) modpack.getManifest()), name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
-        else throw new IllegalStateException("Unrecognized modpack: " + modpack);
+        else throw new IllegalArgumentException("Unrecognized modpack: " + modpack);
     }
 
     public static Task<Void> getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, MismatchedModpackTypeException {

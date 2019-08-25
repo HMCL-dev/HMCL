@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +81,7 @@ public class MultiMCModpackExportTask extends Task<Void> {
 
             LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(versionId));
             String gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(versionId))
-                    .orElseThrow(() ->  new IllegalStateException("Cannot parse the version of " + versionId));
+                    .orElseThrow(() -> new IOException("Cannot parse the version of " + versionId));
             List<MultiMCManifest.MultiMCManifestComponent> components = new ArrayList<>();
             components.add(new MultiMCManifest.MultiMCManifestComponent(true, false, "net.minecraft", gameVersion));
             analyzer.getVersion(FORGE).ifPresent(forgeVersion ->
