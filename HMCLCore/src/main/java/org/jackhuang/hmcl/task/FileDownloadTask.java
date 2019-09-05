@@ -316,6 +316,9 @@ public class FileDownloadTask extends Task<Void> {
                 if (temp != null)
                     temp.toFile().delete();
                 exception = e;
+
+                if (e instanceof ResponseCodeException && ((ResponseCodeException) e).getResponseCode() == 404)
+                    break;
             } finally {
                 closeFiles();
             }

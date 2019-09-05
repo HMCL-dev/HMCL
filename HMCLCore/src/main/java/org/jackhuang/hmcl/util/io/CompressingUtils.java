@@ -179,6 +179,8 @@ public final class CompressingUtils {
             throw new ZipException(error.getMessage());
         } catch (UnsupportedOperationException ex) {
             throw new IOException("Not a zip file", ex);
+        } catch (FileSystemNotFoundException ex) {
+            throw new IOException("Java Environment is broken");
         }
     }
 

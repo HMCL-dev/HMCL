@@ -30,8 +30,11 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
+import java.nio.file.Paths;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -83,7 +86,9 @@ public class InstallersPage extends StackPane implements WizardPage {
         String gameVersion = ((RemoteVersion) controller.getSettings().get("game")).getGameVersion();
         Validator hasVersion = new Validator(s -> !repository.hasVersion(s) && StringUtils.isNotBlank(s));
         hasVersion.setMessage(i18n("install.new_game.already_exists"));
-        txtName.getValidators().add(hasVersion);
+        Validator nameValidator = new Validator(OperatingSystem::isNameValid);
+        nameValidator.setMessage(i18n("install.new_game.malformed"));
+        txtName.getValidators().addAll(hasVersion, nameValidator);
         txtName.textProperty().addListener(e -> btnInstall.setDisable(!txtName.validate()));
         txtName.setText(gameVersion);
 
