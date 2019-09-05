@@ -28,10 +28,15 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> {
 
@@ -79,10 +84,13 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                         String jar = null;
                         for (ForgeVersion.File file : version.getFiles())
                             if ("installer".equals(file.getCategory()) && "jar".equals(file.getFormat())) {
-                                String classifier = gameVersion + "-" + version.getVersion()
-                                        + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
-                                String fileName = "forge-" + classifier + "-" + file.getCategory() + "." + file.getFormat();
-                                jar = "https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/" + classifier + "/" + fileName;
+                                jar = NetworkUtils.withQuery("https://bmclapi2.bangbang93.com/forge/download", mapOf(
+                                        pair("mcversion", version.getGameVersion()),
+                                        pair("version", version.getVersion()),
+                                        pair("branch", version.getBranch()),
+                                        pair("category", file.getCategory()),
+                                        pair("format", file.getFormat())
+                                ));
                             }
 
                         if (jar == null)
@@ -121,18 +129,22 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
             this.files = files;
         }
 
+        @Nullable
         public String getBranch() {
             return branch;
         }
 
+        @NotNull
         public String getGameVersion() {
             return mcversion;
         }
 
+        @NotNull
         public String getVersion() {
             return version;
         }
 
+        @NotNull
         public List<File> getFiles() {
             return files;
         }

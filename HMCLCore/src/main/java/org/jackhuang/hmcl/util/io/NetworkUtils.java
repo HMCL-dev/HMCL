@@ -40,6 +40,8 @@ public final class NetworkUtils {
             StringBuilder sb = new StringBuilder(baseUrl);
             boolean first = true;
             for (Entry<String, String> param : params.entrySet()) {
+                if (param.getValue() == null)
+                    continue;
                 if (first) {
                     sb.append('?');
                     first = false;

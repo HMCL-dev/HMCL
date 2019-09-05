@@ -231,12 +231,13 @@ public class ForgeNewInstallTask extends Task<Version> {
 
                 command.add(mainClass);
 
-                List<String> args = processor.getArgs().stream().map(arg -> {
+                List<String> args = new ArrayList<>(processor.getArgs().size());
+                for (String arg : processor.getArgs()) {
                     String parsed = parseLiteral(arg, data, ExceptionalFunction.identity());
                     if (parsed == null)
                         throw new IOException("Invalid forge installation configuration");
-                    return parsed;
-                }).collect(Collectors.toList());
+                    args.add(parsed);
+                }
 
                 command.addAll(args);
 
