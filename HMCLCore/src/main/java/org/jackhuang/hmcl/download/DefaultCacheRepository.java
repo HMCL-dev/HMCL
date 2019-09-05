@@ -23,8 +23,11 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.LibraryDownloadInfo;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.gson.TolerableValidationException;
+import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -214,7 +217,7 @@ public class DefaultCacheRepository extends CacheRepository {
      *     // assets and versions will not be included in index.
      * }
      */
-    private class Index {
+    private class Index implements Validation {
         private final Set<LibraryIndex> libraries;
 
         public Index() {
@@ -222,11 +225,18 @@ public class DefaultCacheRepository extends CacheRepository {
         }
 
         public Index(Set<LibraryIndex> libraries) {
-            this.libraries = libraries;
+            this.libraries = Objects.requireNonNull(libraries);
         }
 
+        @NotNull
         public Set<LibraryIndex> getLibraries() {
             return libraries;
+        }
+
+        @Override
+        public void validate() throws JsonParseException, TolerableValidationException {
+            if (libraries == null)
+                throw new JsonParseException("Index.libraries cannot be null");
         }
     }
 

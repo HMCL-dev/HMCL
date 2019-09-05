@@ -121,6 +121,9 @@ public final class TexturesLoader {
         try (InputStream in = Files.newInputStream(file)) {
             img = ImageIO.read(in);
         }
+        if (img == null)
+            throw new IOException("Texture is malformed");
+
         Map<String, String> metadata = texture.getMetadata();
         if (metadata == null) {
             metadata = emptyMap();

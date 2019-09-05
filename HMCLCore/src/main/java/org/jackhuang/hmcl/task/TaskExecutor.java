@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.task;
 
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
@@ -64,7 +65,9 @@ public final class TaskExecutor {
                         Logging.LOG.log(Level.WARNING, "An exception occurred in task execution", exception);
 
                         Throwable resolvedException = resolveException(exception);
-                        if (resolvedException instanceof RuntimeException && !(resolvedException instanceof CancellationException)) {
+                        if (resolvedException instanceof RuntimeException &&
+                                !(resolvedException instanceof CancellationException) &&
+                                !(resolvedException instanceof JsonParseException)) {
                             // Track uncaught RuntimeException which are thrown mostly by our mistake
                             if (uncaughtExceptionHandler != null)
                                 uncaughtExceptionHandler.uncaughtException(Thread.currentThread(), resolvedException);
