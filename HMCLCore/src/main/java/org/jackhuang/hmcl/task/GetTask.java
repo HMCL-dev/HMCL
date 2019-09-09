@@ -30,6 +30,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -40,7 +43,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public final class GetTask extends Task<String> {
 
-    private final URL url;
+    private final List<URL> urls;
     private final Charset charset;
     private final int retry;
     private CacheRepository repository = CacheRepository.getInstance();
@@ -54,11 +57,20 @@ public final class GetTask extends Task<String> {
     }
 
     public GetTask(URL url, Charset charset, int retry) {
-        this.url = url;
+        this.urls = Collections.singletonList(url);
         this.charset = charset;
         this.retry = retry;
 
         setName(url.toString());
+        setExecutor(Schedulers.io());
+    }
+
+    public GetTask(List<URL> urls, Charset charset) {
+        this.urls = new ArrayList<>(urls);
+        this.charset = charset;
+        this.retry = urls.size();
+
+        setName(urls.get(0).toString());
         setExecutor(Schedulers.io());
     }
 
@@ -72,8 +84,7 @@ public final class GetTask extends Task<String> {
         Exception exception = null;
         boolean checkETag = true;
         for (int time = 0; time < retry; ++time) {
-            if (time > 0)
-                Logging.LOG.log(Level.WARNING, "Failed to download, repeat times: " + time);
+            URL url = urls.get(time % urls.size());
             try {
                 updateProgress(0);
                 HttpURLConnection conn = NetworkUtils.createConnection(url);
@@ -122,10 +133,11 @@ public final class GetTask extends Task<String> {
                 return;
             } catch (IOException ex) {
                 exception = ex;
+                Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", repeat times: " + time + 1, ex);
             }
         }
         if (exception != null)
-            throw new DownloadException(url, exception);
+            throw new DownloadException(urls.get(0), exception);
     }
 
 }

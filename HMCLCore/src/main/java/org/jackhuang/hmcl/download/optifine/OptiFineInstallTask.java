@@ -45,11 +45,8 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.getOrDefault;
 
@@ -91,7 +88,7 @@ public final class OptiFineInstallTask extends Task<Version> {
                 new Artifact("optifine", "OptiFine", mavenVersion, "installer"), null,
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(
                         "optifine/OptiFine/" + mavenVersion + "/OptiFine-" + mavenVersion + "-installer.jar",
-                        remote.getUrl()))
+                        remote.getUrl()[0]))
         );
     }
 
@@ -105,7 +102,9 @@ public final class OptiFineInstallTask extends Task<Version> {
         dest = Files.createTempFile("optifine-installer", ".jar");
 
         if (installer == null) {
-            dependents.add(new FileDownloadTask(NetworkUtils.toURL(remote.getUrl()), dest.toFile())
+            dependents.add(new FileDownloadTask(
+                    Arrays.stream(remote.getUrl()).map(NetworkUtils::toURL).collect(Collectors.toList()),
+                    dest.toFile(), null)
                     .setCacheRepository(dependencyManager.getCacheRepository())
                     .setCaching(true));
         } else {
@@ -223,7 +222,7 @@ public final class OptiFineInstallTask extends Task<Version> {
                 throw new VersionMismatchException(mcVersion, gameVersion.get());
 
             return new OptiFineInstallTask(dependencyManager, version,
-                    new OptiFineRemoteVersion(mcVersion,  ofEdition + "_" + ofRelease, () -> null, false), installer);
+                    new OptiFineRemoteVersion(mcVersion,  ofEdition + "_" + ofRelease, "", false), installer);
         }
     }
 }

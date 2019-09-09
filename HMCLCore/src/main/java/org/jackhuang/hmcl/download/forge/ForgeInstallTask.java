@@ -33,10 +33,8 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
@@ -69,7 +67,11 @@ public final class ForgeInstallTask extends Task<Version> {
     public void preExecute() throws Exception {
         installer = Files.createTempFile("forge-installer", ".jar");
 
-        dependent = new FileDownloadTask(NetworkUtils.toURL(remote.getUrl()), installer.toFile())
+        dependent = new FileDownloadTask(
+                Arrays.stream(remote.getUrl())
+                        .map(NetworkUtils::toURL)
+                        .collect(Collectors.toList()),
+                installer.toFile(), null)
                 .setCacheRepository(dependencyManager.getCacheRepository())
                 .setCaching(true);
     }

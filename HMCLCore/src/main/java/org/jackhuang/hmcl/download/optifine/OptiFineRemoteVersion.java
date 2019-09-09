@@ -26,17 +26,9 @@ import org.jackhuang.hmcl.task.Task;
 import java.util.function.Supplier;
 
 public class OptiFineRemoteVersion extends RemoteVersion {
-    private final Supplier<String> url;
 
-    public OptiFineRemoteVersion(String gameVersion, String selfVersion, Supplier<String> url, boolean snapshot) {
-        super(LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId(), gameVersion, selfVersion, "", snapshot ? Type.SNAPSHOT : Type.RELEASE);
-
-        this.url = url;
-    }
-
-    @Override
-    public String getUrl() {
-        return url.get();
+    public OptiFineRemoteVersion(String gameVersion, String selfVersion, String url, boolean snapshot) {
+        super(LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId(), gameVersion, selfVersion, snapshot ? Type.SNAPSHOT : Type.RELEASE, url);
     }
 
     @Override
