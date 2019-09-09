@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.ReleaseType;
 import org.jackhuang.hmcl.game.Version;
@@ -37,7 +38,7 @@ public final class GameRemoteVersion extends RemoteVersion {
     private final Date time;
 
     public GameRemoteVersion(String gameVersion, String selfVersion, String url, ReleaseType type, Date time) {
-        super(gameVersion, selfVersion, url, getReleaseType(type));
+        super(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion, selfVersion, url, getReleaseType(type));
         this.type = type;
         this.time = time;
     }

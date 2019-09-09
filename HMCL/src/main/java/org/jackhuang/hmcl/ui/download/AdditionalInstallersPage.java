@@ -113,16 +113,14 @@ class AdditionalInstallersPage extends StackPane implements WizardPage {
         String liteLoader = analyzer.getVersion(LITELOADER).orElse(null);
         String optiFine = analyzer.getVersion(OPTIFINE).orElse(null);
 
-        JFXButton[] buttons = new JFXButton[]{btnFabric, btnForge, btnLiteLoader, btnOptiFine};
         Label[] labels = new Label[]{lblFabric, lblForge, lblLiteLoader, lblOptiFine};
         String[] libraryIds = new String[]{"fabric", "forge", "liteloader", "optifine"};
         String[] versions = new String[]{fabric, forge, liteLoader, optiFine};
 
         for (int i = 0; i < libraryIds.length; ++i) {
             String libraryId = libraryIds[i];
-            buttons[i].setDisable(versions[i] != null);
             if (versions[i] != null || controller.getSettings().containsKey(libraryId))
-                labels[i].setText(i18n("install.installer.version", i18n("install.installer." + libraryId)) + ": " + Lang.nonNull(versions[i], getVersion(libraryId)));
+                labels[i].setText(i18n("install.installer.version", i18n("install.installer." + libraryId)) + ": " + Lang.nonNull(getVersion(libraryId), versions[i]));
             else
                 labels[i].setText(i18n("install.installer.not_installed", i18n("install.installer." + libraryId)));
         }

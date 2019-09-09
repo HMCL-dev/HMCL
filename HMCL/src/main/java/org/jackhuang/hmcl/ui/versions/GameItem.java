@@ -60,14 +60,16 @@ public class GameItem extends Control {
                 .thenAcceptAsync(game -> {
                     StringBuilder libraries = new StringBuilder(game);
                     LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id));
-                    analyzer.forEachLibrary((libraryId, libraryVersion) -> {
-                        if (libraryId.equals(MINECRAFT.getPatchId())) return;
+                    for (LibraryAnalyzer.LibraryMark mark : analyzer) {
+                        String libraryId = mark.getLibraryId();
+                        String libraryVersion = mark.getLibraryVersion();
+                        if (libraryId.equals(MINECRAFT.getPatchId())) continue;
                         if (I18n.hasKey("install.installer." + libraryId)) {
                             libraries.append(", ").append(i18n("install.installer." + libraryId));
                             if (libraryVersion != null)
                                 libraries.append(": ").append(modifyVersion("", libraryVersion.replaceAll("(?i)" + libraryId, "")));
                         }
-                    });
+                    }
 
                     subtitle.set(libraries.toString());
                 }, Platform::runLater)

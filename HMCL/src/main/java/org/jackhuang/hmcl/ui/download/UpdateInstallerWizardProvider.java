@@ -58,8 +58,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
 
         // We remove library but not save it,
         // so if installation failed will not break down current version.
-        return profile.getDependency().removeLibraryWithoutSavingAsync(version.getId(), libraryId)
-                .thenComposeAsync(profile.getDependency().installLibraryAsync((RemoteVersion) settings.get(libraryId)))
+        return profile.getDependency().installLibraryAsync(version, (RemoteVersion) settings.get(libraryId))
                 .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
     }
 

@@ -74,7 +74,7 @@ public class HMCLModpackExportTask extends Task<Void> {
                 return false;
             });
 
-            Version mv = repository.getResolvedVersion(version);
+            Version mv = repository.getResolvedPreservingPatchesVersion(version);
             String gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version))
                     .orElseThrow(() ->  new IOException("Cannot parse the version of " + version));
             zip.putTextFile(JsonUtils.GSON.toJson(mv.setJar(gameVersion)), "minecraft/pack.json"); // Making "jar" to gameVersion is to be compatible with old HMCL.

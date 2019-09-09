@@ -31,6 +31,7 @@ import java.util.Objects;
  */
 public class RemoteVersion implements Comparable<RemoteVersion> {
 
+    private final String libraryId;
     private final String gameVersion;
     private final String selfVersion;
     private final String url;
@@ -43,8 +44,8 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
      * @param selfVersion the version string of the remote version.
      * @param url         the installer or universal jar URL.
      */
-    public RemoteVersion(String gameVersion, String selfVersion, String url) {
-        this(gameVersion, selfVersion, url, Type.UNCATEGORIZED);
+    public RemoteVersion(String libraryId, String gameVersion, String selfVersion, String url) {
+        this(libraryId, gameVersion, selfVersion, url, Type.UNCATEGORIZED);
     }
 
     /**
@@ -54,11 +55,16 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
      * @param selfVersion the version string of the remote version.
      * @param url         the installer or universal jar URL.
      */
-    public RemoteVersion(String gameVersion, String selfVersion, String url, Type type) {
+    public RemoteVersion(String libraryId, String gameVersion, String selfVersion, String url, Type type) {
+        this.libraryId = Objects.requireNonNull(libraryId);
         this.gameVersion = Objects.requireNonNull(gameVersion);
         this.selfVersion = Objects.requireNonNull(selfVersion);
         this.url = Objects.requireNonNull(url);
         this.type = Objects.requireNonNull(type);
+    }
+
+    public String getLibraryId() {
+        return libraryId;
     }
 
     public String getGameVersion() {

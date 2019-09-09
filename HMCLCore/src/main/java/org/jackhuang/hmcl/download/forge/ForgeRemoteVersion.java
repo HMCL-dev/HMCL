@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
@@ -31,7 +32,7 @@ public class ForgeRemoteVersion extends RemoteVersion {
      * @param url         the installer or universal jar URL.
      */
     public ForgeRemoteVersion(String gameVersion, String selfVersion, String url) {
-        super(gameVersion, selfVersion, url);
+        super(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), gameVersion, selfVersion, url);
     }
 
     @Override

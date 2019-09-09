@@ -101,11 +101,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     public Task<Version> installLibraryAsync(Version baseVersion, RemoteVersion libraryVersion) {
         if (baseVersion.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
 
-        return libraryVersion.getInstallTask(this, baseVersion)
+        return removeLibraryAsync(baseVersion.resolvePreservingPatches(repository), libraryVersion.getLibraryId())
+                .thenComposeAsync(version -> libraryVersion.getInstallTask(this, version))
                 .thenApplyAsync(baseVersion::addPatch)
                 .thenComposeAsync(repository::save);
     }
-
 
     public ExceptionalFunction<Version, Task<Version>, ?> installLibraryAsync(RemoteVersion libraryVersion) {
         return version -> installLibraryAsync(version, libraryVersion);
@@ -139,28 +139,19 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
      * Remove installed library.
      * Will try to remove libraries and patches.
      *
-     * @param versionId version id
+     * @param version not resolved version
      * @param libraryId forge/liteloader/optifine/fabric
      * @return task to remove the specified library
      */
-    public Task<Version> removeLibraryWithoutSavingAsync(String versionId, String libraryId) {
+    public Task<Version> removeLibraryAsync(Version version, String libraryId) {
         // MaintainTask requires version that does not inherits from any version.
         // If we want to remove a library in dependent version, we should keep the dependents not changed
         // So resolving this game version to preserve all information in this version.json is necessary.
-        Version version = repository.getResolvedPreservingPatchesVersion(versionId);
+        if (version.isResolved())
+            throw new IllegalArgumentException("removeLibraryWithoutSavingAsync requires non-resolved version");
+        Version independentVersion = version.resolvePreservingPatches(repository);
 
-        return Task.supplyAsync(() -> LibraryAnalyzer.analyze(version).removeLibrary(libraryId).build());
+        return Task.supplyAsync(() -> LibraryAnalyzer.analyze(independentVersion).removeLibrary(libraryId).build());
     }
 
-    /**
-     * Remove installed library.
-     * Will try to remove libraries and patches.
-     *
-     * @param versionId version id
-     * @param libraryId forge/liteloader/optifine/fabric
-     * @return task to remove the specified library
-     */
-    public Task<Version> removeLibraryAsync(String versionId, String libraryId) {
-        return removeLibraryWithoutSavingAsync(versionId, libraryId).thenComposeAsync(repository::save);
-    }
 }

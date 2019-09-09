@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.optifine;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
@@ -28,7 +29,7 @@ public class OptiFineRemoteVersion extends RemoteVersion {
     private final Supplier<String> url;
 
     public OptiFineRemoteVersion(String gameVersion, String selfVersion, Supplier<String> url, boolean snapshot) {
-        super(gameVersion, selfVersion, "", snapshot ? Type.SNAPSHOT : Type.RELEASE);
+        super(LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId(), gameVersion, selfVersion, "", snapshot ? Type.SNAPSHOT : Type.RELEASE);
 
         this.url = url;
     }

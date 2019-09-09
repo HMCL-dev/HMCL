@@ -20,19 +20,17 @@ package org.jackhuang.hmcl.download;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public final class LibraryAnalyzer {
+import static org.jackhuang.hmcl.util.Pair.pair;
+
+public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMark> {
     private Version version;
     private final Map<String, Pair<Library, String>> libraries;
 
@@ -49,9 +47,23 @@ public final class LibraryAnalyzer {
         return Optional.ofNullable(libraries.get(type)).map(Pair::getValue);
     }
 
-    public void forEachLibrary(BiConsumer<String, @Nullable String> callback) {
-        for (Map.Entry<String, Pair<Library, String>> entry : libraries.entrySet())
-            callback.accept(entry.getKey(), entry.getValue().getValue());
+    @NotNull
+    @Override
+    public Iterator<LibraryMark> iterator() {
+        return new Iterator<LibraryMark>() {
+            Iterator<Map.Entry<String, Pair<Library, String>>> impl = libraries.entrySet().iterator();
+
+            @Override
+            public boolean hasNext() {
+                return impl.hasNext();
+            }
+
+            @Override
+            public LibraryMark next() {
+                Map.Entry<String, Pair<Library, String>> entry = impl.next();
+                return new LibraryMark(entry.getKey(), entry.getValue().getValue());
+            }
+        };
     }
 
     public boolean has(LibraryType type) {
@@ -122,7 +134,7 @@ public final class LibraryAnalyzer {
 
             for (LibraryType type : LibraryType.values()) {
                 if (type.group.matcher(groupId).matches() && type.artifact.matcher(artifactId).matches()) {
-                    libraries.put(type.getPatchId(), Pair.pair(library, library.getVersion()));
+                    libraries.put(type.getPatchId(), pair(library, library.getVersion()));
                     break;
                 }
             }
@@ -130,7 +142,7 @@ public final class LibraryAnalyzer {
 
         for (Version patch : version.getPatches()) {
             if (patch.isHidden()) continue;
-            libraries.put(patch.getId(), Pair.pair(null, patch.getVersion()));
+            libraries.put(patch.getId(), pair(null, patch.getVersion()));
         }
 
         return new LibraryAnalyzer(version, libraries);
@@ -167,6 +179,26 @@ public final class LibraryAnalyzer {
                 if (type.getPatchId().equals(patchId))
                     return type;
             return null;
+        }
+    }
+
+    public static class LibraryMark {
+        private final String libraryId;
+        private final String libraryVersion;
+
+        public LibraryMark(@NotNull String libraryId, @Nullable String libraryVersion) {
+            this.libraryId = libraryId;
+            this.libraryVersion = libraryVersion;
+        }
+
+        @NotNull
+        public String getLibraryId() {
+            return libraryId;
+        }
+
+        @Nullable
+        public String getLibraryVersion() {
+            return libraryVersion;
         }
     }
 }

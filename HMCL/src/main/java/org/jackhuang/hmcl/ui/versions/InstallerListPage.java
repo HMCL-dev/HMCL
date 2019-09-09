@@ -79,14 +79,17 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
             return LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(versionId));
         }).thenAcceptAsync(Schedulers.javafx(), analyzer -> {
             Function<String, Consumer<InstallerItem>> removeAction = libraryId -> x -> {
-                profile.getDependency().removeLibraryAsync(version.getId(), libraryId)
+                profile.getDependency().removeLibraryAsync(version, libraryId)
+                        .thenComposeAsync(profile.getRepository()::save)
                         .withComposeAsync(profile.getRepository().refreshVersionsAsync())
                         .withRunAsync(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId))
                         .start();
             };
 
             itemsProperty().clear();
-            analyzer.forEachLibrary((libraryId, libraryVersion) -> {
+            for (LibraryAnalyzer.LibraryMark mark : analyzer) {
+                String libraryId = mark.getLibraryId();
+                String libraryVersion = mark.getLibraryVersion();
                 String title = I18n.hasKey("install.installer." + libraryId) ? i18n("install.installer." + libraryId) : libraryId;
                 Consumer<InstallerItem> action = "game".equals(libraryId) ? null : removeAction.apply(libraryId);
                 if (libraryVersion != null && Lang.test(() -> profile.getDependency().getVersionList(libraryId)))
@@ -96,7 +99,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                             }, action));
                 else
                     itemsProperty().add(new InstallerItem(title, libraryVersion, null, action));
-            });
+            }
         }).start();
     }
 
