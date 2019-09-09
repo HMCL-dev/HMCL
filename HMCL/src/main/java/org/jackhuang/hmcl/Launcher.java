@@ -20,6 +20,9 @@ package org.jackhuang.hmcl;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.setting.AuthlibInjectorServers;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -41,6 +44,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -54,6 +58,14 @@ public final class Launcher extends Application {
         try {
             try {
                 ConfigHolder.init();
+                AuthlibInjectorServers.init();
+
+                if (ConfigHolder.isNewlyCreated() && !AuthlibInjectorServers.getConfigInstance().getUrls().isEmpty()) {
+                    config().setPreferredLoginType(Accounts.getLoginType(Accounts.FACTORY_AUTHLIB_INJECTOR));
+                    AuthlibInjectorServers.getConfigInstance().getUrls().stream()
+                            .map(AuthlibInjectorServer::new)
+                            .forEach(config().getAuthlibInjectorServers()::add);
+                }
             } catch (IOException e) {
                 Main.showErrorAndExit(i18n("fatal.config_loading_failure", Paths.get("").toAbsolutePath().normalize()));
             }
