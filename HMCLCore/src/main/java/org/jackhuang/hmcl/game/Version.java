@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.gson.JsonMap;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,8 +61,8 @@ public class Version implements Comparable<Version>, Validation {
     private final String assets;
     private final List<Library> libraries;
     private final List<CompatibilityRule> compatibilityRules;
-    private final Map<DownloadType, DownloadInfo> downloads;
-    private final Map<DownloadType, LoggingInfo> logging;
+    private final JsonMap<DownloadType, DownloadInfo> downloads;
+    private final JsonMap<DownloadType, LoggingInfo> logging;
     private final ReleaseType type;
     private final Date time;
     private final Date releaseTime;
@@ -103,8 +104,8 @@ public class Version implements Comparable<Version>, Validation {
         this.assets = assets;
         this.libraries = Lang.copyList(libraries);
         this.compatibilityRules = Lang.copyList(compatibilityRules);
-        this.downloads = downloads == null ? null : new HashMap<>(downloads);
-        this.logging = logging == null ? null : new HashMap<>(logging);
+        this.downloads = downloads == null ? null : new JsonMap<>(downloads);
+        this.logging = logging == null ? null : new JsonMap<>(logging);
         this.type = type;
         this.time = time == null ? null : (Date) time.clone();
         this.releaseTime = releaseTime == null ? null : (Date) releaseTime.clone();
