@@ -23,11 +23,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -99,7 +95,7 @@ public final class Arguments {
     }
 
     public static List<String> parseStringArguments(List<String> arguments, Map<String, String> keys) {
-        return arguments.stream().flatMap(str -> new StringArgument(str).toString(keys, Collections.emptyMap()).stream()).collect(Collectors.toList());
+        return arguments.stream().filter(Objects::nonNull).flatMap(str -> new StringArgument(str).toString(keys, Collections.emptyMap()).stream()).collect(Collectors.toList());
     }
 
     public static List<String> parseArguments(List<Argument> arguments, Map<String, String> keys) {
@@ -107,7 +103,7 @@ public final class Arguments {
     }
 
     public static List<String> parseArguments(List<Argument> arguments, Map<String, String> keys, Map<String, Boolean> features) {
-        return arguments.stream().flatMap(arg -> arg.toString(keys, features).stream()).collect(Collectors.toList());
+        return arguments.stream().filter(Objects::nonNull).flatMap(arg -> arg.toString(keys, features).stream()).collect(Collectors.toList());
     }
 
     public static final List<Argument> DEFAULT_JVM_ARGUMENTS;

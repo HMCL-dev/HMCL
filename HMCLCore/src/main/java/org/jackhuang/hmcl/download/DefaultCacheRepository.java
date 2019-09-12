@@ -63,7 +63,7 @@ public class DefaultCacheRepository extends CacheRepository {
         lock.writeLock().lock();
         try {
             if (Files.isRegularFile(indexFile))
-                index = JsonUtils.GSON.fromJson(FileUtils.readText(indexFile.toFile()), Index.class);
+                index = JsonUtils.fromNonNullJson(FileUtils.readText(indexFile.toFile()), Index.class);
             else
                 index = new Index();
         } catch (IOException | JsonParseException e) {
@@ -240,13 +240,13 @@ public class DefaultCacheRepository extends CacheRepository {
         }
     }
 
-    private class LibraryIndex {
+    private class LibraryIndex implements Validation {
         private final String name;
         private final String hash;
         private final String type;
 
         public LibraryIndex() {
-            this(null, null, null);
+            this("", "", "");
         }
 
         public LibraryIndex(String name, String hash, String type) {
@@ -255,16 +255,25 @@ public class DefaultCacheRepository extends CacheRepository {
             this.type = type;
         }
 
+        @NotNull
         public String getName() {
             return name;
         }
 
+        @NotNull
         public String getHash() {
             return hash;
         }
 
+        @NotNull
         public String getType() {
             return type;
+        }
+
+        @Override
+        public void validate() throws JsonParseException, TolerableValidationException {
+            if (name == null || hash == null || type == null)
+                throw new JsonParseException("Index.LibraryIndex.* cannot be null");
         }
 
         @Override
