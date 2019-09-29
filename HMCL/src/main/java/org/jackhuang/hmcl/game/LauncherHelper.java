@@ -303,7 +303,7 @@ public final class LauncherHelper {
         }
 
         // LaunchWrapper 1.12 will crash because of assuming the system class loader is an instance of URLClassLoader.
-        if (!flag && java.getParsedVersion() >= JavaVersion.JAVA_9
+        if (!flag && java.getParsedVersion() >= JavaVersion.JAVA_9_AND_LATER
                 && version.getMainClass().contains("launchwrapper")
                 && version.getLibraries().stream()
                 .filter(library -> "launchwrapper".equals(library.getArtifactId()))
