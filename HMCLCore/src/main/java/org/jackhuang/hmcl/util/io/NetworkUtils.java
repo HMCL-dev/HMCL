@@ -178,7 +178,7 @@ public final class NetworkUtils {
     public static String detectFileName(URL url) throws IOException {
         HttpURLConnection conn = resolveConnection(createConnection(url));
         int code = conn.getResponseCode();
-        if (code == 404)
+        if (code / 100 == 4)
             throw new FileNotFoundException();
         if (code / 100 != 2)
             throw new IOException(url + ": response code " + conn.getResponseCode());
