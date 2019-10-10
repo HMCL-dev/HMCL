@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -84,7 +85,12 @@ public final class CurseInstallTask extends Task<Void> {
         dependents.add(builder.buildAsync());
 
         onDone().register(event -> {
-            if (event.isFailed()) repository.removeVersionFromDisk(name);
+            Exception ex = event.getTask().getException();
+            if (event.isFailed()) {
+                if (!(ex instanceof CurseCompletionException) || ex.getCause() instanceof FileNotFoundException) {
+                    repository.removeVersionFromDisk(name);
+                }
+            }
         });
 
         ModpackConfiguration<CurseManifest> config = null;

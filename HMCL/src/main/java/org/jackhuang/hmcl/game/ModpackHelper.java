@@ -107,9 +107,6 @@ public final class ModpackHelper {
             if (ex instanceof CurseCompletionException && !(ex.getCause() instanceof FileNotFoundException)) {
                 success.run();
                 // This is tolerable and we will not delete the game
-            } else {
-                HMCLGameRepository repository = profile.getRepository();
-                repository.removeVersionFromDisk(name);
             }
         };
 
