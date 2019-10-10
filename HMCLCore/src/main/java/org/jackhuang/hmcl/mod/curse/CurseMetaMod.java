@@ -20,18 +20,23 @@ package org.jackhuang.hmcl.mod.curse;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
 
+/**
+ * CurseMetaMod is JSON structure for
+ * https://cursemeta.dries007.net/&lt;projectID&gt;/&lt;fileID&gt;.json
+ * https://addons-ecs.forgesvc.net/api/v2/addon/&lt;projectID&gt;/file/<fileID&gt;
+ */
 @Immutable
 public final class CurseMetaMod {
-    @SerializedName("Id")
+    @SerializedName(value = "Id", alternate = "id")
     private final int id;
 
-    @SerializedName("FileName")
+    @SerializedName(value = "FileName", alternate = "fileName")
     private final String fileName;
 
-    @SerializedName("FileNameOnDisk")
+    @SerializedName(value = "FileNameOnDisk")
     private final String fileNameOnDisk;
 
-    @SerializedName("DownloadURL")
+    @SerializedName(value = "DownloadURL", alternate = "downloadUrl")
     private final String downloadURL;
 
     public CurseMetaMod() {

@@ -23,7 +23,8 @@ import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -124,9 +125,15 @@ public final class CurseCompletionTask extends Task<Void> {
                                         CurseMetaMod mod = JsonUtils.fromNonNullJson(result, CurseMetaMod.class);
                                         return file.withFileName(mod.getFileNameOnDisk()).withURL(mod.getDownloadURL());
                                     } catch (IOException | JsonParseException e2) {
-                                        Logging.LOG.log(Level.WARNING, "Could not query cursemeta for deleted mods: " + file.getUrl(), e2);
-                                        notFound.set(true);
-                                        return file;
+                                        try {
+                                            String result = NetworkUtils.doGet(NetworkUtils.toURL(String.format("https://addons-ecs.forgesvc.net/api/v2/addon/%d/file/%d", file.getProjectID(), file.getFileID())));
+                                            CurseMetaMod mod = JsonUtils.fromNonNullJson(result, CurseMetaMod.class);
+                                            return file.withFileName(mod.getFileName()).withURL(mod.getDownloadURL());
+                                        } catch (IOException | JsonParseException e3) {
+                                            Logging.LOG.log(Level.WARNING, "Could not query cursemeta for deleted mods: " + file.getUrl(), e2);
+                                            notFound.set(true);
+                                            return file;
+                                        }
                                     }
 
                                 } catch (IOException ioe) {
