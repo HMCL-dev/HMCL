@@ -32,10 +32,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -157,7 +154,13 @@ public class World {
     }
 
     public void install(Path savesDir, String name) throws IOException {
-        Path worldDir = savesDir.resolve(name);
+        Path worldDir;
+        try {
+            worldDir = savesDir.resolve(name);
+        } catch (InvalidPathException e) {
+            throw new IOException(e);
+        }
+
         if (Files.isDirectory(worldDir)) {
             throw new FileAlreadyExistsException("World already exists");
         }

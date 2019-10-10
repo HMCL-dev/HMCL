@@ -33,7 +33,9 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -117,6 +119,8 @@ public class WorldListPage extends ListPageBase<WorldListItem> {
                                 }, e -> {
                                     if (e instanceof FileAlreadyExistsException)
                                         reject.accept(i18n("world.import.failed", i18n("world.import.already_exists")));
+                                    else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
+                                        reject.accept(i18n("world.import.failed", i18n("install.new_game.malformed")));
                                     else
                                         reject.accept(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
                                 }).start();
