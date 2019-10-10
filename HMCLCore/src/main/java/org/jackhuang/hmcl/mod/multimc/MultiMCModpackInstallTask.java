@@ -142,7 +142,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
     public void execute() throws Exception {
         Version version = repository.readVersionJson(name);
 
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(zipFile.toPath())) {
+        try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setAutoDetectEncoding(true).build()) {
             Path root = MultiMCInstanceConfiguration.getRootPath(fs.getPath("/"));
             Path patches = root.resolve("patches");
 
