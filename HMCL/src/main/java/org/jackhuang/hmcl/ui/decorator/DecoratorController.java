@@ -150,7 +150,7 @@ public class DecoratorController {
                             if (image == null) {
                                 image = loadDefaultBackgroundImage();
                             }
-                            return new Background(new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true)));
+                            return new Background(new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(820, 480, false, false, true, true)));
                         },
                         config().backgroundImageTypeProperty(),
                         config().backgroundImageProperty()));

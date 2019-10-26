@@ -65,7 +65,7 @@ public class CrashWindow extends Stage {
         pane.setCenter(textArea);
         pane.setBottom(box);
 
-        Scene scene = new Scene(pane, 800, 480);
+        Scene scene = new Scene(pane, 820, 480);
         setScene(scene);
         getIcons().add(newImage("/assets/img/icon.png"));
         setTitle(i18n("message.error"));

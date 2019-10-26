@@ -73,7 +73,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         BorderPane root = new BorderPane();
         root.getStyleClass().addAll("jfx-decorator", "resize-border");
         root.setPrefHeight(519);
-        root.setPrefWidth(800);
+        root.setPrefWidth(820);
         root.setMaxHeight(Region.USE_PREF_SIZE);
         root.setMinHeight(Region.USE_PREF_SIZE);
         root.setMaxWidth(Region.USE_PREF_SIZE);
