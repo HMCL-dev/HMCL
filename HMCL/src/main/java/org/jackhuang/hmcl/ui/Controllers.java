@@ -210,7 +210,7 @@ public final class Controllers {
 
         Task.runAsync(JavaVersion::initialize).start();
 
-        scene = new Scene(decorator.getDecorator(), 820, 519);
+        scene = new Scene(decorator.getDecorator(), 800, 519);
         scene.getStylesheets().setAll(config().getTheme().getStylesheets());
 
         stage.getIcons().add(newImage("/assets/img/icon.png"));

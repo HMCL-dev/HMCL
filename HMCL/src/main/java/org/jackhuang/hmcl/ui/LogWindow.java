@@ -65,7 +65,7 @@ public final class LogWindow extends Stage {
     public final EventManager<Event> onDone = new EventManager<>();
 
     public LogWindow() {
-        setScene(new Scene(impl, 820, 480));
+        setScene(new Scene(impl, 800, 480));
         getScene().getStylesheets().addAll(config().getTheme().getStylesheets());
         setTitle(i18n("logwindow.title"));
         getIcons().add(newImage("/assets/img/icon.png"));

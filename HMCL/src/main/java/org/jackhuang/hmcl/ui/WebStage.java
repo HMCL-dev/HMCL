@@ -28,7 +28,7 @@ public class WebStage extends Stage {
     private final WebView webView = new WebView();
 
     public WebStage() {
-        setScene(new Scene(webView, 820, 480));
+        setScene(new Scene(webView, 800, 480));
         getScene().getStylesheets().addAll(config().getTheme().getStylesheets());
         getIcons().add(newImage("/assets/img/icon.png"));
     }
