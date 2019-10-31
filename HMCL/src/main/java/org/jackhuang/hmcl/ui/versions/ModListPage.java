@@ -79,22 +79,22 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void loadVersion(Profile profile, String id) {
-        libraryAnalyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedVersion(id));
+        libraryAnalyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id));
         modded.set(libraryAnalyzer.hasModLoader());
         loadMods(profile.getRepository().getModManager(id));
     }
 
     private void loadMods(ModManager modManager) {
         this.modManager = modManager;
-        Task.ofResult(() -> {
+        Task.supplyAsync(() -> {
             synchronized (ModListPage.this) {
                 runInFX(() -> loadingProperty().set(true));
                 modManager.refreshMods();
                 return new LinkedList<>(modManager.getMods());
             }
-        }).whenComplete(Schedulers.javafx(), (list, isDependentSucceeded, exception) -> {
+        }).whenComplete(Schedulers.javafx(), (list, exception) -> {
             loadingProperty().set(false);
-            if (isDependentSucceeded)
+            if (exception == null)
                 FXUtils.onWeakChangeAndOperate(parentTab.getSelectionModel().selectedItemProperty(), newValue -> {
                     if (newValue != null && newValue.getUserData() == ModListPage.this)
                         itemsProperty().setAll(list.stream().map(ModListPageSkin.ModInfoObject::new).collect(Collectors.toList()));
@@ -112,7 +112,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         List<String> succeeded = new LinkedList<>();
         List<String> failed = new LinkedList<>();
         if (res == null) return;
-        Task.of(() -> {
+        Task.runAsync(() -> {
             for (File file : res) {
                 try {
                     modManager.addMod(file);
@@ -124,7 +124,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                     // Actually addMod will not throw exceptions because FileChooser has already filtered files.
                 }
             }
-        }).with(Task.of(Schedulers.javafx(), () -> {
+        }).withRunAsync(Schedulers.javafx(), () -> {
             List<String> prompt = new LinkedList<>();
             if (!succeeded.isEmpty())
                 prompt.add(i18n("mods.add.success", String.join(", ", succeeded)));
@@ -132,7 +132,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 prompt.add(i18n("mods.add.failed", String.join(", ", failed)));
             Controllers.dialog(String.join("\n", prompt), i18n("mods.add"));
             loadMods(modManager);
-        })).start();
+        }).start();
     }
 
     public void setParentTab(JFXTabPane parentTab) {
@@ -142,6 +142,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     public void removeSelected(ObservableList<TreeItem<ModListPageSkin.ModInfoObject>> selectedItems) {
         try {
             modManager.removeMods(selectedItems.stream()
+                    .filter(Objects::nonNull)
                     .map(TreeItem::getValue)
                     .filter(Objects::nonNull)
                     .map(ModListPageSkin.ModInfoObject::getModInfo)

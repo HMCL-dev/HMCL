@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.download.fabric.FabricVersionList;
 import org.jackhuang.hmcl.download.forge.ForgeBMCLVersionList;
-import org.jackhuang.hmcl.download.forge.ForgeVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
@@ -44,6 +44,8 @@ public class MojangDownloadProvider implements DownloadProvider {
         switch (id) {
             case "game":
                 return GameVersionList.INSTANCE;
+            case "fabric":
+                return FabricVersionList.INSTANCE;
             case "forge":
                 return ForgeBMCLVersionList.INSTANCE;
             case "liteloader":

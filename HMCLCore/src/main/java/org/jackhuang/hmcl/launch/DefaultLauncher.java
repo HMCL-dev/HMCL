@@ -18,8 +18,15 @@
 package org.jackhuang.hmcl.launch;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.game.Argument;
+import org.jackhuang.hmcl.game.Arguments;
+import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.game.LaunchOptions;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
@@ -29,9 +36,18 @@ import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -43,16 +59,16 @@ import static org.jackhuang.hmcl.util.Pair.pair;
  */
 public class DefaultLauncher extends Launcher {
 
-    public DefaultLauncher(GameRepository repository, String versionId, AuthInfo authInfo, LaunchOptions options) {
-        this(repository, versionId, authInfo, options, null);
+    public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
+        this(repository, version, authInfo, options, null);
     }
 
-    public DefaultLauncher(GameRepository repository, String versionId, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
-        this(repository, versionId, authInfo, options, listener, true);
+    public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
+        this(repository, version, authInfo, options, listener, true);
     }
 
-    public DefaultLauncher(GameRepository repository, String versionId, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
-        super(repository, versionId, authInfo, options, listener, daemon);
+    public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
+        super(repository, version, authInfo, options, listener, daemon);
     }
 
     private CommandBuilder generateCommandLine(File nativeFolder) throws IOException {
@@ -144,12 +160,12 @@ public class DefaultLauncher extends Launcher {
 
         res.add(version.getMainClass());
 
+        res.addAll(Arguments.parseStringArguments(version.getMinecraftArguments().map(StringUtils::tokenize).orElseGet(LinkedList::new), configuration));
+
         Map<String, Boolean> features = getFeatures();
         res.addAll(Arguments.parseArguments(version.getArguments().map(Arguments::getGame).orElseGet(this::getDefaultGameArguments), configuration, features));
         if (authInfo.getArguments() != null && authInfo.getArguments().getGame() != null && !authInfo.getArguments().getGame().isEmpty())
             res.addAll(Arguments.parseArguments(authInfo.getArguments().getGame(), configuration, features));
-
-        res.addAll(Arguments.parseStringArguments(version.getMinecraftArguments().map(StringUtils::tokenize).orElseGet(LinkedList::new), configuration));
 
         if (StringUtils.isNotBlank(options.getServerIp())) {
             String[] args = options.getServerIp().split(":");
@@ -190,7 +206,7 @@ public class DefaultLauncher extends Launcher {
     }
 
     private final Map<String, Supplier<Boolean>> forbiddens = mapOf(
-            pair("-Xincgc", () -> options.getJava().getParsedVersion() >= JavaVersion.JAVA_9)
+            pair("-Xincgc", () -> options.getJava().getParsedVersion() >= JavaVersion.JAVA_9_AND_LATER)
     );
 
     protected Map<String, Supplier<Boolean>> getForbiddens() {
@@ -243,7 +259,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${auth_uuid}", UUIDTypeAdapter.fromUUID(authInfo.getUUID())),
                 pair("${version_name}", Optional.ofNullable(options.getVersionName()).orElse(version.getId())),
                 pair("${profile_name}", Optional.ofNullable(options.getProfileName()).orElse("Minecraft")),
-                pair("${version_type}", version.getType().getId()),
+                pair("${version_type}", Optional.ofNullable(options.getVersionType()).orElse(version.getType().getId())),
                 pair("${game_directory}", repository.getRunDirectory(version.getId()).getAbsolutePath()),
                 pair("${user_type}", "mojang"),
                 pair("${assets_index_name}", version.getAssetIndex().getId()),
@@ -255,7 +271,7 @@ public class DefaultLauncher extends Launcher {
 
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        File nativeFolder = repository.getNativeDirectory(versionId);
+        File nativeFolder = repository.getNativeDirectory(version.getId());
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = generateCommandLine(nativeFolder).asList();
@@ -287,7 +303,7 @@ public class DefaultLauncher extends Launcher {
     public void makeLaunchScript(File scriptFile) throws IOException {
         boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
 
-        File nativeFolder = repository.getNativeDirectory(versionId);
+        File nativeFolder = repository.getNativeDirectory(version.getId());
         decompressNatives(nativeFolder);
 
         if (isWindows && !FileUtils.getExtension(scriptFile).equals("bat"))

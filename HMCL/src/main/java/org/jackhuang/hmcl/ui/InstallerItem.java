@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.setting.Theme;
@@ -40,11 +41,16 @@ public class InstallerItem extends BorderPane {
         setStyle("-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;");
         JFXDepthManager.setDepth(this, 1);
 
-        {
+        if (version != null) {
             TwoLineListItem item = new TwoLineListItem();
             item.setTitle(artifact);
             item.setSubtitle(i18n("archive.version") + ": " + version);
             setCenter(item);
+        } else {
+            Label label = new Label(artifact);
+            label.setStyle("-fx-font-size: 15px;");
+            BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+            setCenter(label);
         }
 
         {

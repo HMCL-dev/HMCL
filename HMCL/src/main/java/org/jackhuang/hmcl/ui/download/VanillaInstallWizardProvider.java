@@ -43,24 +43,19 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         settings.put(PROFILE, profile);
     }
 
-    private Task finishVersionDownloadingAsync(Map<String, Object> settings) {
+    private Task<Void> finishVersionDownloadingAsync(Map<String, Object> settings) {
         GameBuilder builder = profile.getDependency().gameBuilder();
 
         String name = (String) settings.get("name");
         builder.name(name);
         builder.gameVersion(((RemoteVersion) settings.get("game")).getGameVersion());
 
-        if (settings.containsKey("forge"))
-            builder.version((RemoteVersion) settings.get("forge"));
+        for (Map.Entry<String, Object> entry : settings.entrySet())
+            if (!"game".equals(entry.getKey()) && entry.getValue() instanceof RemoteVersion)
+                builder.version((RemoteVersion) entry.getValue());
 
-        if (settings.containsKey("liteloader"))
-            builder.version((RemoteVersion) settings.get("liteloader"));
-
-        if (settings.containsKey("optifine"))
-            builder.version((RemoteVersion) settings.get("optifine"));
-
-        return builder.buildAsync().whenComplete((a, b) -> profile.getRepository().refreshVersions())
-                .then(Task.of(Schedulers.javafx(), () -> profile.setSelectedVersion(name)));
+        return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
+                .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
     }
 
     @Override

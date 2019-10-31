@@ -46,7 +46,7 @@ public interface DependencyManager {
      *
      * @return the task to check game completion.
      */
-    Task checkGameCompletionAsync(Version version);
+    Task<?> checkGameCompletionAsync(Version version);
 
     /**
      * Check if the game is complete.
@@ -54,7 +54,7 @@ public interface DependencyManager {
      *
      * @return the task to check game completion.
      */
-    Task checkLibraryCompletionAsync(Version version);
+    Task<?> checkLibraryCompletionAsync(Version version);
 
     /**
      * The builder to build a brand new game then libraries such as Forge, LiteLoader and OptiFine.
@@ -66,22 +66,22 @@ public interface DependencyManager {
      * **Note**: Installing a library may change the version.json.
      *
      * @param gameVersion the Minecraft version that the library relies on.
-     * @param version the version.json.
+     * @param baseVersion the version.json.
      * @param libraryId the type of being installed library. i.e. "forge", "liteloader", "optifine"
      * @param libraryVersion the version of being installed library.
      * @return the task to install the specific library.
      */
-    Task installLibraryAsync(String gameVersion, Version version, String libraryId, String libraryVersion);
+    Task<?> installLibraryAsync(String gameVersion, Version baseVersion, String libraryId, String libraryVersion);
 
     /**
      * Install a library to a version.
      * **Note**: Installing a library may change the version.json.
      *
-     * @param version the version.json.\
+     * @param baseVersion the version.json.
      * @param libraryVersion the remote version of being installed library.
      * @return the task to install the specific library.
      */
-    Task installLibraryAsync(Version version, RemoteVersion libraryVersion);
+    Task<?> installLibraryAsync(Version baseVersion, RemoteVersion libraryVersion);
 
     /**
      * Get registered version list.

@@ -17,21 +17,22 @@
  */
 package org.jackhuang.hmcl.download.optifine;
 
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.task.Task;
 
 import java.util.function.Supplier;
 
 public class OptiFineRemoteVersion extends RemoteVersion {
-    private final Supplier<String> url;
 
-    public OptiFineRemoteVersion(String gameVersion, String selfVersion, Supplier<String> url, boolean snapshot) {
-        super(gameVersion, selfVersion, "", snapshot ? Type.SNAPSHOT : Type.RELEASE);
-
-        this.url = url;
+    public OptiFineRemoteVersion(String gameVersion, String selfVersion, String url, boolean snapshot) {
+        super(LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId(), gameVersion, selfVersion, snapshot ? Type.SNAPSHOT : Type.RELEASE, url);
     }
 
     @Override
-    public String getUrl() {
-        return url.get();
+    public Task<Version> getInstallTask(DefaultDependencyManager dependencyManager, Version baseVersion) {
+        return new OptiFineInstallTask(dependencyManager, baseVersion, this);
     }
 }

@@ -33,8 +33,7 @@ public class Pair<K, V> implements Map.Entry<K, V> {
     private K key;
     private V value;
 
-    @Deprecated
-    public Pair(K key, V value) {
+    private Pair(K key, V value) {
         this.key = key;
         this.value = value;
     }

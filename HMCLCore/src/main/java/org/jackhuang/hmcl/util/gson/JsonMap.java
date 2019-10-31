@@ -15,43 +15,37 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.task;
+package org.jackhuang.hmcl.util.gson;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * The tasks that provides a way to execute tasks parallelly.
- * Fails when some of {@link #tasks} failed.
- *
- * @author huangyuhui
+ * To resolve JsonParseException: duplicate key: null
+ * By skipping inserting data with key null
+ * @param <K>
+ * @param <V>
  */
-public final class ParallelTask extends Task {
-
-    private final Collection<Task> tasks;
-
-    /**
-     * Constructor.
-     *
-     * @param tasks the tasks that can be executed parallelly.
-     */
-    public ParallelTask(Task... tasks) {
-        this.tasks = Arrays.asList(tasks);
-        setSignificance(TaskSignificance.MINOR);
+public class JsonMap<K, V> extends HashMap<K, V> {
+    public JsonMap(int initialCapacity, float loadFactor) {
+        super(initialCapacity, loadFactor);
     }
 
-    public ParallelTask(Collection<Task> tasks) {
-        this.tasks = tasks;
-        setSignificance(TaskSignificance.MINOR);
+    public JsonMap(int initialCapacity) {
+        super(initialCapacity);
     }
 
-    @Override
-    public void execute() {
+    public JsonMap() {
+        super();
+    }
+
+    public JsonMap(Map<? extends K, ? extends V> m) {
+        super(m);
     }
 
     @Override
-    public Collection<Task> getDependents() {
-        return tasks;
+    public V put(K key, V value) {
+        if (key == null) return null;
+        return super.put(key, value);
     }
-
 }

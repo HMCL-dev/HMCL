@@ -77,7 +77,7 @@ public class AddAccountPane extends StackPane {
     @FXML private SpinnerPane acceptPane;
     @FXML private HBox linksContainer;
 
-    private ListProperty<Hyperlink> links = new SimpleListProperty<>();;
+    private ListProperty<Hyperlink> links = new SimpleListProperty<>();
 
     public AddAccountPane() {
         FXUtils.loadFXML(this, "/assets/fxml/account-add.fxml");
@@ -197,7 +197,7 @@ public class AddAccountPane extends StackPane {
         AccountFactory<?> factory = cboType.getSelectionModel().getSelectedItem();
         Object additionalData = getAuthAdditionalData();
 
-        Task.ofResult(() -> factory.create(new Selector(), username, password, additionalData))
+        Task.supplyAsync(() -> factory.create(new Selector(), username, password, additionalData))
                 .whenComplete(Schedulers.javafx(), account -> {
                     int oldIndex = Accounts.getAccounts().indexOf(account);
                     if (oldIndex == -1) {

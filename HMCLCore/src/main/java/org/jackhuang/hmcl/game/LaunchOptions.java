@@ -17,10 +17,10 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.platform.JavaVersion;
+
 import java.io.File;
 import java.io.Serializable;
-
-import org.jackhuang.hmcl.util.platform.JavaVersion;
 
 /**
  *
@@ -31,6 +31,7 @@ public class LaunchOptions implements Serializable {
     private File gameDir;
     private JavaVersion java;
     private String versionName;
+    private String versionType;
     private String profileName;
     private String minecraftArgs;
     private String javaArgs;
@@ -69,6 +70,14 @@ public class LaunchOptions implements Serializable {
      */
     public String getVersionName() {
         return versionName;
+    }
+
+    /**
+     * Will shown in the left bottom corner of the main menu of Minecraft.
+     * null if use Version.versionType.
+     */
+    public String getVersionType() {
+        return versionType;
     }
 
     /**
@@ -212,6 +221,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setVersionName(String versionName) {
             options.versionName = versionName;
+            return this;
+        }
+
+        public Builder setVersionType(String versionType) {
+            options.versionType = versionType;
             return this;
         }
 

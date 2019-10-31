@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Logging;
@@ -24,13 +25,14 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Export the game to a mod pack file.
  */
-public class HMCLModpackExportTask extends Task {
+public class HMCLModpackExportTask extends Task<Void> {
     private final DefaultGameRepository repository;
     private final String version;
     private final List<String> whitelist;
@@ -55,7 +57,7 @@ public class HMCLModpackExportTask extends Task {
 
     @Override
     public void execute() throws Exception {
-        ArrayList<String> blackList = new ArrayList<>(HMCLModpackManager.MODPACK_BLACK_LIST);
+        ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
         blackList.add(version + ".jar");
         blackList.add(version + ".json");
         Logging.LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
@@ -72,9 +74,9 @@ public class HMCLModpackExportTask extends Task {
                 return false;
             });
 
-            Version mv = repository.getResolvedVersion(version);
+            Version mv = repository.getResolvedPreservingPatchesVersion(version);
             String gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version))
-                    .orElseThrow(() ->  new IllegalStateException("Cannot parse the version of " + version));
+                    .orElseThrow(() ->  new IOException("Cannot parse the version of " + version));
             zip.putTextFile(JsonUtils.GSON.toJson(mv.setJar(gameVersion)), "minecraft/pack.json"); // Making "jar" to gameVersion is to be compatible with old HMCL.
             zip.putTextFile(JsonUtils.GSON.toJson(modpack.setGameVersion(gameVersion)), "modpack.json"); // Newer HMCL only reads 'gameVersion' field.
         }

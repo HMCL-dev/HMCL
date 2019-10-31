@@ -33,7 +33,9 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -82,12 +84,12 @@ public class WorldListPage extends ListPageBase<WorldListItem> {
 
         setLoading(true);
         Task
-                .of(() -> gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(id)).orElse(null))
-                .thenSupply(() -> World.getWorlds(savesDir).parallel().collect(Collectors.toList()))
-                .whenComplete(Schedulers.javafx(), (result, isDependentSucceeded, exception) -> {
+                .runAsync(() -> gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(id)).orElse(null))
+                .thenSupplyAsync(() -> World.getWorlds(savesDir).parallel().collect(Collectors.toList()))
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     worlds = result;
                     setLoading(false);
-                    if (isDependentSucceeded)
+                    if (exception == null)
                         itemsProperty().setAll(result.stream()
                                 .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
                                 .map(WorldListItem::new).collect(Collectors.toList()));
@@ -107,16 +109,18 @@ public class WorldListPage extends ListPageBase<WorldListItem> {
     private void installWorld(File zipFile) {
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
-        Task.ofResult(() -> new World(zipFile.toPath()))
+        Task.supplyAsync(() -> new World(zipFile.toPath()))
                 .whenComplete(Schedulers.javafx(), world -> {
                     Controllers.inputDialog(i18n("world.name.enter"), (name, resolve, reject) -> {
-                        Task.of(() -> world.install(savesDir, name))
+                        Task.runAsync(() -> world.install(savesDir, name))
                                 .whenComplete(Schedulers.javafx(), () -> {
                                     itemsProperty().add(new WorldListItem(new World(savesDir.resolve(name))));
                                     resolve.run();
                                 }, e -> {
                                     if (e instanceof FileAlreadyExistsException)
                                         reject.accept(i18n("world.import.failed", i18n("world.import.already_exists")));
+                                    else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
+                                        reject.accept(i18n("world.import.failed", i18n("install.new_game.malformed")));
                                     else
                                         reject.accept(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
                                 }).start();

@@ -19,8 +19,8 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
-import org.jackhuang.hmcl.download.DependencyManager;
-import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
@@ -36,16 +36,17 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-public final class HMCLModpackInstallTask extends Task {
+public final class HMCLModpackInstallTask extends Task<Void> {
     private final File zipFile;
     private final String name;
     private final HMCLGameRepository repository;
+    private final DefaultDependencyManager dependency;
     private final Modpack modpack;
-    private final List<Task> dependencies = new LinkedList<>();
-    private final List<Task> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new LinkedList<>();
 
     public HMCLModpackInstallTask(Profile profile, File zipFile, Modpack modpack, String name) {
-        DependencyManager dependency = profile.getDependency();
+        dependency = profile.getDependency();
         repository = profile.getRepository();
         this.zipFile = zipFile;
         this.name = name;
@@ -77,20 +78,30 @@ public final class HMCLModpackInstallTask extends Task {
     }
 
     @Override
-    public List<Task> getDependencies() {
+    public List<Task<?>> getDependencies() {
         return dependencies;
     }
 
     @Override
-    public List<Task> getDependents() {
+    public List<Task<?>> getDependents() {
         return dependents;
     }
 
     @Override
     public void execute() throws Exception {
         String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
-        Version version = JsonUtils.GSON.fromJson(json, Version.class).setId(name).setJar(null);
-        dependencies.add(new VersionJsonSaveTask(repository, version));
+        Version originalVersion = JsonUtils.GSON.fromJson(json, Version.class).setId(name).setJar(null);
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(originalVersion);
+        Task<Version> libraryTask = Task.supplyAsync(() -> originalVersion);
+        // reinstall libraries
+        // libraries of Forge and OptiFine should be obtained by installation.
+        for (LibraryAnalyzer.LibraryMark mark : analyzer) {
+            if (LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(mark.getLibraryId()))
+                continue;
+            libraryTask = libraryTask.thenComposeAsync(version -> dependency.installLibraryAsync(modpack.getGameVersion(), version, mark.getLibraryId(), mark.getLibraryVersion()));
+        }
+
+        dependencies.add(libraryTask.thenComposeAsync(repository::save));
         dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/minecraft", modpack, MODPACK_TYPE, repository.getModpackConfiguration(name)));
     }
 

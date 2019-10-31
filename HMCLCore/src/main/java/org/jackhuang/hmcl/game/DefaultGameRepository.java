@@ -18,8 +18,17 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.event.*;
+import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
+import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.event.EventBus;
+import org.jackhuang.hmcl.event.GameJsonParseFailedEvent;
+import org.jackhuang.hmcl.event.LoadedOneVersionEvent;
+import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
+import org.jackhuang.hmcl.event.RemoveVersionEvent;
+import org.jackhuang.hmcl.event.RenameVersionEvent;
 import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -27,7 +36,13 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -79,7 +94,10 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public File getLibraryFile(Version version, Library lib) {
-        return new File(getBaseDirectory(), "libraries/" + lib.getPath());
+        if ("local".equals(lib.getHint()))
+            return new File(getVersionRoot(version.getId()), "libraries/" + lib.getFileName());
+        else
+            return new File(getBaseDirectory(), "libraries/" + lib.getPath());
     }
 
     public Path getArtifactFile(Version version, Artifact artifact) {
@@ -145,7 +163,7 @@ public class DefaultGameRepository implements GameRepository {
             }
 
             if (fromVersion.getId().equals(fromVersion.getJar()))
-                fromVersion = fromVersion.setJar(to);
+                fromVersion = fromVersion.setJar(null);
             FileUtils.writeText(toJson, JsonUtils.GSON.toJson(fromVersion.setId(to)));
             return true;
         } catch (IOException | JsonParseException | VersionNotFoundException e) {
@@ -215,6 +233,12 @@ public class DefaultGameRepository implements GameRepository {
                         LOG.info("Renaming json file " + jsons.get(0) + " to " + json);
                         if (!jsons.get(0).renameTo(json)) {
                             LOG.warning("Cannot rename json file, ignoring version " + id);
+                            return Stream.empty();
+                        }
+
+                        File jar = new File(dir, FileUtils.getNameWithoutExtension(jsons.get(0)) + ".jar");
+                        if (jar.exists() && !jar.renameTo(new File(dir, id + ".jar"))) {
+                            LOG.warning("Cannot rename jar file, ignoring version " + id);
                             return Stream.empty();
                         }
                     } else {
@@ -366,6 +390,10 @@ public class DefaultGameRepository implements GameRepository {
         }
 
         return assetsDir;
+    }
+
+    public Task<Version> save(Version version) {
+        return new VersionJsonSaveTask(this, version);
     }
 
     public boolean isLoaded() {

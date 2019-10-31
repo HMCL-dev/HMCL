@@ -15,10 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.mod;
+package org.jackhuang.hmcl.mod.multimc;
 
+import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -37,6 +37,7 @@ import java.util.Properties;
  */
 public final class MultiMCInstanceConfiguration {
 
+    private final String instanceType; // InstanceType
     private final String name; // name
     private final String gameVersion; // IntendedVersion
     private final Integer permGen; // PermGen
@@ -69,6 +70,7 @@ public final class MultiMCInstanceConfiguration {
 
         this.mmcPack = mmcPack;
 
+        instanceType = p.getProperty("InstanceType");
         autoCloseConsole = Boolean.parseBoolean(p.getProperty("AutoCloseConsole"));
         gameVersion = mmcPack != null ? mmcPack.getComponents().stream().filter(e -> "net.minecraft".equals(e.getUid())).findAny()
                 .orElseThrow(() -> new IOException("Malformed mmc-pack.json")).getVersion() : p.getProperty("IntendedVersion");
@@ -93,6 +95,38 @@ public final class MultiMCInstanceConfiguration {
         wrapperCommand = p.getProperty("WrapperCommand");
         name = defaultName;
         notes = Optional.ofNullable(p.getProperty("notes")).orElse("");
+    }
+
+    public MultiMCInstanceConfiguration(String instanceType, String name, String gameVersion, Integer permGen, String wrapperCommand, String preLaunchCommand, String postExitCommand, String notes, String javaPath, String jvmArgs, boolean fullscreen, Integer width, Integer height, Integer maxMemory, Integer minMemory, boolean showConsole, boolean showConsoleOnError, boolean autoCloseConsole, boolean overrideMemory, boolean overrideJavaLocation, boolean overrideJavaArgs, boolean overrideConsole, boolean overrideCommands, boolean overrideWindow) {
+        this.instanceType = instanceType;
+        this.name = name;
+        this.gameVersion = gameVersion;
+        this.permGen = permGen;
+        this.wrapperCommand = wrapperCommand;
+        this.preLaunchCommand = preLaunchCommand;
+        this.postExitCommand = postExitCommand;
+        this.notes = notes;
+        this.javaPath = javaPath;
+        this.jvmArgs = jvmArgs;
+        this.fullscreen = fullscreen;
+        this.width = width;
+        this.height = height;
+        this.maxMemory = maxMemory;
+        this.minMemory = minMemory;
+        this.showConsole = showConsole;
+        this.showConsoleOnError = showConsoleOnError;
+        this.autoCloseConsole = autoCloseConsole;
+        this.overrideMemory = overrideMemory;
+        this.overrideJavaLocation = overrideJavaLocation;
+        this.overrideJavaArgs = overrideJavaArgs;
+        this.overrideConsole = overrideConsole;
+        this.overrideCommands = overrideCommands;
+        this.overrideWindow = overrideWindow;
+        this.mmcPack = null;
+    }
+
+    public String getInstanceType() {
+        return instanceType;
     }
 
     /**
@@ -259,6 +293,35 @@ public final class MultiMCInstanceConfiguration {
      */
     public boolean isOverrideWindow() {
         return overrideWindow;
+    }
+
+    public Properties toProperties() {
+        Properties p = new Properties();
+        if (instanceType != null) p.setProperty("InstanceType", instanceType);
+        p.setProperty("AutoCloseConsole", Boolean.toString(autoCloseConsole));
+        if (gameVersion != null) p.setProperty("IntendedVersion", gameVersion);
+        if (javaPath != null) p.setProperty("JavaPath", javaPath);
+        if (jvmArgs != null) p.setProperty("JvmArgs", jvmArgs);
+        p.setProperty("LaunchMaximized", Boolean.toString(fullscreen));
+        if (maxMemory != null) p.setProperty("MaxMemAlloc", Integer.toString(maxMemory));
+        if (minMemory != null) p.setProperty("MinMemAlloc", Integer.toString(minMemory));
+        if (height != null) p.setProperty("MinecraftWinHeight", Integer.toString(height));
+        if (width != null) p.setProperty("MinecraftWinWidth", Integer.toString(width));
+        p.setProperty("OverrideCommands", Boolean.toString(overrideCommands));
+        p.setProperty("OverrideConsole", Boolean.toString(overrideConsole));
+        p.setProperty("OverrideJavaArgs", Boolean.toString(overrideJavaArgs));
+        p.setProperty("OverrideJavaLocation", Boolean.toString(overrideJavaLocation));
+        p.setProperty("OverrideMemory", Boolean.toString(overrideMemory));
+        p.setProperty("OverrideWindow", Boolean.toString(overrideWindow));
+        if (permGen != null) p.setProperty("PermGen", Integer.toString(permGen));
+        if (postExitCommand != null) p.setProperty("PostExitCommand", postExitCommand);
+        if (preLaunchCommand != null) p.setProperty("PreLaunchCommand", preLaunchCommand);
+        p.setProperty("ShowConsole", Boolean.toString(showConsole));
+        p.setProperty("ShowConsoleOnError", Boolean.toString(showConsoleOnError));
+        if (wrapperCommand != null) p.setProperty("WrapperCommand", wrapperCommand);
+        if (name != null) p.setProperty("name", name);
+        if (notes != null) p.setProperty("notes", notes);
+        return p;
     }
 
     public MultiMCManifest getMmcPack() {

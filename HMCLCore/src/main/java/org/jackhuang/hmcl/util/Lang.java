@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 
 import java.util.*;
@@ -24,6 +25,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -54,6 +56,15 @@ public final class Lang {
     @SafeVarargs
     public static <T> List<T> immutableListOf(T... elements) {
         return Collections.unmodifiableList(Arrays.asList(elements));
+    }
+
+    public static boolean test(ExceptionalRunnable<?> r) {
+        try {
+            r.run();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public static <E extends Exception> boolean test(ExceptionalSupplier<Boolean, E> r) {
@@ -95,6 +106,12 @@ public final class Lang {
         return index < 0 || index >= a.size() ? defaultValue : a.get(index);
     }
 
+    public static <T> T merge(T a, T b, BinaryOperator<T> operator) {
+        if (a == null) return b;
+        if (b == null) return a;
+        return operator.apply(a, b);
+    }
+
     /**
      * Join two collections into one list.
      *
@@ -110,6 +127,10 @@ public final class Lang {
         if (b != null)
             result.addAll(b);
         return result;
+    }
+
+    public static <T> List<T> copyList(List<T> list) {
+        return list == null ? null : list.isEmpty() ? null : new ArrayList<>(list);
     }
 
     public static void executeDelayed(Runnable runnable, TimeUnit timeUnit, long timeout, boolean isDaemon) {

@@ -18,12 +18,14 @@
 package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.Arguments;
+import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.LibraryDownloadInfo;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.util.Collection;
@@ -36,13 +38,13 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class LiteLoaderInstallTask extends TaskResult<Version> {
+public final class LiteLoaderInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
     private final LiteLoaderRemoteVersion remote;
-    private final List<Task> dependents = new LinkedList<>();
-    private final List<Task> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
 
     public LiteLoaderInstallTask(DefaultDependencyManager dependencyManager, Version version, LiteLoaderRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
@@ -51,33 +53,33 @@ public final class LiteLoaderInstallTask extends TaskResult<Version> {
     }
 
     @Override
-    public Collection<Task> getDependents() {
+    public Collection<Task<?>> getDependents() {
         return dependents;
     }
 
     @Override
-    public Collection<Task> getDependencies() {
+    public Collection<Task<?>> getDependencies() {
         return dependencies;
     }
 
     @Override
     public void execute() {
         Library library = new Library(
-                "com.mumfrey", "liteloader", remote.getSelfVersion(), null,
+                new Artifact("com.mumfrey", "liteloader", remote.getSelfVersion()),
                 "http://dl.liteloader.com/versions/",
-                new LibrariesDownloadInfo(new LibraryDownloadInfo(null, remote.getUrl()))
+                new LibrariesDownloadInfo(new LibraryDownloadInfo(null, remote.getUrl()[0]))
         );
 
-        Version tempVersion = version.setLibraries(Lang.merge(remote.getLibraries(), Collections.singleton(library)));
-
-        // --tweakClass will be added in MaintainTask
-        setResult(version
-                .setMainClass("net.minecraft.launchwrapper.Launch")
-                .setLibraries(Lang.merge(tempVersion.getLibraries(), version.getLibraries()))
+        setResult(new Version(LibraryAnalyzer.LibraryType.LITELOADER.getPatchId(),
+                remote.getSelfVersion(),
+                60000,
+                new Arguments().addGameArguments("--tweakClass", "com.mumfrey.liteloader.launch.LiteLoaderTweaker"),
+                "net.minecraft.launchwrapper.Launch",
+                Lang.merge(remote.getLibraries(), Collections.singleton(library)))
                 .setLogging(Collections.emptyMap()) // Mods may log in malformed format, causing XML parser to crash. So we suppress using official log4j configuration
         );
 
-        dependencies.add(dependencyManager.checkLibraryCompletionAsync(tempVersion));
+        dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult()));
     }
 
 }

@@ -15,21 +15,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.mod;
+package org.jackhuang.hmcl.util.function;
 
-public class CurseCompletionException extends Exception {
-    public CurseCompletionException() {
-    }
+import static java.util.Objects.requireNonNull;
 
-    public CurseCompletionException(String message) {
-        super(message);
-    }
+public interface ExceptionalBiConsumer<T, U, E extends Exception> {
+    void accept(T t, U u) throws E;
 
-    public CurseCompletionException(String message, Throwable cause) {
-        super(message, cause);
-    }
+    default ExceptionalBiConsumer<T, U, ?> andThen(ExceptionalBiConsumer<? super T, ? super U, ?> after) {
+        requireNonNull(after);
 
-    public CurseCompletionException(Throwable cause) {
-        super(cause);
+        return (l, r) -> {
+            this.accept(l, r);
+            after.accept(l, r);
+        };
     }
 }

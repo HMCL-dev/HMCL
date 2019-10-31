@@ -18,36 +18,44 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class ForgeOldInstallTask extends TaskResult<Version> {
+public class ForgeOldInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
     private final Path installer;
-    private final List<Task> dependencies = new LinkedList<>();
+    private final String selfVersion;
+    private final List<Task<?>> dependencies = new LinkedList<>();
 
-    public ForgeOldInstallTask(DefaultDependencyManager dependencyManager, Version version, Path installer) {
+    ForgeOldInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.installer = installer;
+        this.selfVersion = selfVersion;
 
         setSignificance(TaskSignificance.MINOR);
     }
 
     @Override
-    public List<Task> getDependencies() {
+    public List<Task<?>> getDependencies() {
         return dependencies;
     }
 
@@ -66,7 +74,7 @@ public class ForgeOldInstallTask extends TaskResult<Version> {
             ForgeInstallProfile installProfile = JsonUtils.fromNonNullJson(json, ForgeInstallProfile.class);
 
             // unpack the universal jar in the installer file.
-            Library forgeLibrary = Library.fromName(installProfile.getInstall().getPath());
+            Library forgeLibrary = new Library(installProfile.getInstall().getPath());
             File forgeFile = dependencyManager.getGameRepository().getLibraryFile(version, forgeLibrary);
             if (!FileUtils.makeFile(forgeFile))
                 throw new IOException("Cannot make directory " + forgeFile.getParent());
@@ -76,15 +84,10 @@ public class ForgeOldInstallTask extends TaskResult<Version> {
                 IOUtils.copyTo(is, os);
             }
 
-            // resolve the version
-            SimpleVersionProvider provider = new SimpleVersionProvider();
-            provider.addVersion(version);
-
             setResult(installProfile.getVersionInfo()
-                    .setInheritsFrom(version.getId())
-                    .resolve(provider).setJar(null)
-                    .setId(version.getId()).setLogging(Collections.emptyMap()));
-
+                    .setPriority(30000)
+                    .setId(LibraryAnalyzer.LibraryType.FORGE.getPatchId())
+                    .setVersion(selfVersion));
             dependencies.add(dependencyManager.checkLibraryCompletionAsync(installProfile.getVersionInfo()));
         }
     }

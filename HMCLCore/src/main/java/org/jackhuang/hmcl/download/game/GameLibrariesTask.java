@@ -32,28 +32,28 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class GameLibrariesTask extends Task {
+public final class GameLibrariesTask extends Task<Void> {
 
     private final AbstractDependencyManager dependencyManager;
     private final Version version;
     private final List<Library> libraries;
-    private final List<Task> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
 
     /**
      * Constructor.
      *
      * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
-     * @param version the <b>resolved</b> version
+     * @param version the game version
      */
     public GameLibrariesTask(AbstractDependencyManager dependencyManager, Version version) {
-        this(dependencyManager, version, version.getLibraries());
+        this(dependencyManager, version, version.resolve(dependencyManager.getGameRepository()).getLibraries());
     }
 
     /**
      * Constructor.
      *
      * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
-     * @param version the <b>resolved</b> version
+     * @param version the game version
      */
     public GameLibrariesTask(AbstractDependencyManager dependencyManager, Version version, List<Library> libraries) {
         this.dependencyManager = dependencyManager;
@@ -64,7 +64,7 @@ public final class GameLibrariesTask extends Task {
     }
 
     @Override
-    public List<Task> getDependencies() {
+    public List<Task<?>> getDependencies() {
         return dependencies;
     }
 

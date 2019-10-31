@@ -24,5 +24,7 @@ package org.jackhuang.hmcl.game;
 public enum DownloadType {
     CLIENT,
     SERVER,
-    WINDOWS_SERVER
+    WINDOWS_SERVER,
+    CLIENT_MAPPINGS,
+    SERVER_MAPPINGS
 }

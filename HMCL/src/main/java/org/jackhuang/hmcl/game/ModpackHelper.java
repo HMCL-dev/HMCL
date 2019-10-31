@@ -20,6 +20,11 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.mod.*;
+import org.jackhuang.hmcl.mod.curse.CurseCompletionException;
+import org.jackhuang.hmcl.mod.curse.CurseInstallTask;
+import org.jackhuang.hmcl.mod.curse.CurseManifest;
+import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
+import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -86,7 +91,7 @@ public final class ModpackHelper {
             throw new UnsupportedModpackException();
     }
 
-    public static Task getInstallTask(Profile profile, File zipFile, String name, Modpack modpack) {
+    public static Task<Void> getInstallTask(Profile profile, File zipFile, String name, Modpack modpack) {
         profile.getRepository().markVersionAsModpack(name);
 
         ExceptionalRunnable<?> success = () -> {
@@ -102,9 +107,6 @@ public final class ModpackHelper {
             if (ex instanceof CurseCompletionException && !(ex.getCause() instanceof FileNotFoundException)) {
                 success.run();
                 // This is tolerable and we will not delete the game
-            } else {
-                HMCLGameRepository repository = profile.getRepository();
-                repository.removeVersionFromDisk(name);
             }
         };
 
@@ -117,11 +119,11 @@ public final class ModpackHelper {
         else if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
             return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, modpack, ((MultiMCInstanceConfiguration) modpack.getManifest()), name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                    .then(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
-        else throw new IllegalStateException("Unrecognized modpack: " + modpack);
+                    .thenComposeAsync(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
+        else throw new IllegalArgumentException("Unrecognized modpack: " + modpack);
     }
 
-    public static Task getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, MismatchedModpackTypeException {
+    public static Task<Void> getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile.toPath(), charset);
 
         switch (configuration.getType()) {

@@ -31,7 +31,7 @@ import java.util.function.Predicate;
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
 import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
-public class ModpackInstallTask<T> extends Task {
+public class ModpackInstallTask<T> extends Task<Void> {
 
     private final File modpackFile;
     private final File dest;

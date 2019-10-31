@@ -32,7 +32,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class MessageDialogPane extends StackPane {
 
-    public static enum MessageType {
+    public enum MessageType {
         ERROR,
         INFORMATION,
         WARNING,

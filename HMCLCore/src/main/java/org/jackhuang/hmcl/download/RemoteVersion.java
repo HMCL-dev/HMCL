@@ -17,9 +17,12 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -29,9 +32,10 @@ import java.util.Objects;
  */
 public class RemoteVersion implements Comparable<RemoteVersion> {
 
+    private final String libraryId;
     private final String gameVersion;
     private final String selfVersion;
-    private final String url;
+    private final String[] url;
     private final Type type;
 
     /**
@@ -41,8 +45,8 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
      * @param selfVersion the version string of the remote version.
      * @param url         the installer or universal jar URL.
      */
-    public RemoteVersion(String gameVersion, String selfVersion, String url) {
-        this(gameVersion, selfVersion, url, Type.UNCATEGORIZED);
+    public RemoteVersion(String libraryId, String gameVersion, String selfVersion, String... url) {
+        this(libraryId, gameVersion, selfVersion, Type.UNCATEGORIZED, url);
     }
 
     /**
@@ -52,11 +56,16 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
      * @param selfVersion the version string of the remote version.
      * @param url         the installer or universal jar URL.
      */
-    public RemoteVersion(String gameVersion, String selfVersion, String url, Type type) {
+    public RemoteVersion(String libraryId, String gameVersion, String selfVersion, Type type, String... url) {
+        this.libraryId = Objects.requireNonNull(libraryId);
         this.gameVersion = Objects.requireNonNull(gameVersion);
         this.selfVersion = Objects.requireNonNull(selfVersion);
         this.url = Objects.requireNonNull(url);
         this.type = Objects.requireNonNull(type);
+    }
+
+    public String getLibraryId() {
+        return libraryId;
     }
 
     public String getGameVersion() {
@@ -67,12 +76,16 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
         return selfVersion;
     }
 
-    public String getUrl() {
+    public String[] getUrl() {
         return url;
     }
 
     public Type getVersionType() {
         return type;
+    }
+
+    public Task<Version> getInstallTask(DefaultDependencyManager dependencyManager, Version baseVersion) {
+        throw new UnsupportedOperationException(toString() + " cannot be installed yet");
     }
 
     @Override

@@ -25,7 +25,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.game.ModAdviser;
+import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
@@ -146,7 +146,7 @@ public final class ModpackFileSelectionPage extends StackPane implements WizardP
         LinkedList<String> list = new LinkedList<>();
         getFilesNeeded(rootNode, "minecraft", list);
         controller.getSettings().put(MODPACK_FILE_SELECTION, list);
-        controller.onFinish();
+        controller.onNext();
     }
 
     @Override

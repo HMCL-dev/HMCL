@@ -29,16 +29,16 @@ import java.util.Map;
  */
 public final class HMCLGameLauncher extends DefaultLauncher {
 
-    public HMCLGameLauncher(GameRepository repository, String versionId, AuthInfo authInfo, LaunchOptions options) {
-        this(repository, versionId, authInfo, options, null);
+    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
+        this(repository, version, authInfo, options, null);
     }
 
-    public HMCLGameLauncher(GameRepository repository, String versionId, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
-        this(repository, versionId, authInfo, options, listener, true);
+    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
+        this(repository, version, authInfo, options, listener, true);
     }
 
-    public HMCLGameLauncher(GameRepository repository, String versionId, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
-        super(repository, versionId, authInfo, options, listener, daemon);
+    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
+        super(repository, version, authInfo, options, listener, daemon);
     }
 
     @Override

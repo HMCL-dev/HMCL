@@ -30,46 +30,48 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  *
- * @author huang
+ * @author huangyuhui
  */
-public final class GetTask extends TaskResult<String> {
+public final class GetTask extends Task<String> {
 
-    private final URL url;
+    private final List<URL> urls;
     private final Charset charset;
     private final int retry;
-    private final String id;
     private CacheRepository repository = CacheRepository.getInstance();
 
     public GetTask(URL url) {
-        this(url, ID);
+        this(url, UTF_8);
     }
 
-    public GetTask(URL url, String id) {
-        this(url, id, UTF_8);
+    public GetTask(URL url, Charset charset) {
+        this(url, charset, 5);
     }
 
-    public GetTask(URL url, String id, Charset charset) {
-        this(url, id, charset, 5);
-    }
-
-    public GetTask(URL url, String id, Charset charset, int retry) {
-        this.url = url;
+    public GetTask(URL url, Charset charset, int retry) {
+        this.urls = Collections.singletonList(url);
         this.charset = charset;
         this.retry = retry;
-        this.id = id;
 
         setName(url.toString());
+        setExecutor(Schedulers.io());
     }
 
-    @Override
-    public Scheduler getScheduler() {
-        return Schedulers.io();
+    public GetTask(List<URL> urls, Charset charset) {
+        this.urls = new ArrayList<>(urls);
+        this.charset = charset;
+        this.retry = urls.size();
+
+        setName(urls.get(0).toString());
+        setExecutor(Schedulers.io());
     }
 
     public GetTask setCacheRepository(CacheRepository repository) {
@@ -82,8 +84,7 @@ public final class GetTask extends TaskResult<String> {
         Exception exception = null;
         boolean checkETag = true;
         for (int time = 0; time < retry; ++time) {
-            if (time > 0)
-                Logging.LOG.log(Level.WARNING, "Failed to download, repeat times: " + time);
+            URL url = urls.get(time % urls.size());
             try {
                 updateProgress(0);
                 HttpURLConnection conn = NetworkUtils.createConnection(url);
@@ -132,15 +133,11 @@ public final class GetTask extends TaskResult<String> {
                 return;
             } catch (IOException ex) {
                 exception = ex;
+                Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", repeat times: " + time + 1, ex);
             }
         }
         if (exception != null)
-            throw new DownloadException(url, exception);
+            throw new DownloadException(urls.get(0), exception);
     }
-
-    /**
-     * The default task result ID.
-     */
-    public static final String ID = "http_get";
 
 }

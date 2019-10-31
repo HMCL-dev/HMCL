@@ -40,8 +40,8 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
 
     private static final String LATEST_BUILD_URL = "https://authlib-injector.yushi.moe/artifact/latest.json";
 
-    private Path artifactLocation;
-    private Supplier<DownloadProvider> downloadProvider;
+    private final Path artifactLocation;
+    private final Supplier<DownloadProvider> downloadProvider;
 
     /**
      * The flag will be reset after application restart.

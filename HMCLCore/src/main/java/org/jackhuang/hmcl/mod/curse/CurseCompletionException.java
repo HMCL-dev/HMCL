@@ -15,24 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.task;
+package org.jackhuang.hmcl.mod.curse;
 
-import java.util.concurrent.Future;
+public class CurseCompletionException extends Exception {
+    public CurseCompletionException() {
+    }
 
-import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
+    public CurseCompletionException(String message) {
+        super(message);
+    }
 
-/**
- * Determines how a task is executed.
- *
- * @author huangyuhui
- */
-public abstract class Scheduler {
+    public CurseCompletionException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    /**
-     * Schedules the given task.
-     *
-     * @return the future
-     */
-    public abstract Future<?> schedule(ExceptionalRunnable<?> block);
-
+    public CurseCompletionException(Throwable cause) {
+        super(cause);
+    }
 }

@@ -18,11 +18,14 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.Artifact;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -32,16 +35,23 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -50,23 +60,25 @@ import static org.jackhuang.hmcl.util.DigestUtils.digest;
 import static org.jackhuang.hmcl.util.Hex.encodeHex;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
-public class ForgeNewInstallTask extends TaskResult<Version> {
+public class ForgeNewInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository gameRepository;
     private final Version version;
     private final Path installer;
-    private final List<Task> dependents = new LinkedList<>();
-    private final List<Task> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
 
     private ForgeNewInstallProfile profile;
     private Version forgeVersion;
+    private final String selfVersion;
 
-    public ForgeNewInstallTask(DefaultDependencyManager dependencyManager, Version version, Path installer) {
+    ForgeNewInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;
         this.gameRepository = dependencyManager.getGameRepository();
         this.version = version;
         this.installer = installer;
+        this.selfVersion = selfVersion;
 
         setSignificance(TaskSignificance.MINOR);
     }
@@ -77,18 +89,18 @@ public class ForgeNewInstallTask extends TaskResult<Version> {
         else if (StringUtils.isSurrounded(literal, "'", "'"))
             return StringUtils.removeSurrounding(literal, "'");
         else if (StringUtils.isSurrounded(literal, "[", "]"))
-            return gameRepository.getArtifactFile(version, new Artifact(StringUtils.removeSurrounding(literal, "[", "]"))).toString();
+            return gameRepository.getArtifactFile(version, Artifact.fromDescriptor(StringUtils.removeSurrounding(literal, "[", "]"))).toString();
         else
             return plainConverter.apply(literal);
     }
 
     @Override
-    public Collection<Task> getDependents() {
+    public Collection<Task<?>> getDependents() {
         return dependents;
     }
 
     @Override
-    public List<Task> getDependencies() {
+    public Collection<Task<?>> getDependencies() {
         return dependencies;
     }
 
@@ -125,7 +137,7 @@ public class ForgeNewInstallTask extends TaskResult<Version> {
 
     @Override
     public void execute() throws Exception {
-        if ("net.minecraft.launchwrapper.Launch".equals(version.getMainClass()))
+        if ("net.minecraft.launchwrapper.Launch".equals(version.resolve(dependencyManager.getGameRepository()).getMainClass()))
             throw new OptiFineInstallTask.UnsupportedOptiFineInstallationException();
 
         Path temp  = Files.createTempDirectory("forge_installer");
@@ -219,25 +231,20 @@ public class ForgeNewInstallTask extends TaskResult<Version> {
 
                 command.add(mainClass);
 
-                List<String> args = processor.getArgs().stream().map(arg -> {
+                List<String> args = new ArrayList<>(processor.getArgs().size());
+                for (String arg : processor.getArgs()) {
                     String parsed = parseLiteral(arg, data, ExceptionalFunction.identity());
                     if (parsed == null)
-                        throw new IllegalStateException("Invalid forge installation configuration");
-                    return parsed;
-                }).collect(Collectors.toList());
+                        throw new IOException("Invalid forge installation configuration");
+                    args.add(parsed);
+                }
 
                 command.addAll(args);
 
                 LOG.info("Executing external processor " + processor.getJar().toString() + ", command line: " + new CommandBuilder().addAll(command).toString());
-                Process process = new ProcessBuilder(command).start();
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                    for (String line; (line = reader.readLine()) != null;) {
-                        System.out.println(line);
-                    }
-                }
-                int exitCode = process.waitFor();
+                int exitCode = SystemUtils.callExternalProcess(command);
                 if (exitCode != 0)
-                    throw new IllegalStateException("Game processor exited abnormally");
+                    throw new IOException("Game processor exited abnormally");
 
                 for (Map.Entry<String, String> entry : outputs.entrySet()) {
                     Path artifact = Paths.get(entry.getKey());
@@ -259,15 +266,10 @@ public class ForgeNewInstallTask extends TaskResult<Version> {
             }
         }
 
-        // resolve the version
-        SimpleVersionProvider provider = new SimpleVersionProvider();
-        provider.addVersion(version);
-
         setResult(forgeVersion
-                .setInheritsFrom(version.getId())
-                .resolve(provider).setJar(null)
-                .setId(version.getId()).setLogging(Collections.emptyMap()));
-
+                .setPriority(30000)
+                .setId(LibraryAnalyzer.LibraryType.FORGE.getPatchId())
+                .setVersion(selfVersion));
         dependencies.add(dependencyManager.checkLibraryCompletionAsync(forgeVersion));
 
         FileUtils.deleteDirectory(temp.toFile());

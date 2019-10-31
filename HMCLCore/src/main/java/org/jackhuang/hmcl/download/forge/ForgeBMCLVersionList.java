@@ -28,10 +28,16 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> {
 
@@ -46,21 +52,21 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
     }
 
     @Override
-    public Task loadAsync(DownloadProvider downloadProvider) {
+    public Task<?> loadAsync(DownloadProvider downloadProvider) {
         throw new UnsupportedOperationException("ForgeBMCLVersionList does not support loading the entire Forge remote version list.");
     }
 
     @Override
-    public Task refreshAsync(DownloadProvider downloadProvider) {
+    public Task<?> refreshAsync(DownloadProvider downloadProvider) {
         throw new UnsupportedOperationException("ForgeBMCLVersionList does not support loading the entire Forge remote version list.");
     }
 
     @Override
-    public Task refreshAsync(String gameVersion, DownloadProvider downloadProvider) {
+    public Task<?> refreshAsync(String gameVersion, DownloadProvider downloadProvider) {
         final GetTask task = new GetTask(NetworkUtils.toURL("https://bmclapi2.bangbang93.com/forge/minecraft/" + gameVersion));
-        return new Task() {
+        return new Task<Void>() {
             @Override
-            public Collection<Task> getDependents() {
+            public Collection<Task<?>> getDependents() {
                 return Collections.singleton(task);
             }
 
@@ -76,19 +82,28 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                     for (ForgeVersion version : forgeVersions) {
                         if (version == null)
                             continue;
-                        String jar = null;
+                        List<String> urls = new ArrayList<>();
                         for (ForgeVersion.File file : version.getFiles())
                             if ("installer".equals(file.getCategory()) && "jar".equals(file.getFormat())) {
                                 String classifier = gameVersion + "-" + version.getVersion()
                                         + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
-                                String fileName = "forge-" + classifier + "-" + file.getCategory() + "." + file.getFormat();
-                                jar = "https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/" + classifier + "/" + fileName;
+                                String fileName1 = "forge-" + classifier + "-" + file.getCategory() + "." + file.getFormat();
+                                String fileName2 = "forge-" + classifier + "-" + gameVersion + "-" + file.getCategory() + "." + file.getFormat();
+                                urls.add(NetworkUtils.withQuery("https://bmclapi2.bangbang93.com/forge/download", mapOf(
+                                        pair("mcversion", version.getGameVersion()),
+                                        pair("version", version.getVersion()),
+                                        pair("branch", version.getBranch()),
+                                        pair("category", file.getCategory()),
+                                        pair("format", file.getFormat())
+                                )));
+                                urls.add("https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/" + classifier + "/" + fileName1);
+                                urls.add("https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/" + classifier + "-" + gameVersion + "/" + fileName2);
                             }
 
-                        if (jar == null)
+                        if (urls.isEmpty())
                             continue;
                         versions.put(gameVersion, new ForgeRemoteVersion(
-                                version.getGameVersion(), version.getVersion(), jar
+                                version.getGameVersion(), version.getVersion(), urls.toArray(new String[0])
                         ));
                     }
                 } finally {
@@ -121,18 +136,22 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
             this.files = files;
         }
 
+        @Nullable
         public String getBranch() {
             return branch;
         }
 
+        @NotNull
         public String getGameVersion() {
             return mcversion;
         }
 
+        @NotNull
         public String getVersion() {
             return version;
         }
 
+        @NotNull
         public List<File> getFiles() {
             return files;
         }

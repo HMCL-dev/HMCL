@@ -226,7 +226,7 @@ public final class Profile implements Observable {
 
         @Override
         public Profile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            if (json == null || json == JsonNull.INSTANCE || !(json instanceof JsonObject)) return null;
+            if (json == JsonNull.INSTANCE || !(json instanceof JsonObject)) return null;
             JsonObject obj = (JsonObject) json;
             String gameDir = Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse("");
 

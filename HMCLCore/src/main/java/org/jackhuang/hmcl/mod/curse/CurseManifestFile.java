@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.mod;
+package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
@@ -83,7 +83,7 @@ public final class CurseManifestFile implements Validation {
     }
 
     public URL getUrl() {
-        return url == null ? NetworkUtils.toURL("https://minecraft.curseforge.com/projects/" + projectID + "/files/" + fileID + "/download")
+        return url == null ? NetworkUtils.toURL("https://www.curseforge.com/minecraft/mc-mods/" + projectID + "/download/" + fileID + "/file")
                 : NetworkUtils.toURL(url);
     }
 

@@ -37,7 +37,6 @@ import javafx.beans.value.ObservableValue;
  */
 public abstract class BindingMapping<T, U> extends ObjectBinding<U> {
 
-    @SuppressWarnings("unchecked")
     public static <T> BindingMapping<?, T> of(ObservableValue<T> property) {
         if (property instanceof BindingMapping) {
             return (BindingMapping<?, T>) property;

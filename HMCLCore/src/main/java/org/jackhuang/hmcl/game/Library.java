@@ -17,15 +17,16 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.*;
-import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.reflect.TypeToken;
+import com.google.gson.JsonParseException;
+import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
+import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.gson.TolerableValidationException;
+import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -36,83 +37,68 @@ import java.util.Optional;
  *
  * @author huangyuhui
  */
-@JsonAdapter(Library.Serializer.class)
-public class Library implements Comparable<Library> {
+@Immutable
+public class Library implements Comparable<Library>, Validation {
 
-    private final String groupId;
-    private final String artifactId;
-    private final String version;
-    private final String classifier;
+    @SerializedName("name")
+    private final Artifact artifact;
     private final String url;
     private final LibrariesDownloadInfo downloads;
-    private transient final LibraryDownloadInfo download;
     private final ExtractRules extract;
     private final Map<OperatingSystem, String> natives;
     private final List<CompatibilityRule> rules;
     private final List<String> checksums;
 
-    private transient final String path;
+    @SerializedName(value = "hint", alternate = {"MMC-hint"})
+    private final String hint;
 
-    public Library(String groupId, String artifactId, String version) {
-        this(groupId, artifactId, version, null, null, null);
+    @SerializedName(value = "filename", alternate = {"MMC-filename"})
+    private final String fileName;
+
+    public Library(Artifact artifact) {
+        this(artifact, null, null);
     }
 
-    public Library(String groupId, String artifactId, String version, String classifier, String url, LibrariesDownloadInfo downloads) {
-        this(groupId, artifactId, version, classifier, url, downloads, null, null, null, null);
+    public Library(Artifact artifact, String url, LibrariesDownloadInfo downloads) {
+        this(artifact, url, downloads, null, null, null, null, null, null);
     }
 
-    public Library(String groupId, String artifactId, String version, String classifier, String url, LibrariesDownloadInfo downloads, List<String> checksums, ExtractRules extract, Map<OperatingSystem, String> natives, List<CompatibilityRule> rules) {
-        this.groupId = groupId;
-        this.artifactId = artifactId;
-        this.version = version;
-        if (classifier == null)
-            if (natives != null && natives.containsKey(OperatingSystem.CURRENT_OS))
-                this.classifier = natives.get(OperatingSystem.CURRENT_OS).replace("${arch}", Platform.PLATFORM.getBit());
-            else
-                this.classifier = null;
-        else
-            this.classifier = classifier;
+    public Library(Artifact artifact, String url, LibrariesDownloadInfo downloads, List<String> checksums, ExtractRules extract, Map<OperatingSystem, String> natives, List<CompatibilityRule> rules, String hint, String filename) {
+        this.artifact = artifact;
         this.url = url;
         this.downloads = downloads;
         this.extract = extract;
         this.natives = natives;
         this.rules = rules;
         this.checksums = checksums;
-
-        LibraryDownloadInfo temp = null;
-        if (downloads != null)
-            if (isNative())
-                temp = downloads.getClassifiers().get(this.classifier);
-            else
-                temp = downloads.getArtifact();
-
-        if (temp != null && temp.getPath() != null)
-            path = temp.getPath();
-        else
-            path = String.format("%s/%s/%s/%s-%s", groupId.replace(".", "/"), artifactId, version, artifactId, version)
-                    + (this.classifier == null ? "" : "-" + this.classifier) + ".jar";
-
-        download = new LibraryDownloadInfo(path,
-                Optional.ofNullable(temp).map(LibraryDownloadInfo::getUrl).orElse(Optional.ofNullable(url).orElse(Constants.DEFAULT_LIBRARY_URL) + path),
-                temp != null ? temp.getSha1() : null,
-                temp != null ? temp.getSize() : 0
-        );
+        this.hint = hint;
+        this.fileName = filename;
     }
 
     public String getGroupId() {
-        return groupId;
+        return artifact.getGroup();
     }
 
     public String getArtifactId() {
-        return artifactId;
+        return artifact.getName();
     }
 
     public String getName() {
-        return groupId + ":" + artifactId + ":" + version;
+        return artifact.toString();
     }
 
     public String getVersion() {
-        return version;
+        return artifact.getVersion();
+    }
+
+    public String getClassifier() {
+        if (artifact.getClassifier() == null)
+            if (natives != null && natives.containsKey(OperatingSystem.CURRENT_OS))
+                return natives.get(OperatingSystem.CURRENT_OS).replace("${arch}", Platform.PLATFORM.getBit());
+            else
+                return null;
+        else
+            return artifact.getClassifier();
     }
 
     public ExtractRules getExtract() {
@@ -127,12 +113,33 @@ public class Library implements Comparable<Library> {
         return natives != null && appliesToCurrentEnvironment();
     }
 
+    protected LibraryDownloadInfo getRawDownloadInfo() {
+        if (downloads != null) {
+            if (isNative())
+                return downloads.getClassifiers().get(getClassifier());
+            else
+                return downloads.getArtifact();
+        } else {
+            return null;
+        }
+    }
+
     public String getPath() {
-        return path;
+        LibraryDownloadInfo temp = getRawDownloadInfo();
+        if (temp != null && temp.getPath() != null)
+            return temp.getPath();
+        else
+            return artifact.setClassifier(getClassifier()).getPath();
     }
 
     public LibraryDownloadInfo getDownload() {
-        return download;
+        LibraryDownloadInfo temp = getRawDownloadInfo();
+        String path = getPath();
+        return new LibraryDownloadInfo(path,
+                Optional.ofNullable(temp).map(LibraryDownloadInfo::getUrl).orElse(Optional.ofNullable(url).orElse(Constants.DEFAULT_LIBRARY_URL) + path),
+                temp != null ? temp.getSha1() : null,
+                temp != null ? temp.getSize() : 0
+        );
     }
 
     public List<String> getChecksums() {
@@ -143,8 +150,24 @@ public class Library implements Comparable<Library> {
         return rules;
     }
 
+    /**
+     * Hint for how to locate the library file.
+     * @return null for default, "local" for location in version/&lt;version&gt;/libraries/filename
+     */
+    public String getHint() {
+        return hint;
+    }
+
+    /**
+     * Available when hint is "local"
+     * @return the filename of the local library in version/&lt;version&gt;/libraries/$filename
+     */
+    public String getFileName() {
+        return fileName;
+    }
+
     public boolean is(String groupId, String artifactId) {
-        return this.groupId.equals(groupId) && this.artifactId.equals(artifactId);
+        return getGroupId().equals(groupId) && getArtifactId().equals(artifactId);
     }
 
     @Override
@@ -175,58 +198,12 @@ public class Library implements Comparable<Library> {
     }
 
     public Library setClassifier(String classifier) {
-        return new Library(groupId, artifactId, version, classifier, url, downloads, checksums, extract, natives, rules);
+        return new Library(artifact.setClassifier(classifier), url, downloads, checksums, extract, natives, rules, hint, fileName);
     }
 
-    public static Library fromName(String name) {
-        return fromName(name, null, null, null, null, null, null);
-    }
-
-    public static Library fromName(String name, String url, LibrariesDownloadInfo downloads, List<String> checksums, ExtractRules extract, Map<OperatingSystem, String> natives, List<CompatibilityRule> rules) {
-        String[] arr = name.split(":", 4);
-        if (arr.length != 3 && arr.length != 4)
-            throw new IllegalArgumentException("Library name is malformed. Correct example: group:artifact:version(:classifier).");
-
-        return new Library(arr[0].replace("\\", "/"), arr[1], arr[2], arr.length >= 4 ? arr[3] : null, url, downloads, checksums, extract, natives, rules);
-    }
-
-    public static class Serializer implements JsonDeserializer<Library>, JsonSerializer<Library> {
-        @Override
-        public Library deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
-            if (json == null || json == JsonNull.INSTANCE)
-                return null;
-            JsonObject jsonObject = json.getAsJsonObject();
-            if (!jsonObject.has("name"))
-                throw new JsonParseException("Library name not found.");
-            return fromName(
-                    jsonObject.get("name").getAsString(),
-                    jsonObject.has("url") ? jsonObject.get("url").getAsString() : null,
-                    context.deserialize(jsonObject.get("downloads"), LibrariesDownloadInfo.class),
-                    context.deserialize(jsonObject.get("checksums"), new TypeToken<List<String>>() {
-                    }.getType()),
-                    context.deserialize(jsonObject.get("extract"), ExtractRules.class),
-                    context.deserialize(jsonObject.get("natives"), new TypeToken<Map<OperatingSystem, String>>() {
-                    }.getType()),
-                    context.deserialize(jsonObject.get("rules"), new TypeToken<List<CompatibilityRule>>() {
-                    }.getType()));
-        }
-
-        @Override
-        public JsonElement serialize(Library src, Type type, JsonSerializationContext context) {
-            if (src == null)
-                return JsonNull.INSTANCE;
-            JsonObject obj = new JsonObject();
-            obj.addProperty("name", src.getName());
-            obj.addProperty("url", src.url);
-            obj.add("downloads", context.serialize(src.downloads));
-            obj.add("checksums", context.serialize(src.getChecksums()));
-            obj.add("extract", context.serialize(src.extract));
-            obj.add("natives", context.serialize(src.natives, new TypeToken<Map<OperatingSystem, String>>() {
-            }.getType()));
-            obj.add("rules", context.serialize(src.rules, new TypeToken<List<CompatibilityRule>>() {
-            }.getType()));
-            return obj;
-        }
-
+    @Override
+    public void validate() throws JsonParseException, TolerableValidationException {
+        if (artifact == null)
+            throw new JsonParseException("Library.name cannot be null");
     }
 }

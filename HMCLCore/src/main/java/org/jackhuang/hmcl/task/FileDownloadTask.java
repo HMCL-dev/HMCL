@@ -33,6 +33,9 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 
@@ -44,7 +47,7 @@ import static org.jackhuang.hmcl.util.DigestUtils.getDigest;
  *
  * @author huangyuhui
  */
-public class FileDownloadTask extends Task {
+public class FileDownloadTask extends Task<Void> {
 
     public static class IntegrityCheck {
         private String algorithm;
@@ -80,11 +83,10 @@ public class FileDownloadTask extends Task {
         }
     }
 
-    private final URL url;
+    private final List<URL> urls;
     private final File file;
     private final IntegrityCheck integrityCheck;
     private final int retry;
-    private final EventManager<FailedEvent<URL>> onFailed = new EventManager<>();
     private Path candidate;
     private boolean caching;
     private CacheRepository repository = CacheRepository.getInstance();
@@ -115,12 +117,32 @@ public class FileDownloadTask extends Task {
      * @param retry the times for retrying if downloading fails.
      */
     public FileDownloadTask(URL url, File file, IntegrityCheck integrityCheck, int retry) {
-        this.url = url;
+        this.urls = Collections.singletonList(url);
         this.file = file;
         this.integrityCheck = integrityCheck;
         this.retry = retry;
 
         setName(file.getName());
+        setExecutor(Schedulers.io());
+    }
+
+    /**
+     * Constructor.
+     * @param urls urls of remote file, will be attempted in order.
+     * @param file the location that download to.
+     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
+     */
+    public FileDownloadTask(List<URL> urls, File file, IntegrityCheck integrityCheck) {
+        if (urls == null || urls.isEmpty())
+            throw new IllegalArgumentException("At least one URL is required");
+
+        this.urls = new ArrayList<>(urls);
+        this.file = file;
+        this.integrityCheck = integrityCheck;
+        this.retry = urls.size();
+
+        setName(file.getName());
+        setExecutor(Schedulers.io());
     }
 
     private void closeFiles() {
@@ -140,19 +162,6 @@ public class FileDownloadTask extends Task {
                 Logging.LOG.log(Level.WARNING, "Failed to close stream", e);
             }
         stream = null;
-    }
-
-    @Override
-    public Scheduler getScheduler() {
-        return Schedulers.io();
-    }
-
-    public EventManager<FailedEvent<URL>> getOnFailed() {
-        return onFailed;
-    }
-
-    public URL getUrl() {
-        return url;
     }
 
     public File getFile() {
@@ -176,8 +185,6 @@ public class FileDownloadTask extends Task {
 
     @Override
     public void execute() throws Exception {
-        URL currentURL = url;
-
         boolean checkETag;
         // Check cache
         if (integrityCheck != null && caching) {
@@ -186,7 +193,7 @@ public class FileDownloadTask extends Task {
             if (cache.isPresent()) {
                 try {
                     FileUtils.copyFile(cache.get().toFile(), file);
-                    Logging.LOG.log(Level.FINER, "Successfully verified file " + file + " from " + currentURL);
+                    Logging.LOG.log(Level.FINER, "Successfully verified file " + file + " from " + urls.get(0));
                     return;
                 } catch (IOException e) {
                     Logging.LOG.log(Level.WARNING, "Failed to copy cache files", e);
@@ -196,15 +203,11 @@ public class FileDownloadTask extends Task {
             checkETag = true;
         }
 
-        Logging.LOG.log(Level.FINER, "Downloading " + currentURL + " to " + file);
+        Logging.LOG.log(Level.FINER, "Downloading " + urls.get(0) + " to " + file);
         Exception exception = null;
 
         for (int repeat = 0; repeat < retry; repeat++) {
-            if (repeat > 0) {
-                FailedEvent<URL> event = new FailedEvent<>(this, repeat, currentURL);
-                onFailed.fireEvent(event);
-                currentURL = event.getNewResult();
-            }
+            URL url = urls.get(repeat % urls.size());
             if (Thread.interrupted()) {
                 Thread.currentThread().interrupt();
                 break;
@@ -230,7 +233,7 @@ public class FileDownloadTask extends Task {
                         repository.removeRemoteEntry(con);
                     }
                 } else if (con.getResponseCode() / 100 != 2) {
-                    throw new ResponseCodeException(currentURL, con.getResponseCode());
+                    throw new ResponseCodeException(url, con.getResponseCode());
                 }
 
                 int contentLength = con.getContentLength();
@@ -296,7 +299,7 @@ public class FileDownloadTask extends Task {
                 }
 
                 if (downloaded != contentLength)
-                    throw new IllegalStateException("Unexpected file size: " + downloaded + ", expected: " + contentLength);
+                    throw new IOException("Unexpected file size: " + downloaded + ", expected: " + contentLength);
 
                 // Integrity check
                 if (integrityCheck != null) {
@@ -316,17 +319,18 @@ public class FileDownloadTask extends Task {
                 }
 
                 return;
-            } catch (IOException | IllegalStateException e) {
+            } catch (IOException e) {
                 if (temp != null)
                     temp.toFile().delete();
                 exception = e;
+                Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", repeat times: " + repeat + 1, e);
             } finally {
                 closeFiles();
             }
         }
 
         if (exception != null)
-            throw new DownloadException(currentURL, exception);
+            throw new DownloadException(urls.get(0), exception);
     }
 
 }

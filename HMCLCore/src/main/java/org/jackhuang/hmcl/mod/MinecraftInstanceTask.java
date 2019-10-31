@@ -33,7 +33,7 @@ import java.util.List;
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
 import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
-public final class MinecraftInstanceTask<T> extends Task {
+public final class MinecraftInstanceTask<T> extends Task<Void> {
 
     private final File zipFile;
     private final Charset encoding;

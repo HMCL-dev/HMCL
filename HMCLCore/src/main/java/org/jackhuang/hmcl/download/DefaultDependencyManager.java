@@ -18,17 +18,13 @@
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
-import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
-import org.jackhuang.hmcl.download.game.*;
-import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
-import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
+import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
+import org.jackhuang.hmcl.download.game.GameDownloadTask;
+import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
-import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.task.ParallelTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 
 import java.io.IOException;
@@ -72,9 +68,10 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public Task checkGameCompletionAsync(Version version) {
-        return new ParallelTask(
-                Task.ofThen(() -> {
+    public Task<?> checkGameCompletionAsync(Version original) {
+        Version version = original.resolve(repository);
+        return Task.allOf(
+                Task.composeAsync(() -> {
                     if (!repository.getVersionJar(version).exists())
                         return new GameDownloadTask(this, null, version);
                     else
@@ -86,44 +83,39 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public Task checkLibraryCompletionAsync(Version version) {
-        return new GameLibrariesTask(this, version);
+    public Task<?> checkLibraryCompletionAsync(Version version) {
+        return new GameLibrariesTask(this, version, version.getLibraries());
     }
 
     @Override
-    public TaskResult<Version> installLibraryAsync(String gameVersion, Version version, String libraryId, String libraryVersion) {
+    public Task<Version> installLibraryAsync(String gameVersion, Version baseVersion, String libraryId, String libraryVersion) {
+        if (baseVersion.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
+
         VersionList<?> versionList = getVersionList(libraryId);
         return versionList.loadAsync(gameVersion, getDownloadProvider())
-                .thenCompose(() -> installLibraryAsync(version, versionList.getVersion(gameVersion, libraryVersion)
-                        .orElseThrow(() -> new IllegalStateException("Remote library " + libraryId + " has no version " + libraryVersion))));
+                .thenComposeAsync(() -> installLibraryAsync(baseVersion, versionList.getVersion(gameVersion, libraryVersion)
+                        .orElseThrow(() -> new IOException("Remote library " + libraryId + " has no version " + libraryVersion))));
     }
 
     @Override
-    public TaskResult<Version> installLibraryAsync(Version oldVersion, RemoteVersion libraryVersion) {
-        TaskResult<Version> task;
-        if (libraryVersion instanceof ForgeRemoteVersion)
-            task = new ForgeInstallTask(this, oldVersion, (ForgeRemoteVersion) libraryVersion);
-        else if (libraryVersion instanceof LiteLoaderRemoteVersion)
-            task = new LiteLoaderInstallTask(this, oldVersion, (LiteLoaderRemoteVersion) libraryVersion);
-        else if (libraryVersion instanceof OptiFineRemoteVersion)
-            task = new OptiFineInstallTask(this, oldVersion, (OptiFineRemoteVersion) libraryVersion);
-        else
-            throw new IllegalArgumentException("Remote library " + libraryVersion + " is unrecognized.");
-        return task
-                .thenCompose(LibrariesUniqueTask::new)
-                .thenCompose(MaintainTask::new)
-                .thenCompose(newVersion -> new VersionJsonSaveTask(repository, newVersion));
+    public Task<Version> installLibraryAsync(Version baseVersion, RemoteVersion libraryVersion) {
+        if (baseVersion.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
+
+        return removeLibraryAsync(baseVersion.resolvePreservingPatches(repository), libraryVersion.getLibraryId())
+                .thenComposeAsync(version -> libraryVersion.getInstallTask(this, version))
+                .thenApplyAsync(baseVersion::addPatch)
+                .thenComposeAsync(repository::save);
     }
 
-    public ExceptionalFunction<Version, TaskResult<Version>, ?> installLibraryAsync(RemoteVersion libraryVersion) {
+    public ExceptionalFunction<Version, Task<Version>, ?> installLibraryAsync(RemoteVersion libraryVersion) {
         return version -> installLibraryAsync(version, libraryVersion);
     }
 
-    public Task installLibraryAsync(Version oldVersion, Path installer) {
+    public Task<Version> installLibraryAsync(Version oldVersion, Path installer) {
+        if (oldVersion.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
+
         return Task
-                .of(() -> {
-                })
-                .thenCompose(() -> {
+                .composeAsync(() -> {
                     try {
                         return ForgeInstallTask.install(this, oldVersion, installer);
                     } catch (IOException ignore) {
@@ -134,10 +126,32 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                     } catch (IOException ignore) {
                     }
 
-                    throw new UnsupportedOperationException("Library cannot be recognized");
+                    throw new UnsupportedLibraryInstallerException();
                 })
-                .thenCompose(LibrariesUniqueTask::new)
-                .thenCompose(MaintainTask::new)
-                .thenCompose(newVersion -> new VersionJsonSaveTask(repository, newVersion));
+                .thenApplyAsync(oldVersion::addPatch)
+                .thenComposeAsync(repository::save);
     }
+
+    public static class UnsupportedLibraryInstallerException extends Exception {
+    }
+
+    /**
+     * Remove installed library.
+     * Will try to remove libraries and patches.
+     *
+     * @param version not resolved version
+     * @param libraryId forge/liteloader/optifine/fabric
+     * @return task to remove the specified library
+     */
+    public Task<Version> removeLibraryAsync(Version version, String libraryId) {
+        // MaintainTask requires version that does not inherits from any version.
+        // If we want to remove a library in dependent version, we should keep the dependents not changed
+        // So resolving this game version to preserve all information in this version.json is necessary.
+        if (version.isResolved())
+            throw new IllegalArgumentException("removeLibraryWithoutSavingAsync requires non-resolved version");
+        Version independentVersion = version.resolvePreservingPatches(repository);
+
+        return Task.supplyAsync(() -> LibraryAnalyzer.analyze(independentVersion).removeLibrary(libraryId).build());
+    }
+
 }

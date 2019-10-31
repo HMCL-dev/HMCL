@@ -45,7 +45,7 @@ import java.util.logging.Level;
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
 import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
-public class LibraryDownloadTask extends Task {
+public class LibraryDownloadTask extends Task<Void> {
     private FileDownloadTask task;
     protected final File jar;
     protected final DefaultCacheRepository cacheRepository;
@@ -74,7 +74,7 @@ public class LibraryDownloadTask extends Task {
     }
 
     @Override
-    public Collection<? extends Task> getDependents() {
+    public Collection<Task<?>> getDependents() {
         if (cached) return Collections.emptyList();
         else return Collections.singleton(task);
     }
@@ -91,7 +91,7 @@ public class LibraryDownloadTask extends Task {
         if (!isDependentsSucceeded()) {
             // Since FileDownloadTask wraps the actual exception with DownloadException.
             // We should extract it letting the error message clearer.
-            Throwable t = task.getLastException();
+            Exception t = task.getException();
             if (t instanceof DownloadException)
                 throw new LibraryDownloadException(library, t.getCause());
             else
@@ -128,12 +128,16 @@ public class LibraryDownloadTask extends Task {
         try {
             URL packXz = NetworkUtils.toURL(url + ".pack.xz");
             if (NetworkUtils.urlExists(packXz)) {
-                task = new FileDownloadTask(packXz, xzFile, null).setCaching(true);
+                task = new FileDownloadTask(packXz, xzFile, null)
+                        .setCacheRepository(cacheRepository)
+                        .setCaching(true);
                 xz = true;
             } else {
                 task = new FileDownloadTask(NetworkUtils.toURL(url),
                         jar,
-                        library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null).setCaching(true);
+                        library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null)
+                        .setCacheRepository(cacheRepository)
+                        .setCaching(true);
                 xz = false;
             }
         } catch (IOException e) {

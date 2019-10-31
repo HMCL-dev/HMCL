@@ -34,7 +34,7 @@ public final class LibrariesDownloadInfo {
     private final Map<String, LibraryDownloadInfo> classifiers;
 
     public LibrariesDownloadInfo(LibraryDownloadInfo artifact) {
-        this(artifact, Collections.emptyMap());
+        this(artifact, null);
     }
 
     public LibrariesDownloadInfo(LibraryDownloadInfo artifact, Map<String, LibraryDownloadInfo> classifiers) {

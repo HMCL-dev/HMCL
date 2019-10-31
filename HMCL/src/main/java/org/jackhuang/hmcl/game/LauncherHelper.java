@@ -27,14 +27,20 @@ import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
-import org.jackhuang.hmcl.launch.*;
-import org.jackhuang.hmcl.mod.CurseCompletionException;
-import org.jackhuang.hmcl.mod.CurseCompletionTask;
+import org.jackhuang.hmcl.launch.NotDecompressingNativesException;
+import org.jackhuang.hmcl.launch.PermissionException;
+import org.jackhuang.hmcl.launch.ProcessCreationException;
+import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.mod.curse.CurseCompletionException;
+import org.jackhuang.hmcl.mod.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
-import org.jackhuang.hmcl.task.*;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.LogWindow;
@@ -56,7 +62,13 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -103,7 +115,7 @@ public final class LauncherHelper {
             try {
                 checkGameState(profile, setting, version, () -> {
                     Controllers.dialog(launchingStepsPane);
-                    Schedulers.newThread().schedule(this::launch0);
+                    Schedulers.newThread().execute(this::launch0);
                 });
             } catch (InterruptedException ignore) {
             }
@@ -119,18 +131,18 @@ public final class LauncherHelper {
     private void launch0() {
         HMCLGameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
-        Version version = MaintainTask.maintain(repository.getResolvedVersion(selectedVersion));
+        Version version = MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion));
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
-        TaskExecutor executor = Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))
-                .then(() -> {
+        TaskExecutor executor = Task.runAsync(Schedulers.javafx(), () -> emitStatus(LoadingState.DEPENDENCIES))
+                .thenComposeAsync(() -> {
                     if (setting.isNotCheckGame())
                         return null;
                     else
                         return dependencyManager.checkGameCompletionAsync(version);
                 })
-                .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.MODS)))
-                .then(() -> {
+                .thenRunAsync(Schedulers.javafx(), () -> emitStatus(LoadingState.MODS))
+                .thenComposeAsync(() -> {
                     try {
                         ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
                         if ("Curse".equals(configuration.getType()))
@@ -141,8 +153,8 @@ public final class LauncherHelper {
                         return null;
                     }
                 })
-                .then(Task.of(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN)))
-                .thenCompose(() -> Task.ofResult(i18n("account.methods"), () -> {
+                .thenRunAsync(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN))
+                .thenSupplyAsync(i18n("account.methods"), () -> {
                     try {
                         return account.logIn();
                     } catch (CredentialExpiredException e) {
@@ -152,21 +164,21 @@ public final class LauncherHelper {
                         LOG.warning("Authentication failed, try playing offline: " + e);
                         return account.playOffline().orElseThrow(() -> e);
                     }
-                }))
-                .thenApply(Schedulers.javafx(), authInfo -> {
+                })
+                .thenApplyAsync(Schedulers.javafx(), authInfo -> {
                     emitStatus(LoadingState.LAUNCHING);
                     return authInfo;
                 })
-                .thenApply(authInfo -> new HMCLGameLauncher(
+                .thenApplyAsync(authInfo -> new HMCLGameLauncher(
                         repository,
-                        selectedVersion,
+                        version.getPatches().isEmpty() ? repository.getResolvedVersion(selectedVersion) : version,
                         authInfo,
                         setting.toLaunchOptions(profile.getGameDir()),
                         launcherVisibility == LauncherVisibility.CLOSE
                                 ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                : new HMCLProcessListener(authInfo, setting, gameVersion.isPresent())
+                                : new HMCLProcessListener(authInfo, gameVersion.isPresent())
                 ))
-                .thenCompose(launcher -> { // launcher is prev task's result
+                .thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
                         return new LaunchTask<>(launcher::launch).setName(i18n("version.launch"));
                     } else {
@@ -176,7 +188,7 @@ public final class LauncherHelper {
                         }).setName(i18n("version.launch_script"));
                     }
                 })
-                .thenAccept(process -> { // process is LaunchTask's result
+                .thenAcceptAsync(process -> { // process is LaunchTask's result
                     if (scriptFile == null) {
                         PROCESSES.add(process);
                         if (launcherVisibility == LauncherVisibility.CLOSE)
@@ -200,7 +212,7 @@ public final class LauncherHelper {
             final AtomicInteger finished = new AtomicInteger(0);
 
             @Override
-            public void onFinished(Task task) {
+            public void onFinished(Task<?> task) {
                 finished.incrementAndGet();
                 int runningTasks = executor.getRunningTasks();
                 Platform.runLater(() -> launchingStepsPane.setProgress(1.0 * finished.get() / runningTasks));
@@ -214,7 +226,7 @@ public final class LauncherHelper {
                         // because onStop will be invoked if tasks fail when the executor service shut down.
                         if (!Controllers.isStopped()) {
                             launchingStepsPane.fireEvent(new DialogCloseEvent());
-                            Exception ex = executor.getLastException();
+                            Exception ex = executor.getException();
                             if (ex != null) {
                                 String message;
                                 if (ex instanceof CurseCompletionException) {
@@ -291,7 +303,7 @@ public final class LauncherHelper {
         }
 
         // LaunchWrapper 1.12 will crash because of assuming the system class loader is an instance of URLClassLoader.
-        if (!flag && java.getParsedVersion() >= JavaVersion.JAVA_9
+        if (!flag && java.getParsedVersion() >= JavaVersion.JAVA_9_AND_LATER
                 && version.getMainClass().contains("launchwrapper")
                 && version.getLibraries().stream()
                 .filter(library -> "launchwrapper".equals(library.getArtifactId()))
@@ -420,7 +432,7 @@ public final class LauncherHelper {
         }
     }
 
-    private static class LaunchTask<T> extends TaskResult<T> {
+    private static class LaunchTask<T> extends Task<T> {
         private final ExceptionalSupplier<T, Exception> supplier;
 
         public LaunchTask(ExceptionalSupplier<T, Exception> supplier) {
@@ -440,7 +452,6 @@ public final class LauncherHelper {
      */
     class HMCLProcessListener implements ProcessListener {
 
-        private final VersionSetting setting;
         private final Map<String, String> forbiddenTokens;
         private ManagedProcess process;
         private boolean lwjgl;
@@ -449,8 +460,7 @@ public final class LauncherHelper {
         private final LinkedList<Pair<String, Log4jLevel>> logs;
         private final CountDownLatch latch = new CountDownLatch(1);
 
-        public HMCLProcessListener(AuthInfo authInfo, VersionSetting setting, boolean detectWindow) {
-            this.setting = setting;
+        public HMCLProcessListener(AuthInfo authInfo, boolean detectWindow) {
             this.detectWindow = detectWindow;
 
             if (authInfo == null)

@@ -104,13 +104,13 @@ public class AddAuthlibInjectorServerPane extends StackPane implements DialogAwa
         nextPane.showSpinner();
         addServerPane.setDisable(true);
 
-        Task.of(() -> {
+        Task.runAsync(() -> {
             serverBeingAdded = AuthlibInjectorServer.locateServer(url);
-        }).whenComplete(Schedulers.javafx(), (isDependentSucceeded, exception) -> {
+        }).whenComplete(Schedulers.javafx(), exception -> {
             addServerPane.setDisable(false);
             nextPane.hideSpinner();
 
-            if (isDependentSucceeded) {
+            if (exception == null) {
                 lblServerName.setText(serverBeingAdded.getName());
                 lblServerUrl.setText(serverBeingAdded.getUrl());
 

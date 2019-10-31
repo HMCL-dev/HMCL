@@ -25,16 +25,16 @@ import org.jackhuang.hmcl.event.Event;
  */
 public class TaskEvent extends Event {
 
-    private final Task task;
+    private final Task<?> task;
     private final boolean failed;
 
-    public TaskEvent(Object source, Task task, boolean failed) {
+    public TaskEvent(Object source, Task<?> task, boolean failed) {
         super(source);
         this.task = task;
         this.failed = failed;
     }
 
-    public Task getTask() {
+    public Task<?> getTask() {
         return task;
     }
 

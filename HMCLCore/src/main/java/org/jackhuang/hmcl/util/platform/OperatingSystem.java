@@ -28,8 +28,10 @@ import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * Represents the operating system.
@@ -98,6 +100,10 @@ public enum OperatingSystem {
      */
     public static final String SYSTEM_ARCHITECTURE;
 
+    public static final Pattern INVALID_RESOURCE_CHARACTERS;
+    private static final String[] INVALID_RESOURCE_BASENAMES;
+    private static final String[] INVALID_RESOURCE_FULLNAMES;
+
     static {
         String name = System.getProperty("os.name").toLowerCase(Locale.US);
         if (name.contains("win"))
@@ -119,6 +125,24 @@ public enum OperatingSystem {
         if (arch == null)
             arch = System.getProperty("os.arch");
         SYSTEM_ARCHITECTURE = arch;
+
+        // setup the invalid names
+        if (CURRENT_OS == WINDOWS) {
+            // valid names and characters taken from http://msdn.microsoft.com/library/default.asp?url=/library/en-us/fileio/fs/naming_a_file.asp
+            INVALID_RESOURCE_CHARACTERS = Pattern.compile("[/\"<>|?*:\\\\]");
+            INVALID_RESOURCE_BASENAMES = new String[]{"aux", "com1", "com2", "com3", "com4", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+                    "com5", "com6", "com7", "com8", "com9", "con", "lpt1", "lpt2", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
+                    "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9", "nul", "prn"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
+            Arrays.sort(INVALID_RESOURCE_BASENAMES);
+            //CLOCK$ may be used if an extension is provided
+            INVALID_RESOURCE_FULLNAMES = new String[]{"clock$"}; //$NON-NLS-1$
+        } else {
+            //only front slash and null char are invalid on UNIXes
+            //taken from http://www.faqs.org/faqs/unix-faq/faq/part2/section-2.html
+            INVALID_RESOURCE_CHARACTERS = null;
+            INVALID_RESOURCE_BASENAMES = null;
+            INVALID_RESOURCE_FULLNAMES = null;
+        }
     }
 
     private static Optional<Long> getTotalPhysicalMemorySize() {
@@ -147,11 +171,45 @@ public enum OperatingSystem {
                 return Paths.get(home, "." + folder);
             case WINDOWS:
                 String appdata = System.getenv("APPDATA");
-                return Paths.get(Lang.nonNull(appdata, home), "." + folder);
+                return Paths.get(appdata == null ? home : appdata, "." + folder);
             case OSX:
                 return Paths.get(home, "Library", "Application Support", folder);
             default:
                 return Paths.get(home, folder);
         }
+    }
+
+    /**
+     * Returns true if the given name is a valid resource name on this operating system,
+     * and false otherwise.
+     */
+    public static boolean isNameValid(String name) {
+        //. and .. have special meaning on all platforms
+        if (name.equals(".") || name.equals("..") || name.indexOf('/') == 0 || name.indexOf('\0') >= 0) //$NON-NLS-1$ //$NON-NLS-2$
+            return false;
+        if (CURRENT_OS == WINDOWS) {
+            //empty names are not valid
+            final int length = name.length();
+            if (length == 0)
+                return false;
+            final char lastChar = name.charAt(length - 1);
+            // filenames ending in dot are not valid
+            if (lastChar == '.')
+                return false;
+            // file names ending with whitespace are truncated (bug 118997)
+            if (Character.isWhitespace(lastChar))
+                return false;
+            int dot = name.indexOf('.');
+            // on windows, filename suffixes are not relevant to name validity
+            String basename = dot == -1 ? name : name.substring(0, dot);
+            if (Arrays.binarySearch(INVALID_RESOURCE_BASENAMES, basename.toLowerCase()) >= 0)
+                return false;
+            if (Arrays.binarySearch(INVALID_RESOURCE_FULLNAMES, name.toLowerCase()) >= 0)
+                return false;
+            if (INVALID_RESOURCE_CHARACTERS != null && INVALID_RESOURCE_CHARACTERS.matcher(name).find())
+                return false;
+        }
+
+        return true;
     }
 }

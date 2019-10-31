@@ -15,19 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.mod;
+package org.jackhuang.hmcl.mod.multimc;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
-import org.jackhuang.hmcl.download.MaintainTask;
-import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
+import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.game.VersionLibraryBuilder;
+import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
+import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.ModpackConfiguration;
+import org.jackhuang.hmcl.mod.ModpackInstallTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -46,15 +48,15 @@ import java.util.Optional;
  *
  * @author huangyuhui
  */
-public final class MultiMCModpackInstallTask extends Task {
+public final class MultiMCModpackInstallTask extends Task<Void> {
 
     private final File zipFile;
     private final Modpack modpack;
     private final MultiMCInstanceConfiguration manifest;
     private final String name;
     private final DefaultGameRepository repository;
-    private final List<Task> dependencies = new LinkedList<>();
-    private final List<Task> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new LinkedList<>();
     
     public MultiMCModpackInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, MultiMCInstanceConfiguration manifest, String name) {
         this.zipFile = zipFile;
@@ -81,6 +83,12 @@ public final class MultiMCModpackInstallTask extends Task {
                 if (c.getVersion() != null)
                     builder.version("liteloader", c.getVersion());
             });
+
+            Optional<MultiMCManifest.MultiMCManifestComponent> fabric = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("net.fabricmc.fabric-loader")).findAny();
+            fabric.ifPresent(c -> {
+                if (c.getVersion() != null)
+                    builder.version("fabric", c.getVersion());
+            });
         }
 
         dependents.add(builder.buildAsync());
@@ -91,7 +99,7 @@ public final class MultiMCModpackInstallTask extends Task {
     }
     
     @Override
-    public List<Task> getDependencies() {
+    public List<Task<?>> getDependencies() {
         return dependencies;
     }
 
@@ -126,7 +134,7 @@ public final class MultiMCModpackInstallTask extends Task {
     }
 
     @Override
-    public List<Task> getDependents() {
+    public List<Task<?>> getDependents() {
         return dependents;
     }
     
@@ -134,7 +142,7 @@ public final class MultiMCModpackInstallTask extends Task {
     public void execute() throws Exception {
         Version version = repository.readVersionJson(name);
 
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(zipFile.toPath())) {
+        try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setAutoDetectEncoding(true).build()) {
             Path root = MultiMCInstanceConfiguration.getRootPath(fs.getPath("/"));
             Path patches = root.resolve("patches");
 
@@ -142,20 +150,29 @@ public final class MultiMCModpackInstallTask extends Task {
                 for (Path patchJson : Files.newDirectoryStream(patches)) {
                     if (patchJson.toString().endsWith(".json")) {
                         // If json is malformed, we should stop installing this modpack instead of skipping it.
-                        MultiMCInstancePatch patch = JsonUtils.GSON.fromJson(IOUtils.readFullyAsString(Files.newInputStream(patchJson)), MultiMCInstancePatch.class);
+                        MultiMCInstancePatch multiMCPatch = JsonUtils.GSON.fromJson(IOUtils.readFullyAsString(Files.newInputStream(patchJson)), MultiMCInstancePatch.class);
 
-                        VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
-                        for (String arg : patch.getTweakers())
-                            builder.addArgument("--tweakClass", arg);
+                        List<String> arguments = new ArrayList<>();
+                        for (String arg : multiMCPatch.getTweakers()) {
+                            arguments.add("--tweakClass");
+                            arguments.add(arg);
+                        }
 
-                        version = builder.build()
-                                .setLibraries(Lang.merge(version.getLibraries(), patch.getLibraries()))
-                                .setMainClass(patch.getMainClass());
+                        Version patch = new Version(multiMCPatch.getName(), multiMCPatch.getVersion(), 1, new Arguments().addGameArguments(arguments), multiMCPatch.getMainClass(), multiMCPatch.getLibraries());
+                        version = version.addPatch(patch);
                     }
                 }
+
+            Path libraries = root.resolve("libraries");
+            if (Files.exists(libraries))
+            FileUtils.copyDirectory(libraries, repository.getVersionRoot(name).toPath().resolve("libraries"));
+
+            Path jarmods = root.resolve("jarmods");
+            if (Files.exists(jarmods))
+            FileUtils.copyDirectory(jarmods, repository.getVersionRoot(name).toPath().resolve("jarmods"));
         }
 
-        dependencies.add(new MaintainTask(version).thenCompose(maintainedVersion -> new VersionJsonSaveTask(repository, maintainedVersion)));
+        dependencies.add(repository.save(version));
         dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/" + manifest.getName() + "/minecraft", manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)));
     }
 

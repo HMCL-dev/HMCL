@@ -75,9 +75,7 @@ public class JFXCheckBoxTreeTableCell<S,T> extends TreeTableCell<S,T> {
     }
 
     private ObjectProperty<Callback<Integer, ObservableValue<Boolean>>>
-            selectedStateCallback =
-            new SimpleObjectProperty<Callback<Integer, ObservableValue<Boolean>>>(
-                    this, "selectedStateCallback");
+            selectedStateCallback = new SimpleObjectProperty<>(this, "selectedStateCallback");
 
     public final ObjectProperty<Callback<Integer, ObservableValue<Boolean>>> selectedStateCallbackProperty() {
         return selectedStateCallback;

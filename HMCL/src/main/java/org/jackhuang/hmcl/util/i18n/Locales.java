@@ -47,16 +47,16 @@ public final class Locales {
     public static final SupportedLocale ZH_CN = new SupportedLocale(Locale.SIMPLIFIED_CHINESE);
 
     /**
-     * Vietnamese
+     * Spanish
      */
-    public static final SupportedLocale VI = new SupportedLocale(new Locale("vi"));
+    public static final SupportedLocale ES = new SupportedLocale(new Locale("es"));
 
     /**
      * Russian
      */
     public static final SupportedLocale RU = new SupportedLocale(new Locale("ru"));
 
-    public static final List<SupportedLocale> LOCALES = Lang.immutableListOf(DEFAULT, EN, ZH_CN, ZH);
+    public static final List<SupportedLocale> LOCALES = Lang.immutableListOf(DEFAULT, EN, ZH_CN, ZH, ES, RU);
 
     public static SupportedLocale getLocaleByName(String name) {
         if (name == null) return DEFAULT;
@@ -64,7 +64,7 @@ public final class Locales {
             case "en": return EN;
             case "zh": return ZH;
             case "zh_cn": return ZH_CN;
-            case "vi": return VI;
+            case "es": return ES;
             case "ru": return RU;
             default: return DEFAULT;
         }
@@ -74,7 +74,7 @@ public final class Locales {
         if (locale == EN) return "en";
         else if (locale == ZH) return "zh";
         else if (locale == ZH_CN) return "zh_CN";
-        else if (locale == VI) return "vi";
+        else if (locale == ES) return "es";
         else if (locale == RU) return "ru";
         else if (locale == DEFAULT) return "def";
         else throw new IllegalArgumentException("Unknown locale: " + locale);

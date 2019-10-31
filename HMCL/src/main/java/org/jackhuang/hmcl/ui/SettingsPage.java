@@ -50,7 +50,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -118,7 +117,7 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
         selectedItemPropertyFor(proxyConfigurationGroup, Proxy.Type.class).bindBidirectional(config().proxyTypeProperty());
         // ====
 
-        fileCommonLocation.loadChildren(Arrays.asList(
+        fileCommonLocation.loadChildren(Collections.singletonList(
                 fileCommonLocation.createChildren(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT)
         ), EnumCommonDirectory.CUSTOM);
         fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());

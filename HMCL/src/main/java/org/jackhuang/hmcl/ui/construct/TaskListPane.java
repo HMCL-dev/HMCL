@@ -26,11 +26,17 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
+import org.jackhuang.hmcl.download.game.GameInstallTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.HMCLModpackExportTask;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
-import org.jackhuang.hmcl.mod.*;
+import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
+import org.jackhuang.hmcl.mod.ModpackInstallTask;
+import org.jackhuang.hmcl.mod.ModpackUpdateTask;
+import org.jackhuang.hmcl.mod.curse.CurseCompletionTask;
+import org.jackhuang.hmcl.mod.curse.CurseInstallTask;
+import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
@@ -42,7 +48,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class TaskListPane extends StackPane {
     private final AdvancedListBox listBox = new AdvancedListBox();
-    private final Map<Task, ProgressListNode> nodes = new HashMap<>();
+    private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
     private final ReadOnlyIntegerWrapper finishedTasks = new ReadOnlyIntegerWrapper();
     private final ReadOnlyIntegerWrapper totTasks = new ReadOnlyIntegerWrapper();
 
@@ -72,17 +78,19 @@ public final class TaskListPane extends StackPane {
             }
 
             @Override
-            public void onReady(Task task) {
+            public void onReady(Task<?> task) {
                 Platform.runLater(() -> totTasks.set(totTasks.getValue() + 1));
             }
 
             @Override
-            public void onRunning(Task task) {
+            public void onRunning(Task<?> task) {
                 if (!task.getSignificance().shouldShow())
                     return;
 
                 if (task instanceof GameAssetDownloadTask) {
                     task.setName(i18n("assets.download_all"));
+                } else if (task instanceof GameInstallTask) {
+                    task.setName(i18n("install.installer.install", i18n("install.installer.game")));
                 } else if (task instanceof ForgeInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
                 } else if (task instanceof LiteLoaderInstallTask) {
@@ -113,7 +121,7 @@ public final class TaskListPane extends StackPane {
             }
 
             @Override
-            public void onFinished(Task task) {
+            public void onFinished(Task<?> task) {
                 ProgressListNode node = nodes.remove(task);
                 if (node == null)
                     return;
@@ -125,7 +133,7 @@ public final class TaskListPane extends StackPane {
             }
 
             @Override
-            public void onFailed(Task task, Throwable throwable) {
+            public void onFailed(Task<?> task, Throwable throwable) {
                 ProgressListNode node = nodes.remove(task);
                 if (node == null)
                     return;
@@ -142,7 +150,7 @@ public final class TaskListPane extends StackPane {
         private final Label title = new Label();
         private final Label state = new Label();
 
-        public ProgressListNode(Task task) {
+        public ProgressListNode(Task<?> task) {
             bar.progressProperty().bind(task.progressProperty());
             title.setText(task.getName());
             state.textProperty().bind(task.messageProperty());

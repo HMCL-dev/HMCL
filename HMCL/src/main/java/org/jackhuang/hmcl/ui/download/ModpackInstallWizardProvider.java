@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.mod.CurseCompletionException;
+import org.jackhuang.hmcl.mod.curse.CurseCompletionException;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
@@ -71,7 +71,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
         settings.put(PROFILE, profile);
     }
 
-    private Task finishModpackInstallingAsync(Map<String, Object> settings) {
+    private Task<Void> finishModpackInstallingAsync(Map<String, Object> settings) {
         if (!settings.containsKey(ModpackPage.MODPACK_FILE))
             return null;
 
@@ -93,7 +93,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
             return null;
         } else {
             return ModpackHelper.getInstallTask(profile, selected, name, modpack)
-                    .then(Task.of(Schedulers.javafx(), () -> profile.setSelectedVersion(name)));
+                    .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
         }
     }
 

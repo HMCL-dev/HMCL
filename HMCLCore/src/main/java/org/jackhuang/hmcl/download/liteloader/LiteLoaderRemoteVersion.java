@@ -17,8 +17,12 @@
  */
 package org.jackhuang.hmcl.download.liteloader;
 
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.task.Task;
 
 import java.util.Collection;
 
@@ -33,7 +37,7 @@ public class LiteLoaderRemoteVersion extends RemoteVersion {
      * @param url         the installer or universal jar URL.
      */
     LiteLoaderRemoteVersion(String gameVersion, String selfVersion, String url, String tweakClass, Collection<Library> libraries) {
-        super(gameVersion, selfVersion, url);
+        super(LibraryAnalyzer.LibraryType.LITELOADER.getPatchId(), gameVersion, selfVersion, url);
 
         this.tweakClass = tweakClass;
         this.libraries = libraries;
@@ -47,4 +51,8 @@ public class LiteLoaderRemoteVersion extends RemoteVersion {
         return tweakClass;
     }
 
+    @Override
+    public Task<Version> getInstallTask(DefaultDependencyManager dependencyManager, Version baseVersion) {
+        return new LiteLoaderInstallTask(dependencyManager, baseVersion, this);
+    }
 }

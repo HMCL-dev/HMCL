@@ -35,7 +35,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplayer {
 
     @Override
-    default void handleTask(Map<String, Object> settings, Task task) {
+    default void handleTask(Map<String, Object> settings, Task<?> task) {
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(it -> {
             it.fireEvent(new DialogCloseEvent());
             onEnd();
@@ -70,11 +70,11 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
                             else if (!settings.containsKey("forbid_success_message"))
                                 Controllers.dialog(i18n("message.success"), null, MessageType.FINE, () -> onEnd());
                         } else {
-                            if (executor.getLastException() == null)
+                            if (executor.getException() == null)
                                 return;
-                            String appendix = StringUtils.getStackTrace(executor.getLastException());
+                            String appendix = StringUtils.getStackTrace(executor.getException());
                             if (settings.get("failure_callback") instanceof WizardProvider.FailureCallback)
-                                ((WizardProvider.FailureCallback)settings.get("failure_callback")).onFail(settings, executor.getLastException(), () -> onEnd());
+                                ((WizardProvider.FailureCallback)settings.get("failure_callback")).onFail(settings, executor.getException(), () -> onEnd());
                             else if (settings.get("failure_message") instanceof String)
                                 Controllers.dialog(appendix, (String) settings.get("failure_message"), MessageType.ERROR, () -> onEnd());
                             else if (!settings.containsKey("forbid_failure_message"))

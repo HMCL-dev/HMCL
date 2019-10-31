@@ -22,22 +22,27 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  *
  * @author huangyuhui
  */
-public final class VersionJsonDownloadTask extends TaskResult<String> {
+public final class VersionJsonDownloadTask extends Task<String> {
     private final String gameVersion;
     private final DefaultDependencyManager dependencyManager;
-    private final List<Task> dependents = new LinkedList<>();
-    private final List<Task> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new LinkedList<>();
     private final VersionList<?> gameVersionList;
 
     public VersionJsonDownloadTask(String gameVersion, DefaultDependencyManager dependencyManager) {
@@ -52,20 +57,22 @@ public final class VersionJsonDownloadTask extends TaskResult<String> {
     }
 
     @Override
-    public Collection<Task> getDependencies() {
+    public Collection<Task<?>> getDependencies() {
         return dependencies;
     }
 
     @Override
-    public Collection<Task> getDependents() {
+    public Collection<Task<?>> getDependents() {
         return dependents;
     }
 
     @Override
-    public void execute() {
-        RemoteVersion remoteVersion = gameVersionList.getVersions(gameVersion).stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("Cannot find specific version " + gameVersion + " in remote repository"));
-        String jsonURL = dependencyManager.getDownloadProvider().injectURL(remoteVersion.getUrl());
-        dependencies.add(new GetTask(NetworkUtils.toURL(jsonURL)).storeTo(this::setResult));
+    public void execute() throws IOException {
+        RemoteVersion remoteVersion = gameVersionList.getVersion(gameVersion, gameVersion)
+                .orElseThrow(() -> new IOException("Cannot find specific version " + gameVersion + " in remote repository"));
+        dependencies.add(new GetTask(
+                dependencyManager.getDownloadProvider().injectURLs(remoteVersion.getUrl())
+                        .map(NetworkUtils::toURL).collect(Collectors.toList()),
+                UTF_8).storeTo(this::setResult));
     }
 }

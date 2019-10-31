@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -34,23 +33,24 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
+import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 
 /**
  *
  * @author huangyuhui
  */
-public final class ForgeInstallTask extends TaskResult<Version> {
+public final class ForgeInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
     private Path installer;
     private final ForgeRemoteVersion remote;
-    private Task dependent;
-    private TaskResult<Version> dependency;
+    private Task<Void> dependent;
+    private Task<Version> dependency;
 
     public ForgeInstallTask(DefaultDependencyManager dependencyManager, Version version, ForgeRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
@@ -67,7 +67,12 @@ public final class ForgeInstallTask extends TaskResult<Version> {
     public void preExecute() throws Exception {
         installer = Files.createTempFile("forge-installer", ".jar");
 
-        dependent = new FileDownloadTask(NetworkUtils.toURL(remote.getUrl()), installer.toFile())
+        dependent = new FileDownloadTask(
+                Arrays.stream(remote.getUrl())
+                        .map(NetworkUtils::toURL)
+                        .collect(Collectors.toList()),
+                installer.toFile(), null)
+                .setCacheRepository(dependencyManager.getCacheRepository())
                 .setCaching(true);
     }
 
@@ -83,25 +88,26 @@ public final class ForgeInstallTask extends TaskResult<Version> {
     }
 
     @Override
-    public Collection<Task> getDependents() {
+    public Collection<Task<?>> getDependents() {
         return Collections.singleton(dependent);
     }
 
     @Override
-    public Collection<Task> getDependencies() {
+    public Collection<Task<?>> getDependencies() {
         return Collections.singleton(dependency);
     }
 
     @Override
     public void execute() {
         if (VersionNumber.VERSION_COMPARATOR.compare("1.13", remote.getGameVersion()) <= 0)
-            dependency = new ForgeNewInstallTask(dependencyManager, version, installer);
+            dependency = new ForgeNewInstallTask(dependencyManager, version, remote.getSelfVersion(), installer);
         else
-            dependency = new ForgeOldInstallTask(dependencyManager, version, installer);
+            dependency = new ForgeOldInstallTask(dependencyManager, version, remote.getSelfVersion(), installer);
     }
 
     /**
      * Install Forge library from existing local file.
+     * This method will try to identify this installer whether it is in old or new format.
      *
      * @param dependencyManager game repository
      * @param version version.json
@@ -110,7 +116,7 @@ public final class ForgeInstallTask extends TaskResult<Version> {
      * @throws IOException if unable to read compressed content of installer file, or installer file is corrupted, or the installer is not the one we want.
      * @throws VersionMismatchException if required game version of installer does not match the actual one.
      */
-    public static TaskResult<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
+    public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
         Optional<String> gameVersion = GameVersion.minecraftVersion(dependencyManager.getGameRepository().getVersionJar(version));
         if (!gameVersion.isPresent()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
@@ -120,15 +126,19 @@ public final class ForgeInstallTask extends TaskResult<Version> {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());
-                return new ForgeNewInstallTask(dependencyManager, version, installer);
+                return new ForgeNewInstallTask(dependencyManager, version, modifyVersion(gameVersion.get(), profile.getPath().getVersion().replaceAll("(?i)forge", "")), installer);
             } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
                 ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getInstall().getMinecraft()))
                     throw new VersionMismatchException(profile.getInstall().getMinecraft(), gameVersion.get());
-                return new ForgeOldInstallTask(dependencyManager, version, installer);
+                return new ForgeOldInstallTask(dependencyManager, version, modifyVersion(gameVersion.get(), profile.getInstall().getPath().getVersion().replaceAll("(?i)forge", "")), installer);
             } else {
                 throw new IOException();
             }
         }
+    }
+
+    private static String modifyVersion(String gameVersion, String version) {
+        return removeSuffix(removePrefix(removeSuffix(removePrefix(version.replace(gameVersion, "").trim(), "-"), "-"), "_"), "_");
     }
 }

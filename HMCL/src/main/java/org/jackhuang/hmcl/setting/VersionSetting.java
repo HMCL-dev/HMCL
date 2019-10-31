@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
@@ -482,7 +483,7 @@ public final class VersionSetting {
         else if (isUsesCustomJavaDir()) {
             try {
                 return JavaVersion.fromExecutable(Paths.get(getJavaDir()));
-            } catch (IOException e) {
+            } catch (IOException | InvalidPathException e) {
                 return null; // Custom Java Directory not found,
             }
         } else if (StringUtils.isNotBlank(getJava())) {
@@ -537,6 +538,7 @@ public final class VersionSetting {
                 .setGameDir(gameDir)
                 .setJava(javaVersion)
                 .setVersionName(Metadata.TITLE)
+                .setVersionType(Metadata.TITLE)
                 .setProfileName(Metadata.TITLE)
                 .setMinecraftArgs(getMinecraftArgs())
                 .setJavaArgs(getJavaArgs())
@@ -595,7 +597,7 @@ public final class VersionSetting {
 
         @Override
         public VersionSetting deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            if (json == null || json == JsonNull.INSTANCE || !(json instanceof JsonObject))
+            if (json == JsonNull.INSTANCE || !(json instanceof JsonObject))
                 return null;
             JsonObject obj = (JsonObject) json;
 

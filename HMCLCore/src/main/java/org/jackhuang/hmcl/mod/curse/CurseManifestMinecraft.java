@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.mod;
+package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
@@ -23,40 +23,45 @@ import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  *
  * @author huangyuhui
  */
 @Immutable
-public final class CurseManifestModLoader implements Validation {
+public final class CurseManifestMinecraft implements Validation {
 
-    @SerializedName("id")
-    private final String id;
+    @SerializedName("version")
+    private final String gameVersion;
 
-    @SerializedName("primary")
-    private final boolean primary;
+    @SerializedName("modLoaders")
+    private final List<CurseManifestModLoader> modLoaders;
 
-    public CurseManifestModLoader() {
-        this("", false);
+    public CurseManifestMinecraft() {
+        this.gameVersion = "";
+        this.modLoaders = Collections.emptyList();
     }
 
-    public CurseManifestModLoader(String id, boolean primary) {
-        this.id = id;
-        this.primary = primary;
+    public CurseManifestMinecraft(String gameVersion, List<CurseManifestModLoader> modLoaders) {
+        this.gameVersion = gameVersion;
+        this.modLoaders = new LinkedList<>(modLoaders);
     }
 
-    public String getId() {
-        return id;
+    public String getGameVersion() {
+        return gameVersion;
     }
 
-    public boolean isPrimary() {
-        return primary;
+    public List<CurseManifestModLoader> getModLoaders() {
+        return Collections.unmodifiableList(modLoaders);
     }
 
     @Override
     public void validate() throws JsonParseException {
-        if (StringUtils.isBlank(id))
-            throw new JsonParseException("Curse Forge modpack manifest Mod loader id cannot be blank.");
+        if (StringUtils.isBlank(gameVersion))
+            throw new JsonParseException("CurseForge Manifest.gameVersion cannot be blank.");
     }
 
 }

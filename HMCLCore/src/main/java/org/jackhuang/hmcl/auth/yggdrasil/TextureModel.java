@@ -25,7 +25,7 @@ public enum TextureModel {
 
     public final String modelName;
 
-    private TextureModel(String modelName) {
+    TextureModel(String modelName) {
         this.modelName = modelName;
     }
 

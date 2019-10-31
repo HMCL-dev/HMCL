@@ -26,14 +26,14 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 
-public class ModpackUpdateTask extends Task {
+public class ModpackUpdateTask extends Task<Void> {
 
     private final DefaultGameRepository repository;
     private final String id;
-    private final Task updateTask;
+    private final Task<?> updateTask;
     private final Path backupFolder;
 
-    public ModpackUpdateTask(DefaultGameRepository repository, String id, Task updateTask) {
+    public ModpackUpdateTask(DefaultGameRepository repository, String id, Task<?> updateTask) {
         this.repository = repository;
         this.id = id;
         this.updateTask = updateTask;
@@ -49,7 +49,7 @@ public class ModpackUpdateTask extends Task {
     }
 
     @Override
-    public Collection<? extends Task> getDependencies() {
+    public Collection<Task<?>> getDependencies() {
         return Collections.singleton(updateTask);
     }
 
@@ -72,6 +72,8 @@ public class ModpackUpdateTask extends Task {
             repository.removeVersionFromDisk(id);
 
             FileUtils.copyDirectory(backupFolder, repository.getVersionRoot(id).toPath());
+
+            repository.refreshVersionsAsync().start();
         }
     }
 }

@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import static java.util.Collections.unmodifiableList;
-import static java.util.stream.Collectors.toList;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,8 +35,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import static java.util.Collections.unmodifiableList;
+import static java.util.stream.Collectors.toList;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 /**
  * Represents a Java installation.
@@ -76,9 +77,6 @@ public final class JavaVersion {
     /**
      * The major version of Java installation.
      *
-     * @see org.jackhuang.hmcl.util.platform.JavaVersion#JAVA_11
-     * @see org.jackhuang.hmcl.util.platform.JavaVersion#JAVA_10
-     * @see org.jackhuang.hmcl.util.platform.JavaVersion#JAVA_9
      * @see org.jackhuang.hmcl.util.platform.JavaVersion#JAVA_8
      * @see org.jackhuang.hmcl.util.platform.JavaVersion#JAVA_7
      * @see org.jackhuang.hmcl.util.platform.JavaVersion#UNKNOWN
@@ -88,22 +86,20 @@ public final class JavaVersion {
     }
 
     private static final Pattern REGEX = Pattern.compile("version \"(?<version>(.*?))\"");
+    private static final Pattern VERSION = Pattern.compile("^(?<version>[0-9]+)");
 
     public static final int UNKNOWN = -1;
     public static final int JAVA_7 = 70;
     public static final int JAVA_8 = 80;
-    public static final int JAVA_9 = 90;
-    public static final int JAVA_10 = 100;
-    public static final int JAVA_11 = 110;
+    public static final int JAVA_9_AND_LATER = 90;
 
     private static int parseVersion(String version) {
-        if (version.startsWith("11"))
-            return JAVA_11;
-        else if (version.startsWith("10"))
-            return JAVA_10;
-        else if (version.startsWith("9"))
-            return JAVA_9;
-        else if (version.contains("1.8"))
+        Matcher matcher = VERSION.matcher(version);
+        if (matcher.find()) {
+            int head = Lang.parseInt(matcher.group(), -1);
+            if (head > 1) return JAVA_9_AND_LATER;
+        }
+        if (version.contains("1.8"))
             return JAVA_8;
         else if (version.contains("1.7"))
             return JAVA_7;
@@ -114,11 +110,6 @@ public final class JavaVersion {
     public static JavaVersion fromExecutable(Path executable) throws IOException {
         Platform platform = Platform.BIT_32;
         String version = null;
-
-        // javaw is only used on windows
-        if ("javaw.exe".equalsIgnoreCase(executable.getFileName().toString())) {
-            executable = executable.resolveSibling("java.exe");
-        }
 
         executable = executable.toRealPath();
 

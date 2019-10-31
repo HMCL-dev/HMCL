@@ -18,18 +18,17 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionMismatchException;
+import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
-import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskResult;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -41,26 +40,17 @@ import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import java.net.SocketTimeoutException;
 import java.util.Map;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class InstallerWizardProvider implements WizardProvider {
     private final Profile profile;
     private final String gameVersion;
     private final Version version;
-    private final String forge;
-    private final String liteLoader;
-    private final String optiFine;
 
     public InstallerWizardProvider(Profile profile, String gameVersion, Version version) {
         this.profile = profile;
         this.gameVersion = gameVersion;
         this.version = version;
-
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
-        forge = analyzer.get(FORGE).map(Library::getVersion).orElse(null);
-        liteLoader = analyzer.get(LITELOADER).map(Library::getVersion).orElse(null);
-        optiFine = analyzer.get(OPTIFINE).map(Library::getVersion).orElse(null);
     }
 
     public Profile getProfile() {
@@ -75,18 +65,6 @@ public final class InstallerWizardProvider implements WizardProvider {
         return version;
     }
 
-    public String getForge() {
-        return forge;
-    }
-
-    public String getLiteLoader() {
-        return liteLoader;
-    }
-
-    public String getOptiFine() {
-        return optiFine;
-    }
-
     @Override
     public void start(Map<String, Object> settings) {
     }
@@ -96,18 +74,14 @@ public final class InstallerWizardProvider implements WizardProvider {
         settings.put("success_message", i18n("install.success"));
         settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> alertFailureMessage(exception, next));
 
-        TaskResult<Version> ret = Task.ofResult(() -> version);
+        Task<Version> ret = Task.supplyAsync(() -> version);
 
-        if (settings.containsKey("forge"))
-            ret = ret.thenCompose(profile.getDependency().installLibraryAsync((RemoteVersion) settings.get("forge")));
+        for (Object value : settings.values()) {
+            if (value instanceof RemoteVersion)
+                ret = ret.thenComposeAsync(profile.getDependency().installLibraryAsync((RemoteVersion) value));
+        }
 
-        if (settings.containsKey("liteloader"))
-            ret = ret.thenCompose(profile.getDependency().installLibraryAsync((RemoteVersion) settings.get("liteloader")));
-
-        if (settings.containsKey("optifine"))
-            ret = ret.thenCompose(profile.getDependency().installLibraryAsync((RemoteVersion) settings.get("optifine")));
-
-        return ret.then(profile.getRepository().refreshVersionsAsync());
+        return ret.thenComposeAsync(profile.getRepository().refreshVersionsAsync());
     }
 
     @Override
@@ -142,9 +116,10 @@ public final class InstallerWizardProvider implements WizardProvider {
             } else {
                 Controllers.dialog(i18n("install.failed.downloading.detail", ((DownloadException) exception).getUrl()) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageType.ERROR, next);
             }
-        } else if (exception instanceof OptiFineInstallTask.UnsupportedOptiFineInstallationException) {
+        } else if (exception instanceof OptiFineInstallTask.UnsupportedOptiFineInstallationException ||
+                exception instanceof FabricInstallTask.UnsupportedFabricInstallationException) {
             Controllers.dialog(i18n("install.failed.optifine_conflict"), i18n("install.failed"), MessageType.ERROR, next);
-        } else if (exception instanceof UnsupportedOperationException) {
+        } else if (exception instanceof DefaultDependencyManager.UnsupportedLibraryInstallerException) {
             Controllers.dialog(i18n("install.failed.install_online"), i18n("install.failed"), MessageType.ERROR, next);
         } else if (exception instanceof VersionMismatchException) {
             VersionMismatchException e = ((VersionMismatchException) exception);

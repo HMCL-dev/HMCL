@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.util.SimpleMultimap;
 import java.lang.ref.WeakReference;
 import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Consumer;
 
 /**
@@ -31,7 +32,7 @@ import java.util.function.Consumer;
 public final class EventManager<T extends Event> {
 
     private final SimpleMultimap<EventPriority, Consumer<T>> handlers
-            = new SimpleMultimap<>(() -> new EnumMap<>(EventPriority.class), HashSet::new);
+            = new SimpleMultimap<>(() -> new EnumMap<>(EventPriority.class), CopyOnWriteArraySet::new);
 
     public Consumer<T> registerWeak(Consumer<T> consumer) {
         register(new WeakListener(consumer));

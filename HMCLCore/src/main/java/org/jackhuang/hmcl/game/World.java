@@ -32,11 +32,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
+import java.nio.file.*;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -92,7 +88,7 @@ public class World {
     private void loadFromZipImpl(Path root) throws IOException {
         Path levelDat = root.resolve("level.dat");
         if (!Files.exists(levelDat))
-            throw new IllegalArgumentException("Not a valid world zip file since level.dat cannot be found.");
+            throw new IOException("Not a valid world zip file since level.dat cannot be found.");
 
         getWorldName(levelDat);
     }
@@ -117,6 +113,9 @@ public class World {
         CompoundTag nbt = parseLevelDat(levelDat);
 
         CompoundTag data = nbt.get("Data");
+        if (data == null)
+            throw new IOException("level.dat missing Data");
+
         if (data.get("LevelName") instanceof StringTag)
             worldName = data.<StringTag>get("LevelName").getValue();
         else
@@ -155,7 +154,13 @@ public class World {
     }
 
     public void install(Path savesDir, String name) throws IOException {
-        Path worldDir = savesDir.resolve(name);
+        Path worldDir;
+        try {
+            worldDir = savesDir.resolve(name);
+        } catch (InvalidPathException e) {
+            throw new IOException(e);
+        }
+
         if (Files.isDirectory(worldDir)) {
             throw new FileAlreadyExistsException("World already exists");
         }
@@ -210,7 +215,7 @@ public class World {
                 return Files.list(savesDir).flatMap(world -> {
                     try {
                         return Stream.of(new World(world));
-                    } catch (IOException | IllegalArgumentException e) {
+                    } catch (IOException e) {
                         Logging.LOG.log(Level.WARNING, "Failed to read world " + world, e);
                         return Stream.empty();
                     }

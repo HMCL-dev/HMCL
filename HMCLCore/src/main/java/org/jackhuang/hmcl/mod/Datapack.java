@@ -174,10 +174,8 @@ public class Datapack {
                             continue;
 
                         String name = FileUtils.getName(subDir);
-                        boolean enabled = true;
                         if (name.endsWith(".disabled")) {
                             name = name.substring(0, name.length() - ".disabled".length());
-                            enabled = false;
                         }
                         if (!name.endsWith(".zip"))
                             continue;

@@ -15,17 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.mod;
+package org.jackhuang.hmcl.mod.multimc;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -116,17 +113,25 @@ public final class MultiMCManifest {
         @SerializedName("important")
         private final boolean important;
 
+        @SerializedName("dependencyOnly")
+        private final boolean dependencyOnly;
+
         @SerializedName("uid")
         private final String uid;
 
         @SerializedName("version")
         private final String version;
 
-        public MultiMCManifestComponent(String cachedName, List<MultiMCManifestCachedRequires> cachedRequires, String cachedVersion, boolean important, String uid, String version) {
+        public MultiMCManifestComponent(boolean important, boolean dependencyOnly, String uid, String version) {
+            this(null, null, null, important, dependencyOnly, uid, version);
+        }
+
+        public MultiMCManifestComponent(String cachedName, List<MultiMCManifestCachedRequires> cachedRequires, String cachedVersion, boolean important, boolean dependencyOnly, String uid, String version) {
             this.cachedName = cachedName;
             this.cachedRequires = cachedRequires;
             this.cachedVersion = cachedVersion;
             this.important = important;
+            this.dependencyOnly = dependencyOnly;
             this.uid = uid;
             this.version = version;
         }
@@ -145,6 +150,10 @@ public final class MultiMCManifest {
 
         public boolean isImportant() {
             return important;
+        }
+
+        public boolean isDependencyOnly() {
+            return dependencyOnly;
         }
 
         public String getUid() {

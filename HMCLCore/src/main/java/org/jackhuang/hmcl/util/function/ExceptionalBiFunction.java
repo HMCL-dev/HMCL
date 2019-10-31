@@ -15,32 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.task;
+package org.jackhuang.hmcl.util.function;
 
-import org.jackhuang.hmcl.util.AutoTypingMap;
-import org.jackhuang.hmcl.util.function.ExceptionalFunction;
-import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
+import static java.util.Objects.requireNonNull;
 
-import java.util.concurrent.Callable;
+public interface ExceptionalBiFunction<T, U, R, E extends Exception> {
+    R apply(T t, U u) throws E;
 
-/**
- *
- * @author huangyuhui
- */
-class SimpleTaskResult<V> extends TaskResult<V> {
-
-    private final Callable<V> callable;
-
-    public SimpleTaskResult(Callable<V> callable) {
-        this.callable = callable;
-    }
-
-    public SimpleTaskResult(ExceptionalSupplier<V, ?> supplier) {
-        this.callable = supplier.toCallable();
-    }
-
-    @Override
-    public void execute() throws Exception {
-        setResult(callable.call());
+    default <V> ExceptionalBiFunction<T, U, V, ?> andThen(ExceptionalFunction<? super R, ? extends V, ?> after) {
+        requireNonNull(after);
+        return (t, u) -> after.apply(apply(t, u));
     }
 }

@@ -129,8 +129,8 @@ public final class ExtendedProperties {
     public static ObjectProperty<Boolean> reservedSelectedPropertyFor(CheckBox checkbox) {
         return (ObjectProperty<Boolean>) checkbox.getProperties().computeIfAbsent(
                 PROP_PREFIX + ".checkbox.reservedSelected",
-                any -> new MappedProperty<>(checkbox, "ext.reservedSelected",
-                        checkbox.selectedProperty(), it -> !(boolean) it, it -> !(boolean) it));
+                any -> new MappedProperty<Boolean, Boolean>(checkbox, "ext.reservedSelected",
+                        checkbox.selectedProperty(), it -> !it, it -> !it));
     }
     // ====
 

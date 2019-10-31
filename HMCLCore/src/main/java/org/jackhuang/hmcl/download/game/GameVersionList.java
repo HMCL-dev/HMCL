@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
@@ -48,18 +47,18 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
     protected Collection<GameRemoteVersion> getVersionsImpl(String gameVersion) {
         lock.readLock().lock();
         try {
-            return StringUtils.isBlank(gameVersion) ? versions.values() : versions.get(gameVersion);
+            return versions.values();
         } finally {
             lock.readLock().unlock();
         }
     }
 
     @Override
-    public Task refreshAsync(DownloadProvider downloadProvider) {
+    public Task<?> refreshAsync(DownloadProvider downloadProvider) {
         GetTask task = new GetTask(NetworkUtils.toURL(downloadProvider.getVersionListURL()));
-        return new Task() {
+        return new Task<Void>() {
             @Override
-            public Collection<Task> getDependents() {
+            public Collection<Task<?>> getDependents() {
                 return Collections.singleton(task);
             }
 

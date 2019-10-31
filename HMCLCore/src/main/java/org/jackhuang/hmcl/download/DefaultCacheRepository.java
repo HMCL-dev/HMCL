@@ -23,8 +23,11 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.LibraryDownloadInfo;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.gson.TolerableValidationException;
+import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -60,7 +63,7 @@ public class DefaultCacheRepository extends CacheRepository {
         lock.writeLock().lock();
         try {
             if (Files.isRegularFile(indexFile))
-                index = JsonUtils.GSON.fromJson(FileUtils.readText(indexFile.toFile()), Index.class);
+                index = JsonUtils.fromNonNullJson(FileUtils.readText(indexFile.toFile()), Index.class);
             else
                 index = new Index();
         } catch (IOException | JsonParseException e) {
@@ -214,7 +217,7 @@ public class DefaultCacheRepository extends CacheRepository {
      *     // assets and versions will not be included in index.
      * }
      */
-    private class Index {
+    private class Index implements Validation {
         private final Set<LibraryIndex> libraries;
 
         public Index() {
@@ -222,21 +225,28 @@ public class DefaultCacheRepository extends CacheRepository {
         }
 
         public Index(Set<LibraryIndex> libraries) {
-            this.libraries = libraries;
+            this.libraries = Objects.requireNonNull(libraries);
         }
 
+        @NotNull
         public Set<LibraryIndex> getLibraries() {
             return libraries;
         }
+
+        @Override
+        public void validate() throws JsonParseException, TolerableValidationException {
+            if (libraries == null)
+                throw new JsonParseException("Index.libraries cannot be null");
+        }
     }
 
-    private class LibraryIndex {
+    private class LibraryIndex implements Validation {
         private final String name;
         private final String hash;
         private final String type;
 
         public LibraryIndex() {
-            this(null, null, null);
+            this("", "", "");
         }
 
         public LibraryIndex(String name, String hash, String type) {
@@ -245,16 +255,25 @@ public class DefaultCacheRepository extends CacheRepository {
             this.type = type;
         }
 
+        @NotNull
         public String getName() {
             return name;
         }
 
+        @NotNull
         public String getHash() {
             return hash;
         }
 
+        @NotNull
         public String getType() {
             return type;
+        }
+
+        @Override
+        public void validate() throws JsonParseException, TolerableValidationException {
+            if (name == null || hash == null || type == null)
+                throw new JsonParseException("Index.LibraryIndex.* cannot be null");
         }
 
         @Override
