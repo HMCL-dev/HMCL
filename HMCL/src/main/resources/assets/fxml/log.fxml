@@ -1,20 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXCheckBox?>
 <?import com.jfoenix.controls.JFXComboBox?>
-<?import javafx.collections.FXCollections?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.web.WebView?>
 <?import java.lang.String?>
-<fx:root xmlns="http://javafx.com/javafx"
-         xmlns:fx="http://javafx.com/fxml"
-         type="StackPane"
-         style="-fx-background-color: white; -fx-padding: 3 0 3 0;">
+<?import javafx.collections.FXCollections?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.web.WebView?>
+
+<fx:root style="-fx-background-color: white; -fx-padding: 3 0 3 0;" type="StackPane" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
     <VBox spacing="3">
             <BorderPane style="-fx-padding: 0 3 0 3;">
                 <left>
-                    <HBox alignment="CENTER_LEFT" style="-fx-padding: 0 0 0 4;" spacing="3">
+                    <HBox alignment="CENTER_LEFT" spacing="3" style="-fx-padding: 0 0 0 4;">
                         <Label text="%logwindow.show_lines" />
                         <JFXComboBox fx:id="cboLines">
                             <items>
@@ -29,19 +33,19 @@
                 </left>
                 <right>
                     <HBox spacing="3">
-                        <ToggleButton styleClass="log-toggle" style="-fx-background-color: #F7A699;" fx:id="btnFatals" text="0 fatals" selected="true">
+                        <ToggleButton fx:id="btnFatals" selected="true" style="-fx-background-color: #F7A699;" styleClass="log-toggle" text="0 fatals">
                             <toggleGroup><ToggleGroup /></toggleGroup>
                         </ToggleButton>
-                        <ToggleButton styleClass="log-toggle" style="-fx-background-color: #FFCCBB;" fx:id="btnErrors" text="0 errors" selected="true">
+                        <ToggleButton fx:id="btnErrors" selected="true" style="-fx-background-color: #FFCCBB;" styleClass="log-toggle" text="0 errors">
                             <toggleGroup><ToggleGroup /></toggleGroup>
                         </ToggleButton>
-                        <ToggleButton styleClass="log-toggle" style="-fx-background-color: #FFEECC;" fx:id="btnWarns" text="0 warns" selected="true">
+                        <ToggleButton fx:id="btnWarns" selected="true" style="-fx-background-color: #FFEECC;" styleClass="log-toggle" text="0 warns">
                             <toggleGroup><ToggleGroup /></toggleGroup>
                         </ToggleButton>
-                        <ToggleButton styleClass="log-toggle" style="-fx-background-color: #FBFBFB;" fx:id="btnInfos" text="0 infos" selected="true">
+                        <ToggleButton fx:id="btnInfos" selected="true" style="-fx-background-color: #FBFBFB;" styleClass="log-toggle" text="0 infos">
                             <toggleGroup><ToggleGroup /></toggleGroup>
                         </ToggleButton>
-                        <ToggleButton styleClass="log-toggle" style="-fx-background-color: #EEE9E0;" fx:id="btnDebugs" text="0 debugs" selected="true">
+                        <ToggleButton fx:id="btnDebugs" selected="true" style="-fx-background-color: #EEE9E0;" styleClass="log-toggle" text="0 debugs">
                             <toggleGroup><ToggleGroup /></toggleGroup>
                         </ToggleButton>
                     </HBox>
@@ -50,7 +54,8 @@
             <StackPane style="-fx-border: 1 0 1 0; -fx-border-color: #dddddd;" VBox.vgrow="ALWAYS">
                 <WebView fx:id="webView" />
             </StackPane>
-            <HBox alignment="CENTER_RIGHT" style="-fx-padding: 0 3 0 3;" spacing="3">
+            <HBox alignment="CENTER_RIGHT" spacing="3" style="-fx-padding: 0 3 0 3;">
+                <JFXCheckBox fx:id="autoscroll" selected="true" text="%logwindow.autoscroll" />
                 <JFXButton onMouseClicked="#onTerminateGame" text="%logwindow.terminate_game" />
                 <JFXButton onMouseClicked="#onClear" text="%button.clear" />
             </HBox>

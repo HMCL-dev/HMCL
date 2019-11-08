@@ -17,12 +17,14 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.controls.JFXCheckBox;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.StackPane;
@@ -122,7 +124,8 @@ public final class LogWindow extends Stage {
         pre.setTextContent(line);
         div.appendChild(pre);
         impl.body.appendChild(div);
-        impl.engine.executeScript("checkNewLog(\"" + level.name().toLowerCase() + "\");scrollToBottom();");
+        //impl.engine.executeScript("checkNewLog(\"" + level.name().toLowerCase() + "\");scrollToBottom();");
+        impl.engine.executeScript("checkNewLog(\"" + level.name().toLowerCase() + "\");" + (impl.autoscroll.isSelected() ? "scrollToBottom();" : ""));
 
         switch (level) {
             case FATAL:
@@ -166,6 +169,8 @@ public final class LogWindow extends Stage {
         private ToggleButton btnDebugs;
         @FXML
         private ComboBox<String> cboLines;
+        @FXML
+        private CheckBox autoscroll;
 
         final WebEngine engine;
         Node body;
