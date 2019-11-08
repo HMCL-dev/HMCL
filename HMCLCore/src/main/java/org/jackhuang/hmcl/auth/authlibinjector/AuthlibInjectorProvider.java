@@ -17,10 +17,11 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
+import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilProvider;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
 
@@ -33,32 +34,40 @@ public class AuthlibInjectorProvider implements YggdrasilProvider {
     }
 
     @Override
-    public URL getAuthenticationURL() {
-        return NetworkUtils.toURL(apiRoot + "authserver/authenticate");
+    public URL getAuthenticationURL() throws AuthenticationException {
+        return toURL(apiRoot + "authserver/authenticate");
     }
 
     @Override
-    public URL getRefreshmentURL() {
-        return NetworkUtils.toURL(apiRoot + "authserver/refresh");
+    public URL getRefreshmentURL() throws AuthenticationException {
+        return toURL(apiRoot + "authserver/refresh");
     }
 
     @Override
-    public URL getValidationURL() {
-        return NetworkUtils.toURL(apiRoot + "authserver/validate");
+    public URL getValidationURL() throws AuthenticationException {
+        return toURL(apiRoot + "authserver/validate");
     }
 
     @Override
-    public URL getInvalidationURL() {
-        return NetworkUtils.toURL(apiRoot + "authserver/invalidate");
+    public URL getInvalidationURL() throws AuthenticationException {
+        return toURL(apiRoot + "authserver/invalidate");
     }
 
     @Override
-    public URL getProfilePropertiesURL(UUID uuid) {
-        return NetworkUtils.toURL(apiRoot + "sessionserver/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid));
+    public URL getProfilePropertiesURL(UUID uuid) throws AuthenticationException {
+        return toURL(apiRoot + "sessionserver/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid));
     }
 
     @Override
     public String toString() {
         return apiRoot;
+    }
+
+    private URL toURL(String url) throws AuthenticationException {
+        try {
+            return new URL(url);
+        } catch (MalformedURLException e) {
+            throw new AuthenticationException(e);
+        }
     }
 }

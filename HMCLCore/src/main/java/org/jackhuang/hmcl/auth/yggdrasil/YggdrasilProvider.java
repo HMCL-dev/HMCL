@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
+import org.jackhuang.hmcl.auth.AuthenticationException;
+
 import java.net.URL;
 import java.util.UUID;
 
@@ -25,14 +27,14 @@ import java.util.UUID;
  */
 public interface YggdrasilProvider {
 
-    URL getAuthenticationURL();
+    URL getAuthenticationURL() throws AuthenticationException;
 
-    URL getRefreshmentURL();
+    URL getRefreshmentURL() throws AuthenticationException;
 
-    URL getValidationURL();
+    URL getValidationURL() throws AuthenticationException;
 
-    URL getInvalidationURL();
+    URL getInvalidationURL() throws AuthenticationException;
 
-    URL getProfilePropertiesURL(UUID uuid);
+    URL getProfilePropertiesURL(UUID uuid) throws AuthenticationException;
 
 }
