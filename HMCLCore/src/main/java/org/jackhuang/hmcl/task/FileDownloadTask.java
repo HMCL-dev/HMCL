@@ -323,7 +323,7 @@ public class FileDownloadTask extends Task<Void> {
                 if (temp != null)
                     temp.toFile().delete();
                 exception = e;
-                Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", repeat times: " + repeat + 1, e);
+                Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", repeat times: " + (repeat + 1), e);
             } finally {
                 closeFiles();
             }

@@ -122,6 +122,8 @@ public class ModpackInstallWizardProvider implements WizardProvider {
     public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
         switch (step) {
             case 0:
+                return new ModpackSelectionPage(controller);
+            case 1:
                 return new ModpackPage(controller);
             default:
                 throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
