@@ -287,7 +287,8 @@ public class DefaultLauncher extends Launcher {
         Process process;
         try {
             ProcessBuilder builder = new ProcessBuilder(rawCommandLine).directory(runDirectory);
-            builder.environment().put("APPDATA", options.getGameDir().getAbsoluteFile().getParent());
+            String appdata = options.getGameDir().getAbsoluteFile().getParent();
+            if (appdata != null) builder.environment().put("APPDATA", appdata);
             process = builder.start();
         } catch (IOException e) {
             throw new ProcessCreationException(e);
