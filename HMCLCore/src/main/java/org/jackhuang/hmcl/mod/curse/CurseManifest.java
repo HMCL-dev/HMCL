@@ -113,7 +113,7 @@ public final class CurseManifest {
     }
 
     /**
-     * @param f the CurseForge modpack file.
+     * @param zip the CurseForge modpack file.
      * @throws IOException if the file is not a valid zip file.
      * @throws JsonParseException if the manifest.json is missing or malformed.
      * @return the manifest.

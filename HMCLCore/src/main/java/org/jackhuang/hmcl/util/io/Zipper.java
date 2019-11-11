@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.util.io;
 
 
+import org.jackhuang.hmcl.util.function.ExceptionalPredicate;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +27,6 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.function.Predicate;
 
 /**
  * Non thread-safe
@@ -67,7 +68,7 @@ public final class Zipper implements Closeable {
      * @param targetDir the path of the directory in this zip file.
      * @param filter  returns false if you do not want that file or directory
      */
-    public void putDirectory(Path source, String targetDir, Predicate<String> filter) throws IOException {
+    public void putDirectory(Path source, String targetDir, ExceptionalPredicate<String, IOException> filter) throws IOException {
         Path root = fs.getPath(targetDir);
         Files.createDirectories(root);
         Files.walkFileTree(source, new SimpleFileVisitor<Path>() {

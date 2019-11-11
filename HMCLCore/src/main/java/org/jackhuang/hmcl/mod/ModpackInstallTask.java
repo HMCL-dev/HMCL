@@ -40,6 +40,15 @@ public class ModpackInstallTask<T> extends Task<Void> {
     private final List<ModpackConfiguration.FileInformation> overrides;
     private final Predicate<String> callback;
 
+    /**
+     * Constructor
+     * @param modpackFile a zip file
+     * @param dest destination to store unpacked files
+     * @param charset charset of the zip file
+     * @param subDirectory the subdirectory of zip file to unpack
+     * @param callback test whether the file (given full path) in zip file should be unpacked or not
+     * @param oldConfiguration old modpack information if upgrade
+     */
     public ModpackInstallTask(File modpackFile, File dest, Charset charset, String subDirectory, Predicate<String> callback, ModpackConfiguration<T> oldConfiguration) {
         this.modpackFile = modpackFile;
         this.dest = dest;

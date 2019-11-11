@@ -34,13 +34,15 @@ public final class ModpackTypeSelectionPage extends StackPane implements WizardP
     private JFXButton btnHMCL;
     @FXML
     private JFXButton btnMultiMC;
+    @FXML
+    private JFXButton btnServer;
 
     public ModpackTypeSelectionPage(WizardController controller) {
         this.controller = controller;
         FXUtils.loadFXML(this, "/assets/fxml/modpack/type.fxml");
 
-        JFXButton[] buttons = new JFXButton[]{btnHMCL, btnMultiMC};
-        String[] types = new String[]{MODPACK_TYPE_HMCL, MODPACK_TYPE_MULTIMC};
+        JFXButton[] buttons = new JFXButton[]{btnHMCL, btnMultiMC, btnServer};
+        String[] types = new String[]{MODPACK_TYPE_HMCL, MODPACK_TYPE_MULTIMC, MODPACK_TYPE_SERVER};
         for (int i = 0; i < types.length; ++i) {
             String type = types[i];
             buttons[i].setOnMouseClicked(e -> {
@@ -61,6 +63,7 @@ public final class ModpackTypeSelectionPage extends StackPane implements WizardP
 
     public static final String MODPACK_TYPE = "modpack.type";
 
-    public static final String MODPACK_TYPE_MULTIMC = "multimc";
     public static final String MODPACK_TYPE_HMCL = "hmcl";
+    public static final String MODPACK_TYPE_MULTIMC = "multimc";
+    public static final String MODPACK_TYPE_SERVER = "server";
 }

@@ -25,6 +25,8 @@ import org.jackhuang.hmcl.mod.curse.CurseInstallTask;
 import org.jackhuang.hmcl.mod.curse.CurseManifest;
 import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
+import org.jackhuang.hmcl.mod.server.ServerModpackInstallTask;
+import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -63,6 +65,12 @@ public final class ModpackHelper {
             return MultiMCInstanceConfiguration.readMultiMCModpackManifest(file, charset);
         } catch (Exception e) {
             // ignore it, not a valid MultiMC modpack.
+        }
+
+        try {
+            return ServerModpackManifest.readManifest(file, charset);
+        } catch (Exception e) {
+            // ignore it, not a valid Server modpack.
         }
 
         throw new UnsupportedModpackException(file.toString());
@@ -120,7 +128,10 @@ public final class ModpackHelper {
             return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, modpack, ((MultiMCInstanceConfiguration) modpack.getManifest()), name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
-        else throw new IllegalArgumentException("Unrecognized modpack: " + modpack);
+        else if (modpack.getManifest() instanceof ServerModpackManifest)
+            return new ServerModpackInstallTask(profile.getDependency(), zipFile, modpack, ((ServerModpackManifest) modpack.getManifest()), name)
+                    .whenComplete(Schedulers.defaultScheduler(), success, failure);
+        else throw new IllegalArgumentException("Unrecognized modpack: " + modpack.getManifest());
     }
 
     public static Task<Void> getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, MismatchedModpackTypeException {

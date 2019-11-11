@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
+import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Profile;
@@ -74,6 +75,8 @@ public final class ExportWizardProvider implements WizardProvider {
                 return exportAsHMCL(whitelist, modpackFile, modpackName, modpackAuthor, modpackVersion, modpackDescription, includeLauncher);
             case ModpackTypeSelectionPage.MODPACK_TYPE_MULTIMC:
                 return exportAsMultiMC(whitelist, modpackFile, modpackName, modpackAuthor, modpackVersion, modpackDescription);
+            case ModpackTypeSelectionPage.MODPACK_TYPE_SERVER:
+                return exportAsServer(whitelist, modpackFile, modpackName, modpackAuthor, modpackVersion, modpackDescription);
             default:
                 throw new IllegalStateException("Unrecognized modpack type " + modpackType);
         }
@@ -177,7 +180,22 @@ public final class ExportWizardProvider implements WizardProvider {
         };
     }
 
-    @Override
+    private Task<?> exportAsServer(List<String> whitelist, File modpackFile, String modpackName, String modpackAuthor, String modpackVersion, String modpackDescription) {
+        return new Task<Void>() {
+            Task<?> dependency;
+
+            @Override
+            public void execute() {
+                dependency = new ServerModpackExportTask(profile.getRepository(), version, whitelist, modpackName, modpackAuthor, modpackVersion, modpackDescription, modpackFile);
+            }
+
+            @Override
+            public Collection<Task<?>> getDependencies() {
+                return Collections.singleton(dependency);
+            }
+        };
+    }
+            @Override
     public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
         switch (step) {
             case 0: return new ModpackInfoPage(controller, version);

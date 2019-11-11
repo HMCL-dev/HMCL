@@ -62,10 +62,10 @@ public final class MinecraftInstanceTask<T> extends Task<Void> {
             Path root = fs.getPath(subDirectory);
 
             if (Files.exists(root))
-                Files.walkFileTree(fs.getPath(subDirectory), new SimpleFileVisitor<Path>() {
+                Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                     @Override
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                        String relativePath = root.relativize(file).normalize().toString();
+                        String relativePath = root.relativize(file).normalize().toString().replace(File.separatorChar, '/');
                         overrides.add(new ModpackConfiguration.FileInformation(relativePath, encodeHex(digest("SHA-1", file))));
                         return FileVisitResult.CONTINUE;
                     }

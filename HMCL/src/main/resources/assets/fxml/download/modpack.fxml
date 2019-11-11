@@ -24,7 +24,7 @@
                 <BorderPane><left><Label text="%archive.version"/></left><right><Label fx:id="lblVersion" /></right></BorderPane>
                 <BorderPane><left><Label text="%archive.author"/></left><right><Label fx:id="lblAuthor" /></right></BorderPane>
                 <BorderPane>
-                    <left><JFXButton fx:id="btnDescription" onMouseClicked="#onDescribe" text="%modpack.wizard.step.3" styleClass="jfx-button-border" /></left>
+                    <left><JFXButton fx:id="btnDescription" onMouseClicked="#onDescribe" text="%modpack.description" styleClass="jfx-button-border" /></left>
                     <right><JFXButton buttonType="RAISED" fx:id="btnInstall" onMouseClicked="#onInstall" text="%button.install" styleClass="jfx-button-raised" /></right>
                 </BorderPane>
             </ComponentList>

@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.mod;
 
 import java.nio.charset.Charset;
+import java.util.List;
 
 /**
  *
@@ -84,5 +85,17 @@ public final class Modpack {
 
     public Modpack setManifest(Object manifest) {
         return new Modpack(name, author, version, gameVersion, description, encoding, manifest);
+    }
+
+    public static boolean acceptFile(String path, List<String> blackList, List<String> whiteList) {
+        if (path.isEmpty())
+            return true;
+        for (String s : blackList)
+            if (path.equals(s))
+                return false;
+        for (String s : whiteList)
+            if (path.equals(s))
+                return true;
+        return false;
     }
 }

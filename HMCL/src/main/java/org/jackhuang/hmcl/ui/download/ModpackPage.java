@@ -151,7 +151,7 @@ public final class ModpackPage extends StackPane implements WizardPage {
         if (manifest != null) {
             WebStage stage = new WebStage();
             stage.getWebView().getEngine().loadContent(manifest.getDescription());
-            stage.setTitle(i18n("modpack.wizard.step.3"));
+            stage.setTitle(i18n("modpack.description"));
             stage.showAndWait();
         }
     }

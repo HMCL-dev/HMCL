@@ -52,7 +52,6 @@ public final class CurseCompletionTask extends Task<Void> {
     private final ModManager modManager;
     private final String version;
     private CurseManifest manifest;
-    private final List<Task<?>> dependents = new LinkedList<>();
     private final List<Task<?>> dependencies = new LinkedList<>();
 
     /**
@@ -92,11 +91,6 @@ public final class CurseCompletionTask extends Task<Void> {
     @Override
     public Collection<Task<?>> getDependencies() {
         return dependencies;
-    }
-
-    @Override
-    public Collection<Task<?>> getDependents() {
-        return dependents;
     }
 
     @Override

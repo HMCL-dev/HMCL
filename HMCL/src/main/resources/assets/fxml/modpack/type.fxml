@@ -37,5 +37,17 @@
                 </BorderPane>
             </graphic>
         </JFXButton>
+        <JFXButton fx:id="btnServer" prefWidth="${list.width}">
+            <graphic>
+                <BorderPane mouseTransparent="true">
+                    <left>
+                        <TwoLineListItem title="%modpack.type.server" subtitle="%modpack.type.server.export" />
+                    </left>
+                    <right>
+                        <fx:include BorderPane.alignment="CENTER" source="/assets/svg/arrow-right.fxml"/>
+                    </right>
+                </BorderPane>
+            </graphic>
+        </JFXButton>
     </VBox>
 </fx:root>

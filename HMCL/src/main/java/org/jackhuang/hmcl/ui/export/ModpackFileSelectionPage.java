@@ -156,6 +156,7 @@ public final class ModpackFileSelectionPage extends StackPane implements WizardP
 
     public static final String MODPACK_FILE_SELECTION = "modpack.accepted";
     private static final Map<String, String> TRANSLATION = mapOf(
+            pair("minecraft/hmclversion.cfg", i18n("modpack.files.hmclversion_cfg")),
             pair("minecraft/servers.dat", i18n("modpack.files.servers_dat")),
             pair("minecraft/saves", i18n("modpack.files.saves")),
             pair("minecraft/mods", i18n("modpack.files.mods")),

@@ -55,7 +55,7 @@ public final class ModpackSelectionPage extends StackPane implements WizardPage 
         Optional<File> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), File.class);
         if (filePath.isPresent()) {
             controller.getSettings().put(MODPACK_FILE, filePath.get());
-            controller.onNext();
+            Platform.runLater(controller::onNext);
         }
 
         FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
