@@ -146,7 +146,7 @@ public final class ModpackFileSelectionPage extends StackPane implements WizardP
         LinkedList<String> list = new LinkedList<>();
         getFilesNeeded(rootNode, "minecraft", list);
         controller.getSettings().put(MODPACK_FILE_SELECTION, list);
-        controller.onNext();
+        controller.onFinish();
     }
 
     @Override

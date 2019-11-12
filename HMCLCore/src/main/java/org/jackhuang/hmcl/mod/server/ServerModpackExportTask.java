@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 
@@ -48,8 +49,9 @@ public class ServerModpackExportTask extends Task<Void> {
     private final String modpackAuthor;
     private final String modpackVersion;
     private final String modpackDescription;
+    private final String modpackFileApi;
 
-    public ServerModpackExportTask(DefaultGameRepository repository, String versionId, List<String> whitelist, String modpackName, String modpackAuthor, String modpackVersion, String modpackDescription, File output) {
+    public ServerModpackExportTask(DefaultGameRepository repository, String versionId, List<String> whitelist, String modpackName, String modpackAuthor, String modpackVersion, String modpackDescription, String modpackFileApi, File output) {
         this.repository = repository;
         this.versionId = versionId;
         this.whitelist = whitelist;
@@ -58,6 +60,7 @@ public class ServerModpackExportTask extends Task<Void> {
         this.modpackAuthor = modpackAuthor;
         this.modpackVersion = modpackVersion;
         this.modpackDescription = modpackDescription;
+        this.modpackFileApi = modpackFileApi;
 
         onDone().register(event -> {
             if (event.isFailed()) output.delete();
@@ -73,7 +76,7 @@ public class ServerModpackExportTask extends Task<Void> {
         try (Zipper zip = new Zipper(output.toPath())) {
             Path runDirectory = repository.getRunDirectory(versionId).toPath();
             List<ModpackConfiguration.FileInformation> files = new ArrayList<>();
-            zip.putDirectory(runDirectory, ".minecraft", path -> {
+            zip.putDirectory(runDirectory, "overrides", path -> {
                 if (Modpack.acceptFile(path, blackList, whitelist)) {
                     Path file = runDirectory.resolve(path);
                     if (Files.isRegularFile(file)) {
@@ -99,7 +102,7 @@ public class ServerModpackExportTask extends Task<Void> {
                     addons.add(new ServerModpackManifest.Addon(OPTIFINE.getPatchId(), optifineVersion)));
             analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->
                     addons.add(new ServerModpackManifest.Addon(FABRIC.getPatchId(), fabricVersion)));
-            ServerModpackManifest manifest = new ServerModpackManifest(modpackName, modpackAuthor, modpackVersion, modpackDescription, "", files, addons);
+            ServerModpackManifest manifest = new ServerModpackManifest(modpackName, modpackAuthor, modpackVersion, modpackDescription, StringUtils.removeSuffix(modpackFileApi, "/"), files, addons);
             zip.putTextFile(JsonUtils.GSON.toJson(manifest), "server-manifest.json");
         }
     }

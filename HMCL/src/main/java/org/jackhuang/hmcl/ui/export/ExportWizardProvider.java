@@ -65,6 +65,7 @@ public final class ExportWizardProvider implements WizardProvider {
         File modpackFile = (File) settings.get(ModpackInfoPage.MODPACK_FILE);
         String modpackName = (String) settings.get(ModpackInfoPage.MODPACK_NAME);
         String modpackAuthor = (String) settings.get(ModpackInfoPage.MODPACK_AUTHOR);
+        String modpackFileApi = (String) settings.get(ModpackInfoPage.MODPACK_FILE_API);
         String modpackVersion = (String) settings.get(ModpackInfoPage.MODPACK_VERSION);
         String modpackDescription = (String) settings.get(ModpackInfoPage.MODPACK_DESCRIPTION);
         String modpackType = (String) settings.get(ModpackTypeSelectionPage.MODPACK_TYPE);
@@ -76,7 +77,7 @@ public final class ExportWizardProvider implements WizardProvider {
             case ModpackTypeSelectionPage.MODPACK_TYPE_MULTIMC:
                 return exportAsMultiMC(whitelist, modpackFile, modpackName, modpackAuthor, modpackVersion, modpackDescription);
             case ModpackTypeSelectionPage.MODPACK_TYPE_SERVER:
-                return exportAsServer(whitelist, modpackFile, modpackName, modpackAuthor, modpackVersion, modpackDescription);
+                return exportAsServer(whitelist, modpackFile, modpackName, modpackAuthor, modpackVersion, modpackDescription, modpackFileApi);
             default:
                 throw new IllegalStateException("Unrecognized modpack type " + modpackType);
         }
@@ -180,13 +181,13 @@ public final class ExportWizardProvider implements WizardProvider {
         };
     }
 
-    private Task<?> exportAsServer(List<String> whitelist, File modpackFile, String modpackName, String modpackAuthor, String modpackVersion, String modpackDescription) {
+    private Task<?> exportAsServer(List<String> whitelist, File modpackFile, String modpackName, String modpackAuthor, String modpackVersion, String modpackDescription, String modpackFileApi) {
         return new Task<Void>() {
             Task<?> dependency;
 
             @Override
             public void execute() {
-                dependency = new ServerModpackExportTask(profile.getRepository(), version, whitelist, modpackName, modpackAuthor, modpackVersion, modpackDescription, modpackFile);
+                dependency = new ServerModpackExportTask(profile.getRepository(), version, whitelist, modpackName, modpackAuthor, modpackVersion, modpackDescription, modpackFileApi, modpackFile);
             }
 
             @Override
@@ -198,9 +199,9 @@ public final class ExportWizardProvider implements WizardProvider {
             @Override
     public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
         switch (step) {
-            case 0: return new ModpackInfoPage(controller, version);
-            case 1: return new ModpackFileSelectionPage(controller, profile, version, ModAdviser::suggestMod);
-            case 2: return new ModpackTypeSelectionPage(controller);
+            case 0: return new ModpackTypeSelectionPage(controller);
+            case 1: return new ModpackInfoPage(controller, version);
+            case 2: return new ModpackFileSelectionPage(controller, profile, version, ModAdviser::suggestMod);
             default: throw new IllegalArgumentException("step");
         }
     }

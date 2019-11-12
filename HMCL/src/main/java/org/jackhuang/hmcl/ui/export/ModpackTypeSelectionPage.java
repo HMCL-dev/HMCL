@@ -47,7 +47,7 @@ public final class ModpackTypeSelectionPage extends StackPane implements WizardP
             String type = types[i];
             buttons[i].setOnMouseClicked(e -> {
                 controller.getSettings().put(MODPACK_TYPE, type);
-                controller.onFinish();
+                controller.onNext();
             });
         }
     }
