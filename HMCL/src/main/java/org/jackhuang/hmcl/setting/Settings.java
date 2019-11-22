@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.setting;
 
 import javafx.beans.binding.Bindings;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -45,19 +44,11 @@ public class Settings {
     }
 
     private Settings() {
-        AuthlibInjectorServers.init();
-
-        if (ConfigHolder.isNewlyCreated() && !AuthlibInjectorServers.getConfigInstance().getUrls().isEmpty()) {
-            config().setPreferredLoginType(Accounts.getLoginType(Accounts.FACTORY_AUTHLIB_INJECTOR));
-            AuthlibInjectorServers.getConfigInstance().getUrls().stream()
-                    .map(AuthlibInjectorServer::new)
-                    .forEach(config().getAuthlibInjectorServers()::add);
-        }
-
         DownloadProviders.init();
         ProxyManager.init();
         Accounts.init();
         Profiles.init();
+        AuthlibInjectorServers.init();
 
         CacheRepository.setInstance(HMCLCacheRepository.REPOSITORY);
         HMCLCacheRepository.REPOSITORY.directoryProperty().bind(Bindings.createStringBinding(() -> {

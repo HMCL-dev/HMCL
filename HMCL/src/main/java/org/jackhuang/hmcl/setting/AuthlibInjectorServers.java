@@ -18,6 +18,9 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -30,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class AuthlibInjectorServers implements Validation {
@@ -68,6 +72,15 @@ public class AuthlibInjectorServers implements Validation {
                 configInstance = JsonUtils.GSON.fromJson(content, AuthlibInjectorServers.class);
             } catch (IOException | JsonParseException e) {
                 LOG.log(Level.WARNING, "Malformed authlib-injectors.json", e);
+            }
+        }
+
+        if (ConfigHolder.isNewlyCreated() && !AuthlibInjectorServers.getConfigInstance().getUrls().isEmpty()) {
+            config().setPreferredLoginType(Accounts.getLoginType(Accounts.FACTORY_AUTHLIB_INJECTOR));
+            for (String url : AuthlibInjectorServers.getConfigInstance().getUrls()) {
+                Task.supplyAsync(Schedulers.io(), () -> AuthlibInjectorServer.locateServer(url))
+                        .thenAcceptAsync(Schedulers.javafx(), server -> config().getAuthlibInjectorServers().add(server))
+                        .start();
             }
         }
     }
