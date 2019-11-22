@@ -113,8 +113,9 @@ public class ServerModpackCompletionTask extends Task<Void> {
                 // If old modpack does not have this entry, download it
                 download = true;
             } else if (!Files.exists(actualPath)) {
-                // If both old and new modpacks have this entry, but the file is deleted by user, leave it missing.
-                download = false;
+                // If both old and new modpacks have this entry, but the file is missing...
+                // Re-download it since network problem may cause file missing
+                download = true;
             } else {
                 // If user modified this entry file, we will not replace this file since this modified file is that user expects.
                 String fileHash = encodeHex(digest("SHA-1", Files.newInputStream(actualPath)));
