@@ -19,22 +19,15 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
-
 import javafx.beans.InvalidationListener;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-
+import javafx.beans.property.*;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.LaunchOptions;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.io.File;
 import java.io.IOException;
@@ -476,13 +469,20 @@ public final class VersionSetting {
     }
 
     public JavaVersion getJavaVersion() throws InterruptedException {
+        return getJavaVersion(true);
+    }
+
+    public JavaVersion getJavaVersion(boolean checkJava) throws InterruptedException {
         // TODO: lazy initialization may result in UI suspension.
         if (StringUtils.isBlank(getJava()))
             setJava(StringUtils.isBlank(getJavaDir()) ? "Default" : "Custom");
         if ("Default".equals(getJava())) return JavaVersion.fromCurrentEnvironment();
         else if (isUsesCustomJavaDir()) {
             try {
-                return JavaVersion.fromExecutable(Paths.get(getJavaDir()));
+                if (checkJava)
+                    return JavaVersion.fromExecutable(Paths.get(getJavaDir()));
+                else
+                    return new JavaVersion(Paths.get(getJavaDir()), "", Platform.PLATFORM);
             } catch (IOException | InvalidPathException e) {
                 return null; // Custom Java Directory not found,
             }
@@ -532,8 +532,8 @@ public final class VersionSetting {
         defaultJavaPathProperty.addListener(listener);
     }
 
-    public LaunchOptions toLaunchOptions(File gameDir) throws InterruptedException {
-        JavaVersion javaVersion = Optional.ofNullable(getJavaVersion()).orElse(JavaVersion.fromCurrentEnvironment());
+    public LaunchOptions toLaunchOptions(File gameDir, boolean checkJava) throws InterruptedException {
+        JavaVersion javaVersion = Optional.ofNullable(getJavaVersion(checkJava)).orElse(JavaVersion.fromCurrentEnvironment());
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
                 .setGameDir(gameDir)
                 .setJava(javaVersion)
