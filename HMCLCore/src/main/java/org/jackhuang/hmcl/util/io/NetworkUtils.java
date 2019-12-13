@@ -198,8 +198,8 @@ public final class NetworkUtils {
 
     public static URL toURL(String str) {
         try {
-            return new URL(str);
-        } catch (MalformedURLException e) {
+            return new URL(URLEncoder.encode(str, "UTF-8"));
+        } catch (MalformedURLException | UnsupportedEncodingException e) {
             throw new IllegalArgumentException(e);
         }
     }
