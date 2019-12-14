@@ -36,26 +36,22 @@ public final class NetworkUtils {
     }
 
     public static String withQuery(String baseUrl, Map<String, String> params) {
-        try {
-            StringBuilder sb = new StringBuilder(baseUrl);
-            boolean first = true;
-            for (Entry<String, String> param : params.entrySet()) {
-                if (param.getValue() == null)
-                    continue;
-                if (first) {
-                    sb.append('?');
-                    first = false;
-                } else {
-                    sb.append('&');
-                }
-                sb.append(URLEncoder.encode(param.getKey(), "UTF-8"));
-                sb.append('=');
-                sb.append(URLEncoder.encode(param.getValue(), "UTF-8"));
+        StringBuilder sb = new StringBuilder(baseUrl);
+        boolean first = true;
+        for (Entry<String, String> param : params.entrySet()) {
+            if (param.getValue() == null)
+                continue;
+            if (first) {
+                sb.append('?');
+                first = false;
+            } else {
+                sb.append('&');
             }
-            return sb.toString();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            sb.append(encodeURL(param.getKey()));
+            sb.append('=');
+            sb.append(encodeURL(param.getValue()));
         }
+        return sb.toString();
     }
 
     public static HttpURLConnection createConnection(URL url) throws IOException {
@@ -198,8 +194,8 @@ public final class NetworkUtils {
 
     public static URL toURL(String str) {
         try {
-            return new URL(URLEncoder.encode(str, "UTF-8"));
-        } catch (MalformedURLException | UnsupportedEncodingException e) {
+            return new URL(str);
+        } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e);
         }
     }

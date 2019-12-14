@@ -237,7 +237,7 @@ public class FileDownloadTask extends Task<Void> {
                 }
 
                 int contentLength = con.getContentLength();
-                if (contentLength < 1)
+                if (contentLength < 0)
                     throw new IOException("The content length is invalid.");
 
                 if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))

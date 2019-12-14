@@ -89,7 +89,7 @@ public final class GetTask extends Task<String> {
                 updateProgress(0);
                 HttpURLConnection conn = NetworkUtils.createConnection(url);
                 if (checkETag) repository.injectConnection(conn);
-                conn.connect();
+                conn = NetworkUtils.resolveConnection(conn);
 
                 if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
                     // Handle cache
