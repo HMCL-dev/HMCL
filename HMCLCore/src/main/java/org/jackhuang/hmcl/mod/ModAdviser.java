@@ -20,11 +20,19 @@ package org.jackhuang.hmcl.mod;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author huangyuhui
  */
 public interface ModAdviser {
+
+    /**
+     * Suggests the file should be displayed, hidden, or included by default.
+     * @param fileName full path of fileName
+     * @param isDirectory whether the path is directory
+     * @return the suggestion to the file
+     */
     ModSuggestion advise(String fileName, boolean isDirectory);
 
     enum ModSuggestion {
@@ -34,15 +42,15 @@ public interface ModAdviser {
     }
 
     List<String> MODPACK_BLACK_LIST = Lang.immutableListOf(
+            "regex:(.*?)\\.log",
             "usernamecache.json", "usercache.json", // Minecraft
             "launcher_profiles.json", "launcher.pack.lzma", // Minecraft Launcher
-            "pack.json", "launcher.jar", "hmclmc.log", "cache", "modpack.cfg", // HMCL
+            "pack.json", "launcher.jar", "cache", "modpack.cfg", // HMCL
             "manifest.json", "minecraftinstance.json", ".curseclient", // Curse
-            "minetweaker.log", // Mods
             ".fabric", ".mixin.out", // Fabric
             "jars", "logs", "versions", "assets", "libraries", "crash-reports", "NVIDIA", "AMD", "screenshots", "natives", "native", "$native", "server-resource-packs", // Minecraft
             "downloads", // Curse
-            "asm", "backups", "TCNodeTracker", "CustomDISkins", "data" // Mods
+            "asm", "backups", "TCNodeTracker", "CustomDISkins", "data", "CustomSkinLoader/caches" // Mods
     );
 
     List<String> MODPACK_SUGGESTED_BLACK_LIST = Lang.immutableListOf(
@@ -68,8 +76,15 @@ public interface ModAdviser {
             if (isDirectory) {
                 if (fileName.startsWith(s + "/"))
                     return true;
-            } else if (fileName.equals(s))
-                return true;
+            } else {
+                if (s.startsWith("regex:")) {
+                    if (fileName.matches(s.substring("regex:".length())))
+                        return true;
+                } else {
+                    if (fileName.equals(s))
+                        return true;
+                }
+            }
         return false;
     }
 }
