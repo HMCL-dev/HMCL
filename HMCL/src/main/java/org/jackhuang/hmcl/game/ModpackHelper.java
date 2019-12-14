@@ -25,8 +25,9 @@ import org.jackhuang.hmcl.mod.curse.CurseInstallTask;
 import org.jackhuang.hmcl.mod.curse.CurseManifest;
 import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
-import org.jackhuang.hmcl.mod.server.ServerModpackInstallTask;
+import org.jackhuang.hmcl.mod.server.ServerModpackLocalInstallTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
+import org.jackhuang.hmcl.mod.server.ServerModpackRemoteInstallTask;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -99,6 +100,29 @@ public final class ModpackHelper {
             throw new UnsupportedModpackException();
     }
 
+    public static Task<Void> getInstallTask(Profile profile, ServerModpackManifest manifest, String name, Modpack modpack) {
+        profile.getRepository().markVersionAsModpack(name);
+
+        ExceptionalRunnable<?> success = () -> {
+            HMCLGameRepository repository = profile.getRepository();
+            repository.refreshVersions();
+            VersionSetting vs = repository.specializeVersionSetting(name);
+            repository.undoMark(name);
+            if (vs != null)
+                vs.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
+        };
+
+        ExceptionalConsumer<Exception, ?> failure = ex -> {
+            if (ex instanceof CurseCompletionException && !(ex.getCause() instanceof FileNotFoundException)) {
+                success.run();
+                // This is tolerable and we will not delete the game
+            }
+        };
+
+        return new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name)
+                .whenComplete(Schedulers.defaultScheduler(), success, failure);
+    }
+
     public static Task<Void> getInstallTask(Profile profile, File zipFile, String name, Modpack modpack) {
         profile.getRepository().markVersionAsModpack(name);
 
@@ -129,7 +153,7 @@ public final class ModpackHelper {
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
         else if (modpack.getManifest() instanceof ServerModpackManifest)
-            return new ServerModpackInstallTask(profile.getDependency(), zipFile, modpack, ((ServerModpackManifest) modpack.getManifest()), name)
+            return new ServerModpackLocalInstallTask(profile.getDependency(), zipFile, modpack, ((ServerModpackManifest) modpack.getManifest()), name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure);
         else throw new IllegalArgumentException("Unrecognized modpack: " + modpack.getManifest());
     }

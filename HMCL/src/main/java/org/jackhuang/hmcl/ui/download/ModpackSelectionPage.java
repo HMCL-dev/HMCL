@@ -22,12 +22,15 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
@@ -38,7 +41,8 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.jackhuang.hmcl.ui.download.ModpackPage.MODPACK_FILE;
+import static org.jackhuang.hmcl.ui.download.LocalModpackPage.*;
+import static org.jackhuang.hmcl.ui.download.RemoteModpackPage.MODPACK_SERVER_MANIFEST;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -85,22 +89,40 @@ public final class ModpackSelectionPage extends StackPane implements WizardPage 
         Controllers.inputDialog(i18n("modpack.choose.remote.tooltip"), (urlString, resolve, reject) -> {
             try {
                 URL url = new URL(urlString);
-                Path modpack = Files.createTempFile("forge-installer", ".jar");
-                resolve.run();
+                if (urlString.endsWith("server-manifest.json")) {
+                    // if urlString ends with .json, we assume that the url is server-manifest.json
+                    Controllers.taskDialog(new GetTask(url).whenComplete(Schedulers.javafx(), (result, e) -> {
+                        ServerModpackManifest manifest = JsonUtils.fromMaybeMalformedJson(result, ServerModpackManifest.class);
+                        if (manifest == null) {
+                            reject.accept(i18n("modpack.type.server.malformed"));
+                        } else if (e == null) {
+                            resolve.run();
+                            controller.getSettings().put(MODPACK_SERVER_MANIFEST, manifest);
+                            controller.onNext();
+                        } else {
+                            reject.accept(e.getMessage());
+                        }
+                    }).executor(true), i18n("message.downloading"));
+                } else {
+                    // otherwise we still consider the file as modpack zip file
+                    // since casually the url may not ends with ".zip"
+                    Path modpack = Files.createTempFile("modpack", ".zip");
+                    resolve.run();
 
-                Controllers.taskDialog(
-                        new FileDownloadTask(url, modpack.toFile(), null)
-                                .whenComplete(Schedulers.javafx(), e -> {
-                                    if (e == null) {
-                                        resolve.run();
-                                        controller.getSettings().put(MODPACK_FILE, modpack.toFile());
-                                        controller.onNext();
-                                    } else {
-                                        reject.accept(e.getMessage());
-                                    }
-                                }).executor(true),
-                        i18n("message.downloading")
-                );
+                    Controllers.taskDialog(
+                            new FileDownloadTask(url, modpack.toFile(), null)
+                                    .whenComplete(Schedulers.javafx(), e -> {
+                                        if (e == null) {
+                                            resolve.run();
+                                            controller.getSettings().put(MODPACK_FILE, modpack.toFile());
+                                            controller.onNext();
+                                        } else {
+                                            reject.accept(e.getMessage());
+                                        }
+                                    }).executor(true),
+                            i18n("message.downloading")
+                    );
+                }
             } catch (IOException e) {
                 reject.accept(e.getMessage());
             }

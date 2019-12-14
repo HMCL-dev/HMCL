@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.mod.curse.CurseCompletionException;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
+import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -65,22 +66,24 @@ public class ModpackInstallWizardProvider implements WizardProvider {
     @Override
     public void start(Map<String, Object> settings) {
         if (file != null)
-            settings.put(ModpackPage.MODPACK_FILE, file);
+            settings.put(LocalModpackPage.MODPACK_FILE, file);
         if (updateVersion != null)
-            settings.put(ModpackPage.MODPACK_NAME, updateVersion);
+            settings.put(LocalModpackPage.MODPACK_NAME, updateVersion);
         settings.put(PROFILE, profile);
     }
 
     private Task<Void> finishModpackInstallingAsync(Map<String, Object> settings) {
-        if (!settings.containsKey(ModpackPage.MODPACK_FILE))
-            return null;
-
-        File selected = tryCast(settings.get(ModpackPage.MODPACK_FILE), File.class).orElse(null);
-        Modpack modpack = tryCast(settings.get(ModpackPage.MODPACK_MANIFEST), Modpack.class).orElse(null);
-        String name = tryCast(settings.get(ModpackPage.MODPACK_NAME), String.class).orElse(null);
-        if (selected == null || modpack == null || name == null) return null;
+        File selected = tryCast(settings.get(LocalModpackPage.MODPACK_FILE), File.class).orElse(null);
+        ServerModpackManifest serverModpackManifest = tryCast(settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST), ServerModpackManifest.class).orElse(null);
+        Modpack modpack = tryCast(settings.get(LocalModpackPage.MODPACK_MANIFEST), Modpack.class).orElse(null);
+        String name = tryCast(settings.get(LocalModpackPage.MODPACK_NAME), String.class).orElse(null);
+        if ((selected == null && serverModpackManifest == null) || modpack == null || name == null) return null;
 
         if (updateVersion != null) {
+            if (selected == null) {
+                Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
+                return null;
+            }
             try {
                 return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
             } catch (UnsupportedModpackException e) {
@@ -92,8 +95,13 @@ public class ModpackInstallWizardProvider implements WizardProvider {
             }
             return null;
         } else {
-            return ModpackHelper.getInstallTask(profile, selected, name, modpack)
-                    .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+            if (serverModpackManifest != null) {
+                return ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack)
+                        .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+            } else {
+                return ModpackHelper.getInstallTask(profile, selected, name, modpack)
+                        .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+            }
         }
     }
 
@@ -124,7 +132,12 @@ public class ModpackInstallWizardProvider implements WizardProvider {
             case 0:
                 return new ModpackSelectionPage(controller);
             case 1:
-                return new ModpackPage(controller);
+                if (controller.getSettings().containsKey(LocalModpackPage.MODPACK_FILE))
+                    return new LocalModpackPage(controller);
+                else if (controller.getSettings().containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST))
+                    return new RemoteModpackPage(controller);
+                else
+                    throw new IllegalArgumentException();
             default:
                 throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
         }

@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,16 +54,25 @@ public class ServerModpackCompletionTask extends Task<Void> {
     private final List<Task<?>> dependencies = new LinkedList<>();
 
     public ServerModpackCompletionTask(DefaultDependencyManager dependencyManager, String version) {
+        this(dependencyManager, version, null);
+    }
+
+    public ServerModpackCompletionTask(DefaultDependencyManager dependencyManager, String version, ModpackConfiguration<ServerModpackManifest> manifest) {
         this.repository = dependencyManager.getGameRepository();
         this.version = version;
 
-        try {
-            File manifestFile = repository.getModpackConfiguration(version);
-            if (manifestFile.exists())
-                this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), new TypeToken<ModpackConfiguration<ServerModpackManifest>>() {
-                }.getType());
-        } catch (Exception e) {
-            Logging.LOG.log(Level.WARNING, "Unable to read CurseForge modpack manifest.json", e);
+        if (manifest == null) {
+            try {
+                File manifestFile = repository.getModpackConfiguration(version);
+                if (manifestFile.exists()) {
+                    this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), new TypeToken<ModpackConfiguration<ServerModpackManifest>>() {
+                    }.getType());
+                }
+            } catch (Exception e) {
+                Logging.LOG.log(Level.WARNING, "Unable to read CurseForge modpack manifest.json", e);
+            }
+        } else {
+            this.manifest = manifest;
         }
     }
 
@@ -125,7 +135,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
 
             if (download) {
                 dependencies.add(new FileDownloadTask(
-                        new URL(remoteManifest.getFileApi() + "/overrides/" + file.getPath()),
+                        new URL(remoteManifest.getFileApi() + "/overrides/" + NetworkUtils.encodeLocation(file.getPath())),
                         actualPath.toFile(),
                         new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash())));
             }

@@ -35,7 +35,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ServerModpackInstallTask extends Task<Void> {
+public class ServerModpackLocalInstallTask extends Task<Void> {
 
     private final File zipFile;
     private final Modpack modpack;
@@ -45,7 +45,7 @@ public class ServerModpackInstallTask extends Task<Void> {
     private final List<Task<?>> dependencies = new LinkedList<>();
     private final List<Task<?>> dependents = new LinkedList<>();
 
-    public ServerModpackInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, ServerModpackManifest manifest, String name) {
+    public ServerModpackLocalInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, ServerModpackManifest manifest, String name) {
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
@@ -75,7 +75,7 @@ public class ServerModpackInstallTask extends Task<Void> {
                 }.getType());
 
                 if (!MODPACK_TYPE.equals(config.getType()))
-                    throw new IllegalArgumentException("Version " + name + " is not a Curse modpack. Cannot update this version.");
+                    throw new IllegalArgumentException("Version " + name + " is not a Server modpack. Cannot update this version.");
             }
         } catch (JsonParseException | IOException ignore) {
         }

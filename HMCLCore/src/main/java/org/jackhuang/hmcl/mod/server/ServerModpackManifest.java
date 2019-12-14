@@ -114,6 +114,12 @@ public class ServerModpackManifest implements Validation {
         }
     }
 
+    public Modpack toModpack(Charset encoding) throws IOException {
+        String gameVersion = addons.stream().filter(x -> MINECRAFT.getPatchId().equals(x.id)).findAny()
+                .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
+        return new Modpack(name, author, version, gameVersion, description, encoding, this);
+    }
+
     /**
      * @param zip the CurseForge modpack file.
      * @throws IOException if the file is not a valid zip file.
@@ -123,7 +129,6 @@ public class ServerModpackManifest implements Validation {
     public static Modpack readManifest(Path zip, Charset encoding) throws IOException, JsonParseException {
         String json = CompressingUtils.readTextZipEntry(zip, "server-manifest.json", encoding);
         ServerModpackManifest manifest = JsonUtils.fromNonNullJson(json, ServerModpackManifest.class);
-        String gameVersion = manifest.getAddons().stream().filter(x -> MINECRAFT.getPatchId().equals(x.getId())).findAny().orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
-        return new Modpack(manifest.getName(), manifest.getAuthor(), manifest.getVersion(), gameVersion, manifest.getDescription(), encoding, manifest);
+        return manifest.toModpack(encoding);
     }
 }

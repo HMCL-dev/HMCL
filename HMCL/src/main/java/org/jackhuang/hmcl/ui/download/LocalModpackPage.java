@@ -48,7 +48,7 @@ import java.util.Optional;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class ModpackPage extends StackPane implements WizardPage {
+public final class LocalModpackPage extends StackPane implements WizardPage {
     private final WizardController controller;
 
     private Modpack manifest = null;
@@ -77,7 +77,7 @@ public final class ModpackPage extends StackPane implements WizardPage {
     @FXML
     private SpinnerPane spinnerPane;
 
-    public ModpackPage(WizardController controller) {
+    public LocalModpackPage(WizardController controller) {
         this.controller = controller;
 
         FXUtils.loadFXML(this, "/assets/fxml/download/modpack.fxml");
