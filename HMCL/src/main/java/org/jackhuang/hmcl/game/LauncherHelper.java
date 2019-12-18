@@ -544,7 +544,7 @@ public final class LauncherHelper {
                 Platform.runLater(() -> logWindow.logLine(log, level));
             }
 
-            if (!lwjgl && (log.contains("LWJGL Version: ") || !detectWindow)) {
+            if (!lwjgl && (log.toLowerCase().contains("lwjgl version") || !detectWindow)) {
                 lwjgl = true;
                 finishLaunch();
             }
