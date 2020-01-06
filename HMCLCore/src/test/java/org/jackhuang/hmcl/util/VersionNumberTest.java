@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2019  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -86,7 +86,7 @@ public class VersionNumberTest {
                 "1.10.2-forge2511-simple_life_2",
                 "1.10.2-forge2511_bxztest",
                 "1.10.2-forge2511_Farming_Valley",
-                "1.10.2-forge2511简单生活BXZ",
+                "1.10.2-forge2511�?单生活BXZ",
                 "1.10.2-FTB_Beyond",
                 "1.10.2-LiteLoader1.10.2",
                 "1.12.2",
