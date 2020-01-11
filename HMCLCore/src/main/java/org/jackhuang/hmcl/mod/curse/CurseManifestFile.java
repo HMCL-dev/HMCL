@@ -20,11 +20,14 @@ package org.jackhuang.hmcl.mod.curse;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Objects;
+import java.util.logging.Level;
 
 /**
  *
@@ -83,8 +86,19 @@ public final class CurseManifestFile implements Validation {
     }
 
     public URL getUrl() {
-        return url == null ? NetworkUtils.toURL("https://www.curseforge.com/minecraft/mc-mods/" + projectID + "/download/" + fileID + "/file")
-                : NetworkUtils.toURL(url);
+        if(url==null){
+            try{
+                return NetworkUtils.toURL(URLEncoder.encode("https://www.curseforge.com/minecraft/mc-mods/" + projectID + "/download/" + fileID + "/file","UTF-8"));
+            } catch (Exception e) {
+                Logging.LOG.log(Level.WARNING, "Unable to encode CurseForge modpack download URL", e);
+            }
+        }
+        try{
+            return NetworkUtils.toURL(URLEncoder.encode(url,"UTF-8"));
+        } catch (Exception e) {
+            Logging.LOG.log(Level.WARNING, "Unable to encode CurseForge modpack download URL", e);
+        }
+        return null;
     }
 
     public CurseManifestFile withFileName(String fileName) {
