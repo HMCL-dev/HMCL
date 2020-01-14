@@ -31,10 +31,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -111,6 +108,12 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                 }
             }
         };
+    }
+
+    @Override
+    public Optional<ForgeRemoteVersion> getVersion(String gameVersion, String remoteVersion) {
+        remoteVersion = StringUtils.substringAfter(remoteVersion, "-", remoteVersion);
+        return super.getVersion(gameVersion, remoteVersion);
     }
 
     @Immutable

@@ -127,7 +127,7 @@ public abstract class VersionList<T extends RemoteVersion> {
      * @param remoteVersion the version of the remote version.
      * @return the specific remote version, null if it is not found.
      */
-    public final Optional<T> getVersion(String gameVersion, String remoteVersion) {
+    public Optional<T> getVersion(String gameVersion, String remoteVersion) {
         lock.readLock().lock();
         try {
             T result = null;
