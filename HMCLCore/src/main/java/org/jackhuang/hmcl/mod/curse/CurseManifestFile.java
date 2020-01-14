@@ -84,7 +84,7 @@ public final class CurseManifestFile implements Validation {
 
     public URL getUrl() {
         return url == null ? NetworkUtils.toURL("https://www.curseforge.com/minecraft/mc-mods/" + projectID + "/download/" + fileID + "/file")
-                : NetworkUtils.toURL(url);
+                : NetworkUtils.toURL(NetworkUtils.encodeLocation(url));
     }
 
     public CurseManifestFile withFileName(String fileName) {
