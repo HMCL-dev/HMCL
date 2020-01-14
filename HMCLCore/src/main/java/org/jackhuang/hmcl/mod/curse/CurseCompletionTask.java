@@ -54,6 +54,10 @@ public final class CurseCompletionTask extends Task<Void> {
     private CurseManifest manifest;
     private final List<Task<?>> dependencies = new LinkedList<>();
 
+    private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
+    private final AtomicInteger finished = new AtomicInteger(0);
+    private final AtomicBoolean notFound = new AtomicBoolean(false);
+
     /**
      * Constructor.
      *
@@ -94,15 +98,16 @@ public final class CurseCompletionTask extends Task<Void> {
     }
 
     @Override
+    public boolean isRelyingOnDependencies() {
+        return false;
+    }
+
+    @Override
     public void execute() throws Exception {
         if (manifest == null)
             return;
 
         File root = repository.getVersionRoot(version);
-
-        AtomicBoolean flag = new AtomicBoolean(true);
-        AtomicInteger finished = new AtomicInteger(0);
-        AtomicBoolean notFound = new AtomicBoolean(false);
 
         // Because in China, Curse is too difficult to visit,
         // if failed, ignore it and retry next time.
@@ -132,7 +137,7 @@ public final class CurseCompletionTask extends Task<Void> {
 
                                 } catch (IOException ioe) {
                                     Logging.LOG.log(Level.WARNING, "Unable to fetch the file name of URL: " + file.getUrl(), ioe);
-                                    flag.set(false);
+                                    allNameKnown.set(false);
                                     return file;
                                 }
                             } else
@@ -149,16 +154,20 @@ public final class CurseCompletionTask extends Task<Void> {
                             .setCaching(true));
                 }
             }
-
-        // Let this task fail if the curse manifest has not been completed.
-        // But continue other downloads.
-        if (!flag.get() || notFound.get())
-            dependencies.add(Task.runAsync(() -> {
-                if (notFound.get())
-                    throw new CurseCompletionException(new FileNotFoundException());
-                else
-                    throw new CurseCompletionException();
-            }));
     }
 
+    @Override
+    public boolean doPostExecute() {
+        return true;
+    }
+
+    @Override
+    public void postExecute() throws Exception {
+        // Let this task fail if the curse manifest has not been completed.
+        // But continue other downloads.
+        if (notFound.get())
+            throw new CurseCompletionException(new FileNotFoundException());
+        if (!allNameKnown.get() || !isDependenciesSucceeded())
+            throw new CurseCompletionException();
+    }
 }
