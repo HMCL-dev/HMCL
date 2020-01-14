@@ -109,7 +109,7 @@ public final class CommandBuilder {
             // The argument has not been quoted, add quotes.
             return '"' + s
                     .replace("\\", "\\\\")
-                    .replace("\"", "\"\"")
+                    .replace("\"", "\\\"")
                     + '"';
         else {
             return s;
