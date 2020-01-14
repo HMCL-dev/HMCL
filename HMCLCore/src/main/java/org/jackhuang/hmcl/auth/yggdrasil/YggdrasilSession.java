@@ -22,10 +22,8 @@ import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -106,7 +104,11 @@ public class YggdrasilSession {
             throw new IllegalStateException("No user is specified");
 
         return new AuthInfo(selectedProfile.getName(), selectedProfile.getId(), accessToken,
-                Optional.ofNullable(user.getProperties()).map(GSON_PROPERTIES::toJson).orElse("{}"));
+                Optional.ofNullable(user.getProperties())
+                        .map(properties -> properties.entrySet().stream()
+                                .collect(Collectors.toMap(Map.Entry::getKey,
+                                        e -> Collections.singleton(e.getValue()))))
+                        .map(GSON_PROPERTIES::toJson).orElse("{}"));
     }
 
     private static final Gson GSON_PROPERTIES = new Gson();
