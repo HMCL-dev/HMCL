@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -69,4 +70,7 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
         ).setCacheRepository(dependencyManager.getCacheRepository()));
     }
 
+
+    public static class GameAssetIndexMalformedException extends IOException {
+    }
 }

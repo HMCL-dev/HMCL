@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download.game;
 
+import com.google.gson.JsonSyntaxException;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.game.AssetIndex;
 import org.jackhuang.hmcl.game.AssetIndexInfo;
@@ -46,6 +47,8 @@ public final class GameAssetDownloadTask extends Task<Void> {
     private final File assetIndexFile;
     private final List<Task<?>> dependents = new LinkedList<>();
     private final List<Task<?>> dependencies = new LinkedList<>();
+    private AssetIndex index;
+    private boolean retry = false;
 
     /**
      * Constructor.
@@ -72,10 +75,32 @@ public final class GameAssetDownloadTask extends Task<Void> {
     public Collection<Task<?>> getDependencies() {
         return dependencies;
     }
-    
+
+    @Override
+    public boolean doPreExecute() {
+        return true;
+    }
+
+    @Override
+    public void preExecute() throws Exception {
+        try {
+            index = JsonUtils.GSON.fromJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
+        } catch (JsonSyntaxException e) {
+            dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.version));
+            retry = true;
+        }
+    }
+
     @Override
     public void execute() throws Exception {
-        AssetIndex index = JsonUtils.GSON.fromJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
+        if (retry) {
+            try {
+                index = JsonUtils.GSON.fromJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
+            } catch (JsonSyntaxException e) {
+                throw new GameAssetIndexDownloadTask.GameAssetIndexMalformedException();
+            }
+        }
+
         int progress = 0;
         if (index != null)
             for (AssetObject assetObject : index.getObjects().values()) {

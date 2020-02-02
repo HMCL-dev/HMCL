@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.MaintainTask;
+import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.launch.NotDecompressingNativesException;
 import org.jackhuang.hmcl.launch.PermissionException;
@@ -239,6 +240,8 @@ public final class LauncherHelper {
                                     message = i18n("launch.failed.decompressing_natives") + ex.getLocalizedMessage();
                                 } else if (ex instanceof LibraryDownloadException) {
                                     message = i18n("launch.failed.download_library", ((LibraryDownloadException) ex).getLibrary().getName()) + "\n" + StringUtils.getStackTrace(ex.getCause());
+                                } else if (ex instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
+                                    message = i18n("assets.index.malformed");
                                 } else {
                                     message = StringUtils.getStackTrace(ex);
                                 }
