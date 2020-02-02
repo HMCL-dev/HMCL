@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.download;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
-
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXSpinner;
@@ -44,9 +42,10 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.util.Logging.LOG;
+
 public final class VersionsPage extends BorderPane implements WizardPage, Refreshable {
     private final String gameVersion;
-    private final DownloadProvider downloadProvider;
     private final String libraryId;
     private final String title;
     private final WizardController controller;
@@ -79,7 +78,6 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     public VersionsPage(WizardController controller, String title, String gameVersion, DownloadProvider downloadProvider, String libraryId, Runnable callback) {
         this.title = title;
         this.gameVersion = gameVersion;
-        this.downloadProvider = downloadProvider;
         this.libraryId = libraryId;
         this.controller = controller;
         this.versionList = downloadProvider.getVersionListById(libraryId);
@@ -128,7 +126,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     @Override
     public void refresh() {
         transitionHandler.setContent(spinner, ContainerAnimations.FADE.getAnimationProducer());
-        executor = versionList.refreshAsync(gameVersion, downloadProvider).whenComplete(exception -> {
+        executor = versionList.refreshAsync(gameVersion).whenComplete(exception -> {
             if (exception == null) {
                 List<VersionsPageItem> items = loadVersions();
 

@@ -25,12 +25,10 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -51,7 +49,7 @@ public final class VersionJsonDownloadTask extends Task<String> {
         this.gameVersionList = dependencyManager.getVersionList("game");
         
         if (!gameVersionList.isLoaded())
-            dependents.add(gameVersionList.refreshAsync(dependencyManager.getDownloadProvider()));
+            dependents.add(gameVersionList.refreshAsync());
 
         setSignificance(TaskSignificance.MODERATE);
     }

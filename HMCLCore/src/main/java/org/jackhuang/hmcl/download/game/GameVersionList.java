@@ -32,10 +32,10 @@ import java.util.Collections;
  * @author huangyuhui
  */
 public final class GameVersionList extends VersionList<GameRemoteVersion> {
+    private final DownloadProvider downloadProvider;
 
-    public static final GameVersionList INSTANCE = new GameVersionList();
-
-    private GameVersionList() {
+    public GameVersionList(DownloadProvider downloadProvider) {
+        this.downloadProvider = downloadProvider;
     }
 
     @Override
@@ -54,7 +54,7 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
     }
 
     @Override
-    public Task<?> refreshAsync(DownloadProvider downloadProvider) {
+    public Task<?> refreshAsync() {
         GetTask task = new GetTask(NetworkUtils.toURL(downloadProvider.getVersionListURL()));
         return new Task<Void>() {
             @Override

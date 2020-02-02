@@ -17,27 +17,27 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Pair.pair;
-
-import java.util.Map;
-import java.util.Optional;
-
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
+import javafx.beans.value.ObservableObjectValue;
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
 
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ObjectBinding;
-import javafx.beans.value.ObservableObjectValue;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class DownloadProviders {
     private DownloadProviders() {}
 
     public static final Map<String, DownloadProvider> providersById = mapOf(
             pair("mojang", new MojangDownloadProvider()),
-            pair("bmclapi", new BMCLAPIDownloadProvider()));
+            pair("bmclapi", new BMCLAPIDownloadProvider("https://bmclapi2.bangbang93.com")),
+            pair("mcbbs", new BMCLAPIDownloadProvider("https://download.mcbbs.net")));
 
     public static final String DEFAULT_PROVIDER_ID = "bmclapi";
 

@@ -40,9 +40,10 @@ import java.util.Map;
  */
 public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVersion> {
 
-    public static final LiteLoaderVersionList INSTANCE = new LiteLoaderVersionList();
+    private final DownloadProvider downloadProvider;
 
-    private LiteLoaderVersionList() {
+    public LiteLoaderVersionList(DownloadProvider downloadProvider) {
+        this.downloadProvider = downloadProvider;
     }
 
     @Override
@@ -51,7 +52,7 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
     }
 
     @Override
-    public Task<?> refreshAsync(DownloadProvider downloadProvider) {
+    public Task<?> refreshAsync() {
         GetTask task = new GetTask(NetworkUtils.toURL(downloadProvider.injectURL(LITELOADER_LIST)));
         return new Task<Void>() {
             @Override

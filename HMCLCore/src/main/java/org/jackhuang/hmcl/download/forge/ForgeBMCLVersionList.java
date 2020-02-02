@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.download.forge;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
@@ -31,16 +30,23 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> {
+    private final String apiRoot;
 
-    public static final ForgeBMCLVersionList INSTANCE = new ForgeBMCLVersionList();
-
-    private ForgeBMCLVersionList() {
+    /**
+     * @param apiRoot API Root of BMCLAPI implementations
+     */
+    public ForgeBMCLVersionList(String apiRoot) {
+        this.apiRoot = apiRoot;
     }
 
     @Override
@@ -49,18 +55,18 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
     }
 
     @Override
-    public Task<?> loadAsync(DownloadProvider downloadProvider) {
+    public Task<?> loadAsync() {
         throw new UnsupportedOperationException("ForgeBMCLVersionList does not support loading the entire Forge remote version list.");
     }
 
     @Override
-    public Task<?> refreshAsync(DownloadProvider downloadProvider) {
+    public Task<?> refreshAsync() {
         throw new UnsupportedOperationException("ForgeBMCLVersionList does not support loading the entire Forge remote version list.");
     }
 
     @Override
-    public Task<?> refreshAsync(String gameVersion, DownloadProvider downloadProvider) {
-        final GetTask task = new GetTask(NetworkUtils.toURL("https://bmclapi2.bangbang93.com/forge/minecraft/" + gameVersion));
+    public Task<?> refreshAsync(String gameVersion) {
+        final GetTask task = new GetTask(NetworkUtils.toURL(apiRoot + "/forge/minecraft/" + gameVersion));
         return new Task<Void>() {
             @Override
             public Collection<Task<?>> getDependents() {
@@ -86,15 +92,15 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                                         + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
                                 String fileName1 = "forge-" + classifier + "-" + file.getCategory() + "." + file.getFormat();
                                 String fileName2 = "forge-" + classifier + "-" + gameVersion + "-" + file.getCategory() + "." + file.getFormat();
-                                urls.add(NetworkUtils.withQuery("https://bmclapi2.bangbang93.com/forge/download", mapOf(
+                                urls.add(NetworkUtils.withQuery(apiRoot + "/forge/download", mapOf(
                                         pair("mcversion", version.getGameVersion()),
                                         pair("version", version.getVersion()),
                                         pair("branch", version.getBranch()),
                                         pair("category", file.getCategory()),
                                         pair("format", file.getFormat())
                                 )));
-                                urls.add("https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/" + classifier + "/" + fileName1);
-                                urls.add("https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/" + classifier + "-" + gameVersion + "/" + fileName2);
+                                urls.add(apiRoot + "/maven/net/minecraftforge/forge/" + classifier + "/" + fileName1);
+                                urls.add(apiRoot + "/maven/net/minecraftforge/forge/" + classifier + "-" + gameVersion + "/" + fileName2);
                             }
 
                         if (urls.isEmpty())

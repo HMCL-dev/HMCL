@@ -59,21 +59,19 @@ public abstract class VersionList<T extends RemoteVersion> {
     protected final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
-     * @param downloadProvider DownloadProvider
      * @return the task to reload the remote version list.
      */
-    public abstract Task<?> refreshAsync(DownloadProvider downloadProvider);
+    public abstract Task<?> refreshAsync();
 
     /**
      * @param gameVersion the remote version depends on
-     * @param downloadProvider DownloadProvider
      * @return the task to reload the remote version list.
      */
-    public Task<?> refreshAsync(String gameVersion, DownloadProvider downloadProvider) {
-        return refreshAsync(downloadProvider);
+    public Task<?> refreshAsync(String gameVersion) {
+        return refreshAsync();
     }
 
-    public Task<?> loadAsync(DownloadProvider downloadProvider) {
+    public Task<?> loadAsync() {
         return Task.composeAsync(() -> {
             lock.readLock().lock();
             boolean loaded;
@@ -83,11 +81,11 @@ public abstract class VersionList<T extends RemoteVersion> {
             } finally {
                 lock.readLock().unlock();
             }
-            return loaded ? null : refreshAsync(downloadProvider);
+            return loaded ? null : refreshAsync();
         });
     }
 
-    public Task<?> loadAsync(String gameVersion, DownloadProvider downloadProvider) {
+    public Task<?> loadAsync(String gameVersion) {
         return Task.composeAsync(() -> {
             lock.readLock().lock();
             boolean loaded;
@@ -97,7 +95,7 @@ public abstract class VersionList<T extends RemoteVersion> {
             } finally {
                 lock.readLock().unlock();
             }
-            return loaded ? null : refreshAsync(gameVersion, downloadProvider);
+            return loaded ? null : refreshAsync(gameVersion);
         });
     }
 

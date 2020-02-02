@@ -28,6 +28,19 @@ import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
  * @author huangyuhui
  */
 public class MojangDownloadProvider implements DownloadProvider {
+    private final GameVersionList game;
+    private final ForgeBMCLVersionList forge;
+    private final LiteLoaderVersionList liteLoader;
+    private final OptiFineBMCLVersionList optifine;
+
+    public MojangDownloadProvider() {
+        String apiRoot = "https://bmclapi2.bangbang93.com";
+
+        this.game = new GameVersionList(this);
+        this.forge = new ForgeBMCLVersionList(apiRoot);
+        this.liteLoader = new LiteLoaderVersionList(this);
+        this.optifine = new OptiFineBMCLVersionList(apiRoot);
+    }
 
     @Override
     public String getVersionListURL() {
@@ -43,15 +56,15 @@ public class MojangDownloadProvider implements DownloadProvider {
     public VersionList<?> getVersionListById(String id) {
         switch (id) {
             case "game":
-                return GameVersionList.INSTANCE;
+                return game;
             case "fabric":
                 return FabricVersionList.INSTANCE;
             case "forge":
-                return ForgeBMCLVersionList.INSTANCE;
+                return forge;
             case "liteloader":
-                return LiteLoaderVersionList.INSTANCE;
+                return liteLoader;
             case "optifine":
-                return OptiFineBMCLVersionList.INSTANCE;
+                return optifine;
             default:
                 throw new IllegalArgumentException("Unrecognized version list id: " + id);
         }

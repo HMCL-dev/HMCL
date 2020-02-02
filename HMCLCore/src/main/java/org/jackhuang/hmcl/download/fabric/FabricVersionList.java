@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download.fabric;
 
 import com.google.gson.reflect.TypeToken;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -47,7 +46,7 @@ public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
     }
 
     @Override
-    public Task<?> refreshAsync(DownloadProvider downloadProvider) {
+    public Task<?> refreshAsync() {
         return new Task<Void>() {
             @Override
             public void execute() throws IOException, XMLStreamException {

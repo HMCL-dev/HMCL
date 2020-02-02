@@ -33,10 +33,10 @@ import java.util.*;
  * @author huangyuhui
  */
 public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
+    private final DownloadProvider downloadProvider;
 
-    public static final ForgeVersionList INSTANCE = new ForgeVersionList();
-
-    private ForgeVersionList() {
+    public ForgeVersionList(DownloadProvider downloadProvider) {
+        this.downloadProvider = downloadProvider;
     }
 
     @Override
@@ -45,7 +45,7 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
     }
 
     @Override
-    public Task<?> refreshAsync(DownloadProvider downloadProvider) {
+    public Task<?> refreshAsync() {
         final GetTask task = new GetTask(NetworkUtils.toURL(downloadProvider.injectURL(FORGE_LIST)));
         return new Task<Void>() {
 

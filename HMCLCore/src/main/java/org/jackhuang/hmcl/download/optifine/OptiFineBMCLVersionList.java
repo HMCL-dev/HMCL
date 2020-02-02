@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download.optifine;
 
 import com.google.gson.reflect.TypeToken;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
@@ -27,17 +26,24 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  *
  * @author huangyuhui
  */
 public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVersion> {
+    private final String apiRoot;
 
-    public static final OptiFineBMCLVersionList INSTANCE = new OptiFineBMCLVersionList();
-
-    private OptiFineBMCLVersionList() {
+    /**
+     * @param apiRoot API Root of BMCLAPI implementations
+     */
+    public OptiFineBMCLVersionList(String apiRoot) {
+        this.apiRoot = apiRoot;
     }
 
     @Override
@@ -46,8 +52,8 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
     }
 
     @Override
-    public Task<?> refreshAsync(DownloadProvider downloadProvider) {
-        GetTask task = new GetTask(NetworkUtils.toURL("http://bmclapi2.bangbang93.com/optifine/versionlist"));
+    public Task<?> refreshAsync() {
+        GetTask task = new GetTask(NetworkUtils.toURL(apiRoot + "/optifine/versionlist"));
         return new Task<Void>() {
             @Override
             public Collection<Task<?>> getDependents() {
@@ -65,7 +71,7 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
                     }.getType());
                     for (OptiFineVersion element : root) {
                         String version = element.getType() + "_" + element.getPatch();
-                        String mirror = "http://bmclapi2.bangbang93.com/optifine/" + element.getGameVersion() + "/" + element.getType() + "/" + element.getPatch();
+                        String mirror = apiRoot + "/optifine/" + element.getGameVersion() + "/" + element.getType() + "/" + element.getPatch();
                         if (!duplicates.add(mirror))
                             continue;
 
