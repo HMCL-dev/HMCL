@@ -79,7 +79,7 @@ public final class GameAssetDownloadTask extends Task<Void> {
         int progress = 0;
         if (index != null)
             for (AssetObject assetObject : index.getObjects().values()) {
-                if (Thread.interrupted())
+                if (isCancelled())
                     throw new InterruptedException();
 
                 File file = dependencyManager.getGameRepository().getAssetObject(version.getId(), assetIndexInfo.getId(), assetObject);

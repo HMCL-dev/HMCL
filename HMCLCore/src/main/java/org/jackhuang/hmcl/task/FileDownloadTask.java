@@ -17,11 +17,13 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.event.EventManager;
-import org.jackhuang.hmcl.event.FailedEvent;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.io.*;
+import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.ResponseCodeException;
 
 import java.io.File;
 import java.io.IOException;
@@ -208,8 +210,7 @@ public class FileDownloadTask extends Task<Void> {
 
         for (int repeat = 0; repeat < retry; repeat++) {
             URL url = urls.get(repeat % urls.size());
-            if (Thread.interrupted()) {
-                Thread.currentThread().interrupt();
+            if (isCancelled()) {
                 break;
             }
 
@@ -253,8 +254,7 @@ public class FileDownloadTask extends Task<Void> {
                 long lastTime = System.currentTimeMillis();
                 byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
                 while (true) {
-                    if (Thread.interrupted()) {
-                        Thread.currentThread().interrupt();
+                    if (isCancelled()) {
                         break;
                     }
 
@@ -283,9 +283,8 @@ public class FileDownloadTask extends Task<Void> {
                 closeFiles();
 
                 // Restore temp file to original name.
-                if (Thread.interrupted()) {
+                if (isCancelled()) {
                     temp.toFile().delete();
-                    Thread.currentThread().interrupt();
                     break;
                 } else {
                     Files.deleteIfExists(file.toPath());

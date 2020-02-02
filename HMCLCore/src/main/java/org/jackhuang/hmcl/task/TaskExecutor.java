@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
@@ -41,6 +42,7 @@ public final class TaskExecutor {
     private Exception exception;
     private final AtomicInteger totTask = new AtomicInteger(0);
     private CompletableFuture<Boolean> future;
+    private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
     public TaskExecutor(Task<?> task) {
         this.firstTask = task;
@@ -106,7 +108,12 @@ public final class TaskExecutor {
             throw new IllegalStateException("Cannot cancel a not started TaskExecutor");
         }
 
+        cancelled.set(true);
         future.cancel(true);
+    }
+
+    public boolean isCancelled() {
+        return cancelled.get();
     }
 
     private CompletableFuture<Exception> executeTasks(Collection<Task<?>> tasks) {
@@ -125,6 +132,9 @@ public final class TaskExecutor {
                 .thenApplyAsync(unused -> (Exception) null)
                 .exceptionally(throwable -> {
                     Throwable resolved = resolveException(throwable);
+                    if (resolved instanceof CancellationException) {
+                        throw (CancellationException)resolved;
+                    }
                     if (resolved instanceof Exception) {
                         return (Exception) resolved;
                     } else {
@@ -137,6 +147,7 @@ public final class TaskExecutor {
     private CompletableFuture<?> executeTask(Task<?> task) {
         return CompletableFuture.completedFuture(null)
                 .thenComposeAsync(unused -> {
+                    task.setCancelled(this::isCancelled);
                     task.setState(Task.TaskState.READY);
 
                     if (task.getSignificance().shouldLog())
@@ -207,7 +218,7 @@ public final class TaskExecutor {
                     Throwable resolved = resolveException(throwable);
                     if (resolved instanceof Exception) {
                         Exception e = (Exception) resolved;
-                        if (e instanceof InterruptedException) {
+                        if (e instanceof InterruptedException || e instanceof CancellationException) {
                             task.setException(e);
                             if (task.getSignificance().shouldLog()) {
                                 Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName());

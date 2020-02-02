@@ -38,6 +38,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 
 /**
@@ -60,6 +61,22 @@ public abstract class Task<T> {
 
     public final void setSignificance(TaskSignificance significance) {
         this.significance = significance;
+    }
+
+    // cancel
+    private Supplier<Boolean> cancelled;
+
+    final void setCancelled(Supplier<Boolean> cancelled) {
+        this.cancelled = cancelled;
+    }
+
+    protected final boolean isCancelled() {
+        if (Thread.interrupted()) {
+            Thread.currentThread().interrupt();
+            return true;
+        }
+
+        return cancelled != null ? cancelled.get() : false;
     }
 
     // state
