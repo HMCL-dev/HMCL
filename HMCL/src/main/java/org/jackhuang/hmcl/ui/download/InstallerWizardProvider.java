@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
+import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
@@ -121,6 +122,8 @@ public final class InstallerWizardProvider implements WizardProvider {
             Controllers.dialog(i18n("install.failed.optifine_conflict"), i18n("install.failed"), MessageType.ERROR, next);
         } else if (exception instanceof DefaultDependencyManager.UnsupportedLibraryInstallerException) {
             Controllers.dialog(i18n("install.failed.install_online"), i18n("install.failed"), MessageType.ERROR, next);
+        } else if (exception instanceof ArtifactMalformedException) {
+            Controllers.dialog(i18n("install.failed.malformed"), i18n("install.failed"), MessageType.ERROR, next);
         } else if (exception instanceof VersionMismatchException) {
             VersionMismatchException e = ((VersionMismatchException) exception);
             Controllers.dialog(i18n("install.failed.version_mismatch", e.getExpect(), e.getActual()), i18n("install.failed"), MessageType.ERROR, next);

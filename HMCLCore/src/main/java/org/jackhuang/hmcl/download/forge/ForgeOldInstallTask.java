@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
+import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.Library;
@@ -35,6 +36,7 @@ import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 public class ForgeOldInstallTask extends Task<Version> {
@@ -69,7 +71,7 @@ public class ForgeOldInstallTask extends Task<Version> {
         try (ZipFile zipFile = new ZipFile(installer.toFile())) {
             InputStream stream = zipFile.getInputStream(zipFile.getEntry("install_profile.json"));
             if (stream == null)
-                throw new IOException("Malformed forge installer file, install_profile.json does not exist.");
+                throw new ArtifactMalformedException("Malformed forge installer file, install_profile.json does not exist.");
             String json = IOUtils.readFullyAsString(stream);
             ForgeInstallProfile installProfile = JsonUtils.fromNonNullJson(json, ForgeInstallProfile.class);
 
@@ -89,6 +91,8 @@ public class ForgeOldInstallTask extends Task<Version> {
                     .setId(LibraryAnalyzer.LibraryType.FORGE.getPatchId())
                     .setVersion(selfVersion));
             dependencies.add(dependencyManager.checkLibraryCompletionAsync(installProfile.getVersionInfo()));
+        } catch (ZipException ex) {
+            throw new ArtifactMalformedException("Malformed forge installer file", ex);
         }
     }
 }

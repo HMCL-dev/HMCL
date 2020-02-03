@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
+import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
@@ -54,7 +55,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
-import java.util.stream.Collectors;
+import java.util.zip.ZipException;
 
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
 import static org.jackhuang.hmcl.util.Hex.encodeHex;
@@ -176,7 +177,7 @@ public class ForgeNewInstallTask extends Task<Version> {
                     value = parseLiteral(value, data, ExceptionalFunction.identity());
 
                     if (key == null || value == null) {
-                        throw new Exception("Invalid forge installation configuration");
+                        throw new ArtifactMalformedException("Invalid forge installation configuration");
                     }
 
                     outputs.put(key, value);
@@ -235,7 +236,7 @@ public class ForgeNewInstallTask extends Task<Version> {
                 for (String arg : processor.getArgs()) {
                     String parsed = parseLiteral(arg, data, ExceptionalFunction.identity());
                     if (parsed == null)
-                        throw new IOException("Invalid forge installation configuration");
+                        throw new ArtifactMalformedException("Invalid forge installation configuration");
                     args.add(parsed);
                 }
 
@@ -264,6 +265,8 @@ public class ForgeNewInstallTask extends Task<Version> {
 
                 updateProgress(++finished, processors.size());
             }
+        } catch (ZipException ex) {
+            throw new ArtifactMalformedException("Malformed forge installer file", ex);
         }
 
         setResult(forgeVersion

@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
+import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.task.DownloadException;
@@ -220,7 +221,12 @@ public class LibraryDownloadTask extends Task<Void> {
             if (!dest.delete())
                 throw new IOException("Unable to delete file " + dest);
 
-        byte[] decompressed = IOUtils.readFullyAsByteArray(new XZInputStream(new ByteArrayInputStream(src)));
+        byte[] decompressed;
+        try {
+            decompressed = IOUtils.readFullyAsByteArray(new XZInputStream(new ByteArrayInputStream(src)));
+        } catch (IOException e) {
+            throw new ArtifactMalformedException("Library " + dest + " is malformed");
+        }
 
         String end = new String(decompressed, decompressed.length - 4, 4);
         if (!end.equals("SIGN"))
