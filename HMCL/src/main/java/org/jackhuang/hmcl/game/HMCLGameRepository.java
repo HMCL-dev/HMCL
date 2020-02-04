@@ -154,12 +154,11 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (id == null || !isLoaded())
             return newImage("/assets/img/grass.png");
 
-        Version version = getVersion(id);
+        Version version = getVersion(id).resolve(this);
         File iconFile = getVersionIconFile(id);
         if (iconFile.exists())
             return new Image("file:" + iconFile.getAbsolutePath());
-        else if (!version.getPatches().isEmpty() ||
-                version.getMainClass() != null &&
+        else if (version.getMainClass() != null &&
                 ("net.minecraft.launchwrapper.Launch".equals(version.getMainClass())
                         || version.getMainClass().startsWith("net.fabricmc")
                         || "cpw.mods.modlauncher.Launcher".equals(version.getMainClass())))
