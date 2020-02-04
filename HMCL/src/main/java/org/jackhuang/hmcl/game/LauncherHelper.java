@@ -23,7 +23,9 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
+import org.jackhuang.hmcl.auth.CharacterDeletedException;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
@@ -242,6 +244,10 @@ public final class LauncherHelper {
                                     message = i18n("launch.failed.download_library", ((LibraryDownloadException) ex).getLibrary().getName()) + "\n" + StringUtils.getStackTrace(ex.getCause());
                                 } else if (ex instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
                                     message = i18n("assets.index.malformed");
+                                } else if (ex instanceof AuthlibInjectorDownloadException) {
+                                    message = i18n("account.failed.injector_download_failure");
+                                } else if (ex instanceof CharacterDeletedException) {
+                                    message = i18n("account.failed.character_deleted");
                                 } else {
                                     message = StringUtils.getStackTrace(ex);
                                 }
