@@ -108,6 +108,8 @@ public final class TaskExecutor {
             throw new IllegalStateException("Cannot cancel a not started TaskExecutor");
         }
 
+        Logging.LOG.log(Level.INFO, "Cancelling task " + firstTask);
+
         cancelled.set(true);
         future.cancel(true);
     }
@@ -132,9 +134,6 @@ public final class TaskExecutor {
                 .thenApplyAsync(unused -> (Exception) null)
                 .exceptionally(throwable -> {
                     Throwable resolved = resolveException(throwable);
-                    if (resolved instanceof CancellationException) {
-                        throw (CancellationException)resolved;
-                    }
                     if (resolved instanceof Exception) {
                         return (Exception) resolved;
                     } else {
