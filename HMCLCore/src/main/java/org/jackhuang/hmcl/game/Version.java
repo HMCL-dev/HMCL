@@ -217,9 +217,12 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     /**
-     * Resolve given version
+     * Resolve given version.
+     * Resolving version will list all patches within this version and its parents,
+     * which is for analysis.
      */
     public Version resolve(VersionProvider provider) throws VersionNotFoundException {
+        if (isResolved()) return this;
         return resolve(provider, new HashSet<>()).setResolved();
     }
 
