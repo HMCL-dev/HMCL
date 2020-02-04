@@ -57,6 +57,7 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
@@ -66,7 +67,14 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.*;
+import java.net.URL;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -241,13 +249,32 @@ public final class LauncherHelper {
                                 } else if (ex instanceof NotDecompressingNativesException) {
                                     message = i18n("launch.failed.decompressing_natives") + ex.getLocalizedMessage();
                                 } else if (ex instanceof LibraryDownloadException) {
-                                    message = i18n("launch.failed.download_library", ((LibraryDownloadException) ex).getLibrary().getName()) + "\n" + StringUtils.getStackTrace(ex.getCause());
+                                    message = i18n("launch.failed.download_library", ((LibraryDownloadException) ex).getLibrary().getName()) + "\n";
+                                    if (ex.getCause() instanceof ResponseCodeException) {
+                                        ResponseCodeException rce = (ResponseCodeException) ex.getCause();
+                                        int responseCode = rce.getResponseCode();
+                                        URL url = rce.getUrl();
+                                        if (responseCode == 404)
+                                            message += i18n("download.code.404", url);
+                                        else
+                                            message += i18n("download.failed", url, responseCode);
+                                    } else {
+                                        message += StringUtils.getStackTrace(ex.getCause());
+                                    }
                                 } else if (ex instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
                                     message = i18n("assets.index.malformed");
                                 } else if (ex instanceof AuthlibInjectorDownloadException) {
                                     message = i18n("account.failed.injector_download_failure");
                                 } else if (ex instanceof CharacterDeletedException) {
                                     message = i18n("account.failed.character_deleted");
+                                } else if (ex instanceof ResponseCodeException) {
+                                    ResponseCodeException rce = (ResponseCodeException) ex;
+                                    int responseCode = rce.getResponseCode();
+                                    URL url = rce.getUrl();
+                                    if (responseCode == 404)
+                                        message = i18n("download.code.404", url);
+                                    else
+                                        message = i18n("download.failed", url, responseCode);
                                 } else {
                                     message = StringUtils.getStackTrace(ex);
                                 }
