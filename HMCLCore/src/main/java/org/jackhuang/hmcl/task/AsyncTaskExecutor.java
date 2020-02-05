@@ -87,7 +87,12 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
     @Override
     public synchronized void cancel() {
-        // AsyncTaskExecutor does not support cancellation.
+        if (future == null) {
+            throw new IllegalStateException("Cannot cancel a not started TaskExecutor");
+        }
+
+        cancelled.set(true);
+        future.cancel(true);
     }
 
     private CompletableFuture<Exception> executeTasks(Collection<Task<?>> tasks) {
