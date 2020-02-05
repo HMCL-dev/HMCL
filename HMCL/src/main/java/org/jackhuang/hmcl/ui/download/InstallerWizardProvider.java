@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 
 import java.net.SocketTimeoutException;
+import java.net.URL;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -103,7 +104,19 @@ public final class InstallerWizardProvider implements WizardProvider {
 
     public static void alertFailureMessage(Exception exception, Runnable next) {
         if (exception instanceof LibraryDownloadException) {
-            Controllers.dialog(i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().getName()) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageType.ERROR, next);
+            String message = i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().getName()) + "\n";
+            if (exception.getCause() instanceof ResponseCodeException) {
+                ResponseCodeException rce = (ResponseCodeException) exception.getCause();
+                int responseCode = rce.getResponseCode();
+                URL url = rce.getUrl();
+                if (responseCode == 404)
+                    message += i18n("download.code.404", url);
+                else
+                    message += i18n("download.failed", url, responseCode);
+            } else {
+                message += StringUtils.getStackTrace(exception.getCause());
+            }
+            Controllers.dialog(message, i18n("install.failed.downloading"), MessageType.ERROR, next);
         } else if (exception instanceof DownloadException) {
             if (exception.getCause() instanceof SocketTimeoutException) {
                 Controllers.dialog(i18n("install.failed.downloading.timeout", ((DownloadException) exception).getUrl()), i18n("install.failed.downloading"), MessageType.ERROR, next);

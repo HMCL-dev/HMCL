@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -47,8 +48,6 @@ public final class GameAssetDownloadTask extends Task<Void> {
     private final File assetIndexFile;
     private final List<Task<?>> dependents = new LinkedList<>();
     private final List<Task<?>> dependencies = new LinkedList<>();
-    private AssetIndex index;
-    private boolean retry = false;
 
     /**
      * Constructor.
@@ -62,8 +61,15 @@ public final class GameAssetDownloadTask extends Task<Void> {
         this.assetIndexInfo = this.version.getAssetIndex();
         this.assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
 
-        if (!assetIndexFile.exists() || forceDownloadingIndex)
+        if (!assetIndexFile.exists() || forceDownloadingIndex) {
             dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.version));
+        } else {
+            try {
+                JsonUtils.GSON.fromJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
+            } catch (IOException | JsonSyntaxException e) {
+                dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.version));
+            }
+        }
     }
 
     @Override
@@ -77,28 +83,12 @@ public final class GameAssetDownloadTask extends Task<Void> {
     }
 
     @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    @Override
-    public void preExecute() throws Exception {
+    public void execute() throws Exception {
+        AssetIndex index;
         try {
             index = JsonUtils.GSON.fromJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
-        } catch (JsonSyntaxException e) {
-            dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.version));
-            retry = true;
-        }
-    }
-
-    @Override
-    public void execute() throws Exception {
-        if (retry) {
-            try {
-                index = JsonUtils.GSON.fromJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
-            } catch (JsonSyntaxException e) {
-                throw new GameAssetIndexDownloadTask.GameAssetIndexMalformedException();
-            }
+        } catch (IOException | JsonSyntaxException e) {
+            throw new GameAssetIndexDownloadTask.GameAssetIndexMalformedException();
         }
 
         int progress = 0;
