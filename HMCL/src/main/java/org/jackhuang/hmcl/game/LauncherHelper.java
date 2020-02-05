@@ -162,7 +162,7 @@ public final class LauncherHelper {
                     }
                 })
                 .thenRunAsync(Schedulers.javafx(), () -> emitStatus(LoadingState.LOGGING_IN))
-                .thenSupplyAsync(i18n("account.methods"), () -> {
+                .thenSupplyAsync(i18n("launch.state.logging_in"), () -> {
                     try {
                         return account.logIn();
                     } catch (CredentialExpiredException e) {

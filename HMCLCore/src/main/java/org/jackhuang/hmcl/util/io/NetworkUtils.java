@@ -106,6 +106,10 @@ public final class NetworkUtils {
             conn.setReadTimeout(15000);
             conn.setInstanceFollowRedirects(false);
             Map<String, List<String>> properties = conn.getRequestProperties();
+            String method = conn.getRequestMethod();
+            boolean doInput = conn.getDoInput();
+            boolean doOutput = conn.getDoOutput();
+            boolean useCaches = conn.getUseCaches();
             int code = conn.getResponseCode();
             if (code >= 300 && code <= 307 && code != 306 && code != 304) {
                 String newURL = conn.getHeaderField("Location");
@@ -117,6 +121,10 @@ public final class NetworkUtils {
 
                 HttpURLConnection redirected = (HttpURLConnection) new URL(conn.getURL(), encodeLocation(newURL)).openConnection();
                 properties.forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));
+                redirected.setRequestMethod(method);
+                redirected.setDoInput(doInput);
+                redirected.setDoOutput(doOutput);
+                redirected.setUseCaches(useCaches);
                 conn = redirected;
                 ++redirect;
             } else {
@@ -127,7 +135,9 @@ public final class NetworkUtils {
     }
 
     public static String doGet(URL url) throws IOException {
-        return IOUtils.readFullyAsString(createConnection(url).getInputStream());
+        HttpURLConnection con = createConnection(url);
+        con = resolveConnection(con);
+        return IOUtils.readFullyAsString(con.getInputStream());
     }
 
     public static String doPost(URL u, Map<String, String> params) throws IOException {
@@ -149,9 +159,10 @@ public final class NetworkUtils {
 
         HttpURLConnection con = createConnection(url);
         con.setRequestMethod("POST");
-        con.setDoOutput(true);
         con.setRequestProperty("Content-Type", contentType + "; charset=utf-8");
         con.setRequestProperty("Content-Length", "" + bytes.length);
+        con.setDoOutput(true);
+        con = resolveConnection(con);
         try (OutputStream os = con.getOutputStream()) {
             os.write(bytes);
         }
