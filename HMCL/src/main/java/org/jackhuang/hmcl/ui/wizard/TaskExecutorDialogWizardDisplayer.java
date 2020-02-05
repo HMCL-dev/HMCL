@@ -60,7 +60,7 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
         }
 
         runInFX(() -> {
-            TaskExecutor executor = task.executor(new TaskListener() {
+            TaskExecutor executor = task.cancellableExecutor(new TaskListener() {
                 @Override
                 public void onStop(boolean success, TaskExecutor executor) {
                     runInFX(() -> {

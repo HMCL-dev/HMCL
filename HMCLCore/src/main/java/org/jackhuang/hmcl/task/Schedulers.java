@@ -19,9 +19,20 @@ package org.jackhuang.hmcl.task;
 
 import javafx.application.Platform;
 import org.jackhuang.hmcl.util.Logging;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
@@ -91,5 +102,62 @@ public final class Schedulers {
 
         if (SINGLE_EXECUTOR != null)
             SINGLE_EXECUTOR.shutdownNow();
+    }
+
+    public static Future<?> schedule(Executor executor, Runnable command) {
+        if (executor instanceof ExecutorService) {
+            return ((ExecutorService) executor).submit(command);
+        }
+
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Exception> wrapper = new AtomicReference<>();
+
+        executor.execute(() -> {
+            try {
+                command.run();
+            } catch (Exception e) {
+                wrapper.set(e);
+            } finally {
+                latch.countDown();
+            }
+            Thread.interrupted(); // clear the `interrupted` flag to prevent from interrupting EventDispatch thread.
+        });
+
+        return new Future<Void>() {
+            @Override
+            public boolean cancel(boolean mayInterruptIfRunning) {
+                return false;
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return false;
+            }
+
+            @Override
+            public boolean isDone() {
+                return latch.getCount() == 0;
+            }
+
+            private Void getImpl() throws ExecutionException {
+                Exception e = wrapper.get();
+                if (e != null)
+                    throw new ExecutionException(e);
+                return null;
+            }
+
+            @Override
+            public Void get() throws InterruptedException, ExecutionException {
+                latch.await();
+                return getImpl();
+            }
+
+            @Override
+            public Void get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                if (!latch.await(timeout, unit))
+                    throw new TimeoutException();
+                return getImpl();
+            }
+        };
     }
 }

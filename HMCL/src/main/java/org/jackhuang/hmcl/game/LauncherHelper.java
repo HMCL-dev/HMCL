@@ -213,7 +213,7 @@ public final class LauncherHelper {
                         });
                     }
                 })
-                .executor();
+                .cancellableExecutor();
 
         launchingStepsPane.setExecutor(executor, false);
         executor.addTaskListener(new TaskListener() {
