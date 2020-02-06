@@ -135,10 +135,7 @@ public class CancellableTaskExecutor extends TaskExecutor {
                 try {
                     Schedulers.schedule(task.getExecutor(), wrap(task::preExecute)).get();
                 } catch (ExecutionException e) {
-                    if (e.getCause() instanceof Exception)
-                        throw (Exception) e.getCause();
-                    else
-                        throw e;
+                    rethrow(e);
                 }
             }
 
@@ -160,10 +157,7 @@ public class CancellableTaskExecutor extends TaskExecutor {
                     task.execute();
                 })).get();
             } catch (ExecutionException e) {
-                if (e.getCause() instanceof Exception)
-                    throw (Exception) e.getCause();
-                else
-                    throw e;
+                rethrow(e);
             } finally {
                 task.setState(Task.TaskState.EXECUTED);
             }
@@ -179,10 +173,7 @@ public class CancellableTaskExecutor extends TaskExecutor {
                 try {
                     Schedulers.schedule(task.getExecutor(), wrap(task::postExecute)).get();
                 } catch (ExecutionException e) {
-                    if (e.getCause() instanceof Exception)
-                        throw (Exception) e.getCause();
-                    else
-                        throw e;
+                    rethrow(e);
                 }
             }
 
@@ -199,27 +190,40 @@ public class CancellableTaskExecutor extends TaskExecutor {
 
             task.onDone().fireEvent(new TaskEvent(this, task, false));
             taskListeners.forEach(it -> it.onFinished(task));
-        } catch (InterruptedException e) {
-            task.setException(e);
-            if (task.getSignificance().shouldLog()) {
-                Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName());
+        } catch (RejectedExecutionException ignored) {
+        } catch (Exception throwable) {
+            Throwable resolved = resolveException(throwable);
+            if (resolved instanceof Exception) {
+                Exception e = (Exception) resolved;
+                if (e instanceof InterruptedException || e instanceof CancellationException) {
+                    task.setException(e);
+                    if (task.getSignificance().shouldLog()) {
+                        Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName());
+                    }
+                    task.onDone().fireEvent(new TaskEvent(this, task, true));
+                    taskListeners.forEach(it -> it.onFailed(task, e));
+                } else {
+                    task.setException(e);
+                    exception = e;
+                    if (task.getSignificance().shouldLog()) {
+                        Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
+                    }
+                    task.onDone().fireEvent(new TaskEvent(this, task, true));
+                    taskListeners.forEach(it -> it.onFailed(task, e));
+                }
+            } else if (resolved instanceof Error) {
+                throw (Error) resolved;
             }
-            task.onDone().fireEvent(new TaskEvent(this, task, true));
-            taskListeners.forEach(it -> it.onFailed(task, e));
-        } catch (CancellationException | RejectedExecutionException e) {
-            if (task.getException() == null)
-                task.setException(e);
-        } catch (Exception e) {
-            task.setException(e);
-            exception = e;
-            if (task.getSignificance().shouldLog()) {
-                Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
-            }
-            task.onDone().fireEvent(new TaskEvent(this, task, true));
-            taskListeners.forEach(it -> it.onFailed(task, e));
         }
         task.setState(flag ? Task.TaskState.SUCCEEDED : Task.TaskState.FAILED);
         return flag;
+    }
+
+    private static Throwable resolveException(Throwable e) {
+        if (e instanceof ExecutionException || e instanceof CompletionException)
+            return resolveException(e.getCause());
+        else
+            return e;
     }
 
     private static void rethrow(Throwable e) {
