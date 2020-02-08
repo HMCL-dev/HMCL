@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
  */
 public class MojangDownloadProvider implements DownloadProvider {
     private final GameVersionList game;
+    private final FabricVersionList fabric;
     private final ForgeBMCLVersionList forge;
     private final LiteLoaderVersionList liteLoader;
     private final OptiFineBMCLVersionList optifine;
@@ -37,6 +38,7 @@ public class MojangDownloadProvider implements DownloadProvider {
         String apiRoot = "https://bmclapi2.bangbang93.com";
 
         this.game = new GameVersionList(this);
+        this.fabric = new FabricVersionList(this);
         this.forge = new ForgeBMCLVersionList(apiRoot);
         this.liteLoader = new LiteLoaderVersionList(this);
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
@@ -58,7 +60,7 @@ public class MojangDownloadProvider implements DownloadProvider {
             case "game":
                 return game;
             case "fabric":
-                return FabricVersionList.INSTANCE;
+                return fabric;
             case "forge":
                 return forge;
             case "liteloader":

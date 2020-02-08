@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 public class BMCLAPIDownloadProvider implements DownloadProvider {
     private final String apiRoot;
     private final GameVersionList game;
+    private final FabricVersionList fabric;
     private final ForgeBMCLVersionList forge;
     private final LiteLoaderBMCLVersionList liteLoader;
     private final OptiFineBMCLVersionList optifine;
@@ -37,6 +38,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
     public BMCLAPIDownloadProvider(String apiRoot) {
         this.apiRoot = apiRoot;
         this.game = new GameVersionList(this);
+        this.fabric = new FabricVersionList(this);
         this.forge = new ForgeBMCLVersionList(apiRoot);
         this.liteLoader = new LiteLoaderBMCLVersionList(this);
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
@@ -62,7 +64,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
             case "game":
                 return game;
             case "fabric":
-                return FabricVersionList.INSTANCE;
+                return fabric;
             case "forge":
                 return forge;
             case "liteloader":
@@ -83,6 +85,8 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
                 .replaceFirst("https?://files\\.minecraftforge\\.net/maven", apiRoot + "/maven")
                 .replace("http://dl.liteloader.com/versions/versions.json", apiRoot + "/maven/com/mumfrey/liteloader/versions.json")
                 .replace("http://dl.liteloader.com/versions", apiRoot + "/maven")
+                .replace("https://meta.fabricmc.net/v2/versions/game", apiRoot + "/fabric-meta/v2/versions")
+                .replace("https://maven.fabricmc.net", apiRoot + "/maven")
                 .replace("https://authlib-injector.yushi.moe", apiRoot + "/mirrors/authlib-injector");
     }
 

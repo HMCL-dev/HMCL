@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.fabric;
 
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -34,10 +35,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
+    private final DownloadProvider downloadProvider;
 
-    public static final FabricVersionList INSTANCE = new FabricVersionList();
-
-    private FabricVersionList() {
+    public FabricVersionList(DownloadProvider downloadProvider) {
+        this.downloadProvider = downloadProvider;
     }
 
     @Override
@@ -73,7 +74,7 @@ public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
 
     private List<String> getVersions(String mavenServerURL, String packageName, String jarName) throws IOException, XMLStreamException {
         List<String> versions = new ArrayList<>();
-        URL url = new URL(mavenServerURL + packageName + "/" + jarName + "/maven-metadata.xml");
+        URL url = new URL(downloadProvider.injectURL(mavenServerURL + packageName + "/" + jarName + "/maven-metadata.xml"));
         XMLStreamReader reader = XMLInputFactory.newInstance().createXMLStreamReader(url.openStream());
 
         while(reader.hasNext()) {
@@ -89,7 +90,7 @@ public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
     }
 
     private List<String> getGameVersions(String metaUrl) throws IOException {
-        String json = NetworkUtils.doGet(NetworkUtils.toURL(metaUrl));
+        String json = NetworkUtils.doGet(NetworkUtils.toURL(downloadProvider.injectURL(metaUrl)));
         return JsonUtils.GSON.<ArrayList<GameVersion>>fromJson(json, new TypeToken<ArrayList<GameVersion>>() {
         }.getType()).stream().map(GameVersion::getVersion).collect(Collectors.toList());
     }
