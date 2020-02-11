@@ -82,6 +82,7 @@ public final class GetTask extends Task<String> {
     @Override
     public void execute() throws Exception {
         Exception exception = null;
+        URL failedURL = null;
         boolean checkETag = true;
         for (int time = 0; time < retry; ++time) {
             URL url = urls.get(time % urls.size());
@@ -132,12 +133,13 @@ public final class GetTask extends Task<String> {
                 }
                 return;
             } catch (IOException ex) {
+                failedURL = url;
                 exception = ex;
-                Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", repeat times: " + time + 1, ex);
+                Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", repeat times: " + (time + 1), ex);
             }
         }
         if (exception != null)
-            throw new DownloadException(urls.get(0), exception);
+            throw new DownloadException(failedURL, exception);
     }
 
 }
