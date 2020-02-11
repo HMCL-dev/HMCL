@@ -20,11 +20,15 @@ package org.jackhuang.hmcl.ui.account;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.ObservableList;
+import javafx.scene.control.Tooltip;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.TexturesLoader;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 
@@ -32,6 +36,8 @@ import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AccountAdvancedListItem extends AdvancedListItem {
+    private final Tooltip tooltip;
+
     private ObjectProperty<Account> account = new SimpleObjectProperty<Account>() {
 
         @Override
@@ -43,16 +49,33 @@ public class AccountAdvancedListItem extends AdvancedListItem {
                 setSubtitle(i18n("account.missing.add"));
                 imageProperty().unbind();
                 setImage(newImage("/assets/img/craft_table.png"));
+                tooltip.setText("");
             } else {
                 titleProperty().bind(Bindings.createStringBinding(account::getCharacter, account));
                 setSubtitle(accountSubtitle(account));
                 imageProperty().bind(TexturesLoader.fxAvatarBinding(account, 32));
+                tooltip.setText(account.getCharacter() + " " + accountSubtitle(account));
             }
         }
     };
 
     public AccountAdvancedListItem() {
         setRightGraphic(SVG.viewList(Theme.blackFillBinding(), -1, -1));
+        tooltip = new Tooltip();
+        FXUtils.installFastTooltip(this, tooltip);
+
+        setOnScroll(event -> {
+            Account current = account.get();
+            if (current == null) return;
+            ObservableList<Account> accounts = Accounts.getAccounts();
+            int currentIndex = accounts.indexOf(account.get());
+            if (event.getDeltaY() > 0) { // up
+                currentIndex += 1;
+            } else { // down
+                currentIndex -= 1;
+            }
+            Accounts.setSelectedAccount(accounts.get((currentIndex + accounts.size()) % accounts.size()));
+        });
     }
 
     public ObjectProperty<Account> accountProperty() {
