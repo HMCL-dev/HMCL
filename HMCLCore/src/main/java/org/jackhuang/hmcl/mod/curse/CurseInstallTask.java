@@ -87,7 +87,7 @@ public final class CurseInstallTask extends Task<Void> {
         onDone().register(event -> {
             Exception ex = event.getTask().getException();
             if (event.isFailed()) {
-                if (!(ex instanceof CurseCompletionException) || ex.getCause() instanceof FileNotFoundException) {
+                if (!(ex instanceof CurseCompletionException)) {
                     repository.removeVersionFromDisk(name);
                 }
             }
