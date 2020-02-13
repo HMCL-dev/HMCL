@@ -85,7 +85,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
                 .replaceFirst("https?://files\\.minecraftforge\\.net/maven", apiRoot + "/maven")
                 .replace("http://dl.liteloader.com/versions/versions.json", apiRoot + "/maven/com/mumfrey/liteloader/versions.json")
                 .replace("http://dl.liteloader.com/versions", apiRoot + "/maven")
-                .replace("https://meta.fabricmc.net/v2/versions/game", apiRoot + "/fabric-meta/v2/versions")
+                .replace("https://meta.fabricmc.net", apiRoot + "/fabric-meta")
                 .replace("https://maven.fabricmc.net", apiRoot + "/maven")
                 .replace("https://authlib-injector.yushi.moe", apiRoot + "/mirrors/authlib-injector");
     }

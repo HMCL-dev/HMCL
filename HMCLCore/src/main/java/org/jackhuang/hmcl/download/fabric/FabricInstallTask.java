@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download.fabric;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.Library;
@@ -29,13 +30,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * <b>Note</b>: Fabric should be installed first.
@@ -55,7 +50,7 @@ public final class FabricInstallTask extends Task<Version> {
         this.version = version;
         this.remote = remoteVersion;
 
-        launchMetaTask = new GetTask(NetworkUtils.toURL(getLaunchMetaUrl(remote.getSelfVersion())))
+        launchMetaTask = new GetTask(NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(getLaunchMetaUrl(remote.getGameVersion(), remote.getSelfVersion()))))
                 .setCacheRepository(dependencyManager.getCacheRepository());
     }
 
@@ -86,32 +81,33 @@ public final class FabricInstallTask extends Task<Version> {
     }
 
     @Override
-    public void execute() throws IOException {
-        setResult(getPatch(JsonUtils.GSON.fromJson(launchMetaTask.getResult(), JsonObject.class), remote.getGameVersion(), remote.getSelfVersion()));
+    public void execute() {
+        setResult(getPatch(JsonUtils.GSON.fromJson(launchMetaTask.getResult(), FabricInfo.class), remote.getGameVersion(), remote.getSelfVersion()));
 
         dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult()));
     }
 
-    private static String getLaunchMetaUrl(String loaderVersion) {
-        return String.format("%s/%s/%s/%s/%3$s-%4$s.json", "https://maven.fabricmc.net/", "net/fabricmc", "fabric-loader", loaderVersion);
+    private static String getLaunchMetaUrl(String gameVersion, String loaderVersion) {
+        return String.format("https://meta.fabricmc.net/v2/versions/loader/%s/%s", gameVersion, loaderVersion);
     }
 
-    private Version getPatch(JsonObject jsonObject, String gameVersion, String loaderVersion) {
+    private Version getPatch(FabricInfo fabricInfo, String gameVersion, String loaderVersion) {
+        JsonObject launcherMeta = fabricInfo.launcherMeta;
         Arguments arguments = new Arguments();
 
         String mainClass;
-        if (!jsonObject.get("mainClass").isJsonObject()) {
-            mainClass = jsonObject.get("mainClass").getAsString();
+        if (!launcherMeta.get("mainClass").isJsonObject()) {
+            mainClass = launcherMeta.get("mainClass").getAsString();
         } else {
-            mainClass = jsonObject.get("mainClass").getAsJsonObject().get("client").getAsString();
+            mainClass = launcherMeta.get("mainClass").getAsJsonObject().get("client").getAsString();
         }
 
-        if (jsonObject.has("launchwrapper")) {
-            String clientTweaker = jsonObject.get("launchwrapper").getAsJsonObject().get("tweakers").getAsJsonObject().get("client").getAsJsonArray().get(0).getAsString();
+        if (launcherMeta.has("launchwrapper")) {
+            String clientTweaker = launcherMeta.get("launchwrapper").getAsJsonObject().get("tweakers").getAsJsonObject().get("client").getAsJsonArray().get(0).getAsString();
             arguments = arguments.addGameArguments("--tweakClass", clientTweaker);
         }
 
-        JsonObject librariesObject = jsonObject.getAsJsonObject("libraries");
+        JsonObject librariesObject = launcherMeta.getAsJsonObject("libraries");
         List<Library> libraries = new ArrayList<>();
 
         // "common, server" is hard coded in fabric installer.
@@ -122,10 +118,94 @@ public final class FabricInstallTask extends Task<Version> {
             }
         }
 
-        libraries.add(new Library(new Artifact("net.fabricmc", "intermediary", gameVersion), "https://maven.fabricmc.net/", null));
-        libraries.add(new Library(new Artifact("net.fabricmc", "fabric-loader", loaderVersion), "https://maven.fabricmc.net/", null));
+        libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.intermediary.maven), "https://maven.fabricmc.net/", null));
+        libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.loader.maven), "https://maven.fabricmc.net/", null));
 
-        return new Version("net.fabricmc", loaderVersion, 30000, arguments, mainClass, libraries);
+        return new Version(LibraryAnalyzer.LibraryType.FABRIC.getPatchId(), loaderVersion, 30000, arguments, mainClass, libraries);
+    }
+
+    public static class FabricInfo {
+        private final LoaderInfo loader;
+        private final IntermediaryInfo intermediary;
+        private final JsonObject launcherMeta;
+
+        public FabricInfo(LoaderInfo loader, IntermediaryInfo intermediary, JsonObject launcherMeta) {
+            this.loader = loader;
+            this.intermediary = intermediary;
+            this.launcherMeta = launcherMeta;
+        }
+
+        public LoaderInfo getLoader() {
+            return loader;
+        }
+
+        public IntermediaryInfo getIntermediary() {
+            return intermediary;
+        }
+
+        public JsonObject getLauncherMeta() {
+            return launcherMeta;
+        }
+    }
+
+    public static class LoaderInfo {
+        private final String separator;
+        private final int build;
+        private final String maven;
+        private final String version;
+        private final boolean stable;
+
+        public LoaderInfo(String separator, int build, String maven, String version, boolean stable) {
+            this.separator = separator;
+            this.build = build;
+            this.maven = maven;
+            this.version = version;
+            this.stable = stable;
+        }
+
+        public String getSeparator() {
+            return separator;
+        }
+
+        public int getBuild() {
+            return build;
+        }
+
+        public String getMaven() {
+            return maven;
+        }
+
+        public String getVersion() {
+            return version;
+        }
+
+        public boolean isStable() {
+            return stable;
+        }
+    }
+
+    public static class IntermediaryInfo {
+        private final String maven;
+        private final String version;
+        private final boolean stable;
+
+        public IntermediaryInfo(String maven, String version, boolean stable) {
+            this.maven = maven;
+            this.version = version;
+            this.stable = stable;
+        }
+
+        public String getMaven() {
+            return maven;
+        }
+
+        public String getVersion() {
+            return version;
+        }
+
+        public boolean isStable() {
+            return stable;
+        }
     }
 
     public static class UnsupportedFabricInstallationException extends Exception {
