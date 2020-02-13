@@ -512,6 +512,12 @@ public final class LauncherHelper {
         public void setProcess(ManagedProcess process) {
             this.process = process;
 
+            String command = new CommandBuilder().addAll(process.getCommands()).toString();
+            for (Map.Entry<String, String> entry : forbiddenTokens.entrySet())
+                command = command.replace(entry.getKey(), entry.getValue());
+
+            LOG.info("Launched process: " + command);
+
             if (showLogs)
                 Platform.runLater(() -> {
                     logWindow = new LogWindow();
