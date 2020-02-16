@@ -23,9 +23,12 @@ import javafx.beans.value.ObservableObjectValue;
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -48,6 +51,10 @@ public final class DownloadProviders {
                 () -> Optional.ofNullable(providersById.get(config().getDownloadType()))
                         .orElse(providersById.get(DEFAULT_PROVIDER_ID)),
                 config().downloadTypeProperty());
+
+        FXUtils.onChangeAndOperate(downloadProviderProperty, provider -> {
+            Schedulers.io().setMaximumPoolSize(provider.getConcurrency());
+        });
     }
 
     public static DownloadProvider getDownloadProvider() {

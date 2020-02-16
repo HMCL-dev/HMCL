@@ -22,16 +22,7 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -43,9 +34,9 @@ public final class Schedulers {
     private Schedulers() {
     }
 
-    private static volatile ExecutorService CACHED_EXECUTOR;
+    private static volatile ThreadPoolExecutor CACHED_EXECUTOR;
 
-    public static synchronized Executor newThread() {
+    public static synchronized ThreadPoolExecutor newThread() {
         if (CACHED_EXECUTOR == null)
             CACHED_EXECUTOR = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
                     60, TimeUnit.SECONDS, new SynchronousQueue<>(), Executors.defaultThreadFactory());
@@ -53,22 +44,25 @@ public final class Schedulers {
         return CACHED_EXECUTOR;
     }
 
-    private static volatile ExecutorService IO_EXECUTOR;
+    private static volatile ThreadPoolExecutor IO_EXECUTOR;
 
-    public static synchronized Executor io() {
+    public static synchronized ThreadPoolExecutor io() {
         if (IO_EXECUTOR == null)
-            IO_EXECUTOR = Executors.newFixedThreadPool(6, runnable -> {
-                Thread thread = Executors.defaultThreadFactory().newThread(runnable);
-                thread.setDaemon(true);
-                return thread;
-            });
+            IO_EXECUTOR = new ThreadPoolExecutor(0, 6,
+                    60L, TimeUnit.SECONDS,
+                    new SynchronousQueue<>(),
+                    runnable -> {
+                        Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+                        thread.setDaemon(true);
+                        return thread;
+                    });
 
         return IO_EXECUTOR;
     }
 
     private static volatile ExecutorService SINGLE_EXECUTOR;
 
-    public static synchronized Executor computation() {
+    public static synchronized ExecutorService computation() {
         if (SINGLE_EXECUTOR == null)
             SINGLE_EXECUTOR = Executors.newSingleThreadExecutor(runnable -> {
                 Thread thread = Executors.defaultThreadFactory().newThread(runnable);

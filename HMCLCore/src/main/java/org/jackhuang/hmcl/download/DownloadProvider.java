@@ -56,4 +56,10 @@ public interface DownloadProvider {
      * @throws IllegalArgumentException if the version list does not exist
      */
     VersionList<?> getVersionListById(String id);
+
+    /**
+     * The maximum download concurrency that this download provider supports.
+     * @return the maximum download concurrency.
+     */
+    int getConcurrency();
 }

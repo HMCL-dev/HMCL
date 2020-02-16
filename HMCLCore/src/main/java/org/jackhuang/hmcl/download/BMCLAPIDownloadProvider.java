@@ -90,4 +90,8 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
                 .replace("https://authlib-injector.yushi.moe", apiRoot + "/mirrors/authlib-injector");
     }
 
+    @Override
+    public int getConcurrency() {
+        return Math.max(Runtime.getRuntime().availableProcessors() * 2, 6);
+    }
 }

@@ -76,4 +76,9 @@ public class MojangDownloadProvider implements DownloadProvider {
     public String injectURL(String baseURL) {
         return baseURL;
     }
+
+    @Override
+    public int getConcurrency() {
+        return 6;
+    }
 }
