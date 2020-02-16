@@ -48,7 +48,7 @@ public final class Schedulers {
 
     public static synchronized ThreadPoolExecutor io() {
         if (IO_EXECUTOR == null)
-            IO_EXECUTOR = new ThreadPoolExecutor(0, 6,
+            IO_EXECUTOR = new ThreadPoolExecutor(6, 6,
                     60L, TimeUnit.SECONDS,
                     new SynchronousQueue<>(),
                     runnable -> {

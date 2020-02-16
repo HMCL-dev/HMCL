@@ -40,9 +40,11 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.i18n.Locales;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.net.Proxy;
 import java.nio.file.Files;
@@ -250,5 +252,10 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
     @Override
     protected void onSponsor() {
         FXUtils.openLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
+    }
+
+    @Override
+    protected void clearCacheDirectory() {
+        FileUtils.cleanDirectoryQuietly(new File(Settings.instance().getCommonDirectory(), "cache"));
     }
 }

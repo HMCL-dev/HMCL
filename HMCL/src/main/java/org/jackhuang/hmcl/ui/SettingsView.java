@@ -183,6 +183,14 @@ public abstract class SettingsView extends StackPane {
                     fileCommonLocation.setHasSubtitle(true);
                     fileCommonLocation.setCustomText("settings.custom");
 
+                    {
+                        JFXButton cleanButton = new JFXButton(i18n("launcher.cache_directory.clean"));
+                        cleanButton.setOnMouseClicked(e -> clearCacheDirectory());
+                        cleanButton.getStyleClass().add("jfx-button-border");
+
+                        fileCommonLocation.setHeaderRight(cleanButton);
+                    }
+
                     settingsPane.getContent().add(fileCommonLocation);
                 }
 
@@ -526,4 +534,5 @@ public abstract class SettingsView extends StackPane {
     protected abstract void onHelp();
     protected abstract void onExportLogs();
     protected abstract void onSponsor();
+    protected abstract void clearCacheDirectory();
 }

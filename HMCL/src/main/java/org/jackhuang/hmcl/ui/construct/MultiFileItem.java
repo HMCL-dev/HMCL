@@ -47,7 +47,7 @@ import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class MultiFileItem<T> extends ComponentList {
+public class MultiFileItem<T> extends ComponentSublist {
     private final StringProperty customTitle = new SimpleStringProperty(this, "customTitle", i18n("selector.custom"));
     private final StringProperty chooserTitle = new SimpleStringProperty(this, "chooserTitle", i18n("selector.choose_file"));
     private final BooleanProperty directory = new SimpleBooleanProperty(this, "directory", false);

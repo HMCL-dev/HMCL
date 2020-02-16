@@ -23,7 +23,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Node;
 
 @DefaultProperty("content")
-public final class ComponentSublist extends ComponentList {
+public class ComponentSublist extends ComponentList {
 
     private final ObjectProperty<Node> headerLeft = new SimpleObjectProperty<>(this, "headerLeft");
     private final ObjectProperty<Node> headerRight = new SimpleObjectProperty<>(this, "headerRight");
