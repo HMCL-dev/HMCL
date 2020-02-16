@@ -121,15 +121,16 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                     "  JVM Free Memory: " + Runtime.getRuntime().freeMemory() + "\n";
 
             LOG.log(Level.SEVERE, text);
-
-            if (checkThrowable(e)) {
-                if (showCrashWindow) {
-                    Platform.runLater(() -> new CrashWindow(text).show());
+            Platform.runLater(() -> {
+                if (checkThrowable(e)) {
+                    if (showCrashWindow) {
+                        new CrashWindow(text).show();
+                    }
+                    if (!UpdateChecker.isOutdated() && IntegrityChecker.isSelfVerified()) {
+                        reportToServer(text);
+                    }
                 }
-                if (!UpdateChecker.isOutdated() && IntegrityChecker.isSelfVerified()) {
-                    reportToServer(text);
-                }
-            }
+            });
         } catch (Throwable handlingException) {
             LOG.log(Level.SEVERE, "Unable to handle uncaught exception", handlingException);
         }
