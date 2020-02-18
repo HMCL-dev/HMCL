@@ -58,7 +58,7 @@ public final class GameDownloadTask extends Task<Void> {
         File jar = dependencyManager.getGameRepository().getVersionJar(version);
 
         FileDownloadTask task = new FileDownloadTask(
-                NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(version.getDownloadInfo().getUrl())),
+                NetworkUtils.toURL(dependencyManager.getPrimaryDownloadProvider().injectURL(version.getDownloadInfo().getUrl())),
                 jar,
                 IntegrityCheck.of(CacheRepository.SHA1, version.getDownloadInfo().getSha1()))
                 .setCaching(true)

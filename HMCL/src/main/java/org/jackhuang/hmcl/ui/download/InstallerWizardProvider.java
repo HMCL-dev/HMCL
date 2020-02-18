@@ -88,7 +88,7 @@ public final class InstallerWizardProvider implements WizardProvider {
 
     @Override
     public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
-        DownloadProvider provider = profile.getDependency().getDownloadProvider();
+        DownloadProvider provider = profile.getDependency().getPrimaryDownloadProvider();
         switch (step) {
             case 0:
                 return new AdditionalInstallersPage(this, controller, profile.getRepository(), provider);

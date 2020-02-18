@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * Note: This class has no state.
@@ -39,11 +40,13 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     private final DefaultGameRepository repository;
     private final DownloadProvider downloadProvider;
+    private final List<DownloadProvider> preferredDownloadProviders;
     private final DefaultCacheRepository cacheRepository;
 
-    public DefaultDependencyManager(DefaultGameRepository repository, DownloadProvider downloadProvider, DefaultCacheRepository cacheRepository) {
+    public DefaultDependencyManager(DefaultGameRepository repository, DownloadProvider downloadProvider, List<DownloadProvider> preferredDownloadProviders, DefaultCacheRepository cacheRepository) {
         this.repository = repository;
         this.downloadProvider = downloadProvider;
+        this.preferredDownloadProviders = preferredDownloadProviders;
         this.cacheRepository = cacheRepository;
     }
 
@@ -53,8 +56,13 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public DownloadProvider getDownloadProvider() {
+    public DownloadProvider getPrimaryDownloadProvider() {
         return downloadProvider;
+    }
+
+    @Override
+    public List<DownloadProvider> getPreferredDownloadProviders() {
+        return preferredDownloadProviders;
     }
 
     @Override

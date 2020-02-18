@@ -50,7 +50,7 @@ public final class FabricInstallTask extends Task<Version> {
         this.version = version;
         this.remote = remoteVersion;
 
-        launchMetaTask = new GetTask(NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(getLaunchMetaUrl(remote.getGameVersion(), remote.getSelfVersion()))))
+        launchMetaTask = new GetTask(NetworkUtils.toURL(dependencyManager.getPrimaryDownloadProvider().injectURL(getLaunchMetaUrl(remote.getGameVersion(), remote.getSelfVersion()))))
                 .setCacheRepository(dependencyManager.getCacheRepository());
     }
 

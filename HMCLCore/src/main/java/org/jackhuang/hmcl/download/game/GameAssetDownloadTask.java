@@ -32,9 +32,11 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -101,8 +103,12 @@ public final class GameAssetDownloadTask extends Task<Void> {
                 if (file.isFile())
                     dependencyManager.getCacheRepository().tryCacheFile(file.toPath(), CacheRepository.SHA1, assetObject.getHash());
                 else {
-                    String url = dependencyManager.getDownloadProvider().getAssetBaseURL() + assetObject.getLocation();
-                    FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(url), file, new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.getHash()));
+                    List<URL> urls = dependencyManager.getPreferredDownloadProviders().stream()
+                            .map(downloadProvider -> downloadProvider.getAssetBaseURL() + assetObject.getLocation())
+                            .map(NetworkUtils::toURL)
+                            .collect(Collectors.toList());
+
+                    FileDownloadTask task = new FileDownloadTask(urls, file, new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.getHash()));
                     task.setName(assetObject.getHash());
                     dependencies.add(task
                             .setCacheRepository(dependencyManager.getCacheRepository())

@@ -109,7 +109,7 @@ public class FileDownloadTask extends Task<Void> {
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
      */
     public FileDownloadTask(URL url, File file, IntegrityCheck integrityCheck) {
-        this(url, file, integrityCheck, 5);
+        this(Collections.singletonList(url), file, integrityCheck);
     }
 
     /**
@@ -119,13 +119,7 @@ public class FileDownloadTask extends Task<Void> {
      * @param retry the times for retrying if downloading fails.
      */
     public FileDownloadTask(URL url, File file, IntegrityCheck integrityCheck, int retry) {
-        this.urls = Collections.singletonList(url);
-        this.file = file;
-        this.integrityCheck = integrityCheck;
-        this.retry = retry;
-
-        setName(file.getName());
-        setExecutor(Schedulers.io());
+        this(Collections.singletonList(url), file, integrityCheck, retry);
     }
 
     /**
@@ -135,13 +129,24 @@ public class FileDownloadTask extends Task<Void> {
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
      */
     public FileDownloadTask(List<URL> urls, File file, IntegrityCheck integrityCheck) {
+        this(urls, file, integrityCheck, 3);
+    }
+
+    /**
+     * Constructor.
+     * @param urls urls of remote file, will be attempted in order.
+     * @param file the location that download to.
+     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
+     * @param retry the times for retrying if downloading fails.
+     */
+    public FileDownloadTask(List<URL> urls, File file, IntegrityCheck integrityCheck, int retry) {
         if (urls == null || urls.isEmpty())
             throw new IllegalArgumentException("At least one URL is required");
 
         this.urls = new ArrayList<>(urls);
         this.file = file;
         this.integrityCheck = integrityCheck;
-        this.retry = urls.size();
+        this.retry = retry;
 
         setName(file.getName());
         setExecutor(Schedulers.io());
@@ -208,8 +213,8 @@ public class FileDownloadTask extends Task<Void> {
         Logging.LOG.log(Level.FINER, "Downloading " + urls.get(0) + " to " + file);
         Exception exception = null;
 
-        for (int repeat = 0; repeat < retry; repeat++) {
-            URL url = urls.get(repeat % urls.size());
+        for (int repeat = 0; repeat < retry * urls.size(); repeat++) {
+            URL url = urls.get(repeat / urls.size());
             if (isCancelled()) {
                 break;
             }

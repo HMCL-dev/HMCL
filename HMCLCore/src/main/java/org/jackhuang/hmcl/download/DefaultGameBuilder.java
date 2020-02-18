@@ -34,7 +34,7 @@ public class DefaultGameBuilder extends GameBuilder {
 
     public DefaultGameBuilder(DefaultDependencyManager dependencyManager) {
         this.dependencyManager = dependencyManager;
-        this.downloadProvider = dependencyManager.getDownloadProvider();
+        this.downloadProvider = dependencyManager.getPrimaryDownloadProvider();
     }
 
     public DefaultDependencyManager getDependencyManager() {

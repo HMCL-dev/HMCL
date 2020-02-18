@@ -68,7 +68,7 @@ public class LibraryDownloadTask extends Task<Void> {
         this.library = library;
         this.cacheRepository = dependencyManager.getCacheRepository();
 
-        url = dependencyManager.getDownloadProvider().injectURL(library.getDownload().getUrl());
+        url = dependencyManager.getPrimaryDownloadProvider().injectURL(library.getDownload().getUrl());
         jar = file;
 
         xzFile = new File(file.getAbsoluteFile().getParentFile(), file.getName() + ".pack.xz");

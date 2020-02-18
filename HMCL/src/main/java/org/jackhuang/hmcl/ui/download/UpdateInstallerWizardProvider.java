@@ -64,7 +64,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
 
     @Override
     public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
-        DownloadProvider provider = profile.getDependency().getDownloadProvider();
+        DownloadProvider provider = profile.getDependency().getPrimaryDownloadProvider();
         switch (step) {
             case 0:
                 return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, provider, libraryId, () -> {

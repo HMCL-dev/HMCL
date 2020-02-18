@@ -26,9 +26,12 @@ import org.jackhuang.hmcl.download.MojangDownloadProvider;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.FXUtils;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -57,8 +60,20 @@ public final class DownloadProviders {
         });
     }
 
+    /**
+     * Get current primary preferred download provider
+     */
     public static DownloadProvider getDownloadProvider() {
         return downloadProviderProperty.get();
+    }
+
+    /**
+     * Preferred download providers have the primary one first, the official one next.
+     * @return the preferred download providers
+     */
+    public static List<DownloadProvider> getPreferredDownloadProviders() {
+        DownloadProvider provider = getDownloadProvider();
+        return Stream.concat(Stream.of(provider), providersById.values().stream().filter(x -> x != provider)).collect(Collectors.toList());
     }
 
     public static ObservableObjectValue<DownloadProvider> downloadProviderProperty() {
