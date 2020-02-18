@@ -42,6 +42,7 @@ import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
 import static org.jackhuang.hmcl.util.Hex.encodeHex;
@@ -50,6 +51,7 @@ public class LibraryDownloadTask extends Task<Void> {
     private FileDownloadTask task;
     protected final File jar;
     protected final DefaultCacheRepository cacheRepository;
+    protected final AbstractDependencyManager dependencyManager;
     private final File xzFile;
     protected final Library library;
     protected final String url;
@@ -58,6 +60,7 @@ public class LibraryDownloadTask extends Task<Void> {
     private boolean cached = false;
 
     public LibraryDownloadTask(AbstractDependencyManager dependencyManager, File file, Library library) {
+        this.dependencyManager = dependencyManager;
         this.originalLibrary = library;
 
         setSignificance(TaskSignificance.MODERATE);
@@ -68,7 +71,7 @@ public class LibraryDownloadTask extends Task<Void> {
         this.library = library;
         this.cacheRepository = dependencyManager.getCacheRepository();
 
-        url = dependencyManager.getPrimaryDownloadProvider().injectURL(library.getDownload().getUrl());
+        url = library.getDownload().getUrl();
         jar = file;
 
         xzFile = new File(file.getAbsoluteFile().getParentFile(), file.getName() + ".pack.xz");
@@ -127,15 +130,22 @@ public class LibraryDownloadTask extends Task<Void> {
         }
 
         try {
-            URL packXz = NetworkUtils.toURL(url + ".pack.xz");
+            URL packXz = NetworkUtils.toURL(dependencyManager.getPrimaryDownloadProvider().injectURL(url) + ".pack.xz");
             if (NetworkUtils.urlExists(packXz)) {
-                task = new FileDownloadTask(packXz, xzFile, null)
+                List<URL> urls = dependencyManager.getPreferredDownloadProviders().stream()
+                        .map(downloadProvider -> downloadProvider.injectURL(url) + ".pack.xz")
+                        .map(NetworkUtils::toURL)
+                        .collect(Collectors.toList());
+                task = new FileDownloadTask(urls, xzFile, null)
                         .setCacheRepository(cacheRepository)
                         .setCaching(true);
                 xz = true;
             } else {
-                task = new FileDownloadTask(NetworkUtils.toURL(url),
-                        jar,
+                List<URL> urls = dependencyManager.getPreferredDownloadProviders().stream()
+                        .map(downloadProvider -> downloadProvider.injectURL(url))
+                        .map(NetworkUtils::toURL)
+                        .collect(Collectors.toList());
+                task = new FileDownloadTask(urls, jar,
                         library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null)
                         .setCacheRepository(cacheRepository)
                         .setCaching(true);
