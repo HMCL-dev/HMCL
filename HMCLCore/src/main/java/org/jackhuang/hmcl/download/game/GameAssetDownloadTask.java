@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download.game;
 
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.game.AssetIndex;
@@ -25,10 +26,10 @@ import org.jackhuang.hmcl.game.AssetObject;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,8 +68,8 @@ public final class GameAssetDownloadTask extends Task<Void> {
             dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.version));
         } else {
             try {
-                JsonUtils.GSON.fromJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
-            } catch (IOException | JsonSyntaxException e) {
+                JsonUtils.fromNonNullJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
+            } catch (IOException | JsonParseException e) {
                 dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.version));
             }
         }
