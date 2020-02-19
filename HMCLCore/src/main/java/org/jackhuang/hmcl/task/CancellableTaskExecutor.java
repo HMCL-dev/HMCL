@@ -143,7 +143,7 @@ public class CancellableTaskExecutor extends TaskExecutor {
                     .findAny().orElse(null);
             if (!doDependentsSucceeded && task.isRelyingOnDependents() || cancelled.get()) {
                 task.setException(dependentsException);
-                throw new CancellationException();
+                throw new ExecutionException(dependentsException);
             }
 
             if (doDependentsSucceeded)
@@ -183,7 +183,7 @@ public class CancellableTaskExecutor extends TaskExecutor {
             if (!doDependenciesSucceeded && task.isRelyingOnDependencies()) {
                 Logging.LOG.severe("Subtasks failed for " + task.getName());
                 task.setException(dependenciesException);
-                throw new CancellationException();
+                throw new ExecutionException(dependenciesException);
             }
 
             flag = true;

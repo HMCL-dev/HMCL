@@ -211,7 +211,7 @@ public class FileDownloadTask extends Task<Void> {
         Exception exception = null;
 
         for (int repeat = 0; repeat < retry * urls.size(); repeat++) {
-            URL url = urls.get(repeat / urls.size());
+            URL url = urls.get(repeat / retry);
             if (isCancelled()) {
                 break;
             }

@@ -86,7 +86,7 @@ public abstract class VersionList<T extends RemoteVersion> {
     }
 
     public Task<?> loadAsync(String gameVersion) {
-        return Task.composeAsync(() -> {
+        return Task.composeAsync(null, () -> {
             lock.readLock().lock();
             boolean loaded;
 
