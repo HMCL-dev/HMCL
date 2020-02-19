@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskStages;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -73,14 +74,35 @@ public final class InstallerWizardProvider implements WizardProvider {
 
     @Override
     public Object finish(Map<String, Object> settings) {
+        settings.put("title", i18n("install.installer.install_online"));
         settings.put("success_message", i18n("install.success"));
         settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> alertFailureMessage(exception, next));
+        settings.put("stages", new TaskStages() {
+            {
+                if (settings.containsKey("forge")) {
+                    RemoteVersion forge = (RemoteVersion) settings.get("forge");
+                    addStage("hmcl.install.forge", i18n("install.installer.install", i18n("install.installer.forge") + " " + forge.getSelfVersion()));
+                }
+                if (settings.containsKey("liteloader")) {
+                    RemoteVersion liteloader = (RemoteVersion) settings.get("liteloader");
+                    addStage("hmcl.install.liteloader", i18n("install.installer.install", i18n("install.installer.liteloader") + " " + liteloader.getSelfVersion()));
+                }
+                if (settings.containsKey("optifine")) {
+                    RemoteVersion optifine = (RemoteVersion) settings.get("optifine");
+                    addStage("hmcl.install.optifine", i18n("install.installer.install", i18n("install.installer.optifine") + " " + optifine.getSelfVersion()));
+                }
+                if (settings.containsKey("fabric")) {
+                    RemoteVersion fabric = (RemoteVersion) settings.get("fabric");
+                    addStage("hmcl.install.fabric", i18n("install.installer.install", i18n("install.installer.fabric") + " " + fabric.getSelfVersion()));
+                }
+            }
+        });
 
         Task<Version> ret = Task.supplyAsync(() -> version);
 
         for (Object value : settings.values()) {
             if (value instanceof RemoteVersion)
-                ret = ret.thenComposeAsync(profile.getDependency().installLibraryAsync((RemoteVersion) value));
+                ret = ret.thenComposeAsync(version -> profile.getDependency().installLibraryAsync(version, (RemoteVersion) value));
         }
 
         return ret.thenComposeAsync(profile.getRepository().refreshVersionsAsync());

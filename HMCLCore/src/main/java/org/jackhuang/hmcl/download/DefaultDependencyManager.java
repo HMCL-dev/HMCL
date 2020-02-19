@@ -102,7 +102,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         VersionList<?> versionList = getVersionList(libraryId);
         return versionList.loadAsync(gameVersion)
                 .thenComposeAsync(() -> installLibraryAsync(baseVersion, versionList.getVersion(gameVersion, libraryVersion)
-                        .orElseThrow(() -> new IOException("Remote library " + libraryId + " has no version " + libraryVersion))));
+                        .orElseThrow(() -> new IOException("Remote library " + libraryId + " has no version " + libraryVersion))))
+                .withStage("hmcl.install." + libraryId);
     }
 
     @Override
@@ -112,11 +113,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         return removeLibraryAsync(baseVersion.resolvePreservingPatches(repository), libraryVersion.getLibraryId())
                 .thenComposeAsync(version -> libraryVersion.getInstallTask(this, version))
                 .thenApplyAsync(baseVersion::addPatch)
-                .thenComposeAsync(repository::save);
-    }
-
-    public ExceptionalFunction<Version, Task<Version>, ?> installLibraryAsync(RemoteVersion libraryVersion) {
-        return version -> installLibraryAsync(version, libraryVersion);
+                .thenComposeAsync(repository::save).withStage("hmcl.install." + libraryVersion.getLibraryId());
     }
 
     public Task<Version> installLibraryAsync(Version oldVersion, Path installer) {

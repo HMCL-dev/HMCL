@@ -85,18 +85,10 @@ public class TaskExecutorDialogPane extends StackPane {
     }
 
     public void setExecutor(TaskExecutor executor, boolean autoClose) {
-        setExecutor(executor, Collections.emptyList(), autoClose);
-    }
-
-    public void setExecutor(TaskExecutor executor, List<String> stages) {
-        setExecutor(executor, stages, true);
-    }
-
-    public void setExecutor(TaskExecutor executor, List<String> stages, boolean autoClose) {
         this.executor = executor;
 
         if (executor != null) {
-            taskListPane.setExecutor(executor, stages);
+            taskListPane.setExecutor(executor);
 
             if (autoClose)
                 executor.addTaskListener(new TaskListener() {

@@ -21,6 +21,7 @@ import javafx.beans.property.StringProperty;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.task.TaskStages;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
@@ -65,7 +66,7 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
                                 return;
                             String appendix = StringUtils.getStackTrace(executor.getException());
                             if (settings.get("failure_callback") instanceof WizardProvider.FailureCallback)
-                                ((WizardProvider.FailureCallback)settings.get("failure_callback")).onFail(settings, executor.getException(), () -> onEnd());
+                                ((WizardProvider.FailureCallback) settings.get("failure_callback")).onFail(settings, executor.getException(), () -> onEnd());
                             else if (settings.get("failure_message") instanceof String)
                                 Controllers.dialog(appendix, (String) settings.get("failure_message"), MessageType.ERROR, () -> onEnd());
                             else if (!settings.containsKey("forbid_failure_message"))
@@ -75,6 +76,8 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
                     });
                 }
             });
+            if (settings.containsKey("stages"))
+                executor.setStages((TaskStages) settings.get("stages"));
             pane.setExecutor(executor);
             Controllers.dialog(pane);
             executor.start();

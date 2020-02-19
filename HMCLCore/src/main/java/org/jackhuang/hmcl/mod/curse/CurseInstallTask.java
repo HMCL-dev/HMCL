@@ -133,8 +133,8 @@ public final class CurseInstallTask extends Task<Void> {
         File root = repository.getVersionRoot(name);
         FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(manifest));
 
-        dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest));
-        dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), manifest.getOverrides(), manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)));
+        dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest).withStage("hmcl.modpack.download"));
+        dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), manifest.getOverrides(), manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)).withStage("hmcl.modpack.unzip"));
     }
 
     public static final String MODPACK_TYPE = "Curse";

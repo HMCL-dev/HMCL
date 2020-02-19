@@ -49,6 +49,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.i18n.LocalizedTaskStages;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
@@ -199,12 +200,12 @@ public final class LauncherHelper {
                     launchingLatch.await();
                 }).withStage("launch.state.waiting_launching"))
                 .cancellableExecutor();
-
-        launchingStepsPane.setExecutor(executor, Lang.immutableListOf(
+        executor.setStages(new LocalizedTaskStages(Lang.immutableListOf(
                 "launch.state.dependencies",
                 "launch.state.modpack",
                 "launch.state.logging_in",
-                "launch.state.waiting_launching"), false);
+                "launch.state.waiting_launching")));
+        launchingStepsPane.setExecutor(executor, false);
         executor.addTaskListener(new TaskListener() {
 
             @Override

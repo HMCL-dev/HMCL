@@ -19,13 +19,16 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXProgressBar;
 import javafx.application.Platform;
-import javafx.beans.property.ReadOnlyIntegerProperty;
-import javafx.beans.property.ReadOnlyIntegerWrapper;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.DoubleBinding;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
@@ -43,6 +46,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.task.TaskStages;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
@@ -52,9 +56,11 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class TaskListPane extends StackPane {
+    private TaskExecutor executor;
     private final AdvancedListBox listBox = new AdvancedListBox();
     private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
     private final List<StageNode> stageNodes = new ArrayList<>();
+    private final ObjectProperty<Insets> progressNodePadding = new SimpleObjectProperty<>(Insets.EMPTY);
 
     public TaskListPane() {
         listBox.setSpacing(0);
@@ -63,19 +69,19 @@ public final class TaskListPane extends StackPane {
     }
 
     public void setExecutor(TaskExecutor executor) {
-        setExecutor(executor, Collections.emptyList());
-    }
-
-    public void setExecutor(TaskExecutor executor, List<String> stages) {
-
+        TaskStages stages = executor.getStages();
+        this.executor = executor;
         executor.addTaskListener(new TaskListener() {
             @Override
             public void onStart() {
                 Platform.runLater(() -> {
                     stageNodes.clear();
                     listBox.clear();
-                    stageNodes.addAll(stages.stream().map(StageNode::new).collect(Collectors.toList()));
+                    stageNodes.addAll(stages.getStages().stream().map(StageNode::new).collect(Collectors.toList()));
                     stageNodes.forEach(listBox::add);
+
+                    if (stages.getStages().isEmpty()) progressNodePadding.setValue(new Insets(0, 0, 8, 0));
+                    else progressNodePadding.setValue(new Insets(0, 0, 8, 26));
                 });
             }
 
@@ -103,6 +109,8 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("install.installer.install", i18n("install.installer.liteloader")));
                 } else if (task instanceof OptiFineInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.optifine")));
+                } else if (task instanceof FabricInstallTask) {
+                    task.setName(i18n("install.installer.install", i18n("install.installer.fabric")));
                 } else if (task instanceof CurseCompletionTask) {
                     task.setName(i18n("modpack.type.curse.completion"));
                 } else if (task instanceof ModpackInstallTask) {
@@ -163,7 +171,7 @@ public final class TaskListPane extends StackPane {
         });
     }
 
-    private static class StageNode extends BorderPane {
+    private class StageNode extends BorderPane {
         private final String stage;
         private final Label title = new Label();
         private boolean started = false;
@@ -171,12 +179,12 @@ public final class TaskListPane extends StackPane {
         public StageNode(String stage) {
             this.stage = stage;
 
-            title.setText(i18n(stage));
+            title.setText(executor.getStages().localize(stage));
             BorderPane.setAlignment(title, Pos.CENTER_LEFT);
             BorderPane.setMargin(title, new Insets(0, 0, 0, 8));
             setPadding(new Insets(0, 0, 8, 4));
             setCenter(title);
-            setLeft(SVG.dotsHorizontal(Theme.blackFillBinding(), 14, 14));
+            setLeft(FXUtils.limitingSize(SVG.dotsHorizontal(Theme.blackFillBinding(), 14, 14), 14, 14));
         }
 
         public void begin() {
@@ -194,10 +202,13 @@ public final class TaskListPane extends StackPane {
         }
     }
 
-    private static class ProgressListNode extends BorderPane {
+    private class ProgressListNode extends BorderPane {
         private final JFXProgressBar bar = new JFXProgressBar();
         private final Label title = new Label();
         private final Label state = new Label();
+        private final DoubleBinding binding = Bindings.createDoubleBinding(() ->
+                        getWidth() - getPadding().getLeft() - getPadding().getRight(),
+                paddingProperty(), widthProperty());
 
         public ProgressListNode(Task<?> task) {
             bar.progressProperty().bind(task.progressProperty());
@@ -208,9 +219,11 @@ public final class TaskListPane extends StackPane {
             setRight(state);
             setBottom(bar);
 
-            bar.minWidthProperty().bind(widthProperty());
-            bar.prefWidthProperty().bind(widthProperty());
-            bar.maxWidthProperty().bind(widthProperty());
+            bar.minWidthProperty().bind(binding);
+            bar.prefWidthProperty().bind(binding);
+            bar.maxWidthProperty().bind(binding);
+
+            paddingProperty().bind(progressNodePadding);
         }
 
         public void unbind() {

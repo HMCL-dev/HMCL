@@ -30,6 +30,7 @@ public abstract class TaskExecutor {
     protected final AtomicInteger totTask = new AtomicInteger(0);
     protected final AtomicBoolean cancelled = new AtomicBoolean(false);
     protected Exception exception;
+    private TaskStages stages = TaskStages.EMPTY;
 
     public TaskExecutor(Task<?> task) {
         this.firstTask = task;
@@ -63,5 +64,13 @@ public abstract class TaskExecutor {
 
     public int getRunningTasks() {
         return totTask.get();
+    }
+
+    public TaskStages getStages() {
+        return stages;
+    }
+
+    public void setStages(TaskStages stages) {
+        this.stages = stages;
     }
 }

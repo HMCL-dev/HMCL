@@ -54,7 +54,7 @@ public class DefaultGameBuilder extends GameBuilder {
             libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, entry.getKey(), entry.getValue()));
 
         for (RemoteVersion remoteVersion : remoteVersions)
-            libraryTask = libraryTask.thenComposeAsync(dependencyManager.installLibraryAsync(remoteVersion));
+            libraryTask = libraryTask.thenComposeAsync(version -> dependencyManager.installLibraryAsync(version, remoteVersion));
 
         return libraryTask.whenComplete(exception -> {
             if (exception != null)
