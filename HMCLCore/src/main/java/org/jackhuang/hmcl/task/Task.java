@@ -94,7 +94,7 @@ public abstract class Task<T> {
      * You must initialize stage in preExecute.
      * @param stage the stage
      */
-    public void setStage(String stage) {
+    final void setStage(String stage) {
         this.stage = stage;
     }
 
@@ -363,18 +363,18 @@ public abstract class Task<T> {
     }
 
     public final TaskExecutor cancellableExecutor() {
-        return new AsyncTaskExecutor(this);
+        return new CancellableTaskExecutor(this);
     }
 
     public final TaskExecutor cancellableExecutor(boolean start) {
-        TaskExecutor executor = new AsyncTaskExecutor(this);
+        TaskExecutor executor = new CancellableTaskExecutor(this);
         if (start)
             executor.start();
         return executor;
     }
 
     public final TaskExecutor cancellableExecutor(TaskListener taskListener) {
-        TaskExecutor executor = new AsyncTaskExecutor(this);
+        TaskExecutor executor = new CancellableTaskExecutor(this);
         executor.addTaskListener(taskListener);
         return executor;
     }

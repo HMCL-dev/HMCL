@@ -19,11 +19,9 @@ package org.jackhuang.hmcl.task;
 
 import javafx.application.Platform;
 import org.jackhuang.hmcl.util.Logging;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
@@ -50,7 +48,7 @@ public final class Schedulers {
         if (IO_EXECUTOR == null)
             IO_EXECUTOR = new ThreadPoolExecutor(6, 6,
                     60L, TimeUnit.SECONDS,
-                    new SynchronousQueue<>(),
+                    new LinkedBlockingQueue<>(),
                     runnable -> {
                         Thread thread = Executors.defaultThreadFactory().newThread(runnable);
                         thread.setDaemon(true);
@@ -99,59 +97,8 @@ public final class Schedulers {
     }
 
     public static Future<?> schedule(Executor executor, Runnable command) {
-        if (executor instanceof ExecutorService) {
-            return ((ExecutorService) executor).submit(command);
-        }
-
-        CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<Exception> wrapper = new AtomicReference<>();
-
-        executor.execute(() -> {
-            try {
-                command.run();
-            } catch (Exception e) {
-                wrapper.set(e);
-            } finally {
-                latch.countDown();
-            }
-            Thread.interrupted(); // clear the `interrupted` flag to prevent from interrupting EventDispatch thread.
-        });
-
-        return new Future<Void>() {
-            @Override
-            public boolean cancel(boolean mayInterruptIfRunning) {
-                return false;
-            }
-
-            @Override
-            public boolean isCancelled() {
-                return false;
-            }
-
-            @Override
-            public boolean isDone() {
-                return latch.getCount() == 0;
-            }
-
-            private Void getImpl() throws ExecutionException {
-                Exception e = wrapper.get();
-                if (e != null)
-                    throw new ExecutionException(e);
-                return null;
-            }
-
-            @Override
-            public Void get() throws InterruptedException, ExecutionException {
-                latch.await();
-                return getImpl();
-            }
-
-            @Override
-            public Void get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-                if (!latch.await(timeout, unit))
-                    throw new TimeoutException();
-                return getImpl();
-            }
-        };
+        FutureTask<?> future = new FutureTask<Void>(command, null);
+        executor.execute(future);
+        return future;
     }
 }

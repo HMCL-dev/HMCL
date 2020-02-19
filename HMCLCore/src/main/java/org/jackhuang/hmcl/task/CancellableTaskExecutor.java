@@ -193,7 +193,8 @@ public class CancellableTaskExecutor extends TaskExecutor {
 
             task.onDone().fireEvent(new TaskEvent(this, task, false));
             taskListeners.forEach(it -> it.onFinished(task));
-        } catch (RejectedExecutionException ignored) {
+        } catch (RejectedExecutionException e) {
+            Logging.LOG.log(Level.SEVERE, "Task rejected: " + task.getName(), e);
         } catch (Exception throwable) {
             Throwable resolved = resolveException(throwable);
             if (resolved instanceof Exception) {
@@ -268,7 +269,8 @@ public class CancellableTaskExecutor extends TaskExecutor {
         @Override
         public void run() {
             try {
-                Thread.currentThread().setName(task.getName());
+                if (task.getName() != null)
+                    Thread.currentThread().setName(task.getName());
                 if (!executeTask(parentTask, task))
                     success.set(false);
             } finally {
