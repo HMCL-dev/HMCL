@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -76,7 +75,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public Task<?> checkGameCompletionAsync(Version original) {
+    public Task<?> checkGameCompletionAsync(Version original, boolean integrityCheck) {
         Version version = original.resolve(repository);
         return Task.allOf(
                 Task.composeAsync(() -> {
@@ -85,14 +84,14 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                     else
                         return null;
                 }),
-                new GameAssetDownloadTask(this, version, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY),
-                new GameLibrariesTask(this, version)
+                new GameAssetDownloadTask(this, version, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck),
+                new GameLibrariesTask(this, version, integrityCheck)
         );
     }
 
     @Override
-    public Task<?> checkLibraryCompletionAsync(Version version) {
-        return new GameLibrariesTask(this, version, version.getLibraries());
+    public Task<?> checkLibraryCompletionAsync(Version version, boolean integrityCheck) {
+        return new GameLibrariesTask(this, version, integrityCheck, version.getLibraries());
     }
 
     @Override

@@ -84,7 +84,7 @@ public final class FabricInstallTask extends Task<Version> {
     public void execute() {
         setResult(getPatch(JsonUtils.GSON.fromJson(launchMetaTask.getResult(), FabricInfo.class), remote.getGameVersion(), remote.getSelfVersion()));
 
-        dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult()));
+        dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
     }
 
     private static String getLaunchMetaUrl(String gameVersion, String loaderVersion) {

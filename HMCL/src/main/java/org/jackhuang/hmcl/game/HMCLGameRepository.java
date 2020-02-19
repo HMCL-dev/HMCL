@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -219,6 +220,20 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public void undoMark(String id) {
         beingModpackVersions.remove(id);
+    }
+
+    public void markVersionLaunchedAbnormally(String id) {
+        try {
+            Files.createFile(getVersionRoot(id).toPath().resolve(".abnormal"));
+        } catch (IOException ignored) {
+        }
+    }
+
+    public boolean unmarkVersionLaunchedAbnormally(String id) {
+        File file = new File(getVersionRoot(id), ".abnormal");
+        boolean result = file.isFile();
+        file.delete();
+        return result;
     }
 
     private static final Gson GSON = new GsonBuilder()

@@ -19,12 +19,7 @@ package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.Arguments;
-import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.LibraryDownloadInfo;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 
@@ -79,7 +74,7 @@ public final class LiteLoaderInstallTask extends Task<Version> {
                 .setLogging(Collections.emptyMap()) // Mods may log in malformed format, causing XML parser to crash. So we suppress using official log4j configuration
         );
 
-        dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult()));
+        dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
     }
 
 }

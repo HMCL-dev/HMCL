@@ -135,7 +135,7 @@ public final class LauncherHelper {
                             if (setting.isNotCheckGame())
                                 return null;
                             else
-                                return dependencyManager.checkGameCompletionAsync(version);
+                                return dependencyManager.checkGameCompletionAsync(version, repository.unmarkVersionLaunchedAbnormally(selectedVersion));
                         }), Task.composeAsync(null, () -> {
                             try {
                                 ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
@@ -168,7 +168,7 @@ public final class LauncherHelper {
                             setting.toLaunchOptions(profile.getGameDir(), !setting.isNotCheckJVM()),
                             launcherVisibility == LauncherVisibility.CLOSE
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(authInfo, gameVersion.isPresent())
+                                    : new HMCLProcessListener(repository, selectedVersion, authInfo, gameVersion.isPresent())
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
@@ -209,12 +209,12 @@ public final class LauncherHelper {
 
             @Override
             public void onStop(boolean success, TaskExecutor executor) {
-                if (!success && !Controllers.isStopped()) {
-                    Platform.runLater(() -> {
-                        // Check if the application has stopped
-                        // because onStop will be invoked if tasks fail when the executor service shut down.
-                        if (!Controllers.isStopped()) {
-                            launchingStepsPane.fireEvent(new DialogCloseEvent());
+                Platform.runLater(() -> {
+                    // Check if the application has stopped
+                    // because onStop will be invoked if tasks fail when the executor service shut down.
+                    if (!Controllers.isStopped()) {
+                        launchingStepsPane.fireEvent(new DialogCloseEvent());
+                        if (!success) {
                             Exception ex = executor.getException();
                             if (ex != null) {
                                 String message;
@@ -264,9 +264,9 @@ public final class LauncherHelper {
                                         MessageType.ERROR);
                             }
                         }
-                    });
-                }
-                launchingStepsPane.setExecutor(null);
+                    }
+                    launchingStepsPane.setExecutor(null);
+                });
             }
         });
 
@@ -444,6 +444,8 @@ public final class LauncherHelper {
      */
     class HMCLProcessListener implements ProcessListener {
 
+        private final HMCLGameRepository repository;
+        private final String version;
         private final Map<String, String> forbiddenTokens;
         private ManagedProcess process;
         private boolean lwjgl;
@@ -452,7 +454,9 @@ public final class LauncherHelper {
         private final LinkedList<Pair<String, Log4jLevel>> logs;
         private final CountDownLatch latch = new CountDownLatch(1);
 
-        public HMCLProcessListener(AuthInfo authInfo, boolean detectWindow) {
+        public HMCLProcessListener(HMCLGameRepository repository, String version, AuthInfo authInfo, boolean detectWindow) {
+            this.repository = repository;
+            this.version = version;
             this.detectWindow = detectWindow;
 
             if (authInfo == null)
@@ -558,6 +562,12 @@ public final class LauncherHelper {
 
             // Game crashed before opening the game window.
             if (!lwjgl) finishLaunch();
+
+            launchingLatch.countDown();
+
+            if (exitType != ExitType.NORMAL) {
+                repository.markVersionLaunchedAbnormally(version);
+            }
 
             if (exitType != ExitType.NORMAL && logWindow == null)
                 Platform.runLater(() -> {

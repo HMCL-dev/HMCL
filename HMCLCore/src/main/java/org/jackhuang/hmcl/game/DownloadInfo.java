@@ -19,11 +19,12 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
+
+import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  *
@@ -78,5 +79,10 @@ public class DownloadInfo implements Validation {
     public void validate() throws JsonParseException, TolerableValidationException {
         if (StringUtils.isBlank(url))
             throw new TolerableValidationException();
+    }
+
+    public boolean validateChecksum(Path file, boolean defaultValue) throws IOException {
+        if (getSha1() == null) return defaultValue;
+        return Hex.encodeHex(DigestUtils.digest("SHA-1", file)).equalsIgnoreCase(getSha1());
     }
 }

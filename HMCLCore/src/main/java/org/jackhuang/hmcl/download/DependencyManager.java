@@ -46,7 +46,7 @@ public interface DependencyManager {
      *
      * @return the task to check game completion.
      */
-    Task<?> checkGameCompletionAsync(Version version);
+    Task<?> checkGameCompletionAsync(Version version, boolean integrityCheck);
 
     /**
      * Check if the game is complete.
@@ -54,7 +54,7 @@ public interface DependencyManager {
      *
      * @return the task to check game completion.
      */
-    Task<?> checkLibraryCompletionAsync(Version version);
+    Task<?> checkLibraryCompletionAsync(Version version, boolean integrityCheck);
 
     /**
      * The builder to build a brand new game then libraries such as Forge, LiteLoader and OptiFine.

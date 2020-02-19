@@ -132,9 +132,9 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("modpack.scan"));
                 }
 
-                ProgressListNode node = new ProgressListNode(task);
-                nodes.put(task, node);
                 Platform.runLater(() -> {
+                    ProgressListNode node = new ProgressListNode(task);
+                    nodes.put(task, node);
                     StageNode stageNode = stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().orElse(null);
                     listBox.add(listBox.indexOf(stageNode) + 1, node);
                 });
@@ -148,11 +148,11 @@ public final class TaskListPane extends StackPane {
                     });
                 }
 
-                ProgressListNode node = nodes.remove(task);
-                if (node == null)
-                    return;
-                node.unbind();
                 Platform.runLater(() -> {
+                    ProgressListNode node = nodes.remove(task);
+                    if (node == null)
+                        return;
+                    node.unbind();
                     listBox.remove(node);
                 });
             }

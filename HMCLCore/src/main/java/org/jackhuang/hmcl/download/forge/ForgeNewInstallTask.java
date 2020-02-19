@@ -45,14 +45,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.zip.ZipException;
@@ -133,7 +126,7 @@ public class ForgeNewInstallTask extends Task<Version> {
             }
         }
 
-        dependents.add(new GameLibrariesTask(dependencyManager, version, profile.getLibraries()));
+        dependents.add(new GameLibrariesTask(dependencyManager, version, true, profile.getLibraries()));
     }
 
     @Override
@@ -273,7 +266,7 @@ public class ForgeNewInstallTask extends Task<Version> {
                 .setPriority(30000)
                 .setId(LibraryAnalyzer.LibraryType.FORGE.getPatchId())
                 .setVersion(selfVersion));
-        dependencies.add(dependencyManager.checkLibraryCompletionAsync(forgeVersion));
+        dependencies.add(dependencyManager.checkLibraryCompletionAsync(forgeVersion, true));
 
         FileUtils.deleteDirectory(temp.toFile());
     }

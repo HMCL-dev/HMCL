@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.CacheRepository;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -37,6 +38,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
@@ -49,6 +51,7 @@ public final class GameAssetDownloadTask extends Task<Void> {
     private final Version version;
     private final AssetIndexInfo assetIndexInfo;
     private final File assetIndexFile;
+    private final boolean integrityCheck;
     private final List<Task<?>> dependents = new LinkedList<>();
     private final List<Task<?>> dependencies = new LinkedList<>();
 
@@ -58,11 +61,12 @@ public final class GameAssetDownloadTask extends Task<Void> {
      * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
      * @param version the game version
      */
-    public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, Version version, boolean forceDownloadingIndex) {
+    public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, Version version, boolean forceDownloadingIndex, boolean integrityCheck) {
         this.dependencyManager = dependencyManager;
         this.version = version.resolve(dependencyManager.getGameRepository());
         this.assetIndexInfo = this.version.getAssetIndex();
         this.assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
+        this.integrityCheck = integrityCheck;
 
         if (!assetIndexFile.exists() || forceDownloadingIndex) {
             dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.version));
@@ -101,9 +105,14 @@ public final class GameAssetDownloadTask extends Task<Void> {
                     throw new InterruptedException();
 
                 File file = dependencyManager.getGameRepository().getAssetObject(version.getId(), assetIndexInfo.getId(), assetObject);
-                if (file.isFile())
-                    dependencyManager.getCacheRepository().tryCacheFile(file.toPath(), CacheRepository.SHA1, assetObject.getHash());
-                else {
+                boolean download = !file.isFile();
+                try {
+                    if (!download && integrityCheck && !assetObject.validateChecksum(file.toPath(), true))
+                        download = true;
+                } catch (IOException e) {
+                    Logging.LOG.log(Level.WARNING, "Unable to calc hash value of file " + file.toPath(), e);
+                }
+                if (download) {
                     List<URL> urls = dependencyManager.getPreferredDownloadProviders().stream()
                             .map(downloadProvider -> downloadProvider.getAssetBaseURL() + assetObject.getLocation())
                             .map(NetworkUtils::toURL)
@@ -116,6 +125,8 @@ public final class GameAssetDownloadTask extends Task<Void> {
                             .setCaching(true)
                             .setCandidate(dependencyManager.getCacheRepository().getCommonDirectory()
                                     .resolve("assets").resolve("objects").resolve(assetObject.getLocation())));
+                } else {
+                    dependencyManager.getCacheRepository().tryCacheFile(file.toPath(), CacheRepository.SHA1, assetObject.getHash());
                 }
 
                 updateProgress(++progress, index.getObjects().size());
