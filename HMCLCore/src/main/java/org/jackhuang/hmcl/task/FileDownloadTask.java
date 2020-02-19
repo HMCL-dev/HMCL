@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.io.*;
 
 import java.io.File;
@@ -252,7 +253,6 @@ public class FileDownloadTask extends Task<Void> {
 
                 stream = con.getInputStream();
                 int lastDownloaded = 0, downloaded = 0;
-                long lastTime = System.currentTimeMillis();
                 byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
                 while (true) {
                     if (isCancelled()) {
@@ -273,13 +273,12 @@ public class FileDownloadTask extends Task<Void> {
 
                     // Update progress information per second
                     updateProgress(downloaded, contentLength);
-                    long now = System.currentTimeMillis();
-                    if (now - lastTime >= 1000) {
-                        updateDownloadSpeed(downloaded - lastDownloaded);
-                        lastDownloaded = downloaded;
-                        lastTime = now;
-                    }
+
+                    updateDownloadSpeed(downloaded - lastDownloaded);
+                    lastDownloaded = downloaded;
                 }
+
+                updateDownloadSpeed(downloaded - lastDownloaded);
 
                 closeFiles();
 
@@ -341,7 +340,7 @@ public class FileDownloadTask extends Task<Void> {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                speedEvent.fireEvent(new SpeedEvent(speedEvent, downloadSpeed.getAndSet(0)));
+                speedEvent.channel(SpeedEvent.class).fireEvent(new SpeedEvent(speedEvent, downloadSpeed.getAndSet(0)));
             }
         }, 0, 1000);
     }
@@ -365,6 +364,11 @@ public class FileDownloadTask extends Task<Void> {
          */
         public int getSpeed() {
             return speed;
+        }
+
+        @Override
+        public String toString() {
+            return new ToStringBuilder(this).append("speed", speed).toString();
         }
     }
 
