@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import com.jfoenix.controls.JFXButton?>
-<?import com.jfoenix.controls.JFXProgressBar?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.*?>
@@ -11,13 +10,9 @@
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane" FXUtils.limitWidth="500" FXUtils.limitHeight="300">
     <BorderPane>
-        <top>
-            <JFXProgressBar fx:id="progressBar" StackPane.alignment="TOP_CENTER" />
-        </top>
         <center>
-            <VBox alignment="TOP_CENTER" style="-fx-padding: 16px;">
-                <Label fx:id="lblTitle" style="-fx-font-size: 20px;" />
-                <Label fx:id="lblSubtitle" style="-fx-font-size: 14px;" />
+            <VBox style="-fx-padding: 16px;">
+                <Label fx:id="lblTitle" style="-fx-font-size: 14px; -fx-font-weight: BOLD;" />
 
                 <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
                     <TaskListPane fx:id="taskListPane" />

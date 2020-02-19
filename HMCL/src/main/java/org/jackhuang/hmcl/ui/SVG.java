@@ -71,6 +71,10 @@ public final class SVG {
         return createSVGPath("M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z", fill, width, height);
     }
 
+    public static Node dotsHorizontal(ObjectBinding<? extends Paint> fill, double width, double height) {
+        return createSVGPath("M16,12A2,2 0 0,1 18,10A2,2 0 0,1 20,12A2,2 0 0,1 18,14A2,2 0 0,1 16,12M10,12A2,2 0 0,1 12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12M4,12A2,2 0 0,1 6,10A2,2 0 0,1 8,12A2,2 0 0,1 6,14A2,2 0 0,1 4,12Z", fill, width, height);
+    }
+
     public static Node delete(ObjectBinding<? extends Paint> fill, double width, double height) {
         return createSVGPath("M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z", fill, width, height);
     }
@@ -169,5 +173,9 @@ public final class SVG {
 
     public static Node check(ObjectBinding<? extends Paint> fill, double width, double height) {
         return createSVGPath("M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z", fill, width, height);
+    }
+
+    public static Node arrowRight(ObjectBinding<? extends Paint> fill, double width, double height) {
+        return createSVGPath("M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z", fill, width, height);
     }
 }

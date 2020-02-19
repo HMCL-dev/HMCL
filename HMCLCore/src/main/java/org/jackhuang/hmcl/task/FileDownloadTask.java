@@ -17,13 +17,11 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.io.ResponseCodeException;
+import org.jackhuang.hmcl.util.io.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,10 +33,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;
@@ -279,7 +275,7 @@ public class FileDownloadTask extends Task<Void> {
                     updateProgress(downloaded, contentLength);
                     long now = System.currentTimeMillis();
                     if (now - lastTime >= 1000) {
-                        updateMessage((downloaded - lastDownloaded) / 1024 + "KB/s");
+                        updateDownloadSpeed(downloaded - lastDownloaded);
                         lastDownloaded = downloaded;
                         lastTime = now;
                     }
@@ -335,6 +331,41 @@ public class FileDownloadTask extends Task<Void> {
 
         if (exception != null)
             throw new DownloadException(urls.get(0), exception);
+    }
+
+    private static final Timer timer = new Timer("DownloadSpeedRecorder", true);
+    private static final AtomicInteger downloadSpeed = new AtomicInteger(0);
+    public static final EventBus speedEvent = new EventBus();
+
+    static {
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                speedEvent.fireEvent(new SpeedEvent(speedEvent, downloadSpeed.getAndSet(0)));
+            }
+        }, 0, 1000);
+    }
+
+    private static void updateDownloadSpeed(int speed) {
+        downloadSpeed.addAndGet(speed);
+    }
+
+    public static class SpeedEvent extends Event {
+        private final int speed;
+
+        public SpeedEvent(Object source, int speed) {
+            super(source);
+
+            this.speed = speed;
+        }
+
+        /**
+         * Download speed in byte/sec.
+         * @return
+         */
+        public int getSpeed() {
+            return speed;
+        }
     }
 
 }

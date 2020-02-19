@@ -24,7 +24,10 @@ import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 
 /**
@@ -42,7 +45,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
     @Override
     public TaskExecutor start() {
         taskListeners.forEach(TaskListener::onStart);
-        future = executeTasks(Collections.singleton(firstTask))
+        future = executeTasks(null, Collections.singleton(firstTask))
                 .thenApplyAsync(exception -> {
                     boolean success = exception == null;
 
@@ -95,7 +98,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         future.cancel(true);
     }
 
-    private CompletableFuture<Exception> executeTasks(Collection<Task<?>> tasks) {
+    private CompletableFuture<Exception> executeTasks(Task<?> parentTask, Collection<Task<?>> tasks) {
         if (tasks == null || tasks.isEmpty())
             return CompletableFuture.completedFuture(null);
 
@@ -105,7 +108,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
                     return CompletableFuture.allOf(tasks.stream()
                             .map(task -> CompletableFuture.completedFuture(null)
-                                    .thenComposeAsync(unused2 -> executeTask(task))
+                                    .thenComposeAsync(unused2 -> executeTask(parentTask, task))
                             ).toArray(CompletableFuture<?>[]::new));
                 })
                 .thenApplyAsync(unused -> (Exception) null)
@@ -120,11 +123,13 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                 });
     }
 
-    private CompletableFuture<?> executeTask(Task<?> task) {
+    private CompletableFuture<?> executeTask(Task<?> parentTask, Task<?> task) {
         return CompletableFuture.completedFuture(null)
                 .thenComposeAsync(unused -> {
                     task.setCancelled(this::isCancelled);
                     task.setState(Task.TaskState.READY);
+                    if (parentTask != null && task.getStage() == null)
+                        task.setStage(parentTask.getStage());
 
                     if (task.getSignificance().shouldLog())
                         Logging.LOG.log(Level.FINE, "Executing task: " + task.getName());
@@ -137,7 +142,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                         return CompletableFuture.completedFuture(null);
                     }
                 })
-                .thenComposeAsync(unused -> executeTasks(task.getDependents()))
+                .thenComposeAsync(unused -> executeTasks(task, task.getDependents()))
                 .thenComposeAsync(dependentsException -> {
                     boolean isDependentsSucceeded = dependentsException == null;
 
@@ -158,7 +163,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                         rethrow(throwable);
                     });
                 })
-                .thenComposeAsync(unused -> executeTasks(task.getDependencies()))
+                .thenComposeAsync(unused -> executeTasks(task, task.getDependencies()))
                 .thenComposeAsync(dependenciesException -> {
                     boolean isDependenciesSucceeded = dependenciesException == null;
 

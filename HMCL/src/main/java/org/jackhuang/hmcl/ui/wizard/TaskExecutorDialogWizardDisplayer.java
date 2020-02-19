@@ -42,21 +42,12 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
         });
 
         pane.setTitle(i18n("message.doing"));
-        pane.setProgress(Double.MAX_VALUE);
         if (settings.containsKey("title")) {
             Object title = settings.get("title");
             if (title instanceof StringProperty)
                 pane.titleProperty().bind((StringProperty) title);
             else if (title instanceof String)
                 pane.setTitle((String) title);
-        }
-
-        if (settings.containsKey("subtitle")) {
-            Object subtitle = settings.get("subtitle");
-            if (subtitle instanceof StringProperty)
-                pane.subtitleProperty().bind((StringProperty) subtitle);
-            else if (subtitle instanceof String)
-                pane.setSubtitle((String) subtitle);
         }
 
         runInFX(() -> {

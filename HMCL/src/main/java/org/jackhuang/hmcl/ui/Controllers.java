@@ -248,18 +248,13 @@ public final class Controllers {
         return pane;
     }
 
-    public static Region taskDialog(TaskExecutor executor, String title) {
-        return taskDialog(executor, title, "");
+    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, String title) {
+        return taskDialog(executor, title, null);
     }
 
-    public static Region taskDialog(TaskExecutor executor, String title, String subtitle) {
-        return taskDialog(executor, title, subtitle, null);
-    }
-
-    public static Region taskDialog(TaskExecutor executor, String title, String subtitle, Consumer<Region> onCancel) {
+    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, String title, Consumer<Region> onCancel) {
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
         pane.setTitle(title);
-        pane.setSubtitle(subtitle);
         pane.setExecutor(executor);
         dialog(pane);
         return pane;

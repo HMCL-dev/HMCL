@@ -21,6 +21,8 @@ import com.jfoenix.controls.JFXProgressBar;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
@@ -37,20 +39,22 @@ import org.jackhuang.hmcl.mod.ModpackUpdateTask;
 import org.jackhuang.hmcl.mod.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.mod.curse.CurseInstallTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class TaskListPane extends StackPane {
     private final AdvancedListBox listBox = new AdvancedListBox();
     private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
-    private final ReadOnlyIntegerWrapper finishedTasks = new ReadOnlyIntegerWrapper();
-    private final ReadOnlyIntegerWrapper totTasks = new ReadOnlyIntegerWrapper();
+    private final List<StageNode> stageNodes = new ArrayList<>();
 
     public TaskListPane() {
         listBox.setSpacing(0);
@@ -58,33 +62,35 @@ public final class TaskListPane extends StackPane {
         getChildren().setAll(listBox);
     }
 
-    public ReadOnlyIntegerProperty finishedTasksProperty() {
-        return finishedTasks.getReadOnlyProperty();
-    }
-
-    public ReadOnlyIntegerProperty totTasksProperty() {
-        return totTasks.getReadOnlyProperty();
-    }
-
     public void setExecutor(TaskExecutor executor) {
+        setExecutor(executor, Collections.emptyList());
+    }
+
+    public void setExecutor(TaskExecutor executor, List<String> stages) {
+
         executor.addTaskListener(new TaskListener() {
             @Override
             public void onStart() {
                 Platform.runLater(() -> {
+                    stageNodes.clear();
                     listBox.clear();
-                    finishedTasks.set(0);
-                    totTasks.set(0);
+                    stageNodes.addAll(stages.stream().map(StageNode::new).collect(Collectors.toList()));
+                    stageNodes.forEach(listBox::add);
                 });
             }
 
             @Override
             public void onReady(Task<?> task) {
-                Platform.runLater(() -> totTasks.set(totTasks.getValue() + 1));
+                if (task instanceof Task.StageTask) {
+                    Platform.runLater(() -> {
+                        stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::begin);
+                    });
+                }
             }
 
             @Override
             public void onRunning(Task<?> task) {
-                if (!task.getSignificance().shouldShow())
+                if (!task.getSignificance().shouldShow() || task.getName() == null)
                     return;
 
                 if (task instanceof GameAssetDownloadTask) {
@@ -117,32 +123,75 @@ public final class TaskListPane extends StackPane {
 
                 ProgressListNode node = new ProgressListNode(task);
                 nodes.put(task, node);
-                Platform.runLater(() -> listBox.add(node));
+                Platform.runLater(() -> {
+                    StageNode stageNode = stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().orElse(null);
+                    listBox.add(listBox.indexOf(stageNode) + 1, node);
+                });
             }
 
             @Override
             public void onFinished(Task<?> task) {
+                if (task instanceof Task.StageTask) {
+                    Platform.runLater(() -> {
+                        stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::succeed);
+                    });
+                }
+
                 ProgressListNode node = nodes.remove(task);
                 if (node == null)
                     return;
                 node.unbind();
                 Platform.runLater(() -> {
                     listBox.remove(node);
-                    finishedTasks.set(finishedTasks.getValue() + 1);
                 });
             }
 
             @Override
             public void onFailed(Task<?> task, Throwable throwable) {
+                if (task instanceof Task.StageTask) {
+                    Platform.runLater(() -> {
+                        stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::fail);
+                    });
+                }
                 ProgressListNode node = nodes.remove(task);
                 if (node == null)
                     return;
                 Platform.runLater(() -> {
                     node.setThrowable(throwable);
-                    finishedTasks.set(finishedTasks.getValue() + 1);
                 });
             }
         });
+    }
+
+    private static class StageNode extends BorderPane {
+        private final String stage;
+        private final Label title = new Label();
+        private boolean started = false;
+
+        public StageNode(String stage) {
+            this.stage = stage;
+
+            title.setText(i18n(stage));
+            BorderPane.setAlignment(title, Pos.CENTER_LEFT);
+            BorderPane.setMargin(title, new Insets(0, 0, 0, 8));
+            setPadding(new Insets(0, 0, 8, 4));
+            setCenter(title);
+            setLeft(SVG.dotsHorizontal(Theme.blackFillBinding(), 14, 14));
+        }
+
+        public void begin() {
+            if (started) return;
+            started = true;
+            setLeft(FXUtils.limitingSize(SVG.arrowRight(Theme.blackFillBinding(), 14, 14), 14, 14));
+        }
+
+        public void fail() {
+            setLeft(FXUtils.limitingSize(SVG.close(Theme.blackFillBinding(), 14, 14), 14, 14));
+        }
+
+        public void succeed() {
+            setLeft(FXUtils.limitingSize(SVG.check(Theme.blackFillBinding(), 14, 14), 14, 14));
+        }
     }
 
     private static class ProgressListNode extends BorderPane {

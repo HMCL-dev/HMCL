@@ -23,14 +23,7 @@ import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
@@ -47,7 +40,7 @@ public class CancellableTaskExecutor extends TaskExecutor {
     public TaskExecutor start() {
         taskListeners.forEach(TaskListener::onStart);
         workerQueue.add(Schedulers.schedule(scheduler, wrap(() -> {
-            boolean flag = executeTasks(Collections.singleton(firstTask));
+            boolean flag = executeTasks(null, Collections.singleton(firstTask));
             taskListeners.forEach(it -> it.onStop(flag, this));
         })));
         return this;
@@ -58,7 +51,7 @@ public class CancellableTaskExecutor extends TaskExecutor {
         taskListeners.forEach(TaskListener::onStart);
         AtomicBoolean flag = new AtomicBoolean(true);
         Future<?> future = Schedulers.schedule(scheduler, wrap(() -> {
-            flag.set(executeTasks(Collections.singleton(firstTask)));
+            flag.set(executeTasks(null, Collections.singleton(firstTask)));
             taskListeners.forEach(it -> it.onStop(flag.get(), this));
         }));
         workerQueue.add(future);
@@ -82,7 +75,7 @@ public class CancellableTaskExecutor extends TaskExecutor {
         }
     }
 
-    private boolean executeTasks(Collection<? extends Task<?>> tasks) throws InterruptedException {
+    private boolean executeTasks(Task<?> parentTask, Collection<? extends Task<?>> tasks) throws InterruptedException {
         if (tasks.isEmpty())
             return true;
 
@@ -92,7 +85,7 @@ public class CancellableTaskExecutor extends TaskExecutor {
         for (Task<?> task : tasks) {
             if (cancelled.get())
                 return false;
-            Invoker invoker = new Invoker(task, latch, success);
+            Invoker invoker = new Invoker(parentTask, task, latch, success);
             try {
                 Future<?> future = Schedulers.schedule(scheduler, invoker);
                 workerQueue.add(future);
@@ -112,7 +105,7 @@ public class CancellableTaskExecutor extends TaskExecutor {
         return success.get() && !cancelled.get();
     }
 
-    private boolean executeTask(Task<?> task) {
+    private boolean executeTask(Task<?> parentTask, Task<?> task) {
         task.setCancelled(this::isCancelled);
 
         if (cancelled.get()) {
@@ -122,6 +115,8 @@ public class CancellableTaskExecutor extends TaskExecutor {
         }
 
         task.setState(Task.TaskState.READY);
+        if (parentTask != null && task.getStage() == null)
+            task.setStage(parentTask.getStage());
 
         if (task.getSignificance().shouldLog())
             Logging.LOG.log(Level.FINE, "Executing task: " + task.getName());
@@ -140,8 +135,12 @@ public class CancellableTaskExecutor extends TaskExecutor {
             }
 
             Collection<? extends Task<?>> dependents = task.getDependents();
-            boolean doDependentsSucceeded = executeTasks(dependents);
-            Exception dependentsException = dependents.stream().map(Task::getException).filter(Objects::nonNull).findAny().orElse(null);
+            boolean doDependentsSucceeded = executeTasks(task, dependents);
+            Exception dependentsException = dependents.stream().map(Task::getException)
+                    .filter(Objects::nonNull)
+                    .filter(x -> !(x instanceof CancellationException))
+                    .filter(x -> !(x instanceof InterruptedException))
+                    .findAny().orElse(null);
             if (!doDependentsSucceeded && task.isRelyingOnDependents() || cancelled.get()) {
                 task.setException(dependentsException);
                 throw new CancellationException();
@@ -163,8 +162,12 @@ public class CancellableTaskExecutor extends TaskExecutor {
             }
 
             Collection<? extends Task<?>> dependencies = task.getDependencies();
-            boolean doDependenciesSucceeded = executeTasks(dependencies);
-            Exception dependenciesException = dependencies.stream().map(Task::getException).filter(Objects::nonNull).findAny().orElse(null);
+            boolean doDependenciesSucceeded = executeTasks(task, dependencies);
+            Exception dependenciesException = dependencies.stream().map(Task::getException)
+                    .filter(Objects::nonNull)
+                    .filter(x -> !(x instanceof CancellationException))
+                    .filter(x -> !(x instanceof InterruptedException))
+                    .findAny().orElse(null);
 
             if (doDependenciesSucceeded)
                 task.setDependenciesSucceeded();
@@ -250,11 +253,13 @@ public class CancellableTaskExecutor extends TaskExecutor {
 
     private class Invoker implements Runnable {
 
+        private final Task<?> parentTask;
         private final Task<?> task;
         private final CountDownLatch latch;
         private final AtomicBoolean success;
 
-        public Invoker(Task<?> task, CountDownLatch latch, AtomicBoolean success) {
+        public Invoker(Task<?> parentTask, Task<?> task, CountDownLatch latch, AtomicBoolean success) {
+            this.parentTask = parentTask;
             this.task = task;
             this.latch = latch;
             this.success = success;
@@ -264,7 +269,7 @@ public class CancellableTaskExecutor extends TaskExecutor {
         public void run() {
             try {
                 Thread.currentThread().setName(task.getName());
-                if (!executeTask(task))
+                if (!executeTask(parentTask, task))
                     success.set(false);
             } finally {
                 latch.countDown();

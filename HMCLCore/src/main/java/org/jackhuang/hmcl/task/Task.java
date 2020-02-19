@@ -79,6 +79,25 @@ public abstract class Task<T> {
         return cancelled != null ? cancelled.get() : false;
     }
 
+    // stage
+    private String stage = null;
+
+    /**
+     * Stage of task implies the goal of this task, for grouping tasks.
+     * Stage will inherit from the parent task.
+     */
+    public String getStage() {
+        return stage;
+    }
+
+    /**
+     * You must initialize stage in preExecute.
+     * @param stage the stage
+     */
+    public void setStage(String stage) {
+        this.stage = stage;
+    }
+
     // state
     private TaskState state = TaskState.READY;
 
@@ -344,18 +363,18 @@ public abstract class Task<T> {
     }
 
     public final TaskExecutor cancellableExecutor() {
-        return new CancellableTaskExecutor(this);
+        return new AsyncTaskExecutor(this);
     }
 
     public final TaskExecutor cancellableExecutor(boolean start) {
-        TaskExecutor executor = new CancellableTaskExecutor(this);
+        TaskExecutor executor = new AsyncTaskExecutor(this);
         if (start)
             executor.start();
         return executor;
     }
 
     public final TaskExecutor cancellableExecutor(TaskListener taskListener) {
-        TaskExecutor executor = new CancellableTaskExecutor(this);
+        TaskExecutor executor = new AsyncTaskExecutor(this);
         executor.addTaskListener(taskListener);
         return executor;
     }
@@ -743,6 +762,12 @@ public abstract class Task<T> {
         return whenComplete(executor, () -> success.accept(getResult()), failure);
     }
 
+    public Task<T> withStage(String stage) {
+        StageTask<T> task = new StageTask<>(this);
+        task.setStage(stage);
+        return task;
+    }
+
     public static Task<Void> runAsync(ExceptionalRunnable<?> closure) {
         return runAsync(Schedulers.defaultScheduler(), closure);
     }
@@ -760,6 +785,10 @@ public abstract class Task<T> {
     }
 
     public static <T> Task<T> composeAsync(ExceptionalSupplier<Task<T>, ?> fn) {
+        return composeAsync(getCaller(), fn);
+    }
+
+    public static <T> Task<T> composeAsync(String name, ExceptionalSupplier<Task<T>, ?> fn) {
         return new Task<T>() {
             Task<T> then;
 
@@ -774,7 +803,7 @@ public abstract class Task<T> {
             public Collection<Task<?>> getDependencies() {
                 return then == null ? Collections.emptySet() : Collections.singleton(then);
             }
-        };
+        }.setName(name);
     }
 
     public static <V> Task<V> supplyAsync(Callable<V> callable) {
@@ -958,6 +987,23 @@ public abstract class Task<T> {
         @Override
         public boolean isRelyingOnDependents() {
             return relyingOnDependents;
+        }
+    }
+
+    public static class StageTask<T> extends Task<T> {
+        private final Task<T> task;
+        StageTask(Task<T> task) {
+            this.task = task;
+        }
+
+        @Override
+        public Collection<Task<?>> getDependents() {
+            return Collections.singleton(task);
+        }
+
+        @Override
+        public void execute() throws Exception {
+            setResult(task.getResult());
         }
     }
 }
