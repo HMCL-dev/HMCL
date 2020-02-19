@@ -29,8 +29,6 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.FXUtils;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -74,7 +72,7 @@ public class TaskExecutorDialogPane extends StackPane {
             double finalSpeed = speed;
             String finalUnit = unit;
             Platform.runLater(() -> {
-                lblProgress.setText(String.format("%.1f", finalSpeed) + " " + finalUnit);
+                lblProgress.setText(String.format("%.1f %s", finalSpeed, finalUnit));
             });
         };
         FileDownloadTask.speedEvent.channel(FileDownloadTask.SpeedEvent.class).registerWeak(speedEventHandler);

@@ -130,25 +130,25 @@ public final class LauncherHelper {
 
         TaskExecutor executor = Task.runAsync(() -> {
         })
-                .thenComposeAsync(() -> Task.composeAsync(() -> {
-                    if (setting.isNotCheckGame())
-                        return null;
-                    else
-                        return dependencyManager.checkGameCompletionAsync(version);
-                }).withStage("launch.state.dependencies"))
-                .thenComposeAsync(() -> Task.composeAsync(null, () -> {
-                    try {
-                        ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
-                        if ("Curse".equals(configuration.getType()))
-                            return new CurseCompletionTask(dependencyManager, selectedVersion);
-                        else if ("Server".equals(configuration.getType()))
-                            return new ServerModpackCompletionTask(dependencyManager, selectedVersion);
-                        else
-                            return null;
-                    } catch (IOException e) {
-                        return null;
-                    }
-                }).withStage("launch.state.modpack"))
+                .thenComposeAsync(() -> Task.allOf(
+                        Task.composeAsync(null, () -> {
+                            if (setting.isNotCheckGame())
+                                return null;
+                            else
+                                return dependencyManager.checkGameCompletionAsync(version);
+                        }), Task.composeAsync(null, () -> {
+                            try {
+                                ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
+                                if ("Curse".equals(configuration.getType()))
+                                    return new CurseCompletionTask(dependencyManager, selectedVersion);
+                                else if ("Server".equals(configuration.getType()))
+                                    return new ServerModpackCompletionTask(dependencyManager, selectedVersion);
+                                else
+                                    return null;
+                            } catch (IOException e) {
+                                return null;
+                            }
+                        })).withStage("launch.state.dependencies"))
                 .thenComposeAsync(() -> Task.supplyAsync((String) null, () -> {
                     try {
                         return account.logIn();
@@ -202,7 +202,6 @@ public final class LauncherHelper {
                 .cancellableExecutor();
         executor.setStages(new LocalizedTaskStages(Lang.immutableListOf(
                 "launch.state.dependencies",
-                "launch.state.modpack",
                 "launch.state.logging_in",
                 "launch.state.waiting_launching")));
         launchingStepsPane.setExecutor(executor, false);
