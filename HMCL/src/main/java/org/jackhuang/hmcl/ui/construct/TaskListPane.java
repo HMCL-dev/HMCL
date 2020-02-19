@@ -50,7 +50,10 @@ import org.jackhuang.hmcl.task.TaskStages;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -207,7 +210,7 @@ public final class TaskListPane extends StackPane {
         private final Label title = new Label();
         private final Label state = new Label();
         private final DoubleBinding binding = Bindings.createDoubleBinding(() ->
-                        getWidth() - getPadding().getLeft() - getPadding().getRight(),
+                        getWidth() - getPadding().getLeft() - getPadding().getRight() - 100,
                 paddingProperty(), widthProperty());
 
         public ProgressListNode(Task<?> task) {
