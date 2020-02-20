@@ -128,12 +128,12 @@ public final class LauncherHelper {
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
         TaskExecutor executor = Task.allOf(
-                Task.composeAsync(null, () -> {
+                Task.composeAsync(() -> {
                     if (setting.isNotCheckGame())
                         return null;
                     else
                         return dependencyManager.checkGameCompletionAsync(version, repository.unmarkVersionLaunchedAbnormally(selectedVersion));
-                }), Task.composeAsync(null, () -> {
+                }), Task.composeAsync(() -> {
                     try {
                         ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
                         if ("Curse".equals(configuration.getType()))
@@ -146,7 +146,7 @@ public final class LauncherHelper {
                         return null;
                     }
                 })).withStage("launch.state.dependencies")
-                .thenComposeAsync(Task.supplyAsync((String) null, () -> {
+                .thenComposeAsync(Task.supplyAsync(() -> {
                     try {
                         return account.logIn();
                     } catch (CredentialExpiredException e) {
@@ -157,7 +157,7 @@ public final class LauncherHelper {
                         return account.playOffline().orElseThrow(() -> e);
                     }
                 }).withStage("launch.state.logging_in"))
-                .thenComposeAsync(authInfo -> Task.supplyAsync((String) null, () -> {
+                .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     return new HMCLGameLauncher(
                             repository,
                             version.getPatches().isEmpty() ? repository.getResolvedVersion(selectedVersion) : version,
@@ -169,9 +169,9 @@ public final class LauncherHelper {
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
-                        return Task.supplyAsync((String) null, launcher::launch);
+                        return Task.supplyAsync(launcher::launch);
                     } else {
-                        return Task.supplyAsync((String) null, () -> {
+                        return Task.supplyAsync(() -> {
                             launcher.makeLaunchScript(scriptFile);
                             return null;
                         });
@@ -192,7 +192,7 @@ public final class LauncherHelper {
                             Controllers.dialog(i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
                         });
                     }
-                }).thenRunAsync(null, Schedulers.defaultScheduler(), () -> {
+                }).thenRunAsync(Schedulers.defaultScheduler(), () -> {
                     launchingLatch = new CountDownLatch(1);
                     launchingLatch.await();
                 }).withStage("launch.state.waiting_launching"))

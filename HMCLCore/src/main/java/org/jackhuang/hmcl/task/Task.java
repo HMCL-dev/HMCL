@@ -63,8 +63,9 @@ public abstract class Task<T> {
         return significance;
     }
 
-    public final void setSignificance(TaskSignificance significance) {
+    public final Task<T> setSignificance(TaskSignificance significance) {
         this.significance = significance;
+        return this;
     }
 
     // cancel
@@ -419,7 +420,7 @@ public abstract class Task<T> {
      * @return the new Task
      */
     public <U, E extends Exception> Task<U> thenApplyAsync(Executor executor, ExceptionalFunction<T, U, E> fn) {
-        return thenApplyAsync(getCaller(), executor, fn);
+        return thenApplyAsync(getCaller(), executor, fn).setSignificance(TaskSignificance.MODERATE);
     }
 
     /**
@@ -460,7 +461,7 @@ public abstract class Task<T> {
      * @return the new Task
      */
     public <E extends Exception> Task<Void> thenAcceptAsync(Executor executor, ExceptionalConsumer<T, E> action) {
-        return thenAcceptAsync(getCaller(), executor, action);
+        return thenAcceptAsync(getCaller(), executor, action).setSignificance(TaskSignificance.MODERATE);
     }
 
     /**
@@ -502,7 +503,7 @@ public abstract class Task<T> {
      * @return the new Task
      */
     public <E extends Exception> Task<Void> thenRunAsync(Executor executor, ExceptionalRunnable<E> action) {
-        return thenRunAsync(getCaller(), executor, action);
+        return thenRunAsync(getCaller(), executor, action).setSignificance(TaskSignificance.MODERATE);
     }
 
     /**
@@ -614,7 +615,7 @@ public abstract class Task<T> {
      * @return the new Task
      */
     public <E extends Exception> Task<Void> withRunAsync(Executor executor, ExceptionalRunnable<E> action) {
-        return withRunAsync(getCaller(), executor, action);
+        return withRunAsync(getCaller(), executor, action).setSignificance(TaskSignificance.MODERATE);
     }
 
     /**
@@ -701,7 +702,7 @@ public abstract class Task<T> {
             public List<String> getStages() {
                 return Lang.merge(Task.this.getStages(), super.getStages());
             }
-        }.setExecutor(executor).setName(getCaller());
+        }.setExecutor(executor).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
     /**
@@ -810,7 +811,7 @@ public abstract class Task<T> {
     }
 
     public static Task<Void> runAsync(Executor executor, ExceptionalRunnable<?> closure) {
-        return runAsync(getCaller(), executor, closure);
+        return runAsync(getCaller(), executor, closure).setSignificance(TaskSignificance.MODERATE);
     }
 
     public static Task<Void> runAsync(String name, Executor executor, ExceptionalRunnable<?> closure) {
@@ -818,7 +819,7 @@ public abstract class Task<T> {
     }
 
     public static <T> Task<T> composeAsync(ExceptionalSupplier<Task<T>, ?> fn) {
-        return composeAsync(getCaller(), fn);
+        return composeAsync(getCaller(), fn).setSignificance(TaskSignificance.MODERATE);
     }
 
     public static <T> Task<T> composeAsync(String name, ExceptionalSupplier<Task<T>, ?> fn) {
@@ -845,11 +846,11 @@ public abstract class Task<T> {
     }
 
     public static <V> Task<V> supplyAsync(Callable<V> callable) {
-        return supplyAsync(getCaller(), callable);
+        return supplyAsync(getCaller(), callable).setSignificance(TaskSignificance.MODERATE);
     }
 
     public static <V> Task<V> supplyAsync(Executor executor, Callable<V> callable) {
-        return supplyAsync(getCaller(), executor, callable);
+        return supplyAsync(getCaller(), executor, callable).setSignificance(TaskSignificance.MODERATE);
     }
 
     public static <V> Task<V> supplyAsync(String name, Callable<V> callable) {
