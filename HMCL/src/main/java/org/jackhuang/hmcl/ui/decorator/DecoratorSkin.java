@@ -154,28 +154,9 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
         Rectangle rectangle = new Rectangle(0, 0, 0, 0);
         rectangle.widthProperty().bind(titleContainer.widthProperty());
-        rectangle.heightProperty().bind(Bindings.createDoubleBinding(() -> titleContainer.getHeight() + 100, titleContainer.heightProperty()));
+        rectangle.heightProperty().bind(titleContainer.heightProperty().add(100));
         titleContainer.setClip(rectangle);
         {
-            BorderPane titleWrapper = new BorderPane();
-            FXUtils.setLimitWidth(titleWrapper, 200);
-            {
-                Label lblTitle = new Label();
-                BorderPane.setMargin(lblTitle, new Insets(0, 0, 0, 3));
-                lblTitle.setStyle("-fx-background-color: transparent; -fx-text-fill: -fx-base-text-fill; -fx-font-size: 15px;");
-                lblTitle.setMouseTransparent(true);
-                lblTitle.textProperty().bind(skinnable.titleProperty());
-                BorderPane.setAlignment(lblTitle, Pos.CENTER);
-                titleWrapper.setCenter(lblTitle);
-
-                Rectangle separator = new Rectangle();
-                separator.getStyleClass().add("separator");
-                separator.heightProperty().bind(titleWrapper.heightProperty());
-                separator.setWidth(1);
-                titleWrapper.setRight(separator);
-            }
-            titleContainer.setLeft(titleWrapper);
-
             BorderPane navBar = new BorderPane();
             {
                 navLeft = new HBox();
@@ -195,11 +176,13 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                     closeNavButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
                     closeNavButton.onActionProperty().bind(skinnable.onCloseNavButtonActionProperty());
 
-                    navLeft.getChildren().setAll(backNavButton);
-
-                    skinnable.canCloseProperty().addListener((a, b, newValue) -> {
-                        if (newValue) navLeft.getChildren().setAll(backNavButton, closeNavButton);
-                        else navLeft.getChildren().setAll(backNavButton);
+                    FXUtils.onChangeAndOperate(skinnable.canBackProperty(), (newValue) -> {
+                        navLeft.getChildren().remove(backNavButton);
+                        if (newValue) navLeft.getChildren().add(0, backNavButton);
+                    });
+                    FXUtils.onChangeAndOperate(skinnable.canCloseProperty(), (newValue) -> {
+                        navLeft.getChildren().remove(closeNavButton);
+                        if (newValue) navLeft.getChildren().add(closeNavButton);
                     });
 
                     FXUtils.onChangeAndOperate(skinnable.showCloseAsHomeProperty(), (newValue) -> {

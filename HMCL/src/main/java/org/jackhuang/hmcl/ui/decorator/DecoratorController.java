@@ -82,7 +82,6 @@ public class DecoratorController {
         this.mainPage = mainPage;
 
         decorator = new Decorator(stage);
-        decorator.titleProperty().set(Metadata.TITLE);
         decorator.setOnCloseButtonAction(Launcher::stopApplication);
 
         navigator = new Navigator();
