@@ -93,44 +93,43 @@ public final class GameAssetDownloadTask extends Task<Void> {
     public void execute() throws Exception {
         AssetIndex index;
         try {
-            index = JsonUtils.GSON.fromJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
-        } catch (IOException | JsonSyntaxException e) {
+            index = JsonUtils.fromNonNullJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
+        } catch (IOException | JsonParseException e) {
             throw new GameAssetIndexDownloadTask.GameAssetIndexMalformedException();
         }
 
         int progress = 0;
-        if (index != null)
-            for (AssetObject assetObject : index.getObjects().values()) {
-                if (isCancelled())
-                    throw new InterruptedException();
+        for (AssetObject assetObject : index.getObjects().values()) {
+            if (isCancelled())
+                throw new InterruptedException();
 
-                File file = dependencyManager.getGameRepository().getAssetObject(version.getId(), assetIndexInfo.getId(), assetObject);
-                boolean download = !file.isFile();
-                try {
-                    if (!download && integrityCheck && !assetObject.validateChecksum(file.toPath(), true))
-                        download = true;
-                } catch (IOException e) {
-                    Logging.LOG.log(Level.WARNING, "Unable to calc hash value of file " + file.toPath(), e);
-                }
-                if (download) {
-                    List<URL> urls = dependencyManager.getPreferredDownloadProviders().stream()
-                            .map(downloadProvider -> downloadProvider.getAssetBaseURL() + assetObject.getLocation())
-                            .map(NetworkUtils::toURL)
-                            .collect(Collectors.toList());
-
-                    FileDownloadTask task = new FileDownloadTask(urls, file, new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.getHash()));
-                    task.setName(assetObject.getHash());
-                    dependencies.add(task
-                            .setCacheRepository(dependencyManager.getCacheRepository())
-                            .setCaching(true)
-                            .setCandidate(dependencyManager.getCacheRepository().getCommonDirectory()
-                                    .resolve("assets").resolve("objects").resolve(assetObject.getLocation())));
-                } else {
-                    dependencyManager.getCacheRepository().tryCacheFile(file.toPath(), CacheRepository.SHA1, assetObject.getHash());
-                }
-
-                updateProgress(++progress, index.getObjects().size());
+            File file = dependencyManager.getGameRepository().getAssetObject(version.getId(), assetIndexInfo.getId(), assetObject);
+            boolean download = !file.isFile();
+            try {
+                if (!download && integrityCheck && !assetObject.validateChecksum(file.toPath(), true))
+                    download = true;
+            } catch (IOException e) {
+                Logging.LOG.log(Level.WARNING, "Unable to calc hash value of file " + file.toPath(), e);
             }
+            if (download) {
+                List<URL> urls = dependencyManager.getPreferredDownloadProviders().stream()
+                        .map(downloadProvider -> downloadProvider.getAssetBaseURL() + assetObject.getLocation())
+                        .map(NetworkUtils::toURL)
+                        .collect(Collectors.toList());
+
+                FileDownloadTask task = new FileDownloadTask(urls, file, new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.getHash()));
+                task.setName(assetObject.getHash());
+                dependencies.add(task
+                        .setCacheRepository(dependencyManager.getCacheRepository())
+                        .setCaching(true)
+                        .setCandidate(dependencyManager.getCacheRepository().getCommonDirectory()
+                                .resolve("assets").resolve("objects").resolve(assetObject.getLocation())));
+            } else {
+                dependencyManager.getCacheRepository().tryCacheFile(file.toPath(), CacheRepository.SHA1, assetObject.getHash());
+            }
+
+            updateProgress(++progress, index.getObjects().size());
+        }
     }
 
     public static final boolean DOWNLOAD_INDEX_FORCIBLY = true;
