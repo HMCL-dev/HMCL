@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
+import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.Version;
@@ -143,6 +144,8 @@ public final class InstallerWizardProvider implements WizardProvider {
             Controllers.dialog(i18n("install.failed.install_online"), i18n("install.failed"), MessageType.ERROR, next);
         } else if (exception instanceof ArtifactMalformedException) {
             Controllers.dialog(i18n("install.failed.malformed"), i18n("install.failed"), MessageType.ERROR, next);
+        } else if (exception instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
+            Controllers.dialog(i18n("assets.index.malformed"), i18n("install.failed"), MessageType.ERROR, next);
         } else if (exception instanceof VersionMismatchException) {
             VersionMismatchException e = ((VersionMismatchException) exception);
             Controllers.dialog(i18n("install.failed.version_mismatch", e.getExpect(), e.getActual()), i18n("install.failed"), MessageType.ERROR, next);
