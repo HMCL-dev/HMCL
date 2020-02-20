@@ -43,6 +43,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  *
@@ -127,9 +129,9 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
 
         try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setEncoding(modpack.getEncoding()).build()) {
             if (Files.exists(fs.getPath("/" + manifest.getName() + "/.minecraft")))
-                dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/" + manifest.getName() + "/.minecraft", any -> true, config));
+                dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/" + manifest.getName() + "/.minecraft", any -> true, config).withStage("hmcl.modpack"));
             else if (Files.exists(fs.getPath("/" + manifest.getName() + "/minecraft")))
-                dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/" + manifest.getName() + "/minecraft", any -> true, config));
+                dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/" + manifest.getName() + "/minecraft", any -> true, config).withStage("hmcl.modpack"));
         }
     }
 
@@ -173,7 +175,15 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
         }
 
         dependencies.add(repository.save(version));
-        dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/" + manifest.getName() + "/minecraft", manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)));
+        dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/" + manifest.getName() + "/minecraft", manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+    }
+
+    @Override
+    public List<String> getStages() {
+        return Stream.concat(
+                dependents.stream().flatMap(task -> task.getStages().stream()),
+                Stream.of("hmcl.modpack")
+        ).collect(Collectors.toList());
     }
 
     public static final String MODPACK_TYPE = "MultiMC";

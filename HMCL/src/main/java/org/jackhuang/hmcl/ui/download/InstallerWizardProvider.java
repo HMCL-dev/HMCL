@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskStages;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -41,6 +40,8 @@ import org.jackhuang.hmcl.util.io.ResponseCodeException;
 
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -77,35 +78,18 @@ public final class InstallerWizardProvider implements WizardProvider {
         settings.put("title", i18n("install.installer.install_online"));
         settings.put("success_message", i18n("install.success"));
         settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> alertFailureMessage(exception, next));
-        settings.put("stages", new TaskStages() {
-            {
-                if (settings.containsKey("forge")) {
-                    RemoteVersion forge = (RemoteVersion) settings.get("forge");
-                    addStage("hmcl.install.forge", i18n("install.installer.install", i18n("install.installer.forge") + " " + forge.getSelfVersion()));
-                }
-                if (settings.containsKey("liteloader")) {
-                    RemoteVersion liteloader = (RemoteVersion) settings.get("liteloader");
-                    addStage("hmcl.install.liteloader", i18n("install.installer.install", i18n("install.installer.liteloader") + " " + liteloader.getSelfVersion()));
-                }
-                if (settings.containsKey("optifine")) {
-                    RemoteVersion optifine = (RemoteVersion) settings.get("optifine");
-                    addStage("hmcl.install.optifine", i18n("install.installer.install", i18n("install.installer.optifine") + " " + optifine.getSelfVersion()));
-                }
-                if (settings.containsKey("fabric")) {
-                    RemoteVersion fabric = (RemoteVersion) settings.get("fabric");
-                    addStage("hmcl.install.fabric", i18n("install.installer.install", i18n("install.installer.fabric") + " " + fabric.getSelfVersion()));
-                }
-            }
-        });
 
         Task<Version> ret = Task.supplyAsync(() -> version);
-
+        List<String> stages = new ArrayList<>();
         for (Object value : settings.values()) {
-            if (value instanceof RemoteVersion)
-                ret = ret.thenComposeAsync(version -> profile.getDependency().installLibraryAsync(version, (RemoteVersion) value));
+            if (value instanceof RemoteVersion) {
+                RemoteVersion remoteVersion = (RemoteVersion) value;
+                ret = ret.thenComposeAsync(version -> profile.getDependency().installLibraryAsync(version, remoteVersion));
+                stages.add(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion()));
+            }
         }
 
-        return ret.thenComposeAsync(profile.getRepository().refreshVersionsAsync());
+        return ret.thenComposeAsync(profile.getRepository().refreshVersionsAsync()).withStagesHint(stages);
     }
 
     @Override

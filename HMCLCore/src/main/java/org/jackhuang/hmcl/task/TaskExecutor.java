@@ -30,10 +30,11 @@ public abstract class TaskExecutor {
     protected final AtomicInteger totTask = new AtomicInteger(0);
     protected final AtomicBoolean cancelled = new AtomicBoolean(false);
     protected Exception exception;
-    private TaskStages stages = TaskStages.EMPTY;
+    private final List<String> stages;
 
     public TaskExecutor(Task<?> task) {
         this.firstTask = task;
+        this.stages = task.getStages();
     }
 
     public void addTaskListener(TaskListener taskListener) {
@@ -66,11 +67,7 @@ public abstract class TaskExecutor {
         return totTask.get();
     }
 
-    public TaskStages getStages() {
+    public List<String> getStages() {
         return stages;
-    }
-
-    public void setStages(TaskStages stages) {
-        this.stages = stages;
     }
 }

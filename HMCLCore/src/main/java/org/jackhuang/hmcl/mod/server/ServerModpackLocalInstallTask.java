@@ -34,6 +34,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ServerModpackLocalInstallTask extends Task<Void> {
 
@@ -79,7 +81,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
             }
         } catch (JsonParseException | IOException ignore) {
         }
-        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/overrides", any -> true, config));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/overrides", any -> true, config).withStage("hmcl.modpack"));
     }
 
     @Override
@@ -94,7 +96,15 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
-        dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/overrides", manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)));
+        dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/overrides", manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+    }
+
+    @Override
+    public List<String> getStages() {
+        return Stream.concat(
+                dependents.stream().flatMap(task -> task.getStages().stream()),
+                Stream.of("hmcl.modpack")
+        ).collect(Collectors.toList());
     }
 
     public static final String MODPACK_TYPE = "Server";

@@ -21,7 +21,6 @@ import javafx.beans.property.StringProperty;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
-import org.jackhuang.hmcl.task.TaskStages;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
@@ -76,8 +75,6 @@ public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplay
                     });
                 }
             });
-            if (settings.containsKey("stages"))
-                executor.setStages((TaskStages) settings.get("stages"));
             pane.setExecutor(executor);
             Controllers.dialog(pane);
             executor.start();

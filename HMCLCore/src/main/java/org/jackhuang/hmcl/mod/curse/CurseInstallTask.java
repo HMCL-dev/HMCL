@@ -32,11 +32,12 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Install a downloaded CurseForge modpack.
@@ -105,7 +106,8 @@ public final class CurseInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
         this.config = config;
-        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), manifest.getOverrides(), any -> true, config));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), manifest.getOverrides(), any -> true, config).withStage("hmcl.modpack"));
+        dependents.add(new CurseCompletionTask(dependencyManager, name, manifest).withStage("hmcl.modpack.download"));
     }
 
     @Override
@@ -133,8 +135,15 @@ public final class CurseInstallTask extends Task<Void> {
         File root = repository.getVersionRoot(name);
         FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(manifest));
 
-        dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest).withStage("hmcl.modpack.download"));
-        dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), manifest.getOverrides(), manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)).withStage("hmcl.modpack.unzip"));
+        dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), manifest.getOverrides(), manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+    }
+
+    @Override
+    public List<String> getStages() {
+        return Stream.concat(
+                dependents.stream().flatMap(task -> task.getStages().stream()),
+                Stream.of("hmcl.modpack", "hmcl.modpack.download")
+        ).collect(Collectors.toList());
     }
 
     public static final String MODPACK_TYPE = "Curse";

@@ -21,6 +21,8 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,19 +49,27 @@ public class DefaultGameBuilder extends GameBuilder {
 
     @Override
     public Task<?> buildAsync() {
+        List<String> stages = new ArrayList<>();
+
         Task<Version> libraryTask = Task.supplyAsync(() -> new Version(name));
         libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, "game", gameVersion));
+        stages.add("hmcl.install.game:" + gameVersion);
+        stages.add("hmcl.install.assets");
 
-        for (Map.Entry<String, String> entry : toolVersions.entrySet())
+        for (Map.Entry<String, String> entry : toolVersions.entrySet()) {
             libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, entry.getKey(), entry.getValue()));
+            stages.add(String.format("hmcl.install.%s:%s", entry.getKey(), entry.getValue()));
+        }
 
-        for (RemoteVersion remoteVersion : remoteVersions)
+        for (RemoteVersion remoteVersion : remoteVersions) {
             libraryTask = libraryTask.thenComposeAsync(version -> dependencyManager.installLibraryAsync(version, remoteVersion));
+            stages.add(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion()));
+        }
 
         return libraryTask.whenComplete(exception -> {
             if (exception != null)
                 dependencyManager.getGameRepository().removeVersionFromDisk(name);
-        });
+        }).withStagesHint(stages);
     }
 
     private ExceptionalFunction<Version, Task<Version>, ?> libraryTaskHelper(String gameVersion, String libraryId, String libraryVersion) {

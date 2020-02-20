@@ -112,6 +112,12 @@ public final class Lang {
         return operator.apply(a, b);
     }
 
+    public static <T> List<T> removingDuplicates(List<T> list) {
+        LinkedHashSet<T> set = new LinkedHashSet<>(list.size());
+        set.addAll(list);
+        return new ArrayList<>(set);
+    }
+
     /**
      * Join two collections into one list.
      *

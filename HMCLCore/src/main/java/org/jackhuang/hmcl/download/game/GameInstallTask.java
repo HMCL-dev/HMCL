@@ -69,11 +69,13 @@ public class GameInstallTask extends Task<Version> {
         setResult(patch);
 
         Version version = new Version(this.version.getId()).addPatch(patch);
-        dependencies.add(new GameDownloadTask(dependencyManager, remote.getGameVersion(), version)
-                .thenComposeAsync(Task.allOf(
+        dependencies.add(Task.allOf(
+                new GameDownloadTask(dependencyManager, remote.getGameVersion(), version),
+                Task.allOf(
                         new GameAssetDownloadTask(dependencyManager, version, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
                         new GameLibrariesTask(dependencyManager, version, true)
-                ).withStage("hmcl.install.assets").withComposeAsync(gameRepository.save(version))));
+                ).withStage("hmcl.install.assets")
+        ).withComposeAsync(gameRepository.save(version)));
     }
 
 }

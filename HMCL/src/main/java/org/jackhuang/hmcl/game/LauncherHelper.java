@@ -49,7 +49,6 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
-import org.jackhuang.hmcl.util.i18n.LocalizedTaskStages;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
@@ -128,28 +127,26 @@ public final class LauncherHelper {
         Version version = MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion));
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
-        TaskExecutor executor = Task.runAsync(() -> {
-        })
-                .thenComposeAsync(() -> Task.allOf(
-                        Task.composeAsync(null, () -> {
-                            if (setting.isNotCheckGame())
-                                return null;
-                            else
-                                return dependencyManager.checkGameCompletionAsync(version, repository.unmarkVersionLaunchedAbnormally(selectedVersion));
-                        }), Task.composeAsync(null, () -> {
-                            try {
-                                ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
-                                if ("Curse".equals(configuration.getType()))
-                                    return new CurseCompletionTask(dependencyManager, selectedVersion);
-                                else if ("Server".equals(configuration.getType()))
-                                    return new ServerModpackCompletionTask(dependencyManager, selectedVersion);
-                                else
-                                    return null;
-                            } catch (IOException e) {
-                                return null;
-                            }
-                        })).withStage("launch.state.dependencies"))
-                .thenComposeAsync(() -> Task.supplyAsync((String) null, () -> {
+        TaskExecutor executor = Task.allOf(
+                Task.composeAsync(null, () -> {
+                    if (setting.isNotCheckGame())
+                        return null;
+                    else
+                        return dependencyManager.checkGameCompletionAsync(version, repository.unmarkVersionLaunchedAbnormally(selectedVersion));
+                }), Task.composeAsync(null, () -> {
+                    try {
+                        ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
+                        if ("Curse".equals(configuration.getType()))
+                            return new CurseCompletionTask(dependencyManager, selectedVersion);
+                        else if ("Server".equals(configuration.getType()))
+                            return new ServerModpackCompletionTask(dependencyManager, selectedVersion);
+                        else
+                            return null;
+                    } catch (IOException e) {
+                        return null;
+                    }
+                })).withStage("launch.state.dependencies")
+                .thenComposeAsync(Task.supplyAsync((String) null, () -> {
                     try {
                         return account.logIn();
                     } catch (CredentialExpiredException e) {
@@ -199,11 +196,11 @@ public final class LauncherHelper {
                     launchingLatch = new CountDownLatch(1);
                     launchingLatch.await();
                 }).withStage("launch.state.waiting_launching"))
+                .withStagesHint(Lang.immutableListOf(
+                        "launch.state.dependencies",
+                        "launch.state.logging_in",
+                        "launch.state.waiting_launching"))
                 .cancellableExecutor();
-        executor.setStages(new LocalizedTaskStages(Lang.immutableListOf(
-                "launch.state.dependencies",
-                "launch.state.logging_in",
-                "launch.state.waiting_launching")));
         launchingStepsPane.setExecutor(executor, false);
         executor.addTaskListener(new TaskListener() {
 

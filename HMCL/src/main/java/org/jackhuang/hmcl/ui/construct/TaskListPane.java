@@ -46,9 +46,10 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
-import org.jackhuang.hmcl.task.TaskStages;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,7 +73,7 @@ public final class TaskListPane extends StackPane {
     }
 
     public void setExecutor(TaskExecutor executor) {
-        TaskStages stages = executor.getStages();
+        List<String> stages = Lang.removingDuplicates(executor.getStages());
         this.executor = executor;
         executor.addTaskListener(new TaskListener() {
             @Override
@@ -80,10 +81,10 @@ public final class TaskListPane extends StackPane {
                 Platform.runLater(() -> {
                     stageNodes.clear();
                     listBox.clear();
-                    stageNodes.addAll(stages.getStages().stream().map(StageNode::new).collect(Collectors.toList()));
+                    stageNodes.addAll(stages.stream().map(StageNode::new).collect(Collectors.toList()));
                     stageNodes.forEach(listBox::add);
 
-                    if (stages.getStages().isEmpty()) progressNodePadding.setValue(new Insets(0, 0, 8, 0));
+                    if (stages.isEmpty()) progressNodePadding.setValue(new Insets(0, 0, 8, 0));
                     else progressNodePadding.setValue(new Insets(0, 0, 8, 26));
                 });
             }
@@ -182,7 +183,25 @@ public final class TaskListPane extends StackPane {
         public StageNode(String stage) {
             this.stage = stage;
 
-            title.setText(executor.getStages().localize(stage));
+            String stageKey = StringUtils.substringBefore(stage, ':');
+            String stageValue = StringUtils.substringAfter(stage, ':');
+            String message;
+
+            // @formatter:off
+            switch (stageKey) {
+                case "hmcl.modpack": message = i18n("install.modpack"); break;
+                case "hmcl.modpack.download": message = i18n("launch.state.modpack"); break;
+                case "hmcl.install.assets": message = i18n("assets.download"); break;
+                case "hmcl.install.game": message = i18n("install.installer.install", i18n("install.installer.game") + " " + stageValue); break;
+                case "hmcl.install.forge": message = i18n("install.installer.install", i18n("install.installer.forge") + " " + stageValue); break;
+                case "hmcl.install.liteloader": message = i18n("install.installer.install", i18n("install.installer.liteloader") + " " + stageValue); break;
+                case "hmcl.install.optifine": message = i18n("install.installer.install", i18n("install.installer.optifine") + " " + stageValue); break;
+                case "hmcl.install.fabric": message = i18n("install.installer.install", i18n("install.installer.fabric") + " " + stageValue); break;
+                default: message = i18n(stageKey); break;
+            }
+            // @formatter:on
+
+            title.setText(message);
             BorderPane.setAlignment(title, Pos.CENTER_LEFT);
             BorderPane.setMargin(title, new Insets(0, 0, 0, 8));
             setPadding(new Insets(0, 0, 8, 4));
@@ -210,7 +229,7 @@ public final class TaskListPane extends StackPane {
         private final Label title = new Label();
         private final Label state = new Label();
         private final DoubleBinding binding = Bindings.createDoubleBinding(() ->
-                        getWidth() - getPadding().getLeft() - getPadding().getRight() - 100,
+                        getWidth() - getPadding().getLeft() - getPadding().getRight(),
                 paddingProperty(), widthProperty());
 
         public ProgressListNode(Task<?> task) {

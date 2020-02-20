@@ -24,6 +24,7 @@ import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ReflectionHelper;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
@@ -34,12 +35,15 @@ import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Disposable task.
@@ -91,11 +95,15 @@ public abstract class Task<T> {
     }
 
     /**
-     * You must initialize stage in preExecute.
+     * You must initialize stage in constructor.
      * @param stage the stage
      */
     final void setStage(String stage) {
         this.stage = stage;
+    }
+
+    public List<String> getStages() {
+        return getStage() == null ? Collections.emptyList() : Collections.singletonList(getStage());
     }
 
     // state
@@ -688,6 +696,11 @@ public abstract class Task<T> {
             public boolean isRelyingOnDependents() {
                 return false;
             }
+
+            @Override
+            public List<String> getStages() {
+                return Lang.merge(Task.this.getStages(), super.getStages());
+            }
         }.setExecutor(executor).setName(getCaller());
     }
 
@@ -763,9 +776,29 @@ public abstract class Task<T> {
     }
 
     public Task<T> withStage(String stage) {
-        StageTask<T> task = new StageTask<>(this);
+        StageTask task = new StageTask();
         task.setStage(stage);
         return task;
+    }
+
+    public Task<T> withStagesHint(List<String> stages) {
+        return new Task<T>() {
+
+            @Override
+            public Collection<Task<?>> getDependents() {
+                return Collections.singleton(Task.this);
+            }
+
+            @Override
+            public void execute() throws Exception {
+                setResult(Task.this.getResult());
+            }
+
+            @Override
+            public List<String> getStages() {
+                return stages;
+            }
+        };
     }
 
     public static Task<Void> runAsync(ExceptionalRunnable<?> closure) {
@@ -802,6 +835,11 @@ public abstract class Task<T> {
             @Override
             public Collection<Task<?>> getDependencies() {
                 return then == null ? Collections.emptySet() : Collections.singleton(then);
+            }
+
+            @Override
+            public List<String> getStages() {
+                return Lang.merge(super.getStages(), then == null ? null : then.getStages());
             }
         }.setName(name);
     }
@@ -861,6 +899,11 @@ public abstract class Task<T> {
             @Override
             public Collection<Task<?>> getDependents() {
                 return tasks;
+            }
+
+            @Override
+            public List<String> getStages() {
+                return tasks.stream().flatMap(task -> task.getStages().stream()).collect(Collectors.toList());
             }
         };
     }
@@ -929,6 +972,11 @@ public abstract class Task<T> {
         public void execute() throws Exception {
             setResult(callable.apply(Task.this.getResult()));
         }
+
+        @Override
+        public List<String> getStages() {
+            return Lang.merge(Task.this.getStages(), super.getStages());
+        }
     }
 
     /**
@@ -988,22 +1036,30 @@ public abstract class Task<T> {
         public boolean isRelyingOnDependents() {
             return relyingOnDependents;
         }
+
+        @Override
+        public List<String> getStages() {
+            return Stream.of(Task.this.getStages(), super.getStages(), succ == null ? Collections.<String>emptyList() : succ.getStages())
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toList());
+        }
     }
 
-    public static class StageTask<T> extends Task<T> {
-        private final Task<T> task;
-        StageTask(Task<T> task) {
-            this.task = task;
-        }
+    public class StageTask extends Task<T> {
 
         @Override
         public Collection<Task<?>> getDependents() {
-            return Collections.singleton(task);
+            return Collections.singleton(Task.this);
         }
 
         @Override
         public void execute() throws Exception {
-            setResult(task.getResult());
+            setResult(Task.this.getResult());
+        }
+
+        @Override
+        public List<String> getStages() {
+            return Lang.merge(Task.this.getStages(), super.getStages());
         }
     }
 }
