@@ -234,6 +234,10 @@ public class FileDownloadTask extends Task<Void> {
                     } catch (IOException e) {
                         Logging.LOG.log(Level.WARNING, "Unable to use cached file, redownload it", e);
                         repository.removeRemoteEntry(con);
+                        // Now we must reconnect the server since 304 may result in empty content,
+                        // if we want to redownload the file, we must reconnect the server without etag settings.
+                        repeat--;
+                        continue;
                     }
                 } else if (con.getResponseCode() / 100 != 2) {
                     throw new ResponseCodeException(url, con.getResponseCode());
