@@ -37,60 +37,20 @@ import java.util.Optional;
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-class AdditionalInstallersPage extends StackPane implements WizardPage {
-    private final InstallerWizardProvider provider;
-    private final WizardController controller;
-
-    @FXML
-    private VBox list;
-    @FXML
-    private JFXButton btnFabric;
-    @FXML
-    private JFXButton btnForge;
-    @FXML
-    private JFXButton btnLiteLoader;
-    @FXML
-    private JFXButton btnOptiFine;
-    @FXML
-    private Label lblGameVersion;
-    @FXML
-    private Label lblVersionName;
-    @FXML
-    private Label lblFabric;
-    @FXML
-    private Label lblForge;
-    @FXML
-    private Label lblLiteLoader;
-    @FXML
-    private Label lblOptiFine;
-    @FXML
-    private JFXButton btnInstall;
+class AdditionalInstallersPage extends InstallersPage {
+    protected final InstallerWizardProvider provider;
 
     public AdditionalInstallersPage(InstallerWizardProvider provider, WizardController controller, GameRepository repository, DownloadProvider downloadProvider) {
+        super(controller, repository, provider.getGameVersion(), downloadProvider);
         this.provider = provider;
-        this.controller = controller;
 
-        FXUtils.loadFXML(this, "/assets/fxml/download/additional-installers.fxml");
-
-        lblGameVersion.setText(provider.getGameVersion());
-        lblVersionName.setText(provider.getVersion().getId());
-
-        JFXButton[] buttons = new JFXButton[]{btnFabric, btnForge, btnLiteLoader, btnOptiFine};
-        String[] libraryIds = new String[]{"fabric", "forge", "liteloader", "optifine"};
-
-        for (int i = 0; i < libraryIds.length; ++i) {
-            String libraryId = libraryIds[i];
-            buttons[i].setOnMouseClicked(e -> {
-                controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), provider.getGameVersion(), downloadProvider, libraryId, () -> {
-                    controller.onPrev(false);
-                }));
-            });
-        }
-
-        btnInstall.setOnMouseClicked(e -> onInstall());
+        txtName.getValidators().clear();
+        txtName.setText(provider.getVersion().getId());
+        txtName.setEditable(false);
     }
 
-    private void onInstall() {
+    @Override
+    protected void onInstall() {
         controller.onFinish();
     }
 
@@ -105,17 +65,16 @@ class AdditionalInstallersPage extends StackPane implements WizardPage {
 
     @Override
     public void onNavigate(Map<String, Object> settings) {
-        lblGameVersion.setText(i18n("install.new_game.current_game_version") + ": " + provider.getGameVersion());
-
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(provider.getVersion().resolvePreservingPatches(provider.getProfile().getRepository()));
+        String game = analyzer.getVersion(MINECRAFT).orElse(null);
         String fabric = analyzer.getVersion(FABRIC).orElse(null);
         String forge = analyzer.getVersion(FORGE).orElse(null);
         String liteLoader = analyzer.getVersion(LITELOADER).orElse(null);
         String optiFine = analyzer.getVersion(OPTIFINE).orElse(null);
 
-        Label[] labels = new Label[]{lblFabric, lblForge, lblLiteLoader, lblOptiFine};
-        String[] libraryIds = new String[]{"fabric", "forge", "liteloader", "optifine"};
-        String[] versions = new String[]{fabric, forge, liteLoader, optiFine};
+        Label[] labels = new Label[]{lblGame, lblFabric, lblForge, lblLiteLoader, lblOptiFine};
+        String[] libraryIds = new String[]{"game", "fabric", "forge", "liteloader", "optifine"};
+        String[] versions = new String[]{game, fabric, forge, liteLoader, optiFine};
 
         for (int i = 0; i < libraryIds.length; ++i) {
             String libraryId = libraryIds[i];

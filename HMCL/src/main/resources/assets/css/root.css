@@ -137,7 +137,6 @@
 
 .sponsor-pane {
     -fx-padding: 16;
-    -fx-background-color: white;
     -fx-cursor: hand;
 }
 
@@ -522,6 +521,12 @@
     -fx-cursor: hand;
 }
 
+.jfx-button .jfx-rippler {
+    -jfx-rippler-fill: -fx-base-check-color;
+    -jfx-mask-type: CIRCLE;
+    -fx-padding: 0.0;
+}
+
 .jfx-button-raised {
     -fx-background-color: -fx-base-color;
 }
@@ -614,7 +619,8 @@
 *******************************************************************************/
 
 .jfx-list-cell, .list-cell {
-    -fx-background-color: WHITE;
+    /*-fx-background-color: WHITE;*/
+    -fx-background-color: transparent;
 }
 
 .list-cell:selected, .jfx-list-cell:selected,
@@ -637,6 +643,17 @@
     -jfx-cell-vertical-margin: 5.0;
     -jfx-vertical-gap: 10.0;
     -jfx-expanded: false;
+    -fx-background-color: transparent;
+}
+
+.jfx-list-view-float {
+    -fx-padding: 5;
+    -fx-background-insets: 0.0;
+    -jfx-cell-horizontal-margin: 0.0;
+    -jfx-cell-vertical-margin: 5.0;
+    -jfx-vertical-gap: 10.0;
+    -jfx-expanded: false;
+    -fx-background-color: transparent;
 }
 
 .options-list {

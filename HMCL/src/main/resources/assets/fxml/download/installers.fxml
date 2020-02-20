@@ -3,70 +3,85 @@
 <?import com.jfoenix.controls.*?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<?import com.jfoenix.effects.JFXDepthManager?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane" style="-fx-padding: 16;">
     <BorderPane>
-        <top>
-            <VBox alignment="CENTER" style="-fx-padding: 40px;" spacing="20">
-                <Label fx:id="lblGameVersion" alignment="CENTER"/>
-                <JFXTextField fx:id="txtName" labelFloat="true" promptText="%modpack.enter_name" maxWidth="300"/>
-            </VBox>
-        </top>
         <center>
-            <VBox fx:id="list" styleClass="jfx-list-view" maxHeight="150" maxWidth="300">
-                <JFXButton fx:id="btnFabric" prefWidth="${list.width}">
-                    <graphic>
-                        <BorderPane mouseTransparent="true">
-                            <left>
-                                <Label fx:id="lblFabric"/>
-                            </left>
-                            <right>
-                                <fx:include source="/assets/svg/arrow-right.fxml"/>
-                            </right>
-                        </BorderPane>
-                    </graphic>
-                </JFXButton>
-                <JFXButton fx:id="btnForge" prefWidth="${list.width}">
-                    <graphic>
-                        <BorderPane mouseTransparent="true">
-                            <left>
-                                <Label fx:id="lblForge"/>
-                            </left>
-                            <right>
-                                <fx:include source="/assets/svg/arrow-right.fxml"/>
-                            </right>
-                        </BorderPane>
-                    </graphic>
-                </JFXButton>
-                <JFXButton fx:id="btnLiteLoader" prefWidth="${list.width}">
-                    <graphic>
-                        <BorderPane mouseTransparent="true">
-                            <left>
-                                <Label fx:id="lblLiteLoader"/>
-                            </left>
-                            <right>
-                                <fx:include source="/assets/svg/arrow-right.fxml"/>
-                            </right>
-                        </BorderPane>
-                    </graphic>
-                </JFXButton>
-                <JFXButton fx:id="btnOptiFine" prefWidth="${list.width}">
-                    <graphic>
-                        <BorderPane mouseTransparent="true">
-                            <left>
-                                <Label fx:id="lblOptiFine"/>
-                            </left>
-                            <right>
-                                <fx:include source="/assets/svg/arrow-right.fxml"/>
-                            </right>
-                        </BorderPane>
-                    </graphic>
-                </JFXButton>
+            <VBox fx:id="list" spacing="8">
+                <HBox spacing="8" alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-padding: 20 8 20 16">
+                    <Label text="%archive.name" />
+                    <JFXTextField fx:id="txtName" maxWidth="300"/>
+                </HBox>
+                <BorderPane fx:id="btnGame" style="-fx-background-color: white; -fx-padding: 8">
+                    <left>
+                        <ImageView>
+                            <Image url="/assets/img/grass.png" requestedHeight="32" requestedWidth="32" smooth="true" />
+                        </ImageView>
+                    </left>
+                    <center>
+                        <Label fx:id="lblGame" BorderPane.alignment="CENTER_LEFT" />
+                    </center>
+                </BorderPane>
+                <BorderPane fx:id="btnFabric" style="-fx-background-color: white; -fx-padding: 8; -fx-cursor: HAND">
+                    <left>
+                        <ImageView>
+                            <Image url="/assets/img/fabric.png" requestedHeight="32" requestedWidth="32" smooth="true" />
+                        </ImageView>
+                    </left>
+                    <center>
+                        <Label fx:id="lblFabric" BorderPane.alignment="CENTER_LEFT" />
+                    </center>
+                    <right>
+                        <fx:include BorderPane.alignment="CENTER_RIGHT" source="/assets/svg/arrow-right.fxml"/>
+                    </right>
+                </BorderPane>
+                <BorderPane fx:id="btnForge" style="-fx-background-color: white; -fx-padding: 8; -fx-cursor: HAND">
+                    <left>
+                        <ImageView>
+                            <Image url="/assets/img/forge.png" requestedHeight="32" requestedWidth="32" smooth="true" />
+                        </ImageView>
+                    </left>
+                    <center>
+                        <Label fx:id="lblForge" BorderPane.alignment="CENTER_LEFT" />
+                    </center>
+                    <right>
+                        <fx:include BorderPane.alignment="CENTER_RIGHT" source="/assets/svg/arrow-right.fxml"/>
+                    </right>
+                </BorderPane>
+                <BorderPane fx:id="btnLiteLoader" style="-fx-background-color: white; -fx-padding: 8; -fx-cursor: HAND">
+                    <left>
+                        <ImageView>
+                            <Image url="/assets/img/chicken.png" requestedHeight="32" requestedWidth="32" smooth="true" />
+                        </ImageView>
+                    </left>
+                    <center>
+                        <Label fx:id="lblLiteLoader" BorderPane.alignment="CENTER_LEFT" />
+                    </center>
+                    <right>
+                        <fx:include BorderPane.alignment="CENTER_RIGHT" source="/assets/svg/arrow-right.fxml"/>
+                    </right>
+                </BorderPane>
+                <BorderPane fx:id="btnOptiFine" style="-fx-background-color: white; -fx-padding: 8; -fx-cursor: HAND">
+                    <left>
+                        <ImageView>
+                            <Image url="/assets/img/command.png" requestedHeight="32" requestedWidth="32" smooth="true" />
+                        </ImageView>
+                    </left>
+                    <center>
+                        <Label fx:id="lblOptiFine"  BorderPane.alignment="CENTER_LEFT" />
+                    </center>
+                    <right>
+                        <fx:include BorderPane.alignment="CENTER_RIGHT" source="/assets/svg/arrow-right.fxml"/>
+                    </right>
+                </BorderPane>
             </VBox>
         </center>
         <bottom>
-            <HBox alignment="CENTER">
+            <HBox alignment="CENTER_RIGHT">
                 <JFXButton fx:id="btnInstall" onMouseClicked="#onInstall" prefWidth="100" prefHeight="40"
                            buttonType="RAISED" text="%button.install" styleClass="jfx-button-raised"/>
             </HBox>

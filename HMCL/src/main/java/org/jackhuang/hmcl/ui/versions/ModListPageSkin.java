@@ -53,7 +53,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         super(skinnable);
 
         StackPane pane = new StackPane();
-        pane.getStyleClass().addAll("notice-pane", "white-background");
+        pane.getStyleClass().addAll("notice-pane");
 
         BorderPane root = new BorderPane();
         JFXTreeTableView<ModInfoObject> tableView = new JFXTreeTableView<>();

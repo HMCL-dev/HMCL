@@ -19,8 +19,12 @@ package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.effects.JFXDepthManager;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.download.DownloadProvider;
@@ -40,50 +44,52 @@ import java.util.Map;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class InstallersPage extends StackPane implements WizardPage {
-    private final WizardController controller;
+    protected final WizardController controller;
 
     @FXML
-    private VBox list;
+    protected VBox list;
 
     @FXML
-    private JFXButton btnFabric;
+    protected Node btnGame;
 
     @FXML
-    private JFXButton btnForge;
+    protected Node btnFabric;
 
     @FXML
-    private JFXButton btnLiteLoader;
+    protected Node btnForge;
 
     @FXML
-    private JFXButton btnOptiFine;
+    protected Node btnLiteLoader;
 
     @FXML
-    private Label lblGameVersion;
+    protected Node btnOptiFine;
 
     @FXML
-    private Label lblFabric;
+    protected Label lblGame;
 
     @FXML
-    private Label lblForge;
+    protected Label lblFabric;
 
     @FXML
-    private Label lblLiteLoader;
+    protected Label lblForge;
 
     @FXML
-    private Label lblOptiFine;
+    protected Label lblLiteLoader;
 
     @FXML
-    private JFXTextField txtName;
+    protected Label lblOptiFine;
 
     @FXML
-    private JFXButton btnInstall;
+    protected JFXTextField txtName;
 
-    public InstallersPage(WizardController controller, GameRepository repository, DownloadProvider downloadProvider) {
+    @FXML
+    protected JFXButton btnInstall;
+
+    public InstallersPage(WizardController controller, GameRepository repository, String gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
 
         FXUtils.loadFXML(this, "/assets/fxml/download/installers.fxml");
 
-        String gameVersion = ((RemoteVersion) controller.getSettings().get("game")).getGameVersion();
         Validator hasVersion = new Validator(s -> !repository.hasVersion(s) && StringUtils.isNotBlank(s));
         hasVersion.setMessage(i18n("install.new_game.already_exists"));
         Validator nameValidator = new Validator(OperatingSystem::isNameValid);
@@ -92,11 +98,18 @@ public class InstallersPage extends StackPane implements WizardPage {
         txtName.textProperty().addListener(e -> btnInstall.setDisable(!txtName.validate()));
         txtName.setText(gameVersion);
 
-        JFXButton[] buttons = new JFXButton[]{btnFabric, btnForge, btnLiteLoader, btnOptiFine};
-        String[] libraryIds = new String[]{"fabric", "forge", "liteloader", "optifine"};
+        Label[] labels = new Label[]{lblGame, lblFabric, lblForge, lblLiteLoader, lblOptiFine};
+        Node[] buttons = new Node[]{btnGame, btnFabric, btnForge, btnLiteLoader, btnOptiFine};
+        String[] libraryIds = new String[]{"game", "fabric", "forge", "liteloader", "optifine"};
+
+        for (Node node : list.getChildren()) {
+            JFXDepthManager.setDepth(node, 1);
+        }
 
         for (int i = 0; i < libraryIds.length; ++i) {
             String libraryId = libraryIds[i];
+            BorderPane.setMargin(labels[i], new Insets(0, 0, 0, 8));
+            if (libraryId.equals("game")) continue;
             buttons[i].setOnMouseClicked(e ->
                     controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> controller.onPrev(false))));
         }
@@ -113,10 +126,8 @@ public class InstallersPage extends StackPane implements WizardPage {
 
     @Override
     public void onNavigate(Map<String, Object> settings) {
-        lblGameVersion.setText(i18n("install.new_game.current_game_version") + ": " + getVersion("game"));
-
-        Label[] labels = new Label[]{lblFabric, lblForge, lblLiteLoader, lblOptiFine};
-        String[] libraryIds = new String[]{"fabric", "forge", "liteloader", "optifine"};
+        Label[] labels = new Label[]{lblGame, lblFabric, lblForge, lblLiteLoader, lblOptiFine};
+        String[] libraryIds = new String[]{"game", "fabric", "forge", "liteloader", "optifine"};
 
         for (int i = 0; i < libraryIds.length; ++i) {
             String libraryId = libraryIds[i];
@@ -132,7 +143,7 @@ public class InstallersPage extends StackPane implements WizardPage {
     }
 
     @FXML
-    private void onInstall() {
+    protected void onInstall() {
         controller.getSettings().put("name", txtName.getText());
         controller.onFinish();
     }
