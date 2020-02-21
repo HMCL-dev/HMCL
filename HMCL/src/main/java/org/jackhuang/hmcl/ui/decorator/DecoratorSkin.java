@@ -29,11 +29,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
@@ -110,7 +106,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             {
                 contentPlaceHolder = new StackPane();
                 contentPlaceHolder.getStyleClass().add("jfx-decorator-content-container");
-                contentPlaceHolder.backgroundProperty().bind(skinnable.contentBackgroundProperty());
                 FXUtils.setOverflowHidden(contentPlaceHolder, true);
                 Bindings.bindContent(contentPlaceHolder.getChildren(), skinnable.contentProperty());
 

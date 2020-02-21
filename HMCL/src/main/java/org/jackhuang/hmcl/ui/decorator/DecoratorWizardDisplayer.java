@@ -24,6 +24,7 @@ import javafx.beans.property.StringProperty;
 import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.animation.TransitionHandler;
+import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.wizard.*;
 
@@ -52,7 +53,7 @@ public class DecoratorWizardDisplayer extends StackPane implements TaskExecutorD
         wizardController.setProvider(provider);
         wizardController.onStart();
 
-        // getStyleClass().add("white-background");
+        addEventHandler(Navigator.NavigationEvent.NAVIGATING, this::onDecoratorPageNavigating);
     }
 
     @Override

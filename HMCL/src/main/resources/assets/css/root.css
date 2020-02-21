@@ -19,7 +19,7 @@
 }
 
 .disabled Label {
-    -fx-text-fill: gray;
+    -fx-text-fill: rgba(0, 0, 0, 0.5);
 }
 
 .side-menu {
@@ -36,7 +36,7 @@
 }
 
 .subtitle-label {
-    -fx-text-fill: gray;
+    -fx-text-fill: rgba(0, 0, 0, 0.5);
 }
 
 .update-label {
@@ -113,11 +113,11 @@
 }
 
 .two-line-list-item > .subtitle {
-	-fx-text-fill: gray;
+	-fx-text-fill: rgba(0, 0, 0, 0.5);
 }
 
 .bubble {
-    -fx-background-color: gray;
+    -fx-background-color: rgba(0, 0, 0, 0.5);
     -fx-background-radius: 2px;
     -fx-text-fill: white;
 }
@@ -1032,6 +1032,14 @@
 .debug-border {
     -fx-border-color: red;
     -fx-border-width: 1;
+}
+
+.content-background {
+    -fx-background-color: rgba(244, 244, 244, 0.5);
+}
+
+.drawer-background {
+    -fx-background-color: #FAFAFA;
 }
 
 .gray-background {

@@ -67,7 +67,7 @@ public final class TransitionHandler implements AnimationHandler {
     }
 
     public void setContent(Node newView, AnimationProducer transition) {
-        setContent(newView, transition, Duration.millis(320));
+        setContent(newView, transition, Duration.millis(160));
     }
 
     public void setContent(Node newView, AnimationProducer transition, Duration duration) {

@@ -32,6 +32,7 @@ import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
@@ -70,6 +71,7 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
 
     public SettingsPage() {
         FXUtils.smoothScrolling(scroll);
+        addEventHandler(Navigator.NavigationEvent.NAVIGATING, this::onDecoratorPageNavigating);
 
         // ==== Download sources ====
         cboDownloadSource.getItems().setAll(DownloadProviders.providersById.keySet());

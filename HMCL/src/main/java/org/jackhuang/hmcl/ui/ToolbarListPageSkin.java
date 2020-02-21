@@ -41,6 +41,7 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
 
         SpinnerPane spinnerPane = new SpinnerPane();
         spinnerPane.getStyleClass().add("large-spinner-pane");
+        spinnerPane.getStyleClass().add("content-background");
 
         BorderPane root = new BorderPane();
 

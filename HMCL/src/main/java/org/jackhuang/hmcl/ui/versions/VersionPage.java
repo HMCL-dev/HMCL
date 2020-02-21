@@ -107,7 +107,8 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         btnTestGame.setGraphic(SVG.launch(Theme.whiteFillBinding(), 20, 20));
         FXUtils.installFastTooltip(btnTestGame, i18n("version.launch.test"));
 
-        setEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
+        addEventHandler(Navigator.NavigationEvent.NAVIGATING, this::onDecoratorPageNavigating);
+        addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
     }
 
     public void load(String id, Profile profile) {

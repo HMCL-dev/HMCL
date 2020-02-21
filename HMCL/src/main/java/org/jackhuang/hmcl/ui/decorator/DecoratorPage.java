@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.scene.Node;
+import org.jackhuang.hmcl.ui.construct.Navigator;
 
 public interface DecoratorPage {
     ReadOnlyStringProperty titleProperty();
@@ -31,5 +33,9 @@ public interface DecoratorPage {
     }
 
     default void onForceToClose() {
+    }
+
+    default void onDecoratorPageNavigating(Navigator.NavigationEvent event) {
+        ((Node) this).getStyleClass().add("content-background");
     }
 }

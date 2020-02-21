@@ -27,18 +27,15 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
-import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.DragEvent;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
@@ -279,12 +276,6 @@ public class DecoratorController {
 
         decorator.canBackProperty().set(navigator.canGoBack());
         decorator.canCloseProperty().set(navigator.canGoBack());
-
-        if (navigator.canGoBack()) {
-            decorator.setContentBackground(new Background(new BackgroundFill(Color.rgb(244, 244, 244, 0.5), CornerRadii.EMPTY, Insets.EMPTY)));
-        } else {
-            decorator.setContentBackground(null);
-        }
 
         if (to instanceof Region) {
             Region region = (Region) to;
