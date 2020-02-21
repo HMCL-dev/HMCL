@@ -123,7 +123,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             }
 
             @Override
-            protected void updateControl(RemoteVersion remoteVersion) {
+            protected void updateControl(RemoteVersion remoteVersion, boolean empty) {
+                if (empty) return;
                 content.setTitle(remoteVersion.getSelfVersion());
                 content.setSubtitle(remoteVersion.getGameVersion());
 

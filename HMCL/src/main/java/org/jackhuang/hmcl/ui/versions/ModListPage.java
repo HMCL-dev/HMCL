@@ -22,7 +22,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
-import javafx.scene.control.TreeItem;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.mod.ModInfo;
@@ -139,11 +138,9 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         this.parentTab = parentTab;
     }
 
-    public void removeSelected(ObservableList<TreeItem<ModListPageSkin.ModInfoObject>> selectedItems) {
+    public void removeSelected(ObservableList<ModListPageSkin.ModInfoObject> selectedItems) {
         try {
             modManager.removeMods(selectedItems.stream()
-                    .filter(Objects::nonNull)
-                    .map(TreeItem::getValue)
                     .filter(Objects::nonNull)
                     .map(ModListPageSkin.ModInfoObject::getModInfo)
                     .toArray(ModInfo[]::new));
@@ -153,16 +150,16 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         }
     }
 
-    public void enableSelected(ObservableList<TreeItem<ModListPageSkin.ModInfoObject>> selectedItems) {
+    public void enableSelected(ObservableList<ModListPageSkin.ModInfoObject> selectedItems) {
         selectedItems.stream()
-                .map(TreeItem::getValue)
+                .filter(Objects::nonNull)
                 .map(ModListPageSkin.ModInfoObject::getModInfo)
                 .forEach(info -> info.setActive(true));
     }
 
-    public void disableSelected(ObservableList<TreeItem<ModListPageSkin.ModInfoObject>> selectedItems) {
+    public void disableSelected(ObservableList<ModListPageSkin.ModInfoObject> selectedItems) {
         selectedItems.stream()
-                .map(TreeItem::getValue)
+                .filter(Objects::nonNull)
                 .map(ModListPageSkin.ModInfoObject::getModInfo)
                 .forEach(info -> info.setActive(false));
     }

@@ -17,32 +17,29 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.JFXTreeTableColumn;
-import com.jfoenix.controls.JFXTreeTableView;
-import com.jfoenix.controls.RecursiveTreeItem;
+import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import com.jfoenix.effects.JFXDepthManager;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.mod.ModInfo;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.JFXCheckBoxTreeTableCell;
+import org.jackhuang.hmcl.ui.construct.FloatListCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
-import static org.jackhuang.hmcl.ui.FXUtils.setupCellValueFactory;
-import static org.jackhuang.hmcl.ui.FXUtils.wrapMargin;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton;
 import static org.jackhuang.hmcl.util.StringUtils.isNotBlank;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -56,7 +53,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         pane.getStyleClass().addAll("notice-pane");
 
         BorderPane root = new BorderPane();
-        JFXTreeTableView<ModInfoObject> tableView = new JFXTreeTableView<>();
+        JFXListView<ModInfoObject> listView = new JFXListView<>();
 
         {
             HBox toolbar = new HBox();
@@ -68,13 +65,13 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             toolbar.getChildren().add(createToolbarButton(i18n("mods.add"), SVG::plus, skinnable::add));
             toolbar.getChildren().add(createToolbarButton(i18n("button.remove"), SVG::delete, () -> {
                 Controllers.confirmDialog(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                    skinnable.removeSelected(tableView.getSelectionModel().getSelectedItems());
+                    skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
                 }, null);
             }));
             toolbar.getChildren().add(createToolbarButton(i18n("mods.enable"), SVG::check, () ->
-                    skinnable.enableSelected(tableView.getSelectionModel().getSelectedItems())));
+                    skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())));
             toolbar.getChildren().add(createToolbarButton(i18n("mods.disable"), SVG::close, () ->
-                    skinnable.disableSelected(tableView.getSelectionModel().getSelectedItems())));
+                    skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())));
             root.setTop(toolbar);
         }
 
@@ -83,26 +80,43 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            tableView.getStyleClass().add("no-header");
-            tableView.setShowRoot(false);
-            tableView.setEditable(true);
-            tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-            tableView.setRoot(new RecursiveTreeItem<>(skinnable.getItems(), RecursiveTreeObject::getChildren));
+            listView.setCellFactory(x -> new FloatListCell<ModInfoObject>() {
+                JFXCheckBox checkBox = new JFXCheckBox();
+                TwoLineListItem content = new TwoLineListItem();
+                BooleanProperty booleanProperty;
 
-            JFXTreeTableColumn<ModInfoObject, Boolean> activeColumn = new JFXTreeTableColumn<>();
-            setupCellValueFactory(activeColumn, ModInfoObject::activeProperty);
-            activeColumn.setCellFactory(c -> new JFXCheckBoxTreeTableCell<>());
-            activeColumn.setEditable(true);
-            activeColumn.setMaxWidth(40);
-            activeColumn.setMinWidth(40);
+                {
+                    Region clippedContainer = (Region)listView.lookup(".clipped-container");
+                    setPrefWidth(0);
+                    HBox container = new HBox(8);
+                    container.setPadding(new Insets(0, 0, 0, 6));
+                    container.setAlignment(Pos.CENTER_LEFT);
+                    pane.getChildren().add(container);
+                    pane.setPadding(new Insets(8, 8, 8, 0));
+                    if (clippedContainer != null) {
+                        maxWidthProperty().bind(clippedContainer.widthProperty());
+                        prefWidthProperty().bind(clippedContainer.widthProperty());
+                        minWidthProperty().bind(clippedContainer.widthProperty());
+                    }
 
-            JFXTreeTableColumn<ModInfoObject, Node> detailColumn = new JFXTreeTableColumn<>();
-            setupCellValueFactory(detailColumn, ModInfoObject::nodeProperty);
+                    container.getChildren().setAll(checkBox, content);
+                }
 
-            tableView.getColumns().setAll(activeColumn, detailColumn);
+                @Override
+                protected void updateControl(ModInfoObject dataItem, boolean empty) {
+                    if (empty) return;
+                    content.setTitle(dataItem.getTitle());
+                    content.setSubtitle(dataItem.getSubtitle());
+                    if (booleanProperty != null) {
+                        checkBox.selectedProperty().unbindBidirectional(booleanProperty);
+                    }
+                    checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
+                }
+            });
+            listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+            Bindings.bindContent(listView.getItems(), skinnable.getItems());
 
-            tableView.setColumnResizePolicy(JFXTreeTableView.CONSTRAINED_RESIZE_POLICY);
-            center.setContent(tableView);
+            center.setContent(listView);
             root.setCenter(center);
         }
 
@@ -120,7 +134,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
     static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> {
         private final BooleanProperty active;
         private final ModInfo modInfo;
-        private final ObjectProperty<Node> node;
+        private final String message;
 
         ModInfoObject(ModInfo modInfo) {
             this.modInfo = modInfo;
@@ -132,15 +146,15 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 message.append(", ").append(i18n("archive.game_version")).append(": ").append(modInfo.getGameVersion());
             if (isNotBlank(modInfo.getAuthors()))
                 message.append(", ").append(i18n("archive.author")).append(": ").append(modInfo.getAuthors());
-            this.node = new SimpleObjectProperty<>(wrapMargin(new TwoLineListItem(modInfo.getFileName(), message.toString()), new Insets(8, 0, 8, 0)));
+            this.message = message.toString();
         }
 
-        BooleanProperty activeProperty() {
-            return active;
+        String getTitle() {
+            return modInfo.getFileName();
         }
 
-        ObjectProperty<Node> nodeProperty() {
-            return node;
+        String getSubtitle() {
+            return message;
         }
 
         ModInfo getModInfo() {

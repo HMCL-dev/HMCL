@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Insets;
+import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
 import javafx.scene.layout.StackPane;
 
@@ -29,7 +30,9 @@ public abstract class FloatListCell<T> extends ListCell<T> {
         setText(null);
         setGraphic(null);
 
-        pane.setStyle("-fx-background-color: white; -fx-padding: 8; -fx-cursor: HAND");
+        pane.setStyle("-fx-background-color: white");
+        pane.setCursor(Cursor.HAND);
+        pane.setPadding(new Insets(8));
         setPadding(new Insets(5));
         JFXDepthManager.setDepth(pane, 1);
     }
@@ -37,13 +40,13 @@ public abstract class FloatListCell<T> extends ListCell<T> {
     @Override
     protected void updateItem(T item, boolean empty) {
         super.updateItem(item, empty);
+        updateControl(item, empty);
         if (empty) {
             setGraphic(null);
         } else {
-            updateControl(item);
             setGraphic(pane);
         }
     }
 
-    protected abstract void updateControl(T dataItem);
+    protected abstract void updateControl(T dataItem, boolean empty);
 }

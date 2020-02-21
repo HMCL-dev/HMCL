@@ -21,7 +21,6 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
-import javafx.scene.control.TreeItem;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.Datapack;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -103,9 +102,8 @@ public class DatapackListPage extends ListPageBase<DatapackListPageSkin.Datapack
         datapack.loadFromDir();
     }
 
-    void removeSelected(ObservableList<TreeItem<DatapackListPageSkin.DatapackInfoObject>> selectedItems) {
+    void removeSelected(ObservableList<DatapackListPageSkin.DatapackInfoObject> selectedItems) {
         selectedItems.stream()
-                .map(TreeItem::getValue)
                 .map(DatapackListPageSkin.DatapackInfoObject::getPackInfo)
                 .forEach(pack -> {
                     try {
@@ -117,16 +115,14 @@ public class DatapackListPage extends ListPageBase<DatapackListPageSkin.Datapack
                 });
     }
 
-    void enableSelected(ObservableList<TreeItem<DatapackListPageSkin.DatapackInfoObject>> selectedItems) {
+    void enableSelected(ObservableList<DatapackListPageSkin.DatapackInfoObject> selectedItems) {
         selectedItems.stream()
-                .map(TreeItem::getValue)
                 .map(DatapackListPageSkin.DatapackInfoObject::getPackInfo)
                 .forEach(info -> info.setActive(true));
     }
 
-    void disableSelected(ObservableList<TreeItem<DatapackListPageSkin.DatapackInfoObject>> selectedItems) {
+    void disableSelected(ObservableList<DatapackListPageSkin.DatapackInfoObject> selectedItems) {
         selectedItems.stream()
-                .map(TreeItem::getValue)
                 .map(DatapackListPageSkin.DatapackInfoObject::getPackInfo)
                 .forEach(info -> info.setActive(false));
     }

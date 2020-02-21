@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.download.VanillaInstallWizardProvider;
@@ -56,6 +57,7 @@ public class GameList extends ListPageBase<GameListItem> implements DecoratorPag
         });
 
         Profiles.registerVersionsListener(this::loadVersions);
+        addEventHandler(Navigator.NavigationEvent.NAVIGATING, this::onDecoratorPageNavigating);
     }
 
     private void loadVersions(Profile profile) {
