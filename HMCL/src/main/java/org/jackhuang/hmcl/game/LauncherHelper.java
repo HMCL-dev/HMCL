@@ -554,13 +554,13 @@ public final class LauncherHelper {
 
         @Override
         public void onExit(int exitCode, ExitType exitType) {
+            launchingLatch.countDown();
+
             if (exitType == ExitType.INTERRUPTED)
                 return;
 
             // Game crashed before opening the game window.
             if (!lwjgl) finishLaunch();
-
-            launchingLatch.countDown();
 
             if (exitType != ExitType.NORMAL) {
                 repository.markVersionLaunchedAbnormally(version);
