@@ -42,33 +42,20 @@ public final class Schedulers {
         return CACHED_EXECUTOR;
     }
 
-    private static volatile ThreadPoolExecutor IO_EXECUTOR;
+    private static volatile ExecutorService IO_EXECUTOR;
 
-    public static synchronized ThreadPoolExecutor io() {
-        if (IO_EXECUTOR == null)
-            IO_EXECUTOR = new ThreadPoolExecutor(6, 6,
-                    60L, TimeUnit.SECONDS,
-                    new LinkedBlockingQueue<>(),
+    public static synchronized ExecutorService io() {
+        if (IO_EXECUTOR == null) {
+            int threads = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
+            IO_EXECUTOR = Executors.newFixedThreadPool(threads,
                     runnable -> {
                         Thread thread = Executors.defaultThreadFactory().newThread(runnable);
                         thread.setDaemon(true);
                         return thread;
                     });
+        }
 
         return IO_EXECUTOR;
-    }
-
-    private static volatile ExecutorService SINGLE_EXECUTOR;
-
-    public static synchronized ExecutorService computation() {
-        if (SINGLE_EXECUTOR == null)
-            SINGLE_EXECUTOR = Executors.newSingleThreadExecutor(runnable -> {
-                Thread thread = Executors.defaultThreadFactory().newThread(runnable);
-                thread.setDaemon(true);
-                return thread;
-            });
-
-        return SINGLE_EXECUTOR;
     }
 
     public static Executor javafx() {
@@ -91,9 +78,6 @@ public final class Schedulers {
 
         if (IO_EXECUTOR != null)
             IO_EXECUTOR.shutdownNow();
-
-        if (SINGLE_EXECUTOR != null)
-            SINGLE_EXECUTOR.shutdownNow();
     }
 
     public static Future<?> schedule(Executor executor, Runnable command) {

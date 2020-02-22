@@ -54,10 +54,6 @@ public final class DownloadProviders {
                 () -> Optional.ofNullable(providersById.get(config().getDownloadType()))
                         .orElse(providersById.get(DEFAULT_PROVIDER_ID)),
                 config().downloadTypeProperty());
-
-        FXUtils.onChangeAndOperate(downloadProviderProperty, provider -> {
-            Schedulers.io().setMaximumPoolSize(provider.getConcurrency());
-        });
     }
 
     /**
