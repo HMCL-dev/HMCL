@@ -143,6 +143,7 @@ class ComponentListCell extends StackPane {
 
                 if (isExpanded()) {
                     updateClip(newHeight);
+                    list.onExpand();
                 }
 
                 expandAnimation = new Timeline(new KeyFrame(new Duration(320.0),
@@ -161,8 +162,9 @@ class ComponentListCell extends StackPane {
                     expandIcon.setRotate(newValue ? 180 : 0));
 
             getChildren().setAll(groupNode);
-        } else
+        } else {
             getChildren().setAll(content);
+        }
     }
 
     public boolean isExpanded() {

@@ -41,7 +41,6 @@ public class Decorator extends Control {
     private final ObjectProperty<EventHandler<ActionEvent>> onCloseNavButtonAction = new SimpleObjectProperty<>();
     private final ObjectProperty<EventHandler<ActionEvent>> onBackNavButtonAction = new SimpleObjectProperty<>();
     private final ObjectProperty<EventHandler<ActionEvent>> onRefreshNavButtonAction = new SimpleObjectProperty<>();
-    private final BooleanProperty closeNavButtonVisible = new SimpleBooleanProperty(true);
     private final BooleanProperty canRefresh = new SimpleBooleanProperty(false);
     private final BooleanProperty canBack = new SimpleBooleanProperty(false);
     private final BooleanProperty canClose = new SimpleBooleanProperty(false);
@@ -125,18 +124,6 @@ public class Decorator extends Control {
 
     public void setOnCloseButtonAction(Runnable onCloseButtonAction) {
         this.onCloseButtonAction.set(onCloseButtonAction);
-    }
-
-    public boolean isCloseNavButtonVisible() {
-        return closeNavButtonVisible.get();
-    }
-
-    public BooleanProperty closeNavButtonVisibleProperty() {
-        return closeNavButtonVisible;
-    }
-
-    public void setCloseNavButtonVisible(boolean closeNavButtonVisible) {
-        this.closeNavButtonVisible.set(closeNavButtonVisible);
     }
 
     public ObservableList<Node> getContainer() {

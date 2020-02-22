@@ -34,6 +34,8 @@ import javafx.scene.control.Control;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.VBox;
 
+import java.util.function.Consumer;
+
 @DefaultProperty("content")
 public class ComponentList extends Control {
     private final StringProperty title = new SimpleStringProperty(this, "title", "Group");
@@ -41,6 +43,8 @@ public class ComponentList extends Control {
     private final IntegerProperty depth = new SimpleIntegerProperty(this, "depth", 0);
     private boolean hasSubtitle = false;
     public final ObservableList<Node> content = FXCollections.observableArrayList();
+    private boolean expanded = false;
+    private Consumer<ComponentList> lazyInitializer;
 
     public ComponentList() {
         getStyleClass().add("options-list");
@@ -92,6 +96,18 @@ public class ComponentList extends Control {
 
     public ObservableList<Node> getContent() {
         return content;
+    }
+
+    public void setLazyInitializer(Consumer<ComponentList> lazyInitializer) {
+        this.lazyInitializer = lazyInitializer;
+    }
+
+    public void onExpand() {
+        if (!expanded && lazyInitializer != null) {
+            lazyInitializer.accept(this);
+        }
+
+        expanded = true;
     }
 
     @Override

@@ -108,7 +108,9 @@ public abstract class SettingsView extends StackPane {
                         sponsorPane.getChildren().setAll(gridPane);
                         settingsPane.getContent().add(sponsorPane);
                     }
+                }
 
+                {
                     ComponentSublist updatePane = new ComponentSublist();
                     updatePane.setTitle(i18n("update"));
                     updatePane.setHasSubtitle(true);
@@ -152,7 +154,7 @@ public abstract class SettingsView extends StackPane {
                 }
 
                 {
-                    BorderPane updatePane = new BorderPane();
+                    BorderPane docPane = new BorderPane();
                     {
                         VBox headerLeft = new VBox();
 
@@ -161,7 +163,7 @@ public abstract class SettingsView extends StackPane {
                         helpSubtitle.getStyleClass().add("subtitle-label");
 
                         headerLeft.getChildren().setAll(help, helpSubtitle);
-                        updatePane.setLeft(headerLeft);
+                        docPane.setLeft(headerLeft);
                     }
 
                     {
@@ -170,9 +172,9 @@ public abstract class SettingsView extends StackPane {
                         btnExternal.getStyleClass().add("toggle-icon4");
                         btnExternal.setGraphic(SVG.openInNew(Theme.blackFillBinding(), -1, -1));
 
-                        updatePane.setRight(btnExternal);
+                        docPane.setRight(btnExternal);
                     }
-                    settingsPane.getContent().add(updatePane);
+                    settingsPane.getContent().add(docPane);
                 }
 
                 {
