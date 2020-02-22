@@ -163,7 +163,10 @@ public class DefaultLauncher extends Launcher {
         res.addAll(Arguments.parseStringArguments(version.getMinecraftArguments().map(StringUtils::tokenize).orElseGet(LinkedList::new), configuration));
 
         Map<String, Boolean> features = getFeatures();
-        res.addAll(Arguments.parseArguments(version.getArguments().map(Arguments::getGame).orElseGet(this::getDefaultGameArguments), configuration, features));
+        version.getArguments().map(Arguments::getGame).ifPresent(arguments -> res.addAll(Arguments.parseArguments(arguments, configuration, features)));
+        if (version.getMinecraftArguments().isPresent()) {
+            res.addAll(Arguments.parseArguments(this.getDefaultGameArguments(), configuration, features));
+        }
         if (authInfo.getArguments() != null && authInfo.getArguments().getGame() != null && !authInfo.getArguments().getGame().isEmpty())
             res.addAll(Arguments.parseArguments(authInfo.getArguments().getGame(), configuration, features));
 

@@ -46,10 +46,8 @@ public final class VersionLibraryBuilder {
             // Since $ will be escaped in linux, and our maintain of minecraftArgument will not cause escaping,
             // so we regenerate the minecraftArgument without escaping.
             ret = ret.setMinecraftArguments(new CommandBuilder().addAllWithoutParsing(mcArgs).toString());
-        } else {
-            ret = ret.setArguments(ret.getArguments().map(args -> args.withGame(game)).orElse(new Arguments(game, null)));
         }
-        return ret;
+        return ret.setArguments(ret.getArguments().map(args -> args.withGame(game)).orElse(new Arguments(game, null)));
     }
 
     public void removeTweakClass(String target) {
@@ -63,19 +61,19 @@ public final class VersionLibraryBuilder {
                     --i;
                 }
             }
-        } else {
-            for (int i = 0; i + 1 < game.size(); ++i) {
-                Argument arg0 = game.get(i);
-                Argument arg1 = game.get(i + 1);
-                if (arg0 instanceof StringArgument && arg1 instanceof StringArgument) {
-                    // We need to preserve the tokens
-                    String arg0Str = arg0.toString();
-                    String arg1Str = arg1.toString();
-                    if (arg0Str.equals("--tweakClass") && arg1Str.toLowerCase().contains(target)) {
-                        game.remove(i);
-                        game.remove(i);
-                        --i;
-                    }
+        }
+
+        for (int i = 0; i + 1 < game.size(); ++i) {
+            Argument arg0 = game.get(i);
+            Argument arg1 = game.get(i + 1);
+            if (arg0 instanceof StringArgument && arg1 instanceof StringArgument) {
+                // We need to preserve the tokens
+                String arg0Str = arg0.toString();
+                String arg1Str = arg1.toString();
+                if (arg0Str.equals("--tweakClass") && arg1Str.toLowerCase().contains(target)) {
+                    game.remove(i);
+                    game.remove(i);
+                    --i;
                 }
             }
         }
