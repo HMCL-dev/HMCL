@@ -21,6 +21,8 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXTabPane;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
@@ -34,15 +36,16 @@ import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
-import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
+import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class VersionPage extends StackPane implements DecoratorPage {
+public final class VersionPage extends StackPane {
     private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(this, "title", null);
+    private final ReadOnlyBooleanWrapper loading = new ReadOnlyBooleanWrapper(this, "loading", false);
 
     @FXML
     private VersionSettingsPage versionSettings;
@@ -64,8 +67,6 @@ public final class VersionPage extends StackPane implements DecoratorPage {
     private JFXButton btnExport;
     @FXML
     private JFXButton btnTestGame;
-    @FXML
-    private StackPane rootPane;
     @FXML
     private StackPane contentPane;
     @FXML
@@ -107,7 +108,6 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         btnTestGame.setGraphic(SVG.launch(Theme.whiteFillBinding(), 20, 20));
         FXUtils.installFastTooltip(btnTestGame, i18n("version.launch.test"));
 
-        addEventHandler(Navigator.NavigationEvent.NAVIGATING, this::onDecoratorPageNavigating);
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
     }
 
@@ -120,9 +120,13 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         versionSettings.loadVersion(profile, id);
         mod.setParentTab(tabPane);
         modTab.setUserData(mod);
-        mod.loadVersion(profile, id);
-        installer.loadVersion(profile, id);
-        world.loadVersion(profile, id);
+        loading.set(true);
+
+        CompletableFuture.allOf(
+                mod.loadVersion(profile, id),
+                installer.loadVersion(profile, id),
+                world.loadVersion(profile, id))
+                .whenCompleteAsync((result, exception) -> loading.set(false), Platform::runLater);
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
@@ -163,12 +167,19 @@ public final class VersionPage extends StackPane implements DecoratorPage {
         return title.get();
     }
 
-    @Override
     public ReadOnlyStringProperty titleProperty() {
         return title.getReadOnlyProperty();
     }
 
     public void setTitle(String title) {
         this.title.set(title);
+    }
+
+    public boolean isLoading() {
+        return loading.get();
+    }
+
+    public ReadOnlyBooleanProperty loadingProperty() {
+        return loading.getReadOnlyProperty();
     }
 }

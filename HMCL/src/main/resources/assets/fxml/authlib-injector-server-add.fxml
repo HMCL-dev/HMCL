@@ -5,10 +5,11 @@
 <?import com.jfoenix.controls.*?>
 <?import org.jackhuang.hmcl.ui.construct.SpinnerPane?>
 
+<?import org.jackhuang.hmcl.ui.animation.TransitionPane?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
-    <StackPane fx:id="addServerContainer">
+    <TransitionPane fx:id="root">
         <JFXDialogLayout fx:id="addServerPane">
             <heading>
                 <Label text="%account.injector.add" />
@@ -51,5 +52,5 @@
                 <JFXButton onMouseClicked="#onAddFinish" text="%wizard.finish" styleClass="dialog-accept" />
             </actions>
         </JFXDialogLayout>
-    </StackPane>
+    </TransitionPane>
 </fx:root>

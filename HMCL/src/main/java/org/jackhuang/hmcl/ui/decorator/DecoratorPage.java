@@ -17,22 +17,28 @@
  */
 package org.jackhuang.hmcl.ui.decorator;
 
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
 import org.jackhuang.hmcl.ui.construct.Navigator;
 
 public interface DecoratorPage {
     ReadOnlyStringProperty titleProperty();
 
-    default boolean canForceToClose() {
+    default boolean isPageCloseable() {
         return false;
     }
 
-    default boolean onClose() {
+    default boolean back() {
         return true;
     }
 
-    default void onForceToClose() {
+    default BooleanProperty backableProperty() {
+        return new SimpleBooleanProperty(true);
+    }
+
+    default void closePage() {
     }
 
     default void onDecoratorPageNavigating(Navigator.NavigationEvent event) {

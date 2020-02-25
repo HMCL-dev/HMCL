@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AddAuthlibInjectorServerPane;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.DialogAware;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.Navigator;
@@ -220,8 +221,8 @@ public class DecoratorController {
         if (navigator.getCurrentPage() instanceof DecoratorPage) {
             DecoratorPage page = (DecoratorPage) navigator.getCurrentPage();
 
-            if (page.canForceToClose()) {
-                page.onForceToClose();
+            if (page.isPageCloseable()) {
+                page.closePage();
                 return;
             }
         }
@@ -232,7 +233,7 @@ public class DecoratorController {
         if (navigator.getCurrentPage() instanceof DecoratorPage) {
             DecoratorPage page = (DecoratorPage) navigator.getCurrentPage();
 
-            if (page.onClose())
+            if (page.back())
                 navigator.close();
         } else {
             navigator.close();
@@ -243,23 +244,25 @@ public class DecoratorController {
         if (navigator.getCurrentPage() instanceof Refreshable) {
             Refreshable refreshable = (Refreshable) navigator.getCurrentPage();
 
-            if (refreshable.canRefreshProperty().get())
+            if (refreshable.refreshableProperty().get())
                 refreshable.refresh();
         }
     }
 
     private void onNavigating(Navigator.NavigationEvent event) {
+        if (event.getSource() != this.navigator) return;
         Node from = event.getNode();
 
         if (from instanceof DecoratorPage)
-            ((DecoratorPage) from).onClose();
+            ((DecoratorPage) from).back();
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
+        if (event.getSource() != this.navigator) return;
         Node to = event.getNode();
 
         if (to instanceof Refreshable) {
-            decorator.canRefreshProperty().bind(((Refreshable) to).canRefreshProperty());
+            decorator.canRefreshProperty().bind(((Refreshable) to).refreshableProperty());
         } else {
             decorator.canRefreshProperty().unbind();
             decorator.canRefreshProperty().set(false);
@@ -267,14 +270,17 @@ public class DecoratorController {
 
         if (to instanceof DecoratorPage) {
             decorator.drawerTitleProperty().bind(((DecoratorPage) to).titleProperty());
-            decorator.showCloseAsHomeProperty().set(!((DecoratorPage) to).canForceToClose());
+            decorator.showCloseAsHomeProperty().set(!((DecoratorPage) to).isPageCloseable());
+            decorator.canBackProperty().bind(Bindings.createBooleanBinding(() -> navigator.canGoBack() || ((DecoratorPage) to).backableProperty().get(),
+                    ((DecoratorPage) to).backableProperty()));
         } else {
             decorator.drawerTitleProperty().unbind();
             decorator.drawerTitleProperty().set("");
             decorator.showCloseAsHomeProperty().set(true);
+            decorator.canBackProperty().unbind();
+            decorator.canBackProperty().setValue(navigator.canGoBack());
         }
 
-        decorator.canBackProperty().set(navigator.canGoBack());
         decorator.canCloseProperty().set(navigator.canGoBack());
 
         if (to instanceof Region) {
@@ -359,7 +365,7 @@ public class DecoratorController {
     public void startWizard(WizardProvider wizardProvider, String category) {
         FXUtils.checkFxUserThread();
 
-        getNavigator().navigate(new DecoratorWizardDisplayer(wizardProvider, category));
+        getNavigator().navigate(new DecoratorWizardDisplayer(wizardProvider, category), ContainerAnimations.FADE.getAnimationProducer());
     }
 
     // ==== Authlib Injector DnD ====

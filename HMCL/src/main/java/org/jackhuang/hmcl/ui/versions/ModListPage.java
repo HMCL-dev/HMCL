@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXTabPane;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
@@ -37,10 +38,12 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -77,28 +80,32 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         loadMods(modManager);
     }
 
-    public void loadVersion(Profile profile, String id) {
+    public CompletableFuture<?> loadVersion(Profile profile, String id) {
         libraryAnalyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id));
         modded.set(libraryAnalyzer.hasModLoader());
-        loadMods(profile.getRepository().getModManager(id));
+        return loadMods(profile.getRepository().getModManager(id));
     }
 
-    private void loadMods(ModManager modManager) {
+    private CompletableFuture<?> loadMods(ModManager modManager) {
         this.modManager = modManager;
-        Task.supplyAsync(() -> {
-            synchronized (ModListPage.this) {
-                runInFX(() -> loadingProperty().set(true));
-                modManager.refreshMods();
-                return new LinkedList<>(modManager.getMods());
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                synchronized (ModListPage.this) {
+                    runInFX(() -> loadingProperty().set(true));
+                    modManager.refreshMods();
+                    return new LinkedList<>(modManager.getMods());
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
             }
-        }).whenComplete(Schedulers.javafx(), (list, exception) -> {
+        }).whenCompleteAsync((list, exception) -> {
             loadingProperty().set(false);
             if (exception == null)
                 FXUtils.onWeakChangeAndOperate(parentTab.getSelectionModel().selectedItemProperty(), newValue -> {
                     if (newValue != null && newValue.getUserData() == ModListPage.this)
                         itemsProperty().setAll(list.stream().map(ModListPageSkin.ModInfoObject::new).collect(Collectors.toList()));
                 });
-        }).start();
+        }, Platform::runLater);
     }
 
     public void add() {

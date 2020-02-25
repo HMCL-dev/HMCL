@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXCheckBox;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
@@ -39,6 +40,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -71,29 +73,29 @@ public class WorldListPage extends ListPageBase<WorldListItem> {
         return new WorldListPageSkin();
     }
 
-    public void loadVersion(Profile profile, String id) {
+    public CompletableFuture<?> loadVersion(Profile profile, String id) {
         this.profile = profile;
         this.id = id;
         this.savesDir = profile.getRepository().getRunDirectory(id).toPath().resolve("saves");
-        refresh();
+        return refresh();
     }
 
-    public void refresh() {
+    public CompletableFuture<?> refresh() {
         if (profile == null || id == null)
-            return;
+            return CompletableFuture.completedFuture(null);
 
         setLoading(true);
-        Task
+        return CompletableFuture
                 .runAsync(() -> gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(id)).orElse(null))
-                .thenSupplyAsync(() -> World.getWorlds(savesDir).parallel().collect(Collectors.toList()))
-                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                .thenApplyAsync(unused -> World.getWorlds(savesDir).parallel().collect(Collectors.toList()))
+                .whenCompleteAsync((result, exception) -> {
                     worlds = result;
                     setLoading(false);
                     if (exception == null)
                         itemsProperty().setAll(result.stream()
                                 .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
                                 .map(WorldListItem::new).collect(Collectors.toList()));
-                }).start();
+                }, Platform::runLater);
     }
 
     public void add() {

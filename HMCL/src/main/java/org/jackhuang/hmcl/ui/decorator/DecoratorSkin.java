@@ -72,65 +72,41 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         root.setMaxWidth(Region.USE_PREF_SIZE);
         root.setMinWidth(Region.USE_PREF_SIZE);
 
-        StackPane drawerWrapper = new StackPane();
-        skinnable.setDrawerWrapper(drawerWrapper);
-        drawerWrapper.getStyleClass().add("jfx-decorator-drawer");
-        drawerWrapper.backgroundProperty().bind(skinnable.backgroundProperty());
-        FXUtils.setOverflowHidden(drawerWrapper, true);
+        // center node with a container node in bottom layer and a "welcome" layer at the top layer.
+        StackPane container = new StackPane();
+        skinnable.setDrawerWrapper(container);
+        container.getStyleClass().add("jfx-decorator-drawer");
+        container.backgroundProperty().bind(skinnable.backgroundProperty());
+        FXUtils.setOverflowHidden(container, true);
+        // bottom layer
         {
-            BorderPane drawer = new BorderPane();
+            contentPlaceHolder = new StackPane();
+            contentPlaceHolder.getStyleClass().add("jfx-decorator-content-container");
+            Bindings.bindContent(contentPlaceHolder.getChildren(), skinnable.contentProperty());
 
-            {
-                BorderPane leftRootPane = new BorderPane();
-                FXUtils.setLimitWidth(leftRootPane, 200);
-                leftRootPane.getStyleClass().add("jfx-decorator-content-container");
-
-                StackPane drawerContainer = new StackPane();
-                drawerContainer.getStyleClass().add("gray-background");
-                Bindings.bindContent(drawerContainer.getChildren(), skinnable.drawerProperty());
-                leftRootPane.setCenter(drawerContainer);
-
-                Rectangle separator = new Rectangle();
-                separator.heightProperty().bind(drawer.heightProperty());
-                separator.setWidth(1);
-                separator.setFill(Color.GRAY);
-
-                leftRootPane.setRight(separator);
-
-                drawer.setLeft(leftRootPane);
-            }
-
-            {
-                contentPlaceHolder = new StackPane();
-                contentPlaceHolder.getStyleClass().add("jfx-decorator-content-container");
-                FXUtils.setOverflowHidden(contentPlaceHolder, true);
-                Bindings.bindContent(contentPlaceHolder.getChildren(), skinnable.contentProperty());
-
-                drawer.setCenter(contentPlaceHolder);
-            }
-
-            drawerWrapper.getChildren().add(drawer);
+            container.getChildren().add(contentPlaceHolder);
         }
 
+        // top layer for welcome and hint
         {
-            StackPane container = new StackPane();
-            Bindings.bindContent(container.getChildren(), skinnable.containerProperty());
+            StackPane floatLayer = new StackPane();
+            Bindings.bindContent(floatLayer.getChildren(), skinnable.containerProperty());
             ListChangeListener<Node> listener = c -> {
                 if (skinnable.getContainer().isEmpty()) {
-                    container.setMouseTransparent(true);
-                    container.setVisible(false);
+                    floatLayer.setMouseTransparent(true);
+                    floatLayer.setVisible(false);
                 } else {
-                    container.setMouseTransparent(false);
-                    container.setVisible(true);
+                    floatLayer.setMouseTransparent(false);
+                    floatLayer.setVisible(true);
                 }
             };
             skinnable.containerProperty().addListener(listener);
             listener.onChanged(null);
 
-            drawerWrapper.getChildren().add(container);
+            container.getChildren().add(floatLayer);
         }
 
-        root.setCenter(drawerWrapper);
+        root.setCenter(container);
 
         titleContainer = new BorderPane();
         titleContainer.setOnMouseReleased(this::onMouseReleased);

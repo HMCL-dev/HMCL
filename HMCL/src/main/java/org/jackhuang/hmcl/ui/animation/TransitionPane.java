@@ -21,29 +21,18 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.layout.StackPane;
-import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.FXUtils;
 
-public final class TransitionHandler implements AnimationHandler {
-    private final StackPane view;
+public class TransitionPane extends StackPane implements AnimationHandler {
     private Timeline animation;
     private Duration duration;
     private Node previousNode, currentNode;
 
-    /**
-     * @param view A stack pane that contains another control that is {@link Parent}
-     */
-    public TransitionHandler(StackPane view) {
-        this.view = view;
-        currentNode = view.getChildren().stream().findFirst().orElse(null);
-
-        // prevent content overflow
-        Rectangle clip = new Rectangle();
-        clip.widthProperty().bind(view.widthProperty());
-        clip.heightProperty().bind(view.heightProperty());
-        view.setClip(clip);
+    {
+        currentNode = getChildren().stream().findFirst().orElse(null);
+        FXUtils.setOverflowHidden(this, true);
     }
 
     @Override
@@ -58,7 +47,7 @@ public final class TransitionHandler implements AnimationHandler {
 
     @Override
     public StackPane getCurrentRoot() {
-        return view;
+        return this;
     }
 
     @Override
@@ -86,8 +75,8 @@ public final class TransitionHandler implements AnimationHandler {
             Timeline nowAnimation = new Timeline();
             nowAnimation.getKeyFrames().addAll(transition.animate(this));
             nowAnimation.getKeyFrames().add(new KeyFrame(duration, e -> {
-                view.setMouseTransparent(false);
-                view.getChildren().remove(previousNode);
+                setMouseTransparent(false);
+                getChildren().remove(previousNode);
             }));
             nowAnimation.play();
             animation = nowAnimation;
@@ -95,7 +84,7 @@ public final class TransitionHandler implements AnimationHandler {
     }
 
     private void updateContent(Node newView) {
-        if (view.getWidth() > 0 && view.getHeight() > 0) {
+        if (getWidth() > 0 && getHeight() > 0) {
             previousNode = currentNode;
             if (previousNode == null)
                 previousNode = EMPTY_PANE;
@@ -105,11 +94,11 @@ public final class TransitionHandler implements AnimationHandler {
         if (previousNode == newView)
             previousNode = EMPTY_PANE;
 
-        view.setMouseTransparent(true);
+        setMouseTransparent(true);
 
         currentNode = newView;
 
-        view.getChildren().setAll(previousNode, currentNode);
+        getChildren().setAll(previousNode, currentNode);
     }
 
     private final StackPane EMPTY_PANE = new StackPane();

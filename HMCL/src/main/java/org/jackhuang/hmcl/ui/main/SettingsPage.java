@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui;
+package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXColorPicker;
 import com.jfoenix.effects.JFXDepthManager;
@@ -31,6 +31,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.Validator;

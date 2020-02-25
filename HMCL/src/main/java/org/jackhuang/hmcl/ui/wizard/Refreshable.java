@@ -23,7 +23,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 public interface Refreshable {
     void refresh();
 
-    default BooleanProperty canRefreshProperty() {
+    default BooleanProperty refreshableProperty() {
         return new SimpleBooleanProperty(false);
     }
 }
