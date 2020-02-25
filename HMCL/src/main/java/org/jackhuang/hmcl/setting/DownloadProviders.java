@@ -45,7 +45,7 @@ public final class DownloadProviders {
             pair("bmclapi", new BMCLAPIDownloadProvider("https://bmclapi2.bangbang93.com")),
             pair("mcbbs", new BMCLAPIDownloadProvider("https://download.mcbbs.net")));
 
-    public static final String DEFAULT_PROVIDER_ID = "bmclapi";
+    public static final String DEFAULT_PROVIDER_ID = "mcbbs";
 
     private static ObjectBinding<DownloadProvider> downloadProviderProperty;
 
