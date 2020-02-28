@@ -92,6 +92,8 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                                         + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
                                 String fileName1 = "forge-" + classifier + "-" + file.getCategory() + "." + file.getFormat();
                                 String fileName2 = "forge-" + classifier + "-" + gameVersion + "-" + file.getCategory() + "." + file.getFormat();
+                                urls.add(apiRoot + "/maven/net/minecraftforge/forge/" + classifier + "-" + gameVersion + "/" + fileName2);
+                                urls.add(apiRoot + "/maven/net/minecraftforge/forge/" + classifier + "/" + fileName1);
                                 urls.add(NetworkUtils.withQuery(apiRoot + "/forge/download", mapOf(
                                         pair("mcversion", version.getGameVersion()),
                                         pair("version", version.getVersion()),
@@ -99,8 +101,6 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                                         pair("category", file.getCategory()),
                                         pair("format", file.getFormat())
                                 )));
-                                urls.add(apiRoot + "/maven/net/minecraftforge/forge/" + classifier + "/" + fileName1);
-                                urls.add(apiRoot + "/maven/net/minecraftforge/forge/" + classifier + "-" + gameVersion + "/" + fileName2);
                             }
 
                         if (urls.isEmpty())
