@@ -209,6 +209,7 @@ public class FileDownloadTask extends Task<Void> {
 
         Logging.LOG.log(Level.FINER, "Downloading " + urls.get(0) + " to " + file);
         Exception exception = null;
+        URL failedURL = null;
 
         for (int repeat = 0; repeat < retry * urls.size(); repeat++) {
             URL url = urls.get(repeat / retry);
@@ -325,6 +326,7 @@ public class FileDownloadTask extends Task<Void> {
             } catch (IOException e) {
                 if (temp != null)
                     temp.toFile().delete();
+                failedURL = url;
                 exception = e;
                 Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", repeat times: " + (repeat + 1), e);
             } finally {
@@ -333,7 +335,7 @@ public class FileDownloadTask extends Task<Void> {
         }
 
         if (exception != null)
-            throw new DownloadException(urls.get(0), exception);
+            throw new DownloadException(failedURL, exception);
     }
 
     private static final Timer timer = new Timer("DownloadSpeedRecorder", true);
