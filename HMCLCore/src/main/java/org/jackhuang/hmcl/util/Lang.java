@@ -58,6 +58,20 @@ public final class Lang {
         return Collections.unmodifiableList(Arrays.asList(elements));
     }
 
+    public static <T extends Comparable<T>> T clamp(T min, T val, T max) {
+        if (val.compareTo(min) < 0) return min;
+        else if (val.compareTo(max) > 0) return max;
+        else return val;
+    }
+
+    public static double clamp(double min, double val, double max) {
+        return Math.max(min, Math.min(val, max));
+    }
+
+    public static int clamp(int min, int val, int max) {
+        return Math.max(min, Math.min(val, max));
+    }
+
     public static boolean test(ExceptionalRunnable<?> r) {
         try {
             r.run();

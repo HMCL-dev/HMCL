@@ -45,6 +45,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -452,7 +453,7 @@ public final class FXUtils {
                     derivatives[i] += derivatives[i - 1];
                 double dy = derivatives[derivatives.length - 1];
                 double height = listView.getLayoutBounds().getHeight();
-                bar.setValue(Math.min(Math.max(bar.getValue() + dy / height, 0), 1));
+                bar.setValue(Lang.clamp(0, bar.getValue() + dy / height, 1));
                 if (Math.abs(dy) < 0.001)
                     timeline.stop();
                 listView.requestLayout();

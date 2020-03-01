@@ -18,6 +18,30 @@
 .root {
 }
 
+.scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.scroll-bar .track {
+    -fx-stroke-width: 1;
+    -fx-stroke: -c-dark-glass;
+    -fx-arc-width: 5px;
+    -fx-arc-height: 5px;
+    -fx-fill: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-fill: rgba(255, 255, 255, 0.5);
+    -fx-arc-width: 5px;
+    -fx-arc-height: 5px;
+}
+
+.list-view,
+.scroll-pane,
+.scroll-pane > .viewport  {
+    -fx-background-color: transparent;
+}
+
 .disabled Label {
     -fx-text-fill: rgba(0, 0, 0, 0.5);
 }
