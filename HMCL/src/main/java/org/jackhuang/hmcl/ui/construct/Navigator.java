@@ -71,7 +71,6 @@ public class Navigator extends TransitionPane {
         setContent(node, animationProducer);
 
         NavigationEvent navigated = new NavigationEvent(this, node, NavigationEvent.NAVIGATED);
-        fireEvent(navigated);
         node.fireEvent(navigated);
 
         EventHandler<PageCloseEvent> handler = event -> close(node);
@@ -118,7 +117,6 @@ public class Navigator extends TransitionPane {
         }
 
         NavigationEvent navigated = new NavigationEvent(this, node, NavigationEvent.NAVIGATED);
-        fireEvent(navigated);
         node.fireEvent(navigated);
 
         Optional.ofNullable(from.getProperties().get(PROPERTY_DIALOG_CLOSE_HANDLER))

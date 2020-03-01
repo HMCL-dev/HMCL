@@ -59,7 +59,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class MainPage extends StackPane implements DecoratorPage {
-    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(this, "title", "Hello Minecraft! Launcher " + Metadata.VERSION);
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle("Hello Minecraft! Launcher " + Metadata.VERSION));
 
     private final PopupMenu menu = new PopupMenu();
     private final JFXPopup popup = new JFXPopup(menu);
@@ -236,17 +236,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
         showUpdate.set(false);
     }
 
-    public String getTitle() {
-        return title.get();
-    }
-
     @Override
-    public ReadOnlyStringProperty titleProperty() {
-        return title.getReadOnlyProperty();
-    }
-
-    public void setTitle(String title) {
-        this.title.set(title);
+    public ReadOnlyObjectWrapper<State> stateProperty() {
+        return state;
     }
 
     public String getCurrentGame() {

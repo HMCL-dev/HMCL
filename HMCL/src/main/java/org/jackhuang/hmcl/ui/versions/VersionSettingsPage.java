@@ -24,8 +24,8 @@ import com.jfoenix.controls.JFXToggleButton;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ReadOnlyStringProperty;
-import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -63,7 +63,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VersionSettingsPage extends StackPane implements DecoratorPage {
-    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper();
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(new State("", null, false, false, false));
 
     private VersionSetting lastVersionSetting = null;
     private Profile profile;
@@ -163,7 +163,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             rootPane.getChildren().remove(iconPickerItemWrapper);
             rootPane.getChildren().remove(settingsTypePane);
             chkEnableSpecificSettings.setSelected(true);
-            title.set(Profiles.getProfileDisplayName(profile) + " - " + i18n("settings.type.global.manage"));
+            state.set(State.fromTitle(Profiles.getProfileDisplayName(profile) + " - " + i18n("settings.type.global.manage")));
         }
 
         VersionSetting versionSetting = profile.getVersionSetting(versionId);
@@ -328,7 +328,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     }
 
     @Override
-    public ReadOnlyStringProperty titleProperty() {
-        return title;
+    public ReadOnlyObjectProperty<State> stateProperty() {
+        return state.getReadOnlyProperty();
     }
 }

@@ -23,10 +23,6 @@
 }
 
 .scroll-bar .track {
-    -fx-stroke-width: 1;
-    -fx-stroke: -c-dark-glass;
-    -fx-arc-width: 5px;
-    -fx-arc-height: 5px;
     -fx-fill: transparent;
 }
 

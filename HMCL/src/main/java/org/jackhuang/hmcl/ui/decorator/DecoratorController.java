@@ -71,14 +71,11 @@ public class DecoratorController {
     private final Decorator decorator;
     private final ImageView welcomeView;
     private final Navigator navigator;
-    private final Node mainPage;
 
     private JFXDialog dialog;
     private StackContainerPane dialogPane;
 
     public DecoratorController(Stage stage, Node mainPage) {
-        this.mainPage = mainPage;
-
         decorator = new Decorator(stage);
         decorator.setOnCloseButtonAction(Launcher::stopApplication);
 
@@ -269,16 +266,12 @@ public class DecoratorController {
         }
 
         if (to instanceof DecoratorPage) {
-            decorator.drawerTitleProperty().bind(((DecoratorPage) to).titleProperty());
             decorator.showCloseAsHomeProperty().set(!((DecoratorPage) to).isPageCloseable());
-            decorator.canBackProperty().bind(Bindings.createBooleanBinding(() -> navigator.canGoBack() || ((DecoratorPage) to).backableProperty().get(),
-                    ((DecoratorPage) to).backableProperty()));
+            decorator.stateProperty().bind(((DecoratorPage) to).stateProperty());
         } else {
-            decorator.drawerTitleProperty().unbind();
-            decorator.drawerTitleProperty().set("");
             decorator.showCloseAsHomeProperty().set(true);
-            decorator.canBackProperty().unbind();
-            decorator.canBackProperty().setValue(navigator.canGoBack());
+            decorator.stateProperty().unbind();
+            decorator.stateProperty().set(new DecoratorPage.State("", null, navigator.canGoBack(), false, true));
         }
 
         decorator.canCloseProperty().set(navigator.canGoBack());

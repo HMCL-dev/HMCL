@@ -18,13 +18,15 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXTabPane;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ReadOnlyStringProperty;
-import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.control.Control;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
+import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -35,6 +37,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -44,9 +47,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class VersionRootPage extends Control implements DecoratorPage {
-    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper();
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty();
     private final JFXListView<String> listView = new JFXListView<>();
     private final VersionPage versionPage = new VersionPage();
@@ -88,8 +92,8 @@ public class VersionRootPage extends Control implements DecoratorPage {
     }
 
     @Override
-    public ReadOnlyStringProperty titleProperty() {
-        return title.getReadOnlyProperty();
+    public ReadOnlyObjectProperty<State> stateProperty() {
+        return state.getReadOnlyProperty();
     }
 
     public static class Skin extends SkinBase<VersionRootPage> {
@@ -129,8 +133,9 @@ public class VersionRootPage extends Control implements DecoratorPage {
                 root.setLeft(leftRootPane);
             }
 
+            control.state.set(new State(i18n("version.manage.manage"), null, true, false, true));
+
             root.setCenter(control.versionPage);
-            control.title.bind(control.versionPage.titleProperty());
 
             spinnerPane.loadingProperty().bind(control.versionPage.loadingProperty());
             spinnerPane.setContent(root);

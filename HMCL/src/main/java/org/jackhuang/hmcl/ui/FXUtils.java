@@ -101,8 +101,10 @@ public final class FXUtils {
         value.addListener((a, b, c) -> consumer.accept(c));
     }
 
-    public static <T> void onWeakChange(ObservableValue<T> value, Consumer<T> consumer) {
-        value.addListener(new WeakChangeListener<>((a, b, c) -> consumer.accept(c)));
+    public static <T> WeakChangeListener<T> onWeakChange(ObservableValue<T> value, Consumer<T> consumer) {
+        WeakChangeListener<T> listener = new WeakChangeListener<>((a, b, c) -> consumer.accept(c));
+        value.addListener(listener);
+        return listener;
     }
 
     public static <T> void onChangeAndOperate(ObservableValue<T> value, Consumer<T> consumer) {
@@ -110,9 +112,9 @@ public final class FXUtils {
         onChange(value, consumer);
     }
 
-    public static <T> void onWeakChangeAndOperate(ObservableValue<T> value, Consumer<T> consumer) {
+    public static <T> WeakChangeListener<T> onWeakChangeAndOperate(ObservableValue<T> value, Consumer<T> consumer) {
         consumer.accept(value.getValue());
-        onWeakChange(value, consumer);
+        return onWeakChange(value, consumer);
     }
 
     public static void runLaterIf(BooleanSupplier condition, Runnable runnable) {

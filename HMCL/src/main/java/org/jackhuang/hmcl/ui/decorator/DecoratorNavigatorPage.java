@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.decorator;
 
+import javafx.beans.binding.Bindings;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -35,7 +36,6 @@ public abstract class DecoratorNavigatorPage extends DecoratorTransitionPage {
     @Override
     protected void navigate(Node page, AnimationProducer animationProducer) {
         navigator.navigate(page, animationProducer);
-        setRefreshable(page instanceof Refreshable);
     }
 
     @Override
@@ -68,13 +68,14 @@ public abstract class DecoratorNavigatorPage extends DecoratorTransitionPage {
         }
 
         if (to instanceof DecoratorPage) {
-            titleProperty().bind(((DecoratorPage) to).titleProperty());
+            state.bind(Bindings.createObjectBinding(() -> {
+                State state = ((DecoratorPage) to).stateProperty().get();
+                return new State(state.getTitle(), state.getTitleNode(), navigator.canGoBack(), state.isRefreshable(), true);
+            }, ((DecoratorPage) to).stateProperty()));
         } else {
-            titleProperty().unbind();
-            titleProperty().set("");
+            state.unbind();
+            state.set(new State("", null, navigator.canGoBack(), false, true));
         }
-
-        setBackable(navigator.canGoBack());
 
         if (to instanceof Region) {
             Region region = (Region) to;

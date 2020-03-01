@@ -18,9 +18,9 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
@@ -28,10 +28,11 @@ import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 
-public abstract class DecoratorTransitionPage extends Control implements DecoratorPage, Refreshable {
-    private final StringProperty title = new SimpleStringProperty();
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+
+public abstract class DecoratorTransitionPage extends Control implements DecoratorPage {
+    protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("")));
     private final BooleanProperty refreshable = new SimpleBooleanProperty(false);
-    private final BooleanProperty backable = new SimpleBooleanProperty();
     private Node currentPage;
     protected final TransitionPane transitionPane = new TransitionPane();
 
@@ -47,26 +48,8 @@ public abstract class DecoratorTransitionPage extends Control implements Decorat
         return currentPage;
     }
 
-    public String getTitle() {
-        return title.get();
-    }
-
-    @Override
-    public StringProperty titleProperty() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title.set(title);
-    }
-
     public boolean isRefreshable() {
         return refreshable.get();
-    }
-
-    @Override
-    public void refresh() {
-        // empty implementation for default
     }
 
     @Override
@@ -78,16 +61,8 @@ public abstract class DecoratorTransitionPage extends Control implements Decorat
         this.refreshable.set(refreshable);
     }
 
-    public boolean isBackable() {
-        return backable.get();
-    }
-
     @Override
-    public BooleanProperty backableProperty() {
-        return backable;
-    }
-
-    public void setBackable(boolean backable) {
-        this.backable.set(backable);
+    public ReadOnlyObjectProperty<State> stateProperty() {
+        return state.getReadOnlyProperty();
     }
 }

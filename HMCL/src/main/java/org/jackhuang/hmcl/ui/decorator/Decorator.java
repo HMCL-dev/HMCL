@@ -35,7 +35,7 @@ public class Decorator extends Control {
     private final ListProperty<Node> content = new SimpleListProperty<>(FXCollections.observableArrayList());
     private final ListProperty<Node> container = new SimpleListProperty<>(FXCollections.observableArrayList());
     private final ObjectProperty<Background> contentBackground = new SimpleObjectProperty<>();
-    private final StringProperty title = new SimpleStringProperty();
+    private final ObjectProperty<DecoratorPage.State> state = new SimpleObjectProperty<>();
     private final StringProperty drawerTitle = new SimpleStringProperty();
     private final ObjectProperty<Runnable> onCloseButtonAction = new SimpleObjectProperty<>();
     private final ObjectProperty<EventHandler<ActionEvent>> onCloseNavButtonAction = new SimpleObjectProperty<>();
@@ -90,16 +90,16 @@ public class Decorator extends Control {
         this.content.set(content);
     }
 
-    public String getTitle() {
-        return title.get();
+    public DecoratorPage.State getState() {
+        return state.get();
     }
 
-    public StringProperty titleProperty() {
-        return title;
+    public ObjectProperty<DecoratorPage.State> stateProperty() {
+        return state;
     }
 
-    public void setTitle(String title) {
-        this.title.set(title);
+    public void setState(DecoratorPage.State state) {
+        this.state.set(state);
     }
 
     public String getDrawerTitle() {

@@ -71,8 +71,12 @@ public class DecoratorWizardDisplayer extends DecoratorTransitionPage implements
 
         String prefix = category == null ? "" : category + " - ";
 
+        String title;
         if (page instanceof WizardPage)
-            setTitle(prefix + ((WizardPage) page).getTitle());
+            title = prefix + ((WizardPage) page).getTitle();
+        else
+            title = "";
+        state.set(new State(title, null, true, refreshableProperty().get(), true));
     }
 
     @Override

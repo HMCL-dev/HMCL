@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import javafx.application.Platform;
-import javafx.beans.property.ReadOnlyStringProperty;
-import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.Node;
 import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.event.EventBus;
@@ -33,7 +33,6 @@ import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.download.VanillaInstallWizardProvider;
-import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.Arrays;
@@ -46,7 +45,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameList extends ListPageBase<GameListItem> implements DecoratorPage {
-    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(I18n.i18n("version.manage"));
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("version.manage")));
 
     private ToggleGroup toggleGroup;
 
@@ -123,8 +122,8 @@ public class GameList extends ListPageBase<GameListItem> implements DecoratorPag
     }
 
     @Override
-    public ReadOnlyStringProperty titleProperty() {
-        return title.getReadOnlyProperty();
+    public ReadOnlyObjectProperty<State> stateProperty() {
+        return state.getReadOnlyProperty();
     }
 
     private class GameListSkin extends ToolbarListPageSkin<GameList> {

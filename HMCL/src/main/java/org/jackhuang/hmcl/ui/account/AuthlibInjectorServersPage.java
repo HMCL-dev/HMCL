@@ -18,8 +18,7 @@
 package org.jackhuang.hmcl.ui.account;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ReadOnlyStringProperty;
-import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -31,7 +30,7 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AuthlibInjectorServersPage extends ListPage<AuthlibInjectorServerItem> implements DecoratorPage {
-    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(this, "title", i18n("account.injector.manage.title"));
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("account.injector.manage.title")));
 
     private final ObservableList<AuthlibInjectorServerItem> serverItems;
 
@@ -50,16 +49,8 @@ public class AuthlibInjectorServersPage extends ListPage<AuthlibInjectorServerIt
         Controllers.dialog(new AddAuthlibInjectorServerPane());
     }
 
-    public String getTitle() {
-        return title.get();
-    }
-
     @Override
-    public ReadOnlyStringProperty titleProperty() {
-        return title.getReadOnlyProperty();
-    }
-
-    public void setTitle(String title) {
-        this.title.set(title);
+    public ReadOnlyObjectWrapper<State> stateProperty() {
+        return state;
     }
 }

@@ -24,8 +24,8 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.When;
-import javafx.beans.property.ReadOnlyStringProperty;
-import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -67,7 +67,7 @@ import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.reservedSelected
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 
 public final class SettingsPage extends SettingsView implements DecoratorPage {
-    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(this, "title", i18n("settings.launcher"));
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("settings.launcher")));
 
     private InvalidationListener updateListener;
 
@@ -200,17 +200,9 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
         // ====
     }
 
-    public String getTitle() {
-        return title.get();
-    }
-
     @Override
-    public ReadOnlyStringProperty titleProperty() {
-        return title.getReadOnlyProperty();
-    }
-
-    public void setTitle(String title) {
-        this.title.set(title);
+    public ReadOnlyObjectProperty<State> stateProperty() {
+        return state.getReadOnlyProperty();
     }
 
     @Override
