@@ -70,9 +70,9 @@ public class AccountAdvancedListItem extends AdvancedListItem {
             ObservableList<Account> accounts = Accounts.getAccounts();
             int currentIndex = accounts.indexOf(account.get());
             if (event.getDeltaY() > 0) { // up
-                currentIndex += 1;
+                currentIndex--;
             } else { // down
-                currentIndex -= 1;
+                currentIndex++;
             }
             Accounts.setSelectedAccount(accounts.get((currentIndex + accounts.size()) % accounts.size()));
         });

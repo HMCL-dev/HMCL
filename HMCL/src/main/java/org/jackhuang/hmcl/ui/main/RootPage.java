@@ -89,19 +89,13 @@ public class RootPage extends DecoratorNavigatorPage {
 
     private MainPage getMainPage() {
         if (mainPage == null) {
-            mainPage = new MainPage();
+            MainPage mainPage = new MainPage();
             FXUtils.applyDragListener(mainPage, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
                 File modpack = modpacks.get(0);
                 Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
             });
 
-            FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
-                if (version != null) {
-                    mainPage.setCurrentGame(version);
-                } else {
-                    mainPage.setCurrentGame(i18n("version.empty"));
-                }
-            });
+            FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), mainPage::setCurrentGame);
             mainPage.showUpdateProperty().bind(UpdateChecker.outdatedProperty());
             mainPage.latestVersionProperty().bind(
                     BindingMapping.of(UpdateChecker.latestVersionProperty())
@@ -109,21 +103,17 @@ public class RootPage extends DecoratorNavigatorPage {
 
             Profiles.registerVersionsListener(profile -> {
                 HMCLGameRepository repository = profile.getRepository();
-                List<Node> children = repository.getVersions().parallelStream()
+                List<Version> children = repository.getVersions().parallelStream()
                         .filter(version -> !version.isHidden())
                         .sorted(Comparator.comparing((Version version) -> version.getReleaseTime() == null ? new Date(0L) : version.getReleaseTime())
                                 .thenComparing(a -> VersionNumber.asVersion(a.getId())))
-                        .map(version -> {
-                            Node node = PopupMenu.wrapPopupMenuItem(new GameItem(profile, version.getId()));
-                            node.setOnMouseClicked(e -> profile.setSelectedVersion(version.getId()));
-                            return node;
-                        })
                         .collect(Collectors.toList());
                 runInFX(() -> {
                     if (profile == Profiles.getSelectedProfile())
-                        mainPage.getVersions().setAll(children);
+                        mainPage.initVersions(profile, children);
                 });
             });
+            this.mainPage = mainPage;
         }
         return mainPage;
     }
