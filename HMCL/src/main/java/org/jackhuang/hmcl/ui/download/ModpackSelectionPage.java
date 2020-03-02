@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
@@ -55,6 +56,9 @@ public final class ModpackSelectionPage extends StackPane implements WizardPage 
     public ModpackSelectionPage(WizardController controller) {
         this.controller = controller;
         FXUtils.loadFXML(this, "/assets/fxml/download/modpack-source.fxml");
+
+        JFXDepthManager.setDepth(btnLocal, 1);
+        JFXDepthManager.setDepth(btnRemote, 1);
 
         Optional<File> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), File.class);
         if (filePath.isPresent()) {
