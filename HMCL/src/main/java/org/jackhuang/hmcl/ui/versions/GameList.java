@@ -22,6 +22,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.Node;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -35,7 +36,7 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.download.VanillaInstallWizardProvider;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -130,16 +131,21 @@ public class GameList extends ListPageBase<GameListItem> implements DecoratorPag
 
         public GameListSkin() {
             super(GameList.this);
+
+            HBox hbox = new HBox(
+                    createToolbarButton(i18n("install.new_game"), SVG::plus, GameList.this::addNewGame),
+                    createToolbarButton(i18n("install.modpack"), SVG::importIcon, GameList.this::importModpack),
+                    createToolbarButton(i18n("button.refresh"), SVG::refresh, GameList.this::refresh),
+                    createToolbarButton(i18n("settings.type.global.manage"), SVG::gear, GameList.this::modifyGlobalGameSettings)
+            );
+            hbox.setPickOnBounds(false);
+
+            state.set(new State(i18n("version.manage"), hbox, true, false, true));
         }
 
         @Override
         protected List<Node> initializeToolbar(GameList skinnable) {
-            return Arrays.asList(
-                    createToolbarButton(i18n("install.new_game"), SVG::plus, skinnable::addNewGame),
-                    createToolbarButton(i18n("install.modpack"), SVG::importIcon, skinnable::importModpack),
-                    createToolbarButton(i18n("button.refresh"), SVG::refresh, skinnable::refresh),
-                    createToolbarButton(i18n("settings.type.global.manage"), SVG::gear, skinnable::modifyGlobalGameSettings)
-            );
+            return Collections.emptyList();
         }
     }
 }

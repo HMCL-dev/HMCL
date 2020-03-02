@@ -204,19 +204,19 @@ public final class FXUtils {
         return field.getProperties().containsKey("FXUtils.validation");
     }
 
-    public static void setOverflowHidden(Region region, boolean hidden) {
-        if (hidden) {
-            Rectangle rectangle = new Rectangle();
-            rectangle.widthProperty().bind(region.widthProperty());
-            rectangle.heightProperty().bind(region.heightProperty());
-            region.setClip(rectangle);
-        } else {
-            region.setClip(null);
-        }
+    public static Rectangle setOverflowHidden(Region region) {
+        Rectangle rectangle = new Rectangle();
+        rectangle.widthProperty().bind(region.widthProperty());
+        rectangle.heightProperty().bind(region.heightProperty());
+        region.setClip(rectangle);
+        return rectangle;
     }
 
-    public static boolean getOverflowHidden(Region region) {
-        return region.getClip() != null;
+    public static Rectangle setOverflowHidden(Region region, double arc) {
+        Rectangle rectangle = setOverflowHidden(region);
+        rectangle.setArcWidth(arc);
+        rectangle.setArcHeight(arc);
+        return rectangle;
     }
 
     public static void setLimitWidth(Region region, double width) {

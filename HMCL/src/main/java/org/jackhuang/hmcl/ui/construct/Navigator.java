@@ -140,7 +140,7 @@ public class Navigator extends TransitionPane {
 
         if (content instanceof Region) {
             ((Region) content).setMinSize(0, 0);
-            FXUtils.setOverflowHidden((Region) content, true);
+            FXUtils.setOverflowHidden((Region) content);
         }
     }
 

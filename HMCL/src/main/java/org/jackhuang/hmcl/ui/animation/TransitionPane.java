@@ -32,7 +32,7 @@ public class TransitionPane extends StackPane implements AnimationHandler {
 
     {
         currentNode = getChildren().stream().findFirst().orElse(null);
-        FXUtils.setOverflowHidden(this, true);
+        FXUtils.setOverflowHidden(this);
     }
 
     @Override

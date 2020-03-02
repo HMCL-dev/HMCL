@@ -367,7 +367,7 @@
 }
 
 .jfx-tool-bar HBox {
-    -fx-alignment: center;
+    -fx-alignment: center-left;
     -fx-padding: 0.0 5.0;
 }
 

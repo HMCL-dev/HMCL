@@ -83,7 +83,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         skinnable.setDrawerWrapper(container);
         container.getStyleClass().add("jfx-decorator-drawer");
         container.backgroundProperty().bind(skinnable.backgroundProperty());
-        FXUtils.setOverflowHidden(container, true);
+        FXUtils.setOverflowHidden(container);
         // bottom layer
         {
             contentPlaceHolder = new StackPane();

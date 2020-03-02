@@ -18,12 +18,10 @@
 package org.jackhuang.hmcl.ui.main;
 
 import javafx.application.Platform;
-import javafx.scene.Node;
+import javafx.geometry.Insets;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -42,13 +40,11 @@ import org.jackhuang.hmcl.ui.account.AddAccountPane;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.decorator.DecoratorNavigatorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.profile.ProfileAdvancedListItem;
 import org.jackhuang.hmcl.ui.profile.ProfileList;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
-import org.jackhuang.hmcl.ui.versions.GameItem;
 import org.jackhuang.hmcl.ui.versions.GameList;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
@@ -209,28 +205,24 @@ public class RootPage extends DecoratorNavigatorPage {
             BorderPane root = new BorderPane();
 
             {
-                BorderPane leftRootPane = new BorderPane();
-                FXUtils.setLimitWidth(leftRootPane, 200);
-
                 StackPane drawerContainer = new StackPane();
+                FXUtils.setLimitWidth(drawerContainer, 200);
                 drawerContainer.getStyleClass().add("gray-background");
                 drawerContainer.getChildren().setAll(sideBar);
-                leftRootPane.setCenter(drawerContainer);
+                FXUtils.setOverflowHidden(drawerContainer, 8);
 
-                Rectangle separator = new Rectangle();
-                separator.heightProperty().bind(root.heightProperty());
-                separator.setWidth(1);
-                separator.setFill(Color.GRAY);
-
-                leftRootPane.setRight(separator);
-
-                root.setLeft(leftRootPane);
+                StackPane wrapper = new StackPane(drawerContainer);
+                wrapper.setPadding(new Insets(4, 0, 4, 4));
+                root.setLeft(wrapper);
             }
 
             {
                 control.navigator.getStyleClass().add("jfx-decorator-content-container");
                 control.navigator.init(getSkinnable().getMainPage());
-                root.setCenter(control.navigator);
+                FXUtils.setOverflowHidden(control.navigator, 8);
+                StackPane wrapper = new StackPane(control.navigator);
+                wrapper.setPadding(new Insets(4));
+                root.setCenter(wrapper);
             }
 
             getChildren().setAll(root);
