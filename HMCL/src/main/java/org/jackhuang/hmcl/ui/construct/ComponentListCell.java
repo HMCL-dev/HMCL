@@ -126,7 +126,7 @@ class ComponentListCell extends StackPane {
             VBox container = new VBox();
             container.setPadding(new Insets(8, 0, 0, 0));
             FXUtils.setLimitHeight(container, 0);
-            FXUtils.setOverflowHidden(container, true);
+            FXUtils.setOverflowHidden(container);
             container.getChildren().setAll(content);
             groupNode.setBottom(container);
 

@@ -45,6 +45,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -100,8 +101,10 @@ public final class FXUtils {
         value.addListener((a, b, c) -> consumer.accept(c));
     }
 
-    public static <T> void onWeakChange(ObservableValue<T> value, Consumer<T> consumer) {
-        value.addListener(new WeakChangeListener<>((a, b, c) -> consumer.accept(c)));
+    public static <T> WeakChangeListener<T> onWeakChange(ObservableValue<T> value, Consumer<T> consumer) {
+        WeakChangeListener<T> listener = new WeakChangeListener<>((a, b, c) -> consumer.accept(c));
+        value.addListener(listener);
+        return listener;
     }
 
     public static <T> void onChangeAndOperate(ObservableValue<T> value, Consumer<T> consumer) {
@@ -109,9 +112,9 @@ public final class FXUtils {
         onChange(value, consumer);
     }
 
-    public static <T> void onWeakChangeAndOperate(ObservableValue<T> value, Consumer<T> consumer) {
+    public static <T> WeakChangeListener<T> onWeakChangeAndOperate(ObservableValue<T> value, Consumer<T> consumer) {
         consumer.accept(value.getValue());
-        onWeakChange(value, consumer);
+        return onWeakChange(value, consumer);
     }
 
     public static void runLaterIf(BooleanSupplier condition, Runnable runnable) {
@@ -201,19 +204,19 @@ public final class FXUtils {
         return field.getProperties().containsKey("FXUtils.validation");
     }
 
-    public static void setOverflowHidden(Region region, boolean hidden) {
-        if (hidden) {
-            Rectangle rectangle = new Rectangle();
-            rectangle.widthProperty().bind(region.widthProperty());
-            rectangle.heightProperty().bind(region.heightProperty());
-            region.setClip(rectangle);
-        } else {
-            region.setClip(null);
-        }
+    public static Rectangle setOverflowHidden(Region region) {
+        Rectangle rectangle = new Rectangle();
+        rectangle.widthProperty().bind(region.widthProperty());
+        rectangle.heightProperty().bind(region.heightProperty());
+        region.setClip(rectangle);
+        return rectangle;
     }
 
-    public static boolean getOverflowHidden(Region region) {
-        return region.getClip() != null;
+    public static Rectangle setOverflowHidden(Region region, double arc) {
+        Rectangle rectangle = setOverflowHidden(region);
+        rectangle.setArcWidth(arc);
+        rectangle.setArcHeight(arc);
+        return rectangle;
     }
 
     public static void setLimitWidth(Region region, double width) {
@@ -452,7 +455,7 @@ public final class FXUtils {
                     derivatives[i] += derivatives[i - 1];
                 double dy = derivatives[derivatives.length - 1];
                 double height = listView.getLayoutBounds().getHeight();
-                bar.setValue(Math.min(Math.max(bar.getValue() + dy / height, 0), 1));
+                bar.setValue(Lang.clamp(0, bar.getValue() + dy / height, 1));
                 if (Math.abs(dy) < 0.001)
                     timeline.stop();
                 listView.requestLayout();

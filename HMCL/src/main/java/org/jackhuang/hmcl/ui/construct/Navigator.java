@@ -24,21 +24,20 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.TransitionHandler;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.util.Logging;
 
 import java.util.Optional;
 import java.util.Stack;
 import java.util.logging.Level;
 
-public class Navigator extends StackPane {
+public class Navigator extends TransitionPane {
     private static final String PROPERTY_DIALOG_CLOSE_HANDLER = Navigator.class.getName() + ".closeListener";
 
     private final Stack<Node> stack = new Stack<>();
-    private final TransitionHandler animationHandler = new TransitionHandler(this);
     private boolean initialized = false;
 
     public void init(Node init) {
@@ -50,7 +49,7 @@ public class Navigator extends StackPane {
         initialized = true;
     }
 
-    public void navigate(Node node) {
+    public void navigate(Node node, AnimationProducer animationProducer) {
         FXUtils.checkFxUserThread();
 
         if (!initialized)
@@ -68,10 +67,10 @@ public class Navigator extends StackPane {
         fireEvent(navigating);
         node.fireEvent(navigating);
 
-        setContent(node);
+        node.getProperties().put("hmcl.navigator.animation", animationProducer);
+        setContent(node, animationProducer);
 
         NavigationEvent navigated = new NavigationEvent(this, node, NavigationEvent.NAVIGATED);
-        fireEvent(navigated);
         node.fireEvent(navigated);
 
         EventHandler<PageCloseEvent> handler = event -> close(node);
@@ -110,10 +109,14 @@ public class Navigator extends StackPane {
         fireEvent(navigating);
         node.fireEvent(navigating);
 
-        setContent(node);
+        Object obj = from.getProperties().get("hmcl.navigator.animation");
+        if (obj instanceof AnimationProducer) {
+            setContent(node, (AnimationProducer) obj);
+        } else {
+            setContent(node, ContainerAnimations.NONE.getAnimationProducer());
+        }
 
         NavigationEvent navigated = new NavigationEvent(this, node, NavigationEvent.NAVIGATED);
-        fireEvent(navigated);
         node.fireEvent(navigated);
 
         Optional.ofNullable(from.getProperties().get(PROPERTY_DIALOG_CLOSE_HANDLER))
@@ -128,12 +131,16 @@ public class Navigator extends StackPane {
         return stack.size() > 1;
     }
 
-    private void setContent(Node content) {
-        animationHandler.setContent(content, ContainerAnimations.FADE.getAnimationProducer());
+    public int size() {
+        return stack.size();
+    }
+
+    public void setContent(Node content, AnimationProducer animationProducer) {
+        super.setContent(content, animationProducer);
 
         if (content instanceof Region) {
             ((Region) content).setMinSize(0, 0);
-            FXUtils.setOverflowHidden((Region) content, true);
+            FXUtils.setOverflowHidden((Region) content);
         }
     }
 
@@ -179,12 +186,19 @@ public class Navigator extends StackPane {
         public static final EventType<NavigationEvent> NAVIGATED = new EventType<>("NAVIGATED");
         public static final EventType<NavigationEvent> NAVIGATING = new EventType<>("NAVIGATING");
 
+        private final Navigator source;
         private final Node node;
 
-        public NavigationEvent(Object source, Node target, EventType<? extends Event> eventType) {
+        public NavigationEvent(Navigator source, Node target, EventType<? extends Event> eventType) {
             super(source, target, eventType);
 
+            this.source = source;
             this.node = target;
+        }
+
+        @Override
+        public Navigator getSource() {
+            return source;
         }
 
         public Node getNode() {

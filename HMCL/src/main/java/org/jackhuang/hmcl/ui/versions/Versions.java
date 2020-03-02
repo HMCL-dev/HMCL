@@ -121,7 +121,7 @@ public class Versions {
 
     private static boolean checkForLaunching(Profile profile, String id) {
         if (Accounts.getSelectedAccount() == null)
-            Controllers.getLeftPaneController().checkAccount();
+            Controllers.getRootPage().checkAccount();
         else if (id == null || !profile.getRepository().isLoaded() || !profile.getRepository().hasVersion(id))
             Controllers.dialog(i18n("version.empty.launch"));
         else
@@ -136,7 +136,7 @@ public class Versions {
     }
 
     public static void modifyGameSettings(Profile profile, String version) {
-        Controllers.getVersionPage().load(version, profile);
+        Controllers.getVersionPage().loadVersion(version, profile);
         Controllers.navigate(Controllers.getVersionPage());
     }
 }

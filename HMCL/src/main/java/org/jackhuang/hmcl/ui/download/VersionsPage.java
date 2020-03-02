@@ -42,7 +42,7 @@ import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.TransitionHandler;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.FloatListCell;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
@@ -72,7 +72,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     @FXML
     private StackPane emptyPane;
     @FXML
-    private StackPane root;
+    private TransitionPane root;
     @FXML
     private JFXCheckBox chkRelease;
     @FXML
@@ -84,7 +84,6 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     @FXML
     private VBox centrePane;
 
-    private final TransitionHandler transitionHandler;
     private final VersionList<?> versionList;
     private TaskExecutor executor;
 
@@ -96,8 +95,6 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         this.versionList = downloadProvider.getVersionListById(libraryId);
 
         FXUtils.loadFXML(this, "/assets/fxml/download/versions.fxml");
-
-        transitionHandler = new TransitionHandler(root);
 
         if (versionList.hasType()) {
             centrePane.getChildren().setAll(checkPane, list);
@@ -187,14 +184,14 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
     @Override
     public void refresh() {
-        transitionHandler.setContent(spinner, ContainerAnimations.FADE.getAnimationProducer());
+        root.setContent(spinner, ContainerAnimations.FADE.getAnimationProducer());
         executor = versionList.refreshAsync(gameVersion).whenComplete(exception -> {
             if (exception == null) {
                 List<RemoteVersion> items = loadVersions();
 
                 Platform.runLater(() -> {
                     if (versionList.getVersions(gameVersion).isEmpty()) {
-                        transitionHandler.setContent(emptyPane, ContainerAnimations.FADE.getAnimationProducer());
+                        root.setContent(emptyPane, ContainerAnimations.FADE.getAnimationProducer());
                     } else {
                         if (items.isEmpty()) {
                             chkRelease.setSelected(true);
@@ -203,13 +200,13 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         } else {
                             list.getItems().setAll(items);
                         }
-                        transitionHandler.setContent(centrePane, ContainerAnimations.FADE.getAnimationProducer());
+                        root.setContent(centrePane, ContainerAnimations.FADE.getAnimationProducer());
                     }
                 });
             } else {
                 LOG.log(Level.WARNING, "Failed to fetch versions list", exception);
                 Platform.runLater(() -> {
-                    transitionHandler.setContent(failedPane, ContainerAnimations.FADE.getAnimationProducer());
+                    root.setContent(failedPane, ContainerAnimations.FADE.getAnimationProducer());
                 });
             }
         }).executor().start();

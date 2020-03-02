@@ -3,6 +3,7 @@
 <?import com.jfoenix.controls.*?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.*?>
+<?import org.jackhuang.hmcl.ui.animation.TransitionPane?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="BorderPane"
@@ -13,7 +14,7 @@
         </StackPane>
     </top>
     <center>
-        <StackPane fx:id="root">
+        <TransitionPane fx:id="root">
             <JFXSpinner fx:id="spinner" styleClass="first-spinner" />
             <VBox fx:id="centrePane">
                 <HBox fx:id="checkPane" spacing="10" style="-fx-padding: 10;">
@@ -30,6 +31,6 @@
             <StackPane fx:id="emptyPane" styleClass="notice-pane">
                 <Label onMouseClicked="#onBack" text="%download.failed.empty" />
             </StackPane>
-        </StackPane>
+        </TransitionPane>
     </center>
 </fx:root>

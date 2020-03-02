@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
@@ -43,7 +43,7 @@ import java.util.logging.Level;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> implements DecoratorPage {
-    private final StringProperty title = new SimpleStringProperty();
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final Path worldDir;
     private final Datapack datapack;
 
@@ -52,7 +52,7 @@ public class DatapackListPage extends ListPageBase<DatapackListPageSkin.Datapack
     public DatapackListPage(String worldName, Path worldDir) {
         this.worldDir = worldDir;
 
-        title.set(i18n("datapack.title", worldName));
+        state.set(State.fromTitle(i18n("datapack.title", worldName)));
 
         datapack = new Datapack(worldDir.resolve("datapacks"));
         datapack.loadFromDir();
@@ -86,8 +86,8 @@ public class DatapackListPage extends ListPageBase<DatapackListPageSkin.Datapack
     }
 
     @Override
-    public StringProperty titleProperty() {
-        return title;
+    public ReadOnlyObjectProperty<State> stateProperty() {
+        return state.getReadOnlyProperty();
     }
 
     public void add() {

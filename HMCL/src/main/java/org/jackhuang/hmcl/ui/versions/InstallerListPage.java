@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
@@ -28,12 +29,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.InstallerItem;
-import org.jackhuang.hmcl.ui.ListPageBase;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.ToolbarListPageSkin;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.download.InstallerWizardProvider;
 import org.jackhuang.hmcl.ui.download.UpdateInstallerWizardProvider;
 import org.jackhuang.hmcl.util.Lang;
@@ -43,6 +39,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -67,17 +64,17 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         return new InstallerListPageSkin();
     }
 
-    public void loadVersion(Profile profile, String versionId) {
+    public CompletableFuture<?> loadVersion(Profile profile, String versionId) {
         this.profile = profile;
         this.versionId = versionId;
         this.version = profile.getRepository().getVersion(versionId);
         this.gameVersion = null;
 
-        Task.supplyAsync(() -> {
+        return CompletableFuture.supplyAsync(() -> {
             gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)).orElse(null);
 
             return LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(versionId));
-        }).thenAcceptAsync(Schedulers.javafx(), analyzer -> {
+        }).thenAcceptAsync(analyzer -> {
             Function<String, Consumer<InstallerItem>> removeAction = libraryId -> x -> {
                 profile.getDependency().removeLibraryAsync(version, libraryId)
                         .thenComposeAsync(profile.getRepository()::save)
@@ -100,7 +97,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                 else
                     itemsProperty().add(new InstallerItem(title, libraryVersion, null, action));
             }
-        }).start();
+        }, Platform::runLater);
     }
 
     public void installOnline() {

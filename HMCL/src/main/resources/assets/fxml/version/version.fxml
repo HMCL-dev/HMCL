@@ -10,9 +10,7 @@
 <?import org.jackhuang.hmcl.ui.versions.WorldListPage?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
-         fx:id="rootPane"
          type="StackPane">
-    <JFXRippler />
     <StackPane fx:id="contentPane">
         <JFXTabPane fx:id="tabPane">
             <Tab text="%settings">

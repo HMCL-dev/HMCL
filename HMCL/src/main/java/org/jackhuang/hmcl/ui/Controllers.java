@@ -23,58 +23,36 @@ import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
-import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
-import org.jackhuang.hmcl.ui.account.AccountList;
 import org.jackhuang.hmcl.ui.account.AuthlibInjectorServersPage;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
-import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
-import org.jackhuang.hmcl.ui.profile.ProfileList;
-import org.jackhuang.hmcl.ui.versions.GameItem;
-import org.jackhuang.hmcl.ui.versions.GameList;
+import org.jackhuang.hmcl.ui.main.RootPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.io.File;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
 
     private static Scene scene;
     private static Stage stage;
-    private static MainPage mainPage = null;
-    private static SettingsPage settingsPage = null;
     private static VersionPage versionPage = null;
-    private static GameList gameListPage = null;
-    private static AccountList accountListPage = null;
-    private static ProfileList profileListPage = null;
     private static AuthlibInjectorServersPage serversPage = null;
-    private static LeftPaneController leftPaneController;
+    private static RootPage rootPage;
     private static DecoratorController decorator;
 
     public static Scene getScene() {
@@ -86,51 +64,17 @@ public final class Controllers {
     }
 
     // FXThread
-    public static SettingsPage getSettingsPage() {
-        if (settingsPage == null)
-            settingsPage = new SettingsPage();
-        return settingsPage;
-    }
-
-    // FXThread
-    public static GameList getGameListPage() {
-        if (gameListPage == null) {
-            gameListPage = new GameList();
-            FXUtils.applyDragListener(gameListPage, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
-                File modpack = modpacks.get(0);
-                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
-            });
-        }
-        return gameListPage;
-    }
-
-    // FXThread
-    public static AccountList getAccountListPage() {
-        if (accountListPage == null) {
-            AccountList accountListPage = new AccountList();
-            accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
-            accountListPage.accountsProperty().bindContent(Accounts.accountsProperty());
-            Controllers.accountListPage = accountListPage;
-        }
-        return accountListPage;
-    }
-
-    // FXThread
-    public static ProfileList getProfileListPage() {
-        if (profileListPage == null) {
-            ProfileList profileListPage = new ProfileList();
-            profileListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
-            profileListPage.profilesProperty().bindContent(Profiles.profilesProperty());
-            Controllers.profileListPage = profileListPage;
-        }
-        return profileListPage;
-    }
-
-    // FXThread
     public static VersionPage getVersionPage() {
         if (versionPage == null)
             versionPage = new VersionPage();
         return versionPage;
+    }
+
+    // FXThread
+    public static RootPage getRootPage() {
+        if (rootPage == null)
+            rootPage = new RootPage();
+        return rootPage;
     }
 
     // FXThread
@@ -145,51 +89,6 @@ public final class Controllers {
         return decorator;
     }
 
-    public static MainPage getMainPage() {
-        if (mainPage == null) {
-            MainPage mainPage = new MainPage();
-            FXUtils.applyDragListener(mainPage, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
-                File modpack = modpacks.get(0);
-                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
-            });
-
-            FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
-                if (version != null) {
-                    mainPage.setCurrentGame(version);
-                } else {
-                    mainPage.setCurrentGame(i18n("version.empty"));
-                }
-            });
-            mainPage.showUpdateProperty().bind(UpdateChecker.outdatedProperty());
-            mainPage.latestVersionProperty().bind(
-                    BindingMapping.of(UpdateChecker.latestVersionProperty())
-                            .map(version -> version == null ? "" : i18n("update.bubble.title", version.getVersion())));
-
-            Profiles.registerVersionsListener(profile -> {
-                HMCLGameRepository repository = profile.getRepository();
-                List<Node> children = repository.getVersions().parallelStream()
-                        .filter(version -> !version.isHidden())
-                        .sorted(Comparator.comparing((Version version) -> version.getReleaseTime() == null ? new Date(0L) : version.getReleaseTime())
-                                .thenComparing(a -> VersionNumber.asVersion(a.getId())))
-                        .map(version -> {
-                            Node node = PopupMenu.wrapPopupMenuItem(new GameItem(profile, version.getId()));
-                            node.setOnMouseClicked(e -> profile.setSelectedVersion(version.getId()));
-                            return node;
-                        })
-                        .collect(Collectors.toList());
-                runInFX(() -> {
-                    if (profile == Profiles.getSelectedProfile())
-                        mainPage.getVersions().setAll(children);
-                });
-            });
-            Controllers.mainPage = mainPage;
-        }
-        return mainPage;
-    }
-
-    public static LeftPaneController getLeftPaneController() {
-        return leftPaneController;
-    }
 
     public static void initialize(Stage stage) {
         Logging.LOG.info("Start initializing application");
@@ -198,9 +97,7 @@ public final class Controllers {
 
         stage.setOnCloseRequest(e -> Launcher.stopApplication());
 
-        decorator = new DecoratorController(stage, getMainPage());
-        leftPaneController = new LeftPaneController();
-        decorator.getDecorator().drawerProperty().setAll(leftPaneController);
+        decorator = new DecoratorController(stage, getRootPage());
 
         if (config().getCommonDirType() == EnumCommonDirectory.CUSTOM &&
                 !FileUtils.canCreateDirectory(config().getCommonDirectory())) {
@@ -261,7 +158,7 @@ public final class Controllers {
     }
 
     public static void navigate(Node node) {
-        decorator.getNavigator().navigate(node);
+        decorator.getNavigator().navigate(node, ContainerAnimations.FADE.getAnimationProducer());
     }
 
     public static boolean isStopped() {
@@ -269,15 +166,11 @@ public final class Controllers {
     }
 
     public static void shutdown() {
-        mainPage = null;
-        settingsPage = null;
+        rootPage = null;
         versionPage = null;
         serversPage = null;
         decorator = null;
         stage = null;
         scene = null;
-        gameListPage = null;
-        accountListPage = null;
-        profileListPage = null;
     }
 }

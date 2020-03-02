@@ -5,6 +5,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.*?>
+<?import org.jackhuang.hmcl.ui.animation.TransitionPane?>
 <fx:root xmlns="http://javafx.com/javafx"
          type="StackPane"
          style="-fx-background-color: gray;"
@@ -43,6 +44,6 @@
             </rightItems>
         </JFXToolbar>
 
-        <StackPane fx:id="root"/>
+        <TransitionPane fx:id="root"/>
     </VBox>
 </fx:root>

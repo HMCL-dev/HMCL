@@ -44,12 +44,13 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
 
         BorderPane root = new BorderPane();
 
-        {
+        List<Node> toolbarButtons = initializeToolbar(skinnable);
+        if (!toolbarButtons.isEmpty()) {
             HBox toolbar = new HBox();
             toolbar.getStyleClass().add("jfx-tool-bar-second");
             JFXDepthManager.setDepth(toolbar, 1);
             toolbar.setPickOnBounds(false);
-            toolbar.getChildren().setAll(initializeToolbar(skinnable));
+            toolbar.getChildren().setAll(toolbarButtons);
             root.setTop(toolbar);
         }
 

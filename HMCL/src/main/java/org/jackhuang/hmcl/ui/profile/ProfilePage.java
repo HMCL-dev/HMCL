@@ -21,8 +21,8 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.base.ValidatorBase;
-import javafx.beans.property.ReadOnlyStringProperty;
-import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
@@ -41,7 +41,7 @@ import java.util.Optional;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ProfilePage extends StackPane implements DecoratorPage {
-    private final ReadOnlyStringWrapper title;
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final StringProperty location;
     private final Profile profile;
 
@@ -57,8 +57,7 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
         this.profile = profile;
         String profileDisplayName = Optional.ofNullable(profile).map(Profiles::getProfileDisplayName).orElse("");
 
-        title = new ReadOnlyStringWrapper(this, "title",
-                profile == null ? i18n("profile.new") : i18n("profile") + " - " + profileDisplayName);
+        state.set(State.fromTitle(profile == null ? i18n("profile.new") : i18n("profile") + " - " + profileDisplayName));
         location = new SimpleStringProperty(this, "location",
                 Optional.ofNullable(profile).map(Profile::getGameDir).map(File::getAbsolutePath).orElse(".minecraft"));
 
@@ -111,17 +110,9 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
         fireEvent(new PageCloseEvent());
     }
 
-    public String getTitle() {
-        return title.get();
-    }
-
     @Override
-    public ReadOnlyStringProperty titleProperty() {
-        return title.getReadOnlyProperty();
-    }
-
-    public void setTitle(String title) {
-        this.title.set(title);
+    public ReadOnlyObjectProperty<State> stateProperty() {
+        return state.getReadOnlyProperty();
     }
 
     public String getLocation() {

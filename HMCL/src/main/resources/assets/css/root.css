@@ -18,6 +18,20 @@
 .root {
 }
 
+.scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.scroll-bar .track {
+    -fx-fill: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-fill: rgba(255, 255, 255, 0.5);
+    -fx-arc-width: 5px;
+    -fx-arc-height: 5px;
+}
+
 .disabled Label {
     -fx-text-fill: rgba(0, 0, 0, 0.5);
 }
@@ -353,7 +367,7 @@
 }
 
 .jfx-tool-bar HBox {
-    -fx-alignment: center;
+    -fx-alignment: center-left;
     -fx-padding: 0.0 5.0;
 }
 
@@ -1020,6 +1034,11 @@
 }
 
 .jfx-decorator-title {
+    -fx-text-fill: -fx-base-text-fill;
+    -fx-font-size: 14;
+}
+
+.jfx-decorator-tab .tab-label {
     -fx-text-fill: -fx-base-text-fill;
     -fx-font-size: 14;
 }

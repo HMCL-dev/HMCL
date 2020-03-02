@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui;
+package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
@@ -23,12 +23,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ReadOnlyStringProperty;
-import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -41,22 +36,30 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.versions.GameItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+
+import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class MainPage extends StackPane implements DecoratorPage {
-    private final ReadOnlyStringWrapper title = new ReadOnlyStringWrapper(this, "title", "Hello Minecraft! Launcher " + Metadata.VERSION);
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle("Hello Minecraft! Launcher " + Metadata.VERSION));
 
     private final PopupMenu menu = new PopupMenu();
     private final JFXPopup popup = new JFXPopup(menu);
@@ -64,7 +67,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final StringProperty currentGame = new SimpleStringProperty(this, "currentGame");
     private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
     private final StringProperty latestVersion = new SimpleStringProperty(this, "latestVersion");
-    private final ObservableList<Node> versions = FXCollections.observableArrayList();
+    private final ObservableList<Version> versions = FXCollections.observableArrayList();
+    private final ObservableList<Node> versionNodes;
+    private Profile profile;
 
     private StackPane updatePane;
     private JFXButton menuButton;
@@ -112,6 +117,18 @@ public final class MainPage extends StackPane implements DecoratorPage {
         StackPane launchPane = new StackPane();
         launchPane.setMaxWidth(230);
         launchPane.setMaxHeight(55);
+        launchPane.setOnScroll(event -> {
+            int index = IntStream.range(0, versions.size())
+                    .filter(i -> versions.get(i).getId().equals(getCurrentGame()))
+                    .findFirst().orElse(-1);
+            if (index < 0) return;
+            if (event.getDeltaY() > 0) {
+                index--;
+            } else {
+                index++;
+            }
+            profile.setSelectedVersion(versions.get((index + versions.size()) % versions.size()).getId());
+        });
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
         {
             JFXButton launchButton = new JFXButton();
@@ -131,7 +148,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 launchLabel.setStyle("-fx-font-size: 16px;");
                 Label currentLabel = new Label();
                 currentLabel.setStyle("-fx-font-size: 12px;");
-                currentLabel.textProperty().bind(currentGameProperty());
+                currentLabel.textProperty().bind(Bindings.createStringBinding(() -> {
+                    if (getCurrentGame() == null) {
+                        return i18n("version.empty");
+                    } else {
+                        return getCurrentGame();
+                    }
+                }, currentGameProperty()));
                 graphic.getChildren().setAll(launchLabel, currentLabel);
 
                 launchButton.setGraphic(graphic);
@@ -168,7 +191,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
         menu.setMaxWidth(545);
         menu.setAlwaysShowingVBar(true);
         menu.setOnMouseClicked(e -> popup.hide());
-        Bindings.bindContent(menu.getContent(), versions);
+        versionNodes = MappedObservableList.create(versions, version -> {
+            Node node = PopupMenu.wrapPopupMenuItem(new GameItem(profile, version.getId()));
+            node.setOnMouseClicked(e -> profile.setSelectedVersion(version.getId()));
+            return node;
+        });
+        Bindings.bindContent(menu.getContent(), versionNodes);
     }
 
     private void doAnimation(boolean show) {
@@ -208,17 +236,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
         showUpdate.set(false);
     }
 
-    public String getTitle() {
-        return title.get();
-    }
-
     @Override
-    public ReadOnlyStringProperty titleProperty() {
-        return title.getReadOnlyProperty();
-    }
-
-    public void setTitle(String title) {
-        this.title.set(title);
+    public ReadOnlyObjectWrapper<State> stateProperty() {
+        return state;
     }
 
     public String getCurrentGame() {
@@ -257,7 +277,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
         this.latestVersion.set(latestVersion);
     }
 
-    public ObservableList<Node> getVersions() {
-        return versions;
+    public void initVersions(Profile profile, List<Version> versions) {
+        FXUtils.checkFxUserThread();
+        this.profile = profile;
+        this.versions.setAll(versions);
     }
 }
