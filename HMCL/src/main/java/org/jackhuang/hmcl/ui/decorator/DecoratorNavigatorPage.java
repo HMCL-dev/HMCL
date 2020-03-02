@@ -17,13 +17,9 @@
  */
 package org.jackhuang.hmcl.ui.decorator;
 
-import javafx.beans.binding.Bindings;
 import javafx.scene.Node;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.construct.Navigator;
-import org.jackhuang.hmcl.ui.wizard.Refreshable;
 
 public abstract class DecoratorNavigatorPage extends DecoratorTransitionPage {
     protected final Navigator navigator = new Navigator();
@@ -31,6 +27,7 @@ public abstract class DecoratorNavigatorPage extends DecoratorTransitionPage {
     {
         this.navigator.setOnNavigating(this::onNavigating);
         this.navigator.setOnNavigated(this::onNavigated);
+        backableProperty().bind(navigator.backableProperty());
     }
 
     @Override
@@ -50,39 +47,11 @@ public abstract class DecoratorNavigatorPage extends DecoratorTransitionPage {
 
     private void onNavigating(Navigator.NavigationEvent event) {
         if (event.getSource() != this.navigator) return;
-        Node from = event.getNode();
-
-        if (from instanceof DecoratorPage)
-            ((DecoratorPage) from).back();
+        onNavigating(event.getNode());
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
         if (event.getSource() != this.navigator) return;
-        Node to = event.getNode();
-
-        if (to instanceof Refreshable) {
-            refreshableProperty().bind(((Refreshable) to).refreshableProperty());
-        } else {
-            refreshableProperty().unbind();
-            refreshableProperty().set(false);
-        }
-
-        if (to instanceof DecoratorPage) {
-            state.bind(Bindings.createObjectBinding(() -> {
-                State state = ((DecoratorPage) to).stateProperty().get();
-                return new State(state.getTitle(), state.getTitleNode(), navigator.canGoBack(), state.isRefreshable(), true);
-            }, ((DecoratorPage) to).stateProperty()));
-        } else {
-            state.unbind();
-            state.set(new State("", null, navigator.canGoBack(), false, true));
-        }
-
-        if (to instanceof Region) {
-            Region region = (Region) to;
-            // Let root pane fix window size.
-            StackPane parent = (StackPane) region.getParent();
-            region.prefWidthProperty().bind(parent.widthProperty());
-            region.prefHeightProperty().bind(parent.heightProperty());
-        }
+        onNavigated(event.getNode());
     }
 }

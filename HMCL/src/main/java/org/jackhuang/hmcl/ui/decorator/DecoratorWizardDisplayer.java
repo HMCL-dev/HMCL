@@ -42,7 +42,7 @@ public class DecoratorWizardDisplayer extends DecoratorTransitionPage implements
         wizardController.setProvider(provider);
         wizardController.onStart();
 
-        addEventHandler(Navigator.NavigationEvent.NAVIGATING, this::onDecoratorPageNavigating);
+        addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onDecoratorPageNavigating);
     }
 
     @Override
@@ -77,6 +77,13 @@ public class DecoratorWizardDisplayer extends DecoratorTransitionPage implements
         else
             title = "";
         state.set(new State(title, null, true, refreshableProperty().get(), true));
+
+        if (page instanceof Refreshable) {
+            refreshableProperty().bind(((Refreshable) page).refreshableProperty());
+        } else {
+            refreshableProperty().unbind();
+            refreshableProperty().set(false);
+        }
     }
 
     @Override

@@ -80,6 +80,11 @@ public class VersionPage extends Control implements DecoratorPage {
             loadVersion(newValue, profile);
         });
 
+        versionSettingsTab.setNode(versionSettingsPage);
+        modListTab.setNode(modListPage);
+        installerListTab.setNode(installerListPage);
+        worldListTab.setNode(worldListPage);
+
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
     }
 
@@ -211,15 +216,7 @@ public class VersionPage extends Control implements DecoratorPage {
                     control.worldListTab);
             control.selectedTab.bind(tabPane.getSelectionModel().selectedItemProperty());
             FXUtils.onChangeAndOperate(tabPane.getSelectionModel().selectedItemProperty(), newValue -> {
-                if (control.versionSettingsTab.equals(newValue)) {
-                    control.transitionPane.setContent(control.versionSettingsPage, ContainerAnimations.FADE.getAnimationProducer());
-                } else if (control.modListTab.equals(newValue)) {
-                    control.transitionPane.setContent(control.modListPage, ContainerAnimations.FADE.getAnimationProducer());
-                } else if (control.installerListTab.equals(newValue)) {
-                    control.transitionPane.setContent(control.installerListPage, ContainerAnimations.FADE.getAnimationProducer());
-                } else if (control.worldListTab.equals(newValue)) {
-                    control.transitionPane.setContent(control.worldListPage, ContainerAnimations.FADE.getAnimationProducer());
-                }
+                control.transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE.getAnimationProducer());
             });
 
             HBox toolBar = new HBox();

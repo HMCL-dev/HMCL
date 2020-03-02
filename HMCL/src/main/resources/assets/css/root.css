@@ -71,6 +71,10 @@
     -fx-text-fill: -fx-base-text-fill;
 }
 
+.advanced-list-item:selected .container {
+    -fx-background-color: -fx-base-rippler-color;
+}
+
 .notice-pane > .label {
     -fx-text-fill: #0079FF;
     -fx-font-size: 20;
@@ -692,6 +696,16 @@
 }
 
 .options-list-item:first {
+    -fx-background-radius: 4 4 0 0;
+    -fx-border-width: 0;
+}
+
+.options-list-item:last {
+    -fx-background-radius: 0 0 4 4;
+}
+
+.options-list-item:first:last {
+    -fx-background-radius: 4 4 4 4;
     -fx-border-width: 0;
 }
 

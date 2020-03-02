@@ -105,7 +105,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
     public VersionSettingsPage() {
         FXUtils.loadFXML(this, "/assets/fxml/version/version-settings.fxml");
-        addEventHandler(Navigator.NavigationEvent.NAVIGATING, this::onDecoratorPageNavigating);
+        addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onDecoratorPageNavigating);
 
         cboLauncherVisibility.getItems().setAll(LauncherVisibility.values());
         cboLauncherVisibility.setConverter(stringConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase())));

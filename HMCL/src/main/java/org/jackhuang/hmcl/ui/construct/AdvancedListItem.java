@@ -30,10 +30,12 @@ public class AdvancedListItem extends Control {
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>(this, "image");
     private final ObjectProperty<Node> rightGraphic = new SimpleObjectProperty<>(this, "rightGraphic");
     private final StringProperty title = new SimpleStringProperty(this, "title");
+    private final BooleanProperty active = new SimpleBooleanProperty(this, "active");
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
     private final BooleanProperty actionButtonVisible = new SimpleBooleanProperty(this, "actionButtonVisible", true);
 
     public AdvancedListItem() {
+        getStyleClass().add("advanced-list-item");
         addEventHandler(MouseEvent.MOUSE_CLICKED, e -> fireEvent(new ActionEvent()));
     }
 
@@ -71,6 +73,18 @@ public class AdvancedListItem extends Control {
 
     public void setTitle(String title) {
         this.title.set(title);
+    }
+
+    public boolean isActive() {
+        return active.get();
+    }
+
+    public BooleanProperty activeProperty() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active.set(active);
     }
 
     public String getSubtitle() {

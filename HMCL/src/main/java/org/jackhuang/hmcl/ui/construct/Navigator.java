@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -37,11 +39,13 @@ import java.util.logging.Level;
 public class Navigator extends TransitionPane {
     private static final String PROPERTY_DIALOG_CLOSE_HANDLER = Navigator.class.getName() + ".closeListener";
 
+    private final BooleanProperty backable = new SimpleBooleanProperty(this, "backable");
     private final Stack<Node> stack = new Stack<>();
     private boolean initialized = false;
 
     public void init(Node init) {
         stack.push(init);
+        backable.set(canGoBack());
         getChildren().setAll(init);
 
         fireEvent(new NavigationEvent(this, init, NavigationEvent.NAVIGATED));
@@ -62,6 +66,7 @@ public class Navigator extends TransitionPane {
         Logging.LOG.info("Navigate to " + node);
 
         stack.push(node);
+        backable.set(canGoBack());
 
         NavigationEvent navigating = new NavigationEvent(this, from, NavigationEvent.NAVIGATING);
         fireEvent(navigating);
@@ -103,6 +108,7 @@ public class Navigator extends TransitionPane {
         Logging.LOG.info("Closed page " + from);
 
         stack.pop();
+        backable.set(canGoBack());
         Node node = stack.peek();
 
         NavigationEvent navigating = new NavigationEvent(this, from, NavigationEvent.NAVIGATING);
@@ -129,6 +135,18 @@ public class Navigator extends TransitionPane {
 
     public boolean canGoBack() {
         return stack.size() > 1;
+    }
+
+    public boolean isBackable() {
+        return backable.get();
+    }
+
+    public BooleanProperty backableProperty() {
+        return backable;
+    }
+
+    public void setBackable(boolean backable) {
+        this.backable.set(backable);
     }
 
     public int size() {

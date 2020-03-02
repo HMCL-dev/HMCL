@@ -57,7 +57,7 @@ public class GameList extends ListPageBase<GameListItem> implements DecoratorPag
         });
 
         Profiles.registerVersionsListener(this::loadVersions);
-        addEventHandler(Navigator.NavigationEvent.NAVIGATING, this::onDecoratorPageNavigating);
+        addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onDecoratorPageNavigating);
     }
 
     private void loadVersions(Profile profile) {

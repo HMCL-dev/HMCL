@@ -23,7 +23,6 @@ import com.google.gson.stream.JsonWriter;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
-
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -50,12 +49,14 @@ public class Theme {
             Color.web("#B71C1C")  // red
     };
 
+    private final Color paint;
     private final String color;
     private final String name;
 
     Theme(String name, String color) {
         this.name = name;
         this.color = color;
+        this.paint = Color.web(color);
     }
 
     public String getName() {
@@ -84,6 +85,7 @@ public class Theme {
             File temp = File.createTempFile("hmcl", ".css");
             FileUtils.writeText(temp, IOUtils.readFullyAsString(ResourceNotFoundError.getResourceAsStream("/assets/css/custom.css"))
                     .replace("%base-color%", color)
+                    .replace("%base-rippler-color%", String.format("rgba(%d, %d, %d, 0.3)", (int)Math.ceil(paint.getRed() * 256), (int)Math.ceil(paint.getGreen() * 256), (int)Math.ceil(paint.getBlue() * 256)))
                     .replace("%font-color%", getColorDisplayName(getForegroundColor())));
             css = temp.toURI().toString();
         } catch (IOException | NullPointerException e) {

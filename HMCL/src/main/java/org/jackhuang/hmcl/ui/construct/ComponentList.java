@@ -117,9 +117,11 @@ public class ComponentList extends Control {
 
     protected static class Skin extends SkinBase<ComponentList> {
         private static final PseudoClass PSEUDO_CLASS_FIRST = PseudoClass.getPseudoClass("first");
+        private static final PseudoClass PSEUDO_CLASS_LAST = PseudoClass.getPseudoClass("last");
 
         private final ObservableList<Node> list;
         private final ObjectBinding<Node> firstItem;
+        private final ObjectBinding<Node> lastItem;
 
         protected Skin(ComponentList control) {
             super(control);
@@ -139,6 +141,16 @@ public class ComponentList extends Control {
             });
             if (!list.isEmpty())
                 list.get(0).pseudoClassStateChanged(PSEUDO_CLASS_FIRST, true);
+
+            lastItem = Bindings.valueAt(list, Bindings.subtract(Bindings.size(list), 1));
+            lastItem.addListener((observable, oldValue, newValue) -> {
+                if (newValue != null)
+                    newValue.pseudoClassStateChanged(PSEUDO_CLASS_LAST, true);
+                if (oldValue != null)
+                    oldValue.pseudoClassStateChanged(PSEUDO_CLASS_LAST, false);
+            });
+            if (!list.isEmpty())
+                list.get(list.size() - 1).pseudoClassStateChanged(PSEUDO_CLASS_LAST, true);
 
             VBox vbox = new VBox();
             Bindings.bindContent(vbox.getChildren(), list);

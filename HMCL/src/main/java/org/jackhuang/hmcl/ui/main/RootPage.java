@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.main;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
@@ -37,10 +38,10 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.account.AccountList;
 import org.jackhuang.hmcl.ui.account.AddAccountPane;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.ui.decorator.DecoratorNavigatorPage;
+import org.jackhuang.hmcl.ui.construct.TabHeader;
+import org.jackhuang.hmcl.ui.decorator.DecoratorTabPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.profile.ProfileAdvancedListItem;
 import org.jackhuang.hmcl.ui.profile.ProfileList;
@@ -63,12 +64,18 @@ import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class RootPage extends DecoratorNavigatorPage {
+public class RootPage extends DecoratorTabPage {
     private MainPage mainPage = null;
     private SettingsPage settingsPage = null;
     private GameList gameListPage = null;
     private AccountList accountListPage = null;
     private ProfileList profileListPage = null;
+
+    private final TabHeader.Tab mainTab = new TabHeader.Tab("main");
+    private final TabHeader.Tab settingsTab = new TabHeader.Tab("settings");
+    private final TabHeader.Tab gameTab = new TabHeader.Tab("game");
+    private final TabHeader.Tab accountTab = new TabHeader.Tab("account");
+    private final TabHeader.Tab profileTab = new TabHeader.Tab("profile");
 
     public RootPage() {
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(event -> onRefreshedVersions((HMCLGameRepository) event.getSource()));
@@ -76,6 +83,29 @@ public class RootPage extends DecoratorNavigatorPage {
         Profile profile = Profiles.getSelectedProfile();
         if (profile != null && profile.getRepository().isLoaded())
             onRefreshedVersions(Profiles.selectedProfileProperty().get().getRepository());
+
+        mainTab.setNodeSupplier(this::getMainPage);
+        settingsTab.setNodeSupplier(this::getSettingsPage);
+        gameTab.setNodeSupplier(this::getGameListPage);
+        accountTab.setNodeSupplier(this::getAccountListPage);
+        profileTab.setNodeSupplier(this::getProfileListPage);
+        getTabs().setAll(mainTab, settingsTab, gameTab, accountTab, profileTab);
+    }
+
+    @Override
+    public boolean back() {
+        if (mainTab.isSelected()) return true;
+        else {
+            getSelectionModel().select(mainTab);
+            return false;
+        }
+    }
+
+    @Override
+    protected void onNavigated(Node to) {
+        backableProperty().set(!(to instanceof MainPage));
+
+        super.onNavigated(to);
     }
 
     @Override
@@ -156,7 +186,8 @@ public class RootPage extends DecoratorNavigatorPage {
 
             // first item in left sidebar
             AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
-            accountListItem.setOnAction(e -> getSkinnable().navigate(getSkinnable().getAccountListPage(), ContainerAnimations.FADE.getAnimationProducer()));
+            accountListItem.activeProperty().bind(control.accountTab.selectedProperty());
+            accountListItem.setOnAction(e -> control.getSelectionModel().select(control.accountTab));
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
             // second item in left sidebar
@@ -166,7 +197,7 @@ public class RootPage extends DecoratorNavigatorPage {
                 Profile profile = Profiles.getSelectedProfile();
                 String version = Profiles.getSelectedVersion();
                 if (version == null) {
-                    getSkinnable().navigate(getSkinnable().getGameListPage(), ContainerAnimations.FADE.getAnimationProducer());
+                    control.getSelectionModel().select(control.gameTab);
                 } else {
                     Versions.modifyGameSettings(profile, version);
                 }
@@ -174,20 +205,23 @@ public class RootPage extends DecoratorNavigatorPage {
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
+            gameItem.activeProperty().bind(control.gameTab.selectedProperty());
             gameItem.setImage(newImage("/assets/img/bookshelf.png"));
             gameItem.setTitle(i18n("version.manage"));
-            gameItem.setOnAction(e -> getSkinnable().navigate(getSkinnable().getGameListPage(), ContainerAnimations.FADE.getAnimationProducer()));
+            gameItem.setOnAction(e -> control.getSelectionModel().select(control.gameTab));
 
             // forth item in left sidebar
             ProfileAdvancedListItem profileListItem = new ProfileAdvancedListItem();
-            profileListItem.setOnAction(e -> getSkinnable().navigate(getSkinnable().getProfileListPage(), ContainerAnimations.FADE.getAnimationProducer()));
+            profileListItem.activeProperty().bind(control.profileTab.selectedProperty());
+            profileListItem.setOnAction(e -> control.getSelectionModel().select(control.profileTab));
             profileListItem.profileProperty().bind(Profiles.selectedProfileProperty());
 
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
+            launcherSettingsItem.activeProperty().bind(control.settingsTab.selectedProperty());
             launcherSettingsItem.setImage(newImage("/assets/img/command.png"));
             launcherSettingsItem.setTitle(i18n("settings.launcher"));
-            launcherSettingsItem.setOnAction(e -> getSkinnable().navigate(getSkinnable().getSettingsPage(), ContainerAnimations.FADE.getAnimationProducer()));
+            launcherSettingsItem.setOnAction(e -> control.getSelectionModel().select(control.settingsTab));
 
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
@@ -217,10 +251,10 @@ public class RootPage extends DecoratorNavigatorPage {
             }
 
             {
-                control.navigator.getStyleClass().add("jfx-decorator-content-container");
-                control.navigator.init(getSkinnable().getMainPage());
-                FXUtils.setOverflowHidden(control.navigator, 8);
-                StackPane wrapper = new StackPane(control.navigator);
+                control.transitionPane.getStyleClass().add("jfx-decorator-content-container");
+                control.transitionPane.getChildren().setAll(getSkinnable().getMainPage());
+                FXUtils.setOverflowHidden(control.transitionPane, 8);
+                StackPane wrapper = new StackPane(control.transitionPane);
                 wrapper.setPadding(new Insets(4));
                 root.setCenter(wrapper);
             }
