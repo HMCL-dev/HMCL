@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.JFXTabPane;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -33,6 +32,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -53,11 +53,12 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> {
     private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
 
-    private JFXTabPane parentTab;
+    private TabHeader.Tab tab;
     private ModManager modManager;
     private LibraryAnalyzer libraryAnalyzer;
 
-    public ModListPage() {
+    public ModListPage(TabHeader.Tab tab) {
+        this.tab = tab;
 
         FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)), mods -> {
             mods.forEach(it -> {
@@ -101,10 +102,12 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         }).whenCompleteAsync((list, exception) -> {
             loadingProperty().set(false);
             if (exception == null)
-                FXUtils.onWeakChangeAndOperate(parentTab.getSelectionModel().selectedItemProperty(), newValue -> {
-                    if (newValue != null && newValue.getUserData() == ModListPage.this)
+                getProperties().put(ModListPage.class, FXUtils.onWeakChangeAndOperate(tab.selectedProperty(), newValue -> {
+                    if (newValue)
                         itemsProperty().setAll(list.stream().map(ModListPageSkin.ModInfoObject::new).collect(Collectors.toList()));
-                });
+                }));
+            else
+                getProperties().remove(ModListPage.class);
         }, Platform::runLater);
     }
 
@@ -139,10 +142,6 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             Controllers.dialog(String.join("\n", prompt), i18n("mods.add"));
             loadMods(modManager);
         }).start();
-    }
-
-    public void setParentTab(JFXTabPane parentTab) {
-        this.parentTab = parentTab;
     }
 
     public void removeSelected(ObservableList<ModListPageSkin.ModInfoObject> selectedItems) {

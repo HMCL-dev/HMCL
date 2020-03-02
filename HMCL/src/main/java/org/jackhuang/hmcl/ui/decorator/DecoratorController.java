@@ -265,16 +265,21 @@ public class DecoratorController {
             decorator.canRefreshProperty().set(false);
         }
 
+        decorator.canCloseProperty().set(navigator.size() > 2);
+
         if (to instanceof DecoratorPage) {
             decorator.showCloseAsHomeProperty().set(!((DecoratorPage) to).isPageCloseable());
-            decorator.stateProperty().bind(((DecoratorPage) to).stateProperty());
         } else {
             decorator.showCloseAsHomeProperty().set(true);
+        }
+
+        // state property should be updated at last.
+        if (to instanceof DecoratorPage) {
+            decorator.stateProperty().bind(((DecoratorPage) to).stateProperty());
+        } else {
             decorator.stateProperty().unbind();
             decorator.stateProperty().set(new DecoratorPage.State("", null, navigator.canGoBack(), false, true));
         }
-
-        decorator.canCloseProperty().set(navigator.canGoBack());
 
         if (to instanceof Region) {
             Region region = (Region) to;

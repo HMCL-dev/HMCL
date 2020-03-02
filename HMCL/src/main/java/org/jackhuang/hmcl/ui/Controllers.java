@@ -34,7 +34,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
 import org.jackhuang.hmcl.ui.main.RootPage;
-import org.jackhuang.hmcl.ui.versions.VersionRootPage;
+import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -50,7 +50,7 @@ public final class Controllers {
 
     private static Scene scene;
     private static Stage stage;
-    private static VersionRootPage versionPage = null;
+    private static VersionPage versionPage = null;
     private static AuthlibInjectorServersPage serversPage = null;
     private static RootPage rootPage;
     private static DecoratorController decorator;
@@ -64,9 +64,9 @@ public final class Controllers {
     }
 
     // FXThread
-    public static VersionRootPage getVersionPage() {
+    public static VersionPage getVersionPage() {
         if (versionPage == null)
-            versionPage = new VersionRootPage();
+            versionPage = new VersionPage();
         return versionPage;
     }
 

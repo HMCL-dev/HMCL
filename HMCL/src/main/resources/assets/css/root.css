@@ -32,12 +32,6 @@
     -fx-arc-height: 5px;
 }
 
-.list-view,
-.scroll-pane,
-.scroll-pane > .viewport  {
-    -fx-background-color: transparent;
-}
-
 .disabled Label {
     -fx-text-fill: rgba(0, 0, 0, 0.5);
 }
@@ -1040,6 +1034,11 @@
 }
 
 .jfx-decorator-title {
+    -fx-text-fill: -fx-base-text-fill;
+    -fx-font-size: 14;
+}
+
+.jfx-decorator-tab .tab-label {
     -fx-text-fill: -fx-base-text-fill;
     -fx-font-size: 14;
 }

@@ -213,22 +213,23 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             }
             navBar.setCenter(center);
 
-            HBox navRight = new HBox();
-            navRight.setAlignment(Pos.CENTER_RIGHT);
-            JFXButton refreshNavButton = new JFXButton();
-            refreshNavButton.setGraphic(SVG.refresh(Theme.foregroundFillBinding(), -1, -1));
-            refreshNavButton.getStyleClass().add("jfx-decorator-button");
-            refreshNavButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
-            refreshNavButton.onActionProperty().bind(skinnable.onRefreshNavButtonActionProperty());
-            refreshNavButton.visibleProperty().set(canRefresh);
+            if (canRefresh) {
+                HBox navRight = new HBox();
+                navRight.setAlignment(Pos.CENTER_RIGHT);
+                JFXButton refreshNavButton = new JFXButton();
+                refreshNavButton.setGraphic(SVG.refresh(Theme.foregroundFillBinding(), -1, -1));
+                refreshNavButton.getStyleClass().add("jfx-decorator-button");
+                refreshNavButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
+                refreshNavButton.onActionProperty().bind(skinnable.onRefreshNavButtonActionProperty());
 
-            Rectangle separator = new Rectangle();
-            separator.visibleProperty().bind(refreshNavButton.visibleProperty());
-            separator.heightProperty().bind(navBar.heightProperty());
-            separator.setFill(Color.GRAY);
+                Rectangle separator = new Rectangle();
+                separator.visibleProperty().bind(refreshNavButton.visibleProperty());
+                separator.heightProperty().bind(navBar.heightProperty());
+                separator.setFill(Color.GRAY);
 
-            navRight.getChildren().setAll(refreshNavButton, separator);
-            navBar.setRight(navRight);
+                navRight.getChildren().setAll(refreshNavButton, separator);
+                navBar.setRight(navRight);
+            }
         }
         return navBar;
     }

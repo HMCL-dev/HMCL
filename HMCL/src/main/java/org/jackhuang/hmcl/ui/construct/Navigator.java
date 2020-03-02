@@ -131,6 +131,10 @@ public class Navigator extends TransitionPane {
         return stack.size() > 1;
     }
 
+    public int size() {
+        return stack.size();
+    }
+
     public void setContent(Node content, AnimationProducer animationProducer) {
         super.setContent(content, animationProducer);
 
