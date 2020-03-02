@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.task;
 
 import java.util.EventListener;
+import java.util.Map;
 
 /**
  *
@@ -77,5 +78,8 @@ public abstract class TaskListener implements EventListener {
      * @param executor the task executor with responsibility to the task execution.
      */
     public void onStop(boolean success, TaskExecutor executor) {
+    }
+
+    public void onPropertiesUpdate(Map<String, Map<String, Object>> stageProperties) {
     }
 }

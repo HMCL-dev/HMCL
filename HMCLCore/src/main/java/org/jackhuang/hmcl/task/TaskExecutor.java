@@ -19,8 +19,10 @@ package org.jackhuang.hmcl.task;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -31,6 +33,7 @@ public abstract class TaskExecutor {
     protected final AtomicBoolean cancelled = new AtomicBoolean(false);
     protected Exception exception;
     private final List<String> stages;
+    protected final Map<String, Map<String, Object>> stageProperties = new HashMap<>();
 
     public TaskExecutor(Task<?> task) {
         this.firstTask = task;

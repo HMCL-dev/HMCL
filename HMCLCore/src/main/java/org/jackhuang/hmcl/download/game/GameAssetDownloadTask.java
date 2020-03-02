@@ -123,12 +123,16 @@ public final class GameAssetDownloadTask extends Task<Void> {
                         .setCacheRepository(dependencyManager.getCacheRepository())
                         .setCaching(true)
                         .setCandidate(dependencyManager.getCacheRepository().getCommonDirectory()
-                                .resolve("assets").resolve("objects").resolve(assetObject.getLocation())));
+                                .resolve("assets").resolve("objects").resolve(assetObject.getLocation())).withCounter());
             } else {
                 dependencyManager.getCacheRepository().tryCacheFile(file.toPath(), CacheRepository.SHA1, assetObject.getHash());
             }
 
             updateProgress(++progress, index.getObjects().size());
+        }
+
+        if (!dependencies.isEmpty()) {
+            getProperties().put("total", dependencies.size());
         }
     }
 

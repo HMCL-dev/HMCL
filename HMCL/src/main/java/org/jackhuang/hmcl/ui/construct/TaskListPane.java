@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class TaskListPane extends StackPane {
@@ -172,12 +173,24 @@ public final class TaskListPane extends StackPane {
                     node.setThrowable(throwable);
                 });
             }
+
+            @Override
+            public void onPropertiesUpdate(Map<String, Map<String, Object>> stageProperties) {
+                stageProperties.forEach((stage, properties) -> {
+                    int count = tryCast(properties.get("count"), Integer.class).orElse(0),
+                            total = tryCast(properties.get("total"), Integer.class).orElse(0);
+                    if (total > 0)
+                        Platform.runLater(() ->
+                                stageNodes.stream().filter(x -> x.stage.equals(stage)).findAny().ifPresent(stageNode -> stageNode.updateCounter(count, total)));
+                });
+            }
         });
     }
 
-    private class StageNode extends BorderPane {
+    private static class StageNode extends BorderPane {
         private final String stage;
         private final Label title = new Label();
+        private final String message;
         private boolean started = false;
 
         public StageNode(String stage) {
@@ -185,7 +198,6 @@ public final class TaskListPane extends StackPane {
 
             String stageKey = StringUtils.substringBefore(stage, ':');
             String stageValue = StringUtils.substringAfter(stage, ':');
-            String message;
 
             // @formatter:off
             switch (stageKey) {
@@ -221,6 +233,13 @@ public final class TaskListPane extends StackPane {
 
         public void succeed() {
             setLeft(FXUtils.limitingSize(SVG.check(Theme.blackFillBinding(), 14, 14), 14, 14));
+        }
+
+        public void updateCounter(int count, int total) {
+            if (total > 0)
+                title.setText(String.format("%s - %d/%d", message, count, total));
+            else
+                title.setText(message);
         }
     }
 

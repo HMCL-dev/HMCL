@@ -32,15 +32,13 @@ import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -105,6 +103,13 @@ public abstract class Task<T> {
 
     public List<String> getStages() {
         return getStage() == null ? Collections.emptyList() : Collections.singletonList(getStage());
+    }
+
+    Map<String, Object> properties;
+
+    protected Map<String, Object> getProperties() {
+        if (properties == null) properties = new HashMap<>();
+        return properties;
     }
 
     // state
@@ -802,6 +807,10 @@ public abstract class Task<T> {
         };
     }
 
+    public Task<T> withCounter() {
+        return new CountTask();
+    }
+
     public static Task<Void> runAsync(ExceptionalRunnable<?> closure) {
         return runAsync(Schedulers.defaultScheduler(), closure);
     }
@@ -1056,6 +1065,39 @@ public abstract class Task<T> {
         @Override
         public void execute() throws Exception {
             setResult(Task.this.getResult());
+        }
+
+        @Override
+        public List<String> getStages() {
+            return Lang.merge(Task.this.getStages(), super.getStages());
+        }
+    }
+
+    private class CountTask extends Task<T> {
+        private final UnaryOperator<Integer> COUNTER = a -> {
+            int result = 0;
+            if (a != null) result += a;
+            return result + 1;
+        };
+
+        @Override
+        public Collection<Task<?>> getDependents() {
+            return Collections.singleton(Task.this);
+        }
+
+        @Override
+        public void execute() throws Exception {
+            setResult(Task.this.getResult());
+        }
+
+        @Override
+        public boolean doPostExecute() {
+            return true;
+        }
+
+        @Override
+        public void postExecute() {
+            getProperties().put("count", COUNTER);
         }
 
         @Override

@@ -78,7 +78,8 @@ public class VersionPage extends Control implements DecoratorPage {
         Profiles.registerVersionsListener(this::loadVersions);
 
         listView.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
-            loadVersion(newValue, profile);
+            if (newValue != null)
+                loadVersion(newValue, profile);
         });
 
         versionSettingsTab.setNode(versionSettingsPage);

@@ -151,9 +151,13 @@ public final class CurseCompletionTask extends Task<Void> {
                 if (!modManager.hasSimpleMod(file.getFileName())) {
                     dependencies.add(new FileDownloadTask(file.getUrl(), modManager.getSimpleModPath(file.getFileName()).toFile())
                             .setCacheRepository(dependency.getCacheRepository())
-                            .setCaching(true));
+                            .setCaching(true).withCounter());
                 }
             }
+
+        if (!dependencies.isEmpty()) {
+            getProperties().put("total", dependencies.size());
+        }
     }
 
     @Override

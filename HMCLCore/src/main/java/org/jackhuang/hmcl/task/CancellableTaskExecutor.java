@@ -20,11 +20,10 @@ package org.jackhuang.hmcl.task;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 
 public class CancellableTaskExecutor extends TaskExecutor {
@@ -105,6 +104,19 @@ public class CancellableTaskExecutor extends TaskExecutor {
         return success.get() && !cancelled.get();
     }
 
+    private synchronized void updateStageProperties(String stage, Map<String, Object> taskProperties) {
+        stageProperties.putIfAbsent(stage, new HashMap<>());
+        Map<String, Object> prop = stageProperties.get(stage);
+        for (Map.Entry<String, Object> entry : taskProperties.entrySet()) {
+            if (entry.getValue() instanceof UnaryOperator) {
+                prop.put(entry.getKey(), ((UnaryOperator) entry.getValue()).apply(prop.get(entry.getKey())));
+            } else {
+                prop.put(entry.getKey(), entry.getValue());
+            }
+        }
+        taskListeners.forEach(taskListener -> taskListener.onPropertiesUpdate(stageProperties));
+    }
+
     private boolean executeTask(Task<?> parentTask, Task<?> task) {
         task.setCancelled(this::isCancelled);
 
@@ -161,6 +173,10 @@ public class CancellableTaskExecutor extends TaskExecutor {
                 task.setState(Task.TaskState.EXECUTED);
             }
 
+            if (task.properties != null) {
+                updateStageProperties(task.getStage(), task.properties);
+            }
+
             Collection<? extends Task<?>> dependencies = task.getDependencies();
             boolean doDependenciesSucceeded = executeTasks(task, dependencies);
             Exception dependenciesException = dependencies.stream().map(Task::getException)
@@ -189,6 +205,10 @@ public class CancellableTaskExecutor extends TaskExecutor {
             flag = true;
             if (task.getSignificance().shouldLog()) {
                 Logging.LOG.log(Level.FINER, "Task finished: " + task.getName());
+            }
+
+            if (task.properties != null) {
+                updateStageProperties(task.getStage(), task.properties);
             }
 
             task.onDone().fireEvent(new TaskEvent(this, task, false));
