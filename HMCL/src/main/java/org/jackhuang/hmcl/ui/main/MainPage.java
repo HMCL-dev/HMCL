@@ -75,7 +75,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private JFXButton menuButton;
 
     {
-        setPadding(new Insets(25));
+        setPadding(new Insets(20));
 
         updatePane = new StackPane();
         updatePane.setVisible(false);
