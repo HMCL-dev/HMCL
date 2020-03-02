@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.beans.property.*;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Control;
 import javafx.scene.control.SelectionMode;
@@ -182,24 +183,17 @@ public class VersionPage extends Control implements DecoratorPage {
 
             // the root page, with the sidebar in left, navigator in center.
             BorderPane root = new BorderPane();
-            root.getStyleClass().add("gray-background");
 
             {
-                BorderPane leftRootPane = new BorderPane();
-                FXUtils.setLimitWidth(leftRootPane, 200);
-
                 StackPane drawerContainer = new StackPane();
+                FXUtils.setLimitWidth(drawerContainer, 200);
+                drawerContainer.getStyleClass().add("gray-background");
                 drawerContainer.getChildren().setAll(control.listView);
-                leftRootPane.setCenter(drawerContainer);
+                FXUtils.setOverflowHidden(drawerContainer, 8);
 
-                Rectangle separator = new Rectangle();
-                separator.heightProperty().bind(root.heightProperty());
-                separator.setWidth(1);
-                separator.setFill(Color.GRAY);
-
-                leftRootPane.setRight(separator);
-
-                root.setLeft(leftRootPane);
+                StackPane wrapper = new StackPane(drawerContainer);
+                wrapper.setPadding(new Insets(4, 0, 4, 4));
+                root.setLeft(wrapper);
             }
 
             TabHeader tabPane = new TabHeader();
@@ -277,7 +271,11 @@ public class VersionPage extends Control implements DecoratorPage {
             titleBar.setRight(toolBar);
             control.state.set(new State(i18n("version.manage.manage"), titleBar, true, false, true));
 
-            root.setCenter(control.transitionPane);
+            control.transitionPane.getStyleClass().add("gray-background");
+            FXUtils.setOverflowHidden(control.transitionPane, 8);
+            StackPane wrapper = new StackPane(control.transitionPane);
+            wrapper.setPadding(new Insets(4));
+            root.setCenter(wrapper);
 
             spinnerPane.loadingProperty().bind(control.loading);
             spinnerPane.setContent(root);

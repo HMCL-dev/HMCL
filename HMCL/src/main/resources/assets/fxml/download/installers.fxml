@@ -12,11 +12,11 @@
     <BorderPane>
         <center>
             <VBox fx:id="list" spacing="8">
-                <HBox spacing="8" alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-padding: 20 8 20 16">
+                <HBox spacing="8" alignment="CENTER_LEFT" styleClass="card" style="-fx-padding: 20 8 20 16">
                     <Label text="%archive.name" />
                     <JFXTextField fx:id="txtName" maxWidth="300"/>
                 </HBox>
-                <BorderPane fx:id="btnGame" style="-fx-background-color: white; -fx-padding: 8">
+                <BorderPane fx:id="btnGame" styleClass="card" style="-fx-padding: 8">
                     <left>
                         <ImageView>
                             <Image url="/assets/img/grass.png" requestedHeight="32" requestedWidth="32" smooth="true" />
@@ -26,7 +26,7 @@
                         <Label fx:id="lblGame" BorderPane.alignment="CENTER_LEFT" />
                     </center>
                 </BorderPane>
-                <BorderPane fx:id="btnFabric" style="-fx-background-color: white; -fx-padding: 8; -fx-cursor: HAND">
+                <BorderPane fx:id="btnFabric" styleClass="card" style="-fx-padding: 8; -fx-cursor: HAND">
                     <left>
                         <ImageView>
                             <Image url="/assets/img/fabric.png" requestedHeight="32" requestedWidth="32" smooth="true" />
@@ -39,7 +39,7 @@
                         <fx:include BorderPane.alignment="CENTER_RIGHT" source="/assets/svg/arrow-right.fxml"/>
                     </right>
                 </BorderPane>
-                <BorderPane fx:id="btnForge" style="-fx-background-color: white; -fx-padding: 8; -fx-cursor: HAND">
+                <BorderPane fx:id="btnForge" styleClass="card" style="-fx-padding: 8; -fx-cursor: HAND">
                     <left>
                         <ImageView>
                             <Image url="/assets/img/forge.png" requestedHeight="32" requestedWidth="32" smooth="true" />
@@ -52,7 +52,7 @@
                         <fx:include BorderPane.alignment="CENTER_RIGHT" source="/assets/svg/arrow-right.fxml"/>
                     </right>
                 </BorderPane>
-                <BorderPane fx:id="btnLiteLoader" style="-fx-background-color: white; -fx-padding: 8; -fx-cursor: HAND">
+                <BorderPane fx:id="btnLiteLoader" styleClass="card" style="-fx-padding: 8; -fx-cursor: HAND">
                     <left>
                         <ImageView>
                             <Image url="/assets/img/chicken.png" requestedHeight="32" requestedWidth="32" smooth="true" />
@@ -65,7 +65,7 @@
                         <fx:include BorderPane.alignment="CENTER_RIGHT" source="/assets/svg/arrow-right.fxml"/>
                     </right>
                 </BorderPane>
-                <BorderPane fx:id="btnOptiFine" style="-fx-background-color: white; -fx-padding: 8; -fx-cursor: HAND">
+                <BorderPane fx:id="btnOptiFine" styleClass="card" style="-fx-padding: 8; -fx-cursor: HAND">
                     <left>
                         <ImageView>
                             <Image url="/assets/img/command.png" requestedHeight="32" requestedWidth="32" smooth="true" />

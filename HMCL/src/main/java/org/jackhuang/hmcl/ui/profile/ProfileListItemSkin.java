@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.profile;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
@@ -73,7 +74,8 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
         right.getChildren().add(btnRemove);
         root.setRight(right);
 
-        root.setStyle("-fx-background-color: white; -fx-background-radius: 4; -fx-padding: 8 8 8 0;");
+        root.getStyleClass().add("card");
+        root.setPadding(new Insets(8, 8, 8, 0));
         JFXDepthManager.setDepth(root, 1);
         item.titleProperty().bind(skinnable.titleProperty());
         item.subtitleProperty().bind(skinnable.subtitleProperty());

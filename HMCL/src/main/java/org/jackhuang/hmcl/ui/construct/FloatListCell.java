@@ -30,7 +30,7 @@ public abstract class FloatListCell<T> extends ListCell<T> {
         setText(null);
         setGraphic(null);
 
-        pane.setStyle("-fx-background-color: white");
+        pane.getStyleClass().add("card");
         pane.setCursor(Cursor.HAND);
         pane.setPadding(new Insets(8));
         setPadding(new Insets(5));

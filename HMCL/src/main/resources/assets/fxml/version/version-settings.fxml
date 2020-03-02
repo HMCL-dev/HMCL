@@ -11,7 +11,7 @@
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
     <ScrollPane fx:id="scroll" fitToHeight="true" fitToWidth="true" vbarPolicy="ALWAYS">
-        <VBox fx:id="rootPane" style="-fx-padding: 20;" spacing="12">
+        <VBox fx:id="rootPane" style="-fx-padding: 10;" spacing="12">
 
             <ComponentList fx:id="iconPickerItemWrapper">
                 <ImagePickerItem fx:id="iconPickerItem" title="%settings.icon" onSelectButtonClicked="#onExploreIcon" onDeleteButtonClicked="#onDeleteIcon">

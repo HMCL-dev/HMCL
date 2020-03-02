@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.account;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
@@ -100,7 +101,8 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         right.getChildren().add(btnRemove);
         root.setRight(right);
 
-        root.setStyle("-fx-background-color: white; -fx-background-radius: 4; -fx-padding: 8 8 8 0;");
+        root.getStyleClass().add("card");
+        root.setPadding(new Insets(8, 8, 8, 0));
         JFXDepthManager.setDepth(root, 1);
 
         getChildren().setAll(root);

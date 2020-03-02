@@ -23,7 +23,6 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.ListPage;
-import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
@@ -38,7 +37,6 @@ public class AuthlibInjectorServersPage extends ListPage<AuthlibInjectorServerIt
     public AuthlibInjectorServersPage() {
         serverItems = MappedObservableList.create(config().getAuthlibInjectorServers(), this::createServerItem);
         Bindings.bindContent(itemsProperty(), serverItems);
-        addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onDecoratorPageNavigating);
     }
 
     private AuthlibInjectorServerItem createServerItem(AuthlibInjectorServer server) {

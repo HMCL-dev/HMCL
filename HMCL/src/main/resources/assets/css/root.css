@@ -270,6 +270,7 @@
 
 .jfx-popup-container {
     -fx-background-color: WHITE;
+    -fx-background-radius: 4;
 }
 
 .popup-list-view {
@@ -680,7 +681,8 @@
 }
 
 .card {
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
+    -fx-background-color: WHITE;
+    -fx-background-radius: 4;
 }
 
 .options-sublist {
