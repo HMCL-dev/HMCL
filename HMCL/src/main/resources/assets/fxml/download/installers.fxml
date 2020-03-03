@@ -5,10 +5,13 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
-<?import com.jfoenix.effects.JFXDepthManager?>
+<?import javafx.geometry.Insets?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane" style="-fx-padding: 16;">
+    <fx:define>
+        <Insets fx:id="insets" left="8" />
+    </fx:define>
     <BorderPane>
         <center>
             <VBox fx:id="list" spacing="8">
@@ -23,7 +26,7 @@
                         </ImageView>
                     </left>
                     <center>
-                        <Label fx:id="lblGame" BorderPane.alignment="CENTER_LEFT" />
+                        <Label fx:id="lblGame" BorderPane.margin="$insets" BorderPane.alignment="CENTER_LEFT" />
                     </center>
                 </BorderPane>
                 <BorderPane fx:id="btnFabric" styleClass="card" style="-fx-padding: 8; -fx-cursor: HAND">
@@ -33,7 +36,7 @@
                         </ImageView>
                     </left>
                     <center>
-                        <Label fx:id="lblFabric" BorderPane.alignment="CENTER_LEFT" />
+                        <Label fx:id="lblFabric" BorderPane.margin="$insets" BorderPane.alignment="CENTER_LEFT" />
                     </center>
                     <right>
                         <fx:include BorderPane.alignment="CENTER_RIGHT" source="/assets/svg/arrow-right.fxml"/>
@@ -46,7 +49,7 @@
                         </ImageView>
                     </left>
                     <center>
-                        <Label fx:id="lblForge" BorderPane.alignment="CENTER_LEFT" />
+                        <Label fx:id="lblForge" BorderPane.margin="$insets" BorderPane.alignment="CENTER_LEFT" />
                     </center>
                     <right>
                         <fx:include BorderPane.alignment="CENTER_RIGHT" source="/assets/svg/arrow-right.fxml"/>
@@ -59,7 +62,7 @@
                         </ImageView>
                     </left>
                     <center>
-                        <Label fx:id="lblLiteLoader" BorderPane.alignment="CENTER_LEFT" />
+                        <Label fx:id="lblLiteLoader" BorderPane.margin="$insets" BorderPane.alignment="CENTER_LEFT" />
                     </center>
                     <right>
                         <fx:include BorderPane.alignment="CENTER_RIGHT" source="/assets/svg/arrow-right.fxml"/>
@@ -72,7 +75,7 @@
                         </ImageView>
                     </left>
                     <center>
-                        <Label fx:id="lblOptiFine"  BorderPane.alignment="CENTER_LEFT" />
+                        <Label fx:id="lblOptiFine" BorderPane.margin="$insets" BorderPane.alignment="CENTER_LEFT" />
                     </center>
                     <right>
                         <fx:include BorderPane.alignment="CENTER_RIGHT" source="/assets/svg/arrow-right.fxml"/>

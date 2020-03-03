@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -39,7 +40,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     private final String libraryId;
     private final String oldLibraryVersion;
 
-    public UpdateInstallerWizardProvider(@NotNull Profile profile, @NotNull String gameVersion, @NotNull Version version, @NotNull String libraryId, @NotNull String oldLibraryVersion) {
+    public UpdateInstallerWizardProvider(@NotNull Profile profile, @NotNull String gameVersion, @NotNull Version version, @NotNull String libraryId, @Nullable String oldLibraryVersion) {
         this.profile = profile;
         this.gameVersion = gameVersion;
         this.version = version;
@@ -69,8 +70,12 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         switch (step) {
             case 0:
                 return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, provider, libraryId, () -> {
-                    Controllers.confirmDialog(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
-                            i18n("install.change_version"), controller::onFinish, controller::onCancel);
+                    if (oldLibraryVersion == null) {
+                        controller.onFinish();
+                    } else {
+                        Controllers.confirmDialog(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
+                                i18n("install.change_version"), controller::onFinish, controller::onCancel);
+                    }
                 });
             default:
                 throw new IllegalStateException();

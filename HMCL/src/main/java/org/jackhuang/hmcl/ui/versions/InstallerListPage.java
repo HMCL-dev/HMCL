@@ -33,11 +33,11 @@ import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.download.InstallerWizardProvider;
 import org.jackhuang.hmcl.ui.download.UpdateInstallerWizardProvider;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -84,18 +84,32 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
             };
 
             itemsProperty().clear();
+
+            for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
+                String libraryId = type.getPatchId();
+                String libraryVersion = analyzer.getVersion(type).orElse(null);
+                Consumer<InstallerItem> action = libraryVersion == null ? null : removeAction.apply(libraryId);
+                itemsProperty().add(new InstallerItem(libraryId, libraryVersion, () -> {
+                    Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
+                }, action));
+            }
+
             for (LibraryAnalyzer.LibraryMark mark : analyzer) {
                 String libraryId = mark.getLibraryId();
                 String libraryVersion = mark.getLibraryVersion();
-                String title = I18n.hasKey("install.installer." + libraryId) ? i18n("install.installer." + libraryId) : libraryId;
-                Consumer<InstallerItem> action = "game".equals(libraryId) ? null : removeAction.apply(libraryId);
+
+                // we have done this library above.
+                if (LibraryAnalyzer.LibraryType.fromPatchId(libraryId) != null)
+                    continue;
+
+                Consumer<InstallerItem> action = removeAction.apply(libraryId);
                 if (libraryVersion != null && Lang.test(() -> profile.getDependency().getVersionList(libraryId)))
                     itemsProperty().add(
-                            new InstallerItem(title, libraryVersion, () -> {
+                            new InstallerItem(libraryId, libraryVersion, () -> {
                                 Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
                             }, action));
                 else
-                    itemsProperty().add(new InstallerItem(title, libraryVersion, null, action));
+                    itemsProperty().add(new InstallerItem(libraryId, libraryVersion, null, action));
             }
         }, Platform::runLater);
     }
@@ -145,8 +159,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
 
         @Override
         protected List<Node> initializeToolbar(InstallerListPage skinnable) {
-            return Arrays.asList(
-                    createToolbarButton(i18n("install.installer.install_online"), SVG::plus, skinnable::installOnline),
+            return Collections.singletonList(
                     createToolbarButton(i18n("install.installer.install_offline"), SVG::plus, skinnable::installOffline));
         }
     }

@@ -21,10 +21,8 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.download.DownloadProvider;
@@ -34,11 +32,9 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.nio.file.Paths;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -98,7 +94,6 @@ public class InstallersPage extends StackPane implements WizardPage {
         txtName.textProperty().addListener(e -> btnInstall.setDisable(!txtName.validate()));
         txtName.setText(gameVersion);
 
-        Label[] labels = new Label[]{lblGame, lblFabric, lblForge, lblLiteLoader, lblOptiFine};
         Node[] buttons = new Node[]{btnGame, btnFabric, btnForge, btnLiteLoader, btnOptiFine};
         String[] libraryIds = new String[]{"game", "fabric", "forge", "liteloader", "optifine"};
 
@@ -108,7 +103,6 @@ public class InstallersPage extends StackPane implements WizardPage {
 
         for (int i = 0; i < libraryIds.length; ++i) {
             String libraryId = libraryIds[i];
-            BorderPane.setMargin(labels[i], new Insets(0, 0, 0, 8));
             if (libraryId.equals("game")) continue;
             buttons[i].setOnMouseClicked(e ->
                     controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> controller.onPrev(false))));

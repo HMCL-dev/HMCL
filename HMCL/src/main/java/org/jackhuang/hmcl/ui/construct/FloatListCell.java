@@ -18,12 +18,16 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.effects.JFXDepthManager;
+import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 public abstract class FloatListCell<T> extends ListCell<T> {
+    private final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
+
     protected final StackPane pane = new StackPane();
 
     {
@@ -35,6 +39,10 @@ public abstract class FloatListCell<T> extends ListCell<T> {
         pane.setPadding(new Insets(8));
         setPadding(new Insets(5));
         JFXDepthManager.setDepth(pane, 1);
+
+        FXUtils.onChangeAndOperate(selectedProperty(), selected -> {
+            pane.pseudoClassStateChanged(SELECTED, selected);
+        });
     }
 
     @Override

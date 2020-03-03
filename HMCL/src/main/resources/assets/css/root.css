@@ -685,6 +685,10 @@
     -fx-background-radius: 4;
 }
 
+.card:selected {
+    -fx-background-color: derive(-fx-base-color, 60%);
+}
+
 .options-sublist {
     -fx-background-color: white;
 }
