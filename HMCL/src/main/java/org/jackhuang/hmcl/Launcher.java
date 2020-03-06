@@ -64,8 +64,6 @@ public final class Launcher extends Application {
                 // Stage.show() cannot work again because JavaFX Toolkit have already shut down.
                 Platform.setImplicitExit(false);
                 Controllers.initialize(primaryStage);
-                primaryStage.setResizable(false);
-                primaryStage.setScene(Controllers.getScene());
 
                 UpdateChecker.init();
 

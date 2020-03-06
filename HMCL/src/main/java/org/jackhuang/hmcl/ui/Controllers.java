@@ -108,10 +108,13 @@ public final class Controllers {
         Task.runAsync(JavaVersion::initialize).start();
 
         scene = new Scene(decorator.getDecorator(), 800, 519);
+        decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
+        decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
         scene.getStylesheets().setAll(config().getTheme().getStylesheets());
 
         stage.getIcons().add(newImage("/assets/img/icon.png"));
         stage.setTitle(Metadata.TITLE);
+        stage.setScene(scene);
     }
 
     public static void dialog(Region content) {
