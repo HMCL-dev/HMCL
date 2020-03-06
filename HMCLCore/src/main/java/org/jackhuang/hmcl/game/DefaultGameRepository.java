@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
@@ -393,7 +394,11 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public Task<Version> save(Version version) {
-        return new VersionJsonSaveTask(this, version);
+        if (version.isResolvedPreservingPatches()) {
+            return new VersionJsonSaveTask(this, MaintainTask.maintainPreservingPatches(this, version));
+        } else {
+            return new VersionJsonSaveTask(this, version);
+        }
     }
 
     public boolean isLoaded() {

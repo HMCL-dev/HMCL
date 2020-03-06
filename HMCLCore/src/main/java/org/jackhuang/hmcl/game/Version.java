@@ -223,7 +223,7 @@ public class Version implements Comparable<Version>, Validation {
      */
     public Version resolve(VersionProvider provider) throws VersionNotFoundException {
         if (isResolved()) return this;
-        return resolve(provider, new HashSet<>()).setResolved();
+        return resolve(provider, new HashSet<>()).markAsResolved();
     }
 
     protected Version merge(Version parent, boolean isPatch) {
@@ -243,12 +243,12 @@ public class Version implements Comparable<Version>, Validation {
                 Lang.merge(parent.compatibilityRules, this.compatibilityRules),
                 downloads == null ? parent.downloads : downloads,
                 logging == null ? parent.logging : logging,
-                type,
-                time,
-                releaseTime,
+                type == null ? parent.type : type,
+                time == null ? parent.time : time,
+                releaseTime == null ? parent.releaseTime : releaseTime,
                 Lang.merge(minimumLauncherVersion, parent.minimumLauncherVersion, Math::max),
                 hidden,
-                false,
+                true,
                 isPatch ? parent.patches : Lang.merge(Lang.merge(parent.patches, Collections.singleton(toPatch())), patches));
     }
 
@@ -256,7 +256,10 @@ public class Version implements Comparable<Version>, Validation {
         Version thisVersion;
 
         if (inheritsFrom == null) {
-            thisVersion = this.jar == null ? this.setJar(id) : this;
+            if (isRoot())
+                thisVersion = new Version(id).setJar(id);
+            else
+                thisVersion = this.jar == null ? this.setJar(id) : this;
         } else {
             // To maximize the compatibility.
             if (!resolvedSoFar.add(id)) {
@@ -315,8 +318,12 @@ public class Version implements Comparable<Version>, Validation {
         return thisVersion.setId(id);
     }
 
-    private Version setResolved() {
+    private Version markAsResolved() {
         return new Version(true, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
+    }
+
+    public Version markAsUnresolved() {
+        return new Version(false, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
     }
 
     private Version setHidden(Boolean hidden) {

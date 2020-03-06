@@ -34,3 +34,5 @@ NVIDIA
 
 # netbeans
 .nb-gradle
+
+*.exe

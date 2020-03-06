@@ -70,6 +70,13 @@ public class MaintainTask extends Task<Version> {
         }
     }
 
+    public static Version maintainPreservingPatches(GameRepository repository, Version version) {
+        if (!version.isResolvedPreservingPatches())
+            throw new IllegalArgumentException("MaintainTask requires independent game version");
+        Version newVersion = maintain(repository, version.resolve(repository));
+        return newVersion.setPatches(version.getPatches()).markAsUnresolved();
+    }
+
     private static Version maintainGameWithLaunchWrapper(Version version) {
         LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
         VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
