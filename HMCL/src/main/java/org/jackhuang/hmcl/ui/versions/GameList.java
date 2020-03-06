@@ -78,13 +78,12 @@ public class GameList extends ListPageBase<GameListItem> implements DecoratorPag
                 children.forEach(GameListItem::checkSelection);
 
                 profile.selectedVersionProperty().addListener(listenerHolder.weak((a, b, newValue) -> {
-                    Platform.runLater(() -> {
-                        children.forEach(it -> it.selectedProperty().set(false));
-                        children.stream()
-                                .filter(it -> it.getVersion().equals(newValue))
-                                .findFirst()
-                                .ifPresent(it -> it.selectedProperty().set(true));
-                    });
+                    FXUtils.checkFxUserThread();
+                    children.forEach(it -> it.selectedProperty().set(false));
+                    children.stream()
+                            .filter(it -> it.getVersion().equals(newValue))
+                            .findFirst()
+                            .ifPresent(it -> it.selectedProperty().set(true));
                 }));
             }
             toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {
