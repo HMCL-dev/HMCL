@@ -136,7 +136,8 @@ public class Versions {
     }
 
     public static void modifyGameSettings(Profile profile, String version) {
-        Controllers.getVersionPage().loadVersion(version, profile);
+        Controllers.getVersionPage().setVersion(version, profile);
+        // VersionPage.loadVersion will be invoked after navigation
         Controllers.navigate(Controllers.getVersionPage());
     }
 }

@@ -50,6 +50,7 @@ import java.io.File;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -77,8 +78,8 @@ public class VersionPage extends Control implements DecoratorPage {
     {
         Profiles.registerVersionsListener(this::loadVersions);
 
-        listView.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
-            if (newValue != null)
+        listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null && !Objects.equals(oldValue, newValue))
                 loadVersion(newValue, profile);
         });
 
@@ -107,19 +108,21 @@ public class VersionPage extends Control implements DecoratorPage {
         });
     }
 
-    public void loadVersion(String version, Profile profile) {
-        listView.getSelectionModel().select(version);
+    public void setVersion(String version, Profile profile) {
         this.version = version;
         this.profile = profile;
+    }
+
+    public void loadVersion(String version, Profile profile) {
+        setVersion(version, profile);
+        listView.getSelectionModel().select(version);
 
         versionSettingsPage.loadVersion(profile, version);
-        loading.set(true);
 
         CompletableFuture.allOf(
                 modListPage.loadVersion(profile, version),
                 installerListPage.loadVersion(profile, version),
-                worldListPage.loadVersion(profile, version))
-                .whenCompleteAsync((result, exception) -> loading.set(false), Platform::runLater);
+                worldListPage.loadVersion(profile, version));
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
