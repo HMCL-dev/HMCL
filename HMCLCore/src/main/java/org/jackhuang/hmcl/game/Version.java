@@ -257,7 +257,7 @@ public class Version implements Comparable<Version>, Validation {
 
         if (inheritsFrom == null) {
             if (isRoot())
-                thisVersion = new Version(id).setJar(id);
+                thisVersion = new Version(id).setPatches(patches).setJar(id);
             else
                 thisVersion = this.jar == null ? this.setJar(id) : this;
         } else {

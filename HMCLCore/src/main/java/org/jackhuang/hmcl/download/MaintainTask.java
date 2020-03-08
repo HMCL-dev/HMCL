@@ -45,7 +45,7 @@ public class MaintainTask extends Task<Version> {
         this.repository = repository;
         this.version = version;
 
-        if (version.getInheritsFrom() != null)
+        if (!version.isResolvedPreservingPatches())
             throw new IllegalArgumentException("MaintainTask requires independent game version");
     }
 
@@ -55,13 +55,31 @@ public class MaintainTask extends Task<Version> {
     }
 
     public static Version maintain(GameRepository repository, Version version) {
-        if (version.getInheritsFrom() != null)
+        if (!version.isResolvedPreservingPatches())
             throw new IllegalArgumentException("MaintainTask requires independent game version");
 
-        String mainClass = version.resolve(null).getMainClass();
+        // We made a mistake that priority of OptiFine should be 90000 instead of 10000,
+        // manually reset priority here.
+        version = version.setPatches(version.getPatches().stream().map(patch -> {
+            if (FABRIC.getPatchId().equals(patch.getId())) {
+                return patch.setPriority(30000);
+            } else if (FORGE.getPatchId().equals(patch.getId())) {
+                return patch.setPriority(30000);
+            } else if (LITELOADER.getPatchId().equals(patch.getId())) {
+                return patch.setPriority(60000);
+            } else if (OPTIFINE.getPatchId().equals(patch.getId())) {
+                return patch.setPriority(90000);
+            } else if (MINECRAFT.getPatchId().equals(patch.getId())) {
+                return patch.setPriority(0);
+            } else {
+                return patch;
+            }
+        }).collect(Collectors.toList())).resolve(repository);
+
+        String mainClass = version.getMainClass();
 
         if (mainClass != null && mainClass.contains("launchwrapper")) {
-            return maintainOptiFineLibrary(repository, maintainGameWithLaunchWrapper(unique(version)));
+            return maintainOptiFineLibrary(repository, maintainGameWithLaunchWrapper(unique(version), true));
         } else {
             // Vanilla Minecraft does not need maintain
             // Forge 1.13 support not implemented, not compatible with OptiFine currently.
@@ -73,11 +91,11 @@ public class MaintainTask extends Task<Version> {
     public static Version maintainPreservingPatches(GameRepository repository, Version version) {
         if (!version.isResolvedPreservingPatches())
             throw new IllegalArgumentException("MaintainTask requires independent game version");
-        Version newVersion = maintain(repository, version.resolve(repository));
+        Version newVersion = maintain(repository, version.resolvePreservingPatches(repository));
         return newVersion.setPatches(version.getPatches()).markAsUnresolved();
     }
 
-    private static Version maintainGameWithLaunchWrapper(Version version) {
+    private static Version maintainGameWithLaunchWrapper(Version version, boolean reorderTweakClass) {
         LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
         VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
         String mainClass = null;
@@ -88,24 +106,27 @@ public class MaintainTask extends Task<Version> {
 
         // Installing Forge will override the Minecraft arguments in json, so LiteLoader and OptiFine Tweaker are being re-added.
 
-        builder.removeTweakClass("liteloader");
         if (libraryAnalyzer.has(LITELOADER) && !libraryAnalyzer.hasModLauncher()) {
-            builder.addArgument("--tweakClass", "com.mumfrey.liteloader.launch.LiteLoaderTweaker");
+            builder.replaceTweakClass("liteloader", "com.mumfrey.liteloader.launch.LiteLoaderTweaker", !reorderTweakClass);
+        } else {
+            builder.removeTweakClass("liteloader");
         }
 
-        builder.removeTweakClass("optifine");
         if (libraryAnalyzer.has(OPTIFINE)) {
             if (!libraryAnalyzer.has(LITELOADER) && !libraryAnalyzer.has(FORGE)) {
-                builder.addArgument("--tweakClass", "optifine.OptiFineTweaker");
+                builder.replaceTweakClass("optifine", "optifine.OptiFineTweaker", !reorderTweakClass);
             } else {
                 if (libraryAnalyzer.hasModLauncher()) {
                     // If ModLauncher installed, we use ModLauncher in place of LaunchWrapper.
                     mainClass = "cpw.mods.modlauncher.Launcher";
+                    builder.replaceTweakClass("optifine", "optifine.OptiFineForgeTweaker", !reorderTweakClass);
                 } else {
                     // If forge or LiteLoader installed, OptiFine Forge Tweaker is needed.
-                    builder.addArgument("--tweakClass", "optifine.OptiFineForgeTweaker");
+                    builder.replaceTweakClass("optifine", "optifine.OptiFineForgeTweaker", !reorderTweakClass);
                 }
             }
+        } else {
+            builder.removeTweakClass("optifine");
         }
 
         Version ret = builder.build();
@@ -139,6 +160,13 @@ public class MaintainTask extends Task<Version> {
         }
 
         return version.setLibraries(libraries.stream().filter(Objects::nonNull).collect(Collectors.toList()));
+    }
+
+    public static boolean isPurePatched(Version version) {
+        if (!version.isResolvedPreservingPatches())
+            throw new IllegalArgumentException("isPurePatched requires a version resolved preserving patches");
+
+        return version.hasPatch("game");
     }
 
     public static Version unique(Version version) {

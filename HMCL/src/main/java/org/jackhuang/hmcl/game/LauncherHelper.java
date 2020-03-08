@@ -124,7 +124,7 @@ public final class LauncherHelper {
     private void launch0() {
         HMCLGameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
-        Version version = MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion));
+        Version version = MaintainTask.maintain(repository, repository.getResolvedPreservingPatchesVersion(selectedVersion));
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
 
         TaskExecutor executor = Task.allOf(

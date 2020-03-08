@@ -51,14 +51,57 @@ public final class VersionLibraryBuilder {
     }
 
     public void removeTweakClass(String target) {
+        replaceTweakClass(target, null, true);
+    }
+
+    /**
+     * Replace existing tweak class without reordering.
+     * If the tweak class does not exist, the new tweak class will be appended to the end of argument list.
+     * If the tweak class appears more than one time, the tweak classes will be removed excluding the first one.
+     *
+     * @param target the tweak class to replace
+     * @param replacement the new tweak class to be replaced with
+     */
+    public void replaceTweakClass(String target, String replacement) {
+        replaceTweakClass(target, replacement, true);
+    }
+
+    /**
+     * Replace existing tweak class and add the new tweak class to the end of argument list.
+     *
+     * @param target the tweak class to replace
+     * @param replacement the new tweak class to be replaced with
+     */
+    public void addTweakClass(String target, String replacement) {
+        replaceTweakClass(target, replacement, false);
+    }
+
+    /**
+     * Replace existing tweak class.
+     * If the tweak class does not exist, the new tweak class will be appended to the end of argument list.
+     * If the tweak class appears more than one time, the tweak classes will be removed excluding the first one.
+     *
+     * @param target the tweak class to replace
+     * @param replacement the new tweak class to be replaced with, if null, remove the tweak class only
+     * @param inPlace if true, replace the tweak class in place, otherwise add the tweak class to the end of the argument list without replacement.
+     */
+    public void replaceTweakClass(String target, String replacement, boolean inPlace) {
+        boolean replaced = false;
         if (useMcArgs) {
             for (int i = 0; i + 1 < mcArgs.size(); ++i) {
                 String arg0Str = mcArgs.get(i);
                 String arg1Str = mcArgs.get(i + 1);
                 if (arg0Str.equals("--tweakClass") && arg1Str.toLowerCase().contains(target)) {
-                    mcArgs.remove(i);
-                    mcArgs.remove(i);
-                    --i;
+                    if (!replaced && inPlace) {
+                        // for the first one, we replace the tweak class only.
+                        mcArgs.set(i + 1, replacement);
+                        replaced = true;
+                    } else {
+                        // otherwise, we remove the duplicate tweak classes.
+                        mcArgs.remove(i);
+                        mcArgs.remove(i);
+                        --i;
+                    }
                 }
             }
         }
@@ -71,11 +114,24 @@ public final class VersionLibraryBuilder {
                 String arg0Str = arg0.toString();
                 String arg1Str = arg1.toString();
                 if (arg0Str.equals("--tweakClass") && arg1Str.toLowerCase().contains(target)) {
-                    game.remove(i);
-                    game.remove(i);
-                    --i;
+                    if (!replaced && inPlace) {
+                        // for the first one, we replace the tweak class only.
+                        game.set(i + 1, new StringArgument(replacement));
+                        replaced = true;
+                    } else {
+                        // otherwise, we remove the duplicate tweak classes.
+                        game.remove(i);
+                        game.remove(i);
+                        --i;
+                    }
                 }
             }
+        }
+
+        // if the tweak class does not exist, add a new one to the end.
+        if (!replaced && replacement != null) {
+            game.add(new StringArgument("--tweakClass"));
+            game.add(new StringArgument(replacement));
         }
     }
 
