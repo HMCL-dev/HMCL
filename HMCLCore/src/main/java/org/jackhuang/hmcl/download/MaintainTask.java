@@ -45,7 +45,7 @@ public class MaintainTask extends Task<Version> {
         this.repository = repository;
         this.version = version;
 
-        if (!version.isResolvedPreservingPatches())
+        if (version.getInheritsFrom() != null)
             throw new IllegalArgumentException("MaintainTask requires independent game version");
     }
 
@@ -55,28 +55,10 @@ public class MaintainTask extends Task<Version> {
     }
 
     public static Version maintain(GameRepository repository, Version version) {
-        if (!version.isResolvedPreservingPatches())
+        if (version.getInheritsFrom() != null)
             throw new IllegalArgumentException("MaintainTask requires independent game version");
 
-        // We made a mistake that priority of OptiFine should be 90000 instead of 10000,
-        // manually reset priority here.
-        version = version.setPatches(version.getPatches().stream().map(patch -> {
-            if (FABRIC.getPatchId().equals(patch.getId())) {
-                return patch.setPriority(30000);
-            } else if (FORGE.getPatchId().equals(patch.getId())) {
-                return patch.setPriority(30000);
-            } else if (LITELOADER.getPatchId().equals(patch.getId())) {
-                return patch.setPriority(60000);
-            } else if (OPTIFINE.getPatchId().equals(patch.getId())) {
-                return patch.setPriority(90000);
-            } else if (MINECRAFT.getPatchId().equals(patch.getId())) {
-                return patch.setPriority(0);
-            } else {
-                return patch;
-            }
-        }).collect(Collectors.toList())).resolve(repository);
-
-        String mainClass = version.getMainClass();
+        String mainClass = version.resolve(null).getMainClass();
 
         if (mainClass != null && mainClass.contains("launchwrapper")) {
             return maintainOptiFineLibrary(repository, maintainGameWithLaunchWrapper(unique(version), true));
@@ -91,7 +73,7 @@ public class MaintainTask extends Task<Version> {
     public static Version maintainPreservingPatches(GameRepository repository, Version version) {
         if (!version.isResolvedPreservingPatches())
             throw new IllegalArgumentException("MaintainTask requires independent game version");
-        Version newVersion = maintain(repository, version.resolvePreservingPatches(repository));
+        Version newVersion = maintain(repository, version.resolve(repository));
         return newVersion.setPatches(version.getPatches()).markAsUnresolved();
     }
 
