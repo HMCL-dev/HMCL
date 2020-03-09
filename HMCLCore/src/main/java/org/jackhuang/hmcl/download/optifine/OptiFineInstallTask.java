@@ -149,6 +149,16 @@ public final class OptiFineInstallTask extends Task<Version> {
                 FileUtils.copyFile(dest, gameRepository.getLibraryFile(version, optiFineLibrary).toPath());
             }
 
+            Path launchWrapper2 = fs.getPath("launchwrapper-2.0.jar");
+            if (Files.exists(launchWrapper2)) {
+                Library launchWrapper = new Library(new Artifact("optifine", "launchwrapper", "2.0"));
+                File launchWrapperFile = gameRepository.getLibraryFile(version, launchWrapper);
+                FileUtils.makeDirectory(launchWrapperFile.getAbsoluteFile().getParentFile());
+                FileUtils.copyFile(launchWrapper2, launchWrapperFile.toPath());
+                hasLaunchWrapper = true;
+                libraries.add(launchWrapper);
+            }
+
             Path launchWrapperVersionText = fs.getPath("launchwrapper-of.txt");
             if (Files.exists(launchWrapperVersionText)) {
                 String launchWrapperVersion = FileUtils.readText(launchWrapperVersionText).trim();
