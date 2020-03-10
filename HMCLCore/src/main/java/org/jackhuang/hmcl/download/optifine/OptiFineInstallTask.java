@@ -122,7 +122,8 @@ public final class OptiFineInstallTask extends Task<Version> {
 
     @Override
     public void execute() throws Exception {
-        if ("cpw.mods.modlauncher.Launcher".equals(version.resolve(dependencyManager.getGameRepository()).getMainClass()))
+        String originalMainClass = version.resolve(dependencyManager.getGameRepository()).getMainClass();
+        if (!"net.minecraft.client.main.Main".equals(originalMainClass) && !"net.minecraft.launchwrapper.Launch".equals(originalMainClass))
             throw new OptiFineInstallTask.UnsupportedOptiFineInstallationException();
 
         List<Library> libraries = new LinkedList<>();
