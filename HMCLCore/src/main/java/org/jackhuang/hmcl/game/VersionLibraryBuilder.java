@@ -51,7 +51,7 @@ public final class VersionLibraryBuilder {
     }
 
     public void removeTweakClass(String target) {
-        replaceTweakClass(target, null, true);
+        replaceTweakClass(target, null, false);
     }
 
     /**
@@ -86,6 +86,9 @@ public final class VersionLibraryBuilder {
      * @param inPlace if true, replace the tweak class in place, otherwise add the tweak class to the end of the argument list without replacement.
      */
     public void replaceTweakClass(String target, String replacement, boolean inPlace) {
+        if (replacement == null && inPlace)
+            throw new IllegalArgumentException("Replacement cannot be null in replace mode");
+
         boolean replaced = false;
         if (useMcArgs) {
             for (int i = 0; i + 1 < mcArgs.size(); ++i) {
