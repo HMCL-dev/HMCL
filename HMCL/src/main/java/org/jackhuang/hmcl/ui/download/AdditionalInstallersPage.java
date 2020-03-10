@@ -17,18 +17,16 @@
  */
 package org.jackhuang.hmcl.ui.download;
 
-import com.jfoenix.controls.JFXButton;
-import javafx.fxml.FXML;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
-import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.util.Map;
@@ -38,15 +36,24 @@ import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class AdditionalInstallersPage extends InstallersPage {
-    protected final InstallerWizardProvider provider;
+    protected final BooleanProperty compatible = new SimpleBooleanProperty();
+    protected final GameRepository repository;
+    protected final String gameVersion;
+    protected final Version version;
 
-    public AdditionalInstallersPage(InstallerWizardProvider provider, WizardController controller, GameRepository repository, DownloadProvider downloadProvider) {
-        super(controller, repository, provider.getGameVersion(), downloadProvider);
-        this.provider = provider;
+    public AdditionalInstallersPage(String gameVersion, Version version, WizardController controller, GameRepository repository, DownloadProvider downloadProvider) {
+        super(controller, repository, gameVersion, downloadProvider);
+        this.gameVersion = gameVersion;
+        this.version = version;
+        this.repository = repository;
 
         txtName.getValidators().clear();
-        txtName.setText(provider.getVersion().getId());
+        txtName.setText(version.getId());
         txtName.setEditable(false);
+
+        btnInstall.disableProperty().bind(Bindings.createBooleanBinding(
+                () -> !compatible.get() || !txtName.validate(),
+                txtName.textProperty(), compatible));
     }
 
     @Override
@@ -65,7 +72,7 @@ class AdditionalInstallersPage extends InstallersPage {
 
     @Override
     public void onNavigate(Map<String, Object> settings) {
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(provider.getVersion().resolvePreservingPatches(provider.getProfile().getRepository()));
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version.resolvePreservingPatches(repository));
         String game = analyzer.getVersion(MINECRAFT).orElse(null);
         String fabric = analyzer.getVersion(FABRIC).orElse(null);
         String forge = analyzer.getVersion(FORGE).orElse(null);
@@ -76,13 +83,25 @@ class AdditionalInstallersPage extends InstallersPage {
         String[] libraryIds = new String[]{"game", "fabric", "forge", "liteloader", "optifine"};
         String[] versions = new String[]{game, fabric, forge, liteLoader, optiFine};
 
+        String currentGameVersion = Lang.nonNull(getVersion("game"), game);
+
+        boolean compatible = true;
         for (int i = 0; i < libraryIds.length; ++i) {
             String libraryId = libraryIds[i];
-            if (versions[i] != null || controller.getSettings().containsKey(libraryId))
-                labels[i].setText(i18n("install.installer.version", i18n("install.installer." + libraryId)) + ": " + Lang.nonNull(getVersion(libraryId), versions[i]));
-            else
+            String libraryVersion = Lang.nonNull(getVersion(libraryId), versions[i]);
+            boolean alreadyInstalled = versions[i] != null;
+            if (!"game".equals(libraryId) && currentGameVersion != null && !currentGameVersion.equals(game) && getVersion(libraryId) == null && alreadyInstalled) {
+                // For third-party libraries, if game version is being changed, and the library is not being reinstalled,
+                // warns the user that we should update the library.
+                labels[i].setText(i18n("install.installer.change_version", i18n("install.installer." + libraryId), libraryVersion));
+                compatible = false;
+            } else if (alreadyInstalled || controller.getSettings().containsKey(libraryId)) {
+                labels[i].setText(i18n("install.installer.version", i18n("install.installer." + libraryId)) + ": " + libraryVersion);
+            } else {
                 labels[i].setText(i18n("install.installer.not_installed", i18n("install.installer." + libraryId)));
+            }
         }
+        this.compatible.set(compatible);
     }
 
     @Override

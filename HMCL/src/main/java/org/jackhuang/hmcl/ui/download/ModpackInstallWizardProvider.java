@@ -119,7 +119,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
                         Controllers.dialog(i18n("install.success"), i18n("install.success"), MessageType.INFORMATION, next);
                     }
                 } else {
-                    InstallerWizardProvider.alertFailureMessage(exception, next);
+                    UpdateInstallerWizardProvider.alertFailureMessage(exception, next);
                 }
             }
         });

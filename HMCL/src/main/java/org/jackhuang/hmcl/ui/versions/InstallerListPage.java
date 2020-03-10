@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.download.InstallerWizardProvider;
 import org.jackhuang.hmcl.ui.download.UpdateInstallerWizardProvider;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -88,7 +87,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
             for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
                 String libraryId = type.getPatchId();
                 String libraryVersion = analyzer.getVersion(type).orElse(null);
-                Consumer<InstallerItem> action = libraryVersion == null ? null : removeAction.apply(libraryId);
+                Consumer<InstallerItem> action = "game".equals(libraryId) || libraryVersion == null ? null : removeAction.apply(libraryId);
                 itemsProperty().add(new InstallerItem(libraryId, libraryVersion, () -> {
                     Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
                 }, action));
@@ -114,13 +113,6 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         }, Platform::runLater);
     }
 
-    public void installOnline() {
-        if (gameVersion == null)
-            Controllers.dialog(i18n("version.cannot_read"));
-        else
-            Controllers.getDecorator().startWizard(new InstallerWizardProvider(profile, gameVersion, version));
-    }
-
     public void installOffline() {
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("install.installer.install_offline.extension"), "*.jar", "*.exe"));
@@ -142,7 +134,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                     } else {
                         if (executor.getException() == null)
                             return;
-                        InstallerWizardProvider.alertFailureMessage(executor.getException(), null);
+                        UpdateInstallerWizardProvider.alertFailureMessage(executor.getException(), null);
                     }
                 });
             }

@@ -62,7 +62,7 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
     public Object finish(Map<String, Object> settings) {
         settings.put("title", i18n("install.new_game"));
         settings.put("success_message", i18n("install.success"));
-        settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> InstallerWizardProvider.alertFailureMessage(exception, next));
+        settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
 
         return finishVersionDownloadingAsync(settings);
     }
@@ -72,7 +72,8 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         DownloadProvider provider = profile.getDependency().getPrimaryDownloadProvider();
         switch (step) {
             case 0:
-                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.game")), "", provider, "game", () -> controller.onNext(new InstallersPage(controller, profile.getRepository(), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), provider)));
+                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.game")), "", provider, "game",
+                        () -> controller.onNext(new InstallersPage(controller, profile.getRepository(), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), provider)));
             default:
                 throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
         }

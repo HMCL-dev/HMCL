@@ -112,7 +112,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         return removeLibraryAsync(baseVersion.resolvePreservingPatches(repository), libraryVersion.getLibraryId())
                 .thenComposeAsync(version -> libraryVersion.getInstallTask(this, version))
                 .thenApplyAsync(baseVersion::addPatch)
-                .thenComposeAsync(repository::save).withStage(String.format("hmcl.install.%s:%s", libraryVersion.getLibraryId(), libraryVersion.getSelfVersion()));
+                .withStage(String.format("hmcl.install.%s:%s", libraryVersion.getLibraryId(), libraryVersion.getSelfVersion()));
     }
 
     public Task<Version> installLibraryAsync(Version oldVersion, Path installer) {

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.download;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.effects.JFXDepthManager;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -91,7 +92,8 @@ public class InstallersPage extends StackPane implements WizardPage {
         Validator nameValidator = new Validator(OperatingSystem::isNameValid);
         nameValidator.setMessage(i18n("install.new_game.malformed"));
         txtName.getValidators().addAll(hasVersion, nameValidator);
-        txtName.textProperty().addListener(e -> btnInstall.setDisable(!txtName.validate()));
+        btnInstall.disableProperty().bind(Bindings.createBooleanBinding(() -> !txtName.validate(),
+                txtName.textProperty()));
         txtName.setText(gameVersion);
 
         Node[] buttons = new Node[]{btnGame, btnFabric, btnForge, btnLiteLoader, btnOptiFine};
