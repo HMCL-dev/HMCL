@@ -42,7 +42,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.jackhuang.hmcl.ui.download.LocalModpackPage.*;
+import static org.jackhuang.hmcl.ui.download.LocalModpackPage.MODPACK_FILE;
 import static org.jackhuang.hmcl.ui.download.RemoteModpackPage.MODPACK_SERVER_MANIFEST;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -90,7 +90,7 @@ public final class ModpackSelectionPage extends StackPane implements WizardPage 
 
     @FXML
     private void onChooseRemoteFile() {
-        Controllers.inputDialog(i18n("modpack.choose.remote.tooltip"), (urlString, resolve, reject) -> {
+        Controllers.prompt(i18n("modpack.choose.remote.tooltip"), (urlString, resolve, reject) -> {
             try {
                 URL url = new URL(urlString);
                 if (urlString.endsWith("server-manifest.json")) {

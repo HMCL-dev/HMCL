@@ -26,7 +26,10 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FutureCallback;
 
+import java.util.concurrent.CompletableFuture;
+
 public class InputDialogPane extends StackPane {
+    private final CompletableFuture<String> future = new CompletableFuture<>();
 
     @FXML
     private JFXButton acceptButton;
@@ -47,8 +50,10 @@ public class InputDialogPane extends StackPane {
         cancelButton.setOnMouseClicked(e -> fireEvent(new DialogCloseEvent()));
         acceptButton.setOnMouseClicked(e -> {
             acceptPane.showSpinner();
+
             onResult.call(textField.getText(), () -> {
                 acceptPane.hideSpinner();
+                future.complete(textField.getText());
                 fireEvent(new DialogCloseEvent());
             }, msg -> {
                 acceptPane.hideSpinner();
@@ -62,7 +67,11 @@ public class InputDialogPane extends StackPane {
         ));
     }
 
-    public void setInitialText(String text) {
-        textField.setText(text);
+    public void setInitialValue(String value) {
+        textField.setText(value);
+    }
+
+    public CompletableFuture<String> getCompletableFuture() {
+        return future;
     }
 }

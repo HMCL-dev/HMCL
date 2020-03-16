@@ -64,7 +64,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             toolbar.getChildren().add(createToolbarButton(i18n("button.refresh"), SVG::refresh, skinnable::refresh));
             toolbar.getChildren().add(createToolbarButton(i18n("mods.add"), SVG::plus, skinnable::add));
             toolbar.getChildren().add(createToolbarButton(i18n("button.remove"), SVG::delete, () -> {
-                Controllers.confirmDialog(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
+                Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
                     skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
                 }, null);
             }));

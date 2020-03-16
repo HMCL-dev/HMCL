@@ -18,20 +18,19 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXListCell;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Control;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.SkinBase;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
+import javafx.util.Callback;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
@@ -71,9 +70,12 @@ public class VersionPage extends Control implements DecoratorPage {
     private final WorldListPage worldListPage = new WorldListPage();
     private final TransitionPane transitionPane = new TransitionPane();
     private final ObjectProperty<TabHeader.Tab> selectedTab = new SimpleObjectProperty<>();
+    private final BooleanProperty currentVersionUpgradable = new SimpleBooleanProperty();
 
     private Profile profile;
     private String version;
+
+    private String preferredVersionName = null;
 
     {
         Profiles.registerVersionsListener(this::loadVersions);
@@ -81,6 +83,14 @@ public class VersionPage extends Control implements DecoratorPage {
         listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null && !Objects.equals(oldValue, newValue))
                 loadVersion(newValue, profile);
+            if (newValue == null && !Objects.equals(oldValue, newValue)) {
+                if (listView.getItems().contains(preferredVersionName)) {
+                    loadVersion(preferredVersionName, profile);
+                    preferredVersionName = null;
+                } else if (!listView.getItems().isEmpty()) {
+                    loadVersion(listView.getItems().get(0), profile);
+                }
+            }
         });
 
         versionSettingsTab.setNode(versionSettingsPage);
@@ -118,6 +128,7 @@ public class VersionPage extends Control implements DecoratorPage {
         listView.getSelectionModel().select(version);
 
         versionSettingsPage.loadVersion(profile, version);
+        currentVersionUpgradable.set(profile.getRepository().isModpack(version));
 
         CompletableFuture.allOf(
                 modListPage.loadVersion(profile, version),
@@ -160,6 +171,27 @@ public class VersionPage extends Control implements DecoratorPage {
         Versions.testGame(profile, version);
     }
 
+    private void updateGame() {
+        Versions.updateVersion(profile, version);
+    }
+
+    private void generateLaunchScript() {
+        Versions.generateLaunchScript(profile, version);
+    }
+
+    private void export() {
+        Versions.exportVersion(profile, version);
+    }
+
+    private void rename() {
+        Versions.renameVersion(profile, version)
+            .thenApply(newVersionName -> this.preferredVersionName = newVersionName);
+    }
+
+    private void remove() {
+        Versions.deleteVersion(profile, version);
+    }
+
     @Override
     protected Skin createDefaultSkin() {
         return new Skin(this);
@@ -172,6 +204,9 @@ public class VersionPage extends Control implements DecoratorPage {
 
     public static class Skin extends SkinBase<VersionPage> {
 
+        String currentVersion;
+        private JFXPopup listViewItemPopup;
+
         /**
          * Constructor for all SkinBase instances.
          *
@@ -180,7 +215,46 @@ public class VersionPage extends Control implements DecoratorPage {
         protected Skin(VersionPage control) {
             super(control);
 
+            PopupMenu menu = new PopupMenu();
+            listViewItemPopup = new JFXPopup(menu);
+            menu.getContent().setAll(
+                    new IconedMenuItem(FXUtils.limitingSize(SVG.launch(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch.test"), FXUtils.withJFXPopupClosing(() -> {
+                        Versions.testGame(getSkinnable().profile, currentVersion);
+                    }, listViewItemPopup)),
+                    new IconedMenuItem(FXUtils.limitingSize(SVG.script(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch_script"), FXUtils.withJFXPopupClosing(() -> {
+                        Versions.generateLaunchScript(getSkinnable().profile, currentVersion);
+                    }, listViewItemPopup)),
+                    new MenuSeparator(),
+                    new IconedMenuItem(FXUtils.limitingSize(SVG.pencil(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(() -> {
+                        Versions.renameVersion(getSkinnable().profile, currentVersion).thenApply(name -> getSkinnable().preferredVersionName = name);
+                    }, listViewItemPopup)),
+                    new IconedMenuItem(FXUtils.limitingSize(SVG.delete(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.remove"), FXUtils.withJFXPopupClosing(() -> {
+                        Versions.deleteVersion(getSkinnable().profile, currentVersion);
+                    }, listViewItemPopup)),
+                    new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("modpack.export"), FXUtils.withJFXPopupClosing(() -> {
+                        Versions.exportVersion(getSkinnable().profile, currentVersion);
+                    }, listViewItemPopup)),
+                    new MenuSeparator(),
+                    new IconedMenuItem(FXUtils.limitingSize(SVG.folderOpen(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.game"), FXUtils.withJFXPopupClosing(() -> {
+                        Versions.openFolder(getSkinnable().profile, currentVersion);
+                    }, listViewItemPopup))
+            );
+
             control.listView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+            control.listView.setCellFactory(new Callback<ListView<String>, ListCell<String>>() {
+                @Override
+                public ListCell<String> call(ListView<String> param) {
+                    JFXListCell<String> cell = new JFXListCell<>();
+                    cell.setOnMouseClicked(e -> {
+                        if (cell.getItem() == null) return;
+                        currentVersion = cell.getItem();
+                        if (e.getButton() == MouseButton.SECONDARY) {
+                            listViewItemPopup.show(cell, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
+                        }
+                    });
+                    return cell;
+                }
+            });
 
             SpinnerPane spinnerPane = new SpinnerPane();
             spinnerPane.getStyleClass().add("large-spinner-pane");
@@ -235,10 +309,27 @@ public class VersionPage extends Control implements DecoratorPage {
                 PopupMenu managementList = new PopupMenu();
                 JFXPopup managementPopup = new JFXPopup(managementList);
                 managementList.getContent().setAll(
+                        new IconedMenuItem(FXUtils.limitingSize(SVG.launch(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch.test"), FXUtils.withJFXPopupClosing(control::testGame, managementPopup)),
+                        new IconedMenuItem(FXUtils.limitingSize(SVG.script(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch_script"), FXUtils.withJFXPopupClosing(control::generateLaunchScript, managementPopup)),
+                        new MenuSeparator(),
+                        new IconedMenuItem(FXUtils.limitingSize(SVG.pencil(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(control::rename, managementPopup)),
+                        new IconedMenuItem(FXUtils.limitingSize(SVG.delete(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.remove"), FXUtils.withJFXPopupClosing(control::remove, managementPopup)),
+                        new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("modpack.export"), FXUtils.withJFXPopupClosing(control::export, managementPopup)),
+                        new MenuSeparator(),
                         new IconedMenuItem(null, i18n("version.manage.redownload_assets_index"), FXUtils.withJFXPopupClosing(control::redownloadAssetIndex, managementPopup)),
                         new IconedMenuItem(null, i18n("version.manage.remove_libraries"), FXUtils.withJFXPopupClosing(control::clearLibraries, managementPopup)),
                         new IconedMenuItem(null, i18n("version.manage.clean"), FXUtils.withJFXPopupClosing(control::clearJunkFiles, managementPopup)).addTooltip(i18n("version.manage.clean.tooltip"))
                 );
+
+                JFXButton upgradeButton = new JFXButton();
+                FXUtils.setLimitWidth(upgradeButton, 40);
+                FXUtils.setLimitHeight(upgradeButton, 40);
+                upgradeButton.setGraphic(SVG.update(Theme.whiteFillBinding(), 20, 20));
+                upgradeButton.getStyleClass().add("jfx-decorator-button");
+                upgradeButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
+                upgradeButton.setOnAction(event -> control.updateGame());
+                upgradeButton.visibleProperty().bind(control.currentVersionUpgradable);
+                FXUtils.installFastTooltip(upgradeButton, i18n("version.update"));
 
                 JFXButton testGameButton = new JFXButton();
                 FXUtils.setLimitWidth(testGameButton, 40);
@@ -267,7 +358,7 @@ public class VersionPage extends Control implements DecoratorPage {
                 managementMenuButton.setOnAction(event -> managementPopup.show(managementMenuButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, managementMenuButton.getHeight()));
                 FXUtils.installFastTooltip(managementMenuButton, i18n("settings.game.management"));
 
-                toolBar.getChildren().setAll(testGameButton, browseMenuButton, managementMenuButton);
+                toolBar.getChildren().setAll(upgradeButton, testGameButton, browseMenuButton, managementMenuButton);
             }
 
             BorderPane titleBar = new BorderPane();

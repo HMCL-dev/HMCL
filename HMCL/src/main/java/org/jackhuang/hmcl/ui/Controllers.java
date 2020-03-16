@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -138,14 +139,19 @@ public final class Controllers {
         dialog(new MessageDialogPane(text, title, type, onAccept));
     }
 
-    public static void confirmDialog(String text, String title, Runnable onAccept, Runnable onCancel) {
+    public static void confirm(String text, String title, Runnable onAccept, Runnable onCancel) {
         dialog(new MessageDialogPane(text, title, onAccept, onCancel));
     }
 
-    public static InputDialogPane inputDialog(String text, FutureCallback<String> onResult) {
+    public static CompletableFuture<String> prompt(String text, FutureCallback<String> onResult) {
+        return prompt(text, onResult, "");
+    }
+
+    public static CompletableFuture<String> prompt(String text, FutureCallback<String> onResult, String initialValue) {
         InputDialogPane pane = new InputDialogPane(text, onResult);
         dialog(pane);
-        return pane;
+        pane.setInitialValue(initialValue);
+        return pane.getCompletableFuture();
     }
 
     public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, String title) {

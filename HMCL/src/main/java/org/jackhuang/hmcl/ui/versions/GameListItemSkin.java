@@ -39,6 +39,8 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameListItemSkin extends SkinBase<GameListItem> {
+    private static JFXPopup popup;
+    private static GameListItem currentSkinnable;
 
     public GameListItemSkin(GameListItem skinnable) {
         super(skinnable);
@@ -56,20 +58,22 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         gameItem.setMouseTransparent(true);
         root.setCenter(gameItem);
 
-        PopupMenu menu = new PopupMenu();
-        JFXPopup popup = new JFXPopup(menu);
+        if (popup == null) {
+            PopupMenu menu = new PopupMenu();
+            popup = new JFXPopup(menu);
 
-        menu.getContent().setAll(
-                new IconedMenuItem(FXUtils.limitingSize(SVG.launch(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch.test"), FXUtils.withJFXPopupClosing(skinnable::launch, popup)),
-                new IconedMenuItem(FXUtils.limitingSize(SVG.script(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch_script"), FXUtils.withJFXPopupClosing(skinnable::generateLaunchScript, popup)),
-                new MenuSeparator(),
-                new IconedMenuItem(FXUtils.limitingSize(SVG.gear(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.manage"), FXUtils.withJFXPopupClosing(skinnable::modifyGameSettings, popup)),
-                new MenuSeparator(),
-                new IconedMenuItem(FXUtils.limitingSize(SVG.pencil(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(skinnable::rename, popup)),
-                new IconedMenuItem(FXUtils.limitingSize(SVG.delete(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.remove"), FXUtils.withJFXPopupClosing(skinnable::remove, popup)),
-                new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("modpack.export"), FXUtils.withJFXPopupClosing(skinnable::export, popup)),
-                new MenuSeparator(),
-                new IconedMenuItem(FXUtils.limitingSize(SVG.folderOpen(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.game"), FXUtils.withJFXPopupClosing(skinnable::browse, popup)));
+            menu.getContent().setAll(
+                    new IconedMenuItem(FXUtils.limitingSize(SVG.launch(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch.test"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.launch(), popup)),
+                    new IconedMenuItem(FXUtils.limitingSize(SVG.script(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch_script"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.generateLaunchScript(), popup)),
+                    new MenuSeparator(),
+                    new IconedMenuItem(FXUtils.limitingSize(SVG.gear(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.manage"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.modifyGameSettings(), popup)),
+                    new MenuSeparator(),
+                    new IconedMenuItem(FXUtils.limitingSize(SVG.pencil(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.rename(), popup)),
+                    new IconedMenuItem(FXUtils.limitingSize(SVG.delete(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.remove"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.remove(), popup)),
+                    new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("modpack.export"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.export(), popup)),
+                    new MenuSeparator(),
+                    new IconedMenuItem(FXUtils.limitingSize(SVG.folderOpen(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.game"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.browse(), popup)));
+        }
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
@@ -84,6 +88,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
 
         JFXButton btnManage = new JFXButton();
         btnManage.setOnMouseClicked(e -> {
+            currentSkinnable = skinnable;
             popup.show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
         });
         btnManage.getStyleClass().add("toggle-icon4");
@@ -105,6 +110,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
                     skinnable.modifyGameSettings();
                 }
             } else if (e.getButton() == MouseButton.SECONDARY) {
+                currentSkinnable = skinnable;
                 popup.show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
             }
         });

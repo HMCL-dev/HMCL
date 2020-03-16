@@ -113,7 +113,7 @@ public class WorldListPage extends ListPageBase<WorldListItem> {
         // Or too many input dialogs are popped.
         Task.supplyAsync(() -> new World(zipFile.toPath()))
                 .whenComplete(Schedulers.javafx(), world -> {
-                    Controllers.inputDialog(i18n("world.name.enter"), (name, resolve, reject) -> {
+                    Controllers.prompt(i18n("world.name.enter"), (name, resolve, reject) -> {
                         Task.runAsync(() -> world.install(savesDir, name))
                                 .whenComplete(Schedulers.javafx(), () -> {
                                     itemsProperty().add(new WorldListItem(new World(savesDir.resolve(name))));
@@ -126,7 +126,7 @@ public class WorldListPage extends ListPageBase<WorldListItem> {
                                     else
                                         reject.accept(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
                                 }).start();
-                    }).setInitialText(world.getWorldName());
+                    }, world.getWorldName());
                 }, e -> {
                     Logging.LOG.log(Level.WARNING, "Unable to parse world file " + zipFile, e);
                     Controllers.dialog(i18n("world.import.invalid"));

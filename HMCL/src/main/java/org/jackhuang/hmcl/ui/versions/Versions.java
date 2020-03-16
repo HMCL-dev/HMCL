@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -47,20 +48,20 @@ public class Versions {
         String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
                 isMovingToTrashSupported ? i18n("version.manage.remove.confirm.trash", version, version + "_removed") :
                         i18n("version.manage.remove.confirm", version);
-        Controllers.confirmDialog(message, i18n("message.confirm"), () -> {
+        Controllers.confirm(message, i18n("message.confirm"), () -> {
             profile.getRepository().removeVersionFromDisk(version);
         }, null);
     }
 
-    public static void renameVersion(Profile profile, String version) {
-        Controllers.inputDialog(i18n("version.manage.rename.message"), (res, resolve, reject) -> {
+    public static CompletableFuture<String> renameVersion(Profile profile, String version) {
+        return Controllers.prompt(i18n("version.manage.rename.message"), (res, resolve, reject) -> {
             if (profile.getRepository().renameVersion(version, res)) {
                 profile.getRepository().refreshVersionsAsync().start();
                 resolve.run();
             } else {
                 reject.accept(i18n("version.manage.rename.fail"));
             }
-        }).setInitialText(version);
+        }, version);
     }
 
     public static void exportVersion(Profile profile, String version) {
