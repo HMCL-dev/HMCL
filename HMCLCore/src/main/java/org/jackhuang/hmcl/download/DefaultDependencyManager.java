@@ -132,8 +132,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
                     throw new UnsupportedLibraryInstallerException();
                 })
-                .thenApplyAsync(oldVersion::addPatch)
-                .thenComposeAsync(repository::save);
+                .thenApplyAsync(oldVersion::addPatch);
     }
 
     public static class UnsupportedLibraryInstallerException extends Exception {

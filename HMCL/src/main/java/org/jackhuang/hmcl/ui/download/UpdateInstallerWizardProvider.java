@@ -84,6 +84,8 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                 if ("game".equals(remoteVersion.getLibraryId())) {
                     stages.add("hmcl.install.assets");
                 }
+            } else if (value instanceof RemoveVersionAction) {
+                ret = ret.thenComposeAsync(version -> dependencyManager.removeLibraryAsync(version, ((RemoveVersionAction) value).libraryId));
             }
         }
 
@@ -102,7 +104,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                         String newGameVersion = ((RemoteVersion) settings.get(libraryId)).getSelfVersion();
                         controller.onNext(new AdditionalInstallersPage(newGameVersion, version, controller, profile.getRepository(), provider));
                     } else {
-                        Controllers.confirmDialog(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
+                        Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
                                 i18n("install.change_version"), controller::onFinish, controller::onCancel);
                     }
                 });
@@ -165,6 +167,14 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             Controllers.dialog(i18n("install.failed.version_mismatch", e.getExpect(), e.getActual()), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
         } else {
             Controllers.dialog(StringUtils.getStackTrace(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+        }
+    }
+
+    public static class RemoveVersionAction {
+        private final String libraryId;
+
+        public RemoveVersionAction(String libraryId) {
+            this.libraryId = libraryId;
         }
     }
 }

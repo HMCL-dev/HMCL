@@ -122,6 +122,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
 
     private void doInstallOffline(File file) {
         Task<?> task = profile.getDependency().installLibraryAsync(version, file.toPath())
+                .thenComposeAsync(profile.getRepository()::save)
                 .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
         task.setName(i18n("install.installer.install_offline"));
         TaskExecutor executor = task.executor(new TaskListener() {
