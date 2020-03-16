@@ -20,15 +20,21 @@ package org.jackhuang.hmcl;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Logging;
 
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.*;
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
@@ -46,7 +52,10 @@ public final class Main {
         checkDirectoryPath();
 
         // This environment check will take ~300ms
-        thread(Main::checkDSTRootCAX3, "CA Certificate Check", true);
+        thread(() -> {
+            fixLetsEncrypt();
+            checkDSTRootCAX3();
+        }, "CA Certificate Check", true);
 
         Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
 
@@ -115,4 +124,31 @@ public final class Main {
         JOptionPane.showMessageDialog(null, message, "Warning", JOptionPane.WARNING_MESSAGE);
     }
 
+    static void fixLetsEncrypt() {
+        try {
+            KeyStore defaultKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            Path ksPath = Paths.get(System.getProperty("java.home"), "lib", "security", "cacerts");
+            defaultKeyStore.load(Files.newInputStream(ksPath), "changeit".toCharArray());
+
+            KeyStore letsEncryptKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            InputStream letsEncryptFile = Main.class.getResourceAsStream("/assets/lekeystore.jks");
+            letsEncryptKeyStore.load(letsEncryptFile, "supersecretpassword".toCharArray());
+
+            KeyStore merged = KeyStore.getInstance(KeyStore.getDefaultType());
+            merged.load(null, new char[0]);
+            for (String alias : Collections.list(letsEncryptKeyStore.aliases()))
+                merged.setCertificateEntry(alias, letsEncryptKeyStore.getCertificate(alias));
+            for (String alias : Collections.list(defaultKeyStore.aliases()))
+                merged.setCertificateEntry(alias, defaultKeyStore.getCertificate(alias));
+
+            TrustManagerFactory instance = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            instance.init(merged);
+            SSLContext tls = SSLContext.getInstance("TLS");
+            tls.init(null, instance.getTrustManagers(), null);
+            HttpsURLConnection.setDefaultSSLSocketFactory(tls.getSocketFactory());
+            LOG.info("Added Lets Encrypt root certificates as additional trust");
+        } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException | KeyManagementException e) {
+            LOG.log(Level.SEVERE, "Failed to load lets encrypt certificate. Expect problems", e);
+        }
+    }
 }
