@@ -34,7 +34,7 @@ import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public abstract class DecoratorTransitionPage extends Control implements DecoratorPage {
-    protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("")));
+    protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(""));
     private final BooleanProperty backable = new SimpleBooleanProperty(false);
     private final BooleanProperty refreshable = new SimpleBooleanProperty(false);
     private Node currentPage;
