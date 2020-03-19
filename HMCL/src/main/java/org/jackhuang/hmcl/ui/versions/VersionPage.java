@@ -192,6 +192,10 @@ public class VersionPage extends Control implements DecoratorPage {
         Versions.deleteVersion(profile, version);
     }
 
+    private void duplicate() {
+        Versions.duplicateVersion(profile, version);
+    }
+
     @Override
     protected Skin createDefaultSkin() {
         return new Skin(this);
@@ -227,6 +231,9 @@ public class VersionPage extends Control implements DecoratorPage {
                     new MenuSeparator(),
                     new IconedMenuItem(FXUtils.limitingSize(SVG.pencil(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(() -> {
                         Versions.renameVersion(getSkinnable().profile, currentVersion).thenApply(name -> getSkinnable().preferredVersionName = name);
+                    }, listViewItemPopup)),
+                    new IconedMenuItem(FXUtils.limitingSize(SVG.copy(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.duplicate"), FXUtils.withJFXPopupClosing(() -> {
+                        Versions.duplicateVersion(getSkinnable().profile, currentVersion);
                     }, listViewItemPopup)),
                     new IconedMenuItem(FXUtils.limitingSize(SVG.delete(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.remove"), FXUtils.withJFXPopupClosing(() -> {
                         Versions.deleteVersion(getSkinnable().profile, currentVersion);
@@ -313,6 +320,7 @@ public class VersionPage extends Control implements DecoratorPage {
                         new IconedMenuItem(FXUtils.limitingSize(SVG.script(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch_script"), FXUtils.withJFXPopupClosing(control::generateLaunchScript, managementPopup)),
                         new MenuSeparator(),
                         new IconedMenuItem(FXUtils.limitingSize(SVG.pencil(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(control::rename, managementPopup)),
+                        new IconedMenuItem(FXUtils.limitingSize(SVG.copy(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.duplicate"), FXUtils.withJFXPopupClosing(control::duplicate, managementPopup)),
                         new IconedMenuItem(FXUtils.limitingSize(SVG.delete(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.remove"), FXUtils.withJFXPopupClosing(control::remove, managementPopup)),
                         new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("modpack.export"), FXUtils.withJFXPopupClosing(control::export, managementPopup)),
                         new MenuSeparator(),

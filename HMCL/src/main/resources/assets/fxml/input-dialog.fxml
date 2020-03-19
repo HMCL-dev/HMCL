@@ -6,15 +6,20 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.StackPane?>
 <?import org.jackhuang.hmcl.ui.construct.SpinnerPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
     <JFXDialogLayout>
         <heading>
-            <Label fx:id="content" />
+            <HBox>
+                <Label fx:id="title" />
+            </HBox>
         </heading>
         <body>
-            <JFXTextField fx:id="textField" />
+            <VBox fx:id="vbox">
+            </VBox>
         </body>
         <actions>
             <Label fx:id="lblCreationWarning"/>

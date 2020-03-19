@@ -30,6 +30,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -196,20 +197,30 @@ public final class FileUtils {
      * @throws IOException if an I/O error occurs.
      */
     public static void copyDirectory(Path src, Path dest) throws IOException {
+        copyDirectory(src, dest, path -> true);
+    }
+
+    public static void copyDirectory(Path src, Path dest, Predicate<String> filePredicate) throws IOException {
         Files.walkFileTree(src, new SimpleFileVisitor<Path>(){
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (!filePredicate.test(src.relativize(file).toString())) {
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+
                 Path destFile = dest.resolve(src.relativize(file).toString());
                 Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
-
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                if (!filePredicate.test(src.relativize(dir).toString())) {
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+
                 Path destDir = dest.resolve(src.relativize(dir).toString());
                 Files.createDirectories(destDir);
-
                 return FileVisitResult.CONTINUE;
             }
         });

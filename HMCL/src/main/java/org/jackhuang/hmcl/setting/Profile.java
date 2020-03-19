@@ -166,13 +166,7 @@ public final class Profile implements Observable {
     }
 
     public VersionSetting getVersionSetting(String id) {
-        VersionSetting vs = repository.getVersionSetting(id);
-        if (vs == null || vs.isUsesGlobal()) {
-            getGlobal().setGlobal(true); // always keep global.isGlobal = true
-            getGlobal().setUsesGlobal(true);
-            return getGlobal();
-        } else
-            return vs;
+        return repository.getVersionSetting(id);
     }
 
     @Override

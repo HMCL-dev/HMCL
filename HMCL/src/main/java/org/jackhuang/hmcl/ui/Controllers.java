@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
 import org.jackhuang.hmcl.ui.main.RootPage;
@@ -40,6 +41,7 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -143,14 +145,19 @@ public final class Controllers {
         dialog(new MessageDialogPane(text, title, onAccept, onCancel));
     }
 
-    public static CompletableFuture<String> prompt(String text, FutureCallback<String> onResult) {
-        return prompt(text, onResult, "");
+    public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {
+        return prompt(title, onResult, "");
     }
 
-    public static CompletableFuture<String> prompt(String text, FutureCallback<String> onResult, String initialValue) {
-        InputDialogPane pane = new InputDialogPane(text, onResult);
+    public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult, String initialValue) {
+        InputDialogPane pane = new InputDialogPane(title, initialValue, onResult);
         dialog(pane);
-        pane.setInitialValue(initialValue);
+        return pane.getCompletableFuture();
+    }
+
+    public static CompletableFuture<List<PromptDialogPane.Builder.Question<?>>> prompt(PromptDialogPane.Builder builder) {
+        PromptDialogPane pane = new PromptDialogPane(builder);
+        dialog(pane);
         return pane.getCompletableFuture();
     }
 

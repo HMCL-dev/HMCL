@@ -24,12 +24,17 @@ import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
+import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -70,6 +75,27 @@ public class Versions {
 
     public static void openFolder(Profile profile, String version) {
         FXUtils.openFolder(profile.getRepository().getRunDirectory(version));
+    }
+
+    public static void duplicateVersion(Profile profile, String version) {
+        Controllers.prompt(
+                new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, resolve, reject) -> {
+                    String newVersionName = ((PromptDialogPane.Builder.StringQuestion) res.get(0)).getValue();
+                    boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(1)).getValue();
+                    Task.runAsync(() -> profile.getRepository().duplicateVersion(version, newVersionName, copySaves))
+                            .thenComposeAsync(profile.getRepository().refreshVersionsAsync())
+                            .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                                if (exception == null) {
+                                    resolve.run();
+                                } else {
+                                    reject.accept(StringUtils.getStackTrace(exception));
+                                    profile.getRepository().removeVersionFromDisk(newVersionName);
+                                }
+                            }).start();
+                })
+                        .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("version.manage.duplicate.confirm"), version,
+                                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().hasVersion(newVersionName))))
+                        .addQuestion(new PromptDialogPane.Builder.BooleanQuestion(i18n("version.manage.duplicate.duplicate_save"), false)));
     }
 
     public static void updateVersion(Profile profile, String version) {

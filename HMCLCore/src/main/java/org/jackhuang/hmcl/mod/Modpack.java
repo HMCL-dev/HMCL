@@ -93,6 +93,8 @@ public final class Modpack {
         for (String s : blackList)
             if (path.equals(s))
                 return false;
+        if (whiteList == null || whiteList.isEmpty())
+            return true;
         for (String s : whiteList)
             if (path.equals(s))
                 return true;

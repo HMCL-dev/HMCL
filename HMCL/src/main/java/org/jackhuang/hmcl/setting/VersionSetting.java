@@ -45,7 +45,7 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
  * @author huangyuhui
  */
 @JsonAdapter(VersionSetting.Serializer.class)
-public final class VersionSetting {
+public final class VersionSetting implements Cloneable {
 
     public transient String id;
 
@@ -561,6 +561,34 @@ public final class VersionSetting {
             }
         }
         return builder.create();
+    }
+
+    @Override
+    public VersionSetting clone() {
+        VersionSetting versionSetting = new VersionSetting();
+        versionSetting.setUsesGlobal(isUsesGlobal());
+        versionSetting.setJava(getJava());
+        versionSetting.setDefaultJavaPath(getDefaultJavaPath());
+        versionSetting.setJavaDir(getJavaDir());
+        versionSetting.setWrapper(getWrapper());
+        versionSetting.setPermSize(getPermSize());
+        versionSetting.setMaxMemory(getMaxMemory());
+        versionSetting.setMinMemory(getMinMemory());
+        versionSetting.setPreLaunchCommand(getPreLaunchCommand());
+        versionSetting.setJavaArgs(getJavaArgs());
+        versionSetting.setMinecraftArgs(getMinecraftArgs());
+        versionSetting.setNoJVMArgs(isNoJVMArgs());
+        versionSetting.setNotCheckGame(isNotCheckGame());
+        versionSetting.setNotCheckJVM(isNotCheckJVM());
+        versionSetting.setShowLogs(isShowLogs());
+        versionSetting.setServerIp(getServerIp());
+        versionSetting.setFullscreen(isFullscreen());
+        versionSetting.setWidth(getWidth());
+        versionSetting.setHeight(getHeight());
+        versionSetting.setGameDirType(getGameDirType());
+        versionSetting.setGameDir(getGameDir());
+        versionSetting.setLauncherVisibility(getLauncherVisibility());
+        return versionSetting;
     }
 
     public static class Serializer implements JsonSerializer<VersionSetting>, JsonDeserializer<VersionSetting> {

@@ -69,6 +69,10 @@ public class GameListItem extends Control {
         Versions.renameVersion(profile, version);
     }
 
+    public void duplicate() {
+        Versions.duplicateVersion(profile, version);
+    }
+
     public void remove() {
         Versions.deleteVersion(profile, version);
     }

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import javafx.scene.image.Image;
+import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -36,7 +37,9 @@ import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 
 public class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
-    private final Map<String, VersionSetting> versionSettings = new HashMap<>();
+
+    // local version settings
+    private final Map<String, VersionSetting> localVersionSettings = new HashMap<>();
     private final Set<String> beingModpackVersions = new HashSet<>();
 
     public boolean checkedModpack = false, checkingModpack = false;
@@ -55,7 +58,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (beingModpackVersions.contains(id) || isModpack(id))
             return getVersionRoot(id);
         else {
-            VersionSetting vs = profile.getVersionSetting(id);
+            VersionSetting vs = getVersionSetting(id);
             switch (vs.getGameDirType()) {
                 case VERSION_FOLDER: return getVersionRoot(id);
                 case ROOT_FOLDER: return super.getRunDirectory(id);
@@ -67,9 +70,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     protected void refreshVersionsImpl() {
-        versionSettings.clear();
+        localVersionSettings.clear();
         super.refreshVersionsImpl();
-        versions.keySet().forEach(this::loadVersionSetting);
+        versions.keySet().forEach(this::loadLocalVersionSetting);
 
         try {
             File file = new File(getBaseDirectory(), "launcher_profiles.json");
@@ -95,19 +98,55 @@ public class HMCLGameRepository extends DefaultGameRepository {
         clean(getRunDirectory(id));
     }
 
-    private File getVersionSettingFile(String id) {
+    public void duplicateVersion(String srcId, String dstId, boolean copySaves) throws IOException {
+        File srcDir = getVersionRoot(srcId);
+        File dstDir = getVersionRoot(dstId);
+
+        if (dstDir.exists()) throw new IOException("Version exists");
+        FileUtils.copyDirectory(srcDir.toPath(), dstDir.toPath());
+        VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
+        EnumGameDirectory originalGameDirType = oldVersionSetting.getGameDirType();
+        oldVersionSetting.setUsesGlobal(false);
+        oldVersionSetting.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
+        VersionSetting newVersionSetting = initLocalVersionSetting(dstId, oldVersionSetting);
+        saveVersionSetting(dstId);
+
+        File srcGameDir = getRunDirectory(srcId);
+        File dstGameDir = getRunDirectory(dstId);
+
+        List<String> blackList = new ArrayList<>(Arrays.asList(
+                "regex:(.*?)\\.log",
+                "usernamecache.json", "usercache.json", // Minecraft
+                "launcher_profiles.json", "launcher.pack.lzma", // Minecraft Launcher
+                "backup", "pack.json", "launcher.jar", "cache", // HMCL
+                ".curseclient", // Curse
+                ".fabric", ".mixin.out", // Fabric
+                "jars", "logs", "versions", "assets", "libraries", "crash-reports", "NVIDIA", "AMD", "screenshots", "natives", "native", "$native", "server-resource-packs", // Minecraft
+                "downloads", // Curse
+                "asm", "backups", "TCNodeTracker", "CustomDISkins", "data", "CustomSkinLoader/caches" // Mods
+        ));
+        blackList.add(srcId + ".jar");
+        blackList.add(srcId + ".json");
+        if (!copySaves)
+            blackList.add("saves");
+
+        if (originalGameDirType != EnumGameDirectory.VERSION_FOLDER)
+            FileUtils.copyDirectory(srcGameDir.toPath(), dstGameDir.toPath(), path -> Modpack.acceptFile(path, blackList, null));
+    }
+
+    private File getLocalVersionSettingFile(String id) {
         return new File(getVersionRoot(id), "hmclversion.cfg");
     }
 
-    private void loadVersionSetting(String id) {
-        File file = getVersionSettingFile(id);
+    private void loadLocalVersionSetting(String id) {
+        File file = getLocalVersionSettingFile(id);
         if (file.exists())
             try {
                 VersionSetting versionSetting = GSON.fromJson(FileUtils.readText(file), VersionSetting.class);
-                initVersionSetting(id, versionSetting);
+                initLocalVersionSetting(id, versionSetting);
             } catch (Exception ex) {
                 // If [JsonParseException], [IOException] or [NullPointerException] happens, the json file is malformed and needed to be recreated.
-                initVersionSetting(id, new VersionSetting());
+                initLocalVersionSetting(id, new VersionSetting());
             }
     }
 
@@ -116,18 +155,18 @@ public class HMCLGameRepository extends DefaultGameRepository {
      * @param id the version id.
      * @return new version setting, null if given version does not exist.
      */
-    public VersionSetting createVersionSetting(String id) {
+    public VersionSetting createLocalVersionSetting(String id) {
         if (!hasVersion(id))
             return null;
-        if (versionSettings.containsKey(id))
-            return getVersionSetting(id);
+        if (localVersionSettings.containsKey(id))
+            return getLocalVersionSetting(id);
         else
-            return initVersionSetting(id, new VersionSetting());
+            return initLocalVersionSetting(id, new VersionSetting());
     }
 
-    private VersionSetting initVersionSetting(String id, VersionSetting vs) {
+    private VersionSetting initLocalVersionSetting(String id, VersionSetting vs) {
+        localVersionSettings.put(id, vs);
         vs.addPropertyChangedListener(a -> saveVersionSetting(id));
-        versionSettings.put(id, vs);
         return vs;
     }
 
@@ -136,15 +175,25 @@ public class HMCLGameRepository extends DefaultGameRepository {
      *
      * @param id version id
      *
-     * @return may return null if the id not exists
+     * @return corresponding version setting, null if the version has no its own version setting.
      */
-    public VersionSetting getVersionSetting(String id) {
-        if (!versionSettings.containsKey(id))
-            loadVersionSetting(id);
-        VersionSetting setting = versionSettings.get(id);
+    public VersionSetting getLocalVersionSetting(String id) {
+        if (!localVersionSettings.containsKey(id))
+            loadLocalVersionSetting(id);
+        VersionSetting setting = localVersionSettings.get(id);
         if (setting != null && isModpack(id))
             setting.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
         return setting;
+    }
+
+    public VersionSetting getVersionSetting(String id) {
+        VersionSetting vs = getLocalVersionSetting(id);
+        if (vs == null || vs.isUsesGlobal()) {
+            profile.getGlobal().setGlobal(true); // always keep global.isGlobal = true
+            profile.getGlobal().setUsesGlobal(true);
+            return profile.getGlobal();
+        } else
+            return vs;
     }
 
     public File getVersionIconFile(String id) {
@@ -169,14 +218,14 @@ public class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public boolean saveVersionSetting(String id) {
-        if (!versionSettings.containsKey(id))
+        if (!localVersionSettings.containsKey(id))
             return false;
-        File file = getVersionSettingFile(id);
+        File file = getLocalVersionSettingFile(id);
         if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
             return false;
 
         try {
-            FileUtils.writeText(file, GSON.toJson(versionSettings.get(id)));
+            FileUtils.writeText(file, GSON.toJson(localVersionSettings.get(id)));
             return true;
         } catch (IOException e) {
             Logging.LOG.log(Level.SEVERE, "Unable to save version setting of " + id, e);
@@ -190,9 +239,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
      * @return specialized version setting, null if given version does not exist.
      */
     public VersionSetting specializeVersionSetting(String id) {
-        VersionSetting vs = getVersionSetting(id);
+        VersionSetting vs = getLocalVersionSetting(id);
         if (vs == null)
-            vs = createVersionSetting(id);
+            vs = createLocalVersionSetting(id);
         if (vs == null)
             return null;
         vs.setUsesGlobal(false);
@@ -200,7 +249,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public void globalizeVersionSetting(String id) {
-        VersionSetting vs = getVersionSetting(id);
+        VersionSetting vs = getLocalVersionSetting(id);
         if (vs != null)
             vs.setUsesGlobal(true);
     }

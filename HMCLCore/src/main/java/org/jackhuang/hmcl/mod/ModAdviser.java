@@ -45,7 +45,7 @@ public interface ModAdviser {
             "regex:(.*?)\\.log",
             "usernamecache.json", "usercache.json", // Minecraft
             "launcher_profiles.json", "launcher.pack.lzma", // Minecraft Launcher
-            "pack.json", "launcher.jar", "cache", "modpack.cfg", // HMCL
+            "backup", "pack.json", "launcher.jar", "cache", "modpack.cfg", // HMCL
             "manifest.json", "minecraftinstance.json", ".curseclient", // Curse
             ".fabric", ".mixin.out", // Fabric
             "jars", "logs", "versions", "assets", "libraries", "crash-reports", "NVIDIA", "AMD", "screenshots", "natives", "native", "$native", "server-resource-packs", // Minecraft
