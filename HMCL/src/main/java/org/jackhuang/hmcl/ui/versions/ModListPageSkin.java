@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.FloatListCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jetbrains.annotations.NotNull;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton;
 import static org.jackhuang.hmcl.util.StringUtils.isNotBlank;
@@ -131,7 +132,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         getChildren().setAll(pane);
     }
 
-    static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> {
+    static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
         private final BooleanProperty active;
         private final ModInfo modInfo;
         private final String message;
@@ -159,6 +160,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
         ModInfo getModInfo() {
             return modInfo;
+        }
+
+        @Override
+        public int compareTo(@NotNull ModListPageSkin.ModInfoObject o) {
+            return modInfo.getFileName().toLowerCase().compareTo(o.modInfo.getFileName().toLowerCase());
         }
     }
 }

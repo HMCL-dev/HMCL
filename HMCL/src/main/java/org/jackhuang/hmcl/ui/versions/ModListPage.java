@@ -104,7 +104,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             if (exception == null)
                 getProperties().put(ModListPage.class, FXUtils.onWeakChangeAndOperate(tab.selectedProperty(), newValue -> {
                     if (newValue)
-                        itemsProperty().setAll(list.stream().map(ModListPageSkin.ModInfoObject::new).collect(Collectors.toList()));
+                        itemsProperty().setAll(list.stream().map(ModListPageSkin.ModInfoObject::new).sorted().collect(Collectors.toList()));
                 }));
             else
                 getProperties().remove(ModListPage.class);
