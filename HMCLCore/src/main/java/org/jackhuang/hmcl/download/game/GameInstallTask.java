@@ -74,8 +74,10 @@ public class GameInstallTask extends Task<Version> {
                 Task.allOf(
                         new GameAssetDownloadTask(dependencyManager, version, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true),
                         new GameLibrariesTask(dependencyManager, version, true)
-                ).withStage("hmcl.install.assets")
-        ).withComposeAsync(gameRepository.save(version)));
+                ).withStage("hmcl.install.assets").withRunAsync(() -> {
+                    // ignore failure
+                })
+        ).thenComposeAsync(gameRepository.save(version)));
     }
 
 }
