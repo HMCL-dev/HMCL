@@ -91,7 +91,7 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
                         continue;
 
                     String version = v.getVersion();
-                    String url = downloadProvider.getApiRoot() + "/liteloader/download?version=" + version;
+                    String url = "https://bmclapi2.bangbang93.com/liteloader/download?version=" + version;
                     if (snapshot) {
                         try {
                             version = version.replace("SNAPSHOT", getLatestSnapshotVersion(repository.getUrl() + "com/mumfrey/liteloader/" + v.getVersion() + "/"));
@@ -101,7 +101,7 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
                     }
 
                     versions.put(key, new LiteLoaderRemoteVersion(gameVersion,
-                            version, downloadProvider.injectURL(url),
+                            version, url,
                             v.getTweakClass(), v.getLibraries()
                     ));
                 }

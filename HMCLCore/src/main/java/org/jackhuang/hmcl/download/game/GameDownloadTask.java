@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Task to download Minecraft jar
@@ -58,7 +59,9 @@ public final class GameDownloadTask extends Task<Void> {
         File jar = dependencyManager.getGameRepository().getVersionJar(version);
 
         FileDownloadTask task = new FileDownloadTask(
-                NetworkUtils.toURL(dependencyManager.getPrimaryDownloadProvider().injectURL(version.getDownloadInfo().getUrl())),
+                dependencyManager.getPreferredDownloadProviders().stream()
+                        .map(downloadProvider -> downloadProvider.injectURL(version.getDownloadInfo().getUrl()))
+                        .map(NetworkUtils::toURL).collect(Collectors.toList()),
                 jar,
                 IntegrityCheck.of(CacheRepository.SHA1, version.getDownloadInfo().getSha1()))
                 .setCaching(true)

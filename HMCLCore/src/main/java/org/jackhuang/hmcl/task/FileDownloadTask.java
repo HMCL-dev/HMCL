@@ -207,7 +207,6 @@ public class FileDownloadTask extends Task<Void> {
             checkETag = true;
         }
 
-        Logging.LOG.log(Level.FINER, "Downloading " + urls.get(0) + " to " + file);
         Exception exception = null;
         URL failedURL = null;
 
@@ -217,6 +216,7 @@ public class FileDownloadTask extends Task<Void> {
                 break;
             }
 
+            Logging.LOG.log(Level.FINER, "Downloading " + url + " to " + file);
             Path temp = null;
 
             try {

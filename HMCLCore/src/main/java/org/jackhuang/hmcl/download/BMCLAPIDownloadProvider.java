@@ -79,6 +79,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
     @Override
     public String injectURL(String baseURL) {
         return baseURL
+                .replace("https://bmclapi2.bangbang93.com", apiRoot)
                 .replace("https://launchermeta.mojang.com", apiRoot)
                 .replace("https://launcher.mojang.com", apiRoot)
                 .replace("https://libraries.minecraft.net", apiRoot + "/libraries")

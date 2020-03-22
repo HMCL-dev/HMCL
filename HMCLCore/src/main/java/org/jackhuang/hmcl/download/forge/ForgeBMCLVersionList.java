@@ -30,11 +30,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -92,9 +88,9 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                                         + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
                                 String fileName1 = "forge-" + classifier + "-" + file.getCategory() + "." + file.getFormat();
                                 String fileName2 = "forge-" + classifier + "-" + gameVersion + "-" + file.getCategory() + "." + file.getFormat();
-                                urls.add(apiRoot + "/maven/net/minecraftforge/forge/" + classifier + "-" + gameVersion + "/" + fileName2);
-                                urls.add(apiRoot + "/maven/net/minecraftforge/forge/" + classifier + "/" + fileName1);
-                                urls.add(NetworkUtils.withQuery(apiRoot + "/forge/download", mapOf(
+                                urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "-" + gameVersion + "/" + fileName2);
+                                urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "/" + fileName1);
+                                urls.add(NetworkUtils.withQuery("https://bmclapi2.bangbang93.com/forge/download", mapOf(
                                         pair("mcversion", version.getGameVersion()),
                                         pair("version", version.getVersion()),
                                         pair("branch", version.getBranch()),

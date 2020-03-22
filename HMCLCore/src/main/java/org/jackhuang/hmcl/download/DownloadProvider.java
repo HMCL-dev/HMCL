@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.download;
 
-import java.util.Arrays;
-import java.util.stream.Stream;
-
 /**
  * The service provider that provides Minecraft online file downloads.
  *
@@ -41,12 +38,6 @@ public interface DownloadProvider {
      * @return the URL that is equivalent to [baseURL], but belongs to your own service provider.
      */
     String injectURL(String baseURL);
-
-    default Stream<String> injectURLs(String[] baseURLs) {
-        Stream<String> urls = Arrays.stream(baseURLs);
-        Stream<String> jsonURLs = Arrays.stream(baseURLs).map(this::injectURL);
-        return Stream.concat(jsonURLs, urls);
-    }
 
     /**
      * the specific version list that this download provider provides. i.e. "forge", "liteloader", "game", "optifine"

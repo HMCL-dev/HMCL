@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <b>Note</b>: Fabric should be installed first.
@@ -50,7 +51,9 @@ public final class FabricInstallTask extends Task<Version> {
         this.version = version;
         this.remote = remoteVersion;
 
-        launchMetaTask = new GetTask(NetworkUtils.toURL(dependencyManager.getPrimaryDownloadProvider().injectURL(getLaunchMetaUrl(remote.getGameVersion(), remote.getSelfVersion()))))
+        launchMetaTask = new GetTask(dependencyManager.getPreferredDownloadProviders().stream()
+                .map(downloadProvider -> downloadProvider.injectURL(getLaunchMetaUrl(remote.getGameVersion(), remote.getSelfVersion())))
+                .map(NetworkUtils::toURL).collect(Collectors.toList()))
                 .setCacheRepository(dependencyManager.getCacheRepository());
     }
 

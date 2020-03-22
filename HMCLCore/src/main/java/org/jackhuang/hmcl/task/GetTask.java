@@ -53,22 +53,21 @@ public final class GetTask extends Task<String> {
     }
 
     public GetTask(URL url, Charset charset) {
-        this(url, charset, 5);
+        this(url, charset, 3);
     }
 
     public GetTask(URL url, Charset charset, int retry) {
-        this.urls = Collections.singletonList(url);
-        this.charset = charset;
-        this.retry = retry;
-
-        setName(url.toString());
-        setExecutor(Schedulers.io());
+        this(Collections.singletonList(url), charset, retry);
     }
 
-    public GetTask(List<URL> urls, Charset charset) {
+    public GetTask(List<URL> url) {
+        this(url, UTF_8, 3);
+    }
+
+    public GetTask(List<URL> urls, Charset charset, int retry) {
         this.urls = new ArrayList<>(urls);
         this.charset = charset;
-        this.retry = urls.size();
+        this.retry = retry;
 
         setName(urls.get(0).toString());
         setExecutor(Schedulers.io());
@@ -84,8 +83,12 @@ public final class GetTask extends Task<String> {
         Exception exception = null;
         URL failedURL = null;
         boolean checkETag = true;
-        for (int time = 0; time < retry; ++time) {
-            URL url = urls.get(time % urls.size());
+        for (int time = 0; time < retry * urls.size(); ++time) {
+            URL url = urls.get(time / retry);
+            if (isCancelled()) {
+                break;
+            }
+
             try {
                 updateProgress(0);
                 HttpURLConnection conn = NetworkUtils.createConnection(url);

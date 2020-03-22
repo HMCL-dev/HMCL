@@ -26,11 +26,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  *
@@ -71,7 +67,7 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
                     }.getType());
                     for (OptiFineVersion element : root) {
                         String version = element.getType() + "_" + element.getPatch();
-                        String mirror = apiRoot + "/optifine/" + element.getGameVersion() + "/" + element.getType() + "/" + element.getPatch();
+                        String mirror = "https://bmclapi2.bangbang93.com/optifine/" + element.getGameVersion() + "/" + element.getType() + "/" + element.getPatch();
                         if (!duplicates.add(mirror))
                             continue;
 

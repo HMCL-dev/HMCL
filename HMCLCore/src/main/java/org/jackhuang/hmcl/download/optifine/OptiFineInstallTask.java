@@ -96,7 +96,9 @@ public final class OptiFineInstallTask extends Task<Version> {
 
         if (installer == null) {
             dependents.add(new FileDownloadTask(
-                    Arrays.stream(remote.getUrl()).map(NetworkUtils::toURL).collect(Collectors.toList()),
+                    dependencyManager.getPreferredDownloadProviders().stream()
+                            .flatMap(downloadProvider -> Arrays.stream(remote.getUrl()).map(downloadProvider::injectURL))
+                            .map(NetworkUtils::toURL).collect(Collectors.toList()),
                     dest.toFile(), null)
                     .setCacheRepository(dependencyManager.getCacheRepository())
                     .setCaching(true));
