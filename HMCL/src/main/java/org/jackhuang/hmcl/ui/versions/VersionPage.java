@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXListCell;
-import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXPopup;
+import com.jfoenix.controls.*;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.geometry.Insets;
@@ -247,6 +244,7 @@ public class VersionPage extends Control implements DecoratorPage {
                     }, listViewItemPopup))
             );
 
+            FXUtils.smoothScrolling(control.listView);
             control.listView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
             control.listView.setCellFactory(new Callback<ListView<String>, ListCell<String>>() {
                 @Override
