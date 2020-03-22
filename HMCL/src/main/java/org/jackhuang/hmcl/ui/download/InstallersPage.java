@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -155,7 +156,7 @@ public class InstallersPage extends Control implements WizardPage {
                 setPadding(new Insets(8));
                 getStyleClass().add("card");
 
-                setLeft(imageView = new ImageView(new Image(imageUrl, 32, 32, true, true)));
+                setLeft(FXUtils.limitingSize(imageView = new ImageView(new Image(imageUrl, 32, 32, true, true)), 32, 32));
                 setCenter(label = new Label());
                 label.textProperty().bind(item.label);
                 BorderPane.setMargin(label, new Insets(0, 0, 0, 8));
