@@ -83,7 +83,6 @@ public class VersionPage extends Control implements DecoratorPage {
             if (newValue == null && !Objects.equals(oldValue, newValue)) {
                 if (listView.getItems().contains(preferredVersionName)) {
                     loadVersion(preferredVersionName, profile);
-                    preferredVersionName = null;
                 } else if (!listView.getItems().isEmpty()) {
                     loadVersion(listView.getItems().get(0), profile);
                 }
@@ -122,6 +121,7 @@ public class VersionPage extends Control implements DecoratorPage {
 
     public void loadVersion(String version, Profile profile) {
         setVersion(version, profile);
+        preferredVersionName = version;
         listView.getSelectionModel().select(version);
 
         versionSettingsPage.loadVersion(profile, version);
