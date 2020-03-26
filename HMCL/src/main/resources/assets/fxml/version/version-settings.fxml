@@ -110,11 +110,7 @@
             </HBox>
             <ComponentList fx:id="advancedSettingsPane" depth="1">
                 <JFXTextField labelFloat="true" promptText="%settings.advanced.jvm_args" styleClass="fit-width"
-                              fx:id="txtJVMArgs">
-                    <tooltip>
-                        <Tooltip text="%settings.advanced.java_args_default"/>
-                    </tooltip>
-                </JFXTextField>
+                              fx:id="txtJVMArgs" />
                 <fx:define>
                     <Insets fx:id="insets" bottom="8"/>
                 </fx:define>
