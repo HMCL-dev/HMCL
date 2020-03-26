@@ -104,6 +104,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
         if (dstDir.exists()) throw new IOException("Version exists");
         FileUtils.copyDirectory(srcDir.toPath(), dstDir.toPath());
+        Files.move(dstDir.toPath().resolve(srcId + ".jar"), dstDir.toPath().resolve(dstId + ".jar"));
+        Files.move(dstDir.toPath().resolve(srcId + ".json"), dstDir.toPath().resolve(dstId + ".json"));
         VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
         EnumGameDirectory originalGameDirType = oldVersionSetting.getGameDirType();
         oldVersionSetting.setUsesGlobal(false);
