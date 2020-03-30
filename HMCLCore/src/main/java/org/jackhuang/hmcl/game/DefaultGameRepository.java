@@ -105,9 +105,17 @@ public class DefaultGameRepository implements GameRepository {
         return artifact.getPath(getBaseDirectory().toPath().resolve("libraries"));
     }
 
+    public GameDirectoryType getGameDirectoryType(String id) {
+        return GameDirectoryType.ROOT_FOLDER;
+    }
+
     @Override
     public File getRunDirectory(String id) {
-        return getBaseDirectory();
+        switch (getGameDirectoryType(id)) {
+            case VERSION_FOLDER: return getVersionRoot(id);
+            case ROOT_FOLDER: return getBaseDirectory();
+            default: throw new IllegalStateException();
+        }
     }
 
     @Override

@@ -21,7 +21,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.util.Logging;
@@ -42,8 +41,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
     private final Map<String, VersionSetting> localVersionSettings = new HashMap<>();
     private final Set<String> beingModpackVersions = new HashSet<>();
 
-    public boolean checkedModpack = false, checkingModpack = false;
-
     public HMCLGameRepository(Profile profile, File baseDirectory) {
         super(baseDirectory);
         this.profile = profile;
@@ -54,17 +51,21 @@ public class HMCLGameRepository extends DefaultGameRepository {
     }
 
     @Override
+    public GameDirectoryType getGameDirectoryType(String id) {
+        if (beingModpackVersions.contains(id) || isModpack(id)) {
+            return GameDirectoryType.VERSION_FOLDER;
+        } else {
+            return getVersionSetting(id).getGameDirType();
+        }
+    }
+
+    @Override
     public File getRunDirectory(String id) {
-        if (beingModpackVersions.contains(id) || isModpack(id))
-            return getVersionRoot(id);
-        else {
-            VersionSetting vs = getVersionSetting(id);
-            switch (vs.getGameDirType()) {
-                case VERSION_FOLDER: return getVersionRoot(id);
-                case ROOT_FOLDER: return super.getRunDirectory(id);
-                case CUSTOM: return new File(vs.getGameDir());
-                default: throw new Error();
-            }
+        switch (getGameDirectoryType(id)) {
+            case VERSION_FOLDER: return getVersionRoot(id);
+            case ROOT_FOLDER: return super.getRunDirectory(id);
+            case CUSTOM: return new File(getVersionSetting(id).getGameDir());
+            default: throw new Error();
         }
     }
 
@@ -107,9 +108,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
         Files.move(dstDir.toPath().resolve(srcId + ".jar"), dstDir.toPath().resolve(dstId + ".jar"));
         Files.move(dstDir.toPath().resolve(srcId + ".json"), dstDir.toPath().resolve(dstId + ".json"));
         VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
-        EnumGameDirectory originalGameDirType = oldVersionSetting.getGameDirType();
+        GameDirectoryType originalGameDirType = oldVersionSetting.getGameDirType();
         oldVersionSetting.setUsesGlobal(false);
-        oldVersionSetting.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
+        oldVersionSetting.setGameDirType(GameDirectoryType.VERSION_FOLDER);
         VersionSetting newVersionSetting = initLocalVersionSetting(dstId, oldVersionSetting);
         saveVersionSetting(dstId);
 
@@ -132,7 +133,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (!copySaves)
             blackList.add("saves");
 
-        if (originalGameDirType != EnumGameDirectory.VERSION_FOLDER)
+        if (originalGameDirType != GameDirectoryType.VERSION_FOLDER)
             FileUtils.copyDirectory(srcGameDir.toPath(), dstGameDir.toPath(), path -> Modpack.acceptFile(path, blackList, null));
     }
 
@@ -184,7 +185,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             loadLocalVersionSetting(id);
         VersionSetting setting = localVersionSettings.get(id);
         if (setting != null && isModpack(id))
-            setting.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
+            setting.setGameDirType(GameDirectoryType.VERSION_FOLDER);
         return setting;
     }
 

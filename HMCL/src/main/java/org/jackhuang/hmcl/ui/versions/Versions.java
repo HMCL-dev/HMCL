@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.EnumGameDirectory;
+import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -48,7 +48,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class Versions {
 
     public static void deleteVersion(Profile profile, String version) {
-        boolean isIndependent = profile.getVersionSetting(version).getGameDirType() == EnumGameDirectory.VERSION_FOLDER;
+        boolean isIndependent = profile.getVersionSetting(version).getGameDirType() == GameDirectoryType.VERSION_FOLDER;
         boolean isMovingToTrashSupported = FileUtils.isMovingToTrashSupported();
         String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
                 isMovingToTrashSupported ? i18n("version.manage.remove.confirm.trash", version, version + "_removed") :

@@ -22,6 +22,7 @@ import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -416,17 +417,17 @@ public final class VersionSetting implements Cloneable {
      * 0 - .minecraft<br/>
      * 1 - .minecraft/versions/&lt;version&gt;/<br/>
      */
-    private final ObjectProperty<EnumGameDirectory> gameDirTypeProperty = new SimpleObjectProperty<>(this, "gameDirType", EnumGameDirectory.ROOT_FOLDER);
+    private final ObjectProperty<GameDirectoryType> gameDirTypeProperty = new SimpleObjectProperty<>(this, "gameDirType", GameDirectoryType.ROOT_FOLDER);
 
-    public ObjectProperty<EnumGameDirectory> gameDirTypeProperty() {
+    public ObjectProperty<GameDirectoryType> gameDirTypeProperty() {
         return gameDirTypeProperty;
     }
 
-    public EnumGameDirectory getGameDirType() {
+    public GameDirectoryType getGameDirType() {
         return gameDirTypeProperty.get();
     }
 
-    public void setGameDirType(EnumGameDirectory gameDirType) {
+    public void setGameDirType(GameDirectoryType gameDirType) {
         gameDirTypeProperty.set(gameDirType);
     }
 
@@ -654,7 +655,7 @@ public final class VersionSetting implements Cloneable {
             vs.setNotCheckJVM(Optional.ofNullable(obj.get("notCheckJVM")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setLauncherVisibility(LauncherVisibility.values()[Optional.ofNullable(obj.get("launcherVisibility")).map(JsonElement::getAsInt).orElse(1)]);
-            vs.setGameDirType(EnumGameDirectory.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(0)]);
+            vs.setGameDirType(GameDirectoryType.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(0)]);
             vs.setDefaultJavaPath(Optional.ofNullable(obj.get("defaultJavaPath")).map(JsonElement::getAsString).orElse(null));
 
             return vs;

@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackLocalInstallTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.mod.server.ServerModpackRemoteInstallTask;
-import org.jackhuang.hmcl.setting.EnumGameDirectory;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -109,7 +108,7 @@ public final class ModpackHelper {
             VersionSetting vs = repository.specializeVersionSetting(name);
             repository.undoMark(name);
             if (vs != null)
-                vs.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
+                vs.setGameDirType(GameDirectoryType.VERSION_FOLDER);
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {
@@ -132,7 +131,7 @@ public final class ModpackHelper {
             VersionSetting vs = repository.specializeVersionSetting(name);
             repository.undoMark(name);
             if (vs != null)
-                vs.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
+                vs.setGameDirType(GameDirectoryType.VERSION_FOLDER);
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {
@@ -184,7 +183,7 @@ public final class ModpackHelper {
 
     public static void toVersionSetting(MultiMCInstanceConfiguration c, VersionSetting vs) {
         vs.setUsesGlobal(false);
-        vs.setGameDirType(EnumGameDirectory.VERSION_FOLDER);
+        vs.setGameDirType(GameDirectoryType.VERSION_FOLDER);
 
         if (c.isOverrideJavaLocation()) {
             vs.setJavaDir(Lang.nonNull(c.getJavaPath(), ""));

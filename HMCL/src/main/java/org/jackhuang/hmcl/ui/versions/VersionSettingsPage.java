@@ -34,6 +34,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -91,7 +92,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     @FXML private JFXToggleButton chkNoGameCheck;
     @FXML private JFXToggleButton chkNoJVMCheck;
     @FXML private MultiFileItem<JavaVersion> javaItem;
-    @FXML private MultiFileItem<EnumGameDirectory> gameDirItem;
+    @FXML private MultiFileItem<GameDirectoryType> gameDirItem;
     @FXML private JFXToggleButton chkShowLogs;
     @FXML private ImagePickerItem iconPickerItem;
     @FXML private JFXCheckBox chkEnableSpecificSettings;
@@ -131,10 +132,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             javaItem.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe", "javaw.exe"));
 
-        gameDirItem.setCustomUserData(EnumGameDirectory.CUSTOM);
+        gameDirItem.setCustomUserData(GameDirectoryType.CUSTOM);
         gameDirItem.loadChildren(Arrays.asList(
-                gameDirItem.createChildren(i18n("settings.advanced.game_dir.default"), EnumGameDirectory.ROOT_FOLDER),
-                gameDirItem.createChildren(i18n("settings.advanced.game_dir.independent"), EnumGameDirectory.VERSION_FOLDER)
+                gameDirItem.createChildren(i18n("settings.advanced.game_dir.default"), GameDirectoryType.ROOT_FOLDER),
+                gameDirItem.createChildren(i18n("settings.advanced.game_dir.independent"), GameDirectoryType.VERSION_FOLDER)
         ));
 
         chkEnableSpecificSettings.selectedProperty().addListener((a, b, newValue) -> {
