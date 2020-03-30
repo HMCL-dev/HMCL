@@ -181,7 +181,6 @@
 }
 
 .tab-label {
-    -fx-font-family: "Roboto";
     -fx-font-size: 16;
 }
 
@@ -1058,9 +1057,13 @@
     -fx-font-size: 14;
 }
 
-.jfx-decorator-tab .tab-label {
-    -fx-text-fill: -fx-base-text-fill;
+.jfx-decorator-tab .tab-container .tab-label {
+    -fx-text-fill: -fx-base-disabled-text-fill;
     -fx-font-size: 14;
+}
+
+.jfx-decorator-tab .tab-container:selected .tab-label {
+    -fx-text-fill: -fx-base-text-fill;
 }
 
 .resize-border {

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import javafx.scene.control.Tooltip;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -27,18 +28,24 @@ import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameAdvancedListItem extends AdvancedListItem {
+    private final Tooltip tooltip;
 
     public GameAdvancedListItem() {
+        tooltip = new Tooltip();
+        FXUtils.installFastTooltip(this, tooltip);
+
         FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
             if (version != null && Profiles.getSelectedProfile() != null &&
                     Profiles.getSelectedProfile().getRepository().hasVersion(version)) {
                 setTitle(version);
                 setSubtitle(null);
                 setImage(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
+                tooltip.setText(version);
             } else {
                 setTitle(i18n("version.empty"));
                 setSubtitle(i18n("version.empty.add"));
                 setImage(newImage("/assets/img/grass.png"));
+                tooltip.setText("");
             }
         });
 

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.effects.JFXDepthManager;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
@@ -56,6 +57,8 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         imageViewContainer.getChildren().setAll(imageView);
 
         TwoLineListItem item = new TwoLineListItem();
+        item.titleProperty().bind(skinnable.titleProperty());
+        item.subtitleProperty().bind(skinnable.subtitleProperty());
         BorderPane.setAlignment(item, Pos.CENTER);
         center.getChildren().setAll(imageView, item);
         root.setCenter(center);
@@ -81,10 +84,9 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         right.getChildren().add(btnManage);
         root.setRight(right);
 
-        root.setStyle("-fx-background-color: white; -fx-padding: 8 8 8 0;");
+        root.getStyleClass().add("card");
+        root.setPadding(new Insets(8, 8, 8, 0));
         JFXDepthManager.setDepth(root, 1);
-        item.titleProperty().bind(skinnable.titleProperty());
-        item.subtitleProperty().bind(skinnable.subtitleProperty());
 
         getChildren().setAll(root);
     }

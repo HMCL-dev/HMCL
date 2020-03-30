@@ -47,6 +47,7 @@ class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         super(skinnable);
 
         BorderPane root = new BorderPane();
+        root.getStyleClass().add("content-background");
         JFXListView<DatapackInfoObject> listView = new JFXListView<>();
 
         {
