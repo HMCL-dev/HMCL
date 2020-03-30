@@ -18,11 +18,19 @@
 .root {
 }
 
-.scroll-bar {
+.jfx-list-view .scroll-bar {
     -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
 }
 
-.scroll-bar .track {
+.jfx-list-view .scroll-bar .track {
+    -fx-fill: transparent;
+}
+
+.scroll-pane .scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.scroll-pane .scroll-bar .track {
     -fx-fill: transparent;
 }
 
