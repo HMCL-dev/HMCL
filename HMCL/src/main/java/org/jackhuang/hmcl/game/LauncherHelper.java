@@ -524,29 +524,29 @@ public final class LauncherHelper {
             String newLog = log;
             for (Map.Entry<String, String> entry : forbiddenTokens.entrySet())
                 newLog = newLog.replace(entry.getKey(), entry.getValue());
+            String filteredLog = newLog;
 
             if (level.lessOrEqual(Log4jLevel.ERROR))
-                System.err.print(log);
+                System.err.println(filteredLog);
             else
-                System.out.print(log);
+                System.out.println(filteredLog);
 
-            logs.add(pair(log, level));
+            logs.add(pair(filteredLog, level));
             if (logs.size() > config().getLogLines())
                 logs.removeFirst();
 
             if (showLogs) {
                 try {
                     latch.await();
-                    logWindow.waitForLoaded();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     return;
                 }
 
-                Platform.runLater(() -> logWindow.logLine(log, level));
+                Platform.runLater(() -> logWindow.logLine(filteredLog, level));
             }
 
-            if (!lwjgl && (log.toLowerCase().contains("lwjgl version") || !detectWindow)) {
+            if (!lwjgl && (filteredLog.toLowerCase().contains("lwjgl version") || !detectWindow)) {
                 lwjgl = true;
                 finishLaunch();
             }

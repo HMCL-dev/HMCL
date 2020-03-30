@@ -910,6 +910,12 @@
     -fx-background-color: null;
 }
 
+/*******************************************************************************
+*                                                                              *
+* Log Window                                                                   *
+*                                                                              *
+*******************************************************************************/
+
 .log-toggle:selected {
     -fx-background-color: transparent;
     -fx-border: 1px;
@@ -922,6 +928,36 @@
     -fx-border: 1px;
     -fx-border-color: gray;
     -fx-text-fill: gray;
+}
+
+.log {
+    -fx-text-fill: black;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: #dddddd;
+}
+
+.log:fatal {
+    -fx-background-color: #F7A699;
+}
+
+.log:error {
+    -fx-background-color: #FFCCBB;
+}
+
+.log:warn {
+    -fx-background-color: #FFEECC;
+}
+
+.log:info {
+    -fx-background-color: #FFFFFF;
+}
+
+.log:debug {
+    -fx-background-color: #EEE9E0;
+}
+
+.log:trace {
+    -fx-background-color: #EEE9E0;
 }
 
 /*******************************************************************************

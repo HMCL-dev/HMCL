@@ -339,12 +339,12 @@ public class DefaultLauncher extends Launcher {
     private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
-            processListener.onLog(it + OperatingSystem.LINE_SEPARATOR, Optional.ofNullable(Log4jLevel.guessLevel(it)).orElse(Log4jLevel.INFO));
+            processListener.onLog(it, Optional.ofNullable(Log4jLevel.guessLevel(it)).orElse(Log4jLevel.INFO));
             managedProcess.addLine(it);
         }), "stdout-pump", isDaemon);
         managedProcess.addRelatedThread(stdout);
         Thread stderr = Lang.thread(new StreamPump(managedProcess.getProcess().getErrorStream(), it -> {
-            processListener.onLog(it + OperatingSystem.LINE_SEPARATOR, Log4jLevel.ERROR);
+            processListener.onLog(it, Log4jLevel.ERROR);
             managedProcess.addLine(it);
         }), "stderr-pump", isDaemon);
         managedProcess.addRelatedThread(stderr);
