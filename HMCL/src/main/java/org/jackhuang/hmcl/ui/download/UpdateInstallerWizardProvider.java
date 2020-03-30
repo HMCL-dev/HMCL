@@ -42,6 +42,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipException;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -158,7 +159,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             Controllers.dialog(i18n("install.failed.optifine_conflict"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
         } else if (exception instanceof DefaultDependencyManager.UnsupportedLibraryInstallerException) {
             Controllers.dialog(i18n("install.failed.install_online"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
-        } else if (exception instanceof ArtifactMalformedException) {
+        } else if (exception instanceof ArtifactMalformedException || exception instanceof ZipException) {
             Controllers.dialog(i18n("install.failed.malformed"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
         } else if (exception instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
             Controllers.dialog(i18n("assets.index.malformed"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
