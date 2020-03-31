@@ -74,10 +74,10 @@ public final class Schedulers {
         Logging.LOG.info("Shutting down executor services.");
 
         if (CACHED_EXECUTOR != null)
-            CACHED_EXECUTOR.shutdownNow();
+            CACHED_EXECUTOR.shutdown();
 
         if (IO_EXECUTOR != null)
-            IO_EXECUTOR.shutdownNow();
+            IO_EXECUTOR.shutdown();
     }
 
     public static Future<?> schedule(Executor executor, Runnable command) {

@@ -288,12 +288,14 @@ public class CancellableTaskExecutor extends TaskExecutor {
 
         @Override
         public void run() {
+            String oldName = Thread.currentThread().getName();
             try {
                 if (task.getName() != null)
                     Thread.currentThread().setName(task.getName());
                 if (!executeTask(parentTask, task))
                     success.set(false);
             } finally {
+                Thread.currentThread().setName(oldName);
                 latch.countDown();
             }
         }

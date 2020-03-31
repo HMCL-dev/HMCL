@@ -507,12 +507,14 @@ public final class LauncherHelper {
                     });
                     break;
                 case HIDE:
+                    launchingLatch.countDown();
                     Platform.runLater(() -> {
                         // If application was stopped and execution services did not finish termination,
                         // these codes will be executed.
                         if (Controllers.getStage() != null) {
                             Controllers.getStage().close();
-                            launchingLatch.countDown();
+                            Controllers.shutdown();
+                            Schedulers.shutdown();
                         }
                     });
                     break;
