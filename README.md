@@ -6,6 +6,11 @@ HMCL is a Minecraft launcher which supports Mod management, game customizing, au
 
 No plugin API is provided.
 
+## Download
+Download the latest version [from the official website](https://hmcl.huangyuhui.net/download)
+
+Note: Github releases are outdated.
+
 ## License
 The software is distributed under [GPL v3](https://www.gnu.org/licenses/gpl-3.0.html) with additional terms.
 
