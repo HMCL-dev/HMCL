@@ -936,6 +936,10 @@
     -fx-border-color: #dddddd;
 }
 
+.log:empty {
+    -fx-border-width: 0;
+}
+
 .log:fatal {
     -fx-background-color: #F7A699;
 }

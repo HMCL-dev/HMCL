@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListView;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
@@ -33,8 +34,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import org.jackhuang.hmcl.event.Event;
-import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.util.Log4jLevel;
 
@@ -58,6 +57,7 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.StringUtils.parseEscapeSequence;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
@@ -66,7 +66,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  */
 public final class LogWindow extends Stage {
 
-    public final EventManager<Event> onDone = new EventManager<>();
     private final ArrayDeque<Log> logs = new ArrayDeque<>();
     private final Map<Log4jLevel, SimpleIntegerProperty> levelCountMap = new EnumMap<Log4jLevel, SimpleIntegerProperty>(Log4jLevel.class) {
         {
@@ -76,30 +75,46 @@ public final class LogWindow extends Stage {
     private final Map<Log4jLevel, SimpleBooleanProperty> levelShownMap = new EnumMap<Log4jLevel, SimpleBooleanProperty>(Log4jLevel.class) {
         {
             for (Log4jLevel level : Log4jLevel.values()) {
-                SimpleBooleanProperty property = new SimpleBooleanProperty();
+                SimpleBooleanProperty property = new SimpleBooleanProperty(true);
                 put(level, property);
-                property.addListener((a, b, newValue) -> shakeLogs());
             }
         }
     };
     private final LogWindowImpl impl = new LogWindowImpl();
     private final WeakChangeListener<Number> logLinesListener = FXUtils.onWeakChange(config().logLinesProperty(), logLines -> checkLogCount());
 
+    private boolean stopCheckLogCount = false;
+
     public LogWindow() {
         setScene(new Scene(impl, 800, 480));
         getScene().getStylesheets().addAll(config().getTheme().getStylesheets());
         setTitle(i18n("logwindow.title"));
         getIcons().add(newImage("/assets/img/icon.png"));
+
+        levelShownMap.values().forEach(property -> property.addListener((a, b, newValue) -> shakeLogs()));
     }
 
     public void logLine(String line, Log4jLevel level) {
-        Log log = new Log(line, level);
+        Log log = new Log(parseEscapeSequence(line), level);
         logs.add(log);
         if (levelShownMap.get(level).get())
             impl.listView.getItems().add(log);
 
         levelCountMap.get(level).setValue(levelCountMap.get(level).getValue() + 1);
-        checkLogCount();
+        if (!stopCheckLogCount) checkLogCount();
+    }
+
+    public void showGameCrashReport() {
+        stopCheckLogCount = true;
+        for (Log log : impl.listView.getItems()) {
+            if (log.log.contains("Minecraft Crash Report")) {
+                Platform.runLater(() -> {
+                    impl.listView.scrollTo(log);
+                });
+                break;
+            }
+        }
+        show();
     }
 
     private void shakeLogs() {
@@ -131,7 +146,7 @@ public final class LogWindow extends Stage {
         private ListView<Log> listView = new JFXListView<>();
         private BooleanProperty autoScroll = new SimpleBooleanProperty();
         private List<StringProperty> buttonText = IntStream.range(0, 5).mapToObj(x -> new SimpleStringProperty()).collect(Collectors.toList());
-        private List<BooleanProperty> showLevel = IntStream.range(0, 5).mapToObj(x -> new SimpleBooleanProperty()).collect(Collectors.toList());
+        private List<BooleanProperty> showLevel = IntStream.range(0, 5).mapToObj(x -> new SimpleBooleanProperty(true)).collect(Collectors.toList());
         private JFXComboBox<String> cboLines = new JFXComboBox<>();
 
         LogWindowImpl() {
@@ -193,6 +208,7 @@ public final class LogWindow extends Stage {
     }
 
     private static class LogWindowSkin extends SkinBase<LogWindowImpl> {
+        private static PseudoClass EMPTY = PseudoClass.getPseudoClass("empty");
         private static PseudoClass FATAL = PseudoClass.getPseudoClass("fatal");
         private static PseudoClass ERROR = PseudoClass.getPseudoClass("error");
         private static PseudoClass WARN = PseudoClass.getPseudoClass("warn");
@@ -271,22 +287,17 @@ public final class LogWindow extends Stage {
                     @Override
                     protected void updateItem(Log item, boolean empty) {
                         super.updateItem(item, empty);
+                        pseudoClassStateChanged(EMPTY, empty);
+                        pseudoClassStateChanged(FATAL, !empty && item.level == Log4jLevel.FATAL);
+                        pseudoClassStateChanged(ERROR, !empty && item.level == Log4jLevel.ERROR);
+                        pseudoClassStateChanged(WARN, !empty && item.level == Log4jLevel.WARN);
+                        pseudoClassStateChanged(INFO, !empty && item.level == Log4jLevel.INFO);
+                        pseudoClassStateChanged(DEBUG, !empty && item.level == Log4jLevel.DEBUG);
+                        pseudoClassStateChanged(TRACE, !empty && item.level == Log4jLevel.TRACE);
                         if (empty) {
                             setText(null);
-                            pseudoClassStateChanged(FATAL, false);
-                            pseudoClassStateChanged(ERROR, false);
-                            pseudoClassStateChanged(WARN, false);
-                            pseudoClassStateChanged(INFO, false);
-                            pseudoClassStateChanged(DEBUG, false);
-                            pseudoClassStateChanged(TRACE, false);
                         } else {
                             setText(item.log);
-                            pseudoClassStateChanged(FATAL, item.level == Log4jLevel.FATAL);
-                            pseudoClassStateChanged(ERROR, item.level == Log4jLevel.ERROR);
-                            pseudoClassStateChanged(WARN, item.level == Log4jLevel.WARN);
-                            pseudoClassStateChanged(INFO, item.level == Log4jLevel.INFO);
-                            pseudoClassStateChanged(DEBUG, item.level == Log4jLevel.DEBUG);
-                            pseudoClassStateChanged(TRACE, item.level == Log4jLevel.TRACE);
                         }
                     }
                 });

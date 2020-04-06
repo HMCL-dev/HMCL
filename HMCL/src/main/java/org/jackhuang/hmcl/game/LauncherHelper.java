@@ -566,28 +566,27 @@ public final class LauncherHelper {
 
             if (exitType != ExitType.NORMAL) {
                 repository.markVersionLaunchedAbnormally(version);
-            }
-
-            if (exitType != ExitType.NORMAL && logWindow == null)
                 Platform.runLater(() -> {
-                    logWindow = new LogWindow();
+                    if (logWindow == null) {
+                        logWindow = new LogWindow();
 
-                    switch (exitType) {
-                        case JVM_ERROR:
-                            logWindow.setTitle(i18n("launch.failed.cannot_create_jvm"));
-                            break;
-                        case APPLICATION_ERROR:
-                            logWindow.setTitle(i18n("launch.failed.exited_abnormally"));
-                            break;
-                    }
+                        switch (exitType) {
+                            case JVM_ERROR:
+                                logWindow.setTitle(i18n("launch.failed.cannot_create_jvm"));
+                                break;
+                            case APPLICATION_ERROR:
+                                logWindow.setTitle(i18n("launch.failed.exited_abnormally"));
+                                break;
+                        }
 
-                    logWindow.show();
-                    logWindow.onDone.register(() -> {
                         logWindow.logLine("Command: " + new CommandBuilder().addAll(process.getCommands()).toString(), Log4jLevel.INFO);
                         for (Map.Entry<String, Log4jLevel> entry : logs)
                             logWindow.logLine(entry.getKey(), entry.getValue());
-                    });
+                    }
+
+                    logWindow.showGameCrashReport();
                 });
+            }
 
             checkExit();
         }
