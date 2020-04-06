@@ -18,16 +18,14 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
-import javafx.animation.Animation;
-import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
+import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.Property;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WeakChangeListener;
+import javafx.beans.value.WritableValue;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -62,6 +60,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
@@ -302,6 +301,27 @@ public final class FXUtils {
                 Tooltip.install(node, tooltip);
             }
         });
+    }
+
+    public static void playAnimation(Node node, String animationKey, Timeline timeline) {
+        animationKey = "FXUTILS.ANIMATION." + animationKey;
+        Object oldTimeline = node.getProperties().get(animationKey);
+        if (oldTimeline instanceof Timeline) ((Timeline) oldTimeline).stop();
+        if (timeline != null) timeline.play();
+        node.getProperties().put(animationKey, timeline);
+    }
+
+    public static <T> void playAnimation(Node node, String animationKey, Duration duration, WritableValue<T> property, T from, T to, Interpolator interpolator) {
+        if (from == null) from = property.getValue();
+        if (duration == null || Objects.equals(duration, Duration.ZERO) || Objects.equals(from, to)) {
+            playAnimation(node, animationKey, null);
+            property.setValue(to);
+        } else {
+            playAnimation(node, animationKey, new Timeline(
+                    new KeyFrame(Duration.ZERO, new KeyValue(property, from, interpolator)),
+                    new KeyFrame(duration, new KeyValue(property, to, interpolator))
+            ));
+        }
     }
 
     public static void openFolder(File file) {

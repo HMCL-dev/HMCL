@@ -134,7 +134,7 @@
 }
 
 .two-line-list-item > .title {
-	-fx-text-fill: black;
+	-fx-text-fill: #292929;
 	-fx-font-size: 15px;
 }
 
@@ -151,10 +151,6 @@
 .bubble .two-line-list-item > .title,
 .bubble .two-line-list-item > .subtitle {
 	-fx-text-fill: white;
-}
-
-.window-title-bar .separator {
-    -fx-fill: -fx-base-darker-color;
 }
 
 .darker-fill {
@@ -373,9 +369,12 @@
 .jfx-tool-bar {
     -fx-font-size: 13.0;
     -fx-font-weight: BOLD;
-    -fx-background-color: -fx-base-color;
     -fx-pref-width: 100.0%;
     -fx-pref-height: 32.0px;
+}
+
+.jfx-tool-bar .background {
+    -fx-background-color: -fx-base-color;
 }
 
 .jfx-tool-bar HBox {
@@ -1098,11 +1097,16 @@
 }
 
 .jfx-decorator-drawer {
+    -fx-background-color: rgba(244, 244, 244, 0.55);
 }
 
 .jfx-decorator-title {
     -fx-text-fill: -fx-base-text-fill;
     -fx-font-size: 14;
+}
+
+.jfx-decorator-title:transparent {
+    -fx-text-fill: black;
 }
 
 .jfx-decorator-tab .tab-container .tab-label {
@@ -1116,7 +1120,7 @@
 
 .resize-border {
     -fx-border-color: -fx-base-color;
-    -fx-border-width: 0 2 2 2;
+    -fx-border-width: 2;
 }
 
 .debug-border {

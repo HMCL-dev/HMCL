@@ -110,7 +110,7 @@ public final class Controllers {
 
         Task.runAsync(JavaVersion::initialize).start();
 
-        scene = new Scene(decorator.getDecorator(), 800, 519);
+        scene = new Scene(decorator.getDecorator(), 800, 480);
         decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
         decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
         scene.getStylesheets().setAll(config().getTheme().getStylesheets());

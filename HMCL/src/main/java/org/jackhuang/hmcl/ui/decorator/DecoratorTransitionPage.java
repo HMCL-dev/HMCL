@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.*;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
@@ -31,10 +28,10 @@ import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
 public abstract class DecoratorTransitionPage extends Control implements DecoratorPage {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(""));
+    private final DoubleProperty leftPaneWidth = new SimpleDoubleProperty();
+    private final BooleanProperty titleBarTransparent = new SimpleBooleanProperty(false);
     private final BooleanProperty backable = new SimpleBooleanProperty(false);
     private final BooleanProperty refreshable = new SimpleBooleanProperty(false);
     private Node currentPage;
@@ -60,11 +57,11 @@ public abstract class DecoratorTransitionPage extends Control implements Decorat
         if (to instanceof DecoratorPage) {
             state.bind(Bindings.createObjectBinding(() -> {
                 State state = ((DecoratorPage) to).stateProperty().get();
-                return new State(state.getTitle(), state.getTitleNode(), backable.get(), state.isRefreshable(), true);
+                return new State(state.getTitle(), state.getTitleNode(), backable.get(), state.isRefreshable(), true, titleBarTransparent.get(), leftPaneWidth.get());
             }, ((DecoratorPage) to).stateProperty()));
         } else {
             state.unbind();
-            state.set(new State("", null, backable.get(), false, true));
+            state.set(new State("", null, backable.get(), false, true, titleBarTransparent.get(), leftPaneWidth.get()));
         }
 
         if (to instanceof Region) {
@@ -111,5 +108,29 @@ public abstract class DecoratorTransitionPage extends Control implements Decorat
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state.getReadOnlyProperty();
+    }
+
+    public double getLeftPaneWidth() {
+        return leftPaneWidth.get();
+    }
+
+    public DoubleProperty leftPaneWidthProperty() {
+        return leftPaneWidth;
+    }
+
+    public void setLeftPaneWidth(double leftPaneWidth) {
+        this.leftPaneWidth.set(leftPaneWidth);
+    }
+
+    public boolean isTitleBarTransparent() {
+        return titleBarTransparent.get();
+    }
+
+    public BooleanProperty titleBarTransparentProperty() {
+        return titleBarTransparent;
+    }
+
+    public void setTitleBarTransparent(boolean titleBarTransparent) {
+        this.titleBarTransparent.set(titleBarTransparent);
     }
 }

@@ -78,6 +78,8 @@ public class RootPage extends DecoratorTabPage {
     private final TabHeader.Tab profileTab = new TabHeader.Tab("profile");
 
     public RootPage() {
+        setLeftPaneWidth(200);
+
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(event -> onRefreshedVersions((HMCLGameRepository) event.getSource()));
 
         Profile profile = Profiles.getSelectedProfile();
@@ -104,6 +106,7 @@ public class RootPage extends DecoratorTabPage {
     @Override
     protected void onNavigated(Node to) {
         backableProperty().set(!(to instanceof MainPage));
+        setTitleBarTransparent(to instanceof MainPage);
 
         super.onNavigated(to);
     }
@@ -237,18 +240,8 @@ public class RootPage extends DecoratorTabPage {
 
             // the root page, with the sidebar in left, navigator in center.
             BorderPane root = new BorderPane();
-
-            {
-                StackPane drawerContainer = new StackPane();
-                FXUtils.setLimitWidth(drawerContainer, 200);
-                drawerContainer.getStyleClass().add("gray-background");
-                drawerContainer.getChildren().setAll(sideBar);
-                FXUtils.setOverflowHidden(drawerContainer, 8);
-
-                StackPane wrapper = new StackPane(drawerContainer);
-                wrapper.setPadding(new Insets(4, 0, 4, 4));
-                root.setLeft(wrapper);
-            }
+            sideBar.setPrefWidth(200);
+            root.setLeft(sideBar);
 
             {
                 control.transitionPane.getStyleClass().add("jfx-decorator-content-container");

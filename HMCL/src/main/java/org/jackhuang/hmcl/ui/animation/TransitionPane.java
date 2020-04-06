@@ -26,7 +26,6 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public class TransitionPane extends StackPane implements AnimationHandler {
-    private Timeline animation;
     private Duration duration;
     private Node previousNode, currentNode;
 
@@ -62,24 +61,19 @@ public class TransitionPane extends StackPane implements AnimationHandler {
     public void setContent(Node newView, AnimationProducer transition, Duration duration) {
         this.duration = duration;
 
-        Timeline prev = animation;
-        if (prev != null)
-            prev.stop();
-
         updateContent(newView);
 
         transition.init(this);
 
         // runLater or "init" will not work
         Platform.runLater(() -> {
-            Timeline nowAnimation = new Timeline();
-            nowAnimation.getKeyFrames().addAll(transition.animate(this));
-            nowAnimation.getKeyFrames().add(new KeyFrame(duration, e -> {
+            Timeline newAnimation = new Timeline();
+            newAnimation.getKeyFrames().addAll(transition.animate(this));
+            newAnimation.getKeyFrames().add(new KeyFrame(duration, e -> {
                 setMouseTransparent(false);
                 getChildren().remove(previousNode);
             }));
-            nowAnimation.play();
-            animation = nowAnimation;
+            FXUtils.playAnimation(this, "transition_pane", newAnimation);
         });
     }
 
