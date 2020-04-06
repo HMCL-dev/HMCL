@@ -39,7 +39,7 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 @JsonAdapter(Theme.TypeAdapter.class)
 public class Theme {
     public static final Theme BLUE = new Theme("blue", "#5C6BC0");
-
+    public static final Color BLACK = Color.web("#292929");
     public static final Color[] SUGGESTED_COLORS = new Color[]{
             Color.web("#5C6BC0"), // blue
             Color.web("#283593"), // dark blue
@@ -144,7 +144,7 @@ public class Theme {
     }
 
     public static ObjectBinding<Color> blackFillBinding() {
-        return Bindings.createObjectBinding(() -> Color.BLACK);
+        return Bindings.createObjectBinding(() -> BLACK);
     }
 
     public static ObjectBinding<Color> whiteFillBinding() {
