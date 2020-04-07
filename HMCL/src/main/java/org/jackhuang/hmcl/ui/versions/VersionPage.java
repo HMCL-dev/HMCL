@@ -17,16 +17,17 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXListCell;
+import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.beans.property.*;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.util.Callback;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
@@ -244,7 +245,6 @@ public class VersionPage extends Control implements DecoratorPage {
                     }, listViewItemPopup))
             );
 
-            FXUtils.smoothScrolling(control.listView);
             control.listView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
             control.listView.setCellFactory(new Callback<ListView<String>, ListCell<String>>() {
                 @Override
@@ -318,7 +318,7 @@ public class VersionPage extends Control implements DecoratorPage {
                 );
 
                 JFXButton upgradeButton = new JFXButton();
-                upgradeButton.setGraphic(SVG.update(Theme.whiteFillBinding(), 20, 20));
+                upgradeButton.setGraphic(SVG.update(null, 20, 20));
                 upgradeButton.getStyleClass().add("jfx-decorator-button");
                 upgradeButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
                 upgradeButton.setOnAction(event -> control.updateGame());
@@ -326,14 +326,14 @@ public class VersionPage extends Control implements DecoratorPage {
                 FXUtils.installFastTooltip(upgradeButton, i18n("version.update"));
 
                 JFXButton testGameButton = new JFXButton();
-                testGameButton.setGraphic(SVG.launch(Theme.whiteFillBinding(), 20, 20));
+                testGameButton.setGraphic(SVG.launch(null, 20, 20));
                 testGameButton.getStyleClass().add("jfx-decorator-button");
                 testGameButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
                 testGameButton.setOnAction(event -> control.testGame());
                 FXUtils.installFastTooltip(testGameButton, i18n("version.launch.test"));
 
                 JFXButton browseMenuButton = new JFXButton();
-                browseMenuButton.setGraphic(SVG.folderOpen(Theme.whiteFillBinding(), 20, 20));
+                browseMenuButton.setGraphic(SVG.folderOpen(null, 20, 20));
                 browseMenuButton.getStyleClass().add("jfx-decorator-button");
                 browseMenuButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
                 browseMenuButton.setOnAction(event -> browsePopup.show(browseMenuButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, browseMenuButton.getHeight()));
@@ -342,7 +342,7 @@ public class VersionPage extends Control implements DecoratorPage {
                 JFXButton managementMenuButton = new JFXButton();
                 FXUtils.setLimitWidth(managementMenuButton, 40);
                 FXUtils.setLimitHeight(managementMenuButton, 40);
-                managementMenuButton.setGraphic(SVG.wrench(Theme.whiteFillBinding(), 20, 20));
+                managementMenuButton.setGraphic(SVG.wrench(null, 20, 20));
                 managementMenuButton.getStyleClass().add("jfx-decorator-button");
                 managementMenuButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
                 managementMenuButton.setOnAction(event -> managementPopup.show(managementMenuButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, managementMenuButton.getHeight()));

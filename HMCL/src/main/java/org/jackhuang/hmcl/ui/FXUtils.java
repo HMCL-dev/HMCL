@@ -18,7 +18,10 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
-import javafx.animation.*;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.Property;
@@ -26,7 +29,6 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WeakChangeListener;
 import javafx.beans.value.WritableValue;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -34,8 +36,6 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -43,7 +43,6 @@ import javafx.scene.shape.Rectangle;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -61,12 +60,9 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -441,72 +437,6 @@ public final class FXUtils {
         ChangeListener listener = tryCast(comboBox.getProperties().get("FXUtils.bindEnum.listener"), ChangeListener.class).orElse(null);
         if (listener == null) return;
         comboBox.getSelectionModel().selectedIndexProperty().removeListener(listener);
-    }
-
-    public static void smoothScrolling(ListView<?> listView) {
-        listView.skinProperty().addListener(o -> {
-            ScrollBar bar = (ScrollBar) listView.lookup(".scroll-bar");
-            Node virtualFlow = listView.lookup(".virtual-flow");
-            double[] frictions = new double[]{0.99, 0.1, 0.05, 0.04, 0.03, 0.02, 0.01, 0.04, 0.01, 0.008, 0.008, 0.008, 0.008, 0.0006, 0.0005, 0.00003, 0.00001};
-            double[] pushes = new double[]{1};
-            double[] derivatives = new double[frictions.length];
-
-            Timeline timeline = new Timeline();
-            bar.addEventHandler(MouseEvent.DRAG_DETECTED, e -> timeline.stop());
-
-            EventHandler<ScrollEvent> scrollEventHandler = event -> {
-                if (event.getEventType() == ScrollEvent.SCROLL) {
-                    int direction = event.getDeltaY() > 0 ? -1 : 1;
-                    for (int i = 0; i < pushes.length; ++i)
-                        derivatives[i] += direction * pushes[i];
-                    if (timeline.getStatus() == Animation.Status.STOPPED)
-                        timeline.play();
-                    event.consume();
-                }
-            };
-
-            bar.addEventHandler(ScrollEvent.ANY, scrollEventHandler);
-            virtualFlow.setOnScroll(scrollEventHandler);
-
-            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(3), event -> {
-                for (int i = 0; i < derivatives.length; ++i)
-                    derivatives[i] *= frictions[i];
-                for (int i = 1; i < derivatives.length; ++i)
-                    derivatives[i] += derivatives[i - 1];
-                double dy = derivatives[derivatives.length - 1];
-                double height = listView.getLayoutBounds().getHeight();
-                bar.setValue(Lang.clamp(0, bar.getValue() + dy / height, 1));
-                if (Math.abs(dy) < 0.001)
-                    timeline.stop();
-                listView.requestLayout();
-            }));
-            timeline.setCycleCount(Animation.INDEFINITE);
-        });
-    }
-
-    public static <T> T runInUIThread(Supplier<T> supplier) {
-        if (javafx.application.Platform.isFxApplicationThread()) {
-            return supplier.get();
-        } else {
-            CountDownLatch doneLatch = new CountDownLatch(1);
-            AtomicReference<T> reference = new AtomicReference<>();
-            Platform.runLater(() -> {
-                try {
-                    reference.set(supplier.get());
-                } finally {
-                    doneLatch.countDown();
-                }
-
-            });
-
-            try {
-                doneLatch.await();
-            } catch (InterruptedException var3) {
-                Thread.currentThread().interrupt();
-            }
-
-            return reference.get();
-        }
     }
 
     /**

@@ -393,6 +393,10 @@
     -fx-cursor: hand;
 }
 
+.jfx-tool-bar .jfx-decorator-button .svg {
+    -fx-fill: -fx-base-text-fill;
+}
+
 .jfx-tool-bar Label {
     -fx-text-fill: WHITE;
 }
@@ -687,7 +691,6 @@
 }
 
 .jfx-list-view-float {
-    -fx-padding: 5;
     -fx-background-insets: 0.0;
     -jfx-cell-horizontal-margin: 0.0;
     -jfx-cell-vertical-margin: 5.0;
@@ -1106,10 +1109,6 @@
 
 .jfx-decorator {
     -fx-decorator-color: -fx-base-color;
-}
-
-.jfx-decorator .jfx-decorator-buttons-container {
-    -fx-background-color: -fx-decorator-color;
 }
 
 .jfx-decorator-drawer {

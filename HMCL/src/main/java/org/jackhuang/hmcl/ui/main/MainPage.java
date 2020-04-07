@@ -174,7 +174,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton.setOnMouseClicked(e -> onMenu());
             menuButton.setClip(new Rectangle(211, -100, 100, 200));
             StackPane graphic = new StackPane();
-            Node svg = SVG.triangle(Theme.whiteFillBinding(), 10, 10);
+            Node svg = SVG.triangle(Theme.foregroundFillBinding(), 10, 10);
             StackPane.setAlignment(svg, Pos.CENTER_RIGHT);
             graphic.getChildren().setAll(svg);
             graphic.setTranslateX(12);

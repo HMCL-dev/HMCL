@@ -37,7 +37,7 @@ public final class SVG {
         SVGPath path = new SVGPath();
         path.getStyleClass().add("svg");
         path.setContent(d);
-        path.fillProperty().bind(fill);
+        if (fill != null) path.fillProperty().bind(fill);
 
         if (width < 0 || height < 0) {
             StackPane pane = new StackPane(path);
