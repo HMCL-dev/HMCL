@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DependencyManager;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.Version;
@@ -98,11 +99,43 @@ public final class ForgeInstallTask extends Task<Version> {
     }
 
     @Override
-    public void execute() {
-        if (VersionNumber.VERSION_COMPARATOR.compare("1.13", remote.getGameVersion()) <= 0)
+    public void execute() throws IOException, VersionMismatchException {
+        if (detectForgeInstallerType(dependencyManager, version, installer))
             dependency = new ForgeNewInstallTask(dependencyManager, version, remote.getSelfVersion(), installer);
         else
             dependency = new ForgeOldInstallTask(dependencyManager, version, remote.getSelfVersion(), installer);
+    }
+
+    /**
+     * Detect Forge installer type.
+     *
+     * @param dependencyManager game repository
+     * @param version version.json
+     * @param installer the Forge installer, either the new or old one.
+     * @return true for new, false for old
+     * @throws IOException if unable to read compressed content of installer file, or installer file is corrupted, or the installer is not the one we want.
+     * @throws VersionMismatchException if required game version of installer does not match the actual one.
+     */
+    public static boolean detectForgeInstallerType(DependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
+        Optional<String> gameVersion = GameVersion.minecraftVersion(dependencyManager.getGameRepository().getVersionJar(version));
+        if (!gameVersion.isPresent()) throw new IOException();
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
+            String installProfileText = FileUtils.readText(fs.getPath("install_profile.json"));
+            Map installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
+            if (installProfile.containsKey("spec")) {
+                ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
+                if (!gameVersion.get().equals(profile.getMinecraft()))
+                    throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());
+                return true;
+            } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
+                ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
+                if (!gameVersion.get().equals(profile.getInstall().getMinecraft()))
+                    throw new VersionMismatchException(profile.getInstall().getMinecraft(), gameVersion.get());
+                return false;
+            } else {
+                throw new IOException();
+            }
+        }
     }
 
     /**
