@@ -1119,8 +1119,8 @@
 }
 
 .resize-border {
-    -fx-border-color: -fx-base-color;
-    -fx-border-width: 2;
+    -fx-border-color: black;
+    -fx-border-width: 1;
 }
 
 .debug-border {

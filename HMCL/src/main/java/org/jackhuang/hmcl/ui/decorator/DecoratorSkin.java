@@ -277,19 +277,19 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     }
 
     private boolean isRightEdge(double x, double y, Bounds boundsInParent) {
-        return x < root.getWidth() && x > root.getWidth() - root.snappedLeftInset();
+        return x < root.getWidth() && x >= root.getWidth() - root.snappedLeftInset();
     }
 
     private boolean isTopEdge(double x, double y, Bounds boundsInParent) {
-        return y >= 0 && y < root.snappedLeftInset();
+        return y >= 0 && y <= root.snappedTopInset();
     }
 
     private boolean isBottomEdge(double x, double y, Bounds boundsInParent) {
-        return y < root.getHeight() && y > root.getHeight() - root.snappedLeftInset();
+        return y < root.getHeight() && y >= root.getHeight() - root.snappedLeftInset();
     }
 
     private boolean isLeftEdge(double x, double y, Bounds boundsInParent) {
-        return x >= 0 && x < root.snappedLeftInset();
+        return x >= 0 && x <= root.snappedLeftInset();
     }
 
     private boolean setStageWidth(double width) {
