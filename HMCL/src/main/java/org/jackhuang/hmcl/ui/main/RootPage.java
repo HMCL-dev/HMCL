@@ -247,9 +247,7 @@ public class RootPage extends DecoratorTabPage {
                 control.transitionPane.getStyleClass().add("jfx-decorator-content-container");
                 control.transitionPane.getChildren().setAll(getSkinnable().getMainPage());
                 FXUtils.setOverflowHidden(control.transitionPane, 8);
-                StackPane wrapper = new StackPane(control.transitionPane);
-                wrapper.setPadding(new Insets(4));
-                root.setCenter(wrapper);
+                root.setCenter(control.transitionPane);
             }
 
             getChildren().setAll(root);

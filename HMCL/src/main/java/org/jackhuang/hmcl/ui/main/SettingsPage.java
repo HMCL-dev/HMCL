@@ -73,7 +73,6 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
 
     public SettingsPage() {
         FXUtils.smoothScrolling(scroll);
-        addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onDecoratorPageNavigating);
 
         // ==== Download sources ====
         cboDownloadSource.getItems().setAll(DownloadProviders.providersById.keySet());

@@ -40,7 +40,6 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
         spinnerPane.getStyleClass().add("large-spinner-pane");
         Pane placeholder = new Pane();
         VBox list = new VBox();
-        spinnerPane.getStyleClass().add("content-background");
 
         StackPane contentPane = new StackPane();
         {

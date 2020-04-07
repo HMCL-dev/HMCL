@@ -80,7 +80,6 @@ public class DecoratorController {
         decorator.setOnCloseButtonAction(Launcher::stopApplication);
 
         navigator = new Navigator();
-        navigator.setOnNavigating(this::onNavigating);
         navigator.setOnNavigated(this::onNavigated);
         navigator.init(mainPage);
 
