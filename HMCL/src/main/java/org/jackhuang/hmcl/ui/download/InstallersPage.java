@@ -153,7 +153,6 @@ public class InstallersPage extends Control implements WizardPage {
             final Label label;
 
             InstallersPageItemSkin(String imageUrl, InstallerPageItem item, boolean clickable) {
-                setPadding(new Insets(8));
                 getStyleClass().add("card");
 
                 setLeft(FXUtils.limitingSize(imageView = new ImageView(new Image(imageUrl, 32, 32, true, true)), 32, 32));
@@ -200,7 +199,7 @@ public class InstallersPage extends Control implements WizardPage {
                 HBox versionNamePane = new HBox(8);
                 versionNamePane.setAlignment(Pos.CENTER_LEFT);
                 versionNamePane.getStyleClass().add("card");
-                versionNamePane.setPadding(new Insets(20, 8, 20, 16));
+                versionNamePane.setStyle("-fx-padding: 20 8 20 16");
 
                 versionNamePane.getChildren().add(new Label(i18n("archive.name")));
 

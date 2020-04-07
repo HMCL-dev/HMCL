@@ -13,7 +13,7 @@
     </fx:define>
     <VBox fx:id="list" styleClass="jfx-list-view" maxHeight="150" spacing="8" maxWidth="400">
         <Label padding="${insets}" text="%install.modpack" />
-        <JFXButton fx:id="btnLocal" styleClass="card" style="-fx-padding: 8; -fx-cursor: HAND" prefWidth="${list.width}" onMouseClicked="#onChooseLocalFile">
+        <JFXButton fx:id="btnLocal" styleClass="card" style="-fx-cursor: HAND" prefWidth="${list.width}" onMouseClicked="#onChooseLocalFile">
             <graphic>
                 <BorderPane mouseTransparent="true">
                     <left>
@@ -25,7 +25,7 @@
                 </BorderPane>
             </graphic>
         </JFXButton>
-        <JFXButton fx:id="btnRemote" styleClass="card" style="-fx-padding: 8; -fx-cursor: HAND" prefWidth="${list.width}" onMouseClicked="#onChooseRemoteFile">
+        <JFXButton fx:id="btnRemote" styleClass="card" style="-fx-cursor: HAND" prefWidth="${list.width}" onMouseClicked="#onChooseRemoteFile">
             <graphic>
                 <BorderPane mouseTransparent="true">
                     <left>

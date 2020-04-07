@@ -41,8 +41,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class InstallerItem extends BorderPane {
 
     public InstallerItem(String libraryId, String libraryVersion, @Nullable Runnable upgrade, @Nullable Consumer<InstallerItem> deleteCallback) {
-        getStyleClass().add("two-line-list-item");
-        setStyle("-fx-background-radius: 2; -fx-background-color: white; -fx-padding: 8;");
+        getStyleClass().addAll("two-line-list-item", "card");
         JFXDepthManager.setDepth(this, 1);
 
         String[] urls = new String[]{"/assets/img/grass.png", "/assets/img/fabric.png", "/assets/img/forge.png", "/assets/img/chicken.png", "/assets/img/command.png"};

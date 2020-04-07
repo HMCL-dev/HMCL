@@ -318,8 +318,6 @@ public class VersionPage extends Control implements DecoratorPage {
                 );
 
                 JFXButton upgradeButton = new JFXButton();
-                FXUtils.setLimitWidth(upgradeButton, 40);
-                FXUtils.setLimitHeight(upgradeButton, 40);
                 upgradeButton.setGraphic(SVG.update(Theme.whiteFillBinding(), 20, 20));
                 upgradeButton.getStyleClass().add("jfx-decorator-button");
                 upgradeButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
@@ -328,8 +326,6 @@ public class VersionPage extends Control implements DecoratorPage {
                 FXUtils.installFastTooltip(upgradeButton, i18n("version.update"));
 
                 JFXButton testGameButton = new JFXButton();
-                FXUtils.setLimitWidth(testGameButton, 40);
-                FXUtils.setLimitHeight(testGameButton, 40);
                 testGameButton.setGraphic(SVG.launch(Theme.whiteFillBinding(), 20, 20));
                 testGameButton.getStyleClass().add("jfx-decorator-button");
                 testGameButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
@@ -337,8 +333,6 @@ public class VersionPage extends Control implements DecoratorPage {
                 FXUtils.installFastTooltip(testGameButton, i18n("version.launch.test"));
 
                 JFXButton browseMenuButton = new JFXButton();
-                FXUtils.setLimitWidth(browseMenuButton, 40);
-                FXUtils.setLimitHeight(browseMenuButton, 40);
                 browseMenuButton.setGraphic(SVG.folderOpen(Theme.whiteFillBinding(), 20, 20));
                 browseMenuButton.getStyleClass().add("jfx-decorator-button");
                 browseMenuButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
@@ -347,7 +341,7 @@ public class VersionPage extends Control implements DecoratorPage {
 
                 JFXButton managementMenuButton = new JFXButton();
                 FXUtils.setLimitWidth(managementMenuButton, 40);
-                FXUtils.setLimitHeight(managementMenuButton, 40);;
+                FXUtils.setLimitHeight(managementMenuButton, 40);
                 managementMenuButton.setGraphic(SVG.wrench(Theme.whiteFillBinding(), 20, 20));
                 managementMenuButton.getStyleClass().add("jfx-decorator-button");
                 managementMenuButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
@@ -362,11 +356,9 @@ public class VersionPage extends Control implements DecoratorPage {
             titleBar.setRight(toolBar);
             control.state.set(new State(i18n("version.manage.manage"), titleBar, true, false, true, false, 200));
 
-            control.transitionPane.getStyleClass().add("gray-background");
-            FXUtils.setOverflowHidden(control.transitionPane, 8);
-            StackPane wrapper = new StackPane(control.transitionPane);
-            wrapper.setPadding(new Insets(4));
-            root.setCenter(wrapper);
+            //control.transitionPane.getStyleClass().add("gray-background");
+            //FXUtils.setOverflowHidden(control.transitionPane, 8);
+            root.setCenter(control.transitionPane);
 
             spinnerPane.loadingProperty().bind(control.loading);
             spinnerPane.setContent(root);

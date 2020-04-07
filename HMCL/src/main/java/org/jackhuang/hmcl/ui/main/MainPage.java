@@ -115,6 +115,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         }
 
         StackPane launchPane = new StackPane();
+        launchPane.getStyleClass().add("launch-pane");
         launchPane.setMaxWidth(230);
         launchPane.setMaxHeight(55);
         launchPane.setOnScroll(event -> {
@@ -134,8 +135,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             JFXButton launchButton = new JFXButton();
             launchButton.setPrefWidth(230);
             launchButton.setPrefHeight(55);
-            launchButton.setButtonType(JFXButton.ButtonType.RAISED);
-            launchButton.getStyleClass().add("jfx-button-raised");
+            //launchButton.setButtonType(JFXButton.ButtonType.RAISED);
             launchButton.setOnAction(e -> launch());
             launchButton.setDefaultButton(true);
             launchButton.setClip(new Rectangle(-100, -100, 310, 200));
@@ -161,7 +161,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
             }
 
             Rectangle separator = new Rectangle();
-            separator.getStyleClass().add("darker-fill");
             separator.setWidth(1);
             separator.setHeight(57);
             separator.setTranslateX(95);
@@ -170,8 +169,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton = new JFXButton();
             menuButton.setPrefHeight(55);
             menuButton.setPrefWidth(230);
-            menuButton.setButtonType(JFXButton.ButtonType.RAISED);
-            menuButton.getStyleClass().add("jfx-button-raised");
+            //menuButton.setButtonType(JFXButton.ButtonType.RAISED);
             menuButton.setStyle("-fx-font-size: 15px;");
             menuButton.setOnMouseClicked(e -> onMenu());
             menuButton.setClip(new Rectangle(211, -100, 100, 200));

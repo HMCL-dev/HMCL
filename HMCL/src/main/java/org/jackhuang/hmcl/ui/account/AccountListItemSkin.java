@@ -102,7 +102,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         root.setRight(right);
 
         root.getStyleClass().add("card");
-        root.setPadding(new Insets(8, 8, 8, 0));
+        root.setStyle("-fx-padding: 8 8 8 0;");
         JFXDepthManager.setDepth(root, 1);
 
         getChildren().setAll(root);

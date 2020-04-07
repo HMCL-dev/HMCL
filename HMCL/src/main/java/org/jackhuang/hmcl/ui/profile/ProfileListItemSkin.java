@@ -75,7 +75,7 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
         root.setRight(right);
 
         root.getStyleClass().add("card");
-        root.setPadding(new Insets(8, 8, 8, 0));
+        root.setStyle("-fx-padding: 8 8 8 0");
         JFXDepthManager.setDepth(root, 1);
         item.titleProperty().bind(skinnable.titleProperty());
         item.subtitleProperty().bind(skinnable.subtitleProperty());

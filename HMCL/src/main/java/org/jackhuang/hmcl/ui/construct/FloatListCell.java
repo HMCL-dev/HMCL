@@ -36,8 +36,7 @@ public abstract class FloatListCell<T> extends ListCell<T> {
 
         pane.getStyleClass().add("card");
         pane.setCursor(Cursor.HAND);
-        pane.setPadding(new Insets(8));
-        setPadding(new Insets(5));
+        setPadding(new Insets(9, 9, 0, 9));
         JFXDepthManager.setDepth(pane, 1);
 
         FXUtils.onChangeAndOperate(selectedProperty(), selected -> {

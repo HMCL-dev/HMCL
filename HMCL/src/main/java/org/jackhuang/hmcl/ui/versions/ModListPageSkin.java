@@ -87,13 +87,12 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 BooleanProperty booleanProperty;
 
                 {
+
                     Region clippedContainer = (Region)listView.lookup(".clipped-container");
                     setPrefWidth(0);
                     HBox container = new HBox(8);
-                    container.setPadding(new Insets(0, 0, 0, 6));
                     container.setAlignment(Pos.CENTER_LEFT);
                     pane.getChildren().add(container);
-                    pane.setPadding(new Insets(8, 8, 8, 0));
                     if (clippedContainer != null) {
                         maxWidthProperty().bind(clippedContainer.widthProperty());
                         prefWidthProperty().bind(clippedContainer.widthProperty());
