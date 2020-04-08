@@ -283,9 +283,18 @@ public class DefaultLauncher extends Launcher {
 
         File runDirectory = repository.getRunDirectory(version.getId());
 
-        if (StringUtils.isNotBlank(options.getPreLaunchCommand()))
-            new ProcessBuilder(options.getPreLaunchCommand())
+        if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
+            String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
+            String preLaunchCommand = options.getPreLaunchCommand()
+                    .replace("$INST_NAME", versionName)
+                    .replace("$INST_ID", versionName)
+                    .replace("$INST_DIR", repository.getVersionRoot(version.getId()).getAbsolutePath())
+                    .replace("$INST_MC_DIR", repository.getRunDirectory(version.getId()).getAbsolutePath())
+                    .replace("$INST_JAVA", options.getJava().getBinary().toString());
+
+            new ProcessBuilder(preLaunchCommand)
                     .directory(runDirectory).start().waitFor();
+        }
 
         Process process;
         try {
