@@ -214,11 +214,11 @@ public final class NetworkUtils {
     }
 
     public static boolean urlExists(URL url) throws IOException {
-        try (InputStream stream = url.openStream()) {
-            return true;
-        } catch (FileNotFoundException e) {
-            return false;
-        }
+        HttpURLConnection con = createConnection(url);
+        con = resolveConnection(con);
+        int responseCode = con.getResponseCode();
+        con.disconnect();
+        return responseCode / 100 == 2;
     }
 
     // ==== Shortcut methods for encoding/decoding URLs in UTF-8 ====
