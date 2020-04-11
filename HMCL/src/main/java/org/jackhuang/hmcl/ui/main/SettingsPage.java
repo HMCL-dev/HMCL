@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
@@ -63,7 +62,7 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.reservedSelectedPropertyFor;
+import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.reversedSelectedPropertyFor;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 
 public final class SettingsPage extends SettingsView implements DecoratorPage {
@@ -111,7 +110,7 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
         proxyPane.disableProperty().bind(chkDisableProxy.selectedProperty());
         authPane.disableProperty().bind(chkProxyAuthentication.selectedProperty().not());
 
-        reservedSelectedPropertyFor(chkDisableProxy).bindBidirectional(config().hasProxyProperty());
+        reversedSelectedPropertyFor(chkDisableProxy).bindBidirectional(config().hasProxyProperty());
         chkProxyAuthentication.selectedProperty().bindBidirectional(config().hasProxyAuthProperty());
 
         ToggleGroup proxyConfigurationGroup = new ToggleGroup();

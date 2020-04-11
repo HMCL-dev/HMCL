@@ -17,19 +17,14 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ObjectBinding;
-import javafx.beans.value.ObservableObjectValue;
+import org.jackhuang.hmcl.download.AdaptedDownloadProvider;
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.FXUtils;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,6 +35,8 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 public final class DownloadProviders {
     private DownloadProviders() {}
 
+    private static final AdaptedDownloadProvider DOWNLOAD_PROVIDER = new AdaptedDownloadProvider();
+
     public static final Map<String, DownloadProvider> providersById = mapOf(
             pair("mojang", new MojangDownloadProvider()),
             pair("bmclapi", new BMCLAPIDownloadProvider("https://bmclapi2.bangbang93.com")),
@@ -47,32 +44,44 @@ public final class DownloadProviders {
 
     public static final String DEFAULT_PROVIDER_ID = "mcbbs";
 
-    private static ObjectBinding<DownloadProvider> downloadProviderProperty;
-
     static void init() {
-        downloadProviderProperty = Bindings.createObjectBinding(
-                () -> Optional.ofNullable(providersById.get(config().getDownloadType()))
-                        .orElse(providersById.get(DEFAULT_PROVIDER_ID)),
-                config().downloadTypeProperty());
+        FXUtils.onChangeAndOperate(config().downloadTypeProperty(), downloadType -> {
+            DownloadProvider primary = Optional.ofNullable(providersById.get(config().getDownloadType()))
+                    .orElse(providersById.get(DEFAULT_PROVIDER_ID));
+            DOWNLOAD_PROVIDER.setDownloadProviderCandidates(
+                    Stream.concat(
+                            Stream.of(primary),
+                            providersById.values().stream().filter(x -> x != primary)
+                    ).collect(Collectors.toList())
+            );
+        });
+    }
+
+    public static String getPrimaryDownloadProviderId() {
+        String downloadType = config().getDownloadType();
+        if (providersById.containsKey(downloadType))
+            return downloadType;
+        else
+            return DEFAULT_PROVIDER_ID;
+    }
+
+    public static AdaptedDownloadProvider getDownloadProviderByPrimaryId(String primaryId) {
+        AdaptedDownloadProvider adaptedDownloadProvider = new AdaptedDownloadProvider();
+        DownloadProvider primary = Optional.ofNullable(providersById.get(primaryId))
+                .orElse(providersById.get(DEFAULT_PROVIDER_ID));
+        adaptedDownloadProvider.setDownloadProviderCandidates(
+                Stream.concat(
+                        Stream.of(primary),
+                        providersById.values().stream().filter(x -> x != primary)
+                ).collect(Collectors.toList())
+        );
+        return adaptedDownloadProvider;
     }
 
     /**
      * Get current primary preferred download provider
      */
-    public static DownloadProvider getDownloadProvider() {
-        return downloadProviderProperty.get();
-    }
-
-    /**
-     * Preferred download providers have the primary one first, the official one next.
-     * @return the preferred download providers
-     */
-    public static List<DownloadProvider> getPreferredDownloadProviders() {
-        DownloadProvider provider = getDownloadProvider();
-        return Stream.concat(Stream.of(provider), providersById.values().stream().filter(x -> x != provider)).collect(Collectors.toList());
-    }
-
-    public static ObservableObjectValue<DownloadProvider> downloadProviderProperty() {
-        return downloadProviderProperty;
+    public static AdaptedDownloadProvider getDownloadProvider() {
+        return DOWNLOAD_PROVIDER;
     }
 }

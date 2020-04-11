@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jenkinsci.constant_pool_scanner.ConstantPool;
@@ -96,9 +95,7 @@ public final class OptiFineInstallTask extends Task<Version> {
 
         if (installer == null) {
             dependents.add(new FileDownloadTask(
-                    dependencyManager.getPreferredDownloadProviders().stream()
-                            .flatMap(downloadProvider -> Arrays.stream(remote.getUrl()).map(downloadProvider::injectURL))
-                            .map(NetworkUtils::toURL).collect(Collectors.toList()),
+                    dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()),
                     dest.toFile(), null)
                     .setCacheRepository(dependencyManager.getCacheRepository())
                     .setCaching(true));

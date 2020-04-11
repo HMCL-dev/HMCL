@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXSpinner;
 import javafx.application.Platform;
@@ -31,7 +32,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -54,6 +55,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -83,23 +85,34 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     private HBox checkPane;
     @FXML
     private VBox centrePane;
+    @FXML
+    private JFXComboBox<String> downloadSourceComboBox;
 
-    private final VersionList<?> versionList;
+    private VersionList<?> versionList;
     private TaskExecutor executor;
 
-    public VersionsPage(WizardController controller, String title, String gameVersion, DownloadProvider downloadProvider, String libraryId, Runnable callback) {
+    public VersionsPage(WizardController controller, String title, String gameVersion, InstallerWizardDownloadProvider downloadProvider, String libraryId, Runnable callback) {
         this.title = title;
         this.gameVersion = gameVersion;
         this.libraryId = libraryId;
         this.controller = controller;
-        this.versionList = downloadProvider.getVersionListById(libraryId);
 
         FXUtils.loadFXML(this, "/assets/fxml/download/versions.fxml");
 
-        if (versionList.hasType()) {
-            centrePane.getChildren().setAll(checkPane, list);
-        } else
-            centrePane.getChildren().setAll(list);
+        downloadSourceComboBox.getItems().setAll(DownloadProviders.providersById.keySet());
+        downloadSourceComboBox.setConverter(stringConverter(key -> i18n("download.provider." + key)));
+        downloadSourceComboBox.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
+            controller.getSettings().put("downloadProvider", newValue);
+            downloadProvider.setDownloadProvider(DownloadProviders.getDownloadProviderByPrimaryId(newValue));
+            versionList = downloadProvider.getVersionListById(libraryId);
+            if (versionList.hasType()) {
+                centrePane.getChildren().setAll(checkPane, list);
+            } else {
+                centrePane.getChildren().setAll(list);
+            }
+            refresh();
+        });
+        downloadSourceComboBox.getSelectionModel().select((String)controller.getSettings().getOrDefault("downloadProvider", DownloadProviders.getPrimaryDownloadProviderId()));
 
         InvalidationListener listener = o -> list.getItems().setAll(loadVersions());
         chkRelease.selectedProperty().addListener(listener);
@@ -184,13 +197,15 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
     @Override
     public void refresh() {
+        VersionList<?> currentVersionList = versionList;
         root.setContent(spinner, ContainerAnimations.FADE.getAnimationProducer());
-        executor = versionList.refreshAsync(gameVersion).whenComplete(exception -> {
+        executor = currentVersionList.refreshAsync(gameVersion).whenComplete(exception -> {
             if (exception == null) {
                 List<RemoteVersion> items = loadVersions();
 
                 Platform.runLater(() -> {
-                    if (versionList.getVersions(gameVersion).isEmpty()) {
+                    if (versionList != currentVersionList) return;
+                    if (currentVersionList.getVersions(gameVersion).isEmpty()) {
                         root.setContent(emptyPane, ContainerAnimations.FADE.getAnimationProducer());
                     } else {
                         if (items.isEmpty()) {
@@ -206,6 +221,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             } else {
                 LOG.log(Level.WARNING, "Failed to fetch versions list", exception);
                 Platform.runLater(() -> {
+                    if (versionList != currentVersionList) return;
                     root.setContent(failedPane, ContainerAnimations.FADE.getAnimationProducer());
                 });
             }

@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.game.AssetIndexInfo;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,7 +64,7 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
         // We should not check the hash code of asset index file since this file is not consistent
         // And Mojang will modify this file anytime. So assetIndex.hash might be outdated.
         dependencies.add(new FileDownloadTask(
-                NetworkUtils.toURL(dependencyManager.getPrimaryDownloadProvider().injectURL(assetIndexInfo.getUrl())),
+                dependencyManager.getDownloadProvider().injectURLWithCandidates(assetIndexInfo.getUrl()),
                 assetIndexFile
         ).setCacheRepository(dependencyManager.getCacheRepository()));
     }

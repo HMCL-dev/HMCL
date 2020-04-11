@@ -33,7 +33,7 @@ import org.tukaani.xz.XZInputStream;
 
 import java.io.*;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -42,7 +42,6 @@ import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
 import static org.jackhuang.hmcl.util.Hex.encodeHex;
@@ -130,21 +129,15 @@ public class LibraryDownloadTask extends Task<Void> {
         }
 
         try {
-            URL packXz = NetworkUtils.toURL(dependencyManager.getPrimaryDownloadProvider().injectURL(url) + ".pack.xz");
+            URL packXz = NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(url) + ".pack.xz");
             if (NetworkUtils.urlExists(packXz)) {
-                List<URL> urls = dependencyManager.getPreferredDownloadProviders().stream()
-                        .map(downloadProvider -> downloadProvider.injectURL(url) + ".pack.xz")
-                        .map(NetworkUtils::toURL)
-                        .collect(Collectors.toList());
+                List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url + ".pack.xz");
                 task = new FileDownloadTask(urls, xzFile, null)
                         .setCacheRepository(cacheRepository)
                         .setCaching(true);
                 xz = true;
             } else {
-                List<URL> urls = dependencyManager.getPreferredDownloadProviders().stream()
-                        .map(downloadProvider -> downloadProvider.injectURL(url))
-                        .map(NetworkUtils::toURL)
-                        .collect(Collectors.toList());
+                List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url);
                 task = new FileDownloadTask(urls, jar,
                         library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null)
                         .setCacheRepository(cacheRepository)
@@ -192,7 +185,7 @@ public class LibraryDownloadTask extends Task<Void> {
         while (entry != null) {
             byte[] eData = IOUtils.readFullyWithoutClosing(jar);
             if (entry.getName().equals("checksums.sha1")) {
-                hashes = new String(eData, Charset.forName("UTF-8")).split("\n");
+                hashes = new String(eData, StandardCharsets.UTF_8).split("\n");
             }
             if (!entry.isDirectory()) {
                 files.put(entry.getName(), encodeHex(digest("SHA-1", eData)));

@@ -27,15 +27,15 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
@@ -69,9 +69,7 @@ public final class ForgeInstallTask extends Task<Version> {
         installer = Files.createTempFile("forge-installer", ".jar");
 
         dependent = new FileDownloadTask(
-                dependencyManager.getPreferredDownloadProviders().stream()
-                        .flatMap(downloadProvider -> Arrays.stream(remote.getUrl()).map(downloadProvider::injectURL))
-                        .map(NetworkUtils::toURL).collect(Collectors.toList()),
+                dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()),
                 installer.toFile(), null)
                 .setCacheRepository(dependencyManager.getCacheRepository())
                 .setCaching(true);

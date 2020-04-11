@@ -123,6 +123,15 @@ public class FileDownloadTask extends Task<Void> {
      * Constructor.
      * @param urls urls of remote file, will be attempted in order.
      * @param file the location that download to.
+     */
+    public FileDownloadTask(List<URL> urls, File file) {
+        this(urls, file, null);
+    }
+
+    /**
+     * Constructor.
+     * @param urls urls of remote file, will be attempted in order.
+     * @param file the location that download to.
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
      */
     public FileDownloadTask(List<URL> urls, File file, IntegrityCheck integrityCheck) {

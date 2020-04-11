@@ -22,14 +22,11 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -46,9 +43,8 @@ public final class VersionJsonDownloadTask extends Task<String> {
         this.gameVersion = gameVersion;
         this.dependencyManager = dependencyManager;
         this.gameVersionList = dependencyManager.getVersionList("game");
-        
-        if (!gameVersionList.isLoaded())
-            dependents.add(gameVersionList.refreshAsync());
+
+        dependents.add(gameVersionList.loadAsync());
 
         setSignificance(TaskSignificance.MODERATE);
     }
@@ -67,10 +63,6 @@ public final class VersionJsonDownloadTask extends Task<String> {
     public void execute() throws IOException {
         RemoteVersion remoteVersion = gameVersionList.getVersion(gameVersion, gameVersion)
                 .orElseThrow(() -> new IOException("Cannot find specific version " + gameVersion + " in remote repository"));
-        dependencies.add(new GetTask(
-                dependencyManager.getPreferredDownloadProviders().stream()
-                        .flatMap(downloadProvider -> Arrays.stream(remoteVersion.getUrl()).map(downloadProvider::injectURL))
-                        .map(NetworkUtils::toURL).collect(Collectors.toList())
-        ).storeTo(this::setResult));
+        dependencies.add(new GetTask(dependencyManager.getDownloadProvider().injectURLsWithCandidates(remoteVersion.getUrls())).storeTo(this::setResult));
     }
 }

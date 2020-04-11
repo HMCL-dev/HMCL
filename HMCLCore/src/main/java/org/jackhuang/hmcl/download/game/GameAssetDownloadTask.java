@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download.game;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonSyntaxException;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.game.AssetIndex;
 import org.jackhuang.hmcl.game.AssetIndexInfo;
@@ -30,7 +29,6 @@ import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +37,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -112,10 +109,7 @@ public final class GameAssetDownloadTask extends Task<Void> {
                 Logging.LOG.log(Level.WARNING, "Unable to calc hash value of file " + file.toPath(), e);
             }
             if (download) {
-                List<URL> urls = dependencyManager.getPreferredDownloadProviders().stream()
-                        .map(downloadProvider -> downloadProvider.getAssetBaseURL() + assetObject.getLocation())
-                        .map(NetworkUtils::toURL)
-                        .collect(Collectors.toList());
+                List<URL> urls = dependencyManager.getDownloadProvider().getAssetObjectCandidates(assetObject.getLocation());
 
                 FileDownloadTask task = new FileDownloadTask(urls, file, new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.getHash()));
                 task.setName(assetObject.getHash());

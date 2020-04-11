@@ -48,7 +48,7 @@ public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
     public Task<?> refreshAsync() {
         return new Task<Void>() {
             @Override
-            public void execute() throws IOException, XMLStreamException {
+            public void execute() throws IOException {
                 List<String> gameVersions = getGameVersions(GAME_META_URL);
                 List<String> loaderVersions = getGameVersions(LOADER_META_URL);
 

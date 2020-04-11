@@ -23,15 +23,17 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 
+import java.util.List;
+
 public class ForgeRemoteVersion extends RemoteVersion {
     /**
      * Constructor.
      *
      * @param gameVersion the Minecraft version that this remote version suits.
      * @param selfVersion the version string of the remote version.
-     * @param url         the installer or universal jar URL.
+     * @param url         the installer or universal jar original URL.
      */
-    public ForgeRemoteVersion(String gameVersion, String selfVersion, String... url) {
+    public ForgeRemoteVersion(String gameVersion, String selfVersion, List<String> url) {
         super(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), gameVersion, selfVersion, url);
     }
 

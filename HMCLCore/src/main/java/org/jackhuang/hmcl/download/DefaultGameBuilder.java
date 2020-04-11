@@ -32,19 +32,13 @@ import java.util.Map;
 public class DefaultGameBuilder extends GameBuilder {
 
     private final DefaultDependencyManager dependencyManager;
-    private final DownloadProvider downloadProvider;
 
     public DefaultGameBuilder(DefaultDependencyManager dependencyManager) {
         this.dependencyManager = dependencyManager;
-        this.downloadProvider = dependencyManager.getPrimaryDownloadProvider();
     }
 
     public DefaultDependencyManager getDependencyManager() {
         return dependencyManager;
-    }
-
-    public DownloadProvider getDownloadProvider() {
-        return downloadProvider;
     }
 
     @Override

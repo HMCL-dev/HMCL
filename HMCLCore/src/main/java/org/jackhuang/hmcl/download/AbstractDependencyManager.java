@@ -17,23 +17,19 @@
  */
 package org.jackhuang.hmcl.download;
 
-import java.util.List;
-
 /**
  *
  * @author huangyuhui
  */
 public abstract class AbstractDependencyManager implements DependencyManager {
 
-    public abstract DownloadProvider getPrimaryDownloadProvider();
-
-    public abstract List<DownloadProvider> getPreferredDownloadProviders();
+    public abstract DownloadProvider getDownloadProvider();
 
     @Override
     public abstract DefaultCacheRepository getCacheRepository();
 
     @Override
     public VersionList<?> getVersionList(String id) {
-        return getPrimaryDownloadProvider().getVersionListById(id);
+        return getDownloadProvider().getVersionListById(id);
     }
 }

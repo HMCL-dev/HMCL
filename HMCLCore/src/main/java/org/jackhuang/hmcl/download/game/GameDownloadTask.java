@@ -23,13 +23,11 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.CacheRepository;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Task to download Minecraft jar
@@ -59,9 +57,7 @@ public final class GameDownloadTask extends Task<Void> {
         File jar = dependencyManager.getGameRepository().getVersionJar(version);
 
         FileDownloadTask task = new FileDownloadTask(
-                dependencyManager.getPreferredDownloadProviders().stream()
-                        .map(downloadProvider -> downloadProvider.injectURL(version.getDownloadInfo().getUrl()))
-                        .map(NetworkUtils::toURL).collect(Collectors.toList()),
+                dependencyManager.getDownloadProvider().injectURLWithCandidates(version.getDownloadInfo().getUrl()),
                 jar,
                 IntegrityCheck.of(CacheRepository.SHA1, version.getDownloadInfo().getSha1()))
                 .setCaching(true)

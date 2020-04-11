@@ -9,9 +9,20 @@
          type="BorderPane"
          prefHeight="400.0" prefWidth="600.0">
     <top>
-        <StackPane styleClass="sponsor-pane" onMouseClicked="#onSponsor">
-            <Label text="%sponsor.bmclapi" />
-        </StackPane>
+        <VBox>
+            <StackPane styleClass="sponsor-pane" onMouseClicked="#onSponsor">
+                <Label text="%sponsor.bmclapi" />
+            </StackPane>
+            <BorderPane style="-fx-padding: 0 16 16 16;">
+                <left>
+                    <Label text="%settings.launcher.download_source" BorderPane.alignment="CENTER_LEFT" />
+                </left>
+                <right>
+                    <JFXComboBox fx:id="downloadSourceComboBox">
+                    </JFXComboBox>
+                </right>
+            </BorderPane>
+        </VBox>
     </top>
     <center>
         <TransitionPane fx:id="root">

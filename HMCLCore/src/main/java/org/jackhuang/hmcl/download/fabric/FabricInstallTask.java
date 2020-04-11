@@ -28,10 +28,8 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * <b>Note</b>: Fabric should be installed first.
@@ -51,9 +49,7 @@ public final class FabricInstallTask extends Task<Version> {
         this.version = version;
         this.remote = remoteVersion;
 
-        launchMetaTask = new GetTask(dependencyManager.getPreferredDownloadProviders().stream()
-                .map(downloadProvider -> downloadProvider.injectURL(getLaunchMetaUrl(remote.getGameVersion(), remote.getSelfVersion())))
-                .map(NetworkUtils::toURL).collect(Collectors.toList()))
+        launchMetaTask = new GetTask(dependencyManager.getDownloadProvider().injectURLsWithCandidates(remoteVersion.getUrls()))
                 .setCacheRepository(dependencyManager.getCacheRepository());
     }
 
@@ -88,10 +84,6 @@ public final class FabricInstallTask extends Task<Version> {
         setResult(getPatch(JsonUtils.GSON.fromJson(launchMetaTask.getResult(), FabricInfo.class), remote.getGameVersion(), remote.getSelfVersion()));
 
         dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
-    }
-
-    private static String getLaunchMetaUrl(String gameVersion, String loaderVersion) {
-        return String.format("https://meta.fabricmc.net/v2/versions/loader/%s/%s", gameVersion, loaderVersion);
     }
 
     private Version getPatch(FabricInfo fabricInfo, String gameVersion, String loaderVersion) {

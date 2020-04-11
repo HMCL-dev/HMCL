@@ -17,7 +17,12 @@
  */
 package org.jackhuang.hmcl.util.javafx;
 
-import static org.jackhuang.hmcl.util.Pair.pair;
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.Property;
+import javafx.collections.ObservableList;
+import javafx.scene.control.*;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -25,16 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import javafx.beans.InvalidationListener;
-import javafx.beans.WeakInvalidationListener;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.Property;
-import javafx.collections.ObservableList;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.SelectionModel;
-import javafx.scene.control.Toggle;
-import javafx.scene.control.ToggleGroup;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
  * @author yushijinhun
@@ -126,7 +122,7 @@ public final class ExtendedProperties {
 
     // ==== CheckBox ====
     @SuppressWarnings("unchecked")
-    public static ObjectProperty<Boolean> reservedSelectedPropertyFor(CheckBox checkbox) {
+    public static ObjectProperty<Boolean> reversedSelectedPropertyFor(CheckBox checkbox) {
         return (ObjectProperty<Boolean>) checkbox.getProperties().computeIfAbsent(
                 PROP_PREFIX + ".checkbox.reservedSelected",
                 any -> new MappedProperty<Boolean, Boolean>(checkbox, "ext.reservedSelected",

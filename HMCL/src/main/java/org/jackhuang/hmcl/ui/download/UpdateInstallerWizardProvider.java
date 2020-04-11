@@ -18,12 +18,16 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
-import org.jackhuang.hmcl.download.*;
+import org.jackhuang.hmcl.download.ArtifactMalformedException;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
@@ -53,14 +57,16 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     private final Version version;
     private final String libraryId;
     private final String oldLibraryVersion;
+    private final InstallerWizardDownloadProvider downloadProvider;
 
     public UpdateInstallerWizardProvider(@NotNull Profile profile, @NotNull String gameVersion, @NotNull Version version, @NotNull String libraryId, @Nullable String oldLibraryVersion) {
         this.profile = profile;
-        this.dependencyManager = profile.getDependency();
         this.gameVersion = gameVersion;
         this.version = version;
         this.libraryId = libraryId;
         this.oldLibraryVersion = oldLibraryVersion;
+        this.downloadProvider = new InstallerWizardDownloadProvider(DownloadProviders.getDownloadProvider());
+        this.dependencyManager = profile.getDependency(downloadProvider);
     }
 
     @Override
@@ -95,15 +101,14 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
 
     @Override
     public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
-        DownloadProvider provider = profile.getDependency().getPrimaryDownloadProvider();
         switch (step) {
             case 0:
-                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, provider, libraryId, () -> {
+                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> {
                     if (oldLibraryVersion == null) {
                         controller.onFinish();
                     } else if ("game".equals(libraryId)) {
                         String newGameVersion = ((RemoteVersion) settings.get(libraryId)).getSelfVersion();
-                        controller.onNext(new AdditionalInstallersPage(newGameVersion, version, controller, profile.getRepository(), provider));
+                        controller.onNext(new AdditionalInstallersPage(newGameVersion, version, controller, profile.getRepository(), downloadProvider));
                     } else {
                         Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
                                 i18n("install.change_version"), controller::onFinish, controller::onCancel);
