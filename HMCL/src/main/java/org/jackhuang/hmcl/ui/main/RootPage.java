@@ -18,11 +18,9 @@
 package org.jackhuang.hmcl.ui.main;
 
 import javafx.application.Platform;
-import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -180,6 +178,26 @@ public class RootPage extends DecoratorTabPage {
             profileListPage.profilesProperty().bindContent(Profiles.profilesProperty());
         }
         return profileListPage;
+    }
+
+    public Tab getMainTab() {
+        return mainTab;
+    }
+
+    public Tab getSettingsTab() {
+        return settingsTab;
+    }
+
+    public Tab getGameTab() {
+        return gameTab;
+    }
+
+    public Tab getAccountTab() {
+        return accountTab;
+    }
+
+    public Tab getProfileTab() {
+        return profileTab;
     }
 
     private static class Skin extends SkinBase<RootPage> {

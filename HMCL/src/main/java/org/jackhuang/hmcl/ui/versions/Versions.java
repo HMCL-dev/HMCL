@@ -19,16 +19,17 @@ package org.jackhuang.hmcl.ui.versions;
 
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
+import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -150,7 +151,9 @@ public class Versions {
         if (Accounts.getSelectedAccount() == null)
             Controllers.getRootPage().checkAccount();
         else if (id == null || !profile.getRepository().isLoaded() || !profile.getRepository().hasVersion(id))
-            Controllers.dialog(i18n("version.empty.launch"));
+            Controllers.dialog(i18n("version.empty.launch"), i18n("launch.failed"), MessageDialogPane.MessageType.ERROR, () -> {
+                 Controllers.getRootPage().getSelectionModel().select(Controllers.getRootPage().getGameTab());
+            });
         else
             return true;
         return false;
