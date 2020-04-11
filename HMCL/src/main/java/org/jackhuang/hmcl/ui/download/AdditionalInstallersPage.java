@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.download;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.GameRepository;
@@ -40,7 +39,7 @@ class AdditionalInstallersPage extends InstallersPage {
     protected final String gameVersion;
     protected final Version version;
 
-    public AdditionalInstallersPage(String gameVersion, Version version, WizardController controller, GameRepository repository, DownloadProvider downloadProvider) {
+    public AdditionalInstallersPage(String gameVersion, Version version, WizardController controller, GameRepository repository, InstallerWizardDownloadProvider downloadProvider) {
         super(controller, repository, gameVersion, downloadProvider);
         this.gameVersion = gameVersion;
         this.version = version;
@@ -108,7 +107,7 @@ class AdditionalInstallersPage extends InstallersPage {
                 libraries[i].removable.set(true);
                 compatible = false;
             } else if (alreadyInstalled || getVersion(libraryId) != null) {
-                libraries[i].label.set(i18n("install.installer.version", i18n("install.installer." + libraryId)) + ": " + libraryVersion);
+                libraries[i].label.set(i18n("install.installer.version", i18n("install.installer." + libraryId), libraryVersion));
                 libraries[i].removable.set(true);
             } else {
                 libraries[i].label.set(i18n("install.installer.not_installed", i18n("install.installer." + libraryId)));

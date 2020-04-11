@@ -105,7 +105,7 @@ public class InstallersPage extends Control implements WizardPage {
         for (InstallerPageItem library : libraries) {
             String libraryId = library.id;
             if (controller.getSettings().containsKey(libraryId)) {
-                library.label.set(i18n("install.installer.version", i18n("install.installer." + libraryId)) + ": " + getVersion(libraryId));
+                library.label.set(i18n("install.installer.version", i18n("install.installer." + libraryId), getVersion(libraryId)));
                 library.removable.set(true);
             } else {
                 library.label.setValue(i18n("install.installer.not_installed", i18n("install.installer." + libraryId)));

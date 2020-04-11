@@ -57,7 +57,7 @@ public class InstallerItem extends BorderPane {
                 if (libraryVersion == null) {
                     label.setText(i18n("install.installer.not_installed", i18n("install.installer." + libraryId)));
                 } else {
-                    label.setText(i18n("install.installer.version", i18n("install.installer." + libraryId)) + ": " + libraryVersion);
+                    label.setText(i18n("install.installer.version", i18n("install.installer." + libraryId), libraryVersion));
                 }
                 setCenter(label);
                 regularLibrary = true;
