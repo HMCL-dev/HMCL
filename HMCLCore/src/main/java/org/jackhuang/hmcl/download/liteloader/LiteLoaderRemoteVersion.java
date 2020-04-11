@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 
 import java.util.Collection;
+import java.util.List;
 
 public class LiteLoaderRemoteVersion extends RemoteVersion {
     private final String tweakClass;
@@ -34,10 +35,10 @@ public class LiteLoaderRemoteVersion extends RemoteVersion {
      *
      * @param gameVersion the Minecraft version that this remote version suits.
      * @param selfVersion the version string of the remote version.
-     * @param url         the installer or universal jar URL.
+     * @param urls        the installer or universal jar original URL.
      */
-    LiteLoaderRemoteVersion(String gameVersion, String selfVersion, String url, String tweakClass, Collection<Library> libraries) {
-        super(LibraryAnalyzer.LibraryType.LITELOADER.getPatchId(), gameVersion, selfVersion, url);
+    LiteLoaderRemoteVersion(String gameVersion, String selfVersion, List<String> urls, String tweakClass, Collection<Library> libraries) {
+        super(LibraryAnalyzer.LibraryType.LITELOADER.getPatchId(), gameVersion, selfVersion, urls);
 
         this.tweakClass = tweakClass;
         this.libraries = libraries;

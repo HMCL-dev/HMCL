@@ -102,7 +102,7 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
                     }
 
                     versions.put(key, new LiteLoaderRemoteVersion(gameVersion,
-                            version, downloadProvider.injectURL(url),
+                            version, Collections.singletonList(url),
                             v.getTweakClass(), v.getLibraries()
                     ));
                 }

@@ -101,7 +101,7 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
                     }
 
                     versions.put(key, new LiteLoaderRemoteVersion(gameVersion,
-                            version, url,
+                            version, Collections.singletonList(url),
                             v.getTweakClass(), v.getLibraries()
                     ));
                 }

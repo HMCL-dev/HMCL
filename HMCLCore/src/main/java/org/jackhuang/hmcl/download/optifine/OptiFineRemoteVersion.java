@@ -23,12 +23,12 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 
-import java.util.function.Supplier;
+import java.util.List;
 
 public class OptiFineRemoteVersion extends RemoteVersion {
 
-    public OptiFineRemoteVersion(String gameVersion, String selfVersion, String url, boolean snapshot) {
-        super(LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId(), gameVersion, selfVersion, snapshot ? Type.SNAPSHOT : Type.RELEASE, url);
+    public OptiFineRemoteVersion(String gameVersion, String selfVersion, List<String> urls, boolean snapshot) {
+        super(LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId(), gameVersion, selfVersion, snapshot ? Type.SNAPSHOT : Type.RELEASE, urls);
     }
 
     @Override

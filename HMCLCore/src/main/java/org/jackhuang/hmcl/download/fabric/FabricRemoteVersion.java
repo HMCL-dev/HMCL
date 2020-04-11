@@ -23,16 +23,18 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 
+import java.util.List;
+
 public class FabricRemoteVersion extends RemoteVersion {
     /**
      * Constructor.
      *
      * @param gameVersion the Minecraft version that this remote version suits.
      * @param selfVersion the version string of the remote version.
-     * @param url         the installer or universal jar URL.
+     * @param urls        the installer or universal jar original URL.
      */
-    FabricRemoteVersion(String gameVersion, String selfVersion, String url) {
-        super(LibraryAnalyzer.LibraryType.FABRIC.getPatchId(), gameVersion, selfVersion, url);
+    FabricRemoteVersion(String gameVersion, String selfVersion, List<String> urls) {
+        super(LibraryAnalyzer.LibraryType.FABRIC.getPatchId(), gameVersion, selfVersion, urls);
     }
 
     @Override

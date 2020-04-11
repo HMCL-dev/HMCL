@@ -102,8 +102,7 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                         if (urls.isEmpty())
                             continue;
                         versions.put(gameVersion, new ForgeRemoteVersion(
-                                version.getGameVersion(), version.getVersion(), urls.toArray(new String[0])
-                        ));
+                                version.getGameVersion(), version.getVersion(), urls));
                     }
                 } finally {
                     lock.writeLock().unlock();

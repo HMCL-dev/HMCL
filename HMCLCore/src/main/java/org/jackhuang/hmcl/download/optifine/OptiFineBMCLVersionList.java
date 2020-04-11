@@ -77,7 +77,7 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
                             continue;
 
                         String gameVersion = VersionNumber.normalize(element.getGameVersion());
-                        versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, mirror, isPre));
+                        versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, Collections.singletonList(mirror), isPre));
                     }
                 } finally {
                     lock.writeLock().unlock();

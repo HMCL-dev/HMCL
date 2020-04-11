@@ -74,7 +74,7 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
                         versions.put(remoteVersion.getGameVersion(), new GameRemoteVersion(
                                 remoteVersion.getGameVersion(),
                                 remoteVersion.getGameVersion(),
-                                remoteVersion.getUrl(),
+                                Collections.singletonList(remoteVersion.getUrl()),
                                 remoteVersion.getType(), remoteVersion.getReleaseTime())
                         );
                     }

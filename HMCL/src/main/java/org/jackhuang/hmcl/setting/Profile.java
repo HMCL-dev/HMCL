@@ -24,6 +24,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventPriority;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
@@ -162,7 +163,11 @@ public final class Profile implements Observable {
     }
 
     public DefaultDependencyManager getDependency() {
-        return new DefaultDependencyManager(repository, DownloadProviders.getDownloadProvider(), DownloadProviders.getPreferredDownloadProviders(), HMCLCacheRepository.REPOSITORY);
+        return getDependency(DownloadProviders.getDownloadProvider());
+    }
+
+    public DefaultDependencyManager getDependency(DownloadProvider downloadProvider) {
+        return new DefaultDependencyManager(repository, downloadProvider, HMCLCacheRepository.REPOSITORY);
     }
 
     public VersionSetting getVersionSetting(String id) {

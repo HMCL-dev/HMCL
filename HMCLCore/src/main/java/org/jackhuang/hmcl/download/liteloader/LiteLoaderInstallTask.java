@@ -62,7 +62,7 @@ public final class LiteLoaderInstallTask extends Task<Version> {
         Library library = new Library(
                 new Artifact("com.mumfrey", "liteloader", remote.getSelfVersion()),
                 "http://dl.liteloader.com/versions/",
-                new LibrariesDownloadInfo(new LibraryDownloadInfo(null, remote.getUrl()[0]))
+                new LibrariesDownloadInfo(new LibraryDownloadInfo(null, remote.getUrls().get(0)))
         );
 
         setResult(new Version(LibraryAnalyzer.LibraryType.LITELOADER.getPatchId(),

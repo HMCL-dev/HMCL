@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,7 +57,8 @@ public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
                 try {
                     for (String gameVersion : gameVersions)
                         for (String loaderVersion : loaderVersions)
-                            versions.put(gameVersion, new FabricRemoteVersion(gameVersion, loaderVersion, ""));
+                            versions.put(gameVersion, new FabricRemoteVersion(gameVersion, loaderVersion,
+                                    Collections.singletonList(getLaunchMetaUrl(gameVersion, loaderVersion))));
                 } finally {
                     lock.writeLock().unlock();
                 }
@@ -71,6 +73,10 @@ public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
         String json = NetworkUtils.doGet(NetworkUtils.toURL(downloadProvider.injectURL(metaUrl)));
         return JsonUtils.GSON.<ArrayList<GameVersion>>fromJson(json, new TypeToken<ArrayList<GameVersion>>() {
         }.getType()).stream().map(GameVersion::getVersion).collect(Collectors.toList());
+    }
+
+    private static String getLaunchMetaUrl(String gameVersion, String loaderVersion) {
+        return String.format("https://meta.fabricmc.net/v2/versions/loader/%s/%s", gameVersion, loaderVersion);
     }
 
     private static class GameVersion {

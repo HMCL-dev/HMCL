@@ -81,7 +81,7 @@ public final class OptiFineInstallTask extends Task<Version> {
                 new Artifact("optifine", "OptiFine", mavenVersion, "installer"), null,
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(
                         "optifine/OptiFine/" + mavenVersion + "/OptiFine-" + mavenVersion + "-installer.jar",
-                        remote.getUrl()[0]))
+                        remote.getUrls().get(0).toString()))
         );
     }
 
@@ -231,7 +231,7 @@ public final class OptiFineInstallTask extends Task<Version> {
                 throw new VersionMismatchException(mcVersion, gameVersion.get());
 
             return new OptiFineInstallTask(dependencyManager, version,
-                    new OptiFineRemoteVersion(mcVersion,  ofEdition + "_" + ofRelease, "", false), installer);
+                    new OptiFineRemoteVersion(mcVersion,  ofEdition + "_" + ofRelease, Collections.singletonList(""), false), installer);
         }
     }
 }

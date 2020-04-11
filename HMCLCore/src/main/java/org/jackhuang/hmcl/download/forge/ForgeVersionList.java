@@ -26,7 +26,9 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  *
@@ -76,13 +78,13 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
                                     String classifier = version.getGameVersion() + "-" + version.getVersion()
                                             + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
                                     String fileName = root.getArtifact() + "-" + classifier + "-" + file[1] + "." + file[0];
-                                    jar = downloadProvider.injectURL(root.getWebPath() + classifier + "/" + fileName);
+                                    jar = root.getWebPath() + classifier + "/" + fileName;
                                 }
 
                             if (jar == null)
                                 continue;
                             versions.put(gameVersion, new ForgeRemoteVersion(
-                                    version.getGameVersion(), version.getVersion(), jar
+                                    version.getGameVersion(), version.getVersion(), Collections.singletonList(jar)
                             ));
                         }
                     }
