@@ -178,6 +178,7 @@ public final class LogWindow extends Stage {
         }
 
         private void onClear() {
+            impl.listView.getItems().clear();
             logs.clear();
         }
 
