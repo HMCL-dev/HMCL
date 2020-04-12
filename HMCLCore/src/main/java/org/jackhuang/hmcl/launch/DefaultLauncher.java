@@ -292,7 +292,7 @@ public class DefaultLauncher extends Launcher {
                     .replace("$INST_MC_DIR", repository.getRunDirectory(version.getId()).getAbsolutePath())
                     .replace("$INST_JAVA", options.getJava().getBinary().toString());
 
-            new ProcessBuilder(preLaunchCommand)
+            new ProcessBuilder(StringUtils.tokenize(preLaunchCommand))
                     .directory(runDirectory).start().waitFor();
         }
 
