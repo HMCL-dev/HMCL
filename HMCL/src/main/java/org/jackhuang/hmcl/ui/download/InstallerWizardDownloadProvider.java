@@ -47,7 +47,7 @@ public class InstallerWizardDownloadProvider implements DownloadProvider {
 
     @Override
     public List<URL> getAssetObjectCandidates(String assetObjectLocation) {
-        return fallback.injectURLWithCandidates(assetObjectLocation);
+        return fallback.getAssetObjectCandidates(assetObjectLocation);
     }
 
     @Override
