@@ -367,11 +367,14 @@
 
 .jfx-tool-bar {
     -fx-font-size: 13.0;
-    -fx-font-weight: BOLD;
     -fx-pref-width: 100.0%;
     -fx-min-height: 40px;
     -fx-max-height: 40px;
     -fx-pref-height: 40px;
+}
+
+.jfx-tool-bar .jfx-decorator-title {
+    -fx-font-weight: BOLD;
 }
 
 .jfx-tool-bar .background {
@@ -1131,6 +1134,7 @@
 
 .jfx-decorator-tab .tab-container:selected .tab-label {
     -fx-text-fill: -fx-base-text-fill;
+    -fx-font-weight: BOLD;
 }
 
 .window {

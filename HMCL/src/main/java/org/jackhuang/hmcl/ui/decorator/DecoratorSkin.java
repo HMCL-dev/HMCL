@@ -216,32 +216,32 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             HBox navLeft = new HBox();
             navLeft.setAlignment(Pos.CENTER_LEFT);
             navLeft.setPadding(new Insets(0, 5, 0, 5));
-            {
-                JFXButton backNavButton = new JFXButton();
-                backNavButton.setGraphic(SVG.back(Theme.foregroundFillBinding(), -1, -1));
-                backNavButton.getStyleClass().add("jfx-decorator-button");
-                backNavButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
-                backNavButton.onActionProperty().bind(skinnable.onBackNavButtonActionProperty());
-                backNavButton.visibleProperty().set(canBack);
 
-                JFXButton closeNavButton = new JFXButton();
+            JFXButton backNavButton = new JFXButton();
+            backNavButton.setGraphic(SVG.back(Theme.foregroundFillBinding(), -1, -1));
+            backNavButton.getStyleClass().add("jfx-decorator-button");
+            backNavButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
+            backNavButton.onActionProperty().bind(skinnable.onBackNavButtonActionProperty());
+            backNavButton.visibleProperty().set(canBack);
+
+            JFXButton closeNavButton = new JFXButton();
+            closeNavButton.setGraphic(SVG.close(Theme.foregroundFillBinding(), -1, -1));
+            closeNavButton.getStyleClass().add("jfx-decorator-button");
+            closeNavButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
+            closeNavButton.onActionProperty().bind(skinnable.onCloseNavButtonActionProperty());
+
+            if (canBack) navLeft.getChildren().add(backNavButton);
+            if (canClose) navLeft.getChildren().add(closeNavButton);
+            if (showCloseAsHome)
+                closeNavButton.setGraphic(SVG.home(Theme.foregroundFillBinding(), -1, -1));
+            else
                 closeNavButton.setGraphic(SVG.close(Theme.foregroundFillBinding(), -1, -1));
-                closeNavButton.getStyleClass().add("jfx-decorator-button");
-                closeNavButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
-                closeNavButton.onActionProperty().bind(skinnable.onCloseNavButtonActionProperty());
-
-                if (canBack) navLeft.getChildren().add(backNavButton);
-                if (canClose) navLeft.getChildren().add(closeNavButton);
-                if (showCloseAsHome)
-                    closeNavButton.setGraphic(SVG.home(Theme.foregroundFillBinding(), -1, -1));
-                else
-                    closeNavButton.setGraphic(SVG.close(Theme.foregroundFillBinding(), -1, -1));
-            }
             navBar.setLeft(navLeft);
 
             BorderPane center = new BorderPane();
             if (title != null) {
                 Label titleLabel = new Label();
+                BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
                 titleLabel.getStyleClass().add("jfx-decorator-title");
                 if (titleBarTransparent) titleLabel.pseudoClassStateChanged(TRANSPARENT, true);
                 if (!canClose && !canBack) {
@@ -249,6 +249,11 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                     // 20: in this case width of navLeft is 10, so to make the text center aligned,
                     // we should have width 2 * 10 reduced
                     titleLabel.setPrefWidth(leftPaneWidth - 20);
+                }
+                if (titleNode != null) {
+                    titleLabel.prefWidthProperty().bind(Bindings.createDoubleBinding(() -> {
+                        return leftPaneWidth - 20 - backNavButton.getWidth() - closeNavButton.getWidth();
+                    }, backNavButton.widthProperty(), closeNavButton.widthProperty()));
                 }
                 titleLabel.setText(title);
                 center.setLeft(titleLabel);

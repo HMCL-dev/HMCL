@@ -93,5 +93,15 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         return ret;
     }
 
+    public static JFXButton createDecoratorButton(String tooltip, SVG.SVGIcon creator, Runnable onClick) {
+        JFXButton ret = new JFXButton();
+        ret.getStyleClass().add("jfx-decorator-button");
+        ret.textFillProperty().bind(Theme.foregroundFillBinding());
+        ret.setGraphic(wrap(creator.createIcon(Theme.foregroundFillBinding(), -1, -1)));
+        FXUtils.installFastTooltip(ret, tooltip);
+        ret.setOnMouseClicked(e -> onClick.run());
+        return ret;
+    }
+
     protected abstract List<Node> initializeToolbar(T skinnable);
 }
