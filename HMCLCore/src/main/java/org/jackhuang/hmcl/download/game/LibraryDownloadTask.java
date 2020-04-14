@@ -26,6 +26,8 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -34,13 +36,11 @@ import org.tukaani.xz.XZInputStream;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Pack200;
+import java.util.jar.*;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
@@ -142,6 +142,13 @@ public class LibraryDownloadTask extends Task<Void> {
                         library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null)
                         .setCacheRepository(cacheRepository)
                         .setCaching(true);
+                task.addIntegrityCheckHandler((file, dest) -> {
+                    String ext = FileUtils.getExtension(dest).toLowerCase();
+                    if (ext.equals("jar")) {
+                        JarFile jarFile = new JarFile(file.toFile());
+                        jarFile.getManifest();
+                    }
+                });
                 xz = false;
             }
         } catch (IOException e) {

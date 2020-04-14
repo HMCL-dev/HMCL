@@ -91,6 +91,7 @@ public class FileDownloadTask extends Task<Void> {
     private CacheRepository repository = CacheRepository.getInstance();
     private RandomAccessFile rFile;
     private InputStream stream;
+    private final ArrayList<IntegrityCheckHandler> integrityCheckHandlers = new ArrayList<>();
 
     /**
      * @param url the URL of remote file.
@@ -196,6 +197,10 @@ public class FileDownloadTask extends Task<Void> {
         return this;
     }
 
+    public void addIntegrityCheckHandler(IntegrityCheckHandler handler) {
+        integrityCheckHandlers.add(Objects.requireNonNull(handler));
+    }
+
     @Override
     public void execute() throws Exception {
         boolean checkETag;
@@ -296,23 +301,27 @@ public class FileDownloadTask extends Task<Void> {
 
                 closeFiles();
 
+                if (downloaded != contentLength)
+                    throw new IOException("Unexpected file size: " + downloaded + ", expected: " + contentLength);
+
                 // Restore temp file to original name.
                 if (isCancelled()) {
                     temp.toFile().delete();
                     break;
-                } else {
-                    Files.deleteIfExists(file.toPath());
-                    if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
-                        throw new IOException("Unable to make parent directory " + file);
-                    try {
-                        FileUtils.moveFile(temp.toFile(), file);
-                    } catch (Exception e) {
-                        throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
-                    }
                 }
 
-                if (downloaded != contentLength)
-                    throw new IOException("Unexpected file size: " + downloaded + ", expected: " + contentLength);
+                for (IntegrityCheckHandler handler : integrityCheckHandlers) {
+                    handler.checkIntegrity(temp, file.toPath());
+                }
+
+                Files.deleteIfExists(file.toPath());
+                if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
+                    throw new IOException("Unable to make parent directory " + file);
+                try {
+                    FileUtils.moveFile(temp.toFile(), file);
+                } catch (Exception e) {
+                    throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
+                }
 
                 // Integrity check
                 if (integrityCheck != null) {
@@ -375,7 +384,7 @@ public class FileDownloadTask extends Task<Void> {
 
         /**
          * Download speed in byte/sec.
-         * @return
+         * @return download speed
          */
         public int getSpeed() {
             return speed;
@@ -387,4 +396,13 @@ public class FileDownloadTask extends Task<Void> {
         }
     }
 
+    public interface IntegrityCheckHandler {
+        /**
+         * Check whether the file is corrupted or not.
+         * @param filePath the file locates in (maybe in temp directory)
+         * @param destinationPath for real file name
+         * @throws IOException if the file is corrupted
+         */
+        void checkIntegrity(Path filePath, Path destinationPath) throws IOException;
+    }
 }
