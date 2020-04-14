@@ -145,8 +145,9 @@ public class LibraryDownloadTask extends Task<Void> {
                 task.addIntegrityCheckHandler((file, dest) -> {
                     String ext = FileUtils.getExtension(dest).toLowerCase();
                     if (ext.equals("jar")) {
-                        JarFile jarFile = new JarFile(file.toFile());
-                        jarFile.getManifest();
+                        try (JarFile jarFile = new JarFile(file.toFile())) {
+                            jarFile.getManifest();
+                        }
                     }
                 });
                 xz = false;

@@ -22,12 +22,14 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.jar.JarFile;
 import java.util.logging.Level;
 
 /**
@@ -84,7 +86,18 @@ public final class GameLibrariesTask extends Task<Void> {
                 if (!download && integrityCheck && !library.getDownload().validateChecksum(jar, true)) download = true;
                 if (!download && integrityCheck &&
                         library.getChecksums() != null && !library.getChecksums().isEmpty() &&
-                        !LibraryDownloadTask.checksumValid(jar.toFile(), library.getChecksums())) download = true;
+                        !LibraryDownloadTask.checksumValid(file, library.getChecksums())) download = true;
+                if (!download && integrityCheck) {
+                    String ext = FileUtils.getExtension(file);
+                    if (ext.equals("jar")) {
+                        try (JarFile jarFile = new JarFile(file)) {
+                            jarFile.getManifest();
+                        } catch (IOException ignored) {
+                            // the Jar file is malformed, so re-download it.
+                            download = true;
+                        }
+                    }
+                }
             } catch (IOException e) {
                 Logging.LOG.log(Level.WARNING, "Unable to calc hash value of file " + jar, e);
             }
