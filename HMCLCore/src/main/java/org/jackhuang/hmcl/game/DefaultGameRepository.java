@@ -30,13 +30,16 @@ import org.jackhuang.hmcl.event.RemoveVersionEvent;
 import org.jackhuang.hmcl.event.RenameVersionEvent;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -154,28 +157,32 @@ public class DefaultGameRepository implements GameRepository {
 
         try {
             Version fromVersion = getVersion(from);
-            File fromDir = getVersionRoot(from);
-            File toDir = getVersionRoot(to);
-            if (!fromDir.renameTo(toDir))
-                return false;
+            Path fromDir = getVersionRoot(from).toPath();
+            Path toDir = getVersionRoot(to).toPath();
+            Files.move(fromDir, toDir);
 
-            File toJson = new File(toDir, to + ".json");
-            File toJar = new File(toDir, to + ".jar");
+            Path fromJson = toDir.resolve(from + ".json");
+            Path fromJar = toDir.resolve(from + ".jar");
+            Path toJson = toDir.resolve(to + ".json");
+            Path toJar = toDir.resolve(to + ".jar");
 
-            if (!new File(toDir, from + ".json").renameTo(toJson)
-                    || !new File(toDir, from + ".jar").renameTo(toJar)) {
+            try {
+                Files.move(fromJson, toJson);
+                Files.move(fromJar, toJar);
+            } catch (IOException e) {
                 // recovery
-                toJson.renameTo(new File(toDir, from + ".json"));
-                toJar.renameTo(new File(toDir, from + ".jar"));
-                toDir.renameTo(fromDir);
-                return false;
+                Lang.ignoringException(() -> Files.move(toJson, fromJson));
+                Lang.ignoringException(() -> Files.move(toJar, fromJar));
+                Lang.ignoringException(() -> Files.move(toDir, fromDir));
+                throw e;
             }
 
             if (fromVersion.getId().equals(fromVersion.getJar()))
                 fromVersion = fromVersion.setJar(null);
-            FileUtils.writeText(toJson, JsonUtils.GSON.toJson(fromVersion.setId(to)));
+            FileUtils.writeText(toJson.toFile(), JsonUtils.GSON.toJson(fromVersion.setId(to)));
             return true;
         } catch (IOException | JsonParseException | VersionNotFoundException e) {
+            LOG.log(Level.WARNING, "Unable to rename version " + from + " to " + to, e);
             return false;
         }
     }
