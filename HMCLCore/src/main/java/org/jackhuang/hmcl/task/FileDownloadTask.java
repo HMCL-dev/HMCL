@@ -227,133 +227,135 @@ public class FileDownloadTask extends Task<Void> {
         Exception exception = null;
         URL failedURL = null;
 
-        for (int repeat = 0; repeat < retry * urls.size(); repeat++) {
-            URL url = urls.get(repeat / retry);
-            if (isCancelled()) {
-                break;
-            }
-
-            Logging.LOG.log(Level.FINER, "Downloading " + url + " to " + file);
-            Path temp = null;
-
-            try {
-                updateProgress(0);
-
-                HttpURLConnection con = NetworkUtils.createConnection(url);
-                if (checkETag) repository.injectConnection(con);
-                con = NetworkUtils.resolveConnection(con);
-
-                if (con.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
-                    // Handle cache
-                    try {
-                        Path cache = repository.getCachedRemoteFile(con);
-                        FileUtils.copyFile(cache.toFile(), file);
-                        return;
-                    } catch (IOException e) {
-                        Logging.LOG.log(Level.WARNING, "Unable to use cached file, redownload it", e);
-                        repository.removeRemoteEntry(con);
-                        // Now we must reconnect the server since 304 may result in empty content,
-                        // if we want to redownload the file, we must reconnect the server without etag settings.
-                        repeat--;
-                        continue;
-                    }
-                } else if (con.getResponseCode() / 100 == 4) {
-
-                } else if (con.getResponseCode() / 100 != 2) {
-                    throw new ResponseCodeException(url, con.getResponseCode());
+        int repeat = 0;
+        download: for (URL url : urls) {
+            for (int retryTime = 0; retryTime < retry; retryTime++) {
+                if (isCancelled()) {
+                    break download;
                 }
 
-                int contentLength = con.getContentLength();
-                if (contentLength < 0)
-                    throw new IOException("The content length is invalid.");
+                Logging.LOG.log(Level.FINER, "Downloading " + url + " to " + file);
+                Path temp = null;
 
-                if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
-                    throw new IOException("Could not make directory " + file.getAbsoluteFile().getParent());
+                try {
+                    updateProgress(0);
 
-                temp = Files.createTempFile(null, null);
-                rFile = new RandomAccessFile(temp.toFile(), "rw");
+                    HttpURLConnection con = NetworkUtils.createConnection(url);
+                    if (checkETag) repository.injectConnection(con);
+                    con = NetworkUtils.resolveConnection(con);
 
-                MessageDigest digest = integrityCheck == null ? null : integrityCheck.createDigest();
-
-                stream = con.getInputStream();
-                int lastDownloaded = 0, downloaded = 0;
-                byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
-                while (true) {
-                    if (isCancelled()) {
-                        break;
+                    if (con.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+                        // Handle cache
+                        try {
+                            Path cache = repository.getCachedRemoteFile(con);
+                            FileUtils.copyFile(cache.toFile(), file);
+                            return;
+                        } catch (IOException e) {
+                            Logging.LOG.log(Level.WARNING, "Unable to use cached file, redownload it", e);
+                            repository.removeRemoteEntry(con);
+                            // Now we must reconnect the server since 304 may result in empty content,
+                            // if we want to redownload the file, we must reconnect the server without etag settings.
+                            retryTime--;
+                            continue;
+                        }
+                    } else if (con.getResponseCode() / 100 == 4) {
+                        break; // we will not try this URL again
+                    } else if (con.getResponseCode() / 100 != 2) {
+                        throw new ResponseCodeException(url, con.getResponseCode());
                     }
 
-                    int read = stream.read(buffer);
-                    if (read == -1)
-                        break;
+                    int contentLength = con.getContentLength();
+                    if (contentLength < 0)
+                        throw new IOException("The content length is invalid.");
 
-                    if (digest != null) {
-                        digest.update(buffer, 0, read);
+                    if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
+                        throw new IOException("Could not make directory " + file.getAbsoluteFile().getParent());
+
+                    temp = Files.createTempFile(null, null);
+                    rFile = new RandomAccessFile(temp.toFile(), "rw");
+
+                    MessageDigest digest = integrityCheck == null ? null : integrityCheck.createDigest();
+
+                    stream = con.getInputStream();
+                    int lastDownloaded = 0, downloaded = 0;
+                    byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
+                    while (true) {
+                        if (isCancelled()) {
+                            break;
+                        }
+
+                        int read = stream.read(buffer);
+                        if (read == -1)
+                            break;
+
+                        if (digest != null) {
+                            digest.update(buffer, 0, read);
+                        }
+
+                        // Write buffer to file.
+                        rFile.write(buffer, 0, read);
+                        downloaded += read;
+
+                        // Update progress information per second
+                        updateProgress(downloaded, contentLength);
+
+                        updateDownloadSpeed(downloaded - lastDownloaded);
+                        lastDownloaded = downloaded;
                     }
-
-                    // Write buffer to file.
-                    rFile.write(buffer, 0, read);
-                    downloaded += read;
-
-                    // Update progress information per second
-                    updateProgress(downloaded, contentLength);
 
                     updateDownloadSpeed(downloaded - lastDownloaded);
-                    lastDownloaded = downloaded;
-                }
 
-                updateDownloadSpeed(downloaded - lastDownloaded);
+                    closeFiles();
 
-                closeFiles();
+                    if (downloaded != contentLength)
+                        throw new IOException("Unexpected file size: " + downloaded + ", expected: " + contentLength);
 
-                if (downloaded != contentLength)
-                    throw new IOException("Unexpected file size: " + downloaded + ", expected: " + contentLength);
-
-                // Restore temp file to original name.
-                if (isCancelled()) {
-                    temp.toFile().delete();
-                    break;
-                }
-
-                for (IntegrityCheckHandler handler : integrityCheckHandlers) {
-                    handler.checkIntegrity(temp, file.toPath());
-                }
-
-                Files.deleteIfExists(file.toPath());
-                if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
-                    throw new IOException("Unable to make parent directory " + file);
-                try {
-                    FileUtils.moveFile(temp.toFile(), file);
-                } catch (Exception e) {
-                    throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
-                }
-
-                // Integrity check
-                if (integrityCheck != null) {
-                    integrityCheck.performCheck(digest);
-                }
-
-                if (caching && integrityCheck != null) {
-                    try {
-                        repository.cacheFile(file.toPath(), integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
-                    } catch (IOException e) {
-                        Logging.LOG.log(Level.WARNING, "Failed to cache file", e);
+                    // Restore temp file to original name.
+                    if (isCancelled()) {
+                        temp.toFile().delete();
+                        break download;
                     }
-                }
 
-                if (checkETag) {
-                    repository.cacheRemoteFile(file.toPath(), con);
-                }
+                    for (IntegrityCheckHandler handler : integrityCheckHandlers) {
+                        handler.checkIntegrity(temp, file.toPath());
+                    }
 
-                return;
-            } catch (IOException e) {
-                if (temp != null)
-                    temp.toFile().delete();
-                failedURL = url;
-                exception = e;
-                Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", repeat times: " + (repeat + 1), e);
-            } finally {
-                closeFiles();
+                    Files.deleteIfExists(file.toPath());
+                    if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
+                        throw new IOException("Unable to make parent directory " + file);
+                    try {
+                        FileUtils.moveFile(temp.toFile(), file);
+                    } catch (Exception e) {
+                        throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
+                    }
+
+                    // Integrity check
+                    if (integrityCheck != null) {
+                        integrityCheck.performCheck(digest);
+                    }
+
+                    if (caching && integrityCheck != null) {
+                        try {
+                            repository.cacheFile(file.toPath(), integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
+                        } catch (IOException e) {
+                            Logging.LOG.log(Level.WARNING, "Failed to cache file", e);
+                        }
+                    }
+
+                    if (checkETag) {
+                        repository.cacheRemoteFile(file.toPath(), con);
+                    }
+
+                    return;
+                } catch (IOException e) {
+                    if (temp != null)
+                        temp.toFile().delete();
+                    failedURL = url;
+                    exception = e;
+                    Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", repeat times: " + (++repeat), e);
+                } finally {
+                    closeFiles();
+                }
             }
         }
 

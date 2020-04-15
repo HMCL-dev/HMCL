@@ -63,8 +63,20 @@ public class AdaptedDownloadProvider implements DownloadProvider {
     public List<URL> injectURLWithCandidates(String baseURL) {
         List<DownloadProvider> d = downloadProviderCandidates;
         List<URL> results = new ArrayList<>(d.size());
-        for (int i = 0; i < d.size(); i++) {
-            results.add(NetworkUtils.toURL(d.get(i).injectURL(baseURL)));
+        for (DownloadProvider downloadProvider : d) {
+            results.add(NetworkUtils.toURL(downloadProvider.injectURL(baseURL)));
+        }
+        return results;
+    }
+
+    @Override
+    public List<URL> injectURLsWithCandidates(List<String> urls) {
+        List<DownloadProvider> d = downloadProviderCandidates;
+        List<URL> results = new ArrayList<>(d.size());
+        for (DownloadProvider downloadProvider : d) {
+            for (String baseURL : urls) {
+                results.add(NetworkUtils.toURL(downloadProvider.injectURL(baseURL)));
+            }
         }
         return results;
     }
