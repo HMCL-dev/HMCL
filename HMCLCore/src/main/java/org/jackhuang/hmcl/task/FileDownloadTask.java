@@ -31,6 +31,7 @@ import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -155,6 +156,8 @@ public class FileDownloadTask extends Task<Void> {
         this.integrityCheck = integrityCheck;
         this.retry = retry;
 
+        this.addIntegrityCheckHandler(ZIP_INTEGRITY_CHECK_HANDLER);
+
         setName(file.getName());
         setExecutor(Schedulers.io());
     }
@@ -254,6 +257,8 @@ public class FileDownloadTask extends Task<Void> {
                         repeat--;
                         continue;
                     }
+                } else if (con.getResponseCode() / 100 == 4) {
+
                 } else if (con.getResponseCode() / 100 != 2) {
                     throw new ResponseCodeException(url, con.getResponseCode());
                 }
@@ -405,4 +410,13 @@ public class FileDownloadTask extends Task<Void> {
          */
         void checkIntegrity(Path filePath, Path destinationPath) throws IOException;
     }
+
+    public static final IntegrityCheckHandler ZIP_INTEGRITY_CHECK_HANDLER = (filePath, destinationPath) -> {
+        String ext = FileUtils.getExtension(destinationPath).toLowerCase();
+        if (ext.equals("zip") || ext.equals("jar")) {
+            try (FileSystem ignored = CompressingUtils.createReadOnlyZipFileSystem(filePath)) {
+                // test for zip format
+            }
+        }
+    };
 }

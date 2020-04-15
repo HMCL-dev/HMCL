@@ -142,14 +142,6 @@ public class LibraryDownloadTask extends Task<Void> {
                         library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null)
                         .setCacheRepository(cacheRepository)
                         .setCaching(true);
-                task.addIntegrityCheckHandler((file, dest) -> {
-                    String ext = FileUtils.getExtension(dest).toLowerCase();
-                    if (ext.equals("jar")) {
-                        try (JarFile jarFile = new JarFile(file.toFile())) {
-                            jarFile.getManifest();
-                        }
-                    }
-                });
                 xz = false;
             }
         } catch (IOException e) {
