@@ -146,13 +146,13 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
 
                 if (scrollBar.getOrientation() == Orientation.HORIZONTAL) {
                     thumb.relocate(0, -5);
-                    thumb.widthProperty().bind(Bindings.max(5, scrollBar.visibleAmountProperty().divide(range).multiply(scrollBar.widthProperty())));
+                    thumb.widthProperty().bind(Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(scrollBar.widthProperty())));
                     thumb.setHeight(5);
                     thumb.xProperty().bind(Bindings.subtract(scrollBar.widthProperty(), thumb.widthProperty()).multiply(position));
                 } else {
                     thumb.relocate(-5, 0);
                     thumb.setWidth(5);
-                    thumb.heightProperty().bind(Bindings.max(5, scrollBar.visibleAmountProperty().divide(range).multiply(scrollBar.heightProperty())));
+                    thumb.heightProperty().bind(Bindings.max(20, scrollBar.visibleAmountProperty().divide(range).multiply(scrollBar.heightProperty())));
                     thumb.yProperty().bind(Bindings.subtract(scrollBar.heightProperty(), thumb.heightProperty()).multiply(position));
                 }
             }

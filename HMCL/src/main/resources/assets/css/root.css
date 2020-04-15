@@ -951,37 +951,41 @@
     -fx-text-fill: gray;
 }
 
-.log {
+.log-window .scroll-bar .thumb {
+    -fx-fill: rgba(0, 0, 0, 0.5);
+}
+
+.log-window .list-cell {
     -fx-text-fill: black;
     -fx-border-width: 0 0 1 0;
     -fx-border-color: #dddddd;
 }
 
-.log:empty {
+.log-window .list-cell:empty {
     -fx-border-width: 0;
 }
 
-.log:fatal {
+.log-window .list-cell:fatal {
     -fx-background-color: #F7A699;
 }
 
-.log:error {
+.log-window .list-cell:error {
     -fx-background-color: #FFCCBB;
 }
 
-.log:warn {
+.log-window .list-cell:warn {
     -fx-background-color: #FFEECC;
 }
 
-.log:info {
+.log-window .list-cell:info {
     -fx-background-color: #FFFFFF;
 }
 
-.log:debug {
+.log-window .list-cell:debug {
     -fx-background-color: #EEE9E0;
 }
 
-.log:trace {
+.log-window .list-cell:trace {
     -fx-background-color: #EEE9E0;
 }
 

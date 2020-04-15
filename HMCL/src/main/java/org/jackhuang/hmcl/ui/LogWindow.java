@@ -150,6 +150,8 @@ public final class LogWindow extends Stage {
         private JFXComboBox<String> cboLines = new JFXComboBox<>();
 
         LogWindowImpl() {
+            getStyleClass().add("log-window");
+
             boolean flag = false;
             cboLines.getItems().setAll("500", "2000", "5000");
             for (String i : cboLines.getItems())
@@ -280,7 +282,6 @@ public final class LogWindow extends Stage {
                             prefWidthProperty().bind(clippedContainer.widthProperty());
                         }
                         setPadding(new Insets(2));
-                        getStyleClass().add("log");
                         setWrapText(true);
                         setGraphic(null);
                     }
