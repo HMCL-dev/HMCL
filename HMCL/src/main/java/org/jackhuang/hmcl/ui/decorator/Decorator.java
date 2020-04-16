@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.decorator;
 
+import com.jfoenix.controls.JFXDialog;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -46,7 +47,7 @@ public class Decorator extends Control {
     private final BooleanProperty canClose = new SimpleBooleanProperty(false);
     private final BooleanProperty showCloseAsHome = new SimpleBooleanProperty(false);
     private final Stage primaryStage;
-    private StackPane drawerWrapper;
+    private JFXDialog dialog;
 
     public Decorator(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -58,12 +59,12 @@ public class Decorator extends Control {
         return primaryStage;
     }
 
-    public StackPane getDrawerWrapper() {
-        return drawerWrapper;
+    public JFXDialog getDialog() {
+        return dialog;
     }
 
-    void setDrawerWrapper(StackPane drawerWrapper) {
-        this.drawerWrapper = drawerWrapper;
+    void setDialog(JFXDialog dialog) {
+        this.dialog = dialog;
     }
 
     public ObservableList<Node> getDrawer() {

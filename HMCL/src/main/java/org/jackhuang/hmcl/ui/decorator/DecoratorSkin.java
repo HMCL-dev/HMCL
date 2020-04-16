@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.svg.SVGGlyph;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
@@ -97,7 +98,17 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         BorderPane root = new BorderPane();
         root.getStyleClass().addAll("jfx-decorator");
         wrapper.getChildren().setAll(root);
-        skinnable.setDrawerWrapper(wrapper);
+
+        JFXDialog dialog = new JFXDialog();
+        dialog.setDialogContainer(wrapper);
+        dialog.setOverlayClose(false);
+        dialog.addEventHandler(MouseEvent.MOUSE_ENTERED, e -> allowMove = true);
+        dialog.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {
+            if (!isDragging) allowMove = false;
+        });
+
+        skinnable.setDialog(dialog);
+
         parent.getChildren().add(wrapper);
 
         // center node with a animation layer at bottom, a container layer at middle and a "welcome" layer at top.

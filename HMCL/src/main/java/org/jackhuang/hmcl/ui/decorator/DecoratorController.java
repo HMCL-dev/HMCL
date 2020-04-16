@@ -72,7 +72,6 @@ public class DecoratorController {
     private final ImageView welcomeView;
     private final Navigator navigator;
 
-    private JFXDialog dialog;
     private StackContainerPane dialogPane;
 
     public DecoratorController(Stage stage, Node mainPage) {
@@ -294,22 +293,20 @@ public class DecoratorController {
     public void showDialog(Node node) {
         FXUtils.checkFxUserThread();
 
-        if (dialog == null) {
-            if (decorator.getDrawerWrapper() == null) {
-                // Sometimes showDialog will be invoked before decorator was initialized.
-                // Keep trying again.
-                Platform.runLater(() -> showDialog(node));
-                return;
-            }
-
-            dialog = new JFXDialog();
-            dialogPane = new StackContainerPane();
-
-            dialog.setContent(dialogPane);
-            dialog.setDialogContainer(decorator.getDrawerWrapper());
-            dialog.setOverlayClose(false);
-            dialog.show();
+        if (decorator.getDialog() == null) {
+            // Sometimes showDialog will be invoked before decorator was initialized.
+            // Keep trying again.
+            Platform.runLater(() -> showDialog(node));
+            return;
         }
+
+        if (dialogPane == null) {
+            dialogPane = new StackContainerPane();
+            decorator.getDialog().setContent(dialogPane);
+        }
+
+        if (dialogPane.isEmpty())
+            decorator.getDialog().show();
 
         dialogPane.push(node);
 
@@ -319,10 +316,10 @@ public class DecoratorController {
 
         if (node instanceof DialogAware) {
             DialogAware dialogAware = (DialogAware) node;
-            if (dialog.isVisible()) {
+            if (decorator.getDialog().isVisible()) {
                 dialogAware.onDialogShown();
             } else {
-                dialog.visibleProperty().addListener(new ChangeListener<Boolean>() {
+                decorator.getDialog().visibleProperty().addListener(new ChangeListener<Boolean>() {
                     @Override
                     public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                         if (newValue) {
@@ -342,13 +339,11 @@ public class DecoratorController {
         Optional.ofNullable(node.getProperties().get(PROPERTY_DIALOG_CLOSE_HANDLER))
                 .ifPresent(handler -> node.removeEventHandler(DialogCloseEvent.CLOSE, (EventHandler<DialogCloseEvent>) handler));
 
-        if (dialog != null) {
+        if (decorator.getDialog() != null) {
             dialogPane.pop(node);
 
             if (dialogPane.getChildren().isEmpty()) {
-                dialog.close();
-                dialog = null;
-                dialogPane = null;
+                decorator.getDialog().close();
             }
         }
     }
