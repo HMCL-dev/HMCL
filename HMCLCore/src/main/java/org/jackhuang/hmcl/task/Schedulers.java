@@ -73,11 +73,15 @@ public final class Schedulers {
     public static synchronized void shutdown() {
         Logging.LOG.info("Shutting down executor services.");
 
+        // shutdownNow will interrupt all threads.
+        // So when we want to close the app, no threads need to be waited for finish.
+        // Sometimes it resolves the problem that the app does not exit.
+
         if (CACHED_EXECUTOR != null)
-            CACHED_EXECUTOR.shutdown();
+            CACHED_EXECUTOR.shutdownNow();
 
         if (IO_EXECUTOR != null)
-            IO_EXECUTOR.shutdown();
+            IO_EXECUTOR.shutdownNow();
     }
 
     public static Future<?> schedule(Executor executor, Runnable command) {

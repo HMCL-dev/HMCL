@@ -106,7 +106,6 @@ public final class Launcher extends Application {
             Schedulers.shutdown();
             Controllers.shutdown();
             Platform.exit();
-            Lang.executeDelayed(OperatingSystem::forceGC, TimeUnit.SECONDS, 5, true);
         });
     }
 
