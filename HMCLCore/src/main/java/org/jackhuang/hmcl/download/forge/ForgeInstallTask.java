@@ -52,7 +52,7 @@ public final class ForgeInstallTask extends Task<Version> {
     private final Version version;
     private Path installer;
     private final ForgeRemoteVersion remote;
-    private Task<Void> dependent;
+    private FileDownloadTask dependent;
     private Task<Version> dependency;
 
     public ForgeInstallTask(DefaultDependencyManager dependencyManager, Version version, ForgeRemoteVersion remoteVersion) {
@@ -75,6 +75,7 @@ public final class ForgeInstallTask extends Task<Version> {
                 installer.toFile(), null)
                 .setCacheRepository(dependencyManager.getCacheRepository())
                 .setCaching(true);
+        dependent.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
     }
 
     @Override

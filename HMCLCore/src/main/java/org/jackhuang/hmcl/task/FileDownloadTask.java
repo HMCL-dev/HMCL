@@ -156,8 +156,6 @@ public class FileDownloadTask extends Task<Void> {
         this.integrityCheck = integrityCheck;
         this.retry = retry;
 
-        this.addIntegrityCheckHandler(ZIP_INTEGRITY_CHECK_HANDLER);
-
         setName(file.getName());
         setExecutor(Schedulers.io());
     }
