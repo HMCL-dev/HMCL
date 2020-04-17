@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.svg.SVGGlyph;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
@@ -58,7 +57,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     private final StackPane leftPane;
 
     private double xOffset, yOffset, newX, newY, initX, initY;
-    private boolean allowMove, isDragging;
     private boolean titleBarTransparent = true;
 
     /**
@@ -98,16 +96,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         BorderPane root = new BorderPane();
         root.getStyleClass().addAll("jfx-decorator");
         wrapper.getChildren().setAll(root);
-
-        JFXDialog dialog = new JFXDialog();
-        dialog.setDialogContainer(wrapper);
-        dialog.setOverlayClose(false);
-        dialog.addEventHandler(MouseEvent.MOUSE_ENTERED, e -> allowMove = true);
-        dialog.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {
-            if (!isDragging) allowMove = false;
-        });
-
-        skinnable.setDialog(dialog);
+        skinnable.setDrawerWrapper(wrapper);
 
         parent.getChildren().add(wrapper);
 
@@ -148,10 +137,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         titleContainer = new StackPane();
         titleContainer.setPickOnBounds(false);
         titleContainer.getStyleClass().addAll("jfx-tool-bar");
-        titleContainer.addEventHandler(MouseEvent.MOUSE_ENTERED, e -> allowMove = true);
-        titleContainer.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {
-            if (!isDragging) allowMove = false;
-        });
+        control.capableDraggingWindow(titleContainer);
 
         StackPane titleBarBackground = new StackPane();
         titleBarBackground.getStyleClass().add("background");
@@ -400,11 +386,11 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     }
 
     protected void onMouseReleased(MouseEvent mouseEvent) {
-        isDragging = false;
+        getSkinnable().setDragging(false);
     }
 
     protected void onMouseDragged(MouseEvent mouseEvent) {
-        this.isDragging = true;
+        getSkinnable().setDragging(true);
         if (mouseEvent.isPrimaryButtonDown() && (this.xOffset != -1.0 || this.yOffset != -1.0)) {
             if (!this.primaryStage.isFullScreen() && !mouseEvent.isStillSincePress()) {
                 this.newX = mouseEvent.getScreenX();
@@ -458,7 +444,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                     }
 
                     mouseEvent.consume();
-                } else if (this.allowMove) {
+                } else if (getSkinnable().isAllowMove()) {
                     this.primaryStage.setX(mouseEvent.getScreenX() - this.xOffset);
                     this.primaryStage.setY(mouseEvent.getScreenY() - this.yOffset);
                     mouseEvent.consume();

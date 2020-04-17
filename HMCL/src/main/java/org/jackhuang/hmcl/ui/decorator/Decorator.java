@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.decorator;
 
-import com.jfoenix.controls.JFXDialog;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -26,6 +25,7 @@ import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -47,7 +47,10 @@ public class Decorator extends Control {
     private final BooleanProperty canClose = new SimpleBooleanProperty(false);
     private final BooleanProperty showCloseAsHome = new SimpleBooleanProperty(false);
     private final Stage primaryStage;
-    private JFXDialog dialog;
+    private StackPane drawerWrapper;
+
+    private final ReadOnlyBooleanWrapper allowMove = new ReadOnlyBooleanWrapper();
+    private final ReadOnlyBooleanWrapper dragging = new ReadOnlyBooleanWrapper();
 
     public Decorator(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -59,12 +62,12 @@ public class Decorator extends Control {
         return primaryStage;
     }
 
-    public JFXDialog getDialog() {
-        return dialog;
+    public StackPane getDrawerWrapper() {
+        return drawerWrapper;
     }
 
-    void setDialog(JFXDialog dialog) {
-        this.dialog = dialog;
+    public void setDrawerWrapper(StackPane drawerWrapper) {
+        this.drawerWrapper = drawerWrapper;
     }
 
     public ObservableList<Node> getDrawer() {
@@ -167,6 +170,30 @@ public class Decorator extends Control {
         return showCloseAsHome;
     }
 
+    public boolean isAllowMove() {
+        return allowMove.get();
+    }
+
+    public ReadOnlyBooleanProperty allowMoveProperty() {
+        return allowMove.getReadOnlyProperty();
+    }
+
+    void setAllowMove(boolean allowMove) {
+        this.allowMove.set(allowMove);
+    }
+
+    public boolean isDragging() {
+        return dragging.get();
+    }
+
+    public ReadOnlyBooleanProperty draggingProperty() {
+        return dragging.getReadOnlyProperty();
+    }
+
+    void setDragging(boolean dragging) {
+        this.dragging.set(dragging);
+    }
+
     public ObjectProperty<EventHandler<ActionEvent>> onBackNavButtonActionProperty() {
         return onBackNavButtonAction;
     }
@@ -190,5 +217,12 @@ public class Decorator extends Control {
 
     public void close() {
         onCloseButtonAction.get().run();
+    }
+
+    public void capableDraggingWindow(Node node) {
+        node.addEventHandler(MouseEvent.MOUSE_ENTERED, e -> allowMove.set(true));
+        node.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {
+            if (!isDragging()) allowMove.set(false);
+        });
     }
 }
