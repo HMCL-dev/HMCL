@@ -107,7 +107,9 @@ public final class CurseInstallTask extends Task<Void> {
         }
         this.config = config;
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), manifest.getOverrides(), any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new CurseCompletionTask(dependencyManager, name, manifest).withStage("hmcl.modpack.download"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), manifest.getOverrides(), manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+
+        dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest).withStage("hmcl.modpack.download"));
     }
 
     @Override
@@ -122,7 +124,8 @@ public final class CurseInstallTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
-        if (config != null)
+        if (config != null) {
+            // For update, remove mods not listed in new manifest
             for (CurseManifestFile oldCurseManifestFile : config.getManifest().getFiles()) {
                 if (StringUtils.isBlank(oldCurseManifestFile.getFileName())) continue;
                 File oldFile = new File(run, "mods/" + oldCurseManifestFile.getFileName());
@@ -131,11 +134,10 @@ public final class CurseInstallTask extends Task<Void> {
                     if (!oldFile.delete())
                         throw new IOException("Unable to delete mod file " + oldFile);
             }
+        }
 
         File root = repository.getVersionRoot(name);
         FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(manifest));
-
-        dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), manifest.getOverrides(), manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
     }
 
     @Override

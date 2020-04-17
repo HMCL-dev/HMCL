@@ -77,6 +77,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/minecraft", it -> !"pack.json".equals(it), config));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/minecraft", modpack, MODPACK_TYPE, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
     }
 
     @Override
@@ -104,7 +105,6 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         }
 
         dependencies.add(libraryTask.thenComposeAsync(repository::save));
-        dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/minecraft", modpack, MODPACK_TYPE, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
     }
 
     @Override

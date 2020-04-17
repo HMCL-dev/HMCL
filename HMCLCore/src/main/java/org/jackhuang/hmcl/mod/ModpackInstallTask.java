@@ -89,7 +89,8 @@ public class ModpackInstallTask<T> extends Task<Void> {
                         // If both old and new modpacks have this entry, but the file is deleted by user, leave it missing.
                         return false;
                     } else {
-                        // If user modified this entry file, we will not replace this file since this modified file is that user expects.
+                        // If both old and new modpacks have this entry, and user has modified this file,
+                        // we will not replace it since this modified file is what user expects.
                         String fileHash = encodeHex(digest("SHA-1", Files.newInputStream(destPath)));
                         String oldHash = files.get(entryPath).getHash();
                         return Objects.equals(oldHash, fileHash);

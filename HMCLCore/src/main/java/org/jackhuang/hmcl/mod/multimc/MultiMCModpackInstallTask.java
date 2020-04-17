@@ -134,6 +134,8 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
             else if (Files.exists(fs.getPath("/" + manifest.getName() + "/minecraft")))
                 dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/" + manifest.getName() + "/minecraft", any -> true, config).withStage("hmcl.modpack"));
         }
+
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/" + manifest.getName() + "/minecraft", manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
     }
 
     @Override
@@ -179,7 +181,6 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
         }
 
         dependencies.add(repository.save(version));
-        dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/" + manifest.getName() + "/minecraft", manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
     }
 
     @Override

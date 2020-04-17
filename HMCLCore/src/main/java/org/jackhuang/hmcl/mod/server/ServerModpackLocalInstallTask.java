@@ -82,6 +82,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/overrides", any -> true, config).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/overrides", manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
     }
 
     @Override
@@ -96,7 +97,6 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
-        dependencies.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/overrides", manifest, MODPACK_TYPE, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
     }
 
     @Override
