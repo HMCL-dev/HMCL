@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -91,13 +92,18 @@ public final class ModManager {
     public void refreshMods() throws IOException {
         modInfos.clear();
         if (Files.isDirectory(getModsDirectory())) {
-            for (Path subitem : Files.newDirectoryStream(getModsDirectory())) {
-                if (Files.isDirectory(subitem) && VersionNumber.isIntVersionNumber(FileUtils.getName(subitem))) {
-                    // If the folder name is game version, forge will search mod in this subdirectory
-                    for (Path subsubitem : Files.newDirectoryStream(subitem))
-                        addModInfo(subsubitem.toFile());
-                } else {
-                    addModInfo(subitem.toFile());
+            try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getModsDirectory())) {
+                for (Path subitem : modsDirectoryStream) {
+                    if (Files.isDirectory(subitem) && VersionNumber.isIntVersionNumber(FileUtils.getName(subitem))) {
+                        // If the folder name is game version, forge will search mod in this subdirectory
+                        try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
+                            for (Path subsubitem : subitemDirectoryStream) {
+                                addModInfo(subsubitem.toFile());
+                            }
+                        }
+                    } else {
+                        addModInfo(subitem.toFile());
+                    }
                 }
             }
         }

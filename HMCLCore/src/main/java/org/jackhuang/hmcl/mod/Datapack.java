@@ -58,13 +58,16 @@ public class Datapack {
         Set<String> packs = new HashSet<>();
         for (Pack pack : info) packs.add(pack.getId());
 
-        if (Files.isDirectory(datapacks))
-            for (Path datapack : Files.newDirectoryStream(datapacks)) {
-                if (Files.isDirectory(datapack) && packs.contains(FileUtils.getName(datapack)))
-                    FileUtils.deleteDirectory(datapack.toFile());
-                else if (Files.isRegularFile(datapack) && packs.contains(FileUtils.getNameWithoutExtension(datapack)))
-                    Files.delete(datapack);
+        if (Files.isDirectory(datapacks)) {
+            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(datapacks)) {
+                for (Path datapack : directoryStream) {
+                    if (Files.isDirectory(datapack) && packs.contains(FileUtils.getName(datapack)))
+                        FileUtils.deleteDirectory(datapack.toFile());
+                    else if (Files.isRegularFile(datapack) && packs.contains(FileUtils.getNameWithoutExtension(datapack)))
+                        Files.delete(datapack);
+                }
             }
+        }
 
         if (isMultiple) {
             new Unzipper(path, worldPath)
@@ -148,46 +151,49 @@ public class Datapack {
     private void loadFromDir(Path dir) throws IOException {
         List<Pack> info = new ArrayList<>();
 
-        if (Files.isDirectory(dir))
-            for (Path subDir : Files.newDirectoryStream(dir)) {
-                if (Files.isDirectory(subDir)) {
-                    Path mcmeta = subDir.resolve("pack.mcmeta");
-                    Path mcmetaDisabled = subDir.resolve("pack.mcmeta.disabled");
+        if (Files.isDirectory(dir)) {
+            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(dir)) {
+                for (Path subDir : directoryStream) {
+                    if (Files.isDirectory(subDir)) {
+                        Path mcmeta = subDir.resolve("pack.mcmeta");
+                        Path mcmetaDisabled = subDir.resolve("pack.mcmeta.disabled");
 
-                    if (!Files.exists(mcmeta) && !Files.exists(mcmetaDisabled))
-                        continue;
-
-                    boolean enabled = Files.exists(mcmeta);
-
-                    try {
-                        PackMcMeta pack = enabled ? JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class)
-                                : JsonUtils.fromNonNullJson(FileUtils.readText(mcmetaDisabled), PackMcMeta.class);
-                        info.add(new Pack(enabled ? mcmeta : mcmetaDisabled, FileUtils.getName(subDir), pack.getPackInfo().getDescription(), this));
-                    } catch (IOException | JsonParseException e) {
-                        Logging.LOG.log(Level.WARNING, "Failed to read datapack " + subDir, e);
-                    }
-                } else if (Files.isRegularFile(subDir)) {
-                    try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(subDir)) {
-                        Path mcmeta = fs.getPath("pack.mcmeta");
-
-                        if (!Files.exists(mcmeta))
+                        if (!Files.exists(mcmeta) && !Files.exists(mcmetaDisabled))
                             continue;
 
-                        String name = FileUtils.getName(subDir);
-                        if (name.endsWith(".disabled")) {
-                            name = name.substring(0, name.length() - ".disabled".length());
+                        boolean enabled = Files.exists(mcmeta);
+
+                        try {
+                            PackMcMeta pack = enabled ? JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class)
+                                    : JsonUtils.fromNonNullJson(FileUtils.readText(mcmetaDisabled), PackMcMeta.class);
+                            info.add(new Pack(enabled ? mcmeta : mcmetaDisabled, FileUtils.getName(subDir), pack.getPackInfo().getDescription(), this));
+                        } catch (IOException | JsonParseException e) {
+                            Logging.LOG.log(Level.WARNING, "Failed to read datapack " + subDir, e);
                         }
-                        if (!name.endsWith(".zip"))
-                            continue;
-                        name = StringUtils.substringBeforeLast(name, ".zip");
+                    } else if (Files.isRegularFile(subDir)) {
+                        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(subDir)) {
+                            Path mcmeta = fs.getPath("pack.mcmeta");
 
-                        PackMcMeta pack = JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class);
-                        info.add(new Pack(subDir, name, pack.getPackInfo().getDescription(), this));
-                    } catch (IOException | JsonParseException e) {
-                        Logging.LOG.log(Level.WARNING, "Failed to read datapack " + subDir, e);
+                            if (!Files.exists(mcmeta))
+                                continue;
+
+                            String name = FileUtils.getName(subDir);
+                            if (name.endsWith(".disabled")) {
+                                name = name.substring(0, name.length() - ".disabled".length());
+                            }
+                            if (!name.endsWith(".zip"))
+                                continue;
+                            name = StringUtils.substringBeforeLast(name, ".zip");
+
+                            PackMcMeta pack = JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class);
+                            info.add(new Pack(subDir, name, pack.getPackInfo().getDescription(), this));
+                        } catch (IOException | JsonParseException e) {
+                            Logging.LOG.log(Level.WARNING, "Failed to read datapack " + subDir, e);
+                        }
                     }
                 }
             }
+        }
 
         Platform.runLater(() -> this.info.setAll(info));
     }

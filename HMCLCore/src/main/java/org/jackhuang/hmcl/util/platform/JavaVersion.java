@@ -176,8 +176,8 @@ public final class JavaVersion {
 
         List<JavaVersion> javaVersions;
 
-        try {
-            javaVersions = lookupJavas(searchPotentialJavaHomes());
+        try (Stream<Path> stream = searchPotentialJavaHomes()) {
+            javaVersions = lookupJavas(stream);
         } catch (IOException e) {
             LOG.log(Level.WARNING, "Failed to search Java homes", e);
             javaVersions = new ArrayList<>();

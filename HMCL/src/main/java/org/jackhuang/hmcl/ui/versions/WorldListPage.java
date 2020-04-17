@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -69,7 +70,7 @@ public class WorldListPage extends ListPageBase<WorldListItem> {
     }
 
     @Override
-    protected ToolbarListPageSkin createDefaultSkin() {
+    protected ToolbarListPageSkin<WorldListPage> createDefaultSkin() {
         return new WorldListPageSkin();
     }
 
@@ -87,7 +88,11 @@ public class WorldListPage extends ListPageBase<WorldListItem> {
         setLoading(true);
         return CompletableFuture
                 .runAsync(() -> gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(id)).orElse(null))
-                .thenApplyAsync(unused -> World.getWorlds(savesDir).parallel().collect(Collectors.toList()))
+                .thenApplyAsync(unused -> {
+                    try (Stream<World> stream = World.getWorlds(savesDir)) {
+                        return stream.parallel().collect(Collectors.toList());
+                    }
+                })
                 .whenCompleteAsync((result, exception) -> {
                     worlds = result;
                     setLoading(false);

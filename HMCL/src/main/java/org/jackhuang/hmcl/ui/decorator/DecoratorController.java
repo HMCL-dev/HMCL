@@ -59,6 +59,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -170,9 +171,9 @@ public class DecoratorController {
         }
 
         List<Path> candidates;
-        try {
-            candidates = Files.list(imageDir)
-                    .filter(Files::isRegularFile)
+        try (Stream<Path> stream = Files.list(imageDir)) {
+            candidates = stream
+                .filter(Files::isRegularFile)
                     .filter(it -> {
                         String filename = it.getFileName().toString();
                         return filename.endsWith(".png") || filename.endsWith(".jpg");

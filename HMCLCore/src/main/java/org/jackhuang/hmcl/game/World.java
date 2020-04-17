@@ -102,10 +102,12 @@ public class World {
                 return;
             }
 
-            Path root = Files.list(fs.getPath("/")).filter(Files::isDirectory).findAny()
-                    .orElseThrow(() -> new IOException("Not a valid world zip file"));
-            fileName = FileUtils.getName(root);
-            loadFromZipImpl(root);
+            try (Stream<Path> stream = Files.list(fs.getPath("/"))) {
+                Path root = stream.filter(Files::isDirectory).findAny()
+                        .orElseThrow(() -> new IOException("Not a valid world zip file"));
+                fileName = FileUtils.getName(root);
+                loadFromZipImpl(root);
+            }
         }
     }
 
@@ -173,14 +175,16 @@ public class World {
 
                     new Unzipper(file, worldDir).unzip();
                 } else {
-                    List<Path> subDirs = Files.list(fs.getPath("/")).collect(Collectors.toList());
-                    if (subDirs.size() != 1) {
-                        throw new IOException("World zip malformed");
+                    try (Stream<Path> stream = Files.list(fs.getPath("/"))) {
+                        List<Path> subDirs = stream.collect(Collectors.toList());
+                        if (subDirs.size() != 1) {
+                            throw new IOException("World zip malformed");
+                        }
+                        String subDirectoryName = FileUtils.getName(subDirs.get(0));
+                        new Unzipper(file, worldDir)
+                                .setSubDirectory("/" + subDirectoryName + "/")
+                                .unzip();
                     }
-                    String subDirectoryName = FileUtils.getName(subDirs.get(0));
-                    new Unzipper(file, worldDir)
-                            .setSubDirectory("/" + subDirectoryName + "/")
-                            .unzip();
                 }
 
             }
@@ -211,7 +215,7 @@ public class World {
 
     public static Stream<World> getWorlds(Path savesDir) {
         try {
-            if (Files.exists(savesDir))
+            if (Files.exists(savesDir)) {
                 return Files.list(savesDir).flatMap(world -> {
                     try {
                         return Stream.of(new World(world));
@@ -220,6 +224,7 @@ public class World {
                         return Stream.empty();
                     }
                 });
+            }
         } catch (IOException e) {
             Logging.LOG.log(Level.WARNING, "Failed to read saves", e);
         }

@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -148,22 +149,25 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
             Path root = MultiMCInstanceConfiguration.getRootPath(fs.getPath("/"));
             Path patches = root.resolve("patches");
 
-            if (Files.exists(patches))
-                for (Path patchJson : Files.newDirectoryStream(patches)) {
-                    if (patchJson.toString().endsWith(".json")) {
-                        // If json is malformed, we should stop installing this modpack instead of skipping it.
-                        MultiMCInstancePatch multiMCPatch = JsonUtils.GSON.fromJson(IOUtils.readFullyAsString(Files.newInputStream(patchJson)), MultiMCInstancePatch.class);
+            if (Files.exists(patches)) {
+                try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(patches)) {
+                    for (Path patchJson : directoryStream) {
+                        if (patchJson.toString().endsWith(".json")) {
+                            // If json is malformed, we should stop installing this modpack instead of skipping it.
+                            MultiMCInstancePatch multiMCPatch = JsonUtils.GSON.fromJson(IOUtils.readFullyAsString(Files.newInputStream(patchJson)), MultiMCInstancePatch.class);
 
-                        List<String> arguments = new ArrayList<>();
-                        for (String arg : multiMCPatch.getTweakers()) {
-                            arguments.add("--tweakClass");
-                            arguments.add(arg);
+                            List<String> arguments = new ArrayList<>();
+                            for (String arg : multiMCPatch.getTweakers()) {
+                                arguments.add("--tweakClass");
+                                arguments.add(arg);
+                            }
+
+                            Version patch = new Version(multiMCPatch.getName(), multiMCPatch.getVersion(), 1, new Arguments().addGameArguments(arguments), multiMCPatch.getMainClass(), multiMCPatch.getLibraries());
+                            version = version.addPatch(patch);
                         }
-
-                        Version patch = new Version(multiMCPatch.getName(), multiMCPatch.getVersion(), 1, new Arguments().addGameArguments(arguments), multiMCPatch.getMainClass(), multiMCPatch.getLibraries());
-                        version = version.addPatch(patch);
                     }
                 }
+            }
 
             Path libraries = root.resolve("libraries");
             if (Files.exists(libraries))
