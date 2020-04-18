@@ -91,10 +91,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
 
         List<Library> libraries = new ArrayList<>();
         for (Library library : version.getLibraries()) {
-            String groupId = library.getGroupId();
-            String artifactId = library.getArtifactId();
-
-            if (type.group.matcher(groupId).matches() && type.artifact.matcher(artifactId).matches()) {
+            if (type.matchLibrary(library)) {
                 // skip
             } else {
                 libraries.add(library);
@@ -129,11 +126,8 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         Map<String, Pair<Library, String>> libraries = new HashMap<>();
 
         for (Library library : version.resolve(null).getLibraries()) {
-            String groupId = library.getGroupId();
-            String artifactId = library.getArtifactId();
-
             for (LibraryType type : LibraryType.values()) {
-                if (type.group.matcher(groupId).matches() && type.artifact.matcher(artifactId).matches()) {
+                if (type.matchLibrary(library)) {
                     libraries.put(type.getPatchId(), pair(library, library.getVersion()));
                     break;
                 }
@@ -179,6 +173,10 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 if (type.getPatchId().equals(patchId))
                     return type;
             return null;
+        }
+
+        public boolean matchLibrary(Library library) {
+            return group.matcher(library.getGroupId()).matches() && artifact.matcher(library.getArtifactId()).matches();
         }
     }
 

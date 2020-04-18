@@ -18,8 +18,10 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
+import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -29,7 +31,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.jar.JarFile;
 import java.util.logging.Level;
 
 /**
@@ -76,33 +77,38 @@ public final class GameLibrariesTask extends Task<Void> {
         return dependencies;
     }
 
+    public static boolean shouldDownloadLibrary(GameRepository gameRepository, Version version, Library library, boolean integrityCheck) {
+        File file = gameRepository.getLibraryFile(version, library);
+        Path jar = file.toPath();
+        if (!file.isFile()) return true;
+        try {
+            if (integrityCheck && !library.getDownload().validateChecksum(jar, true)) return true;
+            if (integrityCheck &&
+                    library.getChecksums() != null && !library.getChecksums().isEmpty() &&
+                    !LibraryDownloadTask.checksumValid(file, library.getChecksums())) return true;
+            if (integrityCheck) {
+                String ext = FileUtils.getExtension(file);
+                if (ext.equals("jar")) {
+                    try {
+                        FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER.checkIntegrity(jar, jar);
+                    } catch (IOException ignored) {
+                        // the Jar file is malformed, so re-download it.
+                        return true;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            Logging.LOG.log(Level.WARNING, "Unable to calc hash value of file " + jar, e);
+        }
+
+        return false;
+    }
+
     @Override
     public void execute() {
         libraries.stream().filter(Library::appliesToCurrentEnvironment).forEach(library -> {
             File file = dependencyManager.getGameRepository().getLibraryFile(version, library);
-            Path jar = file.toPath();
-            boolean download = !file.isFile();
-            try {
-                if (!download && integrityCheck && !library.getDownload().validateChecksum(jar, true)) download = true;
-                if (!download && integrityCheck &&
-                        library.getChecksums() != null && !library.getChecksums().isEmpty() &&
-                        !LibraryDownloadTask.checksumValid(file, library.getChecksums())) download = true;
-                if (!download && integrityCheck) {
-                    String ext = FileUtils.getExtension(file);
-                    if (ext.equals("jar")) {
-                        try (JarFile jarFile = new JarFile(file)) {
-                            jarFile.getManifest();
-                        } catch (IOException ignored) {
-                            // the Jar file is malformed, so re-download it.
-                            download = true;
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                Logging.LOG.log(Level.WARNING, "Unable to calc hash value of file " + jar, e);
-            }
-
-            if (download) {
+            if (shouldDownloadLibrary(dependencyManager.getGameRepository(), version, library, integrityCheck)) {
                 dependencies.add(new LibraryDownloadTask(dependencyManager, file, library));
             } else {
                 dependencyManager.getCacheRepository().tryCacheLibrary(library, file.toPath());

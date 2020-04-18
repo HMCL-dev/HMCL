@@ -126,26 +126,28 @@ public final class LauncherHelper {
         DefaultDependencyManager dependencyManager = profile.getDependency();
         Version version = MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion));
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
+        boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
 
-        TaskExecutor executor = Task.allOf(
-                Task.composeAsync(() -> {
-                    if (setting.isNotCheckGame())
-                        return null;
-                    else
-                        return dependencyManager.checkGameCompletionAsync(version, repository.unmarkVersionLaunchedAbnormally(selectedVersion));
-                }), Task.composeAsync(() -> {
-                    try {
-                        ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
-                        if ("Curse".equals(configuration.getType()))
-                            return new CurseCompletionTask(dependencyManager, selectedVersion);
-                        else if ("Server".equals(configuration.getType()))
-                            return new ServerModpackCompletionTask(dependencyManager, selectedVersion);
-                        else
-                            return null;
-                    } catch (IOException e) {
-                        return null;
-                    }
-                })).withStage("launch.state.dependencies")
+        TaskExecutor executor = dependencyManager.checkPatchCompletionAsync(repository.getVersion(selectedVersion), integrityCheck)
+                .thenComposeAsync(Task.allOf(
+                        Task.composeAsync(() -> {
+                            if (setting.isNotCheckGame())
+                                return null;
+                            else
+                                return dependencyManager.checkGameCompletionAsync(version, integrityCheck);
+                        }), Task.composeAsync(() -> {
+                            try {
+                                ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
+                                if ("Curse".equals(configuration.getType()))
+                                    return new CurseCompletionTask(dependencyManager, selectedVersion);
+                                else if ("Server".equals(configuration.getType()))
+                                    return new ServerModpackCompletionTask(dependencyManager, selectedVersion);
+                                else
+                                    return null;
+                            } catch (IOException e) {
+                                return null;
+                            }
+                        }))).withStage("launch.state.dependencies")
                 .thenComposeAsync(Task.supplyAsync(() -> {
                     try {
                         return account.logIn();

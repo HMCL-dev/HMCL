@@ -57,6 +57,16 @@ public interface DependencyManager {
     Task<?> checkLibraryCompletionAsync(Version version, boolean integrityCheck);
 
     /**
+     * Check if patches of this version in complete.
+     * If not, reinstall the patch if possible.
+     *
+     * @param version the version to be checked
+     * @param integrityCheck check if some libraries are corrupt.
+     * @return the task to check patches completion.
+     */
+    Task<?> checkPatchCompletionAsync(Version version, boolean integrityCheck);
+
+    /**
      * The builder to build a brand new game then libraries such as Forge, LiteLoader and OptiFine.
      */
     GameBuilder gameBuilder();

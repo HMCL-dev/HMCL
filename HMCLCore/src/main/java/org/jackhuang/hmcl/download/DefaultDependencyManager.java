@@ -23,11 +23,18 @@ import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameVersion;
+import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.OPTIFINE;
 
 /**
  * Note: This class has no state.
@@ -84,6 +91,28 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     @Override
     public Task<?> checkLibraryCompletionAsync(Version version, boolean integrityCheck) {
         return new GameLibrariesTask(this, version, integrityCheck, version.getLibraries());
+    }
+
+    @Override
+    public Task<?> checkPatchCompletionAsync(Version version, boolean integrityCheck) {
+        return Task.composeAsync(() -> {
+            List<Task<?>> tasks = new ArrayList<>();
+
+            Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
+            if (!gameVersion.isPresent()) return null;
+
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version.resolvePreservingPatches(getGameRepository()));
+            version.resolve(getGameRepository()).getLibraries().stream().filter(Library::appliesToCurrentEnvironment).forEach(library -> {
+                Optional<String> libraryVersion = analyzer.getVersion(OPTIFINE);
+                if (OPTIFINE.matchLibrary(library) && libraryVersion.isPresent()) {
+                    if (GameLibrariesTask.shouldDownloadLibrary(repository, version, library, integrityCheck)) {
+                        tasks.add(installLibraryAsync(gameVersion.get(), version, OPTIFINE.getPatchId(), libraryVersion.get()));
+                    }
+                }
+            });
+
+            return Task.allOf(tasks);
+        });
     }
 
     @Override
