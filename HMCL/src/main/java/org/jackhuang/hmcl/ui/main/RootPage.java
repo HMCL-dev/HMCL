@@ -200,6 +200,14 @@ public class RootPage extends DecoratorTabPage {
         return profileTab;
     }
 
+    private void selectPage(Tab tab) {
+        if (getSelectionModel().getSelectedItem() == tab) {
+            getSelectionModel().select(getMainTab());
+        } else {
+            getSelectionModel().select(tab);
+        }
+    }
+
     private static class Skin extends SkinBase<RootPage> {
 
         protected Skin(RootPage control) {
@@ -208,7 +216,7 @@ public class RootPage extends DecoratorTabPage {
             // first item in left sidebar
             AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
             accountListItem.activeProperty().bind(control.accountTab.selectedProperty());
-            accountListItem.setOnAction(e -> control.getSelectionModel().select(control.accountTab));
+            accountListItem.setOnAction(e -> control.selectPage(control.accountTab));
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
             // second item in left sidebar
@@ -218,7 +226,7 @@ public class RootPage extends DecoratorTabPage {
                 Profile profile = Profiles.getSelectedProfile();
                 String version = Profiles.getSelectedVersion();
                 if (version == null) {
-                    control.getSelectionModel().select(control.gameTab);
+                    control.selectPage(control.gameTab);
                 } else {
                     Versions.modifyGameSettings(profile, version);
                 }
@@ -229,12 +237,12 @@ public class RootPage extends DecoratorTabPage {
             gameItem.activeProperty().bind(control.gameTab.selectedProperty());
             gameItem.setImage(newImage("/assets/img/bookshelf.png"));
             gameItem.setTitle(i18n("version.manage"));
-            gameItem.setOnAction(e -> control.getSelectionModel().select(control.gameTab));
+            gameItem.setOnAction(e -> control.selectPage(control.gameTab));
 
             // forth item in left sidebar
             ProfileAdvancedListItem profileListItem = new ProfileAdvancedListItem();
             profileListItem.activeProperty().bind(control.profileTab.selectedProperty());
-            profileListItem.setOnAction(e -> control.getSelectionModel().select(control.profileTab));
+            profileListItem.setOnAction(e -> control.selectPage(control.profileTab));
             profileListItem.profileProperty().bind(Profiles.selectedProfileProperty());
 
             // fifth item in left sidebar
@@ -242,7 +250,7 @@ public class RootPage extends DecoratorTabPage {
             launcherSettingsItem.activeProperty().bind(control.settingsTab.selectedProperty());
             launcherSettingsItem.setImage(newImage("/assets/img/command.png"));
             launcherSettingsItem.setTitle(i18n("settings.launcher"));
-            launcherSettingsItem.setOnAction(e -> control.getSelectionModel().select(control.settingsTab));
+            launcherSettingsItem.setOnAction(e -> control.selectPage(control.settingsTab));
 
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()

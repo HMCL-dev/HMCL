@@ -87,15 +87,27 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             right.getChildren().add(btnUpgrade);
         }
 
-        JFXButton btnManage = new JFXButton();
-        btnManage.setOnMouseClicked(e -> {
-            currentSkinnable = skinnable;
-            popup.show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
-        });
-        btnManage.getStyleClass().add("toggle-icon4");
-        BorderPane.setAlignment(btnManage, Pos.CENTER);
-        btnManage.setGraphic(SVG.dotsVertical(Theme.blackFillBinding(), -1, -1));
-        right.getChildren().add(btnManage);
+        {
+            JFXButton btnLaunch = new JFXButton();
+            btnLaunch.setOnMouseClicked(e -> skinnable.launch());
+            btnLaunch.getStyleClass().add("toggle-icon4");
+            BorderPane.setAlignment(btnLaunch, Pos.CENTER);
+            btnLaunch.setGraphic(SVG.launch(Theme.blackFillBinding(), 20, 20));
+            right.getChildren().add(btnLaunch);
+        }
+
+        {
+            JFXButton btnManage = new JFXButton();
+            btnManage.setOnMouseClicked(e -> {
+                currentSkinnable = skinnable;
+                popup.show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
+            });
+            btnManage.getStyleClass().add("toggle-icon4");
+            BorderPane.setAlignment(btnManage, Pos.CENTER);
+            btnManage.setGraphic(SVG.dotsVertical(Theme.blackFillBinding(), -1, -1));
+            right.getChildren().add(btnManage);
+        }
+
         root.setRight(right);
 
         root.getStyleClass().add("card");
