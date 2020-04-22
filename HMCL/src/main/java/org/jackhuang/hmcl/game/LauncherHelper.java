@@ -91,7 +91,6 @@ public final class LauncherHelper {
     }
 
     private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(it -> {});
-    private CountDownLatch launchingLatch;
 
     public void setTestMode() {
         launcherVisibility = LauncherVisibility.KEEP;
@@ -127,6 +126,7 @@ public final class LauncherHelper {
         Version version = MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion));
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
         boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
+        CountDownLatch launchingLatch = new CountDownLatch(1);
 
         TaskExecutor executor = dependencyManager.checkPatchCompletionAsync(repository.getVersion(selectedVersion), integrityCheck)
                 .thenComposeAsync(Task.allOf(
@@ -167,7 +167,7 @@ public final class LauncherHelper {
                             setting.toLaunchOptions(profile.getGameDir(), !setting.isNotCheckJVM()),
                             launcherVisibility == LauncherVisibility.CLOSE
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(repository, selectedVersion, authInfo, gameVersion.isPresent())
+                                    : new HMCLProcessListener(repository, selectedVersion, authInfo, launchingLatch, gameVersion.isPresent())
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
@@ -195,7 +195,6 @@ public final class LauncherHelper {
                         });
                     }
                 }).thenRunAsync(Schedulers.defaultScheduler(), () -> {
-                    launchingLatch = new CountDownLatch(1);
                     launchingLatch.await();
                 }).withStage("launch.state.waiting_launching"))
                 .withStagesHint(Lang.immutableListOf(
@@ -451,11 +450,13 @@ public final class LauncherHelper {
         private LogWindow logWindow;
         private final boolean detectWindow;
         private final LinkedList<Pair<String, Log4jLevel>> logs;
-        private final CountDownLatch latch = new CountDownLatch(1);
+        private final CountDownLatch logWindowLatch = new CountDownLatch(1);
+        private final CountDownLatch launchingLatch;
 
-        public HMCLProcessListener(HMCLGameRepository repository, String version, AuthInfo authInfo, boolean detectWindow) {
+        public HMCLProcessListener(HMCLGameRepository repository, String version, AuthInfo authInfo, CountDownLatch launchingLatch, boolean detectWindow) {
             this.repository = repository;
             this.version = version;
+            this.launchingLatch = launchingLatch;
             this.detectWindow = detectWindow;
 
             if (authInfo == null)
@@ -484,7 +485,7 @@ public final class LauncherHelper {
                 Platform.runLater(() -> {
                     logWindow = new LogWindow();
                     logWindow.show();
-                    latch.countDown();
+                    logWindowLatch.countDown();
                 });
         }
 
@@ -504,9 +505,7 @@ public final class LauncherHelper {
                     // Never come to here.
                     break;
                 case KEEP:
-                    Platform.runLater(() -> {
-                        launchingLatch.countDown();
-                    });
+                    Platform.runLater(launchingLatch::countDown);
                     break;
                 case HIDE:
                     launchingLatch.countDown();
@@ -541,7 +540,7 @@ public final class LauncherHelper {
 
             if (showLogs) {
                 try {
-                    latch.await();
+                    logWindowLatch.await();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     return;
