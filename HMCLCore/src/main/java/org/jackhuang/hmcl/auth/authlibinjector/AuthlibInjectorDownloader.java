@@ -127,6 +127,10 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
         }
     }
 
+    public static boolean isArtifactsDirectory(Path artifactsDirectory) {
+        return Files.exists(artifactsDirectory.resolve("authlib-injector.jar"));
+    }
+
     private static class AuthlibInjectorVersionInfo {
         @SerializedName("build_number")
         public int buildNumber;
