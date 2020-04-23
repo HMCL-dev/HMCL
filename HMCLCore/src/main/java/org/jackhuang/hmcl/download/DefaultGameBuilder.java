@@ -60,7 +60,7 @@ public class DefaultGameBuilder extends GameBuilder {
             stages.add(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion()));
         }
 
-        return libraryTask.thenComposeAsync(dependencyManager.getGameRepository()::save).whenComplete(exception -> {
+        return libraryTask.thenComposeAsync(dependencyManager.getGameRepository()::saveAsync).whenComplete(exception -> {
             if (exception != null)
                 dependencyManager.getGameRepository().removeVersionFromDisk(name);
         }).withStagesHint(stages);

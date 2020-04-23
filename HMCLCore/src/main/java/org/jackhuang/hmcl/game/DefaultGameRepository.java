@@ -180,6 +180,14 @@ public class DefaultGameRepository implements GameRepository {
             if (fromVersion.getId().equals(fromVersion.getJar()))
                 fromVersion = fromVersion.setJar(null);
             FileUtils.writeText(toJson.toFile(), JsonUtils.GSON.toJson(fromVersion.setId(to)));
+
+            // fix inheritsFrom of versions that inherits from version [from].
+            for (Version version : getVersions()) {
+                if (from.equals(version.getInheritsFrom())) {
+                    File json = getVersionJson(version.getId()).getAbsoluteFile();
+                    FileUtils.writeText(json, JsonUtils.GSON.toJson(version.setInheritsFrom(to)));
+                }
+            }
             return true;
         } catch (IOException | JsonParseException | VersionNotFoundException | InvalidPathException e) {
             LOG.log(Level.WARNING, "Unable to rename version " + from + " to " + to, e);
@@ -408,7 +416,7 @@ public class DefaultGameRepository implements GameRepository {
         return assetsDir;
     }
 
-    public Task<Version> save(Version version) {
+    public Task<Version> saveAsync(Version version) {
         if (version.isResolvedPreservingPatches()) {
             return new VersionJsonSaveTask(this, MaintainTask.maintainPreservingPatches(this, version));
         } else {

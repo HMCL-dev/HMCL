@@ -104,7 +104,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
             libraryTask = libraryTask.thenComposeAsync(version -> dependency.installLibraryAsync(modpack.getGameVersion(), version, mark.getLibraryId(), mark.getLibraryVersion()));
         }
 
-        dependencies.add(libraryTask.thenComposeAsync(repository::save));
+        dependencies.add(libraryTask.thenComposeAsync(repository::saveAsync));
     }
 
     @Override

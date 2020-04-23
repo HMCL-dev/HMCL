@@ -76,7 +76,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         }).thenAcceptAsync(analyzer -> {
             Function<String, Consumer<InstallerItem>> removeAction = libraryId -> x -> {
                 profile.getDependency().removeLibraryAsync(version, libraryId)
-                        .thenComposeAsync(profile.getRepository()::save)
+                        .thenComposeAsync(profile.getRepository()::saveAsync)
                         .withComposeAsync(profile.getRepository().refreshVersionsAsync())
                         .withRunAsync(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId))
                         .start();
@@ -122,7 +122,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
 
     private void doInstallOffline(File file) {
         Task<?> task = profile.getDependency().installLibraryAsync(version, file.toPath())
-                .thenComposeAsync(profile.getRepository()::save)
+                .thenComposeAsync(profile.getRepository()::saveAsync)
                 .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
         task.setName(i18n("install.installer.install_offline"));
         TaskExecutor executor = task.executor(new TaskListener() {

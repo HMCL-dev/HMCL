@@ -77,7 +77,7 @@ public class GameInstallTask extends Task<Version> {
                 ).withStage("hmcl.install.assets").withRunAsync(() -> {
                     // ignore failure
                 })
-        ).thenComposeAsync(gameRepository.save(version)));
+        ).thenComposeAsync(gameRepository.saveAsync(version)));
     }
 
 }

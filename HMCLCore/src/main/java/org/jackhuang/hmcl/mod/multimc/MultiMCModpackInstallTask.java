@@ -180,7 +180,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
             FileUtils.copyDirectory(jarmods, repository.getVersionRoot(name).toPath().resolve("jarmods"));
         }
 
-        dependencies.add(repository.save(version));
+        dependencies.add(repository.saveAsync(version));
     }
 
     @Override
