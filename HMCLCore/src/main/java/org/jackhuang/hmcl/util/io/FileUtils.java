@@ -390,4 +390,19 @@ public final class FileUtils {
                     result.add(it);
         return result;
     }
+
+    /**
+     * Tests whether the file is convertible to [java.nio.file.Path] or not.
+     *
+     * @param file the file to be tested
+     * @return true if the file is convertible to Path.
+     */
+    public static boolean isValidPath(File file) {
+        try {
+            file.toPath();
+            return true;
+        } catch (InvalidPathException ignored) {
+            return false;
+        }
+    }
 }

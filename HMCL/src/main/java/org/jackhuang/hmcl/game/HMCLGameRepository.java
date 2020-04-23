@@ -62,10 +62,16 @@ public class HMCLGameRepository extends DefaultGameRepository {
     @Override
     public File getRunDirectory(String id) {
         switch (getGameDirectoryType(id)) {
-            case VERSION_FOLDER: return getVersionRoot(id);
-            case ROOT_FOLDER: return super.getRunDirectory(id);
-            case CUSTOM: return new File(getVersionSetting(id).getGameDir());
-            default: throw new Error();
+            case VERSION_FOLDER:
+                return getVersionRoot(id);
+            case ROOT_FOLDER:
+                return super.getRunDirectory(id);
+            case CUSTOM:
+                File dir = new File(getVersionSetting(id).getGameDir());
+                if (!FileUtils.isValidPath(dir)) return getVersionRoot(id);
+                return dir;
+            default:
+                throw new Error();
         }
     }
 
