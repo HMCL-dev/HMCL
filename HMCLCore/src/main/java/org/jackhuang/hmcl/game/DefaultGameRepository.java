@@ -38,8 +38,8 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -181,7 +181,7 @@ public class DefaultGameRepository implements GameRepository {
                 fromVersion = fromVersion.setJar(null);
             FileUtils.writeText(toJson.toFile(), JsonUtils.GSON.toJson(fromVersion.setId(to)));
             return true;
-        } catch (IOException | JsonParseException | VersionNotFoundException e) {
+        } catch (IOException | JsonParseException | VersionNotFoundException | InvalidPathException e) {
             LOG.log(Level.WARNING, "Unable to rename version " + from + " to " + to, e);
             return false;
         }

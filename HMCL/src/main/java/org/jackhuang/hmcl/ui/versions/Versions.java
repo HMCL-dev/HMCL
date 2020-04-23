@@ -60,8 +60,12 @@ public class Versions {
     }
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {
-        return Controllers.prompt(i18n("version.manage.rename.message"), (res, resolve, reject) -> {
-            if (profile.getRepository().renameVersion(version, res)) {
+        return Controllers.prompt(i18n("version.manage.rename.message"), (newName, resolve, reject) -> {
+            if (!OperatingSystem.isNameValid(newName)) {
+                reject.accept(i18n("install.new_game.malformed"));
+                return;
+            }
+            if (profile.getRepository().renameVersion(version, newName)) {
                 profile.getRepository().refreshVersionsAsync().start();
                 resolve.run();
             } else {
