@@ -60,32 +60,36 @@ public class AuthlibInjectorServer implements Observable {
     private static final Gson GSON = new GsonBuilder().create();
 
     public static AuthlibInjectorServer locateServer(String url) throws IOException {
-        url = parseInputUrl(url);
-        HttpURLConnection conn;
-        int redirectCount = 0;
-        for (;;) {
-            conn = (HttpURLConnection) new URL(url).openConnection();
-            Optional<String> ali = getApiLocationIndication(conn);
-            if (ali.isPresent()) {
-                conn.disconnect();
-                url = ali.get();
-                if (redirectCount >= MAX_REDIRECTS) {
-                    throw new IOException("Exceeded maximum number of redirects (" + MAX_REDIRECTS + ")");
-                }
-                redirectCount++;
-                LOG.info("Redirect API root to: " + url);
-            } else {
-                break;
-            }
-        }
-
-
         try {
-            AuthlibInjectorServer server = new AuthlibInjectorServer(url);
-            server.refreshMetadata(readFullyWithoutClosing(conn.getInputStream()));
-            return server;
-        } finally {
-            conn.disconnect();
+            url = parseInputUrl(url);
+            HttpURLConnection conn;
+            int redirectCount = 0;
+            for (; ; ) {
+                conn = (HttpURLConnection) new URL(url).openConnection();
+                Optional<String> ali = getApiLocationIndication(conn);
+                if (ali.isPresent()) {
+                    conn.disconnect();
+                    url = ali.get();
+                    if (redirectCount >= MAX_REDIRECTS) {
+                        throw new IOException("Exceeded maximum number of redirects (" + MAX_REDIRECTS + ")");
+                    }
+                    redirectCount++;
+                    LOG.info("Redirect API root to: " + url);
+                } else {
+                    break;
+                }
+            }
+
+
+            try {
+                AuthlibInjectorServer server = new AuthlibInjectorServer(url);
+                server.refreshMetadata(readFullyWithoutClosing(conn.getInputStream()));
+                return server;
+            } finally {
+                conn.disconnect();
+            }
+        } catch (IllegalArgumentException e) {
+            throw new IOException(e);
         }
     }
 
