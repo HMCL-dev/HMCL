@@ -100,12 +100,7 @@ public abstract class VersionList<T extends RemoteVersion> {
     }
 
     protected Collection<T> getVersionsImpl(String gameVersion) {
-        lock.readLock().lock();
-        try {
-            return versions.get(gameVersion);
-        } finally {
-            lock.readLock().unlock();
-        }
+        return versions.get(gameVersion);
     }
 
     /**
@@ -115,7 +110,12 @@ public abstract class VersionList<T extends RemoteVersion> {
      * @return the collection of specific remote versions
      */
     public final Collection<T> getVersions(String gameVersion) {
-        return Collections.unmodifiableCollection(getVersionsImpl(gameVersion));
+        lock.readLock().lock();
+        try {
+            return Collections.unmodifiableCollection(new ArrayList<>(getVersionsImpl(gameVersion)));
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     /**

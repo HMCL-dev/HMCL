@@ -45,12 +45,7 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
 
     @Override
     protected Collection<GameRemoteVersion> getVersionsImpl(String gameVersion) {
-        lock.readLock().lock();
-        try {
-            return versions.values();
-        } finally {
-            lock.readLock().unlock();
-        }
+        return versions.values();
     }
 
     @Override
