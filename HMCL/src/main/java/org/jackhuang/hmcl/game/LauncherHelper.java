@@ -63,6 +63,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.RejectedExecutionException;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -109,7 +110,7 @@ public final class LauncherHelper {
                     Controllers.dialog(launchingStepsPane);
                     Schedulers.newThread().execute(this::launch0);
                 });
-            } catch (InterruptedException ignore) {
+            } catch (InterruptedException | RejectedExecutionException ignore) {
             }
         });
     }
