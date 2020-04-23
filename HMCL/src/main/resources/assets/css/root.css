@@ -106,7 +106,11 @@
     -fx-padding: 8 16 8 16;
 }
 
-.menu {
+.popup-menu .scroll-bar .thumb {
+    -fx-fill: rgba(0, 0, 0, 0.5);
+}
+
+.popup-menu .content {
     -fx-padding: 4 0 4 0;
 }
 

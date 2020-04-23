@@ -38,6 +38,7 @@ public class PopupMenu extends Control {
     private final BooleanProperty alwaysShowingVBar = new SimpleBooleanProperty();
 
     public PopupMenu() {
+        getStyleClass().add("popup-menu");
     }
 
     public ObservableList<Node> getContent() {
@@ -82,7 +83,7 @@ public class PopupMenu extends Control {
                     .otherwise(ScrollPane.ScrollBarPolicy.AS_NEEDED));
 
             VBox content = new VBox();
-            content.getStyleClass().add("menu");
+            content.getStyleClass().add("content");
             Bindings.bindContent(content.getChildren(), PopupMenu.this.getContent());
             scrollPane.setContent(content);
 
