@@ -249,7 +249,8 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 }
                 if (titleNode != null) {
                     titleLabel.prefWidthProperty().bind(Bindings.createDoubleBinding(() -> {
-                        return leftPaneWidth - 20 - backNavButton.getWidth() - closeNavButton.getWidth();
+                        // 18 = 10 (horizontal padding of navLeft) + 8 (margin-left)
+                        return leftPaneWidth - 18 - backNavButton.getWidth() - closeNavButton.getWidth();
                     }, backNavButton.widthProperty(), closeNavButton.widthProperty()));
                 }
                 titleLabel.setText(title);
