@@ -74,6 +74,12 @@ public final class Launcher extends Application {
         }
     }
 
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        Controllers.onApplicationStop();
+    }
+
     public static void main(String[] args) {
         Thread.setDefaultUncaughtExceptionHandler(CRASH_REPORTER);
         AsyncTaskExecutor.setUncaughtExceptionHandler(new CrashReporter(false));

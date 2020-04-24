@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.layout.Region;
@@ -50,6 +52,8 @@ import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
+    private static DoubleProperty stageWidth = new SimpleDoubleProperty();
+    private static DoubleProperty stageHeight = new SimpleDoubleProperty();
 
     private static Scene scene;
     private static Stage stage;
@@ -92,11 +96,20 @@ public final class Controllers {
         return decorator;
     }
 
+    public static void onApplicationStop() {
+        config().setHeight(stageHeight.get());
+        config().setWidth(stageWidth.get());
+    }
 
     public static void initialize(Stage stage) {
         Logging.LOG.info("Start initializing application");
 
         Controllers.stage = stage;
+
+        stage.setHeight(config().getHeight());
+        stageHeight.bind(stage.heightProperty());
+        stage.setWidth(config().getWidth());
+        stageWidth.bind(stage.widthProperty());
 
         stage.setOnCloseRequest(e -> Launcher.stopApplication());
 
