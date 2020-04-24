@@ -147,17 +147,18 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             }
             Controllers.dialog(message, i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
         } else if (exception instanceof DownloadException) {
+            URL url = ((DownloadException) exception).getUrl();
             if (exception.getCause() instanceof SocketTimeoutException) {
-                Controllers.dialog(i18n("install.failed.downloading.timeout", ((DownloadException) exception).getUrl()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                Controllers.dialog(i18n("install.failed.downloading.timeout", url), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
             } else if (exception.getCause() instanceof ResponseCodeException) {
                 ResponseCodeException responseCodeException = (ResponseCodeException) exception.getCause();
                 if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
-                    Controllers.dialog(i18n("download.code." + responseCodeException.getResponseCode(), ((DownloadException) exception).getUrl()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                    Controllers.dialog(i18n("download.code." + responseCodeException.getResponseCode(), url), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
                 } else {
-                    Controllers.dialog(i18n("install.failed.downloading.detail", ((DownloadException) exception).getUrl()) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                    Controllers.dialog(i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
                 }
             } else {
-                Controllers.dialog(i18n("install.failed.downloading.detail", ((DownloadException) exception).getUrl()) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                Controllers.dialog(i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
             }
         } else if (exception instanceof OptiFineInstallTask.UnsupportedOptiFineInstallationException ||
                 exception instanceof FabricInstallTask.UnsupportedFabricInstallationException) {

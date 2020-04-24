@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.Node;
@@ -30,7 +29,6 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.download.VanillaInstallWizardProvider;
@@ -98,21 +96,21 @@ public class GameList extends ListPageBase<GameListItem> implements DecoratorPag
         return new GameListSkin();
     }
 
-    void addNewGame() {
+    public static void addNewGame() {
         Profile profile = Profiles.getSelectedProfile();
         if (profile.getRepository().isLoaded()) {
             Controllers.getDecorator().startWizard(new VanillaInstallWizardProvider(profile), i18n("install.new_game"));
         }
     }
 
-    void importModpack() {
+    public static void importModpack() {
         Profile profile = Profiles.getSelectedProfile();
         if (profile.getRepository().isLoaded()) {
             Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile), i18n("install.modpack"));
         }
     }
 
-    public void refresh() {
+    public static void refreshList() {
         Profiles.getSelectedProfile().getRepository().refreshVersionsAsync().start();
     }
 
@@ -131,9 +129,9 @@ public class GameList extends ListPageBase<GameListItem> implements DecoratorPag
             super(GameList.this);
 
             HBox hbox = new HBox(
-                    createToolbarButton(i18n("install.new_game"), SVG::plus, GameList.this::addNewGame),
-                    createToolbarButton(i18n("install.modpack"), SVG::importIcon, GameList.this::importModpack),
-                    createToolbarButton(i18n("button.refresh"), SVG::refresh, GameList.this::refresh),
+                    createToolbarButton(i18n("install.new_game"), SVG::plus, GameList::addNewGame),
+                    createToolbarButton(i18n("install.modpack"), SVG::importIcon, GameList::importModpack),
+                    createToolbarButton(i18n("button.refresh"), SVG::refresh, GameList::refreshList),
                     createToolbarButton(i18n("settings.type.global.manage"), SVG::gear, GameList.this::modifyGlobalGameSettings)
             );
             hbox.setPickOnBounds(false);

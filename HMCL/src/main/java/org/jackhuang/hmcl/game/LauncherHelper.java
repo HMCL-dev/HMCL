@@ -37,10 +37,7 @@ import org.jackhuang.hmcl.mod.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
-import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.LogWindow;
@@ -49,6 +46,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
@@ -59,6 +57,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -240,6 +239,20 @@ public final class LauncherHelper {
                                             message += i18n("download.failed", url, responseCode);
                                     } else {
                                         message += StringUtils.getStackTrace(ex.getCause());
+                                    }
+                                } else if (ex instanceof DownloadException) {
+                                    URL url = ((DownloadException) ex).getUrl();
+                                    if (ex.getCause() instanceof SocketTimeoutException) {
+                                        message = i18n("install.failed.downloading.timeout", url);
+                                    } else if (ex.getCause() instanceof ResponseCodeException) {
+                                        ResponseCodeException responseCodeException = (ResponseCodeException) ex.getCause();
+                                        if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
+                                            message = i18n("download.code." + responseCodeException.getResponseCode(), url);
+                                        } else {
+                                            message = i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(ex.getCause());
+                                        }
+                                    } else {
+                                        message = i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(ex.getCause());
                                     }
                                 } else if (ex instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
                                     message = i18n("assets.index.malformed");
