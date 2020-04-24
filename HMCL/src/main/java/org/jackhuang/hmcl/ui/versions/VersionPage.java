@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListCell;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
+import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.geometry.Pos;
@@ -36,6 +37,7 @@ import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.ToolbarListPageSkin;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -266,8 +268,27 @@ public class VersionPage extends Control implements DecoratorPage {
 
             // the root page, with the sidebar in left, navigator in center.
             BorderPane root = new BorderPane();
-            FXUtils.setLimitWidth(control.listView, 200);
-            root.setLeft(control.listView);
+
+            {
+                BorderPane left = new BorderPane();
+                FXUtils.setLimitWidth(left, 200);
+                left.setCenter(control.listView);
+                root.setLeft(left);
+
+                JFXButton btnAddGame = ToolbarListPageSkin.createToolbarButton(null, SVG::plus, GameList::addNewGame);
+                FXUtils.installFastTooltip(btnAddGame, new Tooltip(i18n("install.new_game")));
+
+                JFXButton btnImportModpack = ToolbarListPageSkin.createToolbarButton(null, SVG::importIcon, GameList::importModpack);
+                FXUtils.installFastTooltip(btnImportModpack, new Tooltip(i18n("install.modpack")));
+
+                JFXButton btnRefresh = ToolbarListPageSkin.createToolbarButton(null, SVG::refresh, GameList::refreshList);
+                FXUtils.installFastTooltip(btnRefresh, new Tooltip(i18n("button.refresh")));
+
+                HBox toolbar = new HBox();
+                toolbar.setPickOnBounds(false);
+                toolbar.getChildren().setAll(btnAddGame, btnImportModpack, btnRefresh);
+                left.setTop(toolbar);
+            }
 
             TabHeader tabPane = new TabHeader();
             tabPane.setPickOnBounds(false);
