@@ -91,7 +91,7 @@ public class ModpackInstallTask<T> extends Task<Void> {
                     } else {
                         // If both old and new modpacks have this entry, and user has modified this file,
                         // we will not replace it since this modified file is what user expects.
-                        String fileHash = encodeHex(digest("SHA-1", Files.newInputStream(destPath)));
+                        String fileHash = encodeHex(digest("SHA-1", destPath));
                         String oldHash = files.get(entryPath).getHash();
                         return Objects.equals(oldHash, fileHash);
                     }

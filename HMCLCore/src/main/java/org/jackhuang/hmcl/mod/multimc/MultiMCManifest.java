@@ -20,12 +20,12 @@ package org.jackhuang.hmcl.mod.multimc;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.*;
 
 @Immutable
 public final class MultiMCManifest {
@@ -60,7 +60,7 @@ public final class MultiMCManifest {
         Path mmcPack = root.resolve("mmc-pack.json");
         if (Files.notExists(mmcPack))
             return null;
-        String json = IOUtils.readFullyAsString(Files.newInputStream(mmcPack));
+        String json = FileUtils.readText(mmcPack);
         MultiMCManifest manifest = JsonUtils.fromNonNullJson(json, MultiMCManifest.class);
 
         if (manifest.getComponents() == null)

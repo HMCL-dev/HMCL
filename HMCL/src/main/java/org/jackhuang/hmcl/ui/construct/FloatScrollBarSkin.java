@@ -121,10 +121,6 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                 return getSkinnable().getOrientation() == Orientation.VERTICAL ? thumb.getHeight() : thumb.getWidth();
             }
 
-            private double boundedSize(double min, double value, double max) {
-                return Math.min(Math.max(value, min), Math.max(min, max));
-            }
-
             private void setup() {
                 track.widthProperty().unbind();
                 track.heightProperty().unbind();

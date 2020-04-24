@@ -21,7 +21,6 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListCell;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
-import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.geometry.Pos;

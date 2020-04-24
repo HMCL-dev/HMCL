@@ -352,8 +352,10 @@ public final class MultiMCInstanceConfiguration {
             Path instancePath = root.resolve("instance.cfg");
             if (Files.notExists(instancePath))
                 throw new IOException("`instance.cfg` not found, " + modpackFile + " is not a valid MultiMC modpack.");
-            MultiMCInstanceConfiguration cfg = new MultiMCInstanceConfiguration(name, Files.newInputStream(instancePath), manifest);
-            return new Modpack(cfg.getName(), "", "", cfg.getGameVersion(), cfg.getNotes(), encoding, cfg);
+            try (InputStream instanceStream = Files.newInputStream(instancePath)) {
+                MultiMCInstanceConfiguration cfg = new MultiMCInstanceConfiguration(name, instanceStream, manifest);
+                return new Modpack(cfg.getName(), "", "", cfg.getGameVersion(), cfg.getNotes(), encoding, cfg);
+            }
         }
     }
 }

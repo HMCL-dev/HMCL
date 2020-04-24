@@ -128,7 +128,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
                 download = true;
             } else {
                 // If user modified this entry file, we will not replace this file since this modified file is that user expects.
-                String fileHash = encodeHex(digest("SHA-1", Files.newInputStream(actualPath)));
+                String fileHash = encodeHex(digest("SHA-1", actualPath));
                 String oldHash = files.get(file.getPath()).getHash();
                 download = !Objects.equals(oldHash, file.getHash()) && Objects.equals(oldHash, fileHash);
             }

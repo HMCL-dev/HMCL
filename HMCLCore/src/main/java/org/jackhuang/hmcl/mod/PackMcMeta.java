@@ -17,13 +17,13 @@
  */
 package org.jackhuang.hmcl.mod;
 
-import com.google.gson.*;
+import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -85,7 +85,7 @@ public class PackMcMeta implements Validation {
             Path mcmod = fs.getPath("pack.mcmeta");
             if (Files.notExists(mcmod))
                 throw new IOException("File " + modFile + " is not a resource pack.");
-            PackMcMeta metadata = JsonUtils.fromNonNullJson(IOUtils.readFullyAsString(Files.newInputStream(mcmod)), PackMcMeta.class);
+            PackMcMeta metadata = JsonUtils.fromNonNullJson(FileUtils.readText(mcmod), PackMcMeta.class);
             return new ModInfo(modManager, modFile, metadata.pack.description, "", "", "", "", "");
         }
     }

@@ -38,8 +38,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
-
 import static org.jackhuang.hmcl.util.Lang.getOrDefault;
 
 /**

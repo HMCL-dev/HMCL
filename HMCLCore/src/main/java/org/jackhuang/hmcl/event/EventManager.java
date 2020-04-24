@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.util.SimpleMultimap;
 
 import java.lang.ref.WeakReference;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Consumer;
 

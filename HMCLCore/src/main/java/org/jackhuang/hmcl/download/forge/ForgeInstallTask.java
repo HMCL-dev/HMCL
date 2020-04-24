@@ -134,7 +134,7 @@ public final class ForgeInstallTask extends Task<Version> {
         if (!gameVersion.isPresent()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             String installProfileText = FileUtils.readText(fs.getPath("install_profile.json"));
-            Map installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
+            Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
             if (installProfile.containsKey("spec")) {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getMinecraft()))
@@ -167,7 +167,7 @@ public final class ForgeInstallTask extends Task<Version> {
         if (!gameVersion.isPresent()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             String installProfileText = FileUtils.readText(fs.getPath("install_profile.json"));
-            Map installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
+            Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
             if (installProfile.containsKey("spec")) {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getMinecraft()))

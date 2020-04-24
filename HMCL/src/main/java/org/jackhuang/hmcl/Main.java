@@ -128,7 +128,10 @@ public final class Main {
         try {
             KeyStore defaultKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             Path ksPath = Paths.get(System.getProperty("java.home"), "lib", "security", "cacerts");
-            defaultKeyStore.load(Files.newInputStream(ksPath), "changeit".toCharArray());
+
+            try (InputStream ksStream = Files.newInputStream(ksPath)) {
+                defaultKeyStore.load(ksStream, "changeit".toCharArray());
+            }
 
             KeyStore letsEncryptKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             InputStream letsEncryptFile = Main.class.getResourceAsStream("/assets/lekeystore.jks");

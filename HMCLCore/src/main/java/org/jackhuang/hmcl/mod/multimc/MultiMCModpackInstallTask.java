@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,10 +39,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -156,7 +152,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                     for (Path patchJson : directoryStream) {
                         if (patchJson.toString().endsWith(".json")) {
                             // If json is malformed, we should stop installing this modpack instead of skipping it.
-                            MultiMCInstancePatch multiMCPatch = JsonUtils.GSON.fromJson(IOUtils.readFullyAsString(Files.newInputStream(patchJson)), MultiMCInstancePatch.class);
+                            MultiMCInstancePatch multiMCPatch = JsonUtils.GSON.fromJson(FileUtils.readText(patchJson), MultiMCInstancePatch.class);
 
                             List<String> arguments = new ArrayList<>();
                             for (String arg : multiMCPatch.getTweakers()) {

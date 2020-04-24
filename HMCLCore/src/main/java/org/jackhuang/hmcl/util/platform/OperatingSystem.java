@@ -21,8 +21,6 @@ import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.jackhuang.hmcl.util.Lang;
-
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;

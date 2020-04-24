@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.mod;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * @author huangyuhui
