@@ -106,6 +106,7 @@ public class MaintainTask extends Task<Version> {
                     // If forge or LiteLoader installed, OptiFine Forge Tweaker is needed.
                     builder.replaceTweakClass("optifine", "optifine.OptiFineForgeTweaker", !reorderTweakClass);
                 }
+
             }
         } else {
             builder.removeTweakClass("optifine");
@@ -123,7 +124,7 @@ public class MaintainTask extends Task<Version> {
             if (libraryAnalyzer.has(LITELOADER) || libraryAnalyzer.has(FORGE)) {
                 // If forge or LiteLoader installed, OptiFine Forge Tweaker is needed.
                 // And we should load the installer jar instead of patch jar.
-                if (repository != null)
+                if (repository != null) {
                     for (int i = 0; i < version.getLibraries().size(); ++i) {
                         Library library = libraries.get(i);
                         if (library.is("optifine", "OptiFine")) {
@@ -137,7 +138,15 @@ public class MaintainTask extends Task<Version> {
                                 libraries.add(newLibrary);
                             }
                         }
+
+                        if (library.is("optifine", "launchwrapper-of")) {
+                            // With MinecraftForge installed, the custom launchwrapper installed by OptiFine will conflicts
+                            // with the one installed by MinecraftForge or LiteLoader or ModLoader.
+                            // Simply removing it works.
+                            libraries.set(i, null);
+                        }
                     }
+                }
             }
         }
 
