@@ -119,6 +119,8 @@ public class VersionPage extends Control implements DecoratorPage {
     public void setVersion(String version, Profile profile) {
         this.version = version;
         this.profile = profile;
+
+        profile.setSelectedVersion(version);
     }
 
     public void loadVersion(String version, Profile profile) {
