@@ -22,12 +22,12 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.logging.Level;
 
 /**
@@ -56,7 +56,8 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                         Throwable resolvedException = resolveException(exception);
                         if (resolvedException instanceof RuntimeException &&
                                 !(resolvedException instanceof CancellationException) &&
-                                !(resolvedException instanceof JsonParseException)) {
+                                !(resolvedException instanceof JsonParseException) &&
+                                !(resolvedException instanceof RejectedExecutionException)) {
                             // Track uncaught RuntimeException which are thrown mostly by our mistake
                             if (uncaughtExceptionHandler != null)
                                 uncaughtExceptionHandler.uncaughtException(Thread.currentThread(), resolvedException);
