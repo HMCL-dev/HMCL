@@ -63,10 +63,12 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
 
         // We should not check the hash code of asset index file since this file is not consistent
         // And Mojang will modify this file anytime. So assetIndex.hash might be outdated.
-        dependencies.add(new FileDownloadTask(
+        FileDownloadTask task = new FileDownloadTask(
                 dependencyManager.getDownloadProvider().injectURLWithCandidates(assetIndexInfo.getUrl()),
                 assetIndexFile
-        ).setCacheRepository(dependencyManager.getCacheRepository()));
+        );
+        task.setCacheRepository(dependencyManager.getCacheRepository());
+        dependencies.add(task);
     }
 
 

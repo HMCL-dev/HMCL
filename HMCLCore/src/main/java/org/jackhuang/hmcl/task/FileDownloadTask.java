@@ -17,26 +17,23 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.event.Event;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.ToStringBuilder;
-import org.jackhuang.hmcl.util.io.*;
+import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
-import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;
@@ -47,7 +44,7 @@ import static org.jackhuang.hmcl.util.DigestUtils.getDigest;
  *
  * @author huangyuhui
  */
-public class FileDownloadTask extends Task<Void> {
+public class FileDownloadTask extends FetchTask<Void> {
 
     public static class IntegrityCheck {
         private String algorithm;
@@ -83,13 +80,9 @@ public class FileDownloadTask extends Task<Void> {
         }
     }
 
-    private final List<URL> urls;
     private final File file;
     private final IntegrityCheck integrityCheck;
-    private final int retry;
     private Path candidate;
-    private boolean caching;
-    private CacheRepository repository = CacheRepository.getInstance();
     private RandomAccessFile rFile;
     private InputStream stream;
     private final ArrayList<IntegrityCheckHandler> integrityCheckHandlers = new ArrayList<>();
@@ -148,35 +141,11 @@ public class FileDownloadTask extends Task<Void> {
      * @param retry the times for retrying if downloading fails.
      */
     public FileDownloadTask(List<URL> urls, File file, IntegrityCheck integrityCheck, int retry) {
-        if (urls == null || urls.isEmpty())
-            throw new IllegalArgumentException("At least one URL is required");
-
-        this.urls = new ArrayList<>(urls);
+        super(urls, retry);
         this.file = file;
         this.integrityCheck = integrityCheck;
-        this.retry = retry;
 
         setName(file.getName());
-        setExecutor(Schedulers.io());
-    }
-
-    private void closeFiles() {
-        if (rFile != null)
-            try {
-                rFile.close();
-            } catch (IOException e) {
-                Logging.LOG.log(Level.WARNING, "Failed to close file: " + rFile, e);
-            }
-
-        rFile = null;
-
-        if (stream != null)
-            try {
-                stream.close();
-            } catch (IOException e) {
-                Logging.LOG.log(Level.WARNING, "Failed to close stream", e);
-            }
-        stream = null;
     }
 
     public File getFile() {
@@ -188,217 +157,105 @@ public class FileDownloadTask extends Task<Void> {
         return this;
     }
 
-    public FileDownloadTask setCaching(boolean caching) {
-        this.caching = caching;
-        return this;
-    }
-
-    public FileDownloadTask setCacheRepository(CacheRepository repository) {
-        this.repository = repository;
-        return this;
-    }
-
     public void addIntegrityCheckHandler(IntegrityCheckHandler handler) {
         integrityCheckHandlers.add(Objects.requireNonNull(handler));
     }
 
     @Override
-    public void execute() throws Exception {
-        boolean checkETag;
+    protected EnumCheckETag shouldCheckETag() {
         // Check cache
         if (integrityCheck != null && caching) {
-            checkETag = false;
             Optional<Path> cache = repository.checkExistentFile(candidate, integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
             if (cache.isPresent()) {
                 try {
                     FileUtils.copyFile(cache.get().toFile(), file);
                     Logging.LOG.log(Level.FINER, "Successfully verified file " + file + " from " + urls.get(0));
-                    return;
+                    return EnumCheckETag.CACHED;
                 } catch (IOException e) {
                     Logging.LOG.log(Level.WARNING, "Failed to copy cache files", e);
                 }
             }
+            return EnumCheckETag.NOT_CHECK_E_TAG;
         } else {
-            checkETag = true;
+            return EnumCheckETag.CHECK_E_TAG;
         }
+    }
 
-        Exception exception = null;
-        URL failedURL = null;
+    @Override
+    protected void beforeDownload(URL url) {
+        Logging.LOG.log(Level.FINER, "Downloading " + url + " to " + file);
+    }
 
-        int repeat = 0;
-        download: for (URL url : urls) {
-            for (int retryTime = 0; retryTime < retry; retryTime++) {
-                if (isCancelled()) {
-                    break download;
+    @Override
+    protected void useCachedResult(Path cache) throws IOException {
+        FileUtils.copyFile(cache.toFile(), file);
+    }
+
+    @Override
+    protected Context getContext(URLConnection conn, boolean checkETag) throws IOException {
+        Path temp = Files.createTempFile(null, null);
+        RandomAccessFile rFile = new RandomAccessFile(temp.toFile(), "rw");
+        MessageDigest digest = integrityCheck == null ? null : integrityCheck.createDigest();
+
+        return new Context() {
+            @Override
+            public void write(byte[] buffer, int offset, int len) throws IOException {
+                if (digest != null) {
+                    digest.update(buffer, offset, len);
                 }
 
-                Logging.LOG.log(Level.FINER, "Downloading " + url + " to " + file);
-                Path temp = null;
+                rFile.write(buffer, offset, len);
+            }
+
+            @Override
+            public void close() throws IOException {
+                try {
+                    rFile.close();
+                } catch (IOException e) {
+                    Logging.LOG.log(Level.WARNING, "Failed to close file: " + rFile, e);
+                }
+
+                if (!isSuccess()) {
+                    try {
+                        Files.delete(temp);
+                    } catch (IOException e) {
+                        Logging.LOG.log(Level.WARNING, "Failed to delete file: " + rFile, e);
+                    }
+                    return;
+                }
+
+                for (IntegrityCheckHandler handler : integrityCheckHandlers) {
+                    handler.checkIntegrity(temp, file.toPath());
+                }
+
+                Files.deleteIfExists(file.toPath());
+                if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
+                    throw new IOException("Unable to make parent directory " + file);
 
                 try {
-                    updateProgress(0);
+                    FileUtils.moveFile(temp.toFile(), file);
+                } catch (Exception e) {
+                    throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
+                }
 
-                    HttpURLConnection con = NetworkUtils.createConnection(url);
-                    if (checkETag) repository.injectConnection(con);
-                    con = NetworkUtils.resolveConnection(con);
+                // Integrity check
+                if (integrityCheck != null) {
+                    integrityCheck.performCheck(digest);
+                }
 
-                    if (con.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
-                        // Handle cache
-                        try {
-                            Path cache = repository.getCachedRemoteFile(con);
-                            FileUtils.copyFile(cache.toFile(), file);
-                            return;
-                        } catch (IOException e) {
-                            Logging.LOG.log(Level.WARNING, "Unable to use cached file, redownload it", e);
-                            repository.removeRemoteEntry(con);
-                            // Now we must reconnect the server since 304 may result in empty content,
-                            // if we want to redownload the file, we must reconnect the server without etag settings.
-                            retryTime--;
-                            continue;
-                        }
-                    } else if (con.getResponseCode() / 100 == 4) {
-                        break; // we will not try this URL again
-                    } else if (con.getResponseCode() / 100 != 2) {
-                        throw new ResponseCodeException(url, con.getResponseCode());
-                    }
-
-                    int contentLength = con.getContentLength();
-                    if (contentLength < 0)
-                        throw new IOException("The content length is invalid.");
-
-                    if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
-                        throw new IOException("Could not make directory " + file.getAbsoluteFile().getParent());
-
-                    temp = Files.createTempFile(null, null);
-                    rFile = new RandomAccessFile(temp.toFile(), "rw");
-
-                    MessageDigest digest = integrityCheck == null ? null : integrityCheck.createDigest();
-
-                    stream = con.getInputStream();
-                    int lastDownloaded = 0, downloaded = 0;
-                    byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
-                    while (true) {
-                        if (isCancelled()) {
-                            break;
-                        }
-
-                        int read = stream.read(buffer);
-                        if (read == -1)
-                            break;
-
-                        if (digest != null) {
-                            digest.update(buffer, 0, read);
-                        }
-
-                        // Write buffer to file.
-                        rFile.write(buffer, 0, read);
-                        downloaded += read;
-
-                        // Update progress information per second
-                        updateProgress(downloaded, contentLength);
-
-                        updateDownloadSpeed(downloaded - lastDownloaded);
-                        lastDownloaded = downloaded;
-                    }
-
-                    updateDownloadSpeed(downloaded - lastDownloaded);
-
-                    closeFiles();
-
-                    if (downloaded != contentLength)
-                        throw new IOException("Unexpected file size: " + downloaded + ", expected: " + contentLength);
-
-                    // Restore temp file to original name.
-                    if (isCancelled()) {
-                        temp.toFile().delete();
-                        break download;
-                    }
-
-                    for (IntegrityCheckHandler handler : integrityCheckHandlers) {
-                        handler.checkIntegrity(temp, file.toPath());
-                    }
-
-                    Files.deleteIfExists(file.toPath());
-                    if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
-                        throw new IOException("Unable to make parent directory " + file);
+                if (caching && integrityCheck != null) {
                     try {
-                        FileUtils.moveFile(temp.toFile(), file);
-                    } catch (Exception e) {
-                        throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
+                        repository.cacheFile(file.toPath(), integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
+                    } catch (IOException e) {
+                        Logging.LOG.log(Level.WARNING, "Failed to cache file", e);
                     }
+                }
 
-                    // Integrity check
-                    if (integrityCheck != null) {
-                        integrityCheck.performCheck(digest);
-                    }
-
-                    if (caching && integrityCheck != null) {
-                        try {
-                            repository.cacheFile(file.toPath(), integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
-                        } catch (IOException e) {
-                            Logging.LOG.log(Level.WARNING, "Failed to cache file", e);
-                        }
-                    }
-
-                    if (checkETag) {
-                        repository.cacheRemoteFile(file.toPath(), con);
-                    }
-
-                    return;
-                } catch (IOException e) {
-                    if (temp != null)
-                        temp.toFile().delete();
-                    failedURL = url;
-                    exception = e;
-                    Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", repeat times: " + (++repeat), e);
-                } finally {
-                    closeFiles();
+                if (checkETag) {
+                    repository.cacheRemoteFile(file.toPath(), conn);
                 }
             }
-        }
-
-        if (exception != null)
-            throw new DownloadException(failedURL, exception);
-    }
-
-    private static final Timer timer = new Timer("DownloadSpeedRecorder", true);
-    private static final AtomicInteger downloadSpeed = new AtomicInteger(0);
-    public static final EventBus speedEvent = new EventBus();
-
-    static {
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                speedEvent.channel(SpeedEvent.class).fireEvent(new SpeedEvent(speedEvent, downloadSpeed.getAndSet(0)));
-            }
-        }, 0, 1000);
-    }
-
-    private static void updateDownloadSpeed(int speed) {
-        downloadSpeed.addAndGet(speed);
-    }
-
-    public static class SpeedEvent extends Event {
-        private final int speed;
-
-        public SpeedEvent(Object source, int speed) {
-            super(source);
-
-            this.speed = speed;
-        }
-
-        /**
-         * Download speed in byte/sec.
-         * @return download speed
-         */
-        public int getSpeed() {
-            return speed;
-        }
-
-        @Override
-        public String toString() {
-            return new ToStringBuilder(this).append("speed", speed).toString();
-        }
+        };
     }
 
     public interface IntegrityCheckHandler {

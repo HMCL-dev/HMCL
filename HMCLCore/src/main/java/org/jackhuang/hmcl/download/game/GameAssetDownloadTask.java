@@ -113,11 +113,11 @@ public final class GameAssetDownloadTask extends Task<Void> {
 
                 FileDownloadTask task = new FileDownloadTask(urls, file, new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.getHash()));
                 task.setName(assetObject.getHash());
-                dependencies.add(task
-                        .setCacheRepository(dependencyManager.getCacheRepository())
-                        .setCaching(true)
-                        .setCandidate(dependencyManager.getCacheRepository().getCommonDirectory()
-                                .resolve("assets").resolve("objects").resolve(assetObject.getLocation())).withCounter());
+                task.setCandidate(dependencyManager.getCacheRepository().getCommonDirectory()
+                        .resolve("assets").resolve("objects").resolve(assetObject.getLocation()));
+                task.setCacheRepository(dependencyManager.getCacheRepository());
+                task.setCaching(true);
+                dependencies.add(task.withCounter());
             } else {
                 dependencyManager.getCacheRepository().tryCacheFile(file.toPath(), CacheRepository.SHA1, assetObject.getHash());
             }

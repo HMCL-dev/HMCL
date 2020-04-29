@@ -54,12 +54,16 @@ public final class NetworkUtils {
         return sb.toString();
     }
 
-    public static HttpURLConnection createConnection(URL url) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    public static URLConnection createConnection(URL url) throws IOException {
+        URLConnection connection = url.openConnection();
         connection.setUseCaches(false);
         connection.setConnectTimeout(15000);
         connection.setReadTimeout(15000);
         return connection;
+    }
+
+    public static HttpURLConnection createHttpConnection(URL url) throws IOException {
+        return (HttpURLConnection) createConnection(url);
     }
 
     /**
@@ -129,7 +133,7 @@ public final class NetworkUtils {
     }
 
     public static String doGet(URL url) throws IOException {
-        HttpURLConnection con = createConnection(url);
+        HttpURLConnection con = createHttpConnection(url);
         con = resolveConnection(con);
         return IOUtils.readFullyAsString(con.getInputStream());
     }
@@ -151,7 +155,7 @@ public final class NetworkUtils {
     public static String doPost(URL url, String post, String contentType) throws IOException {
         byte[] bytes = post.getBytes(UTF_8);
 
-        HttpURLConnection con = createConnection(url);
+        HttpURLConnection con = createHttpConnection(url);
         con.setRequestMethod("POST");
         con.setDoOutput(true);
         con.setRequestProperty("Content-Type", contentType + "; charset=utf-8");
@@ -176,7 +180,7 @@ public final class NetworkUtils {
     }
 
     public static String detectFileName(URL url) throws IOException {
-        HttpURLConnection conn = resolveConnection(createConnection(url));
+        HttpURLConnection conn = resolveConnection(createHttpConnection(url));
         int code = conn.getResponseCode();
         if (code / 100 == 4)
             throw new FileNotFoundException();
@@ -214,7 +218,7 @@ public final class NetworkUtils {
     }
 
     public static boolean urlExists(URL url) throws IOException {
-        HttpURLConnection con = createConnection(url);
+        HttpURLConnection con = createHttpConnection(url);
         con = resolveConnection(con);
         int responseCode = con.getResponseCode();
         con.disconnect();

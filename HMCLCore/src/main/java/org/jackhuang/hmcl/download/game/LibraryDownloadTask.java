@@ -129,16 +129,16 @@ public class LibraryDownloadTask extends Task<Void> {
             URL packXz = NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(url) + ".pack.xz");
             if (NetworkUtils.urlExists(packXz)) {
                 List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url + ".pack.xz");
-                task = new FileDownloadTask(urls, xzFile, null)
-                        .setCacheRepository(cacheRepository)
-                        .setCaching(true);
+                task = new FileDownloadTask(urls, xzFile, null);
+                task.setCacheRepository(cacheRepository);
+                task.setCaching(true);
                 xz = true;
             } else {
                 List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url);
                 task = new FileDownloadTask(urls, jar,
-                        library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null)
-                        .setCacheRepository(cacheRepository)
-                        .setCaching(true);
+                        library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
+                task.setCacheRepository(cacheRepository);
+                task.setCaching(true);
                 task.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
                 xz = false;
             }

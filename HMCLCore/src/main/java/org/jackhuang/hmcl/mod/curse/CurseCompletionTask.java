@@ -149,9 +149,10 @@ public final class CurseCompletionTask extends Task<Void> {
         for (CurseManifestFile file : newManifest.getFiles())
             if (StringUtils.isNotBlank(file.getFileName())) {
                 if (!modManager.hasSimpleMod(file.getFileName())) {
-                    dependencies.add(new FileDownloadTask(file.getUrl(), modManager.getSimpleModPath(file.getFileName()).toFile())
-                            .setCacheRepository(dependency.getCacheRepository())
-                            .setCaching(true).withCounter());
+                    FileDownloadTask task = new FileDownloadTask(file.getUrl(), modManager.getSimpleModPath(file.getFileName()).toFile());
+                    task.setCacheRepository(dependency.getCacheRepository());
+                    task.setCaching(true);
+                    dependencies.add(task.withCounter());
                 }
             }
 

@@ -310,7 +310,7 @@ public abstract class Task<T> {
         return progress.getReadOnlyProperty();
     }
 
-    protected void updateProgress(int progress, int total) {
+    protected void updateProgress(long progress, long total) {
         updateProgress(1.0 * progress / total);
     }
 

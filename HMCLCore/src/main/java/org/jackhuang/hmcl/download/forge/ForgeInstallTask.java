@@ -72,9 +72,9 @@ public final class ForgeInstallTask extends Task<Version> {
 
         dependent = new FileDownloadTask(
                 dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()),
-                installer.toFile(), null)
-                .setCacheRepository(dependencyManager.getCacheRepository())
-                .setCaching(true);
+                installer.toFile(), null);
+        dependent.setCacheRepository(dependencyManager.getCacheRepository());
+        dependent.setCaching(true);
         dependent.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
     }
 
