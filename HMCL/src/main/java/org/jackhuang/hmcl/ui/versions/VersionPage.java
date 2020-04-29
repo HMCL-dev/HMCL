@@ -124,6 +124,14 @@ public class VersionPage extends Control implements DecoratorPage {
     }
 
     public void loadVersion(String version, Profile profile) {
+        // If we jumped to game list page and deleted this version
+        // and back to this page, we should return to main page.
+        if (!this.profile.getRepository().isLoaded() ||
+                !this.profile.getRepository().hasVersion(version)) {
+            Platform.runLater(() -> fireEvent(new PageCloseEvent()));
+            return;
+        }
+
         setVersion(version, profile);
         preferredVersionName = version;
         listView.getSelectionModel().select(version);
