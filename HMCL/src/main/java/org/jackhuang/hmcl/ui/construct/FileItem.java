@@ -75,7 +75,13 @@ public class FileItem extends BorderPane {
      * Converts the given path to absolute/relative(if possible) path according to {@link #convertToRelativePathProperty()}.
      */
     private String processPath(String path) {
-        Path given = Paths.get(path).toAbsolutePath();
+        Path given;
+        try {
+            given = Paths.get(path).toAbsolutePath();
+        } catch (IllegalArgumentException e) {
+            return path;
+        }
+
         if (isConvertToRelativePath()) {
             try {
                 return Paths.get(".").normalize().toAbsolutePath().relativize(given).normalize().toString();
