@@ -77,6 +77,8 @@ public final class CompressingUtils {
                     return testZipPath(dir, root, result);
                 }
             });
+        } catch (IllegalArgumentException e) {
+            throw new IOException(e);
         }
         return result.get();
     }
