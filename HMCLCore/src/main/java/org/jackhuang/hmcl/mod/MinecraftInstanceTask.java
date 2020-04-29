@@ -49,9 +49,6 @@ public final class MinecraftInstanceTask<T> extends Task<Void> {
         this.manifest = manifest;
         this.jsonFile = jsonFile;
         this.type = type;
-
-        if (!zipFile.exists())
-            throw new IllegalArgumentException("File " + zipFile + " does not exist. Cannot parse this modpack.");
     }
 
     @Override
