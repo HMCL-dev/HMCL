@@ -25,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -259,7 +260,11 @@ public final class JavaVersion {
                 continue;
             String home = queryRegisterValue(java, "JavaHome");
             if (home != null) {
-                homes.add(Paths.get(home));
+                try {
+                    homes.add(Paths.get(home));
+                } catch (InvalidPathException e) {
+                    LOG.log(Level.WARNING, "Invalid Java path in system registry: " + home);
+                }
             }
         }
         return homes;
