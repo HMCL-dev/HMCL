@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import javafx.scene.image.Image;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -218,9 +219,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (iconFile.exists())
             return new Image("file:" + iconFile.getAbsolutePath());
         else if (version.getMainClass() != null &&
-                ("net.minecraft.launchwrapper.Launch".equals(version.getMainClass())
+                (LibraryAnalyzer.LAUNCH_WRAPPER_MAIN.equals(version.getMainClass())
                         || version.getMainClass().startsWith("net.fabricmc")
-                        || "cpw.mods.modlauncher.Launcher".equals(version.getMainClass())))
+                        || LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(version.getMainClass())))
             return newImage("/assets/img/furnace.png");
         else
             return newImage("/assets/img/grass.png");

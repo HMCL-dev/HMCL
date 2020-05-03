@@ -17,17 +17,20 @@ NVIDIA
 /build/
 /HMCL/build/
 /HMCLCore/build/
+/HMCLTransformerDiscoveryService/build/
 
 # idea
 .idea
 /out/
 /HMCL/out/
 /HMCLCore/out/
+/HMCLTransformerDiscoveryService/out/
 
 # eclipse
 /bin/
 /HMCL/bin/
 /HMCLCore/bin/
+/HMCLTransformerDiscoveryService/bin/
 .classpath
 .project
 .settings

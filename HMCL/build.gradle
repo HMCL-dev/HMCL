@@ -1,3 +1,9 @@
+buildscript {
+    dependencies {
+        classpath 'org.tukaani:xz:1.8'
+    }
+}
+
 plugins {
     id 'com.github.johnrengelman.shadow' version '4.0.0'
     id 'application'
@@ -77,7 +83,7 @@ def repack(File file) {
 
 jar {
     manifest {
-        attributes 'Created-By': 'Copyright(c) 2013-2018 huangyuhui.',
+        attributes 'Created-By': 'Copyright(c) 2013-2020 huangyuhui.',
                 'Main-Class': mainClassName,
                 'Multi-Release': 'true',
                 'Implementation-Version': version

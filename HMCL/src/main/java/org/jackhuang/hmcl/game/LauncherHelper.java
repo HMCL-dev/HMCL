@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
@@ -330,7 +331,7 @@ public final class LauncherHelper {
 
         // LaunchWrapper 1.12 will crash because of assuming the system class loader is an instance of URLClassLoader.
         if (!flag && java.getParsedVersion() >= JavaVersion.JAVA_9_AND_LATER
-                && version.getMainClass().contains("launchwrapper")
+                && version.getMainClass().equals(LibraryAnalyzer.LAUNCH_WRAPPER_MAIN)
                 && version.getLibraries().stream()
                 .filter(library -> "launchwrapper".equals(library.getArtifactId()))
                 .anyMatch(library -> VersionNumber.asVersion(library.getVersion()).compareTo(VersionNumber.asVersion("1.13")) < 0)) {
@@ -417,6 +418,18 @@ public final class LauncherHelper {
             boolean hasLiteLoader = version.getLibraries().stream().anyMatch(it -> it.is("com.mumfrey", "liteloader"));
             if (hasForge2760 && hasLiteLoader && gameVersion.compareTo(VersionNumber.asVersion("1.12.2")) == 0) {
                 Controllers.confirm(i18n("launch.advice.forge2760_liteloader"), i18n("message.error"), onAccept, null);
+                flag = true;
+            }
+        }
+
+        // OptiFine 1.14.4 is not compatible with Forge 28.2.2 and later versions.
+        if (!flag) {
+            boolean hasForge28_2_2 = version.getLibraries().stream().filter(it -> it.is("net.minecraftforge", "forge"))
+                    .anyMatch(it ->
+                            VersionNumber.VERSION_COMPARATOR.compare("1.14.4-28.2.2", it.getVersion()) <= 0);
+            boolean hasOptiFine = version.getLibraries().stream().anyMatch(it -> it.is("optifine", "OptiFine"));
+            if (hasForge28_2_2 && hasOptiFine && gameVersion.compareTo(VersionNumber.asVersion("1.14.4")) == 0) {
+                Controllers.confirm(i18n("launch.advice.forge28_2_2_optifine"), i18n("message.error"), onAccept, null);
                 flag = true;
             }
         }

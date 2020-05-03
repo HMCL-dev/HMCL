@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DependencyManager;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.GameVersion;
@@ -104,7 +105,7 @@ public final class ForgeInstallTask extends Task<Version> {
         String originalMainClass = version.resolve(dependencyManager.getGameRepository()).getMainClass();
         if (VersionNumber.VERSION_COMPARATOR.compare("1.13", remote.getGameVersion()) <= 0) {
             // Forge 1.13 is not compatible with any other libraries.
-            if (!"net.minecraft.client.main.Main".equals(originalMainClass) && !"cpw.mods.modlauncher.Launcher".equals(originalMainClass))
+            if (!LibraryAnalyzer.VANILLA_MAIN.equals(originalMainClass) && !LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(originalMainClass) && !LibraryAnalyzer.LAUNCH_WRAPPER_MAIN.equals(originalMainClass))
                 throw new OptiFineInstallTask.UnsupportedOptiFineInstallationException();
         } else {
             // Forge 1.12 and older versions is compatible with vanilla and launchwrapper.

@@ -99,6 +99,8 @@ public interface GameRepository extends VersionProvider {
      */
     File getRunDirectory(String id);
 
+    File getLibrariesDirectory(Version version);
+
     /**
      * Get the library file in disk.
      * This method allows versions and libraries that are not loaded by this game repository.

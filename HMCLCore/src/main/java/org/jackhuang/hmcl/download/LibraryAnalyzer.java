@@ -198,4 +198,8 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             return libraryVersion;
         }
     }
+
+    public static final String VANILLA_MAIN = "net.minecraft.client.main.Main";
+    public static final String LAUNCH_WRAPPER_MAIN = "net.minecraft.launchwrapper.Launch";
+    public static final String MOD_LAUNCHER_MAIN = "cpw.mods.modlauncher.Launcher";
 }

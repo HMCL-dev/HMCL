@@ -121,7 +121,7 @@ public final class OptiFineInstallTask extends Task<Version> {
     @Override
     public void execute() throws Exception {
         String originalMainClass = version.resolve(dependencyManager.getGameRepository()).getMainClass();
-        if (!"net.minecraft.client.main.Main".equals(originalMainClass) && !"net.minecraft.launchwrapper.Launch".equals(originalMainClass))
+        if (!LibraryAnalyzer.VANILLA_MAIN.equals(originalMainClass) && !LibraryAnalyzer.LAUNCH_WRAPPER_MAIN.equals(originalMainClass) && !LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(originalMainClass))
             throw new OptiFineInstallTask.UnsupportedOptiFineInstallationException();
 
         List<Library> libraries = new LinkedList<>();
@@ -183,9 +183,9 @@ public final class OptiFineInstallTask extends Task<Version> {
         setResult(new Version(
                 LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId(),
                 remote.getSelfVersion(),
-                90000,
+                10000,
                 new Arguments().addGameArguments("--tweakClass", "optifine.OptiFineTweaker"),
-                "net.minecraft.launchwrapper.Launch",
+                LibraryAnalyzer.LAUNCH_WRAPPER_MAIN,
                 libraries
         ));
 

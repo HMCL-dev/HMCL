@@ -24,18 +24,22 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.game.VersionLibraryBuilder;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
+import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.FORGE;
+import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.LITELOADER;
+import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.OPTIFINE;
 
 public class MaintainTask extends Task<Version> {
     private final GameRepository repository;
@@ -60,13 +64,15 @@ public class MaintainTask extends Task<Version> {
 
         String mainClass = version.resolve(null).getMainClass();
 
-        if (mainClass != null && mainClass.contains("launchwrapper")) {
-            return maintainOptiFineLibrary(repository, maintainGameWithLaunchWrapper(unique(version), true));
+        if (mainClass != null && mainClass.equals(LibraryAnalyzer.LAUNCH_WRAPPER_MAIN)) {
+            return maintainOptiFineLibrary(repository, maintainGameWithLaunchWrapper(unique(version), true), false);
+        } else if (mainClass != null && mainClass.equals(LibraryAnalyzer.MOD_LAUNCHER_MAIN)) {
+            // Forge 1.13 and OptiFine
+            return maintainOptiFineLibrary(repository, maintainGameWithModLauncher(repository, unique(version)), true);
         } else {
             // Vanilla Minecraft does not need maintain
-            // Forge 1.13 support not implemented, not compatible with OptiFine currently.
             // Fabric does not need maintain, nothing compatible with fabric now.
-            return maintainOptiFineLibrary(repository, unique(version));
+            return maintainOptiFineLibrary(repository, unique(version), false);
         }
     }
 
@@ -116,7 +122,34 @@ public class MaintainTask extends Task<Version> {
         return mainClass == null ? ret : ret.setMainClass(mainClass);
     }
 
-    private static Version maintainOptiFineLibrary(GameRepository repository, Version version) {
+    private static Version maintainGameWithModLauncher(GameRepository repository, Version version) {
+        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
+        VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
+
+        if (!libraryAnalyzer.has(FORGE)) return version;
+
+        if (libraryAnalyzer.has(OPTIFINE)) {
+            Library hmclTransformerDiscoveryService = new Library(new Artifact("org.jackhuang.hmcl", "transformer-discovery-service", "1.0"));
+            Optional<Library> optiFine = version.getLibraries().stream().filter(library -> library.is("optifine", "OptiFine")).findAny();
+            boolean libraryExisting = version.getLibraries().stream().anyMatch(library -> library.is("org.jackhuang.hmcl", "transformer-discovery-service"));
+            optiFine.ifPresent(library -> {
+                builder.addJvmArgument("-Dhmcl.transformer.candidates=${libraries_directory}/" + library.getPath());
+                if (!libraryExisting) builder.addLibrary(hmclTransformerDiscoveryService);
+                Path libraryPath = repository.getLibraryFile(version, hmclTransformerDiscoveryService).toPath();
+                try {
+                    Files.createDirectories(libraryPath.getParent());
+                    Files.copy(MaintainTask.class.getResourceAsStream("/assets/game/HMCLTransformerDiscoveryService-1.0.jar"),
+                            libraryPath, StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    Logging.LOG.log(Level.WARNING, "Unable to unpack HMCLTransformerDiscoveryService", e);
+                }
+            });
+        }
+
+        return builder.build();
+    }
+
+    private static Version maintainOptiFineLibrary(GameRepository repository, Version version, boolean remove) {
         LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
         List<Library> libraries = new ArrayList<>(version.getLibraries());
 
@@ -135,7 +168,7 @@ public class MaintainTask extends Task<Version> {
                                 // Although we have altered priority of OptiFine higher than Forge,
                                 // there still exists a situation that Forge is installed without patch.
                                 // Here we manually alter the position of OptiFine library in classpath.
-                                libraries.add(newLibrary);
+                                if (!remove) libraries.add(newLibrary);
                             }
                         }
 

@@ -20,8 +20,7 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  *
@@ -31,12 +30,17 @@ public final class VersionLibraryBuilder {
     private final Version version;
     private final List<String> mcArgs;
     private final List<Argument> game;
+    private final List<Argument> jvm;
+    private final List<Library> libraries;
     private final boolean useMcArgs;
+    private boolean jvmChanged = false;
 
     public VersionLibraryBuilder(Version version) {
         this.version = version;
+        this.libraries = new ArrayList<>(version.getLibraries());
         this.mcArgs = version.getMinecraftArguments().map(StringUtils::tokenize).map(ArrayList::new).orElse(null);
         this.game = version.getArguments().map(Arguments::getGame).map(ArrayList::new).orElseGet(ArrayList::new);
+        this.jvm = new ArrayList<>(version.getArguments().map(Arguments::getJvm).orElse(Arguments.DEFAULT_JVM_ARGUMENTS));
         this.useMcArgs = mcArgs != null;
     }
 
@@ -47,7 +51,10 @@ public final class VersionLibraryBuilder {
             // so we regenerate the minecraftArgument without escaping.
             ret = ret.setMinecraftArguments(new CommandBuilder().addAllWithoutParsing(mcArgs).toString());
         }
-        return ret.setArguments(ret.getArguments().map(args -> args.withGame(game)).orElse(new Arguments(game, null)));
+        return ret.setArguments(ret.getArguments()
+                .map(args -> args.withGame(game))
+                .map(args -> jvmChanged ? args.withJvm(jvm) : args).orElse(new Arguments(game, jvmChanged ? jvm : null)))
+                .setLibraries(libraries);
     }
 
     public void removeTweakClass(String target) {
@@ -138,8 +145,18 @@ public final class VersionLibraryBuilder {
         }
     }
 
-    public void addArgument(String... args) {
+    public void addGameArgument(String... args) {
         for (String arg : args)
             game.add(new StringArgument(arg));
+    }
+
+    public void addJvmArgument(String... args) {
+        jvmChanged = true;
+        for (String arg : args)
+            jvm.add(new StringArgument(arg));
+    }
+
+    public void addLibrary(Library library) {
+        libraries.add(library);
     }
 }

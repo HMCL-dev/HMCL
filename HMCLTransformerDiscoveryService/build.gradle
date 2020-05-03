@@ -1,0 +1,12 @@
+version '1.0'
+
+dependencies {
+    compileOnly project.files("lib/modlauncher-4.1.0.jar")
+}
+
+jar {
+    manifest {
+        attributes 'Created-By': 'Copyright(c) 2013-2020 huangyuhui.',
+                'Implementation-Version': version
+    }
+}
