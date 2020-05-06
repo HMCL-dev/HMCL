@@ -81,6 +81,11 @@ public class HMCLGameRepository extends DefaultGameRepository {
         localVersionSettings.clear();
         super.refreshVersionsImpl();
         versions.keySet().forEach(this::loadLocalVersionSetting);
+        versions.keySet().forEach(version -> {
+            if (isModpack(version)) {
+                specializeVersionSetting(version);
+            }
+        });
 
         try {
             File file = new File(getBaseDirectory(), "launcher_profiles.json");
