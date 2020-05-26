@@ -118,30 +118,36 @@ public final class CurseCompletionTask extends Task<Void> {
                             if (StringUtils.isBlank(file.getFileName())) {
                                 try {
                                     return file.withFileName(NetworkUtils.detectFileName(file.getUrl()));
-                                } catch (FileNotFoundException e) {
+                                } catch (IOException e) {
                                     try {
                                         String result = NetworkUtils.doGet(NetworkUtils.toURL(String.format("https://cursemeta.dries007.net/%d/%d.json", file.getProjectID(), file.getFileID())));
                                         CurseMetaMod mod = JsonUtils.fromNonNullJson(result, CurseMetaMod.class);
                                         return file.withFileName(mod.getFileNameOnDisk()).withURL(mod.getDownloadURL());
+                                    } catch (FileNotFoundException fof) {
+                                        Logging.LOG.log(Level.WARNING, "Could not query cursemeta for deleted mods: " + file.getUrl(), fof);
+                                        notFound.set(true);
+                                        return file;
                                     } catch (IOException | JsonParseException e2) {
                                         try {
                                             String result = NetworkUtils.doGet(NetworkUtils.toURL(String.format("https://addons-ecs.forgesvc.net/api/v2/addon/%d/file/%d", file.getProjectID(), file.getFileID())));
                                             CurseMetaMod mod = JsonUtils.fromNonNullJson(result, CurseMetaMod.class);
                                             return file.withFileName(mod.getFileName()).withURL(mod.getDownloadURL());
-                                        } catch (IOException | JsonParseException e3) {
-                                            Logging.LOG.log(Level.WARNING, "Could not query cursemeta for deleted mods: " + file.getUrl(), e2);
+                                        } catch (FileNotFoundException fof) {
+                                            Logging.LOG.log(Level.WARNING, "Could not query forgesvc for deleted mods: " + file.getUrl(), fof);
                                             notFound.set(true);
+                                            return file;
+                                        } catch (IOException | JsonParseException e3) {
+                                            Logging.LOG.log(Level.WARNING, "Unable to fetch the file name of URL: " + file.getUrl(), e);
+                                            Logging.LOG.log(Level.WARNING, "Unable to fetch the file name of URL: " + file.getUrl(), e2);
+                                            Logging.LOG.log(Level.WARNING, "Unable to fetch the file name of URL: " + file.getUrl(), e3);
+                                            allNameKnown.set(false);
                                             return file;
                                         }
                                     }
-
-                                } catch (IOException ioe) {
-                                    Logging.LOG.log(Level.WARNING, "Unable to fetch the file name of URL: " + file.getUrl(), ioe);
-                                    allNameKnown.set(false);
-                                    return file;
                                 }
-                            } else
+                            } else {
                                 return file;
+                            }
                         })
                         .collect(Collectors.toList()));
         FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(newManifest));
