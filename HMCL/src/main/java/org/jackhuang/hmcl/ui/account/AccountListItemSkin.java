@@ -84,12 +84,22 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
+
         JFXButton btnRefresh = new JFXButton();
         btnRefresh.setOnMouseClicked(e -> skinnable.refresh());
         btnRefresh.getStyleClass().add("toggle-icon4");
         btnRefresh.setGraphic(SVG.refresh(Theme.blackFillBinding(), -1, -1));
         runInFX(() -> FXUtils.installFastTooltip(btnRefresh, i18n("button.refresh")));
         right.getChildren().add(btnRefresh);
+
+        if (skinnable.canUploadSkin()) {
+            JFXButton btnUpload = new JFXButton();
+            btnUpload.setOnMouseClicked(e -> skinnable.uploadSkin());
+            btnUpload.getStyleClass().add("toggle-icon4");
+            btnUpload.setGraphic(SVG.upload(Theme.blackFillBinding(), -1, -1));
+            runInFX(() -> FXUtils.installFastTooltip(btnUpload, i18n("account.skin.upload")));
+            right.getChildren().add(btnUpload);
+        }
 
         JFXButton btnRemove = new JFXButton();
         btnRemove.setOnMouseClicked(e -> skinnable.remove());

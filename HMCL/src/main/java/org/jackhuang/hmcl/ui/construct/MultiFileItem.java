@@ -148,6 +148,7 @@ public class MultiFileItem<T> extends ComponentSublist {
         pane.setLeft(left);
 
         Label right = new Label(subtitle);
+        right.setWrapText(true);
         right.getStyleClass().add("subtitle-label");
         right.setStyle("-fx-font-size: 10;");
         pane.setRight(right);

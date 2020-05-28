@@ -54,6 +54,11 @@ public class AuthlibInjectorProvider implements YggdrasilProvider {
     }
 
     @Override
+    public URL getSkinUploadURL(UUID uuid) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public URL getProfilePropertiesURL(UUID uuid) throws AuthenticationException {
         return toURL(apiRoot + "sessionserver/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid));
     }

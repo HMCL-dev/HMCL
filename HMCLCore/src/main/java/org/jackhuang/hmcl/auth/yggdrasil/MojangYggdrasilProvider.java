@@ -21,7 +21,7 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.net.URL;
-import java.util.UUID;
+import java.util.*;
 
 public class MojangYggdrasilProvider implements YggdrasilProvider {
 
@@ -43,6 +43,11 @@ public class MojangYggdrasilProvider implements YggdrasilProvider {
     @Override
     public URL getInvalidationURL() {
         return NetworkUtils.toURL("https://authserver.mojang.com/invalidate");
+    }
+
+    @Override
+    public URL getSkinUploadURL(UUID uuid) throws UnsupportedOperationException {
+        return NetworkUtils.toURL("https://api.mojang.com/user/profile/" + UUIDTypeAdapter.fromUUID(uuid) + "/skin");
     }
 
     @Override

@@ -17,13 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import static java.util.Objects.requireNonNull;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
+import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
@@ -34,7 +28,10 @@ import org.jackhuang.hmcl.auth.NoCharacterException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
-import javafx.beans.binding.ObjectBinding;
+import java.nio.file.Path;
+import java.util.*;
+
+import static java.util.Objects.requireNonNull;
 
 public class YggdrasilAccount extends Account {
 
@@ -191,6 +188,10 @@ public class YggdrasilAccount extends Account {
     public void clearCache() {
         authenticated = false;
         service.getProfileRepository().invalidate(characterUUID);
+    }
+
+    public void uploadSkin(String model, Path file) throws AuthenticationException, UnsupportedOperationException {
+        service.uploadSkin(characterUUID, model, file);
     }
 
     private static String randomClientToken() {

@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.binding.Bindings;
@@ -80,6 +81,18 @@ public class PromptDialogPane extends StackPane {
                 checkBox.setSelected(((Builder.BooleanQuestion) question).value);
                 checkBox.selectedProperty().addListener((a, b, newValue) -> ((Builder.BooleanQuestion) question).value = newValue);
                 checkBox.setText(question.question);
+                vbox.getChildren().add(hBox);
+            } else if (question instanceof Builder.CandidatesQuestion) {
+                HBox hBox = new HBox();
+                JFXComboBox<String> comboBox = new JFXComboBox<>();
+                hBox.getChildren().setAll(comboBox);
+                comboBox.getItems().setAll(((Builder.CandidatesQuestion) question).candidates);
+                comboBox.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) ->
+                        ((Builder.CandidatesQuestion) question).value = newValue.intValue());
+                comboBox.getSelectionModel().select(0);
+                if (StringUtils.isNotBlank(question.question)) {
+                    vbox.getChildren().add(new Label(question.question));
+                }
                 vbox.getChildren().add(hBox);
             }
         }
@@ -143,6 +156,19 @@ public class PromptDialogPane extends StackPane {
                 super(question);
                 this.value = defaultValue;
                 this.validators = Arrays.asList(validators);
+            }
+        }
+
+        public static class CandidatesQuestion extends Question<Integer> {
+            protected final List<String> candidates;
+
+            public CandidatesQuestion(String question, String... candidates) {
+                super(question);
+                this.value = null;
+                if (candidates == null || candidates.length == 0) {
+                    throw new IllegalArgumentException("At least one candidate required");
+                }
+                this.candidates = new ArrayList<>(Arrays.asList(candidates));
             }
         }
 
