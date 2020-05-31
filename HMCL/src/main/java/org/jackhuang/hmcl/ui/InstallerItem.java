@@ -19,94 +19,198 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.effects.JFXDepthManager;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.*;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
+import javafx.scene.control.Control;
 import javafx.scene.control.Label;
+import javafx.scene.control.Skin;
+import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.setting.Theme;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Consumer;
-
+import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
  * @author huangyuhui
  */
-public class InstallerItem extends BorderPane {
+public class InstallerItem extends Control {
+    private final String id;
+    private final String imageUrl;
+    public final StringProperty libraryVersion = new SimpleStringProperty();
+    public final StringProperty incompatibleLibraryName = new SimpleStringProperty();
+    public final BooleanProperty incompatibleWithGame = new SimpleBooleanProperty();
+    public final BooleanProperty removable = new SimpleBooleanProperty();
+    public final BooleanProperty upgradable = new SimpleBooleanProperty(false);
+    public final BooleanProperty installable = new SimpleBooleanProperty(true);
+    public final ObjectProperty<EventHandler<? super MouseEvent>> removeAction = new SimpleObjectProperty<>();
+    public final ObjectProperty<EventHandler<? super MouseEvent>> action = new SimpleObjectProperty<>();
 
-    public InstallerItem(String libraryId, String libraryVersion, @Nullable Runnable upgrade, @Nullable Consumer<InstallerItem> deleteCallback) {
-        getStyleClass().addAll("two-line-list-item", "card");
-        JFXDepthManager.setDepth(this, 1);
+    public InstallerItem(LibraryAnalyzer.LibraryType id) {
+        this(id.getPatchId());
+    }
 
-        String[] urls = new String[]{"/assets/img/grass.png", "/assets/img/fabric.png", "/assets/img/forge.png", "/assets/img/chicken.png", "/assets/img/command.png"};
-        String[] libraryIds = new String[]{"game", "fabric", "forge", "liteloader", "optifine"};
+    public InstallerItem(String id) {
+        this.id = id;
 
-        boolean regularLibrary = false;
-        for (int i = 0; i < 5; ++i) {
-            if (libraryIds[i].equals(libraryId)) {
-                setLeft(FXUtils.limitingSize(new ImageView(new Image(urls[i], 32, 32, true, true)), 32, 32));
-                Label label = new Label();
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                BorderPane.setMargin(label, new Insets(0, 0, 0, 8));
-                if (libraryVersion == null) {
-                    label.setText(i18n("install.installer.not_installed", i18n("install.installer." + libraryId)));
-                } else {
-                    label.setText(i18n("install.installer.version", i18n("install.installer." + libraryId), libraryVersion));
-                }
-                setCenter(label);
-                regularLibrary = true;
+        switch (id) {
+            case "game":
+                imageUrl = "/assets/img/grass.png";
                 break;
-            }
-        }
-
-        if (!regularLibrary) {
-            String title = I18n.hasKey("install.installer." + libraryId) ? i18n("install.installer." + libraryId) : libraryId;
-            if (libraryVersion != null) {
-                TwoLineListItem item = new TwoLineListItem();
-                item.setTitle(title);
-                item.setSubtitle(i18n("archive.version") + ": " + libraryVersion);
-                setCenter(item);
-            } else {
-                Label label = new Label();
-                label.setStyle("-fx-font-size: 15px;");
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                setCenter(label);
-            }
-        }
-
-        {
-            HBox hBox = new HBox();
-
-            if (upgrade != null) {
-                JFXButton upgradeButton = new JFXButton();
-                if (libraryVersion == null) {
-                    upgradeButton.setGraphic(SVG.arrowRight(Theme.blackFillBinding(), -1, -1));
-                } else {
-                    upgradeButton.setGraphic(SVG.update(Theme.blackFillBinding(), -1, -1));
-                }
-                upgradeButton.getStyleClass().add("toggle-icon4");
-                FXUtils.installFastTooltip(upgradeButton, i18n("install.change_version"));
-                upgradeButton.setOnMouseClicked(e -> upgrade.run());
-                hBox.getChildren().add(upgradeButton);
-            }
-
-            if (deleteCallback != null) {
-                JFXButton deleteButton = new JFXButton();
-                deleteButton.setGraphic(SVG.close(Theme.blackFillBinding(), -1, -1));
-                deleteButton.getStyleClass().add("toggle-icon4");
-                deleteButton.setOnMouseClicked(e -> deleteCallback.accept(this));
-                hBox.getChildren().add(deleteButton);
-            }
-
-            hBox.setAlignment(Pos.CENTER_RIGHT);
-            setRight(hBox);
+            case "fabric":
+                imageUrl = "/assets/img/fabric.png";
+                break;
+            case "forge":
+                imageUrl = "/assets/img/forge.png";
+                break;
+            case "liteloader":
+                imageUrl = "/assets/img/chicken.png";
+                break;
+            case "optifine":
+                imageUrl = "/assets/img/command.png";
+                break;
+            default:
+                imageUrl = null;
+                break;
         }
     }
 
+    public void setState(String libraryVersion, boolean incompatibleWithGame, boolean removable) {
+        this.libraryVersion.set(libraryVersion);
+        this.incompatibleWithGame.set(incompatibleWithGame);
+        this.removable.set(removable);
+    }
+
+    public String getLibraryId() {
+        return id;
+    }
+
+    @Override
+    protected Skin<?> createDefaultSkin() {
+        return new InstallerItemSkin(this);
+    }
+
+    public static class InstallerItemGroup {
+        public InstallerItem game = new InstallerItem(MINECRAFT);
+        public InstallerItem fabric = new InstallerItem(FABRIC);
+        public InstallerItem forge = new InstallerItem(FORGE);
+        public InstallerItem liteLoader = new InstallerItem(LITELOADER);
+        public InstallerItem optiFine = new InstallerItem(OPTIFINE);
+
+        public InstallerItemGroup() {
+            forge.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
+                if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
+                return null;
+            }, fabric.libraryVersion));
+
+            liteLoader.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
+                if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
+                return null;
+            }, fabric.libraryVersion));
+
+            optiFine.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
+                if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
+                return null;
+            }, fabric.libraryVersion));
+
+            fabric.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
+                if (liteLoader.libraryVersion.get() != null) return LITELOADER.getPatchId();
+                if (optiFine.libraryVersion.get() != null) return OPTIFINE.getPatchId();
+                if (forge.libraryVersion.get() != null) return FORGE.getPatchId();
+                return null;
+            }, optiFine.libraryVersion, forge.libraryVersion));
+        }
+
+        public InstallerItem[] getLibraries() {
+             return new InstallerItem[]{game, fabric, forge, liteLoader, optiFine};
+        }
+    }
+
+    public static class InstallerItemSkin extends SkinBase<InstallerItem> {
+
+        InstallerItemSkin(InstallerItem control) {
+            super(control);
+
+            HBox hbox = new HBox();
+            getChildren().setAll(hbox);
+            JFXDepthManager.setDepth(hbox, 1);
+
+            hbox.getStyleClass().add("card");
+
+            hbox.setAlignment(Pos.CENTER_LEFT);
+
+            if (control.imageUrl != null) {
+                hbox.getChildren().add(FXUtils.limitingSize(new ImageView(new Image(control.imageUrl, 32, 32, true, true)), 32, 32));
+            }
+
+            Label nameLabel = new Label();
+            hbox.getChildren().add(nameLabel);
+            nameLabel.setPrefWidth(80);
+            nameLabel.textProperty().set(I18n.hasKey("install.installer." + control.id) ? i18n("install.installer." + control.id) : control.id);
+            HBox.setMargin(nameLabel, new Insets(0, 4, 0, 4));
+
+            Label label = new Label();
+            hbox.getChildren().add(label);
+            label.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(label, Priority.ALWAYS);
+            label.textProperty().bind(Bindings.createStringBinding(() -> {
+                String incompatibleWith = control.incompatibleLibraryName.get();
+                String version = control.libraryVersion.get();
+                if (control.incompatibleWithGame.get()) {
+                    return i18n("install.installer.change_version", version);
+                } else if (incompatibleWith != null) {
+                    return i18n("install.installer.incompatible", i18n("install.installer." + incompatibleWith));
+                } else if (version == null) {
+                    return i18n("install.installer.not_installed");
+                } else {
+                    return i18n("install.installer.version", version);
+                }
+            }, control.incompatibleLibraryName, control.incompatibleWithGame, control.libraryVersion));
+            BorderPane.setMargin(label, new Insets(0, 0, 0, 8));
+            BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+
+            JFXButton closeButton = new JFXButton();
+            closeButton.setGraphic(SVG.close(Theme.blackFillBinding(), -1, -1));
+            closeButton.getStyleClass().add("toggle-icon4");
+            closeButton.visibleProperty().bind(control.removable);
+            closeButton.managedProperty().bind(closeButton.visibleProperty());
+            closeButton.onMouseClickedProperty().bind(control.removeAction);
+            hbox.getChildren().add(closeButton);
+
+            JFXButton arrowButton = new JFXButton();
+            arrowButton.graphicProperty().bind(Bindings.createObjectBinding(() -> control.upgradable.get()
+                            ? SVG.update(Theme.blackFillBinding(), -1, -1)
+                            : SVG.arrowRight(Theme.blackFillBinding(), -1, -1),
+                    control.upgradable));
+            arrowButton.getStyleClass().add("toggle-icon4");
+            arrowButton.visibleProperty().bind(Bindings.createBooleanBinding(
+                    () -> control.installable.get() && control.incompatibleLibraryName.get() == null,
+                    control.installable, control.incompatibleLibraryName));
+            arrowButton.managedProperty().bind(arrowButton.visibleProperty());
+            arrowButton.onMouseClickedProperty().bind(control.action);
+            hbox.getChildren().add(arrowButton);
+
+            FXUtils.onChangeAndOperate(arrowButton.visibleProperty(), clickable -> {
+                if (clickable) {
+                    hbox.onMouseClickedProperty().bind(control.action);
+                    hbox.setCursor(Cursor.HAND);
+                } else {
+                    hbox.onMouseClickedProperty().unbind();
+                    hbox.onMouseClickedProperty().set(null);
+                    hbox.setCursor(Cursor.DEFAULT);
+                }
+            });
+        }
+    }
 }

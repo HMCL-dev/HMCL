@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
@@ -42,6 +43,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -74,7 +76,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
 
             return LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(versionId));
         }).thenAcceptAsync(analyzer -> {
-            Function<String, Consumer<InstallerItem>> removeAction = libraryId -> x -> {
+            Function<String, Runnable> removeAction = libraryId -> () -> {
                 profile.getDependency().removeLibraryAsync(version, libraryId)
                         .thenComposeAsync(profile.getRepository()::saveAsync)
                         .withComposeAsync(profile.getRepository().refreshVersionsAsync())
@@ -84,15 +86,28 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
 
             itemsProperty().clear();
 
-            for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
-                String libraryId = type.getPatchId();
-                String libraryVersion = analyzer.getVersion(type).orElse(null);
-                Consumer<InstallerItem> action = "game".equals(libraryId) || libraryVersion == null ? null : removeAction.apply(libraryId);
-                itemsProperty().add(new InstallerItem(libraryId, libraryVersion, () -> {
+            InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup();
+
+            // Conventional libraries: game, fabric, forge, liteloader, optifine
+            for (InstallerItem installerItem : group.getLibraries()) {
+                String libraryId = installerItem.getLibraryId();
+                String libraryVersion = analyzer.getVersion(libraryId).orElse(null);
+                installerItem.libraryVersion.set(libraryVersion);
+                installerItem.upgradable.set(libraryVersion != null);
+                installerItem.installable.set(true);
+                installerItem.action.set(e -> {
                     Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
-                }, action));
+                });
+                boolean removable = !"game".equals(libraryId) && libraryVersion != null;
+                installerItem.removable.set(removable);
+                if (removable) {
+                    Runnable action = removeAction.apply(libraryId);
+                    installerItem.removeAction.set(e -> action.run());
+                }
+                itemsProperty().add(installerItem);
             }
 
+            // other third-party libraries which are unable to manage.
             for (LibraryAnalyzer.LibraryMark mark : analyzer) {
                 String libraryId = mark.getLibraryId();
                 String libraryVersion = mark.getLibraryVersion();
@@ -101,14 +116,23 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                 if (LibraryAnalyzer.LibraryType.fromPatchId(libraryId) != null)
                     continue;
 
-                Consumer<InstallerItem> action = removeAction.apply(libraryId);
-                if (libraryVersion != null && Lang.test(() -> profile.getDependency().getVersionList(libraryId)))
-                    itemsProperty().add(
-                            new InstallerItem(libraryId, libraryVersion, () -> {
-                                Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
-                            }, action));
-                else
-                    itemsProperty().add(new InstallerItem(libraryId, libraryVersion, null, action));
+                Runnable action = removeAction.apply(libraryId);
+
+                InstallerItem installerItem = new InstallerItem(libraryId);
+                installerItem.libraryVersion.set(libraryVersion);
+                installerItem.installable.set(false);
+                installerItem.upgradable.bind(installerItem.installable);
+                installerItem.removable.set(true);
+                installerItem.removeAction.set(e -> action.run());
+
+                if (libraryVersion != null && Lang.test(() -> profile.getDependency().getVersionList(libraryId))) {
+                    installerItem.installable.set(true);
+                    installerItem.action.set(e -> {
+                        Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
+                    });
+                }
+
+                itemsProperty().add(installerItem);
             }
         }, Platform::runLater);
     }
