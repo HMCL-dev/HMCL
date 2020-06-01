@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -42,6 +41,7 @@ import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
 import static org.jackhuang.hmcl.util.Hex.encodeHex;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class LibraryDownloadTask extends Task<Void> {
     private FileDownloadTask task;
@@ -111,7 +111,7 @@ public class LibraryDownloadTask extends Task<Void> {
     }
 
     @Override
-    public void preExecute() throws Exception {
+    public void preExecute() {
         Optional<Path> libPath = cacheRepository.getLibrary(originalLibrary);
         if (libPath.isPresent()) {
             try {
@@ -119,32 +119,42 @@ public class LibraryDownloadTask extends Task<Void> {
                 cached = true;
                 return;
             } catch (IOException e) {
-                Logging.LOG.log(Level.WARNING, "Failed to copy file from cache", e);
+                LOG.log(Level.WARNING, "Failed to copy file from cache", e);
                 // We cannot copy cached file to current location
                 // so we try to download a new one.
             }
         }
 
-        try {
-            URL packXz = NetworkUtils.toURL(dependencyManager.getDownloadProvider().injectURL(url) + ".pack.xz");
-            if (NetworkUtils.urlExists(packXz)) {
-                List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url + ".pack.xz");
-                task = new FileDownloadTask(urls, xzFile, null);
-                task.setCacheRepository(cacheRepository);
-                task.setCaching(true);
-                xz = true;
-            } else {
-                List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url);
-                task = new FileDownloadTask(urls, jar,
-                        library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
-                task.setCacheRepository(cacheRepository);
-                task.setCaching(true);
-                task.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
-                xz = false;
-            }
-        } catch (IOException e) {
-            throw new LibraryDownloadException(library, e);
+        if (testURLExistence(url)) {
+            List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url + ".pack.xz");
+            task = new FileDownloadTask(urls, xzFile, null);
+            task.setCacheRepository(cacheRepository);
+            task.setCaching(true);
+            xz = true;
+        } else {
+            List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url);
+            task = new FileDownloadTask(urls, jar,
+                    library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
+            task.setCacheRepository(cacheRepository);
+            task.setCaching(true);
+            task.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
+            xz = false;
         }
+    }
+
+    private boolean testURLExistence(String rawUrl) {
+        List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(rawUrl);
+        for (URL url : urls) {
+            URL xzURL = NetworkUtils.toURL(url.toString() + ".pack.xz");
+            for (int retry = 0; retry < 3; retry++) {
+                try {
+                    return NetworkUtils.urlExists(xzURL);
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to test for url existence: " + rawUrl + ".pack.xz", e);
+                }
+            }
+        }
+        return false; // maybe some ugly implementation will give timeout for not existent url.
     }
 
     @Override
@@ -201,11 +211,11 @@ public class LibraryDownloadTask extends Task<Void> {
                         String target = hash.substring(validChecksum.length() + 1);
                         String checksum = files.get(target);
                         if ((!files.containsKey(target)) || (checksum == null)) {
-                            Logging.LOG.warning("    " + target + " : missing");
+                            LOG.warning("    " + target + " : missing");
                             failed = true;
                             break;
                         } else if (!checksum.equals(validChecksum)) {
-                            Logging.LOG.warning("    " + target + " : failed (" + checksum + ", " + validChecksum + ")");
+                            LOG.warning("    " + target + " : failed (" + checksum + ", " + validChecksum + ")");
                             failed = true;
                             break;
                         }
