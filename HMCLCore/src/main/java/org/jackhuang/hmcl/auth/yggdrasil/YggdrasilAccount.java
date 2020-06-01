@@ -191,7 +191,7 @@ public class YggdrasilAccount extends Account {
     }
 
     public void uploadSkin(String model, Path file) throws AuthenticationException, UnsupportedOperationException {
-        service.uploadSkin(characterUUID, model, file);
+        service.uploadSkin(characterUUID, session.getAccessToken(), model, file);
     }
 
     private static String randomClientToken() {

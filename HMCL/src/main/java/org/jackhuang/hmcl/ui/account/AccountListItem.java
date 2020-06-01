@@ -33,6 +33,8 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
@@ -82,9 +84,9 @@ public class AccountListItem extends RadioButton {
         return new AccountListItemSkin(this);
     }
 
-    public void refresh() {
-        account.clearCache();
-        thread(() -> {
+    private Task<?> refreshAsync() {
+        return Task.runAsync(() -> {
+            account.clearCache();
             try {
                 account.logIn();
             } catch (CredentialExpiredException e) {
@@ -94,11 +96,17 @@ public class AccountListItem extends RadioButton {
                     // ignore cancellation
                 } catch (Exception e1) {
                     LOG.log(Level.WARNING, "Failed to refresh " + account + " with password", e1);
+                    throw e1;
                 }
             } catch (AuthenticationException e) {
                 LOG.log(Level.WARNING, "Failed to refresh " + account + " with token", e);
+                throw e;
             }
         });
+    }
+
+    public void refresh() {
+        refreshAsync().whenComplete(e -> {}).start();
     }
 
     public boolean canUploadSkin() {
@@ -121,12 +129,15 @@ public class AccountListItem extends RadioButton {
         Controllers.prompt(new PromptDialogPane.Builder(i18n("account.skin.upload"), (questions, resolve, reject) -> {
             PromptDialogPane.Builder.CandidatesQuestion q = (PromptDialogPane.Builder.CandidatesQuestion) questions.get(0);
             String model = q.getValue() == 0 ? "" : "slim";
-            try {
-                ((YggdrasilAccount) account).uploadSkin(model, selectedFile.toPath());
-                resolve.run();
-            } catch (AuthenticationException e) {
-                reject.accept(AddAccountPane.accountException(e));
-            }
+            refreshAsync()
+                    .thenRunAsync(() -> ((YggdrasilAccount) account).uploadSkin(model, selectedFile.toPath()))
+                    .thenComposeAsync(this::refreshAsync)
+                    .thenRunAsync(Schedulers.javafx(), resolve::run)
+                    .whenComplete(Schedulers.javafx(), e -> {
+                        if (e != null) {
+                            reject.accept(AddAccountPane.accountException(e));
+                        }
+                    }).start();
         }).addQuestion(new PromptDialogPane.Builder.CandidatesQuestion(i18n("account.skin.model"),
                 i18n("account.skin.model.default"), i18n("account.skin.model.slim"))));
     }

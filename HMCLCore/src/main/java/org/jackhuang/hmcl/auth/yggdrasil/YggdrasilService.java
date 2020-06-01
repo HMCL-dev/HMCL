@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.gson.ValidationTypeAdapterFactory;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpMultipartRequest;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
@@ -151,16 +152,21 @@ public class YggdrasilService {
         requireEmpty(request(provider.getInvalidationURL(), createRequestWithCredentials(accessToken, clientToken)));
     }
 
-    public void uploadSkin(UUID uuid, String model, Path file) throws AuthenticationException, UnsupportedOperationException {
+    public void uploadSkin(UUID uuid, String accessToken, String model, Path file) throws AuthenticationException, UnsupportedOperationException {
         try {
             HttpURLConnection con = NetworkUtils.createHttpConnection(provider.getSkinUploadURL(uuid));
             con.setRequestMethod("PUT");
+            con.setRequestProperty("Authorization", "Bearer " + accessToken);
             con.setDoOutput(true);
             try (HttpMultipartRequest request = new HttpMultipartRequest(con)) {
+                request.param("model", model);
                 try (InputStream fis = Files.newInputStream(file)) {
                     request.file("file", FileUtils.getName(file), "image/" + FileUtils.getExtension(file), fis);
                 }
-                request.param("model", model);
+            }
+            String response = IOUtils.readFullyAsString(con.getInputStream());
+            if (response.startsWith("{")) {
+                handleErrorMessage(fromJson(response, ErrorResponse.class));
             }
         } catch (IOException e) {
             throw new AuthenticationException(e);
