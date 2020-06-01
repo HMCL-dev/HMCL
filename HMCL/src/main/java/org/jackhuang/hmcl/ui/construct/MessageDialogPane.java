@@ -38,7 +38,6 @@ public final class MessageDialogPane extends StackPane {
         WARNING,
         QUESTION,
         FINE,
-        PLAIN,
     }
 
     @FXML
