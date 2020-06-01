@@ -96,7 +96,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
             JFXButton btnUpload = new JFXButton();
             btnUpload.setOnMouseClicked(e -> skinnable.uploadSkin());
             btnUpload.getStyleClass().add("toggle-icon4");
-            btnUpload.setGraphic(SVG.upload(Theme.blackFillBinding(), -1, -1));
+            btnUpload.setGraphic(SVG.hanger(Theme.blackFillBinding(), -1, -1));
             runInFX(() -> FXUtils.installFastTooltip(btnUpload, i18n("account.skin.upload")));
             right.getChildren().add(btnUpload);
         }
