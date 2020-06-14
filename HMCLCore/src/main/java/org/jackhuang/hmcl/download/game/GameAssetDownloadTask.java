@@ -65,15 +65,7 @@ public final class GameAssetDownloadTask extends Task<Void> {
         this.assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
         this.integrityCheck = integrityCheck;
 
-        if (!assetIndexFile.exists() || forceDownloadingIndex) {
-            dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.version));
-        } else {
-            try {
-                JsonUtils.fromNonNullJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
-            } catch (IOException | JsonParseException e) {
-                dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.version));
-            }
-        }
+        dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.version, forceDownloadingIndex));
     }
 
     @Override
