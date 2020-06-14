@@ -36,6 +36,14 @@ If you want to submit a pull request, there're some requirements:
 * Compiler: Java 1.8.
 * Do NOT modify `gradle` files.
 
+### Compilation
+
+Simply execute following command:
+```bash
+./gradlew clean build
+```
+Make sure you have Java installed with Pack200 and JavaFX 8 at least. Liberica full JDK 8~11 is recommended.
+
 ## JVM Options (for debugging)
 |Parameter|Description|
 |---------|-----------|

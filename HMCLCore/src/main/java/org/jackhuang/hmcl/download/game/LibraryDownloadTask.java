@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.tukaani.xz.XZInputStream;
 
 import java.io.*;
@@ -125,7 +126,7 @@ public class LibraryDownloadTask extends Task<Void> {
             }
         }
 
-        if (testURLExistence(url)) {
+        if (SystemUtils.JRE_CAPABILITY_PACK200 && testURLExistence(url)) {
             List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url + ".pack.xz");
             task = new FileDownloadTask(urls, xzFile, null);
             task.setCacheRepository(cacheRepository);
