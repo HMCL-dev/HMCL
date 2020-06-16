@@ -48,6 +48,7 @@ Make sure you have Java installed with Pack200 and JavaFX 8 at least. Liberica f
 |Parameter|Description|
 |---------|-----------|
 |`-Dhmcl.self_integrity_check.disable=true`|Bypass the self integrity check when checking for update.|
+|`-Dhmcl.font.override=<font family>`|Override font family.|
 |`-Dhmcl.version.override=<version>`|Override the version number.|
 |`-Dhmcl.update_source.override=<url>`|Override the update source.|
 |`-Dhmcl.authlibinjector.location=<path>`|Use specified authlib-injector (instead of downloading one).|

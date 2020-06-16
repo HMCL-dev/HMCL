@@ -22,4 +22,6 @@
     -fx-base-rippler-color: %base-rippler-color%;
     -fx-base-disabled-text-fill: %disabled-font-color%;
     -fx-base-text-fill: %font-color%;
+
+    %font%
 }
