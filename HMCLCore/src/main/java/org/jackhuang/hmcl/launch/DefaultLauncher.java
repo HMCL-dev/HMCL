@@ -41,6 +41,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
@@ -133,6 +135,22 @@ public class DefaultLauncher extends Launcher {
             res.add("-Dfml.ignorePatchDiscrepancies=true");
         }
 
+        Proxy proxy = options.getProxy();
+        if (proxy != null && StringUtils.isBlank(options.getProxyUser()) && StringUtils.isBlank(options.getProxyPass())) {
+            InetSocketAddress address = (InetSocketAddress) options.getProxy().address();
+            String host = address.getHostString();
+            int port = address.getPort();
+            if (proxy.type() == Proxy.Type.HTTP) {
+                res.add("-Dhttp.proxyHost=" + host);
+                res.add("-Dhttp.proxyPort=" + port);
+                res.add("-Dhttps.proxyHost=" + host);
+                res.add("-Dhttps.proxyPort=" + port);
+            } else if (proxy.type() == Proxy.Type.SOCKS) {
+                res.add("-DsocksProxyHost=" + host);
+                res.add("-DsocksProxyPort=" + port);
+            }
+        }
+
         LinkedList<String> classpath = new LinkedList<>();
         for (Library library : version.getLibraries())
             if (library.appliesToCurrentEnvironment() && !library.isNative()) {
@@ -182,11 +200,12 @@ public class DefaultLauncher extends Launcher {
         if (options.isFullscreen())
             res.add("--fullscreen");
 
-        if (StringUtils.isNotBlank(options.getProxyHost())) {
+        if (options.getProxy() != null) {
+            InetSocketAddress address = (InetSocketAddress) options.getProxy().address();
             res.add("--proxyHost");
-            res.add(options.getProxyHost());
+            res.add(address.getHostString());
             res.add("--proxyPort");
-            res.add(String.valueOf(options.getProxyPort()));
+            res.add(String.valueOf(address.getPort()));
             if (StringUtils.isNotBlank(options.getProxyUser()) && StringUtils.isNotBlank(options.getProxyPass())) {
                 res.add("--proxyUser");
                 res.add(options.getProxyUser());
