@@ -33,6 +33,9 @@ public final class AssetIndex {
     @SerializedName("virtual")
     private final boolean virtual;
 
+    @SerializedName("map_to_resources")
+    private final boolean mapToResources;
+
     @SerializedName("objects")
     private final Map<String, AssetObject> objects;
 
@@ -41,12 +44,12 @@ public final class AssetIndex {
     }
 
     public AssetIndex(boolean virtual, Map<String, AssetObject> objects) {
-        this.virtual = virtual;
+        this.virtual = this.mapToResources = virtual;
         this.objects = new HashMap<>(objects);
     }
 
     public boolean isVirtual() {
-        return virtual;
+        return virtual || mapToResources;
     }
 
     public Map<String, AssetObject> getObjects() {
