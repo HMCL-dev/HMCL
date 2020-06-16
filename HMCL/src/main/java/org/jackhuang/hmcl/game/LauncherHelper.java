@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
+import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.launch.NotDecompressingNativesException;
 import org.jackhuang.hmcl.launch.PermissionException;
@@ -149,6 +150,9 @@ public final class LauncherHelper {
                                 return null;
                             }
                         }))).withStage("launch.state.dependencies")
+                .thenComposeAsync(() -> {
+                    return gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version)).orElse(null);
+                })
                 .thenComposeAsync(Task.supplyAsync(() -> {
                     try {
                         return account.logIn();
