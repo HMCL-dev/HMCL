@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * The download provider that changes the real download source in need.
@@ -60,25 +61,24 @@ public class AdaptedDownloadProvider implements DownloadProvider {
     }
 
     @Override
+    public List<URL> getAssetObjectCandidates(String assetObjectLocation) {
+        return downloadProviderCandidates.stream()
+                .flatMap(d -> d.getAssetObjectCandidates(assetObjectLocation).stream())
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<URL> injectURLWithCandidates(String baseURL) {
-        List<DownloadProvider> d = downloadProviderCandidates;
-        List<URL> results = new ArrayList<>(d.size());
-        for (DownloadProvider downloadProvider : d) {
-            results.add(NetworkUtils.toURL(downloadProvider.injectURL(baseURL)));
-        }
-        return results;
+        return downloadProviderCandidates.stream()
+                .flatMap(d -> d.injectURLWithCandidates(baseURL).stream())
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<URL> injectURLsWithCandidates(List<String> urls) {
-        List<DownloadProvider> d = downloadProviderCandidates;
-        List<URL> results = new ArrayList<>(d.size());
-        for (DownloadProvider downloadProvider : d) {
-            for (String baseURL : urls) {
-                results.add(NetworkUtils.toURL(downloadProvider.injectURL(baseURL)));
-            }
-        }
-        return results;
+        return downloadProviderCandidates.stream()
+                .flatMap(d -> d.injectURLsWithCandidates(urls).stream())
+                .collect(Collectors.toList());
     }
 
     @Override

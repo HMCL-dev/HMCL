@@ -60,7 +60,7 @@ public interface DownloadProvider {
      * @return the URL that is equivalent to [baseURL], but belongs to your own service provider.
      */
     default List<URL> injectURLWithCandidates(String baseURL) {
-        return Collections.singletonList(NetworkUtils.toURL(baseURL));
+        return Collections.singletonList(NetworkUtils.toURL(injectURL(baseURL)));
     }
 
     default List<URL> injectURLsWithCandidates(List<String> urls) {

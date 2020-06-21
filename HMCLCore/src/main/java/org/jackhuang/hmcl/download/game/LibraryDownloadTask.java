@@ -151,7 +151,7 @@ public class LibraryDownloadTask extends Task<Void> {
                 try {
                     return NetworkUtils.urlExists(xzURL);
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to test for url existence: " + rawUrl + ".pack.xz", e);
+                    LOG.log(Level.WARNING, "Failed to test for url existence: " + url + ".pack.xz", e);
                 }
             }
         }
