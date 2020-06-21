@@ -22,7 +22,9 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
@@ -123,15 +125,17 @@ public final class Controllers {
 
         Task.runAsync(JavaVersion::initialize).start();
 
-        scene = new Scene(decorator.getDecorator(), 802, 482);
-        stage.setMinHeight(482);
-        stage.setMinWidth(802);
+        scene = new Scene(decorator.getDecorator());
+        scene.setFill(Color.TRANSPARENT);
+        stage.setMinHeight(482 + 32);
+        stage.setMinWidth(802 + 32);
         decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
         decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
         scene.getStylesheets().setAll(config().getTheme().getStylesheets());
 
         stage.getIcons().add(newImage("/assets/img/icon.png"));
         stage.setTitle(Metadata.TITLE);
+        stage.initStyle(StageStyle.TRANSPARENT);
         stage.setScene(scene);
     }
 

@@ -50,7 +50,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     private static final SVGGlyph minus = Lang.apply(new SVGGlyph(0, "MINUS", "M804.571 420.571v109.714q0 22.857-16 38.857t-38.857 16h-694.857q-22.857 0-38.857-16t-16-38.857v-109.714q0-22.857 16-38.857t38.857-16h694.857q22.857 0 38.857 16t16 38.857z", Color.WHITE),
         glyph -> { glyph.setSize(12, 2); glyph.setTranslateY(4); });
 
-    private final StackPane parent;
+    private final StackPane root, parent;
     private final StackPane titleContainer;
     private final Stage primaryStage;
     private final TransitionPane navBarPane;
@@ -72,15 +72,20 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         minus.fillProperty().bind(Theme.foregroundFillBinding());
 
         Decorator skinnable = getSkinnable();
+        root = new StackPane();
+        root.getStyleClass().add("window");
+
         parent = new StackPane();
-        parent.getStyleClass().add("window");
-        parent.backgroundProperty().bind(skinnable.backgroundProperty());
+        parent.getStyleClass().add("body");
+        parent.backgroundProperty().bind(skinnable.contentBackgroundProperty());
         parent.setPickOnBounds(false);
         parent.prefHeightProperty().bind(control.prefHeightProperty());
         parent.prefWidthProperty().bind(control.prefWidthProperty());
-        parent.setOnMouseReleased(this::onMouseReleased);
-        parent.setOnMouseDragged(this::onMouseDragged);
-        parent.setOnMouseMoved(this::onMouseMoved);
+        root.setOnMouseReleased(this::onMouseReleased);
+        root.setOnMouseDragged(this::onMouseDragged);
+        root.setOnMouseMoved(this::onMouseMoved);
+
+        root.getChildren().setAll(parent);
 
         // animation layer at bottom
         {
@@ -93,9 +98,9 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         }
 
         StackPane wrapper = new StackPane();
-        BorderPane root = new BorderPane();
-        root.getStyleClass().addAll("jfx-decorator");
-        wrapper.getChildren().setAll(root);
+        BorderPane frame = new BorderPane();
+        frame.getStyleClass().addAll("jfx-decorator");
+        wrapper.getChildren().setAll(frame);
         skinnable.setDrawerWrapper(wrapper);
 
         parent.getChildren().add(wrapper);
@@ -132,7 +137,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             container.getChildren().add(floatLayer);
         }
 
-        root.setCenter(container);
+        frame.setCenter(container);
 
         titleContainer = new StackPane();
         titleContainer.setPickOnBounds(false);
@@ -174,7 +179,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             titleBar.setCenter(navBarPane);
             titleBar.setRight(buttonsContainerPlaceHolder);
         }
-        root.setTop(titleContainer);
+        frame.setTop(titleContainer);
 
         {
             HBox buttonsContainer = new HBox();
@@ -204,7 +209,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             parent.getChildren().add(layer);
         }
 
-        getChildren().add(parent);
+        getChildren().add(root);
     }
 
     private Node createNavBar(Decorator skinnable, boolean titleBarTransparent, double leftPaneWidth, boolean canBack, boolean canClose, boolean showCloseAsHome, boolean canRefresh, String title, Node titleNode) {
@@ -293,19 +298,19 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     }
 
     private boolean isRightEdge(double x, double y, Bounds boundsInParent) {
-        return x < parent.getWidth() && x >= parent.getWidth() - parent.snappedLeftInset();
+        return x < root.getWidth() && x >= root.getWidth() - root.snappedLeftInset();
     }
 
     private boolean isTopEdge(double x, double y, Bounds boundsInParent) {
-        return y >= 0 && y <= parent.snappedTopInset();
+        return y >= 0 && y <= root.snappedTopInset();
     }
 
     private boolean isBottomEdge(double x, double y, Bounds boundsInParent) {
-        return y < parent.getHeight() && y >= parent.getHeight() - parent.snappedLeftInset();
+        return y < root.getHeight() && y >= root.getHeight() - root.snappedLeftInset();
     }
 
     private boolean isLeftEdge(double x, double y, Bounds boundsInParent) {
-        return x >= 0 && x <= parent.snappedLeftInset();
+        return x >= 0 && x <= root.snappedLeftInset();
     }
 
     private boolean setStageWidth(double width) {
@@ -341,48 +346,46 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             updateInitMouseValues(mouseEvent);
             if (primaryStage.isResizable()) {
                 double x = mouseEvent.getX(), y = mouseEvent.getY();
-                Bounds boundsInParent = parent.getBoundsInParent();
-                if (parent.getBorder() != null && parent.getBorder().getStrokes().size() > 0) {
-                    double diagonalSize = parent.snappedLeftInset() + 10;
-                    if (this.isRightEdge(x, y, boundsInParent)) {
-                        if (y < diagonalSize) {
-                            parent.setCursor(Cursor.NE_RESIZE);
-                        } else if (y > parent.getHeight() - diagonalSize) {
-                            parent.setCursor(Cursor.SE_RESIZE);
-                        } else {
-                            parent.setCursor(Cursor.E_RESIZE);
-                        }
-                    } else if (this.isLeftEdge(x, y, boundsInParent)) {
-                        if (y < diagonalSize) {
-                            parent.setCursor(Cursor.NW_RESIZE);
-                        } else if (y > parent.getHeight() - diagonalSize) {
-                            parent.setCursor(Cursor.SW_RESIZE);
-                        } else {
-                            parent.setCursor(Cursor.W_RESIZE);
-                        }
-                    } else if (this.isTopEdge(x, y, boundsInParent)) {
-                        if (x < diagonalSize) {
-                            parent.setCursor(Cursor.NW_RESIZE);
-                        } else if (x > parent.getWidth() - diagonalSize) {
-                            parent.setCursor(Cursor.NE_RESIZE);
-                        } else {
-                            parent.setCursor(Cursor.N_RESIZE);
-                        }
-                    } else if (this.isBottomEdge(x, y, boundsInParent)) {
-                        if (x < diagonalSize) {
-                            parent.setCursor(Cursor.SW_RESIZE);
-                        } else if (x > parent.getWidth() - diagonalSize) {
-                            parent.setCursor(Cursor.SE_RESIZE);
-                        } else {
-                            parent.setCursor(Cursor.S_RESIZE);
-                        }
+                Bounds boundsInParent = root.getBoundsInParent();
+                double diagonalSize = root.snappedLeftInset() + 10;
+                if (this.isRightEdge(x, y, boundsInParent)) {
+                    if (y < diagonalSize) {
+                        root.setCursor(Cursor.NE_RESIZE);
+                    } else if (y > root.getHeight() - diagonalSize) {
+                        root.setCursor(Cursor.SE_RESIZE);
                     } else {
-                        parent.setCursor(Cursor.DEFAULT);
+                        root.setCursor(Cursor.E_RESIZE);
                     }
+                } else if (this.isLeftEdge(x, y, boundsInParent)) {
+                    if (y < diagonalSize) {
+                        root.setCursor(Cursor.NW_RESIZE);
+                    } else if (y > root.getHeight() - diagonalSize) {
+                        root.setCursor(Cursor.SW_RESIZE);
+                    } else {
+                        root.setCursor(Cursor.W_RESIZE);
+                    }
+                } else if (this.isTopEdge(x, y, boundsInParent)) {
+                    if (x < diagonalSize) {
+                        root.setCursor(Cursor.NW_RESIZE);
+                    } else if (x > root.getWidth() - diagonalSize) {
+                        root.setCursor(Cursor.NE_RESIZE);
+                    } else {
+                        root.setCursor(Cursor.N_RESIZE);
+                    }
+                } else if (this.isBottomEdge(x, y, boundsInParent)) {
+                    if (x < diagonalSize) {
+                        root.setCursor(Cursor.SW_RESIZE);
+                    } else if (x > root.getWidth() - diagonalSize) {
+                        root.setCursor(Cursor.SE_RESIZE);
+                    } else {
+                        root.setCursor(Cursor.S_RESIZE);
+                    }
+                } else {
+                    root.setCursor(Cursor.DEFAULT);
                 }
             }
         } else {
-            parent.setCursor(Cursor.DEFAULT);
+            root.setCursor(Cursor.DEFAULT);
         }
     }
 
@@ -398,7 +401,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 this.newY = mouseEvent.getScreenY();
                 double deltaX = this.newX - this.initX;
                 double deltaY = this.newY - this.initY;
-                Cursor cursor = parent.getCursor();
+                Cursor cursor = root.getCursor();
                 if (Cursor.E_RESIZE == cursor) {
                     this.setStageWidth(this.primaryStage.getWidth() + deltaX);
                     mouseEvent.consume();

@@ -1146,8 +1146,13 @@
 }
 
 .window {
-    -fx-border-color: black;
-    -fx-border-width: 1;
+    -fx-background-color: transparent;
+    -fx-padding: 16;
+}
+
+.body {
+    -fx-border-radius: 5;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 20, 0.3, 0.0, 0.0);
 }
 
 .debug-border {
