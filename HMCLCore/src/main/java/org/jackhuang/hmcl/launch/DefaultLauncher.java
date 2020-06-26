@@ -138,16 +138,18 @@ public class DefaultLauncher extends Launcher {
         Proxy proxy = options.getProxy();
         if (proxy != null && StringUtils.isBlank(options.getProxyUser()) && StringUtils.isBlank(options.getProxyPass())) {
             InetSocketAddress address = (InetSocketAddress) options.getProxy().address();
-            String host = address.getHostString();
-            int port = address.getPort();
-            if (proxy.type() == Proxy.Type.HTTP) {
-                res.add("-Dhttp.proxyHost=" + host);
-                res.add("-Dhttp.proxyPort=" + port);
-                res.add("-Dhttps.proxyHost=" + host);
-                res.add("-Dhttps.proxyPort=" + port);
-            } else if (proxy.type() == Proxy.Type.SOCKS) {
-                res.add("-DsocksProxyHost=" + host);
-                res.add("-DsocksProxyPort=" + port);
+            if (address != null) {
+                String host = address.getHostString();
+                int port = address.getPort();
+                if (proxy.type() == Proxy.Type.HTTP) {
+                    res.add("-Dhttp.proxyHost=" + host);
+                    res.add("-Dhttp.proxyPort=" + port);
+                    res.add("-Dhttps.proxyHost=" + host);
+                    res.add("-Dhttps.proxyPort=" + port);
+                } else if (proxy.type() == Proxy.Type.SOCKS) {
+                    res.add("-DsocksProxyHost=" + host);
+                    res.add("-DsocksProxyPort=" + port);
+                }
             }
         }
 
@@ -202,15 +204,17 @@ public class DefaultLauncher extends Launcher {
 
         if (options.getProxy() != null) {
             InetSocketAddress address = (InetSocketAddress) options.getProxy().address();
-            res.add("--proxyHost");
-            res.add(address.getHostString());
-            res.add("--proxyPort");
-            res.add(String.valueOf(address.getPort()));
-            if (StringUtils.isNotBlank(options.getProxyUser()) && StringUtils.isNotBlank(options.getProxyPass())) {
-                res.add("--proxyUser");
-                res.add(options.getProxyUser());
-                res.add("--proxyPass");
-                res.add(options.getProxyPass());
+            if (address != null) {
+                res.add("--proxyHost");
+                res.add(address.getHostString());
+                res.add("--proxyPort");
+                res.add(String.valueOf(address.getPort()));
+                if (StringUtils.isNotBlank(options.getProxyUser()) && StringUtils.isNotBlank(options.getProxyPass())) {
+                    res.add("--proxyUser");
+                    res.add(options.getProxyUser());
+                    res.add("--proxyPass");
+                    res.add(options.getProxyPass());
+                }
             }
         }
 
