@@ -28,6 +28,7 @@ public class WizardController implements Navigation {
     private WizardProvider provider = null;
     private final Map<String, Object> settings = new HashMap<>();
     private final Stack<Node> pages = new Stack<>();
+    private boolean stopped = false;
 
     public WizardController(WizardDisplayer displayer) {
         this.displayer = displayer;
@@ -60,6 +61,10 @@ public class WizardController implements Navigation {
         Node page = navigatingTo(0);
         pages.push(page);
 
+        if (stopped) { // navigatingTo may stop this wizard.
+            return;
+        }
+
         if (page instanceof WizardPage)
             ((WizardPage) page).onNavigate(settings);
 
@@ -76,6 +81,10 @@ public class WizardController implements Navigation {
 
     public void onNext(Node page) {
         pages.push(page);
+
+        if (stopped) { // navigatingTo may stop this wizard.
+            return;
+        }
 
         if (page instanceof WizardPage)
             ((WizardPage) page).onNavigate(settings);
@@ -122,6 +131,7 @@ public class WizardController implements Navigation {
 
     @Override
     public void onEnd() {
+        stopped = true;
         settings.clear();
         pages.clear();
         displayer.onEnd();

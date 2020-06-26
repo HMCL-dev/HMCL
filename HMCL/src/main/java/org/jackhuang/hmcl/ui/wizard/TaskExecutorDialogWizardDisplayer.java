@@ -28,14 +28,19 @@ import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.Map;
+import java.util.Queue;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public interface TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplayer {
+public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDisplayer {
+
+    public TaskExecutorDialogWizardDisplayer(Queue<Object> cancelQueue) {
+        super(cancelQueue);
+    }
 
     @Override
-    default void handleTask(Map<String, Object> settings, Task<?> task) {
+    public void handleTask(Map<String, Object> settings, Task<?> task) {
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(it -> {
             it.fireEvent(new DialogCloseEvent());
             onEnd();
