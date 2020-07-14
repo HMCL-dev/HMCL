@@ -32,16 +32,17 @@ public class GameAdvancedListItem extends AdvancedListItem {
 
     public GameAdvancedListItem() {
         tooltip = new Tooltip();
-        FXUtils.installFastTooltip(this, tooltip);
 
         FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
             if (version != null && Profiles.getSelectedProfile() != null &&
                     Profiles.getSelectedProfile().getRepository().hasVersion(version)) {
+                FXUtils.installFastTooltip(this, tooltip);
                 setTitle(version);
                 setSubtitle(null);
                 setImage(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
                 tooltip.setText(version);
             } else {
+                Tooltip.uninstall(this,tooltip);
                 setTitle(i18n("version.empty"));
                 setSubtitle(i18n("version.empty.add"));
                 setImage(newImage("/assets/img/grass.png"));
