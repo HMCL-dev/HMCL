@@ -32,11 +32,11 @@ public class GameAdvancedListItem extends AdvancedListItem {
 
     public GameAdvancedListItem() {
         tooltip = new Tooltip();
-        FXUtils.installFastTooltip(this, tooltip);
 
         FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
             if (version != null && Profiles.getSelectedProfile() != null &&
                     Profiles.getSelectedProfile().getRepository().hasVersion(version)) {
+                FXUtils.installFastTooltip(this, tooltip);
                 setTitle(version);
                 setSubtitle(null);
                 setImage(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
