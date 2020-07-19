@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.mod;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.Validation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,15 +31,19 @@ public final class ModpackConfiguration<T> implements Validation {
 
     private final T manifest;
     private final String type;
+    private final String name;
+    private final String version;
     private final List<FileInformation> overrides;
 
     public ModpackConfiguration() {
-        this(null, null, Collections.emptyList());
+        this(null, null,  "", null, Collections.emptyList());
     }
 
-    public ModpackConfiguration(T manifest, String type, List<FileInformation> overrides) {
+    public ModpackConfiguration(T manifest, String type, String name, String version, List<FileInformation> overrides) {
         this.manifest = manifest;
         this.type = type;
+        this.name = name;
+        this.version = version;
         this.overrides = new ArrayList<>(overrides);
     }
 
@@ -50,12 +55,25 @@ public final class ModpackConfiguration<T> implements Validation {
         return type;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    @Nullable
+    public String getVersion() {
+        return version;
+    }
+
     public ModpackConfiguration<T> setManifest(T manifest) {
-        return new ModpackConfiguration<>(manifest, type, overrides);
+        return new ModpackConfiguration<>(manifest, type, name, version, overrides);
     }
 
     public ModpackConfiguration<T> setOverrides(List<FileInformation> overrides) {
-        return new ModpackConfiguration<>(manifest, type, overrides);
+        return new ModpackConfiguration<>(manifest, type, name, version, overrides);
+    }
+
+    public ModpackConfiguration<T> setVersion(String version) {
+        return new ModpackConfiguration<>(manifest, type, name, version, overrides);
     }
 
     public List<FileInformation> getOverrides() {

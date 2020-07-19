@@ -41,14 +41,18 @@ public final class MinecraftInstanceTask<T> extends Task<Void> {
     private final File jsonFile;
     private final T manifest;
     private final String type;
+    private final String name;
+    private final String version;
 
-    public MinecraftInstanceTask(File zipFile, Charset encoding, String subDirectory, T manifest, String type, File jsonFile) {
+    public MinecraftInstanceTask(File zipFile, Charset encoding, String subDirectory, T manifest, String type, String name, String version, File jsonFile) {
         this.zipFile = zipFile;
         this.encoding = encoding;
         this.subDirectory = FileUtils.normalizePath(subDirectory);
         this.manifest = manifest;
         this.jsonFile = jsonFile;
         this.type = type;
+        this.name = name;
+        this.version = version;
     }
 
     @Override
@@ -69,6 +73,6 @@ public final class MinecraftInstanceTask<T> extends Task<Void> {
                 });
         }
 
-        FileUtils.writeText(jsonFile, JsonUtils.GSON.toJson(new ModpackConfiguration<>(manifest, type, overrides)));
+        FileUtils.writeText(jsonFile, JsonUtils.GSON.toJson(new ModpackConfiguration<>(manifest, type, name, version, overrides)));
     }
 }

@@ -27,16 +27,20 @@ import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.GameVersion;
+import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 import static org.jackhuang.hmcl.util.Lang.handleUncaught;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -48,6 +52,7 @@ public class GameItem extends Control {
     private final Profile profile;
     private final String version;
     private final StringProperty title = new SimpleStringProperty();
+    private final StringProperty tag = new SimpleStringProperty();
     private final StringProperty subtitle = new SimpleStringProperty();
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
 
@@ -75,6 +80,17 @@ public class GameItem extends Control {
                 }, Platform::runLater)
                 .exceptionally(handleUncaught);
 
+        CompletableFuture.runAsync(() -> {
+            try {
+                ModpackConfiguration<Void> config = profile.getRepository().readModpackConfiguration(version);
+                if (config == null) return;
+                tag.set(config.getVersion());
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to read modpack configuration from ", e);
+            }
+        }, Platform::runLater)
+                .exceptionally(handleUncaught);
+
         title.set(id);
         image.set(profile.getRepository().getVersionIconImage(version));
     }
@@ -94,6 +110,10 @@ public class GameItem extends Control {
 
     public StringProperty titleProperty() {
         return title;
+    }
+
+    public StringProperty tagProperty() {
+        return tag;
     }
 
     public StringProperty subtitleProperty() {

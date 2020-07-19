@@ -114,13 +114,24 @@
     -fx-padding: 4 0 4 0;
 }
 
-.two-line-list-item > .title {
+.two-line-list-item HBox {
+    -fx-spacing: 8;
+    -fx-alignment: center-left;
+}
+
+.two-line-list-item .title {
 	-fx-text-fill: #292929;
 	-fx-font-size: 15px;
 }
 
-.two-line-list-item > .subtitle {
+.two-line-list-item .subtitle {
 	-fx-text-fill: rgba(0, 0, 0, 0.5);
+}
+
+.two-line-list-item .tag {
+    -fx-text-fill: -fx-base-color;
+    -fx-background-color: -fx-base-rippler-color;
+    -fx-padding: 2;
 }
 
 .bubble {

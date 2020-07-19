@@ -45,6 +45,7 @@ public class GameItemSkin extends SkinBase<GameItem> {
 
         TwoLineListItem item = new TwoLineListItem();
         item.titleProperty().bind(skinnable.titleProperty());
+        item.tagProperty().bind(skinnable.tagProperty());
         item.subtitleProperty().bind(skinnable.subtitleProperty());
         BorderPane.setAlignment(item, Pos.CENTER);
         center.getChildren().setAll(imageView, item);
