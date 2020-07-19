@@ -41,11 +41,11 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
 	if (is64Bit)
 	{
-		LaunchJVM(L"jre-x64\\bin\\javaw.exe", exeName);
+		RawLaunchJVM(L"jre-x64\\bin\\javaw.exe", exeName);
 	}
 	else
 	{
-		LaunchJVM(L"jre-x86\\bin\\javaw.exe", exeName);
+		RawLaunchJVM(L"jre-x86\\bin\\javaw.exe", exeName);
 	}
 
 	if (FindJava(path))
