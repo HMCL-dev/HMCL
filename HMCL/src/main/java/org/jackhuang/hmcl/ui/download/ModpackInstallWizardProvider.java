@@ -85,7 +85,11 @@ public class ModpackInstallWizardProvider implements WizardProvider {
                 return null;
             }
             try {
-                return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
+                if (serverModpackManifest != null) {
+                    return ModpackHelper.getUpdateTask(profile, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
+                } else {
+                    return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
+                }
             } catch (UnsupportedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
             } catch (MismatchedModpackTypeException e) {

@@ -157,6 +157,15 @@ public final class ModpackHelper {
         else throw new IllegalArgumentException("Unrecognized modpack: " + modpack.getManifest());
     }
 
+    public static Task<Void> getUpdateTask(Profile profile, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
+        switch (configuration.getType()) {
+            case ServerModpackRemoteInstallTask.MODPACK_TYPE:
+                return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name));
+            default:
+                throw new UnsupportedModpackException();
+        }
+    }
+
     public static Task<Void> getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile.toPath(), charset);
 
@@ -176,6 +185,11 @@ public final class ModpackHelper {
                     throw new MismatchedModpackTypeException(HMCLModpackInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
 
                 return new ModpackUpdateTask(profile.getRepository(), name, new HMCLModpackInstallTask(profile, zipFile, modpack, name));
+            case ServerModpackLocalInstallTask.MODPACK_TYPE:
+                if (!(modpack.getManifest() instanceof ServerModpackManifest))
+                    throw new MismatchedModpackTypeException(ServerModpackLocalInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
+
+                return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackLocalInstallTask(profile.getDependency(), zipFile, modpack, (ServerModpackManifest) modpack.getManifest(), name));
             default:
                 throw new UnsupportedModpackException();
         }
