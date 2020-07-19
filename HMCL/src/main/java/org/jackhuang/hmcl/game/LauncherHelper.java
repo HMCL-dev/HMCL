@@ -580,7 +580,7 @@ public final class LauncherHelper {
                 Platform.runLater(() -> logWindow.logLine(filteredLog, level));
             }
 
-            if (!lwjgl && (filteredLog.toLowerCase().contains("lwjgl version") || !detectWindow)) {
+            if (!lwjgl && (filteredLog.toLowerCase().contains("lwjgl version") || filteredLog.toLowerCase().contains("lwjgl openal") || !detectWindow)) {
                 lwjgl = true;
                 finishLaunch();
             }
