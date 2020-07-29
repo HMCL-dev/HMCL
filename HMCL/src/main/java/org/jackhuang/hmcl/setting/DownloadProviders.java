@@ -21,9 +21,11 @@ import org.jackhuang.hmcl.download.AdaptedDownloadProvider;
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
+import org.jackhuang.hmcl.download.OMCMAPIDownloadProvider;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,9 +49,19 @@ public final class DownloadProviders {
         if (bmclapiRootOverride != null) bmclapiRoot = bmclapiRootOverride;
 
         providersById = mapOf(
-                pair("mojang", new MojangDownloadProvider()),
-                pair("bmclapi", new BMCLAPIDownloadProvider(bmclapiRoot)),
-                pair("mcbbs", new BMCLAPIDownloadProvider("https://download.mcbbs.net")));
+            pair("mojang", new MojangDownloadProvider()),
+            pair("bmclapi", new BMCLAPIDownloadProvider(bmclapiRoot)),
+            pair("mcbbs", new BMCLAPIDownloadProvider("https://download.mcbbs.net")),
+            pair("mcm", new OMCMAPIDownloadProvider(new HashMap<String, String>() {{
+                put("minecraft-meta", "http://mcm.xgheaven.com/minecraft/launcher-meta");
+                put("minecraft-launcher", "http://mcm.xgheaven.com/minecraft/launcher");
+                put("minecraft-libraries", "http://mcm.xgheaven.com/minecraft/libraries");
+                put("minecraft-resources", "http://mcm.xgheaven.com/minecraft/assets");
+                put("forge", "http://mcm.xgheaven.com/forge");
+                put("fabric-meta", "http://mcm.xgheaven.com/fabric/meta");
+                put("fabric-maven", "http://mcm.xgheaven.com/fabric/maven");
+            }}))
+        );
     }
 
     static void init() {
