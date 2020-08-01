@@ -81,9 +81,9 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         parent.setPickOnBounds(false);
         parent.prefHeightProperty().bind(control.prefHeightProperty());
         parent.prefWidthProperty().bind(control.prefWidthProperty());
-        root.setOnMouseReleased(this::onMouseReleased);
-        root.setOnMouseDragged(this::onMouseDragged);
-        root.setOnMouseMoved(this::onMouseMoved);
+        root.addEventFilter(MouseEvent.MOUSE_RELEASED, this::onMouseReleased);
+        root.addEventFilter(MouseEvent.MOUSE_DRAGGED, this::onMouseDragged);
+        root.addEventFilter(MouseEvent.MOUSE_MOVED, this::onMouseMoved);
 
         root.getChildren().setAll(parent);
 
