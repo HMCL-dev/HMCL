@@ -35,9 +35,9 @@ import static java.util.Objects.requireNonNull;
 
 public class YggdrasilAccount extends Account {
 
-    private final YggdrasilService service;
-    private final UUID characterUUID;
-    private final String username;
+    protected final YggdrasilService service;
+    protected final UUID characterUUID;
+    protected final String username;
 
     private boolean authenticated = false;
     private YggdrasilSession session;
@@ -174,9 +174,8 @@ public class YggdrasilAccount extends Account {
         Map<Object, Object> storage = new HashMap<>();
         storage.put("username", username);
         storage.putAll(session.toStorage());
-        service.getProfileRepository().getImmediately(characterUUID).ifPresent(profile -> {
-            storage.put("profileProperties", profile.getProperties());
-        });
+        service.getProfileRepository().getImmediately(characterUUID).ifPresent(profile ->
+                storage.put("profileProperties", profile.getProperties()));
         return storage;
     }
 
@@ -210,7 +209,7 @@ public class YggdrasilAccount extends Account {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof YggdrasilAccount))
+        if (obj == null || obj.getClass() != YggdrasilAccount.class)
             return false;
         YggdrasilAccount another = (YggdrasilAccount) obj;
         return characterUUID.equals(another.characterUUID);

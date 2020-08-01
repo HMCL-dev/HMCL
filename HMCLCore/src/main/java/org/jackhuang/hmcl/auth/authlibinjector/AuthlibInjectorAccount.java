@@ -142,17 +142,18 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof AuthlibInjectorAccount))
+        if (obj == null || obj.getClass() != AuthlibInjectorAccount.class)
             return false;
         AuthlibInjectorAccount another = (AuthlibInjectorAccount) obj;
-        return super.equals(another) && server.equals(another.server);
+        return characterUUID.equals(another.characterUUID) && server.equals(another.server);
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
+                .append("uuid", characterUUID)
                 .append("username", getUsername())
-                .append("server", getServer())
+                .append("server", getServer().getUrl())
                 .toString();
     }
 }
