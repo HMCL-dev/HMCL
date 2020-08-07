@@ -40,7 +40,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.task.Schedulers;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
@@ -244,12 +243,7 @@ public final class Accounts {
     private static AuthlibInjectorArtifactProvider createAuthlibInjectorArtifactProvider() {
         String authlibinjectorLocation = System.getProperty("hmcl.authlibinjector.location");
         if (authlibinjectorLocation == null) {
-            Path currentDirectory = Paths.get(".");
-            Path artifactsDirectory = AuthlibInjectorDownloader.isArtifactsDirectory(currentDirectory)
-                    ? currentDirectory
-                    : Metadata.HMCL_DIRECTORY;
-
-            return new AuthlibInjectorDownloader(artifactsDirectory, DownloadProviders::getDownloadProvider);
+            return new AuthlibInjectorDownloader(Metadata.HMCL_DIRECTORY, DownloadProviders::getDownloadProvider);
         } else {
             LOG.info("Using specified authlib-injector: " + authlibinjectorLocation);
             return new SimpleAuthlibInjectorArtifactProvider(Paths.get(authlibinjectorLocation));
