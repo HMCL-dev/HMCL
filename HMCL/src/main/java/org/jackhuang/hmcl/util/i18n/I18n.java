@@ -30,7 +30,7 @@ public final class I18n {
 
     private I18n() {}
 
-    private static SupportedLocale getCurrentLocale() {
+    public static SupportedLocale getCurrentLocale() {
         try {
             return ConfigHolder.config().getLocalization();
         } catch (IllegalStateException e) {

@@ -21,8 +21,16 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Locale;
 import java.util.Map;
+import java.util.logging.Level;
 
 /**
  * @author huangyuhui
@@ -47,5 +55,27 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         res.put("${launcher_name}", Metadata.NAME);
         res.put("${launcher_version}", Metadata.VERSION);
         return res;
+    }
+
+    private void generateOptionsTxt() {
+        try {
+            // TODO: Dirty implementation here
+            if (I18n.getCurrentLocale().getLocale() == Locale.CHINA)
+                FileUtils.writeText(new File(repository.getRunDirectory(version.getId()), "options.txt"), "lang:zh_cn\nforceUnicodeFont:true\n");
+        } catch (IOException e) {
+            Logging.LOG.log(Level.WARNING, "Unable to generate options.txt", e);
+        }
+    }
+
+    @Override
+    public ManagedProcess launch() throws IOException, InterruptedException {
+        generateOptionsTxt();
+        return super.launch();
+    }
+
+    @Override
+    public void makeLaunchScript(File scriptFile) throws IOException {
+        generateOptionsTxt();
+        super.makeLaunchScript(scriptFile);
     }
 }
