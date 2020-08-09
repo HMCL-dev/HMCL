@@ -210,7 +210,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     if (resolved instanceof Exception) {
                         Exception e = (Exception) resolved;
                         if (e instanceof InterruptedException || e instanceof CancellationException) {
-                            task.setException(e);
+                            task.setException(null);
                             if (task.getSignificance().shouldLog()) {
                                 Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName());
                             }
