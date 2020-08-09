@@ -87,8 +87,9 @@ public final class ForgeOMCMVersionList extends VersionList<ForgeRemoteVersion> 
                         String url = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + fullVersion + "/forge-" + fullVersion + "-installer.jar";
                         urls.add(downloadProvider.injectURL(url));
                         urls.add(url);
+                        String forgeVersion = StringUtils.substringAfter(fullVersion, "-");
                         versions.put(gameVersion, new ForgeRemoteVersion(
-                                gameVersion, fullVersion, urls));
+                                gameVersion, forgeVersion, urls));
                     }
                 } finally {
                     lock.writeLock().unlock();

@@ -35,11 +35,12 @@ import java.io.File;
  */
 public class OMCMAPIDownloadProvider implements DownloadProvider {
     public static final Map<String, String> BUILTIN_HOST = new HashMap<String, String>() {{
+        // 理论上协议中是不允许出现改协议头的，但是如果不出现，URL 会解析失败，所以这里暂时添加上
         put("minecraft-meta", "https://launchermeta.mojang.com");
         put("minecraft-launcher", "https://launcher.mojang.com");
         put("minecraft-libraries", "https://libraries.minecraft.net");
         put("minecraft-resources", "https://resources.download.minecraft.net");
-        put("forge", "https://files.minecraftforge.net/maven");
+        put("forge", "https://files.minecraftforge.net");
         put("fabric-meta", "https://meta.fabricmc.net");
         put("fabric-maven", "https://maven.fabricmc.net");
     }};
