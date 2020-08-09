@@ -143,12 +143,12 @@ public abstract class FetchTask<T> extends Task<T> {
                             lastDownloaded = downloaded;
                         }
 
+                        if (isCancelled()) break download;
+
                         updateDownloadSpeed(downloaded - lastDownloaded);
 
                         if (contentLength >= 0 && downloaded != contentLength)
                             throw new IOException("Unexpected file size: " + downloaded + ", expected: " + contentLength);
-
-                        if (isCancelled()) break download;
 
                         context.withResult(true);
                     }

@@ -206,7 +206,7 @@ public final class LauncherHelper {
                         "launch.state.dependencies",
                         "launch.state.logging_in",
                         "launch.state.waiting_launching"))
-                .cancellableExecutor();
+                .executor();
         launchingStepsPane.setExecutor(executor, false);
         executor.addTaskListener(new TaskListener() {
 

@@ -56,7 +56,7 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
         }
 
         runInFX(() -> {
-            TaskExecutor executor = task.cancellableExecutor(new TaskListener() {
+            TaskExecutor executor = task.executor(new TaskListener() {
                 @Override
                 public void onStop(boolean success, TaskExecutor executor) {
                     runInFX(() -> {

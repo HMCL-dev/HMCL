@@ -376,23 +376,6 @@ public abstract class Task<T> {
         return executor;
     }
 
-    public final TaskExecutor cancellableExecutor() {
-        return new CancellableTaskExecutor(this);
-    }
-
-    public final TaskExecutor cancellableExecutor(boolean start) {
-        TaskExecutor executor = new CancellableTaskExecutor(this);
-        if (start)
-            executor.start();
-        return executor;
-    }
-
-    public final TaskExecutor cancellableExecutor(TaskListener taskListener) {
-        TaskExecutor executor = new CancellableTaskExecutor(this);
-        executor.addTaskListener(taskListener);
-        return executor;
-    }
-
     public final void start() {
         executor().start();
     }
