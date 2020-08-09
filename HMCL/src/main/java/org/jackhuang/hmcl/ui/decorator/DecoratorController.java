@@ -307,6 +307,7 @@ public class DecoratorController {
 
             dialog.setContent(dialogPane);
             decorator.capableDraggingWindow(dialog);
+            decorator.forbidDraggingWindow(dialogPane);
             dialog.setDialogContainer(decorator.getDrawerWrapper());
             dialog.setOverlayClose(false);
             dialog.show();

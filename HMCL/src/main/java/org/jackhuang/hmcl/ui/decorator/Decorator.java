@@ -226,9 +226,16 @@ public class Decorator extends Control {
     }
 
     public void capableDraggingWindow(Node node) {
-        node.addEventHandler(MouseEvent.MOUSE_ENTERED, e -> allowMove.set(true));
+        node.addEventHandler(MouseEvent.MOUSE_MOVED, e -> allowMove.set(true));
         node.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {
             if (!isDragging()) allowMove.set(false);
+        });
+    }
+
+    public void forbidDraggingWindow(Node node) {
+        node.addEventHandler(MouseEvent.MOUSE_MOVED, e -> {
+            allowMove.set(false);
+            e.consume();
         });
     }
 }
