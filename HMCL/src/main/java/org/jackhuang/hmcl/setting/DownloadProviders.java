@@ -37,12 +37,20 @@ public final class DownloadProviders {
 
     private static final AdaptedDownloadProvider DOWNLOAD_PROVIDER = new AdaptedDownloadProvider();
 
-    public static final Map<String, DownloadProvider> providersById = mapOf(
-            pair("mojang", new MojangDownloadProvider()),
-            pair("bmclapi", new BMCLAPIDownloadProvider("https://bmclapi2.bangbang93.com")),
-            pair("mcbbs", new BMCLAPIDownloadProvider("https://download.mcbbs.net")));
+    public static final Map<String, DownloadProvider> providersById;
 
     public static final String DEFAULT_PROVIDER_ID = "mcbbs";
+
+    static {
+        String bmclapiRoot = "https://bmclapi2.bangbang93.com";
+        String bmclapiRootOverride = System.getProperty("hmcl.bmclapi.override");
+        if (bmclapiRootOverride != null) bmclapiRoot = bmclapiRootOverride;
+
+        providersById = mapOf(
+                pair("mojang", new MojangDownloadProvider()),
+                pair("bmclapi", new BMCLAPIDownloadProvider(bmclapiRoot)),
+                pair("mcbbs", new BMCLAPIDownloadProvider("https://download.mcbbs.net")));
+    }
 
     static void init() {
         FXUtils.onChangeAndOperate(config().downloadTypeProperty(), downloadType -> {
