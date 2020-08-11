@@ -14,6 +14,7 @@ version '3.0'
 subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
+    apply plugin: 'maven-publish'
     apply plugin: 'com.github.hierynomus.license'
 
     repositories {
@@ -44,6 +45,17 @@ subprojects {
         ext.year = Calendar.getInstance().get(Calendar.YEAR)
         mapping {
             java='SLASHSTAR_STYLE'
+        }
+    }
+
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                from components.java
+            }
+        }
+        repositories {
+            mavenLocal()
         }
     }
 }
