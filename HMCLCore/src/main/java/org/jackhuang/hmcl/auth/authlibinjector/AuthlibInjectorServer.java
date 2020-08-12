@@ -27,9 +27,7 @@ import static org.jackhuang.hmcl.util.io.IOUtils.readFullyWithoutClosing;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -56,30 +54,25 @@ import javafx.beans.Observable;
 @JsonAdapter(AuthlibInjectorServer.Deserializer.class)
 public class AuthlibInjectorServer implements Observable {
 
-    private static final int MAX_REDIRECTS = 5;
     private static final Gson GSON = new GsonBuilder().create();
 
     public static AuthlibInjectorServer locateServer(String url) throws IOException {
         try {
-            url = parseInputUrl(url);
-            HttpURLConnection conn;
-            int redirectCount = 0;
-            for (; ; ) {
-                conn = (HttpURLConnection) new URL(url).openConnection();
-                Optional<String> ali = getApiLocationIndication(conn);
-                if (ali.isPresent()) {
+            url = addHttpsIfMissing(url);
+            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+
+            String ali = conn.getHeaderField("x-authlib-injector-api-location");
+            if (ali != null) {
+                URL absoluteAli = new URL(conn.getURL(), ali);
+                if (!urlEqualsIgnoreSlash(url, absoluteAli.toString())) {
                     conn.disconnect();
-                    url = ali.get();
-                    if (redirectCount >= MAX_REDIRECTS) {
-                        throw new IOException("Exceeded maximum number of redirects (" + MAX_REDIRECTS + ")");
-                    }
-                    redirectCount++;
-                    LOG.info("Redirect API root to: " + url);
-                } else {
-                    break;
+                    url = absoluteAli.toString();
+                    conn = (HttpURLConnection) absoluteAli.openConnection();
                 }
             }
 
+            if (!url.endsWith("/"))
+                url += "/";
 
             try {
                 AuthlibInjectorServer server = new AuthlibInjectorServer(url);
@@ -93,49 +86,20 @@ public class AuthlibInjectorServer implements Observable {
         }
     }
 
-    private static Optional<String> getApiLocationIndication(URLConnection conn) {
-        return Optional.ofNullable(conn.getHeaderFields().get("X-Authlib-Injector-API-Location"))
-                .flatMap(list -> list.isEmpty() ? Optional.empty() : Optional.of(list.get(0)))
-                .flatMap(indication -> {
-                    String currentUrl = appendSuffixSlash(conn.getURL().toString());
-                    String newUrl;
-                    try {
-                        newUrl = appendSuffixSlash(new URL(conn.getURL(), indication).toString());
-                    } catch (MalformedURLException e) {
-                        LOG.warning("Failed to resolve absolute ALI, the header is [" + indication + "]. Ignore it.");
-                        return Optional.empty();
-                    }
-
-                    if (newUrl.equals(currentUrl)) {
-                        return Optional.empty();
-                    } else {
-                        return Optional.of(newUrl);
-                    }
-                });
-    }
-
-    private static String parseInputUrl(String url) {
+    private static String addHttpsIfMissing(String url) {
         String lowercased = url.toLowerCase();
         if (!lowercased.startsWith("http://") && !lowercased.startsWith("https://")) {
             url = "https://" + url;
         }
-
-        url = appendSuffixSlash(url);
         return url;
     }
 
-    private static String appendSuffixSlash(String url) {
-        if (!url.endsWith("/")) {
-            return url + "/";
-        } else {
-            return url;
-        }
-    }
-
-    public static AuthlibInjectorServer fetchServerInfo(String url) throws IOException {
-        AuthlibInjectorServer server = new AuthlibInjectorServer(url);
-        server.refreshMetadata();
-        return server;
+    private static boolean urlEqualsIgnoreSlash(String a, String b) {
+        if (!a.endsWith("/"))
+            a += "/";
+        if (!b.endsWith("/"))
+            b += "/";
+        return a.equals(b);
     }
 
     private String url;
