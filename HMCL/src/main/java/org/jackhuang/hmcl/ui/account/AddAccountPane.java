@@ -317,6 +317,8 @@ public class AddAccountPane extends StackPane {
                     return i18n("account.failed.invalid_token");
                 else if (remoteMessage.contains("Invalid username or password"))
                     return i18n("account.failed.invalid_password");
+                else
+                    return remoteMessage;
             }
             return exception.getMessage();
         } else if (exception instanceof AuthlibInjectorDownloadException) {
