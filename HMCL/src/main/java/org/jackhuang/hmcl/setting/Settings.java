@@ -25,6 +25,8 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
+import java.util.Locale;
+
 public class Settings {
 
     private static Settings instance;
@@ -44,6 +46,9 @@ public class Settings {
     }
 
     private Settings() {
+        config().localizationProperty().addListener(unused -> updateSystemLocale());
+        updateSystemLocale();
+
         DownloadProviders.init();
         ProxyManager.init();
         Accounts.init();
@@ -73,5 +78,9 @@ public class Settings {
             default:
                 return null;
         }
+    }
+
+    private static void updateSystemLocale() {
+        Locale.setDefault(config().getLocalization().getLocale());
     }
 }
