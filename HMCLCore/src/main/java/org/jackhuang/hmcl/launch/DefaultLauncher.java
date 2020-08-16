@@ -202,7 +202,7 @@ public class DefaultLauncher extends Launcher {
         if (options.isFullscreen())
             res.add("--fullscreen");
 
-        if (options.getProxy() != null) {
+        if (options.getProxy() != null && options.getProxy().type() == Proxy.Type.SOCKS) {
             InetSocketAddress address = (InetSocketAddress) options.getProxy().address();
             if (address != null) {
                 res.add("--proxyHost");
