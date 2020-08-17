@@ -37,5 +37,17 @@
                 </BorderPane>
             </graphic>
         </JFXButton>
+        <JFXButton fx:id="btnFTB" styleClass="card" style="-fx-cursor: HAND" prefWidth="${list.width}" onMouseClicked="#onChooseFTB">
+            <graphic>
+                <BorderPane mouseTransparent="true">
+                    <left>
+                        <TwoLineListItem title="Import FTB modpack"/>
+                    </left>
+                    <right>
+                        <fx:include BorderPane.alignment="CENTER" source="/assets/svg/arrow-right.fxml"/>
+                    </right>
+                </BorderPane>
+            </graphic>
+        </JFXButton>
     </VBox>
 </fx:root>

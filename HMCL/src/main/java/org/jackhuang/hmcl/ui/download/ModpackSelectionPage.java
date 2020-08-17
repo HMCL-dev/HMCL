@@ -23,7 +23,10 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.mod.ftb.FTBInstallTask;
+import org.jackhuang.hmcl.mod.ftb.FTBManifestDownloadTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -50,8 +53,10 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class ModpackSelectionPage extends StackPane implements WizardPage {
     private final WizardController controller;
 
-    @FXML private JFXButton btnLocal;
-    @FXML private JFXButton btnRemote;
+    @FXML
+    private JFXButton btnLocal;
+    @FXML
+    private JFXButton btnRemote;
 
     public ModpackSelectionPage(WizardController controller) {
         this.controller = controller;
@@ -129,6 +134,25 @@ public final class ModpackSelectionPage extends StackPane implements WizardPage 
                 }
             } catch (IOException e) {
                 reject.accept(e.getMessage());
+            }
+        });
+    }
+
+    @FXML
+    private void onChooseFTB() {
+        Controllers.prompt("PackID/VersionID", (input, resolve, reject) -> {
+            try {
+                String packID = input.split("/")[0];
+                String versionID = input.split("/")[1];
+                Controllers.taskDialog(new FTBManifestDownloadTask(packID, versionID)
+                        .whenComplete(Schedulers.javafx(), (manifest, exception) ->
+                                Controllers.taskDialog(new FTBInstallTask(Profiles.getSelectedProfile().getDependency(), manifest)
+                                .executor(true), "Installing pack"))
+                        .executor(true), "Fetching Manifest");
+                resolve.run();
+            } catch (Exception e) {
+                e.printStackTrace();
+                reject.accept("Download manifest failed?");
             }
         });
     }
