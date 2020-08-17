@@ -140,19 +140,18 @@ public final class ModpackSelectionPage extends StackPane implements WizardPage 
 
     @FXML
     private void onChooseFTB() {
-        Controllers.prompt("PackID/VersionID", (input, resolve, reject) -> {
+        Controllers.prompt(i18n("modpack.choose.ftb.tooltip"), (input, resolve, reject) -> {
             try {
                 String packID = input.split("/")[0];
                 String versionID = input.split("/")[1];
                 Controllers.taskDialog(new FTBManifestDownloadTask(packID, versionID)
                         .whenComplete(Schedulers.javafx(), (manifest, exception) ->
                                 Controllers.taskDialog(new FTBInstallTask(Profiles.getSelectedProfile().getDependency(), manifest)
-                                .executor(true), "Installing pack"))
-                        .executor(true), "Fetching Manifest");
+                                .executor(true), i18n("message.downloading")))
+                        .executor(true), i18n("message.doing"));
                 resolve.run();
             } catch (Exception e) {
-                e.printStackTrace();
-                reject.accept("Download manifest failed?");
+                reject.accept(e.getMessage());
             }
         });
     }

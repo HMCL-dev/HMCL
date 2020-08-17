@@ -41,7 +41,7 @@
             <graphic>
                 <BorderPane mouseTransparent="true">
                     <left>
-                        <TwoLineListItem title="Import FTB modpack"/>
+                        <TwoLineListItem title="%modpack.choose.ftb" subtitle="%modpack.choose.ftb.detail"/>
                     </left>
                     <right>
                         <fx:include BorderPane.alignment="CENTER" source="/assets/svg/arrow-right.fxml"/>
