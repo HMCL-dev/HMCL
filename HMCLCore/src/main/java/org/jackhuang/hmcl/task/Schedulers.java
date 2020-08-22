@@ -32,27 +32,29 @@ public final class Schedulers {
     private Schedulers() {
     }
 
-    private static volatile ThreadPoolExecutor CACHED_EXECUTOR;
-
-    public static synchronized ThreadPoolExecutor newThread() {
-        if (CACHED_EXECUTOR == null)
-            CACHED_EXECUTOR = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-                    60, TimeUnit.SECONDS, new SynchronousQueue<>(), Executors.defaultThreadFactory());
-
-        return CACHED_EXECUTOR;
-    }
-
     private static volatile ExecutorService IO_EXECUTOR;
 
-    public static synchronized ExecutorService io() {
+    /**
+     * Get singleton instance of the thread pool for I/O operations,
+     * usually for reading files from disk, or Internet connections.
+     *
+     * This thread pool has no more than 4 threads, and number of threads will get
+     * reduced if concurrency is less than thread number.
+     *
+     * @return Thread pool for I/O operations.
+     */
+    public static ExecutorService io() {
         if (IO_EXECUTOR == null) {
-            int threads = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
-            IO_EXECUTOR = Executors.newFixedThreadPool(threads,
-                    runnable -> {
-                        Thread thread = Executors.defaultThreadFactory().newThread(runnable);
-                        thread.setDaemon(true);
-                        return thread;
-                    });
+            synchronized (Schedulers.class) {
+                if (IO_EXECUTOR == null) {
+                    IO_EXECUTOR = new ThreadPoolExecutor(0, 4, 10, TimeUnit.SECONDS, new SynchronousQueue<>(),
+                            runnable -> {
+                                Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+                                thread.setDaemon(true);
+                                return thread;
+                            });
+                }
+            }
         }
 
         return IO_EXECUTOR;
@@ -67,7 +69,7 @@ public final class Schedulers {
     }
 
     public static Executor defaultScheduler() {
-        return newThread();
+        return ForkJoinPool.commonPool();
     }
 
     public static synchronized void shutdown() {
@@ -77,16 +79,8 @@ public final class Schedulers {
         // So when we want to close the app, no threads need to be waited for finish.
         // Sometimes it resolves the problem that the app does not exit.
 
-        if (CACHED_EXECUTOR != null)
-            CACHED_EXECUTOR.shutdownNow();
-
         if (IO_EXECUTOR != null)
             IO_EXECUTOR.shutdownNow();
     }
 
-    public static Future<?> schedule(Executor executor, Runnable command) {
-        FutureTask<?> future = new FutureTask<Void>(command, null);
-        executor.execute(future);
-        return future;
-    }
 }
