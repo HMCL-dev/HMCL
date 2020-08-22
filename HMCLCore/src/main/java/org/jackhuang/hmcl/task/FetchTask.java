@@ -34,6 +34,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
@@ -224,5 +225,85 @@ public abstract class FetchTask<T> extends Task<T> {
         CHECK_E_TAG,
         NOT_CHECK_E_TAG,
         CACHED
+    }
+    
+    protected class DownloadState {
+        private final int startPosition;
+        private final int endPosition;
+        private final int currentPosition;
+        private final boolean finished;
+
+        public DownloadState(int startPosition, int endPosition, int currentPosition) {
+            if (currentPosition < startPosition || currentPosition > endPosition) {
+                throw new IllegalArgumentException("Illegal download state: start " + startPosition + ", end " + endPosition + ", cur " + currentPosition);
+            }
+            this.startPosition = startPosition;
+            this.endPosition = endPosition;
+            this.currentPosition = currentPosition;
+            finished = currentPosition == endPosition;
+        }
+
+        public int getStartPosition() {
+            return startPosition;
+        }
+
+        public int getEndPosition() {
+            return endPosition;
+        }
+
+        public int getCurrentPosition() {
+            return currentPosition;
+        }
+
+        public boolean isFinished() {
+            return finished;
+        }
+    }
+
+    protected class DownloadMission {
+
+
+
+    }
+
+    private static int downloadExecutorConcurrency = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
+    private static volatile ExecutorService DOWNLOAD_EXECUTOR;
+
+    /**
+     * Get singleton instance of the thread pool for file downloading.
+     *
+     * @return Thread pool for FetchTask
+     */
+    protected static ExecutorService download() {
+        if (DOWNLOAD_EXECUTOR == null) {
+            synchronized (Schedulers.class) {
+                if (DOWNLOAD_EXECUTOR == null) {
+                    DOWNLOAD_EXECUTOR = new ThreadPoolExecutor(0, downloadExecutorConcurrency, 10, TimeUnit.SECONDS, new SynchronousQueue<>(),
+                            runnable -> {
+                                Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+                                thread.setDaemon(true);
+                                return thread;
+                            });
+                }
+            }
+        }
+
+        return DOWNLOAD_EXECUTOR;
+    }
+
+    public static void setDownloadExecutorConcurrency(int concurrency) {
+        synchronized (Schedulers.class) {
+            downloadExecutorConcurrency = concurrency;
+            if (DOWNLOAD_EXECUTOR != null) {
+                DOWNLOAD_EXECUTOR.shutdownNow();
+                DOWNLOAD_EXECUTOR = null;
+            }
+        }
+    }
+
+    public static int getDownloadExecutorConcurrency() {
+        synchronized (Schedulers.class) {
+            return downloadExecutorConcurrency;
+        }
     }
 }
