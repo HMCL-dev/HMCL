@@ -76,7 +76,7 @@ public final class GetTask extends FetchTask<String> {
             final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
             @Override
-            public void write(byte[] buffer, int offset, int len) {
+            public synchronized void write(byte[] buffer, int offset, int len) {
                 baos.write(buffer, offset, len);
             }
 
