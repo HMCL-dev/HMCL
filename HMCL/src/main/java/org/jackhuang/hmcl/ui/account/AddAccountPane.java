@@ -114,7 +114,7 @@ public class AddAccountPane extends StackPane {
         cboServers.visibleProperty().bind(loginType.isEqualTo(Accounts.FACTORY_AUTHLIB_INJECTOR));
         lblInjectorServer.visibleProperty().bind(cboServers.visibleProperty());
 
-        txtUsername.getValidators().add(new Validator(i18n("input.email"), str -> !txtPassword.isVisible() || str.contains("@")));
+        txtUsername.getValidators().add(new Validator(i18n("input.email"), this::validateUsername));
 
         btnAccept.disableProperty().bind(Bindings.createBooleanBinding(
                 () -> !( // consider the opposite situation: input is valid
@@ -123,9 +123,9 @@ public class AddAccountPane extends StackPane {
                         (!txtPassword.isVisible() || txtPassword.validate()) &&
                         (!cboServers.isVisible() || cboServers.getSelectionModel().getSelectedItem() != null)
                 ),
-                txtUsername.textProperty(),
-                txtPassword.textProperty(), txtPassword.visibleProperty(),
-                cboServers.getSelectionModel().selectedItemProperty(), cboServers.visibleProperty()));
+                txtUsername.textProperty(), txtPassword.textProperty(),
+                loginType, cboServers.getSelectionModel().selectedItemProperty(),
+                txtPassword.visibleProperty(), cboServers.visibleProperty()));
 
         // authlib-injector links
         links.bind(BindingMapping.of(cboServers.getSelectionModel().selectedItemProperty())
@@ -133,6 +133,20 @@ public class AddAccountPane extends StackPane {
                 .map(FXCollections::observableList));
         Bindings.bindContent(linksContainer.getChildren(), links);
         linksContainer.visibleProperty().bind(cboServers.visibleProperty());
+    }
+
+    private boolean validateUsername(String username) {
+        AccountFactory<?> loginType = cboType.getSelectionModel().getSelectedItem();
+        if (loginType == Accounts.FACTORY_OFFLINE) {
+            return true;
+        } else if (loginType == Accounts.FACTORY_AUTHLIB_INJECTOR) {
+            AuthlibInjectorServer server = cboServers.getSelectionModel().getSelectedItem();
+            if (server != null && server.isNonEmailLogin()) {
+                return true;
+            }
+        }
+
+        return username.contains("@");
     }
 
     private static final String[] ALLOWED_LINKS = { "register" };

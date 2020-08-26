@@ -110,6 +110,7 @@ public class AuthlibInjectorServer implements Observable {
     @Nullable
     private transient String name;
     private transient Map<String, String> links = emptyMap();
+    private transient boolean nonEmailLogin;
 
     private transient boolean metadataRefreshed;
     private final transient ObservableHelper helper = new ObservableHelper(this);
@@ -143,6 +144,10 @@ public class AuthlibInjectorServer implements Observable {
 
     public Map<String, String> getLinks() {
         return links;
+    }
+
+    public boolean isNonEmailLogin() {
+        return nonEmailLogin;
     }
 
     public String fetchMetadataResponse() throws IOException {
@@ -194,6 +199,9 @@ public class AuthlibInjectorServer implements Observable {
                         return converted;
                     })
                     .orElse(emptyMap());
+            this.nonEmailLogin = metaObject.flatMap(meta -> tryCast(meta.get("feature.non_email_login"), JsonPrimitive.class))
+                    .map(it -> it.getAsBoolean())
+                    .orElse(false);
         }
     }
 
