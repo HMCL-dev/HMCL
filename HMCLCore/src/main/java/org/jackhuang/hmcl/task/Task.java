@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -131,6 +132,7 @@ public abstract class Task<T> {
      *
      * @return the exception thrown during execution, possibly from dependents or dependencies.
      */
+    @Nullable
     public final Exception getException() {
         return exception;
     }

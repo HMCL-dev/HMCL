@@ -18,11 +18,12 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.game.Library;
+import org.jetbrains.annotations.NotNull;
 
 public class LibraryDownloadException extends Exception {
     private final Library library;
 
-    public LibraryDownloadException(Library library, Throwable cause) {
+    public LibraryDownloadException(Library library, @NotNull Throwable cause) {
         super("Unable to download library " + library, cause);
 
         this.library = library;

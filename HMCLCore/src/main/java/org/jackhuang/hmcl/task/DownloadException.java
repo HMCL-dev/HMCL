@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.net.URL;
 
@@ -26,7 +28,7 @@ public class DownloadException extends IOException {
 
     private final URL url;
 
-    public DownloadException(URL url, Throwable cause) {
+    public DownloadException(URL url, @NotNull Throwable cause) {
         super("Unable to download " + url + ", " + cause.getMessage(), requireNonNull(cause));
 
         this.url = url;
