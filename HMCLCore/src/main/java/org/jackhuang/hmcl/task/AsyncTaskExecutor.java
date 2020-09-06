@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.CancellationException;
@@ -127,8 +128,60 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                 });
     }
 
-    private CompletableFuture<?> executeTask(Task<?> parentTask, Task<?> task) {
+    private <T> CompletableFuture<?> executeTask(Task<?> parentTask, Task<T> task) {
         checkCancellation();
+
+        if (task instanceof CompletableFutureTask) {
+            return CompletableFuture.completedFuture(null)
+                    .thenComposeAsync(unused -> {
+                        checkCancellation();
+
+                        task.setCancelled(this::isCancelled);
+                        task.setState(Task.TaskState.READY);
+                        if (parentTask != null && task.getStage() == null)
+                            task.setStage(parentTask.getStage());
+
+                        if (task.getSignificance().shouldLog())
+                            Logging.LOG.log(Level.FINE, "Executing task: " + task.getName());
+
+                        taskListeners.forEach(it -> it.onRunning(task));
+                        taskListeners.forEach(it -> it.onReady(task));
+
+                        return ((CompletableFutureTask<T>) task).getCompletableFuture();
+                    }).whenComplete((result, throwable) -> {
+                        Throwable resolved = resolveException(throwable);
+                        task.setResult(result);
+                        task.setState(Task.TaskState.EXECUTED);
+                        if (isCancelled() || resolved instanceof InterruptedException || resolved instanceof CancellationException) {
+                            task.setException(null);
+                            if (task.getSignificance().shouldLog()) {
+                                Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName());
+                            }
+                            task.onDone().fireEvent(new TaskEvent(this, task, true));
+                            taskListeners.forEach(it -> it.onFailed(task, resolved));
+                        } else if (resolved == null) {
+                            if (task.getSignificance().shouldLog()) {
+                                Logging.LOG.log(Level.FINER, "Task finished: " + task.getName());
+                            }
+
+                            task.onDone().fireEvent(new TaskEvent(this, task, false));
+                            taskListeners.forEach(it -> it.onFinished(task));
+
+                            task.setState(Task.TaskState.SUCCEEDED);
+                        } else if (resolved instanceof Exception) {
+                            Exception e = (Exception) resolved;
+                            task.setException(e);
+                            exception = e;
+                            if (task.getSignificance().shouldLog()) {
+                                Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
+                            }
+                            task.onDone().fireEvent(new TaskEvent(this, task, true));
+                            taskListeners.forEach(it -> it.onFailed(task, e));
+                        } else {
+                            throw new CompletionException(resolved); // rethrow error
+                        }
+                    });
+        }
 
         return CompletableFuture.completedFuture(null)
                 .thenComposeAsync(unused -> {
@@ -233,7 +286,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                 });
     }
 
-    private static Throwable resolveException(Throwable e) {
+    private static Throwable resolveException(@Nullable  Throwable e) {
         if (e instanceof ExecutionException || e instanceof CompletionException)
             return resolveException(e.getCause());
         else
