@@ -21,11 +21,8 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -33,31 +30,20 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  *
  * @author huangyuhui
  */
-public final class GetTask extends FetchTask<String> {
+public final class GetTask extends DownloadManager.DownloadTask<String> {
 
     private final Charset charset;
+    private ByteArrayOutputStream baos;
 
-    public GetTask(URL url) {
-        this(url, UTF_8);
+    public GetTask(DownloadManager.DownloadTaskState state) {
+        this(state, UTF_8);
     }
 
-    public GetTask(URL url, Charset charset) {
-        this(url, charset, 3);
-    }
-
-    public GetTask(URL url, Charset charset, int retry) {
-        this(Collections.singletonList(url), charset, retry);
-    }
-
-    public GetTask(List<URL> url) {
-        this(url, UTF_8, 3);
-    }
-
-    public GetTask(List<URL> urls, Charset charset, int retry) {
-        super(urls, retry);
+    public GetTask(DownloadManager.DownloadTaskState state, Charset charset) {
+        super(state);
         this.charset = charset;
 
-        setName(urls.get(0).toString());
+        setName(state.getFirstUrl().toString());
     }
 
     @Override
@@ -66,32 +52,34 @@ public final class GetTask extends FetchTask<String> {
     }
 
     @Override
-    protected void useCachedResult(Path cachedFile) throws IOException {
+    protected void finishWithCachedResult(Path cachedFile) throws IOException {
         setResult(FileUtils.readText(cachedFile));
+
+        super.finishWithCachedResult(cachedFile);
     }
 
     @Override
-    protected Context getContext(URLConnection conn, boolean checkETag) {
-        return new Context() {
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    protected void write(byte[] buffer, int offset, int len) {
+        baos.write(buffer, offset, len);
+    }
 
-            @Override
-            public synchronized void write(byte[] buffer, int offset, int len) {
-                baos.write(buffer, offset, len);
-            }
+    @Override
+    protected void onStart() {
+        baos = new ByteArrayOutputStream();
+    }
 
-            @Override
-            public void close() throws IOException {
-                if (!isSuccess()) return;
+    @Override
+    public void finish() throws IOException {
+        if (!state.isFinished()) return;
 
-                String result = baos.toString(charset.name());
-                setResult(result);
+        String result = baos.toString(charset.name());
+        setResult(result);
 
-                if (checkETag) {
-                    repository.cacheText(result, conn);
-                }
-            }
-        };
+        if (getCheckETag() == EnumCheckETag.CHECK_E_TAG) {
+            repository.cacheText(result, state.getSegments().get(0).getConnection());
+        }
+
+        super.finish();
     }
 
 }

@@ -22,18 +22,17 @@ import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;
@@ -44,11 +43,11 @@ import static org.jackhuang.hmcl.util.DigestUtils.getDigest;
  *
  * @author huangyuhui
  */
-public class FileDownloadTask extends FetchTask<Void> {
+public class FileDownloadTask extends DownloadManager.DownloadTask<Void> {
 
     public static class IntegrityCheck {
-        private String algorithm;
-        private String checksum;
+        private final String algorithm;
+        private final String checksum;
 
         public IntegrityCheck(String algorithm, String checksum) {
             this.algorithm = requireNonNull(algorithm);
@@ -80,78 +79,30 @@ public class FileDownloadTask extends FetchTask<Void> {
         }
     }
 
-    private final File file;
     private final IntegrityCheck integrityCheck;
     private Path candidate;
     private RandomAccessFile rFile;
-    private InputStream stream;
     private final ArrayList<IntegrityCheckHandler> integrityCheckHandlers = new ArrayList<>();
 
-    /**
-     * @param url the URL of remote file.
-     * @param file the location that download to.
-     */
-    public FileDownloadTask(URL url, File file) {
-        this(url, file, null);
+    public FileDownloadTask(DownloadManager.DownloadTaskState state) {
+        this(state, null);
     }
 
-    /**
-     * @param url the URL of remote file.
-     * @param file the location that download to.
-     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     */
-    public FileDownloadTask(URL url, File file, IntegrityCheck integrityCheck) {
-        this(Collections.singletonList(url), file, integrityCheck);
-    }
-
-    /**
-     * @param url the URL of remote file.
-     * @param file the location that download to.
-     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     * @param retry the times for retrying if downloading fails.
-     */
-    public FileDownloadTask(URL url, File file, IntegrityCheck integrityCheck, int retry) {
-        this(Collections.singletonList(url), file, integrityCheck, retry);
-    }
-
-    /**
-     * Constructor.
-     * @param urls urls of remote file, will be attempted in order.
-     * @param file the location that download to.
-     */
-    public FileDownloadTask(List<URL> urls, File file) {
-        this(urls, file, null);
-    }
-
-    /**
-     * Constructor.
-     * @param urls urls of remote file, will be attempted in order.
-     * @param file the location that download to.
-     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     */
-    public FileDownloadTask(List<URL> urls, File file, IntegrityCheck integrityCheck) {
-        this(urls, file, integrityCheck, 3);
-    }
-
-    /**
-     * Constructor.
-     * @param urls urls of remote file, will be attempted in order.
-     * @param file the location that download to.
-     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     * @param retry the times for retrying if downloading fails.
-     */
-    public FileDownloadTask(List<URL> urls, File file, IntegrityCheck integrityCheck, int retry) {
-        super(urls, retry);
-        this.file = file;
+    public FileDownloadTask(DownloadManager.DownloadTaskState state, IntegrityCheck integrityCheck) {
+        super(state);
         this.integrityCheck = integrityCheck;
 
-        setName(file.getName());
+        setName(FileUtils.getName(state.getFile()));
     }
 
-    public File getFile() {
-        return file;
-    }
-
+    /**
+     * Set candidate that the content should equal to the file to be downloaded.
+     *
+     * If candidate set and verified, the file will be taken, and download will not happen.
+     *
+     * @param candidate path to candidate
+     * @return this
+     */
     public FileDownloadTask setCandidate(Path candidate) {
         this.candidate = candidate;
         return this;
@@ -168,8 +119,8 @@ public class FileDownloadTask extends FetchTask<Void> {
             Optional<Path> cache = repository.checkExistentFile(candidate, integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
             if (cache.isPresent()) {
                 try {
-                    FileUtils.copyFile(cache.get().toFile(), file);
-                    Logging.LOG.log(Level.FINER, "Successfully verified file " + file + " from " + urls.get(0));
+                    FileUtils.copyFile(cache.get(), state.getFile());
+                    Logging.LOG.log(Level.FINER, "Successfully verified file " + state.getFile() + " from " + state.getFirstUrl());
                     return EnumCheckETag.CACHED;
                 } catch (IOException e) {
                     Logging.LOG.log(Level.WARNING, "Failed to copy cache files", e);
@@ -182,80 +133,75 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     @Override
-    protected void beforeDownload(URL url) {
-        Logging.LOG.log(Level.FINER, "Downloading " + url + " to " + file);
+    protected void onBeforeConnection(URL url) {
+        Logging.LOG.log(Level.FINER, "Downloading " + url + " to " + state.getFile());
     }
 
     @Override
-    protected void useCachedResult(Path cache) throws IOException {
-        FileUtils.copyFile(cache.toFile(), file);
+    protected void finishWithCachedResult(Path cache) throws IOException {
+        FileUtils.copyFile(cache, state.getFile());
     }
 
     @Override
-    protected Context getContext(URLConnection conn, boolean checkETag) throws IOException {
-        Path temp = Files.createTempFile(null, null);
-        RandomAccessFile rFile = new RandomAccessFile(temp.toFile(), "rw");
+    protected void write(byte[] buffer, int offset, int len) throws IOException {
+        rFile.write(buffer, offset, len);
+    }
+
+    @Override
+    protected void onStart() throws IOException {
+        rFile = new RandomAccessFile(state.getDownloadingFile().toFile(), "rw");
+    }
+
+    @Override
+    public void finish() throws IOException {
         MessageDigest digest = integrityCheck == null ? null : integrityCheck.createDigest();
+        // TODO: digest
 
-        return new Context() {
-            @Override
-            public void write(byte[] buffer, int offset, int len) throws IOException {
-                if (digest != null) {
-                    digest.update(buffer, offset, len);
-                }
+        try {
+            rFile.close();
+        } catch (IOException e) {
+            Logging.LOG.log(Level.WARNING, "Failed to close file: " + rFile, e);
+        }
 
-                rFile.write(buffer, offset, len);
+        if (!state.isFinished()) {
+            try {
+                Files.delete(state.getDownloadingFile());
+            } catch (IOException e) {
+                Logging.LOG.log(Level.WARNING, "Failed to delete file: " + rFile, e);
             }
+            return;
+        }
 
-            @Override
-            public void close() throws IOException {
-                try {
-                    rFile.close();
-                } catch (IOException e) {
-                    Logging.LOG.log(Level.WARNING, "Failed to close file: " + rFile, e);
-                }
+        for (IntegrityCheckHandler handler : integrityCheckHandlers) {
+            handler.checkIntegrity(state.getDownloadingFile(), state.getFile());
+        }
 
-                if (!isSuccess()) {
-                    try {
-                        Files.delete(temp);
-                    } catch (IOException e) {
-                        Logging.LOG.log(Level.WARNING, "Failed to delete file: " + rFile, e);
-                    }
-                    return;
-                }
+        Files.deleteIfExists(state.getFile());
+        if (!FileUtils.makeDirectory(state.getFile().toAbsolutePath().getParent().toFile()))
+            throw new IOException("Unable to make parent directory " + state.getFile());
 
-                for (IntegrityCheckHandler handler : integrityCheckHandlers) {
-                    handler.checkIntegrity(temp, file.toPath());
-                }
+        try {
+            FileUtils.moveFile(state.getDownloadingFile().toFile(), state.getFile().toFile());
+        } catch (Exception e) {
+            throw new IOException("Unable to move temp file from " + state.getDownloadingFile() + " to " + state.getFile(), e);
+        }
 
-                Files.deleteIfExists(file.toPath());
-                if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
-                    throw new IOException("Unable to make parent directory " + file);
+        // Integrity check
+        if (integrityCheck != null) {
+            integrityCheck.performCheck(digest);
+        }
 
-                try {
-                    FileUtils.moveFile(temp.toFile(), file);
-                } catch (Exception e) {
-                    throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
-                }
-
-                // Integrity check
-                if (integrityCheck != null) {
-                    integrityCheck.performCheck(digest);
-                }
-
-                if (caching && integrityCheck != null) {
-                    try {
-                        repository.cacheFile(file.toPath(), integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
-                    } catch (IOException e) {
-                        Logging.LOG.log(Level.WARNING, "Failed to cache file", e);
-                    }
-                }
-
-                if (checkETag) {
-                    repository.cacheRemoteFile(file.toPath(), conn);
-                }
+        if (caching && integrityCheck != null) {
+            try {
+                repository.cacheFile(state.getFile(), integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
+            } catch (IOException e) {
+                Logging.LOG.log(Level.WARNING, "Failed to cache file", e);
             }
-        };
+        }
+
+        if (getCheckETag() == EnumCheckETag.CHECK_E_TAG) {
+            repository.cacheRemoteFile(state.getFile(), state.getSegments().get(0).getConnection());
+        }
     }
 
     public interface IntegrityCheckHandler {

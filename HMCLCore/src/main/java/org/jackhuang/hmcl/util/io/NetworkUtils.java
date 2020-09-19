@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.*;
 import java.net.*;
 import java.util.List;
@@ -55,23 +57,27 @@ public final class NetworkUtils {
         return sb.toString();
     }
 
-    public static URLConnection createConnection(URL url) throws IOException {
+    public static URLConnection createConnection(@NotNull URL url) throws IOException {
+        return createConnection(url, 15000);
+    }
+
+    public static URLConnection createConnection(@NotNull URL url, int timeout) throws IOException {
         URLConnection connection = url.openConnection();
         connection.setUseCaches(false);
-        connection.setConnectTimeout(15000);
-        connection.setReadTimeout(15000);
+        connection.setConnectTimeout(timeout);
+        connection.setReadTimeout(timeout);
         connection.setRequestProperty("Accept-Language", Locale.getDefault().toString());
         return connection;
     }
 
-    public static HttpURLConnection createHttpConnection(URL url) throws IOException {
+    public static HttpURLConnection createHttpConnection(@NotNull URL url) throws IOException {
         return (HttpURLConnection) createConnection(url);
     }
 
     /**
-     * @see <a href="https://github.com/curl/curl/blob/3f7b1bb89f92c13e69ee51b710ac54f775aab320/lib/transfer.c#L1427-L1461">Curl</a>
      * @param location the url to be URL encoded
      * @return encoded URL
+     * @see <a href="https://github.com/curl/curl/blob/3f7b1bb89f92c13e69ee51b710ac54f775aab320/lib/transfer.c#L1427-L1461">Curl</a>
      */
     public static String encodeLocation(String location) {
         StringBuilder sb = new StringBuilder();
@@ -98,18 +104,31 @@ public final class NetworkUtils {
 
     /**
      * This method is a work-around that aims to solve problem when "Location" in stupid server's response is not encoded.
-     * @see <a href="https://github.com/curl/curl/issues/473">Issue with libcurl</a>
+     *
      * @param conn the stupid http connection.
      * @return manually redirected http connection.
      * @throws IOException if an I/O error occurs.
+     * @see <a href="https://github.com/curl/curl/issues/473">Issue with libcurl</a>
      */
     public static HttpURLConnection resolveConnection(HttpURLConnection conn) throws IOException {
+        return resolveConnection(conn, 15000);
+    }
+
+    /**
+     * This method is a work-around that aims to solve problem when "Location" in stupid server's response is not encoded.
+     *
+     * @param conn    the stupid http connection.
+     * @param timeout timeout in milliseconds in once connection.
+     * @return manually redirected http connection.
+     * @throws IOException if an I/O error occurs.
+     * @see <a href="https://github.com/curl/curl/issues/473">Issue with libcurl</a>
+     */
+    public static HttpURLConnection resolveConnection(HttpURLConnection conn, int timeout) throws IOException {
         int redirect = 0;
         while (true) {
-
             conn.setUseCaches(false);
-            conn.setConnectTimeout(15000);
-            conn.setReadTimeout(15000);
+            conn.setConnectTimeout(timeout);
+            conn.setReadTimeout(timeout);
             conn.setInstanceFollowRedirects(false);
             Map<String, List<String>> properties = conn.getRequestProperties();
             String method = conn.getRequestMethod();

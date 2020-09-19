@@ -8,5 +8,6 @@ public abstract class CompletableFutureTask<T> extends Task<T> {
 
     @Override
     public void execute() throws Exception {
+        throw new AssertionError("Cannot reach here");
     }
 }
