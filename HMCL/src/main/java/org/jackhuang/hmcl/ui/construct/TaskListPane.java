@@ -274,7 +274,7 @@ public final class TaskListPane extends StackPane {
 
         public void setThrowable(Throwable throwable) {
             unbind();
-            state.setText(throwable.getLocalizedMessage());
+            state.setText(throwable == null ? "" : throwable.getLocalizedMessage());
             bar.setProgress(0);
         }
     }

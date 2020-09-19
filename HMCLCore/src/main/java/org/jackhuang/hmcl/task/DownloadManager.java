@@ -1,3 +1,20 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.task;
 
 import com.google.gson.JsonParseException;
@@ -7,6 +24,7 @@ import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -95,9 +113,9 @@ public class DownloadManager {
             return this;
         }
 
-        public DownloadTaskState build() throws IOException {
+        public DownloadTaskState build() {
             if (file == null) {
-                return DownloadTaskState.newWithLengthUnknown(urls, Files.createTempFile(null, null), retry, initialParts);
+                return DownloadTaskState.newWithLengthUnknown(urls, null, retry, initialParts);
             }
 
             Path downloadingFile = file.resolveSibling(FileUtils.getName(file) + ".download");
@@ -108,7 +126,7 @@ public class DownloadManager {
                 try {
                     String status = FileUtils.readText(stateFile);
                     state = JsonUtils.fromNonNullJson(status, DownloadState.class);
-                } catch (JsonParseException e) {
+                } catch (JsonParseException | IOException e) {
                     LOG.log(Level.WARNING, "Failed to parse download state file", e);
                 }
             }
@@ -138,12 +156,69 @@ public class DownloadManager {
         }
     }
 
-    protected static abstract class DownloadTask<T> extends CompletableFutureTask<T> {
+    public static abstract class Downloader<T> {
+
+        /**
+         * do something before connection.
+         *
+         * @param url currently ready URL
+         */
+        protected void onBeforeConnection(URL url) {}
+
+        /**
+         * Setup downloading environment, creates files, etc.
+         *
+         * @throws IOException if an I/O error occurred.
+         */
+        protected abstract void onStart() throws IOException;
+
+        protected abstract void onContentLengthChanged(long contentLength) throws IOException;
+
+        /**
+         * Accept recently downloaded data segment.
+         *
+         * @throws IOException if an I/O error occurred.
+         */
+        protected abstract void write(long pos, byte[] buffer, int offset, int len) throws IOException;
+
+        /**
+         * Verify if we should check etag, or even it is already cached,
+         * and make use of it.
+         *
+         * @return whether we should check etag, or stop downloading if cached.
+         */
+        protected abstract DownloadTask.EnumCheckETag shouldCheckETag();
+
+        /**
+         * Make cached file as result of downloader.
+         *
+         * This method can fails, if failed, downloading should continue.
+         *
+         * @param cachedFile verified cached file
+         * @throws IOException if an I/O error occurred.
+         */
+        protected abstract T finishWithCachedResult(Path cachedFile) throws IOException;
+
+        /**
+         * Inform downloader that downloading finished.
+         *
+         * Check state.isFinished(), and do necessary cleaning if downloading failed.
+         *
+         * @return result of downloader.
+         * @throws IOException if an I/O error occurred.
+         */
+        protected abstract T finish() throws IOException;
+
+    }
+
+    public static abstract class DownloadTask<T> extends CompletableFutureTask<T> {
         protected final DownloadTaskState state;
         protected boolean caching = false;
+        private boolean doFinish = true;
         protected CacheRepository repository = CacheRepository.getInstance();
         private final CompletableFuture<T> future = new CompletableFuture<>();
         private EnumCheckETag checkETag;
+        private Downloader<T> downloader;
 
         public DownloadTask(DownloadTaskState state) {
             this.state = state;
@@ -161,44 +236,67 @@ public class DownloadManager {
             return state;
         }
 
-        protected abstract void write(byte[] buffer, int offset, int len) throws IOException;
-
-        protected EnumCheckETag shouldCheckETag() {
-            return EnumCheckETag.NOT_CHECK_E_TAG;
-        }
+        protected abstract Downloader<T> createDownloader();
 
         protected final EnumCheckETag getCheckETag() { return checkETag; }
 
-        protected void onBeforeConnection(URL url) {}
-
-        protected abstract void onStart() throws IOException;
-
-        /**
-         * Make cached file as result of this task.
-         *
-         * @param cachedFile verified cached file
-         * @throws IOException if an I/O error occurred.
-         */
-        protected void finishWithCachedResult(Path cachedFile) throws IOException {
-            state.finished = true;
-
-            future.complete(getResult());
+        protected synchronized final void setContentLength(int contentLength) throws IOException {
+            if (state.setContentLength(contentLength)) {
+                downloader.onContentLengthChanged(contentLength);
+            }
         }
 
-        public void finish() throws IOException {
-            state.finished = true;
+        protected synchronized final void finishWithCachedResult(Path cachedFile) throws IOException {
+            setResult(downloader.finishWithCachedResult(cachedFile));
 
-            future.complete(getResult());
+            state.finished = true;
+            doFinish = false;
+            future.complete(null);
+        }
+
+        public synchronized final void onSegmentFinished(DownloadSegment finishedSegment) {
+            assert(state.segments.contains(finishedSegment));
+            finishedSegment.finished = true;
+
+            int max = 0;
+
+            for (DownloadSegment segment : state.segments) {
+                if (segment.endPosition <= max) {
+                    segment.setDownloaded();
+                }
+                if (!segment.isFinished())
+                    return;
+                max = Math.max(max, segment.startPosition + segment.downloaded);
+            }
+
+            // All segments have finished downloading.
+            state.finished = true;
+            future.complete(null);
         }
 
         @Override
         public final CompletableFuture<T> getCompletableFuture() {
-            return CompletableFuture.runAsync(() -> {
-                checkETag = shouldCheckETag();
+            return CompletableFuture.runAsync(AsyncTaskExecutor.wrap(() -> {
+                downloader = createDownloader();
+                checkETag = downloader.shouldCheckETag();
 
-                for (Runnable runnable : state.threads)
-                    download().submit(runnable);
-            }).thenCompose(unused -> future);
+                downloader.onStart();
+
+                for (DownloadSegment segment : state.segments)
+                    segment.download(this, downloader);
+            }))
+                    .thenCompose(unused -> future)
+                    .whenComplete((unused, exception) -> {
+                        if (doFinish) {
+                            try {
+                                setResult(downloader.finish());
+                            } catch (IOException e) {
+                                throw new CompletionException(e);
+                            }
+                        }
+                        AsyncTaskExecutor.rethrow(exception);
+                    })
+                    .thenApplyAsync(unused -> getResult());
         }
 
         protected enum EnumCheckETag {
@@ -210,31 +308,33 @@ public class DownloadManager {
 
     protected static final class DownloadTaskState {
         private final List<URL> urls;
+        @Nullable
         private final Path file;
         private final List<DownloadSegment> segments;
-        private final List<Runnable> threads;
         private URL fastestUrl;
+        private boolean segmentSupported = false;
         private final int retry;
         private int retryUrl = 0;
         private boolean cancelled = false;
         private boolean finished = false;
         private int contentLength;
         private final int initialParts;
+        private boolean waitingForContentLength;
 
         private final SafeRegion connectionCheckRegion = new SafeRegion();
         private final SafeRegion writeRegion = new SafeRegion();
 
-        DownloadTaskState(DownloadState state, Path file, int retry) {
+        DownloadTaskState(DownloadState state, @NotNull Path file, int retry) {
             this.urls = new ArrayList<>(state.urls);
             this.file = file;
             this.retry = retry;
             this.segments = new ArrayList<>(state.segments);
-            this.threads = IntStream.range(0, state.segments.size()).mapToObj(x -> (Thread) null).collect(Collectors.toList());
             this.contentLength = state.getContentLength();
             this.initialParts = state.getSegments().size();
+            this.waitingForContentLength = false;
         }
 
-        DownloadTaskState(List<URL> urls, Path file, int retry, int contentLength, int initialParts) {
+        DownloadTaskState(List<URL> urls, @Nullable Path file, int retry, int contentLength, int initialParts) {
             if (urls == null || urls.size() == 0) {
                 throw new IllegalArgumentException("DownloadTaskState requires at least one url candidate");
             }
@@ -244,14 +344,13 @@ public class DownloadManager {
             this.retry = retry;
             this.initialParts = initialParts;
             this.segments = new ArrayList<>(initialParts);
-            this.threads = new ArrayList<>(initialParts);
             int partLength = contentLength / initialParts;
             for (int i = 0; i < initialParts; i++) {
                 int begin = partLength * i;
                 int end = Math.min((partLength + 1) * i, contentLength);
                 segments.add(new DownloadSegment(begin, end, 0));
-                threads.add(null);
             }
+            this.waitingForContentLength = contentLength == 0;
         }
 
         public static DownloadTaskState newWithLengthUnknown(List<URL> urls, Path file, int retry, int initialParts) {
@@ -267,37 +366,61 @@ public class DownloadManager {
         }
 
         public Path getDownloadingFile() {
-            return file.resolveSibling(FileUtils.getName(file) + ".download");
+            return file == null ? null : file.resolveSibling(FileUtils.getName(file) + ".download");
         }
 
         public Path getStateFile() {
-            return file.resolveSibling(FileUtils.getName(file) + ".status");
+            return file == null ? null : file.resolveSibling(FileUtils.getName(file) + ".status");
         }
 
         public List<DownloadSegment> getSegments() {
             return segments;
         }
 
-        protected synchronized void setContentLength(int contentLength) {
-            if (this.contentLength != 0) {
+        /**
+         * Figure out actually content length
+         * @param contentLength new content length
+         * @return if content length changed
+         */
+        protected synchronized boolean setContentLength(int contentLength) {
+            if (!waitingForContentLength) {
                 throw new IllegalStateException("ContentLength already set");
             }
 
+            if (this.contentLength == contentLength) {
+                return false;
+            }
+
+            waitingForContentLength = false;
+
             this.contentLength = contentLength;
             if (contentLength < 0) {
-                return;
+                return true;
             }
 
             int partLength = contentLength / initialParts;
             for (int i = 0; i < segments.size(); i++) {
                 int begin = partLength * i;
-                int end = Math.min((partLength + 1) * i, contentLength);
+                int end = Math.min(partLength * (i + 1), contentLength);
                 segments.get(i).setDownloadRange(begin, end);
             }
+            return true;
         }
 
         public synchronized int getContentLength() {
             return contentLength;
+        }
+
+        public boolean isWaitingForContentLength() {
+            return waitingForContentLength;
+        }
+
+        public synchronized boolean isSegmentSupported() {
+            return segmentSupported;
+        }
+
+        public synchronized void setSegmentSupported(boolean segmentSupported) {
+            this.segmentSupported = segmentSupported;
         }
 
         public synchronized URL getFirstUrl() {
@@ -348,7 +471,8 @@ public class DownloadManager {
         }
 
         public synchronized void setFastestUrl(URL fastestUrl) {
-            this.fastestUrl = fastestUrl;
+            if (this.fastestUrl == null)
+                this.fastestUrl = fastestUrl;
         }
 
         public synchronized void cancel() {
@@ -415,7 +539,9 @@ public class DownloadManager {
         private int startPosition;
         private int endPosition;
         private int downloaded;
+        private boolean finished;
         private URLConnection connection;
+        private Future<?> future;
 
         /**
          * Constructor for Gson
@@ -451,6 +577,10 @@ public class DownloadManager {
             return downloaded;
         }
 
+        public void setDownloaded() {
+            this.downloaded = endPosition - startPosition;
+        }
+
         public void setDownloaded(int downloaded) {
             this.downloaded = downloaded;
         }
@@ -468,10 +598,15 @@ public class DownloadManager {
         }
 
         public boolean isFinished() {
-            return downloaded == getLength();
+            return finished || downloaded >= getLength();
         }
 
-        public boolean isWaiting() { return startPosition == endPosition && startPosition == 0; }
+        public Future<?> download(DownloadTask<?> task, Downloader<?> downloader) {
+            if (future == null) {
+                future = DownloadManager.download().submit(new DownloadSegmentTask(task, downloader, this));
+            }
+            return future;
+        }
     }
 
     private static final Timer timer = new Timer("DownloadSpeedRecorder", true);
@@ -515,7 +650,7 @@ public class DownloadManager {
     }
 
     private static int downloadExecutorConcurrency = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
-    private static volatile ExecutorService DOWNLOAD_EXECUTOR;
+    private static volatile ThreadPoolExecutor DOWNLOAD_EXECUTOR;
 
     /**
      * Get singleton instance of the thread pool for file downloading.
@@ -543,8 +678,7 @@ public class DownloadManager {
         synchronized (Schedulers.class) {
             downloadExecutorConcurrency = concurrency;
             if (DOWNLOAD_EXECUTOR != null) {
-                DOWNLOAD_EXECUTOR.shutdownNow();
-                DOWNLOAD_EXECUTOR = null;
+                DOWNLOAD_EXECUTOR.setMaximumPoolSize(concurrency);
             }
         }
     }

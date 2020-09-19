@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.task.DownloadManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
@@ -56,10 +57,11 @@ public final class GameDownloadTask extends Task<Void> {
     public void execute() {
         File jar = dependencyManager.getGameRepository().getVersionJar(version);
 
-        FileDownloadTask task = new FileDownloadTask(
-                dependencyManager.getDownloadProvider().injectURLWithCandidates(version.getDownloadInfo().getUrl()),
-                jar,
-                IntegrityCheck.of(CacheRepository.SHA1, version.getDownloadInfo().getSha1()));
+        FileDownloadTask task = new FileDownloadTask(new DownloadManager.DownloadTaskStateBuilder()
+                .setUrls(dependencyManager.getDownloadProvider().injectURLWithCandidates(version.getDownloadInfo().getUrl()))
+                .setFile(jar)
+                .setInitialParts(3)
+                .build(), IntegrityCheck.of(CacheRepository.SHA1, version.getDownloadInfo().getSha1()));
         task.setCaching(true);
         task.setCacheRepository(dependencyManager.getCacheRepository());
 

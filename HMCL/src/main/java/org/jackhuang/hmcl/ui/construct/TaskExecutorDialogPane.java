@@ -24,6 +24,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.task.DownloadManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
@@ -37,7 +38,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 public class TaskExecutorDialogPane extends StackPane {
     private TaskExecutor executor;
     private Consumer<Region> onCancel;
-    private final Consumer<FileDownloadTask.SpeedEvent> speedEventHandler;
+    private final Consumer<DownloadManager.SpeedEvent> speedEventHandler;
 
     @FXML
     private Label lblTitle;
@@ -75,7 +76,7 @@ public class TaskExecutorDialogPane extends StackPane {
                 lblProgress.setText(String.format("%.1f %s", finalSpeed, finalUnit));
             });
         };
-        FileDownloadTask.speedEvent.channel(FileDownloadTask.SpeedEvent.class).registerWeak(speedEventHandler);
+        DownloadManager.speedEvent.channel(DownloadManager.SpeedEvent.class).registerWeak(speedEventHandler);
     }
 
     public void setExecutor(TaskExecutor executor) {

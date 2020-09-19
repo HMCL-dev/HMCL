@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.task.DownloadManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -72,8 +73,11 @@ public final class ForgeInstallTask extends Task<Version> {
         installer = Files.createTempFile("forge-installer", ".jar");
 
         dependent = new FileDownloadTask(
-                dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()),
-                installer.toFile(), null);
+                new DownloadManager.DownloadTaskStateBuilder()
+                .setUrls(dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()))
+                .setFile(installer.toFile())
+                .setInitialParts(3)
+                .build());
         dependent.setCacheRepository(dependencyManager.getCacheRepository());
         dependent.setCaching(true);
         dependent.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);

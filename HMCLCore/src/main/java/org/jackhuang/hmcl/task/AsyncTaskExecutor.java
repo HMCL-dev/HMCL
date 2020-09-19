@@ -112,9 +112,9 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                         return CompletableFuture.runAsync(this::checkCancellation);
 
                     return CompletableFuture.allOf(tasks.stream()
-                            .map(task -> CompletableFuture.completedFuture(null)
-                                    .thenComposeAsync(unused2 -> executeTask(parentTask, task))
-                            ).toArray(CompletableFuture<?>[]::new));
+                            .map(task -> ((CompletableFuture) CompletableFuture.completedFuture(null))
+                                    .thenComposeAsync(unused2 -> (CompletableFuture) executeTask(parentTask, task))
+                            ).toArray(CompletableFuture[]::new));
                 })
                 .thenApplyAsync(unused -> (Exception) null)
                 .exceptionally(throwable -> {
@@ -293,7 +293,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
             return e;
     }
 
-    private static void rethrow(Throwable e) {
+    public static void rethrow(Throwable e) {
         if (e == null)
             return;
         if (e instanceof ExecutionException || e instanceof CompletionException) { // including UncheckedException and UncheckedThrowable
@@ -305,7 +305,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         }
     }
 
-    private static Runnable wrap(ExceptionalRunnable<?> runnable) {
+    public static Runnable wrap(ExceptionalRunnable<?> runnable) {
         return () -> {
             try {
                 runnable.run();

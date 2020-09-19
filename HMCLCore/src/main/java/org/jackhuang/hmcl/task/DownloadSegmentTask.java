@@ -1,3 +1,20 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.Logging;
@@ -12,36 +29,39 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Path;
+import java.util.concurrent.Callable;
 import java.util.logging.Level;
 
-class DownloadSegmentTask {
+class DownloadSegmentTask implements Callable<Void> {
 
     private final DownloadManager.DownloadTask<?> task;
+    private final DownloadManager.Downloader<?> downloader;
     private final DownloadManager.DownloadTaskState state;
-    private final RandomAccessFile file;
     private int tryTime = 0;
-    private URLConnection conn;
     private URL lastURL;
     private DownloadManager.DownloadSegment segment;
 
-    public DownloadSegmentTask(DownloadManager.DownloadTask<?> task, RandomAccessFile file, DownloadManager.DownloadSegment segment) {
+    public DownloadSegmentTask(DownloadManager.DownloadTask<?> task, DownloadManager.Downloader<?> downloader, DownloadManager.DownloadSegment segment) {
         this.task = task;
+        this.downloader = downloader;
         this.state = task.getDownloadState();
-        this.file = file;
         this.segment = segment;
     }
 
-    private URLConnection createConnection(boolean retryLastConnection) throws IOException {
+    private URLConnection createConnection(boolean retryLastConnection, int startPosition, int endPosition) throws IOException {
         if (retryLastConnection && lastURL != null) {
             return NetworkUtils.createConnection(lastURL, 4000);
         }
 
-        // 1. try connection given by DownloadTask
-        if (this.conn != null) {
-            URLConnection conn = this.conn;
-            lastURL = conn.getURL();
-            this.conn = null;
-            return conn;
+        // 1. If we don't know content length now, DownloadSegmentTasks should try
+        //    different candidates.
+        if (state.isWaitingForContentLength()) {
+            URL nextUrlToRetry = state.getNextUrlToRetry();
+            if (nextUrlToRetry == null) {
+                return null;
+            }
+            lastURL = nextUrlToRetry;
+            return NetworkUtils.createConnection(lastURL, 4000);
         }
 
         // 2. try suggested URL at the first time
@@ -68,7 +88,8 @@ class DownloadSegmentTask {
         return NetworkUtils.createConnection(lastURL, 4000);
     }
 
-    public void run() throws DownloadException {
+    @Override
+    public Void call() throws DownloadException {
         Exception exception = null;
         URL failedURL = null;
         boolean checkETag;
@@ -80,7 +101,7 @@ class DownloadSegmentTask {
                 checkETag = false;
                 break;
             default:
-                return;
+                return null;
         }
 
         boolean retryLastConnection = false;
@@ -90,31 +111,29 @@ class DownloadSegmentTask {
             }
 
             try {
-                URLConnection conn = createConnection(retryLastConnection);
+                boolean detectRange = state.isWaitingForContentLength();
+                URLConnection conn = createConnection(retryLastConnection, segment.getStartPosition(), segment.getEndPosition());
                 if (conn == null) {
                     break;
                 }
 
                 if (checkETag) task.repository.injectConnection(conn);
 
-                task.onBeforeConnection(lastURL);
+                downloader.onBeforeConnection(lastURL);
                 segment.setDownloaded(0);
+
+                if (conn instanceof HttpURLConnection) {
+                    conn = NetworkUtils.resolveConnection((HttpURLConnection) conn);
+                }
 
                 try (DownloadManager.SafeRegion region = state.checkingConnection()) {
                     // If other DownloadSegmentTask finishedWithCachedResult
                     // then this task should stop.
                     if (state.isFinished()) {
-                        return;
+                        return null;
                     }
-
-                    if (state.getContentLength() == 0) {
-                        state.setContentLength(conn.getContentLength());
-                    }
-
-                    // TODO: reset connection with range
 
                     if (conn instanceof HttpURLConnection) {
-                        conn = NetworkUtils.resolveConnection((HttpURLConnection) conn);
                         int responseCode = ((HttpURLConnection) conn).getResponseCode();
 
                         if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
@@ -122,7 +141,7 @@ class DownloadSegmentTask {
                             try {
                                 Path cache = task.repository.getCachedRemoteFile(conn);
                                 task.finishWithCachedResult(cache);
-                                return;
+                                return null;
                             } catch (IOException e) {
                                 Logging.LOG.log(Level.WARNING, "Unable to use cached file, re-download " + lastURL, e);
                                 task.repository.removeRemoteEntry(conn);
@@ -132,10 +151,49 @@ class DownloadSegmentTask {
                                 continue;
                             }
                         } else if (responseCode / 100 == 4) {
+                            // 404 may occurs when we hit some mirror that does not have the file,
+                            // but other mirrors may have, so we should try other URLs.
                             state.forbidURL(lastURL);
-                            break; // we will not try this URL again
+                            continue;
                         } else if (responseCode / 100 != 2) {
                             throw new ResponseCodeException(lastURL, responseCode);
+                        }
+
+                        // TODO: maybe some server supports partial content, other servers does not support,
+                        // there should be a way to pick fastest server.
+                        if (conn.getHeaderField("Range") != null && responseCode == 206) {
+                            state.setSegmentSupported(true);
+                        }
+                    }
+
+                    if (state.getContentLength() == 0) {
+                        task.setContentLength(conn.getContentLength());
+                    }
+
+                    if (state.getContentLength() != conn.getContentLength()) {
+                        // If content length is not expected, forbids this URL
+                        state.forbidURL(lastURL);
+                        continue;
+                    }
+
+                    // TODO: Currently we mark first successfully connected URL as "fastest" URL.
+                    state.setFastestUrl(conn.getURL());
+
+                    if (!state.isSegmentSupported() && segment.getStartPosition() != 0) {
+                        // Now we have not figured if URL supports segment downloading,
+                        // and have successfully fetched content length.
+                        // We should check states of non-first DownloadSegmentTasks.
+                        // First DownloadSegmentTask will continue downloading whatever segment is supported or not.
+                        if (detectRange) {
+                            // If this DownloadSegmentTask detects content length,
+                            // reconnect to same URL with header Range, detecting if segment supported.
+                            retryLastConnection = true;
+                            continue;
+                        } else {
+                            // We already tested Range and found segment not supported.
+                            // Make only first DownloadSegmentTask continue.
+                            task.onSegmentFinished(segment);
+                            return null;
                         }
                     }
                 }
@@ -146,11 +204,18 @@ class DownloadSegmentTask {
                     while (true) {
                         if (state.isCancelled()) break;
 
+                        // For first DownloadSegmentTask, if other DownloadSegmentTask have figured out
+                        // that segment is supported, and this segment have already be finished,
+                        // stop downloading.
+                        if (state.isSegmentSupported() && segment.isFinished()) {
+                            break;
+                        }
+
                         int len = stream.read(buffer);
                         if (len == -1) break;
 
                         try (DownloadManager.SafeRegion region = state.writing()) {
-                            task.write(buffer, 0, len);
+                            downloader.write(segment.getStartPosition() + downloaded, buffer, 0, len);
                         }
 
                         downloaded += len;
@@ -171,8 +236,9 @@ class DownloadSegmentTask {
                 }
 
                 segment.setConnection(conn);
+                task.onSegmentFinished(segment);
 
-                return;
+                return null;
             } catch (IOException ex) {
                 failedURL = lastURL;
                 exception = ex;
@@ -182,5 +248,6 @@ class DownloadSegmentTask {
 
         if (exception != null)
             throw new DownloadException(failedURL, exception);
+        return null;
     }
 }

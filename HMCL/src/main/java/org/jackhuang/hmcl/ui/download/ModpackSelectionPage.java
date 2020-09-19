@@ -114,7 +114,7 @@ public final class ModpackSelectionPage extends StackPane implements WizardPage 
                     resolve.run();
 
                     Controllers.taskDialog(
-                            new FileDownloadTask(url, modpack.toFile(), null)
+                            new FileDownloadTask(url, modpack.toFile())
                                     .whenComplete(Schedulers.javafx(), e -> {
                                         if (e == null) {
                                             resolve.run();

@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.upgrade;
 
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.tukaani.xz.XZInputStream;
 
@@ -25,25 +26,31 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Pack200;
 
-class HMCLDownloadTask extends FileDownloadTask {
+class HMCLDownloadTask extends Task<Void> {
 
-    private RemoteVersion.Type archiveFormat;
+    private final FileDownloadTask task;
+    private final RemoteVersion.Type archiveFormat;
+    private final Path target;
 
     public HMCLDownloadTask(RemoteVersion version, Path target) {
-        super(NetworkUtils.toURL(version.getUrl()), target.toFile(), version.getIntegrityCheck());
-        archiveFormat = version.getType();
+        this.task = new FileDownloadTask(NetworkUtils.toURL(version.getUrl()), target.toFile(), version.getIntegrityCheck());
+        this.archiveFormat = version.getType();
+        this.target = target;
+    }
+
+    @Override
+    public Collection<Task<?>> getDependents() {
+        return Collections.singletonList(this);
     }
 
     @Override
     public void execute() throws Exception {
-        super.execute();
-
         try {
-            Path target = getFile().toPath();
-
             switch (archiveFormat) {
                 case JAR:
                     break;
@@ -60,7 +67,7 @@ class HMCLDownloadTask extends FileDownloadTask {
                     throw new IllegalArgumentException("Unknown format: " + archiveFormat);
             }
         } catch (Throwable e) {
-            getFile().delete();
+            Files.deleteIfExists(target);
             throw e;
         }
     }
