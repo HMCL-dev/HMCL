@@ -253,7 +253,7 @@ public class YggdrasilService {
         try {
             return GSON.fromJson(text, typeOfT);
         } catch (JsonParseException e) {
-            throw new ServerResponseMalformedException(e);
+            throw new ServerResponseMalformedException("Server response: " + text, e);
         }
     }
 

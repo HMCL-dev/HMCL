@@ -204,8 +204,8 @@ public class FileDownloadTask extends DownloadManager.DownloadTask<Void> {
             }
 
             @Override
-            protected void onBeforeConnection(URL url) {
-                Logging.LOG.log(Level.FINER, "Downloading " + url + " to " + state.getFile());
+            protected void onBeforeConnection(DownloadManager.DownloadSegment segment, URL url) {
+                Logging.LOG.log(Level.FINER, "Downloading segment " + segment.getStartPosition() + "~" + segment.getEndPosition() + " of " + url + " to " + state.getFile());
             }
 
             @Override

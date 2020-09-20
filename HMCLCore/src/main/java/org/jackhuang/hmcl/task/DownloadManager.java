@@ -161,9 +161,10 @@ public class DownloadManager {
         /**
          * do something before connection.
          *
+         * @param segment segment
          * @param url currently ready URL
          */
-        protected void onBeforeConnection(URL url) {}
+        protected void onBeforeConnection(DownloadSegment segment, URL url) {}
 
         /**
          * Setup downloading environment, creates files, etc.
@@ -266,12 +267,21 @@ public class DownloadManager {
                 }
                 if (!segment.isFinished())
                     return;
-                max = Math.max(max, segment.startPosition + segment.downloaded);
+                max = Math.max(max, segment.currentPosition);
             }
 
             // All segments have finished downloading.
             state.finished = true;
             future.complete(null);
+        }
+
+        public synchronized final void onSegmentFailed(DownloadSegment failedSegment, Throwable throwable) {
+            assert(state.segments.contains(failedSegment));
+            failedSegment.finished = true;
+
+            // All segments have finished downloading.
+            state.finished = true;
+            future.completeExceptionally(throwable);
         }
 
         @Override
@@ -286,7 +296,7 @@ public class DownloadManager {
                     segment.download(this, downloader);
             }))
                     .thenCompose(unused -> future)
-                    .whenComplete((unused, exception) -> {
+                    .whenCompleteAsync((unused, exception) -> {
                         if (doFinish) {
                             try {
                                 setResult(downloader.finish());
@@ -348,7 +358,7 @@ public class DownloadManager {
             for (int i = 0; i < initialParts; i++) {
                 int begin = partLength * i;
                 int end = Math.min((partLength + 1) * i, contentLength);
-                segments.add(new DownloadSegment(begin, end, 0));
+                segments.add(new DownloadSegment(i, begin, end, 0));
             }
             this.waitingForContentLength = contentLength == 0;
         }
@@ -413,6 +423,10 @@ public class DownloadManager {
 
         public boolean isWaitingForContentLength() {
             return waitingForContentLength;
+        }
+
+        public int getRetry() {
+            return retry;
         }
 
         public synchronized boolean isSegmentSupported() {
@@ -501,6 +515,10 @@ public class DownloadManager {
                 }
                 urls.remove(index);
             }
+
+            if (url.equals(fastestUrl)) {
+                fastestUrl = null;
+            }
         }
     }
 
@@ -536,9 +554,10 @@ public class DownloadManager {
     }
 
     protected static final class DownloadSegment {
+        private int index;
         private int startPosition;
         private int endPosition;
-        private int downloaded;
+        private int currentPosition;
         private boolean finished;
         private URLConnection connection;
         private Future<?> future;
@@ -547,16 +566,21 @@ public class DownloadManager {
          * Constructor for Gson
          */
         public DownloadSegment() {
-            this(0, 0, 0);
+            this(0, 0, 0, 0);
         }
 
-        public DownloadSegment(int startPosition, int endPosition, int downloaded) {
-            if (downloaded > endPosition - startPosition) {
-                throw new IllegalArgumentException("Illegal download state: start " + startPosition + ", end " + endPosition + ", total downloaded " + downloaded);
+        public DownloadSegment(int index, int startPosition, int endPosition, int currentPosition) {
+            if (startPosition > endPosition) {
+                throw new IllegalArgumentException("Illegal download state: start " + startPosition + ", end " + endPosition + ", current " + currentPosition);
             }
+            this.index = index;
             this.startPosition = startPosition;
             this.endPosition = endPosition;
-            this.downloaded = downloaded;
+            this.currentPosition = currentPosition;
+        }
+
+        public int getIndex() {
+            return index;
         }
 
         public int getStartPosition() {
@@ -570,19 +594,27 @@ public class DownloadManager {
         public void setDownloadRange(int start, int end) {
             this.startPosition = start;
             this.endPosition = end;
-            this.downloaded = 0;
+            this.currentPosition = start;
         }
 
-        public int getDownloaded() {
-            return downloaded;
+        /**
+         * Get current downloaded position
+         *
+         * CurrentPosition may be less than startPosition or larger than endPosition
+         * when segment unsupported.
+         *
+         * @return
+         */
+        public int getCurrentPosition() {
+            return currentPosition;
         }
 
         public void setDownloaded() {
-            this.downloaded = endPosition - startPosition;
+            this.currentPosition = endPosition - startPosition;
         }
 
-        public void setDownloaded(int downloaded) {
-            this.downloaded = downloaded;
+        public void setCurrentPosition(int currentPosition) {
+            this.currentPosition = currentPosition;
         }
 
         public int getLength() {
@@ -598,7 +630,7 @@ public class DownloadManager {
         }
 
         public boolean isFinished() {
-            return finished || downloaded >= getLength();
+            return finished || currentPosition >= endPosition;
         }
 
         public Future<?> download(DownloadTask<?> task, Downloader<?> downloader) {
@@ -606,6 +638,15 @@ public class DownloadManager {
                 future = DownloadManager.download().submit(new DownloadSegmentTask(task, downloader, this));
             }
             return future;
+        }
+
+        @Override
+        public String toString() {
+            return "DownloadSegment{" +
+                    "startPosition=" + startPosition +
+                    ", endPosition=" + endPosition +
+                    ", hash=" + hashCode() +
+                    '}';
         }
     }
 
