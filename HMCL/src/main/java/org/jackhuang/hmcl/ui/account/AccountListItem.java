@@ -18,8 +18,10 @@
 package org.jackhuang.hmcl.ui.account;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.*;
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
@@ -30,6 +32,8 @@ import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
@@ -40,10 +44,13 @@ import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 
 import java.io.File;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.util.Lang.thread;
+import static java.util.Collections.emptySet;
+import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -111,8 +118,23 @@ public class AccountListItem extends RadioButton {
         refreshAsync().whenComplete(e -> {}).start();
     }
 
-    public boolean canUploadSkin() {
-        return account instanceof YggdrasilAccount && !(account instanceof AuthlibInjectorAccount);
+    public ObservableBooleanValue canUploadSkin() {
+        if (account instanceof YggdrasilAccount) {
+            if (account instanceof AuthlibInjectorAccount) {
+                AuthlibInjectorAccount aiAccount = (AuthlibInjectorAccount) account;
+                ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getUUID());
+                return createBooleanBinding(() -> {
+                    Set<TextureType> uploadableTextures = profile.get()
+                            .map(AuthlibInjectorAccount::getUploadableTextures)
+                            .orElse(emptySet());
+                    return uploadableTextures.contains(TextureType.SKIN);
+                }, profile);
+            } else {
+                return createBooleanBinding(() -> true);
+            }
+        } else {
+            return createBooleanBinding(() -> false);
+        }
     }
 
     public void uploadSkin() {
