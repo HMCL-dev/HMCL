@@ -97,6 +97,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         btnUpload.getStyleClass().add("toggle-icon4");
         btnUpload.setGraphic(SVG.hanger(Theme.blackFillBinding(), -1, -1));
         runInFX(() -> FXUtils.installFastTooltip(btnUpload, i18n("account.skin.upload")));
+        btnUpload.managedProperty().bind(btnUpload.visibleProperty());
         btnUpload.visibleProperty().bind(skinnable.canUploadSkin());
         right.getChildren().add(btnUpload);
 
