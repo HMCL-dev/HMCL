@@ -17,11 +17,12 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
+import static org.jackhuang.hmcl.util.io.NetworkUtils.toURL;
+
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilProvider;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
 
@@ -55,7 +56,7 @@ public class AuthlibInjectorProvider implements YggdrasilProvider {
 
     @Override
     public URL getSkinUploadURL(UUID uuid) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException();
+        return toURL(apiRoot + "api/user/profile/" + UUIDTypeAdapter.fromUUID(uuid) + "/skin");
     }
 
     @Override
@@ -66,13 +67,5 @@ public class AuthlibInjectorProvider implements YggdrasilProvider {
     @Override
     public String toString() {
         return apiRoot;
-    }
-
-    private URL toURL(String url) throws AuthenticationException {
-        try {
-            return new URL(url);
-        } catch (MalformedURLException e) {
-            throw new AuthenticationException(e);
-        }
     }
 }

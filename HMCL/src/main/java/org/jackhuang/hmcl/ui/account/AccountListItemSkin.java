@@ -92,14 +92,13 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         runInFX(() -> FXUtils.installFastTooltip(btnRefresh, i18n("button.refresh")));
         right.getChildren().add(btnRefresh);
 
-        if (skinnable.canUploadSkin()) {
-            JFXButton btnUpload = new JFXButton();
-            btnUpload.setOnMouseClicked(e -> skinnable.uploadSkin());
-            btnUpload.getStyleClass().add("toggle-icon4");
-            btnUpload.setGraphic(SVG.hanger(Theme.blackFillBinding(), -1, -1));
-            runInFX(() -> FXUtils.installFastTooltip(btnUpload, i18n("account.skin.upload")));
-            right.getChildren().add(btnUpload);
-        }
+        JFXButton btnUpload = new JFXButton();
+        btnUpload.setOnMouseClicked(e -> skinnable.uploadSkin());
+        btnUpload.getStyleClass().add("toggle-icon4");
+        btnUpload.setGraphic(SVG.hanger(Theme.blackFillBinding(), -1, -1));
+        runInFX(() -> FXUtils.installFastTooltip(btnUpload, i18n("account.skin.upload")));
+        btnUpload.visibleProperty().bind(skinnable.canUploadSkin());
+        right.getChildren().add(btnUpload);
 
         JFXButton btnRemove = new JFXButton();
         btnRemove.setOnMouseClicked(e -> skinnable.remove());

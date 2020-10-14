@@ -21,6 +21,8 @@ import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.game.Arguments;
@@ -33,6 +35,8 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.unmodifiableSet;
 
 public class AuthlibInjectorAccount extends YggdrasilAccount {
     private final AuthlibInjectorServer server;
@@ -155,5 +159,23 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
                 .append("username", getUsername())
                 .append("server", getServer().getUrl())
                 .toString();
+    }
+
+    public static Set<TextureType> getUploadableTextures(CompleteGameProfile profile) {
+        String prop = profile.getProperties().get("uploadableTextures");
+        if (prop == null)
+            return emptySet();
+        Set<TextureType> result = EnumSet.noneOf(TextureType.class);
+        for (String val : prop.split(",")) {
+            val = val.toUpperCase();
+            TextureType parsed;
+            try {
+                parsed = TextureType.valueOf(val);
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
+            result.add(parsed);
+        }
+        return unmodifiableSet(result);
     }
 }
