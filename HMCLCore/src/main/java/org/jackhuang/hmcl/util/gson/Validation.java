@@ -38,4 +38,9 @@ public interface Validation {
      * @throws TolerableValidationException if we want to replace this object with null (i.e. the object does not fulfill the constraints).
      */
     void validate() throws JsonParseException, TolerableValidationException;
+
+    static void requireNonNull(Object object, String message) throws JsonParseException {
+        if (object == null)
+            throw new JsonParseException(message);
+    }
 }

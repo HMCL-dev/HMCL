@@ -43,7 +43,9 @@ public final class NetworkUtils {
             if (param.getValue() == null)
                 continue;
             if (first) {
-                sb.append('?');
+                if (!baseUrl.isEmpty()) {
+                    sb.append('?');
+                }
                 first = false;
             } else {
                 sb.append('&');

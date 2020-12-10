@@ -68,6 +68,7 @@ public class AddAccountPane extends StackPane {
     @FXML private JFXPasswordField txtPassword;
     @FXML private Label lblCreationWarning;
     @FXML private Label lblPassword;
+    @FXML private Label lblUsername;
     @FXML private JFXComboBox<AccountFactory<?>> cboType;
     @FXML private JFXComboBox<AuthlibInjectorServer> cboServers;
     @FXML private Label lblInjectorServer;
@@ -88,7 +89,7 @@ public class AddAccountPane extends StackPane {
         cboServers.getItems().addListener(onInvalidating(this::selectDefaultServer));
         selectDefaultServer();
 
-        cboType.getItems().setAll(Accounts.FACTORY_OFFLINE, Accounts.FACTORY_MOJANG, Accounts.FACTORY_AUTHLIB_INJECTOR);
+        cboType.getItems().setAll(Accounts.FACTORIES);
         cboType.setConverter(stringConverter(Accounts::getLocalizedLoginTypeName));
         // try selecting the preferred login type
         cboType.getSelectionModel().select(
@@ -108,7 +109,9 @@ public class AddAccountPane extends StackPane {
         // remember the last used login type
         loginType.addListener((observable, oldValue, newValue) -> config().setPreferredLoginType(Accounts.getLoginType(newValue)));
 
-        txtPassword.visibleProperty().bind(loginType.isNotEqualTo(Accounts.FACTORY_OFFLINE));
+        txtUsername.visibleProperty().bind(Bindings.createBooleanBinding(() -> loginType.get().getLoginType().requiresUsername, loginType));
+        lblUsername.visibleProperty().bind(txtUsername.visibleProperty());
+        txtPassword.visibleProperty().bind(Bindings.createBooleanBinding(() -> loginType.get().getLoginType().requiresPassword, loginType));
         lblPassword.visibleProperty().bind(txtPassword.visibleProperty());
 
         cboServers.visibleProperty().bind(loginType.isEqualTo(Accounts.FACTORY_AUTHLIB_INJECTOR));
@@ -118,7 +121,7 @@ public class AddAccountPane extends StackPane {
 
         btnAccept.disableProperty().bind(Bindings.createBooleanBinding(
                 () -> !( // consider the opposite situation: input is valid
-                        txtUsername.validate() &&
+                        (!txtUsername.isVisible() || txtUsername.validate()) &&
                         // invisible means the field is not needed, neither should it be validated
                         (!txtPassword.isVisible() || txtPassword.validate()) &&
                         (!cboServers.isVisible() || cboServers.getSelectionModel().getSelectedItem() != null)

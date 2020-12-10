@@ -17,9 +17,8 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import static java.util.Objects.requireNonNull;
-
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.jackhuang.hmcl.util.Immutable;
@@ -38,7 +37,7 @@ public class CompleteGameProfile extends GameProfile {
 
     public CompleteGameProfile(UUID id, String name, Map<String, String> properties) {
         super(id, name);
-        this.properties = requireNonNull(properties);
+        this.properties = Objects.requireNonNull(properties);
     }
 
     public CompleteGameProfile(GameProfile profile, Map<String, String> properties) {

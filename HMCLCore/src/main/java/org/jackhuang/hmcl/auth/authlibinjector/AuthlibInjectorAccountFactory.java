@@ -45,6 +45,11 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
     }
 
     @Override
+    public AccountLoginType getLoginType() {
+        return AccountLoginType.USERNAME_PASSWORD;
+    }
+
+    @Override
     public AuthlibInjectorAccount create(CharacterSelector selector, String username, String password, Object additionalData) throws AuthenticationException {
         Objects.requireNonNull(selector);
         Objects.requireNonNull(username);

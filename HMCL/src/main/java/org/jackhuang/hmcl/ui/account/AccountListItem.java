@@ -73,7 +73,9 @@ public class AccountListItem extends RadioButton {
         if (account instanceof OfflineAccount) {
             title.bind(characterName);
         } else {
-            title.bind(Bindings.concat(account.getUsername(), " - ", characterName));
+            title.bind(
+                    account.getUsername().isEmpty() ? characterName :
+                            Bindings.concat(account.getUsername(), " - ", characterName));
         }
 
         image.bind(TexturesLoader.fxAvatarBinding(account, 32));

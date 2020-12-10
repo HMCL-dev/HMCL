@@ -45,7 +45,7 @@
                     </JFXButton>
                 </HBox>
 
-                <Label text="%account.username" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                <Label fx:id="lblUsername" text="%account.username" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
 
                 <JFXTextField fx:id="txtUsername" GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="2"
                               FXUtils.validateWhileTextChanged="true" onAction="#onCreationAccept">

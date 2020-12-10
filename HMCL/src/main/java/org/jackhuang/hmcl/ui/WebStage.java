@@ -17,7 +17,11 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Worker;
 import javafx.scene.Scene;
+import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 
@@ -25,12 +29,19 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 
 public class WebStage extends Stage {
-    private final WebView webView = new WebView();
+    protected final WebView webView = new WebView();
+    protected final WebEngine webEngine = webView.getEngine();
 
     public WebStage() {
-        setScene(new Scene(webView, 800, 480));
+        this(800, 480);
+    }
+
+    public WebStage(int width, int height) {
+        setScene(new Scene(webView, width, height));
         getScene().getStylesheets().addAll(config().getTheme().getStylesheets());
         getIcons().add(newImage("/assets/img/icon.png"));
+        webView.setContextMenuEnabled(false);
+        titleProperty().bind(webEngine.titleProperty());
     }
 
     public WebView getWebView() {

@@ -37,6 +37,11 @@ public class OfflineAccountFactory extends AccountFactory<OfflineAccount> {
     private OfflineAccountFactory() {
     }
 
+    @Override
+    public AccountLoginType getLoginType() {
+        return AccountLoginType.USERNAME;
+    }
+
     public OfflineAccount create(String username, UUID uuid) {
         return new OfflineAccount(username, uuid);
     }
