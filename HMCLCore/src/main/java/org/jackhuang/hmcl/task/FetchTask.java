@@ -51,7 +51,7 @@ public abstract class FetchTask<T> extends Task<T> {
         this.urls = new ArrayList<>(urls);
         this.retry = retry;
 
-        setExecutor(Schedulers.io());
+        setExecutor(download());
     }
 
     public void setCaching(boolean caching) {
@@ -278,7 +278,8 @@ public abstract class FetchTask<T> extends Task<T> {
         if (DOWNLOAD_EXECUTOR == null) {
             synchronized (Schedulers.class) {
                 if (DOWNLOAD_EXECUTOR == null) {
-                    DOWNLOAD_EXECUTOR = new ThreadPoolExecutor(0, downloadExecutorConcurrency, 10, TimeUnit.SECONDS, new SynchronousQueue<>(),
+                    DOWNLOAD_EXECUTOR = new ThreadPoolExecutor(0, downloadExecutorConcurrency, 10, TimeUnit.SECONDS,
+                            new LinkedBlockingQueue<>(),
                             runnable -> {
                                 Thread thread = Executors.defaultThreadFactory().newThread(runnable);
                                 thread.setDaemon(true);

@@ -47,7 +47,8 @@ public final class Schedulers {
         if (IO_EXECUTOR == null) {
             synchronized (Schedulers.class) {
                 if (IO_EXECUTOR == null) {
-                    IO_EXECUTOR = new ThreadPoolExecutor(0, 4, 10, TimeUnit.SECONDS, new SynchronousQueue<>(),
+                    IO_EXECUTOR = new ThreadPoolExecutor(0, 4, 10, TimeUnit.SECONDS,
+                            new LinkedBlockingQueue<>(),
                             runnable -> {
                                 Thread thread = Executors.defaultThreadFactory().newThread(runnable);
                                 thread.setDaemon(true);
