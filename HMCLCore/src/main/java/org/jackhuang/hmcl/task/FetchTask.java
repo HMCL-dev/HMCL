@@ -278,13 +278,15 @@ public abstract class FetchTask<T> extends Task<T> {
         if (DOWNLOAD_EXECUTOR == null) {
             synchronized (Schedulers.class) {
                 if (DOWNLOAD_EXECUTOR == null) {
-                    DOWNLOAD_EXECUTOR = new ThreadPoolExecutor(0, downloadExecutorConcurrency, 10, TimeUnit.SECONDS,
-                            new LinkedBlockingQueue<>(),
+                    ThreadPoolExecutor executor = new ThreadPoolExecutor(downloadExecutorConcurrency, downloadExecutorConcurrency, 10, TimeUnit.SECONDS,
+                            new ArrayBlockingQueue<>(downloadExecutorConcurrency),
                             runnable -> {
                                 Thread thread = Executors.defaultThreadFactory().newThread(runnable);
                                 thread.setDaemon(true);
                                 return thread;
                             });
+                    executor.allowCoreThreadTimeOut(true);
+                    DOWNLOAD_EXECUTOR = executor;
                 }
             }
         }
