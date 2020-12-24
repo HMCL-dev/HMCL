@@ -21,6 +21,10 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 
@@ -90,6 +94,10 @@ public abstract class Account implements Observable {
      */
     protected void invalidate() {
         Platform.runLater(helper::invalidate);
+    }
+
+    public ObjectBinding<Optional<Map<TextureType, Texture>>> getTextures() {
+        return Bindings.createObjectBinding(Optional::empty);
     }
 
     @Override

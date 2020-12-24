@@ -258,7 +258,7 @@ public class AddAccountPane extends StackPane {
         Controllers.dialog(new AddAuthlibInjectorServerPane());
     }
 
-    private class Selector extends BorderPane implements CharacterSelector {
+    private static class Selector extends BorderPane implements CharacterSelector {
 
         private final AdvancedListBox listBox = new AdvancedListBox();
         private final JFXButton cancel = new JFXButton();

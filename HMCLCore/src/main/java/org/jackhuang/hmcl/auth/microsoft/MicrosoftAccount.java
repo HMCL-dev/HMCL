@@ -17,7 +17,11 @@
  */
 package org.jackhuang.hmcl.auth.microsoft;
 
+import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.util.Map;
 import java.util.Optional;
@@ -107,6 +111,13 @@ public class MicrosoftAccount extends Account {
 
     public MicrosoftService getService() {
         return service;
+    }
+
+    @Override
+    public ObjectBinding<Optional<Map<TextureType, Texture>>> getTextures() {
+        return BindingMapping.of(service.getProfileRepository().binding(session.getAuthorization()))
+                .map(profile -> profile.flatMap(MicrosoftService::getTextures));
+
     }
 
     @Override

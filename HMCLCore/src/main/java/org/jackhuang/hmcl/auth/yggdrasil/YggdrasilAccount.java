@@ -27,11 +27,14 @@ import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.NoCharacterException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class YggdrasilAccount extends Account {
 
@@ -187,6 +190,20 @@ public class YggdrasilAccount extends Account {
     public void clearCache() {
         authenticated = false;
         service.getProfileRepository().invalidate(characterUUID);
+    }
+
+    @Override
+    public ObjectBinding<Optional<Map<TextureType, Texture>>> getTextures() {
+        return BindingMapping.of(service.getProfileRepository().binding(getUUID()))
+                .map(profile -> profile.flatMap(it -> {
+                    try {
+                        return YggdrasilService.getTextures(it);
+                    } catch (ServerResponseMalformedException e) {
+                        LOG.log(Level.WARNING, "Failed to parse texture payload", e);
+                        return Optional.empty();
+                    }
+                }));
+
     }
 
     public void uploadSkin(String model, Path file) throws AuthenticationException, UnsupportedOperationException {

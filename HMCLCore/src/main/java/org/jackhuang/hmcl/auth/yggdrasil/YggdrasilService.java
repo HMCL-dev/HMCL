@@ -52,7 +52,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class YggdrasilService {
 
-    private static final ThreadPoolExecutor POOL = threadPool("ProfileProperties", true, 2, 10, TimeUnit.SECONDS);
+    private static final ThreadPoolExecutor POOL = threadPool("YggdrasilProfileProperties", true, 2, 10, TimeUnit.SECONDS);
 
     public static final YggdrasilService MOJANG = new YggdrasilService(new MojangYggdrasilProvider());
 

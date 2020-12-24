@@ -24,7 +24,7 @@ import java.util.List;
 
 /**
  * This interface is for your application to open a GUI for user to choose the character
- * when a having-multi-character yggdrasil account is being logging in..
+ * when a having-multi-character yggdrasil account is being logging in.
  */
 public interface CharacterSelector {
 

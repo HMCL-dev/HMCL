@@ -23,33 +23,53 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.NoCharacterException;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
-import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
+import org.jackhuang.hmcl.auth.yggdrasil.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
+import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Lang.threadPool;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class MicrosoftService {
+    private static final ThreadPoolExecutor POOL = threadPool("MicrosoftProfileProperties", true, 2, 10, TimeUnit.SECONDS);
     private static final Pattern OAUTH_URL_PATTERN = Pattern.compile("^https://login\\.live\\.com/oauth20_desktop\\.srf\\?code=(.*?)&lc=(.*?)$");
 
     private final WebViewCallback callback;
 
+    private final ObservableOptionalCache<String, MinecraftProfileResponse, AuthenticationException> profileRepository;
+
     public MicrosoftService(WebViewCallback callback) {
         this.callback = callback;
+        this.profileRepository = new ObservableOptionalCache<>(
+                authorization -> {
+                    LOG.info("Fetching properties");
+                    return getCompleteProfile(authorization);
+                },
+                (uuid, e) -> LOG.log(Level.WARNING, "Failed to fetch properties of " + uuid, e),
+                POOL);
+    }
+
+    public ObservableOptionalCache<String, MinecraftProfileResponse, AuthenticationException> getProfileRepository() {
+        return profileRepository;
     }
 
     public MicrosoftSession authenticate() throws AuthenticationException {
@@ -139,6 +159,18 @@ public class MicrosoftService {
         }
     }
 
+    public Optional<MinecraftProfileResponse> getCompleteProfile(String authorization) throws AuthenticationException {
+        try {
+            return Optional.ofNullable(HttpRequest.GET(NetworkUtils.toURL("https://api.minecraftservices.com/minecraft/profile"))
+                    .authorization(authorization)
+                    .getJson(MinecraftProfileResponse.class));
+        } catch (IOException e) {
+            throw new ServerDisconnectException(e);
+        } catch (JsonParseException e) {
+            throw new ServerResponseMalformedException(e);
+        }
+    }
+
     public boolean validate(String tokenType, String accessToken) throws AuthenticationException {
         requireNonNull(tokenType);
         requireNonNull(accessToken);
@@ -164,6 +196,21 @@ public class MicrosoftService {
         if (response.error != null) {
             throw new RemoteAuthenticationException(response.error, response.errorMessage, response.developerMessage);
         }
+    }
+
+    public static Optional<Map<TextureType, Texture>> getTextures(MinecraftProfileResponse profile) {
+        Objects.requireNonNull(profile);
+
+        Map<TextureType, Texture> textures = new EnumMap<>(TextureType.class);
+
+        if (!profile.skins.isEmpty()) {
+            textures.put(TextureType.SKIN, new Texture(profile.skins.get(0).url, null));
+        }
+//        if (!profile.capes.isEmpty()) {
+//            textures.put(TextureType.CAPE, new Texture(profile.capes.get(0).url, null);
+//        }
+
+        return Optional.of(textures);
     }
 
     private static class LiveAuthorizationResponse {
@@ -242,11 +289,11 @@ public class MicrosoftService {
         String keyId;
     }
 
-    private static class MinecraftProfileResponseSkin implements Validation {
+    public static class MinecraftProfileResponseSkin implements Validation {
         public String id;
         public String state;
         public String url;
-        public String variant;
+        public String variant; // CLASSIC, SLIM
         public String alias;
 
         @Override
@@ -255,15 +302,14 @@ public class MicrosoftService {
             Validation.requireNonNull(state, "state cannot be null");
             Validation.requireNonNull(url, "url cannot be null");
             Validation.requireNonNull(variant, "variant cannot be null");
-            Validation.requireNonNull(alias, "alias cannot be null");
         }
     }
 
-    private static class MinecraftProfileResponseCape {
+    public static class MinecraftProfileResponseCape {
 
     }
 
-    private static class MinecraftProfileResponse extends MinecraftErrorResponse implements Validation {
+    public static class MinecraftProfileResponse extends MinecraftErrorResponse implements Validation {
         @SerializedName("id")
         UUID id;
         @SerializedName("name")

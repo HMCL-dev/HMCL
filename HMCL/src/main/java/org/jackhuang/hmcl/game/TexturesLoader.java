@@ -24,6 +24,8 @@ import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
@@ -181,6 +183,30 @@ public final class TexturesLoader {
                     }
                 }, uuidFallback);
     }
+
+    public static ObjectBinding<LoadedTexture> skinBinding(Account account) {
+        LoadedTexture uuidFallback = getDefaultSkin(TextureModel.detectUUID(account.getUUID()));
+        return BindingMapping.of(account.getTextures())
+                .map(textures -> textures
+                        .flatMap(it -> Optional.ofNullable(it.get(TextureType.SKIN)))
+                        .filter(it -> StringUtils.isNotBlank(it.getUrl())))
+                .asyncMap(it -> {
+                    if (it.isPresent()) {
+                        Texture texture = it.get();
+                        return CompletableFuture.supplyAsync(() -> {
+                            try {
+                                return loadTexture(texture);
+                            } catch (IOException e) {
+                                LOG.log(Level.WARNING, "Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
+                                return uuidFallback;
+                            }
+                        }, POOL);
+                    } else {
+                        return CompletableFuture.completedFuture(uuidFallback);
+                    }
+                }, uuidFallback);
+    }
+
     // ====
 
     // ==== Avatar ====
@@ -209,8 +235,10 @@ public final class TexturesLoader {
     }
 
     public static ObjectBinding<Image> fxAvatarBinding(Account account, int size) {
-        if (account instanceof YggdrasilAccount) {
-            return fxAvatarBinding(((YggdrasilAccount) account).getYggdrasilService(), account.getUUID(), size);
+        if (account instanceof YggdrasilAccount || account instanceof MicrosoftAccount) {
+            return BindingMapping.of(skinBinding(account))
+                    .map(it -> toAvatar(it.image, size))
+                    .map(img -> SwingFXUtils.toFXImage(img, null));
         } else {
             return Bindings.createObjectBinding(
                     () -> SwingFXUtils.toFXImage(toAvatar(getDefaultSkin(TextureModel.detectUUID(account.getUUID())).image, size), null));
