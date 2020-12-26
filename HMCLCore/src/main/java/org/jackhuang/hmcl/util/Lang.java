@@ -202,12 +202,12 @@ public final class Lang {
 
     public static ThreadPoolExecutor threadPool(String name, boolean daemon, int threads, long timeout, TimeUnit timeunit) {
         AtomicInteger counter = new AtomicInteger(1);
-        ThreadPoolExecutor pool = new ThreadPoolExecutor(0, threads, timeout, timeunit, new LinkedBlockingQueue<>(), r -> {
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(threads, threads, timeout, timeunit, new LinkedBlockingQueue<>(), r -> {
             Thread t = new Thread(r, name + "-" + counter.getAndIncrement());
             t.setDaemon(daemon);
             return t;
         });
-        pool.allowsCoreThreadTimeOut();
+        pool.allowCoreThreadTimeOut(true);
         return pool;
     }
 

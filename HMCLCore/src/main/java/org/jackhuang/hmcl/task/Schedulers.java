@@ -23,6 +23,8 @@ import org.jackhuang.hmcl.util.Logging;
 import javax.swing.*;
 import java.util.concurrent.*;
 
+import static org.jackhuang.hmcl.util.Lang.threadPool;
+
 /**
  *
  * @author huangyuhui
@@ -47,13 +49,7 @@ public final class Schedulers {
         if (IO_EXECUTOR == null) {
             synchronized (Schedulers.class) {
                 if (IO_EXECUTOR == null) {
-                    IO_EXECUTOR = new ThreadPoolExecutor(0, 4, 10, TimeUnit.SECONDS,
-                            new LinkedBlockingQueue<>(),
-                            runnable -> {
-                                Thread thread = Executors.defaultThreadFactory().newThread(runnable);
-                                thread.setDaemon(true);
-                                return thread;
-                            });
+                    IO_EXECUTOR = threadPool("IO", true, 4, 10, TimeUnit.SECONDS);
                 }
             }
         }

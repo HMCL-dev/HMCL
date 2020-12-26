@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -113,25 +112,5 @@ public final class GameVersion {
         } catch (IOException e) {
             return Optional.empty();
         }
-    }
-
-    private static final class MinecraftVersion {
-        public String name;
-
-        @SerializedName("release_target")
-        public String releaseTarget;
-
-        public String id;
-
-        public boolean stable;
-
-        @SerializedName("world_version")
-        public int worldVersion;
-
-        @SerializedName("protocol_version")
-        public int protocolVersion;
-
-        @SerializedName("pack_version")
-        public int packVersion;
     }
 }
