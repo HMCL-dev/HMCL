@@ -19,10 +19,7 @@ package org.jackhuang.hmcl.auth.microsoft;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.auth.NoCharacterException;
-import org.jackhuang.hmcl.auth.ServerDisconnectException;
-import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
+import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
@@ -137,8 +134,16 @@ public class MicrosoftService {
             }
 
             return new MicrosoftSession(minecraftResponse.tokenType, minecraftResponse.accessToken, new MicrosoftSession.User(minecraftResponse.username), null);
-        } catch (IOException | ExecutionException | InterruptedException e) {
+        } catch (IOException e) {
             throw new ServerDisconnectException(e);
+        } catch (InterruptedException e) {
+            throw new NoSelectedCharacterException();
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof InterruptedException) {
+                throw new NoSelectedCharacterException();
+            } else {
+                throw new ServerDisconnectException(e);
+            }
         } catch (JsonParseException e) {
             throw new ServerResponseMalformedException(e);
         }
