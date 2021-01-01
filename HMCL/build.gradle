@@ -83,7 +83,7 @@ def repack(File file) {
 
 jar {
     manifest {
-        attributes 'Created-By': 'Copyright(c) 2013-2020 huangyuhui.',
+        attributes 'Created-By': 'Copyright(c) 2013-2021 huangyuhui.',
                 'Main-Class': mainClassName,
                 'Multi-Release': 'true',
                 'Implementation-Version': version,
