@@ -3,9 +3,6 @@ buildscript {
         jcenter()
         maven { url 'https://plugins.gradle.org/m2/' }
     }
-    dependencies {
-        classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.15.0'
-    }
 }
 
 group 'org.jackhuang'
@@ -15,7 +12,6 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
     apply plugin: 'maven-publish'
-    apply plugin: 'com.github.hierynomus.license'
 
     repositories {
         mavenCentral()
@@ -37,15 +33,6 @@ subprojects {
         compileOnly group: 'org.jetbrains', name: 'annotations', version: '16.0.3'
 
         testCompile group: 'junit', name: 'junit', version: '4.12'
-    }
-
-    license {
-        header rootProject.file('license-header.txt')
-        strictCheck true
-        ext.year = Calendar.getInstance().get(Calendar.YEAR)
-        mapping {
-            java='SLASHSTAR_STYLE'
-        }
     }
 
     publishing {
