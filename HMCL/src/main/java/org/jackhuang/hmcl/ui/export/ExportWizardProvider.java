@@ -19,31 +19,24 @@ package org.jackhuang.hmcl.ui.export;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.Launcher;
-import org.jackhuang.hmcl.game.HMCLModpackExportTask;
 import org.jackhuang.hmcl.mod.ModAdviser;
-import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.ModpackExportInfo;
+import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
-import org.jackhuang.hmcl.setting.Config;
-import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public final class ExportWizardProvider implements WizardProvider {
     private final Profile profile;
@@ -62,73 +55,31 @@ public final class ExportWizardProvider implements WizardProvider {
     public Object finish(Map<String, Object> settings) {
         @SuppressWarnings("unchecked")
         List<String> whitelist = (List<String>) settings.get(ModpackFileSelectionPage.MODPACK_FILE_SELECTION);
-        File modpackFile = (File) settings.get(ModpackInfoPage.MODPACK_FILE);
-        String modpackName = (String) settings.get(ModpackInfoPage.MODPACK_NAME);
-        String modpackAuthor = (String) settings.get(ModpackInfoPage.MODPACK_AUTHOR);
-        String modpackFileApi = (String) settings.get(ModpackInfoPage.MODPACK_FILE_API);
-        String modpackVersion = (String) settings.get(ModpackInfoPage.MODPACK_VERSION);
-        String modpackDescription = (String) settings.get(ModpackInfoPage.MODPACK_DESCRIPTION);
+        ModpackExportInfo exportInfo = (ModpackExportInfo) settings.get(ModpackInfoPage.MODPACK_INFO);
+        exportInfo.setWhitelist(whitelist);
         String modpackType = (String) settings.get(ModpackTypeSelectionPage.MODPACK_TYPE);
-        boolean includeLauncher = (Boolean) settings.get(ModpackInfoPage.MODPACK_INCLUDE_LAUNCHER);
 
         switch (modpackType) {
-            case ModpackTypeSelectionPage.MODPACK_TYPE_HMCL:
-                return exportAsHMCL(whitelist, modpackFile, modpackName, modpackAuthor, modpackVersion, modpackDescription, includeLauncher);
+            case ModpackTypeSelectionPage.MODPACK_TYPE_MCBBS:
+                return exportAsMcbbs(exportInfo);
             case ModpackTypeSelectionPage.MODPACK_TYPE_MULTIMC:
-                return exportAsMultiMC(whitelist, modpackFile, modpackName, modpackAuthor, modpackVersion, modpackDescription);
+                return exportAsMultiMC(exportInfo);
             case ModpackTypeSelectionPage.MODPACK_TYPE_SERVER:
-                return exportAsServer(whitelist, modpackFile, modpackName, modpackAuthor, modpackVersion, modpackDescription, modpackFileApi);
+                return exportAsServer(exportInfo);
             default:
                 throw new IllegalStateException("Unrecognized modpack type " + modpackType);
         }
     }
 
-    private Task<?> exportAsHMCL(List<String> whitelist, File modpackFile, String modpackName, String modpackAuthor, String modpackVersion, String modpackDescription, boolean includeLauncherRaw) {
+    private Task<?> exportAsMcbbs(ModpackExportInfo exportInfo) {
         List<File> launcherJar = Launcher.getCurrentJarFiles();
-        boolean includeLauncher = includeLauncherRaw && launcherJar != null;
 
         return new Task<Void>() {
             Task<?> dependency = null;
 
             @Override
-            public void execute() throws Exception {
-                File tempModpack = includeLauncher ? Files.createTempFile("hmcl", ".zip").toFile() : modpackFile;
-
-                dependency = new HMCLModpackExportTask(profile.getRepository(), version, whitelist,
-                        new Modpack(modpackName, modpackAuthor, modpackVersion, null, modpackDescription, StandardCharsets.UTF_8, null), tempModpack);
-
-                if (includeLauncher) {
-                    dependency = dependency.thenRunAsync(() -> {
-                        try (Zipper zip = new Zipper(modpackFile.toPath())) {
-                            Config exported = new Config();
-
-                            exported.setBackgroundImageType(config().getBackgroundImageType());
-                            exported.setBackgroundImage(config().getBackgroundImage());
-                            exported.setTheme(config().getTheme());
-                            exported.setDownloadType(config().getDownloadType());
-                            exported.setPreferredLoginType(config().getPreferredLoginType());
-                            exported.getAuthlibInjectorServers().setAll(config().getAuthlibInjectorServers());
-
-                            zip.putTextFile(exported.toJson(), ConfigHolder.CONFIG_FILENAME);
-                            zip.putFile(tempModpack, "modpack.zip");
-
-                            File bg = new File("bg").getAbsoluteFile();
-                            if (bg.isDirectory())
-                                zip.putDirectory(bg.toPath(), "bg");
-
-                            File background_png = new File("background.png").getAbsoluteFile();
-                            if (background_png.isFile())
-                                zip.putFile(background_png, "background.png");
-
-                            File background_jpg = new File("background.jpg").getAbsoluteFile();
-                            if (background_jpg.isFile())
-                                zip.putFile(background_jpg, "background.jpg");
-
-                            for (File jar : launcherJar)
-                                zip.putFile(jar, jar.getName());
-                        }
-                    });
-                }
+            public void execute() {
+                dependency = new McbbsModpackExportTask(profile.getRepository(), version, exportInfo);
             }
 
             @Override
@@ -138,30 +89,30 @@ public final class ExportWizardProvider implements WizardProvider {
         };
     }
 
-    private Task<?> exportAsMultiMC(List<String> whitelist, File modpackFile, String modpackName, String modpackAuthor, String modpackVersion, String modpackDescription) {
+    private Task<?> exportAsMultiMC(ModpackExportInfo exportInfo) {
         return new Task<Void>() {
             Task<?> dependency;
 
             @Override
             public void execute() {
                 VersionSetting vs = profile.getVersionSetting(version);
-                dependency = new MultiMCModpackExportTask(profile.getRepository(), version, whitelist,
+                dependency = new MultiMCModpackExportTask(profile.getRepository(), version, exportInfo.getWhitelist(),
                         new MultiMCInstanceConfiguration(
                                 "OneSix",
-                                modpackName + "-" + modpackVersion,
+                                exportInfo.getName() + "-" + exportInfo.getVersion(),
                                 null,
                                 Lang.toIntOrNull(vs.getPermSize()),
                                 vs.getWrapper(),
                                 vs.getPreLaunchCommand(),
                                 null,
-                                modpackDescription,
+                                exportInfo.getDescription(),
                                 null,
-                                vs.getJavaArgs(),
+                                exportInfo.getJavaArguments(),
                                 vs.isFullscreen(),
                                 vs.getWidth(),
                                 vs.getHeight(),
                                 vs.getMaxMemory(),
-                                vs.getMinMemory(),
+                                exportInfo.getMinMemory(),
                                 vs.isShowLogs(),
                                 /* showConsoleOnError */ true,
                                 /* autoCloseConsole */ false,
@@ -171,7 +122,7 @@ public final class ExportWizardProvider implements WizardProvider {
                                 /* overrideConsole */ true,
                                 /* overrideCommands */ true,
                                 /* overrideWindow */ true
-                        ), modpackFile);
+                        ), exportInfo.getOutput().toFile());
             }
 
             @Override
@@ -181,13 +132,13 @@ public final class ExportWizardProvider implements WizardProvider {
         };
     }
 
-    private Task<?> exportAsServer(List<String> whitelist, File modpackFile, String modpackName, String modpackAuthor, String modpackVersion, String modpackDescription, String modpackFileApi) {
+    private Task<?> exportAsServer(ModpackExportInfo exportInfo) {
         return new Task<Void>() {
             Task<?> dependency;
 
             @Override
             public void execute() {
-                dependency = new ServerModpackExportTask(profile.getRepository(), version, whitelist, modpackName, modpackAuthor, modpackVersion, modpackDescription, modpackFileApi, modpackFile);
+                dependency = new ServerModpackExportTask(profile.getRepository(), version, exportInfo);
             }
 
             @Override
@@ -203,7 +154,7 @@ public final class ExportWizardProvider implements WizardProvider {
             case 0:
                 return new ModpackTypeSelectionPage(controller);
             case 1:
-                return new ModpackInfoPage(controller, version);
+                return new ModpackInfoPage(controller, profile.getRepository(), version);
             case 2:
                 return new ModpackFileSelectionPage(controller, profile, version, ModAdviser::suggestMod);
             default:

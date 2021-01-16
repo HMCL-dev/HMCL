@@ -13,11 +13,11 @@
     </fx:define>
     <VBox fx:id="list" styleClass="jfx-list-view" maxHeight="150" maxWidth="300">
         <Label padding="${insets}" text="%modpack.export.as" />
-        <JFXButton fx:id="btnHMCL" prefWidth="${list.width}">
+        <JFXButton fx:id="btnMCBBS" prefWidth="${list.width}">
             <graphic>
                 <BorderPane mouseTransparent="true">
                     <left>
-                        <TwoLineListItem title="%modpack.type.hmcl" subtitle="%modpack.type.hmcl.export" />
+                        <TwoLineListItem title="%modpack.type.mcbbs" subtitle="%modpack.type.mcbbs.export" />
                     </left>
                     <right>
                         <fx:include BorderPane.alignment="CENTER" source="/assets/svg/arrow-right.fxml"/>

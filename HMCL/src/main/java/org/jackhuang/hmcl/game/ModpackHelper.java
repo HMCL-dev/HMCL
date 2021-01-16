@@ -23,6 +23,8 @@ import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.mod.curse.CurseCompletionException;
 import org.jackhuang.hmcl.mod.curse.CurseInstallTask;
 import org.jackhuang.hmcl.mod.curse.CurseManifest;
+import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackLocalInstallTask;
+import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackLocalInstallTask;
@@ -43,12 +45,20 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 
 public final class ModpackHelper {
     private ModpackHelper() {}
 
     public static Modpack readModpackManifest(Path file, Charset charset) throws UnsupportedModpackException {
+        try {
+            return McbbsModpackManifest.readManifest(file, charset);
+        } catch (Exception ignored) {
+            ignored.printStackTrace();
+            // ignore it, not a valid MCBBS modpack.
+        }
+
         try {
             return CurseManifest.readCurseForgeModpackManifest(file, charset);
         } catch (Exception e) {
@@ -148,12 +158,16 @@ public final class ModpackHelper {
             return new HMCLModpackInstallTask(profile, zipFile, modpack, name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure);
         else if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, modpack, ((MultiMCInstanceConfiguration) modpack.getManifest()), name)
+            return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, modpack, (MultiMCInstanceConfiguration) modpack.getManifest(), name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                    .thenComposeAsync(new MultiMCInstallVersionSettingTask(profile, ((MultiMCInstanceConfiguration) modpack.getManifest()), name));
+                    .thenComposeAsync(createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
         else if (modpack.getManifest() instanceof ServerModpackManifest)
-            return new ServerModpackLocalInstallTask(profile.getDependency(), zipFile, modpack, ((ServerModpackManifest) modpack.getManifest()), name)
+            return new ServerModpackLocalInstallTask(profile.getDependency(), zipFile, modpack, (ServerModpackManifest) modpack.getManifest(), name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure);
+        else if (modpack.getManifest() instanceof McbbsModpackManifest)
+            return new McbbsModpackLocalInstallTask(profile.getDependency(), zipFile, modpack, (McbbsModpackManifest) modpack.getManifest(), name)
+                    .whenComplete(Schedulers.defaultScheduler(), success, failure)
+                    .thenComposeAsync(createMcbbsPostInstallTask(profile, (McbbsModpackManifest) modpack.getManifest(), name));
         else throw new IllegalArgumentException("Unrecognized modpack: " + modpack.getManifest());
     }
 
@@ -232,5 +246,18 @@ public final class ModpackHelper {
         }
     }
 
+    private static Task<Void> createMultiMCPostInstallTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {
+        return Task.runAsync(Schedulers.javafx(), () -> {
+            VersionSetting vs = Objects.requireNonNull(profile.getRepository().specializeVersionSetting(version));
+            ModpackHelper.toVersionSetting(manifest, vs);
+        });
+    }
 
+    private static Task<Void> createMcbbsPostInstallTask(Profile profile, McbbsModpackManifest manifest, String version) {
+        return Task.runAsync(Schedulers.javafx(), () -> {
+            VersionSetting vs = Objects.requireNonNull(profile.getRepository().specializeVersionSetting(version));
+            if (manifest.getLaunchInfo().getMinMemory() > vs.getMaxMemory())
+                vs.setMaxMemory(manifest.getLaunchInfo().getMinMemory());
+        });
+    }
 }

@@ -17,29 +17,21 @@
  */
 package org.jackhuang.hmcl.util.gson;
 
-import java.io.File;
-import java.util.Date;
-import java.util.UUID;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
+
+import java.io.File;
+import java.util.Date;
+import java.util.UUID;
 
 /**
  * @author yushijinhun
  */
 public final class JsonUtils {
 
-    public static final Gson GSON = new GsonBuilder()
-            .enableComplexMapKeySerialization()
-            .setPrettyPrinting()
-            .registerTypeAdapter(Date.class, DateTypeAdapter.INSTANCE)
-            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
-            .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
-            .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
-            .registerTypeAdapterFactory(LowerCaseEnumTypeAdapterFactory.INSTANCE)
-            .create();
+    public static final Gson GSON = defaultGsonBuilder().create();
 
     private JsonUtils() {
     }
@@ -57,5 +49,17 @@ public final class JsonUtils {
         } catch (JsonSyntaxException e) {
             return null;
         }
+    }
+
+    public static GsonBuilder defaultGsonBuilder() {
+        return new GsonBuilder()
+                .enableComplexMapKeySerialization()
+                .setPrettyPrinting()
+                .registerTypeAdapter(Date.class, DateTypeAdapter.INSTANCE)
+                .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
+                .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
+                .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
+                .registerTypeAdapterFactory(LowerCaseEnumTypeAdapterFactory.INSTANCE)
+                .registerTypeAdapterFactory(JsonTypeAdapterFactory.INSTANCE);
     }
 }

@@ -169,7 +169,7 @@ public final class LauncherHelper {
                             repository,
                             version.getPatches().isEmpty() ? repository.getResolvedVersion(selectedVersion) : version,
                             authInfo,
-                            setting.toLaunchOptions(profile.getGameDir(), !setting.isNotCheckJVM()),
+                            repository.getLaunchOptions(selectedVersion, profile.getGameDir(), !setting.isNotCheckJVM()),
                             launcherVisibility == LauncherVisibility.CLOSE
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
                                     : new HMCLProcessListener(repository, selectedVersion, authInfo, launchingLatch, gameVersion.isPresent())

@@ -18,10 +18,14 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.Serializable;
 import java.net.Proxy;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  *
@@ -34,8 +38,8 @@ public class LaunchOptions implements Serializable {
     private String versionName;
     private String versionType;
     private String profileName;
-    private String minecraftArgs;
-    private String javaArgs;
+    private List<String> gameArguments = new ArrayList<>();
+    private List<String> javaArguments = new ArrayList<>();
     private Integer minMemory;
     private Integer maxMemory;
     private Integer metaspace;
@@ -90,15 +94,17 @@ public class LaunchOptions implements Serializable {
     /**
      * User custom additional minecraft command line arguments.
      */
-    public String getMinecraftArgs() {
-        return minecraftArgs;
+    @NotNull
+    public List<String> getGameArguments() {
+        return Collections.unmodifiableList(gameArguments);
     }
 
     /**
      * User custom additional java virtual machine command line arguments.
      */
-    public String getJavaArgs() {
-        return javaArgs;
+    @NotNull
+    public List<String> getJavaArguments() {
+        return Collections.unmodifiableList(javaArguments);
     }
 
     /**
@@ -202,6 +208,150 @@ public class LaunchOptions implements Serializable {
             return options;
         }
 
+        /**
+         * The game directory
+         */
+        public File getGameDir() {
+            return options.gameDir;
+        }
+
+        /**
+         * The Java Environment that Minecraft runs on.
+         */
+        public JavaVersion getJava() {
+            return options.java;
+        }
+
+        /**
+         * Will shown in the left bottom corner of the main menu of Minecraft.
+         * null if use the id of launch version.
+         */
+        public String getVersionName() {
+            return options.versionName;
+        }
+
+        /**
+         * Will shown in the left bottom corner of the main menu of Minecraft.
+         * null if use Version.versionType.
+         */
+        public String getVersionType() {
+            return options.versionType;
+        }
+
+        /**
+         * Don't know what the hell this is.
+         */
+        public String getProfileName() {
+            return options.profileName;
+        }
+
+        /**
+         * User custom additional minecraft command line arguments.
+         */
+        public List<String> getGameArguments() {
+            return options.gameArguments;
+        }
+
+        /**
+         * User custom additional java virtual machine command line arguments.
+         */
+        public List<String> getJavaArguments() {
+            return options.javaArguments;
+        }
+
+        /**
+         * The minimum memory that the JVM can allocate.
+         */
+        public Integer getMinMemory() {
+            return options.minMemory;
+        }
+
+        /**
+         * The maximum memory that the JVM can allocate.
+         */
+        public Integer getMaxMemory() {
+            return options.maxMemory;
+        }
+
+        /**
+         * The maximum metaspace memory that the JVM can allocate.
+         * For Java 7 -XX:PermSize and Java 8 -XX:MetaspaceSize
+         * Containing class instances.
+         */
+        public Integer getMetaspace() {
+            return options.metaspace;
+        }
+
+        /**
+         * The initial game window width
+         */
+        public Integer getWidth() {
+            return options.width;
+        }
+
+        /**
+         * The initial game window height
+         */
+        public Integer getHeight() {
+            return options.height;
+        }
+
+        /**
+         * Is inital game window fullscreen.
+         */
+        public boolean isFullscreen() {
+            return options.fullscreen;
+        }
+
+        /**
+         * The server ip that will connect to when enter game main menu.
+         */
+        public String getServerIp() {
+            return options.serverIp;
+        }
+
+        /**
+         * i.e. optirun
+         */
+        public String getWrapper() {
+            return options.wrapper;
+        }
+
+        /**
+         * Proxy settings
+         */
+        public Proxy getProxy() {
+            return options.proxy;
+        }
+
+        /**
+         * The user name of the proxy, optional.
+         */
+        public String getProxyUser() {
+            return options.proxyUser;
+        }
+
+        /**
+         * The password of the proxy, optional
+         */
+        public String getProxyPass() {
+            return options.proxyPass;
+        }
+
+        /**
+         * Prevent game launcher from generating default JVM arguments like max memory.
+         */
+        public boolean isNoGeneratedJVMArgs() {
+            return options.noGeneratedJVMArgs;
+        }
+
+        /**
+         * Called command line before launching the game.
+         */
+        public String getPreLaunchCommand() {
+            return options.preLaunchCommand;
+        }
+
         public Builder setGameDir(File gameDir) {
             options.gameDir = gameDir;
             return this;
@@ -227,13 +377,15 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setMinecraftArgs(String minecraftArgs) {
-            options.minecraftArgs = minecraftArgs;
+        public Builder setGameArguments(List<String> gameArguments) {
+            options.gameArguments.clear();
+            options.gameArguments.addAll(gameArguments);
             return this;
         }
 
-        public Builder setJavaArgs(String javaArgs) {
-            options.javaArgs = javaArgs;
+        public Builder setJavaArguments(List<String> javaArguments) {
+            options.javaArguments.clear();
+            options.javaArguments.addAll(javaArguments);
             return this;
         }
 

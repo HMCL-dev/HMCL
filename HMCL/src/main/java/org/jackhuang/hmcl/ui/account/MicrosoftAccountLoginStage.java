@@ -35,6 +35,8 @@ public class MicrosoftAccountLoginStage extends WebStage implements MicrosoftSer
         super(600, 600);
         initModality(Modality.APPLICATION_MODAL);
 
+        titleProperty().bind(webEngine.titleProperty());
+
         webEngine.locationProperty().addListener((observable, oldValue, newValue) -> {
             if (urlTester != null && urlTester.test(newValue)) {
                 future.complete(newValue);

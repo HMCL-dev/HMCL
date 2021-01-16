@@ -21,16 +21,13 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.GameDirectoryType;
-import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.InvalidPathException;
@@ -38,8 +35,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 /**
  *
@@ -531,36 +526,6 @@ public final class VersionSetting implements Cloneable {
         gameDirProperty.addListener(listener);
         launcherVisibilityProperty.addListener(listener);
         defaultJavaPathProperty.addListener(listener);
-    }
-
-    public LaunchOptions toLaunchOptions(File gameDir, boolean checkJava) throws InterruptedException {
-        JavaVersion javaVersion = Optional.ofNullable(getJavaVersion(checkJava)).orElse(JavaVersion.fromCurrentEnvironment());
-        LaunchOptions.Builder builder = new LaunchOptions.Builder()
-                .setGameDir(gameDir)
-                .setJava(javaVersion)
-                .setVersionName(Metadata.TITLE)
-                .setVersionType(Metadata.TITLE)
-                .setProfileName(Metadata.TITLE)
-                .setMinecraftArgs(getMinecraftArgs())
-                .setJavaArgs(getJavaArgs())
-                .setMaxMemory(getMaxMemory())
-                .setMinMemory(getMinMemory())
-                .setMetaspace(Lang.toIntOrNull(getPermSize()))
-                .setWidth(getWidth())
-                .setHeight(getHeight())
-                .setFullscreen(isFullscreen())
-                .setServerIp(getServerIp())
-                .setWrapper(getWrapper())
-                .setPrecalledCommand(getPreLaunchCommand())
-                .setNoGeneratedJVMArgs(isNoJVMArgs());
-        if (config().hasProxy()) {
-            builder.setProxy(ProxyManager.getProxy());
-            if (config().hasProxyAuth()) {
-                builder.setProxyUser(config().getProxyUser());
-                builder.setProxyPass(config().getProxyPass());
-            }
-        }
-        return builder.create();
     }
 
     @Override

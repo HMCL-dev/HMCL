@@ -69,7 +69,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
                     }.getType());
                 }
             } catch (Exception e) {
-                Logging.LOG.log(Level.WARNING, "Unable to read CurseForge modpack manifest.json", e);
+                Logging.LOG.log(Level.WARNING, "Unable to read Server modpack manifest.json", e);
             }
         } else {
             this.manifest = manifest;

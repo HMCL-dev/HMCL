@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
+import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -43,27 +44,15 @@ import static org.jackhuang.hmcl.util.Hex.encodeHex;
 public class ServerModpackExportTask extends Task<Void> {
     private final DefaultGameRepository repository;
     private final String versionId;
-    private final List<String> whitelist;
-    private final File output;
-    private final String modpackName;
-    private final String modpackAuthor;
-    private final String modpackVersion;
-    private final String modpackDescription;
-    private final String modpackFileApi;
+    private final ModpackExportInfo exportInfo;
 
-    public ServerModpackExportTask(DefaultGameRepository repository, String versionId, List<String> whitelist, String modpackName, String modpackAuthor, String modpackVersion, String modpackDescription, String modpackFileApi, File output) {
+    public ServerModpackExportTask(DefaultGameRepository repository, String version, ModpackExportInfo exportInfo) {
         this.repository = repository;
-        this.versionId = versionId;
-        this.whitelist = whitelist;
-        this.output = output;
-        this.modpackName = modpackName;
-        this.modpackAuthor = modpackAuthor;
-        this.modpackVersion = modpackVersion;
-        this.modpackDescription = modpackDescription;
-        this.modpackFileApi = modpackFileApi;
+        this.versionId = version;
+        this.exportInfo = exportInfo.validate();
 
         onDone().register(event -> {
-            if (event.isFailed()) output.delete();
+            if (event.isFailed()) exportInfo.getOutput().toFile().delete();
         });
     }
 
@@ -73,11 +62,11 @@ public class ServerModpackExportTask extends Task<Void> {
         blackList.add(versionId + ".jar");
         blackList.add(versionId + ".json");
         Logging.LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
-        try (Zipper zip = new Zipper(output.toPath())) {
+        try (Zipper zip = new Zipper(exportInfo.getOutput())) {
             Path runDirectory = repository.getRunDirectory(versionId).toPath();
             List<ModpackConfiguration.FileInformation> files = new ArrayList<>();
             zip.putDirectory(runDirectory, "overrides", path -> {
-                if (Modpack.acceptFile(path, blackList, whitelist)) {
+                if (Modpack.acceptFile(path, blackList, exportInfo.getWhitelist())) {
                     Path file = runDirectory.resolve(path);
                     if (Files.isRegularFile(file)) {
                         String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
@@ -102,8 +91,11 @@ public class ServerModpackExportTask extends Task<Void> {
                     addons.add(new ServerModpackManifest.Addon(OPTIFINE.getPatchId(), optifineVersion)));
             analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->
                     addons.add(new ServerModpackManifest.Addon(FABRIC.getPatchId(), fabricVersion)));
-            ServerModpackManifest manifest = new ServerModpackManifest(modpackName, modpackAuthor, modpackVersion, modpackDescription, StringUtils.removeSuffix(modpackFileApi, "/"), files, addons);
+            ServerModpackManifest manifest = new ServerModpackManifest(exportInfo.getName(), exportInfo.getAuthor(), exportInfo.getVersion(), exportInfo.getDescription(), StringUtils.removeSuffix(exportInfo.getFileApi(), "/"), files, addons);
             zip.putTextFile(JsonUtils.GSON.toJson(manifest), "server-manifest.json");
         }
     }
+
+    public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options()
+            .requireFileApi(false);
 }

@@ -20,18 +20,23 @@ package org.jackhuang.hmcl.ui.export;
 import com.jfoenix.controls.JFXButton;
 import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.mod.ModpackExportInfo;
+import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
+import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
+import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 
 import java.util.Map;
 
+import static org.jackhuang.hmcl.ui.export.ModpackInfoPage.MODPACK_INFO_OPTION;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModpackTypeSelectionPage extends StackPane implements WizardPage {
     private final WizardController controller;
     @FXML
-    private JFXButton btnHMCL;
+    private JFXButton btnMCBBS;
     @FXML
     private JFXButton btnMultiMC;
     @FXML
@@ -41,12 +46,15 @@ public final class ModpackTypeSelectionPage extends StackPane implements WizardP
         this.controller = controller;
         FXUtils.loadFXML(this, "/assets/fxml/modpack/type.fxml");
 
-        JFXButton[] buttons = new JFXButton[]{btnHMCL, btnMultiMC, btnServer};
-        String[] types = new String[]{MODPACK_TYPE_HMCL, MODPACK_TYPE_MULTIMC, MODPACK_TYPE_SERVER};
+        JFXButton[] buttons = new JFXButton[]{btnMCBBS, btnMultiMC, btnServer};
+        String[] types = new String[]{MODPACK_TYPE_MCBBS, MODPACK_TYPE_MULTIMC, MODPACK_TYPE_SERVER};
+        ModpackExportInfo.Options[] options = new ModpackExportInfo.Options[]{McbbsModpackExportTask.OPTION, MultiMCModpackExportTask.OPTION, ServerModpackExportTask.OPTION};
         for (int i = 0; i < types.length; ++i) {
             String type = types[i];
+            ModpackExportInfo.Options option = options[i];
             buttons[i].setOnMouseClicked(e -> {
                 controller.getSettings().put(MODPACK_TYPE, type);
+                controller.getSettings().put(MODPACK_INFO_OPTION, option);
                 controller.onNext();
             });
         }
@@ -63,7 +71,7 @@ public final class ModpackTypeSelectionPage extends StackPane implements WizardP
 
     public static final String MODPACK_TYPE = "modpack.type";
 
-    public static final String MODPACK_TYPE_HMCL = "hmcl";
+    public static final String MODPACK_TYPE_MCBBS = "mcbbs";
     public static final String MODPACK_TYPE_MULTIMC = "multimc";
     public static final String MODPACK_TYPE_SERVER = "server";
 }

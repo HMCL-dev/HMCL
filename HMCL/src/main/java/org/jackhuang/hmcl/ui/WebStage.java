@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.concurrent.Worker;
 import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
@@ -41,7 +38,6 @@ public class WebStage extends Stage {
         getScene().getStylesheets().addAll(config().getTheme().getStylesheets());
         getIcons().add(newImage("/assets/img/icon.png"));
         webView.setContextMenuEnabled(false);
-        titleProperty().bind(webEngine.titleProperty());
     }
 
     public WebView getWebView() {

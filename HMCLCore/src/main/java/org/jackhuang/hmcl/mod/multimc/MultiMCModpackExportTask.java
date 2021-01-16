@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -46,7 +47,7 @@ public class MultiMCModpackExportTask extends Task<Void> {
     private final File output;
 
     /**
-     * @param output  mod pack file.
+     * @param output    mod pack file.
      * @param versionId to locate version.json
      */
     public MultiMCModpackExportTask(DefaultGameRepository repository, String versionId, List<String> whitelist, MultiMCInstanceConfiguration configuration, File output) {
@@ -91,4 +92,6 @@ public class MultiMCModpackExportTask extends Task<Void> {
             zip.putTextFile("", ".packignore");
         }
     }
+
+    public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options().requireMinMemory();
 }

@@ -19,13 +19,24 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import javafx.scene.image.Image;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.ModpackConfiguration;
+import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackLocalInstallTask;
+import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.ProxyManager;
 import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.platform.JavaVersion;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,6 +44,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 
 public class HMCLGameRepository extends DefaultGameRepository {
@@ -271,6 +283,54 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public boolean forbidsVersion(String id) {
         return FORBIDDEN.contains(id);
+    }
+
+    public LaunchOptions getLaunchOptions(String version, File gameDir, boolean checkJava) throws InterruptedException {
+        VersionSetting vs = getVersionSetting(version);
+
+        JavaVersion javaVersion = Optional.ofNullable(vs.getJavaVersion(checkJava)).orElse(JavaVersion.fromCurrentEnvironment());
+        LaunchOptions.Builder builder = new LaunchOptions.Builder()
+                .setGameDir(gameDir)
+                .setJava(javaVersion)
+                .setVersionName(Metadata.TITLE)
+                .setVersionType(Metadata.TITLE)
+                .setProfileName(Metadata.TITLE)
+                .setGameArguments(StringUtils.tokenize(vs.getMinecraftArgs()))
+                .setJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
+                .setMaxMemory(vs.getMaxMemory())
+                .setMinMemory(vs.getMinMemory())
+                .setMetaspace(Lang.toIntOrNull(vs.getPermSize()))
+                .setWidth(vs.getWidth())
+                .setHeight(vs.getHeight())
+                .setFullscreen(vs.isFullscreen())
+                .setServerIp(vs.getServerIp())
+                .setWrapper(vs.getWrapper())
+                .setPrecalledCommand(vs.getPreLaunchCommand())
+                .setNoGeneratedJVMArgs(vs.isNoJVMArgs());
+        if (config().hasProxy()) {
+            builder.setProxy(ProxyManager.getProxy());
+            if (config().hasProxyAuth()) {
+                builder.setProxyUser(config().getProxyUser());
+                builder.setProxyPass(config().getProxyPass());
+            }
+        }
+
+        File json = getModpackConfiguration(version);
+        if (json.exists()) {
+            try {
+                String jsonText = FileUtils.readText(json);
+                ModpackConfiguration<?> modpackConfiguration = JsonUtils.GSON.fromJson(jsonText, ModpackConfiguration.class);
+                if (McbbsModpackLocalInstallTask.MODPACK_TYPE.equals(modpackConfiguration.getType())) {
+                    ModpackConfiguration<McbbsModpackManifest> config = JsonUtils.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<McbbsModpackManifest>>() {
+                    }.getType());
+                    config.getManifest().injectLaunchOptions(builder);
+                }
+            } catch (IOException | JsonParseException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return builder.create();
     }
 
     @Override

@@ -34,14 +34,16 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
-import org.jackhuang.hmcl.game.HMCLModpackExportTask;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
 import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
 import org.jackhuang.hmcl.mod.ModpackInstallTask;
 import org.jackhuang.hmcl.mod.ModpackUpdateTask;
 import org.jackhuang.hmcl.mod.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.mod.curse.CurseInstallTask;
+import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
+import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
+import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -128,7 +130,7 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("modpack.install", i18n("modpack.type.multimc")));
                 } else if (task instanceof HMCLModpackInstallTask) {
                     task.setName(i18n("modpack.install", i18n("modpack.type.hmcl")));
-                } else if (task instanceof HMCLModpackExportTask) {
+                } else if (task instanceof McbbsModpackExportTask || task instanceof MultiMCModpackExportTask || task instanceof ServerModpackExportTask) {
                     task.setName(i18n("modpack.export"));
                 } else if (task instanceof MinecraftInstanceTask) {
                     task.setName(i18n("modpack.scan"));

@@ -82,8 +82,7 @@ public class DefaultLauncher extends Launcher {
 
         res.add(options.getJava().getBinary().toString());
 
-        if (StringUtils.isNotBlank(options.getJavaArgs()))
-            res.addAllWithoutParsing(StringUtils.tokenize(options.getJavaArgs()));
+        res.addAllWithoutParsing(options.getJavaArguments());
 
         // JVM Args
         if (!options.isNoGeneratedJVMArgs()) {
@@ -218,8 +217,7 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        if (StringUtils.isNotBlank(options.getMinecraftArgs()))
-            res.addAllWithoutParsing(StringUtils.tokenize(options.getMinecraftArgs()));
+        res.addAllWithoutParsing(options.getGameArguments());
 
         res.removeIf(it -> getForbiddens().containsKey(it) && getForbiddens().get(it).get());
         return res;
