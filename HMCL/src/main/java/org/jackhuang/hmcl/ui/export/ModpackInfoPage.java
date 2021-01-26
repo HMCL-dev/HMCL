@@ -415,7 +415,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                             // our requirement.
                             Bindings.createBooleanBinding(() -> validatingFields.stream()
                                             .map(field -> !field.validate())
-                                            .reduce(true, (left, right) -> left || right),
+                                            .reduce(false, (left, right) -> left || right),
                                     validatingFields.stream().map(JFXTextField::textProperty).toArray(StringProperty[]::new)));
                     hbox.getChildren().add(nextButton);
                 }
