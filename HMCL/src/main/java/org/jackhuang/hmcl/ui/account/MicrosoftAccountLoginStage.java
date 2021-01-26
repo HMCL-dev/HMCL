@@ -25,6 +25,8 @@ import org.jackhuang.hmcl.ui.WebStage;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
+import static org.jackhuang.hmcl.Launcher.COOKIE_MANAGER;
+
 public class MicrosoftAccountLoginStage extends WebStage implements MicrosoftService.WebViewCallback {
     public static final MicrosoftAccountLoginStage INSTANCE = new MicrosoftAccountLoginStage();
 
@@ -58,6 +60,8 @@ public class MicrosoftAccountLoginStage extends WebStage implements MicrosoftSer
     @Override
     public CompletableFuture<String> show(MicrosoftService service, Predicate<String> urlTester, String initialURL) {
         Platform.runLater(() -> {
+            COOKIE_MANAGER.getCookieStore().removeAll();
+
             webEngine.load(initialURL);
             show();
         });

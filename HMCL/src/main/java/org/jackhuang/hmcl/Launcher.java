@@ -33,9 +33,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.net.*;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
@@ -47,10 +45,13 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Launcher extends Application {
+    public static final CookieManager COOKIE_MANAGER = new CookieManager();
 
     @Override
     public void start(Stage primaryStage) {
         Thread.currentThread().setUncaughtExceptionHandler(CRASH_REPORTER);
+
+        CookieHandler.setDefault(COOKIE_MANAGER);
 
         try {
             try {
