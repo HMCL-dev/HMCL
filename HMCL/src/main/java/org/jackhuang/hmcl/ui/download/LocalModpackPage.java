@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.download;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
@@ -90,7 +91,16 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
         if (name.isPresent()) {
             txtModpackName.setText(name.get());
             txtModpackName.setDisable(true);
+        } else {
+            txtModpackName.getValidators().addAll(
+                    new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().hasVersion(str) && StringUtils.isNotBlank(str)),
+                    new Validator(i18n("version.forbidden_name"), str -> !profile.getRepository().forbidsVersion(str))
+            );
         }
+
+        btnInstall.disableProperty().bind(Bindings.createBooleanBinding(
+                () -> !txtModpackName.validate(),
+                txtModpackName.textProperty()));
 
         Optional<File> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), File.class);
         if (filePath.isPresent()) {
@@ -122,11 +132,6 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
 
                     if (!name.isPresent()) {
                         txtModpackName.setText(manifest.getName());
-                        txtModpackName.getValidators().addAll(
-                                new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().hasVersion(str) && StringUtils.isNotBlank(str)),
-                                new Validator(i18n("version.forbidden_name"), str -> !profile.getRepository().forbidsVersion(str))
-                        );
-                        txtModpackName.textProperty().addListener(e -> btnInstall.setDisable(!txtModpackName.validate()));
                     }
                 }, e -> {
                     Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageType.ERROR);
