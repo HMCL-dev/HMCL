@@ -42,6 +42,14 @@ public final class ModManager {
         this.id = id;
     }
 
+    public GameRepository getRepository() {
+        return repository;
+    }
+
+    public String getVersion() {
+        return id;
+    }
+
     private Path getModsDirectory() {
         return repository.getRunDirectory(id).toPath().resolve("mods");
     }

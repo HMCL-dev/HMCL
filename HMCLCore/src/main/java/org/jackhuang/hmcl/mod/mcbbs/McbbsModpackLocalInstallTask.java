@@ -41,16 +41,19 @@ import java.util.stream.Stream;
 
 public class McbbsModpackLocalInstallTask extends Task<Void> {
 
+    private final DefaultDependencyManager dependencyManager;
     private final File zipFile;
     private final Modpack modpack;
     private final McbbsModpackManifest manifest;
     private final String name;
     private final boolean update;
     private final DefaultGameRepository repository;
+    private final MinecraftInstanceTask<McbbsModpackManifest> instanceTask;
     private final List<Task<?>> dependencies = new LinkedList<>();
     private final List<Task<?>> dependents = new LinkedList<>();
 
     public McbbsModpackLocalInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, McbbsModpackManifest manifest, String name) {
+        this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
@@ -87,7 +90,8 @@ public class McbbsModpackLocalInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/overrides", any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/overrides", manifest, MODPACK_TYPE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+        instanceTask = new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/overrides", manifest, MODPACK_TYPE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name));
+        dependents.add(instanceTask.withStage("hmcl.modpack"));
     }
 
     @Override
@@ -115,6 +119,8 @@ public class McbbsModpackLocalInstallTask extends Task<Void> {
             // This mcbbs modpack was installed by other launchers.
             // TODO: maintain libraries.
         }
+
+        dependencies.add(new McbbsModpackCompletionTask(dependencyManager, name, instanceTask.getResult()).withStage("hmcl.modpack.download"));
     }
 
     @Override

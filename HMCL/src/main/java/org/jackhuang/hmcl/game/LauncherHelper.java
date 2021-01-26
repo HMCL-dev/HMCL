@@ -35,7 +35,11 @@ import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.curse.CurseCompletionException;
 import org.jackhuang.hmcl.mod.curse.CurseCompletionTask;
+import org.jackhuang.hmcl.mod.curse.CurseInstallTask;
+import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackCompletionTask;
+import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackLocalInstallTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackCompletionTask;
+import org.jackhuang.hmcl.mod.server.ServerModpackLocalInstallTask;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -140,10 +144,12 @@ public final class LauncherHelper {
                         }), Task.composeAsync(() -> {
                             try {
                                 ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
-                                if ("Curse".equals(configuration.getType()))
+                                if (CurseInstallTask.MODPACK_TYPE.equals(configuration.getType()))
                                     return new CurseCompletionTask(dependencyManager, selectedVersion);
-                                else if ("Server".equals(configuration.getType()))
+                                else if (ServerModpackLocalInstallTask.MODPACK_TYPE.equals(configuration.getType()))
                                     return new ServerModpackCompletionTask(dependencyManager, selectedVersion);
+                                else if (McbbsModpackLocalInstallTask.MODPACK_TYPE.equals(configuration.getType()))
+                                    return new McbbsModpackCompletionTask(dependencyManager, selectedVersion);
                                 else
                                     return null;
                             } catch (IOException e) {

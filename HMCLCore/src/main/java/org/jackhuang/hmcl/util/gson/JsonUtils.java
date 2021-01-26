@@ -23,6 +23,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.UUID;
 
@@ -38,6 +39,13 @@ public final class JsonUtils {
 
     public static <T> T fromNonNullJson(String json, Class<T> classOfT) throws JsonParseException {
         T parsed = GSON.fromJson(json, classOfT);
+        if (parsed == null)
+            throw new JsonParseException("Json object cannot be null.");
+        return parsed;
+    }
+
+    public static <T> T fromNonNullJson(String json, Type type) throws JsonParseException {
+        T parsed = GSON.fromJson(json, type);
         if (parsed == null)
             throw new JsonParseException("Json object cannot be null.");
         return parsed;

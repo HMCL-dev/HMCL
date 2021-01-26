@@ -143,6 +143,10 @@ public class McbbsModpackManifest implements Validation {
         return launchInfo;
     }
 
+    public McbbsModpackManifest setFiles(List<File> files) {
+        return new McbbsModpackManifest(manifestType, manifestVersion, name, version, author, description, fileApi, url, forceUpdate, origins, addons, libraries, files, settings, launchInfo);
+    }
+
     @Override
     public void validate() throws JsonParseException, TolerableValidationException {
         if (!MANIFEST_TYPE.equals(manifestType))
@@ -230,7 +234,7 @@ public class McbbsModpackManifest implements Validation {
             }
     )
     public static abstract class File implements Validation {
-        private final boolean force;
+        protected final boolean force;
 
         public File(boolean force) {
             this.force = force;
@@ -251,8 +255,8 @@ public class McbbsModpackManifest implements Validation {
 
         public AddonFile(boolean force, String path, String hash) {
             super(force);
-            this.path = path;
-            this.hash = hash;
+            this.path = Objects.requireNonNull(path);
+            this.hash = Objects.requireNonNull(hash);
         }
 
         public String getPath() {
@@ -269,6 +273,19 @@ public class McbbsModpackManifest implements Validation {
 
             Validation.requireNonNull(path, "AddonFile.path cannot be null");
             Validation.requireNonNull(hash, "AddonFile.hash cannot be null");
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            AddonFile addonFile = (AddonFile) o;
+            return path.equals(addonFile.path);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(path);
         }
     }
 
@@ -298,6 +315,7 @@ public class McbbsModpackManifest implements Validation {
             return fileID;
         }
 
+        @Nullable
         public String getFileName() {
             return fileName;
         }
@@ -305,6 +323,14 @@ public class McbbsModpackManifest implements Validation {
         public URL getUrl() {
             return url == null ? NetworkUtils.toURL("https://www.curseforge.com/minecraft/mc-mods/" + projectID + "/download/" + fileID + "/file")
                     : NetworkUtils.toURL(NetworkUtils.encodeLocation(url));
+        }
+
+        public CurseFile withFileName(String fileName) {
+            return new CurseFile(force, projectID, fileID, fileName, url);
+        }
+
+        public CurseFile withURL(String url) {
+            return new CurseFile(force, projectID, fileID, fileName, url);
         }
 
         @Override

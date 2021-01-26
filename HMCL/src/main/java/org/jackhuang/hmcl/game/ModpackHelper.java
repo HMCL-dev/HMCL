@@ -199,6 +199,11 @@ public final class ModpackHelper {
                     throw new MismatchedModpackTypeException(HMCLModpackInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
 
                 return new ModpackUpdateTask(profile.getRepository(), name, new HMCLModpackInstallTask(profile, zipFile, modpack, name));
+            case McbbsModpackLocalInstallTask.MODPACK_TYPE:
+                if (!(modpack.getManifest() instanceof McbbsModpackManifest))
+                    throw new MismatchedModpackTypeException(McbbsModpackLocalInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
+
+                return new ModpackUpdateTask(profile.getRepository(), name, new McbbsModpackLocalInstallTask(profile.getDependency(), zipFile, modpack, (McbbsModpackManifest) modpack.getManifest(), name));
             case ServerModpackLocalInstallTask.MODPACK_TYPE:
                 if (!(modpack.getManifest() instanceof ServerModpackManifest))
                     throw new MismatchedModpackTypeException(ServerModpackLocalInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));

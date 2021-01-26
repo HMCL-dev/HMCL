@@ -82,7 +82,7 @@ public class GameItem extends Control {
 
         CompletableFuture.runAsync(() -> {
             try {
-                ModpackConfiguration<Void> config = profile.getRepository().readModpackConfiguration(version);
+                ModpackConfiguration<?> config = profile.getRepository().readModpackConfiguration(version);
                 if (config == null) return;
                 tag.set(config.getVersion());
             } catch (IOException e) {

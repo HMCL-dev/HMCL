@@ -33,7 +33,7 @@ import java.util.List;
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
 import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
-public final class MinecraftInstanceTask<T> extends Task<Void> {
+public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>> {
 
     private final File zipFile;
     private final Charset encoding;
@@ -73,6 +73,8 @@ public final class MinecraftInstanceTask<T> extends Task<Void> {
                 });
         }
 
-        FileUtils.writeText(jsonFile, JsonUtils.GSON.toJson(new ModpackConfiguration<>(manifest, type, name, version, overrides)));
+        ModpackConfiguration<T> configuration = new ModpackConfiguration<>(manifest, type, name, version, overrides);
+        FileUtils.writeText(jsonFile, JsonUtils.GSON.toJson(configuration));
+        setResult(configuration);
     }
 }

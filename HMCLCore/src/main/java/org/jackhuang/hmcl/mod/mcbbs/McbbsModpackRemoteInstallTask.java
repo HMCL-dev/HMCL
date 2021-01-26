@@ -23,13 +23,13 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
-import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -40,9 +40,9 @@ public class McbbsModpackRemoteInstallTask extends Task<Void> {
     private final DefaultGameRepository repository;
     private final List<Task<?>> dependencies = new LinkedList<>();
     private final List<Task<?>> dependents = new LinkedList<>();
-    private final ServerModpackManifest manifest;
+    private final McbbsModpackManifest manifest;
 
-    public McbbsModpackRemoteInstallTask(DefaultDependencyManager dependencyManager, ServerModpackManifest manifest, String name) {
+    public McbbsModpackRemoteInstallTask(DefaultDependencyManager dependencyManager, McbbsModpackManifest manifest, String name) {
         this.name = name;
         this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
@@ -53,7 +53,7 @@ public class McbbsModpackRemoteInstallTask extends Task<Void> {
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
         GameBuilder builder = dependencyManager.gameBuilder().name(name);
-        for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
+        for (McbbsModpackManifest.Addon addon : manifest.getAddons()) {
             builder.version(addon.getId(), addon.getVersion());
         }
 
@@ -63,14 +63,14 @@ public class McbbsModpackRemoteInstallTask extends Task<Void> {
                 repository.removeVersionFromDisk(name);
         });
 
-        ModpackConfiguration<ServerModpackManifest> config = null;
+        ModpackConfiguration<McbbsModpackManifest> config = null;
         try {
             if (json.exists()) {
-                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<ServerModpackManifest>>() {
+                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<McbbsModpackManifest>>() {
                 }.getType());
 
                 if (!MODPACK_TYPE.equals(config.getType()))
-                    throw new IllegalArgumentException("Version " + name + " is not a Server modpack. Cannot update this version.");
+                    throw new IllegalArgumentException("Version " + name + " is not a Mcbbs modpack. Cannot update this version.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
@@ -88,7 +88,7 @@ public class McbbsModpackRemoteInstallTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
-//        dependencies.add(new McbbsModpackCompletionTask(dependency, name, new ModpackConfiguration<>(manifest, MODPACK_TYPE, manifest.getName(), manifest.getVersion(), Collections.emptyList())));
+        dependencies.add(new McbbsModpackCompletionTask(dependency, name, new ModpackConfiguration<>(manifest, MODPACK_TYPE, manifest.getName(), manifest.getVersion(), Collections.emptyList())));
     }
 
     public static final String MODPACK_TYPE = "Server";

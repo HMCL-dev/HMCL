@@ -99,7 +99,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         future.cancel(true);
     }
 
-    private CompletableFuture<Exception> executeTasks(Task<?> parentTask, Collection<Task<?>> tasks) {
+    private CompletableFuture<?> executeTasksExceptionally(Task<?> parentTask, Collection<Task<?>> tasks) {
         if (tasks == null || tasks.isEmpty())
             return CompletableFuture.completedFuture(null);
 
@@ -114,7 +114,11 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                             .map(task -> CompletableFuture.completedFuture(null)
                                     .thenComposeAsync(unused2 -> executeTask(parentTask, task))
                             ).toArray(CompletableFuture<?>[]::new));
-                })
+                });
+    }
+
+    private CompletableFuture<Exception> executeTasks(Task<?> parentTask, Collection<Task<?>> tasks) {
+        return executeTasksExceptionally(parentTask, tasks)
                 .thenApplyAsync(unused -> (Exception) null)
                 .exceptionally(throwable -> {
                     Throwable resolved = resolveException(throwable);
@@ -127,7 +131,79 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                 });
     }
 
-    private CompletableFuture<?> executeTask(Task<?> parentTask, Task<?> task) {
+    private <T> CompletableFuture<T> executeCompletableFutureTask(Task<?> parentTask, CompletableFutureTask<T> task) {
+        checkCancellation();
+
+        return CompletableFuture.completedFuture(null)
+                .thenComposeAsync(unused -> {
+                    checkCancellation();
+
+                    task.setCancelled(this::isCancelled);
+                    task.setState(Task.TaskState.READY);
+                    if (parentTask != null && task.getStage() == null)
+                        task.setStage(parentTask.getStage());
+
+                    if (task.getSignificance().shouldLog())
+                        Logging.LOG.log(Level.FINE, "Executing task: " + task.getName());
+
+                    taskListeners.forEach(it -> it.onReady(task));
+
+                    return task.getFuture(new TaskCompletableFuture() {
+                        @Override
+                        public <T2> CompletableFuture<T2> one(Task<T2> subtask) {
+                            return executeTask(task, subtask);
+                        }
+
+                        @Override
+                        public CompletableFuture<?> all(Collection<Task<?>> tasks) {
+                            return executeTasksExceptionally(task, tasks);
+                        }
+                    });
+                })
+                .thenApplyAsync(result -> {
+                    checkCancellation();
+
+                    if (task.getSignificance().shouldLog()) {
+                        Logging.LOG.log(Level.FINER, "Task finished: " + task.getName());
+                    }
+
+                    task.setResult(result);
+                    task.onDone().fireEvent(new TaskEvent(this, task, false));
+                    taskListeners.forEach(it -> it.onFinished(task));
+
+                    task.setState(Task.TaskState.SUCCEEDED);
+
+                    return result;
+                })
+                .exceptionally(throwable -> {
+                    Throwable resolved = resolveException(throwable);
+                    if (resolved instanceof Exception) {
+                        Exception e = (Exception) resolved;
+                        if (e instanceof InterruptedException || e instanceof CancellationException) {
+                            task.setException(null);
+                            if (task.getSignificance().shouldLog()) {
+                                Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName());
+                            }
+                            task.onDone().fireEvent(new TaskEvent(this, task, true));
+                            taskListeners.forEach(it -> it.onFailed(task, e));
+                        } else {
+                            task.setException(e);
+                            exception = e;
+                            if (task.getSignificance().shouldLog()) {
+                                Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
+                            }
+                            task.onDone().fireEvent(new TaskEvent(this, task, true));
+                            taskListeners.forEach(it -> it.onFailed(task, e));
+                        }
+
+                        task.setState(Task.TaskState.FAILED);
+                    }
+
+                    throw new CompletionException(resolved); // rethrow error
+                });
+    }
+
+    private <T> CompletableFuture<T> executeNormalTask(Task<?> parentTask, Task<T> task) {
         checkCancellation();
 
         return CompletableFuture.completedFuture(null)
@@ -185,7 +261,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                         return CompletableFuture.completedFuture(dependenciesException);
                     }
                 })
-                .thenAcceptAsync(dependenciesException -> {
+                .thenApplyAsync(dependenciesException -> {
                     boolean isDependenciesSucceeded = dependenciesException == null;
 
                     if (!isDependenciesSucceeded && task.isRelyingOnDependencies()) {
@@ -204,6 +280,8 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     taskListeners.forEach(it -> it.onFinished(task));
 
                     task.setState(Task.TaskState.SUCCEEDED);
+
+                    return task.getResult();
                 })
                 .exceptionally(throwable -> {
                     Throwable resolved = resolveException(throwable);
@@ -231,6 +309,14 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
                     throw new CompletionException(resolved); // rethrow error
                 });
+    }
+
+    private <T> CompletableFuture<T> executeTask(Task<?> parentTask, Task<T> task) {
+        if (task instanceof CompletableFutureTask<?>) {
+            return executeCompletableFutureTask(parentTask, (CompletableFutureTask<T>) task);
+        } else {
+            return executeNormalTask(parentTask, task);
+        }
     }
 
     private static Throwable resolveException(Throwable e) {
