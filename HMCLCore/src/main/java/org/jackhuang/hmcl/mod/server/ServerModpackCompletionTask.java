@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.mod.server;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -46,6 +47,7 @@ import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
 public class ServerModpackCompletionTask extends Task<Void> {
 
+    private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
     private final String version;
     private ModpackConfiguration<ServerModpackManifest> manifest;
@@ -58,6 +60,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
     }
 
     public ServerModpackCompletionTask(DefaultDependencyManager dependencyManager, String version, ModpackConfiguration<ServerModpackManifest> manifest) {
+        this.dependencyManager = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
         this.version = version;
 
@@ -97,6 +100,10 @@ public class ServerModpackCompletionTask extends Task<Void> {
         return dependent == null ? Collections.emptySet() : Collections.singleton(dependent);
     }
 
+    private Map<String, String> toMap(Collection<ServerModpackManifest.Addon> addons) {
+        return addons.stream().collect(Collectors.toMap(ServerModpackManifest.Addon::getId, ServerModpackManifest.Addon::getVersion));
+    }
+
     @Override
     public void execute() throws Exception {
         if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
@@ -105,6 +112,17 @@ public class ServerModpackCompletionTask extends Task<Void> {
             remoteManifest = JsonUtils.fromNonNullJson(dependent.getResult(), ServerModpackManifest.class);
         } catch (JsonParseException e) {
             throw new IOException(e);
+        }
+
+        Map<String, String> oldAddons = toMap(manifest.getManifest().getAddons());
+        Map<String, String> newAddons = toMap(remoteManifest.getAddons());
+        if (!Objects.equals(oldAddons, newAddons)) {
+            GameBuilder builder = dependencyManager.gameBuilder().name(version);
+            for (ServerModpackManifest.Addon addon : remoteManifest.getAddons()) {
+                builder.version(addon.getId(), addon.getVersion());
+            }
+
+            dependencies.add(builder.buildAsync());
         }
 
         Path rootPath = repository.getVersionRoot(version).toPath();
