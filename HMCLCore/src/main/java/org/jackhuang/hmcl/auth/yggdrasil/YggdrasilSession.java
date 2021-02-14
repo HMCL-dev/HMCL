@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,14 +37,15 @@ public class YggdrasilSession {
     private final String accessToken;
     private final GameProfile selectedProfile;
     private final List<GameProfile> availableProfiles;
-    private final User user;
+    @Nullable
+    private final Map<String, String> userProperties;
 
-    public YggdrasilSession(String clientToken, String accessToken, GameProfile selectedProfile, List<GameProfile> availableProfiles, User user) {
+    public YggdrasilSession(String clientToken, String accessToken, GameProfile selectedProfile, List<GameProfile> availableProfiles, Map<String, String> userProperties) {
         this.clientToken = clientToken;
         this.accessToken = accessToken;
         this.selectedProfile = selectedProfile;
         this.availableProfiles = availableProfiles;
-        this.user = user;
+        this.userProperties = userProperties;
     }
 
     public String getClientToken() {
@@ -68,8 +70,8 @@ public class YggdrasilSession {
         return availableProfiles;
     }
 
-    public User getUser() {
-        return user;
+    public Map<String, String> getUserProperties() {
+        return userProperties;
     }
 
     public static YggdrasilSession fromStorage(Map<?, ?> storage) {
@@ -77,34 +79,28 @@ public class YggdrasilSession {
         String name = tryCast(storage.get("displayName"), String.class).orElseThrow(() -> new IllegalArgumentException("displayName is missing"));
         String clientToken = tryCast(storage.get("clientToken"), String.class).orElseThrow(() -> new IllegalArgumentException("clientToken is missing"));
         String accessToken = tryCast(storage.get("accessToken"), String.class).orElseThrow(() -> new IllegalArgumentException("accessToken is missing"));
-        String userId = tryCast(storage.get("userid"), String.class).orElseThrow(() -> new IllegalArgumentException("userid is missing"));
         Map<String, String> userProperties = tryCast(storage.get("userProperties"), Map.class).orElse(null);
-        return new YggdrasilSession(clientToken, accessToken, new GameProfile(uuid, name), null, new User(userId, userProperties));
+        return new YggdrasilSession(clientToken, accessToken, new GameProfile(uuid, name), null, userProperties);
     }
 
     public Map<Object, Object> toStorage() {
         if (selectedProfile == null)
             throw new IllegalStateException("No character is selected");
-        if (user == null)
-            throw new IllegalStateException("No user is specified");
 
         return mapOf(
                 pair("clientToken", clientToken),
                 pair("accessToken", accessToken),
                 pair("uuid", UUIDTypeAdapter.fromUUID(selectedProfile.getId())),
                 pair("displayName", selectedProfile.getName()),
-                pair("userid", user.getId()),
-                pair("userProperties", user.getProperties()));
+                pair("userProperties", userProperties));
     }
 
     public AuthInfo toAuthInfo() {
         if (selectedProfile == null)
             throw new IllegalStateException("No character is selected");
-        if (user == null)
-            throw new IllegalStateException("No user is specified");
 
         return new AuthInfo(selectedProfile.getName(), selectedProfile.getId(), accessToken,
-                Optional.ofNullable(user.getProperties())
+                Optional.ofNullable(userProperties)
                         .map(properties -> properties.entrySet().stream()
                                 .collect(Collectors.toMap(Map.Entry::getKey,
                                         e -> Collections.singleton(e.getValue()))))
