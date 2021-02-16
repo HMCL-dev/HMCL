@@ -41,13 +41,20 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
-import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.util.skin.InvalidSkinException;
+import org.jackhuang.hmcl.util.skin.NormalizedSkin;
+import org.jetbrains.annotations.Nullable;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
+
+import javax.imageio.ImageIO;
 
 import static java.util.Collections.emptySet;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
@@ -137,9 +144,13 @@ public class AccountListItem extends RadioButton {
         }
     }
 
-    public void uploadSkin() {
+    /**
+     * @return the skin upload task, null if no file is selected
+     */
+    @Nullable
+    public Task<?> uploadSkin() {
         if (!(account instanceof YggdrasilAccount)) {
-            return;
+            return null;
         }
 
         FileChooser chooser = new FileChooser();
@@ -147,23 +158,31 @@ public class AccountListItem extends RadioButton {
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("account.skin.file"), "*.png"));
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());
         if (selectedFile == null) {
-            return;
+            return null;
         }
 
-        Controllers.prompt(new PromptDialogPane.Builder(i18n("account.skin.upload"), (questions, resolve, reject) -> {
-            PromptDialogPane.Builder.CandidatesQuestion q = (PromptDialogPane.Builder.CandidatesQuestion) questions.get(0);
-            String model = q.getValue() == 0 ? "" : "slim";
-            refreshAsync()
-                    .thenRunAsync(() -> ((YggdrasilAccount) account).uploadSkin(model, selectedFile.toPath()))
-                    .thenComposeAsync(this::refreshAsync)
-                    .thenRunAsync(Schedulers.javafx(), resolve::run)
-                    .whenComplete(Schedulers.javafx(), e -> {
-                        if (e != null) {
-                            reject.accept(AddAccountPane.accountException(e));
-                        }
-                    }).start();
-        }).addQuestion(new PromptDialogPane.Builder.CandidatesQuestion(i18n("account.skin.model"),
-                i18n("account.skin.model.default"), i18n("account.skin.model.slim"))));
+        return refreshAsync()
+                .thenRunAsync(() -> {
+                    BufferedImage skinImg;
+                    try {
+                        skinImg = ImageIO.read(selectedFile);
+                    } catch (IOException e) {
+                        throw new InvalidSkinException("Failed to read skin image", e);
+                    }
+                    if (skinImg == null) {
+                        throw new InvalidSkinException("Failed to read skin image");
+                    }
+                    NormalizedSkin skin = new NormalizedSkin(skinImg);
+                    String model = skin.isSlim() ? "slim" : "";
+                    LOG.info("Uploading skin [" + selectedFile + "], model [" + model + "]");
+                    ((YggdrasilAccount) account).uploadSkin(model, selectedFile.toPath());
+                })
+                .thenComposeAsync(refreshAsync())
+                .whenComplete(Schedulers.javafx(), e -> {
+                    if (e != null) {
+                        Controllers.dialog(AddAccountPane.accountException(e), i18n("account.skin.upload.failed"), MessageType.ERROR);
+                    }
+                });
     }
 
     public void remove() {

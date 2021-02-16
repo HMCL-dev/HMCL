@@ -49,6 +49,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -342,6 +343,8 @@ public class AddAccountPane extends StackPane {
             return i18n("account.failed.injector_download_failure");
         } else if (exception instanceof CharacterDeletedException) {
             return i18n("account.failed.character_deleted");
+        } else if (exception instanceof InvalidSkinException) {
+            return i18n("account.skin.invalid_skin");
         } else if (exception.getClass() == AuthenticationException.class) {
             return exception.getLocalizedMessage();
         } else {
