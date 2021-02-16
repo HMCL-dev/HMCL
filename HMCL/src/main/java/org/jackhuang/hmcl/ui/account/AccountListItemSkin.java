@@ -89,11 +89,18 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         right.setAlignment(Pos.CENTER_RIGHT);
 
         JFXButton btnRefresh = new JFXButton();
-        btnRefresh.setOnMouseClicked(e -> skinnable.refresh());
+        SpinnerPane spinnerRefresh = new SpinnerPane();
+        btnRefresh.setOnMouseClicked(e -> {
+            spinnerRefresh.showSpinner();
+            skinnable.refreshAsync()
+                    .whenComplete(ex -> spinnerRefresh.hideSpinner())
+                    .start();
+        });
         btnRefresh.getStyleClass().add("toggle-icon4");
         btnRefresh.setGraphic(SVG.refresh(Theme.blackFillBinding(), -1, -1));
         runInFX(() -> FXUtils.installFastTooltip(btnRefresh, i18n("button.refresh")));
-        right.getChildren().add(btnRefresh);
+        spinnerRefresh.setContent(btnRefresh);
+        right.getChildren().add(spinnerRefresh);
 
         JFXButton btnUpload = new JFXButton();
         SpinnerPane spinnerUpload = new SpinnerPane();
