@@ -100,7 +100,7 @@ public class AccountListItem extends RadioButton {
         return new AccountListItemSkin(this);
     }
 
-    private Task<?> refreshAsync() {
+    public Task<?> refreshAsync() {
         return Task.runAsync(() -> {
             account.clearCache();
             try {
@@ -119,10 +119,6 @@ public class AccountListItem extends RadioButton {
                 throw e;
             }
         });
-    }
-
-    public void refresh() {
-        refreshAsync().whenComplete(e -> {}).start();
     }
 
     public ObservableBooleanValue canUploadSkin() {
