@@ -19,6 +19,7 @@ package org.jackhuang.hmcl;
 
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 
 import javax.net.ssl.*;
 import javax.swing.*;
@@ -48,7 +49,6 @@ public final class Main {
         System.setProperty("http.agent", "HMCL/" + Metadata.VERSION);
         System.setProperty("javafx.autoproxy.disable", "true");
 
-        checkJavaFX();
         checkDirectoryPath();
 
         // This environment check will take ~300ms
@@ -58,6 +58,8 @@ public final class Main {
         }, "CA Certificate Check", true);
 
         Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
+
+        checkJavaFX();
 
         if (UpdateHandler.processArguments(args)) {
             return;
@@ -76,11 +78,7 @@ public final class Main {
     }
 
     private static void checkJavaFX() {
-        try {
-            Class.forName("javafx.application.Application");
-        } catch (ClassNotFoundException e) {
-            showErrorAndExit(i18n("fatal.missing_javafx"));
-        }
+        SelfDependencyPatcher.patch();
     }
 
     private static void checkDSTRootCAX3() {
