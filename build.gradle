@@ -30,6 +30,7 @@ subprojects {
         compile group: 'org.hildan.fxgson', name: 'fx-gson', version: '3.1.0'
         compile group: 'org.jenkins-ci', name: 'constant-pool-scanner', version: '1.2'
         compile group: 'com.github.steveice10', name: 'opennbt', version: '1.1'
+        compile group: 'com.nqzero', name: 'permit-reflect', version: '0.3'
         compileOnly group: 'org.jetbrains', name: 'annotations', version: '16.0.3'
 
         testCompile group: 'junit', name: 'junit', version: '4.12'
