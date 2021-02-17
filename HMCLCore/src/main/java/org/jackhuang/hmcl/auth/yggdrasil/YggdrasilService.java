@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.gson.ValidationTypeAdapterFactory;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpMultipartRequest;
-import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
@@ -164,10 +163,7 @@ public class YggdrasilService {
                     request.file("file", FileUtils.getName(file), "image/" + FileUtils.getExtension(file), fis);
                 }
             }
-            String response = IOUtils.readFullyAsString(con.getInputStream());
-            if (response.startsWith("{")) {
-                handleErrorMessage(fromJson(response, ErrorResponse.class));
-            }
+            requireEmpty(NetworkUtils.readData(con));
         } catch (IOException e) {
             throw new AuthenticationException(e);
         }
