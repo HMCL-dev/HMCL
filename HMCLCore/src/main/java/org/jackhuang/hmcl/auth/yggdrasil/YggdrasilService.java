@@ -221,11 +221,7 @@ public class YggdrasilService {
         if (StringUtils.isBlank(response))
             return;
 
-        try {
-            handleErrorMessage(fromJson(response, ErrorResponse.class));
-        } catch (JsonParseException e) {
-            throw new ServerResponseMalformedException(e);
-        }
+        handleErrorMessage(fromJson(response, ErrorResponse.class));
     }
 
     private static void handleErrorMessage(ErrorResponse response) throws AuthenticationException {
@@ -249,7 +245,7 @@ public class YggdrasilService {
         try {
             return GSON.fromJson(text, typeOfT);
         } catch (JsonParseException e) {
-            throw new ServerResponseMalformedException(e);
+            throw new ServerResponseMalformedException(text, e);
         }
     }
 
