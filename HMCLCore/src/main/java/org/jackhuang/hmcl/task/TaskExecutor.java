@@ -66,7 +66,7 @@ public abstract class TaskExecutor {
         return cancelled.get();
     }
 
-    public int getRunningTasks() {
+    public int getTaskCount() {
         return totTask.get();
     }
 

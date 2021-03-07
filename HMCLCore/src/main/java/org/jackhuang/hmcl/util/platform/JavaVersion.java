@@ -80,6 +80,7 @@ public final class JavaVersion {
     /**
      * The major version of Java installation.
      *
+     * @see org.jackhuang.hmcl.util.platform.JavaVersion#JAVA_9
      * @see org.jackhuang.hmcl.util.platform.JavaVersion#JAVA_8
      * @see org.jackhuang.hmcl.util.platform.JavaVersion#JAVA_7
      * @see org.jackhuang.hmcl.util.platform.JavaVersion#UNKNOWN
@@ -92,15 +93,15 @@ public final class JavaVersion {
     private static final Pattern VERSION = Pattern.compile("^(?<version>[0-9]+)");
 
     public static final int UNKNOWN = -1;
-    public static final int JAVA_7 = 70;
-    public static final int JAVA_8 = 80;
-    public static final int JAVA_9_AND_LATER = 90;
+    public static final int JAVA_7 = 7;
+    public static final int JAVA_8 = 8;
+    public static final int JAVA_9 = 9;
 
     private static int parseVersion(String version) {
         Matcher matcher = VERSION.matcher(version);
         if (matcher.find()) {
             int head = Lang.parseInt(matcher.group(), -1);
-            if (head > 1) return JAVA_9_AND_LATER;
+            if (head > 1) return head;
         }
         if (version.contains("1.8"))
             return JAVA_8;

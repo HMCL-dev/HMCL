@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl;
 
-import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 
@@ -26,6 +25,8 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,6 +37,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
@@ -59,13 +61,15 @@ public final class Main {
 
         Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
 
-        checkJavaFX();
-
-        if (UpdateHandler.processArguments(args)) {
-            return;
-        }
-
-        Launcher.main(args);
+        checkJavaFX(classLoader -> {
+            try {
+                Class<?> c = Class.forName("org.jackhuang.hmcl.Launcher", true, classLoader);
+                Method method = c.getDeclaredMethod("main");
+                method.invoke(null, (Object) args);
+            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                throw new InternalError(e);
+            }
+        });
     }
 
     private static void checkDirectoryPath() {
@@ -77,8 +81,16 @@ public final class Main {
         }
     }
 
-    private static void checkJavaFX() {
-        SelfDependencyPatcher.patch();
+    private static void checkJavaFX(Consumer<ClassLoader> runnable) {
+        try {
+            SelfDependencyPatcher.runInJavaFxEnvironment(runnable);
+        } catch (SelfDependencyPatcher.PatchException e) {
+            LOG.log(Level.SEVERE, "unable to patch JVM", e);
+            showErrorAndExit(i18n("fatal.javafx.missing"));
+        } catch (SelfDependencyPatcher.IncompatibleVersionException e) {
+            LOG.log(Level.SEVERE, "unable to patch JVM", e);
+            showErrorAndExit(i18n("fatal.javafx.incompatible"));
+        }
     }
 
     private static void checkDSTRootCAX3() {

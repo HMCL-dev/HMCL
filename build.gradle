@@ -33,6 +33,14 @@ subprojects {
         compile group: 'com.nqzero', name: 'permit-reflect', version: '0.3'
         compileOnly group: 'org.jetbrains', name: 'annotations', version: '16.0.3'
 
+//        compileOnly group: 'org.openjfx', name: 'javafx-base', version: '15', classifier: 'win'
+//        compileOnly group: 'org.openjfx', name: 'javafx-controls', version: '15', classifier: 'win'
+//        compileOnly group: 'org.openjfx', name: 'javafx-fxml', version: '15', classifier: 'win'
+//        compileOnly group: 'org.openjfx', name: 'javafx-graphics', version: '15', classifier: 'win'
+//        compileOnly group: 'org.openjfx', name: 'javafx-media', version: '15', classifier: 'win'
+//        compileOnly group: 'org.openjfx', name: 'javafx-swing', version: '15', classifier: 'win'
+//        compileOnly group: 'org.openjfx', name: 'javafx-web', version: '15', classifier: 'win'
+
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
 

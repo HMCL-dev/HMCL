@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.util;
 
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.function.Predicate;
 
 /**
@@ -24,6 +27,19 @@ import java.util.function.Predicate;
  * @author huangyuhui
  */
 public final class ReflectionHelper {
+    private static Method accessible0;
+
+    static {
+        try {
+            accessible0 = AccessibleObject.class.getDeclaredMethod("setAccessible0", boolean.class);
+            accessible0.setAccessible(true);
+        } catch (Throwable ex) {
+        }
+    }
+
+    public static void setAccessible(AccessibleObject obj) throws InvocationTargetException, IllegalAccessException {
+        accessible0.invoke(obj, true);
+    }
 
     /**
      * Get caller, this method is caller sensitive.

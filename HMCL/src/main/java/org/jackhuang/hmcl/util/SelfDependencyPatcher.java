@@ -1,8 +1,11 @@
 package org.jackhuang.hmcl.util;
 
-import com.nqzero.permit.Permit;
+import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -12,15 +15,18 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.*;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.function.Consumer;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
 
 import static java.lang.Class.forName;
-import static javax.swing.JOptionPane.ERROR_MESSAGE;
-import static javax.swing.JOptionPane.showMessageDialog;
 import static org.jackhuang.hmcl.Metadata.HMCL_DIRECTORY;
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.platform.JavaVersion.CURRENT_JAVA;
 
 /**
  * Utility for patching self when missing dependencies.
@@ -83,32 +89,39 @@ public class SelfDependencyPatcher {
     /**
      * Patch in any missing dependencies, if any.
      */
-    public static void patch() {
-        if (getVmVersion() > 8) {
-            Permit.godMode();
-            Permit.unLog();
+    public static void runInJavaFxEnvironment(Consumer<ClassLoader> runnable) throws PatchException, IncompatibleVersionException {
+        if (CURRENT_JAVA.getParsedVersion() > 8) {
             patchReflectionFilters();
         }
         // Do nothing if JavaFX is detected
         try {
             try {
-                forName("javafx.application.Platform", false, ClassLoader.getSystemClassLoader());
-                return;
-            } catch(Exception ignored) {
+                forName("javafx.application.Application");
+                runnable.accept(SelfDependencyPatcher.class.getClassLoader());
+            } catch (Exception ignored) {
             }
-        } catch(UnsupportedClassVersionError error) {
+        } catch (UnsupportedClassVersionError error) {
             // Loading the JavaFX class was unsupported.
             // We are probably on 8 and its on 11
-            showIncompatibleVersion();
-            return;
+            throw new IncompatibleVersionException();
         }
         // So the problem with Java 8 is that some distributions DO NOT BUNDLE JAVAFX
         // Why is this a problem? OpenJFX does not come in public bundles prior to Java 11
         // So you're out of luck unless you change your JDK or update Java.
-        if (getVmVersion() < 11) {
-            showIncompatibleVersion();
-            return;
+        if (CURRENT_JAVA.getParsedVersion() < 11) {
+            throw new IncompatibleVersionException();
         }
+
+        // We can only self-patch JavaFX on x86 platform.
+        // For ARM support, user's manual patch is required.
+        switch (System.getProperty("os.arch")) {
+            case "amd64":
+            case "x86":
+                break;
+            default:
+                throw new IncompatibleVersionException();
+        }
+
         // Otherwise we're free to download in Java 11+
         LOG.info("Missing JavaFX dependencies, attempting to patch in missing classes");
         // Check if dependencies need to be downloaded
@@ -116,9 +129,8 @@ public class SelfDependencyPatcher {
             LOG.info(" - No local cache, downloading dependencies...");
             try {
                 fetchDependencies();
-            } catch(IOException ex) {
-                logError(ex, "Failed to download dependencies!");
-                System.exit(-1);
+            } catch (Exception ex) {
+                throw new PatchException("Failed to download dependencies", ex);
             }
         } else {
             LOG.info(" - Local cache found!");
@@ -126,17 +138,35 @@ public class SelfDependencyPatcher {
         // Add the dependencies
         try {
             loadFromCache();
-        } catch(IOException ex) {
-            logError(ex, ex.getMessage());
-            System.exit(-1);
-        } catch(ReflectiveOperationException ex) {
-            logError(ex, "Failed to add dependencies to classpath!");
-            System.exit(-1);
+        } catch (IOException ex) {
+            throw new PatchException("Failed to load JavaFX cache", ex);
+        } catch (ReflectiveOperationException ex) {
+            throw new PatchException("Failed to add dependencies to classpath!", ex);
         }
         LOG.info(" - Done!");
     }
 
 
+//    /**
+//     * Inject them into the current classpath.
+//     *
+//     * @throws IOException                  When the locally cached dependency urls cannot be resolved.
+//     * @throws ReflectiveOperationException When the call to add these urls to the system classpath failed.
+//     */
+//    private static void loadFromCache(Consumer<ClassLoader> runnable) throws IOException, ReflectiveOperationException {
+//        LOG.info(" - Loading dependencies...");
+//        // Get Jar URLs
+//        List<URL> jarUrls = new ArrayList<>();
+//        Files.walk(DEPENDENCIES_DIR_PATH).forEach(path -> {
+//            try {
+//                jarUrls.add(path.toUri().toURL());
+//            } catch (MalformedURLException ex) {
+//                LOG.log(Level.WARNING, "Failed to convert '" + path.toFile().getAbsolutePath() + "' to URL", ex);
+//            }
+//        });
+//        ClassLoader classLoader = new URLClassLoader(jarUrls.toArray(new URL[0]), SelfDependencyPatcher.class.getClassLoader());
+//        runnable.accept(classLoader);
+//    }
     /**
      * Inject them into the current classpath.
      *
@@ -153,7 +183,7 @@ public class SelfDependencyPatcher {
             try {
                 jarUrls.add(path.toUri().toURL());
             } catch(MalformedURLException ex) {
-                logError(ex, "Failed to convert '%s' to URL", path.toFile().getAbsolutePath());
+                LOG.log(Level.WARNING, "Failed to convert '" + path.toFile().getAbsolutePath() + "' to URL", ex);
             }
         });
         // Fetch UCP of application's ClassLoader
@@ -162,7 +192,7 @@ public class SelfDependencyPatcher {
         Object appClassLoader = clsClassLoaders.getDeclaredMethod("appClassLoader").invoke(null);
         Class<?> ucpOwner = appClassLoader.getClass();
         // Field removed in 16, but still exists in parent class "BuiltinClassLoader"
-        if (getVmVersion() >= 16)
+        if (CURRENT_JAVA.getParsedVersion() >= 16)
             ucpOwner = ucpOwner.getSuperclass();
         Field fieldUCP = ucpOwner.getDeclaredField("ucp");
         fieldUCP.setAccessible(true);
@@ -176,39 +206,44 @@ public class SelfDependencyPatcher {
     }
 
     /**
-     * Display a message detailing why self-patching cannot continue.
-     */
-    private static void showIncompatibleVersion() {
-        String message = "Application cannot self-patch below Java 11 on this JVM. " +
-                "Please run using JDK 11 or higher or use a JDK that bundles JavaFX.\n" +
-                " - Your JDK does not bundle JavaFX\n" +
-                " - Downloadable JFX bundles only come with 11 support or higher.";
-        showMessageDialog(null, message, "Error: Cannot self-patch", ERROR_MESSAGE);
-        // LOG and exit
-        LOG.severe(message);
-        System.exit(-1);
-    }
-
-    /**
      * Download dependencies.
      *
-     * @throws IOException
-     * 		When the files cannot be fetched or saved.
+     * @throws IOException When the files cannot be fetched or saved.
      */
-    private static void fetchDependencies() throws IOException {
+    private static void fetchDependencies() throws Exception {
         // Get dir to store dependencies in
         Path dependenciesDir = DEPENDENCIES_DIR_PATH;
         if (!Files.isDirectory(dependenciesDir)) {
             Files.createDirectories(dependenciesDir);
         }
-        // Download each dependency
-        List<String> dependencies = getLatestDependencies();
-        for(String dependencyPattern : dependencies) {
-            String dependencyUrlPath = String.format(dependencyPattern, getMvnName());
-            URL depURL = new URL(dependencyUrlPath);
-            Path dependencyFilePath = DEPENDENCIES_DIR_PATH.resolve(getFileName(dependencyUrlPath));
-            Files.copy(depURL.openStream(), dependencyFilePath, StandardCopyOption.REPLACE_EXISTING);
-        }
+        ProgressFrame dialog = new ProgressFrame(i18n("download.javafx"));
+
+        ForkJoinTask<Void> task = ForkJoinPool.commonPool().submit(() -> {
+            // Download each dependency
+            List<String> dependencies = getLatestDependencies();
+            for (int i = 0; i < dependencies.size(); i++) {
+                String dependencyUrlPath = dependencies.get(i);
+                URL depURL = new URL(dependencyUrlPath);
+                Path dependencyFilePath = DEPENDENCIES_DIR_PATH.resolve(getFileName(dependencyUrlPath));
+                int finalI = i;
+                SwingUtilities.invokeLater(() -> {
+                    dialog.setStatus(dependencyUrlPath);
+                    dialog.setProgress(finalI, dependencies.size());
+                });
+                String expectedHash = NetworkUtils.doGet(NetworkUtils.toURL(dependencyUrlPath + ".sha1"));
+                Files.copy(depURL.openStream(), dependencyFilePath, StandardCopyOption.REPLACE_EXISTING);
+                String actualHash = Hex.encodeHex(DigestUtils.digest("SHA-1", dependencyFilePath));
+                if (!expectedHash.equalsIgnoreCase(actualHash)) {
+                    throw new ChecksumMismatchException("SHA-1", expectedHash, actualHash);
+                }
+            }
+
+            return null;
+        });
+
+        dialog.setVisible(true);
+
+        task.get();
     }
 
     /**
@@ -222,9 +257,7 @@ public class SelfDependencyPatcher {
     }
 
     /**
-     * @param url
-     * 		Full url path.
-     *
+     * @param url Full url path.
      * @return Name of file at url.
      */
     private static String getFileName(String url) {
@@ -232,23 +265,22 @@ public class SelfDependencyPatcher {
     }
 
     /**
-     * @param component
-     * 		Name of the component.
-     *
+     * @param component Name of the component.
      * @return Formed URL for the component.
      */
     private static String jfxUrl(String component, String version) {
-        // Add platform specific identifier to the end.
-        // https://repo1.maven.org/maven2/org/openjfx/javafx-%s/%s/javafx-%s-%s
-        return String.format("https://maven.aliyun.com/repository/central/org/openjfx/javafx-%s/%s/javafx-%s-%s",
-                component, version, component, version) + "-%s.jar";
+        // https://repo1.maven.org/maven2/org/openjfx/javafx-%s/%s/javafx-%s-%s-%s.jar
+        return String.format("https://maven.aliyun.com/repository/central/org/openjfx/javafx-%s/%s/javafx-%s-%s-%s.jar",
+                component, version, component, version, getMvnName());
+//        return String.format("https://bmclapi.bangbang93.com/maven/org/openjfx/javafx-%s/%s/javafx-%s-%s-%s.jar",
+//                component, version, component, version, getMvnName());
     }
 
     /**
      * @return Latest JavaFX supported version for.
      */
     private static int getLatestSupportedJfxVersion() {
-        int version = getVmVersion();
+        int version = CURRENT_JAVA.getParsedVersion();
         while (version >= 11) {
             List<String> dependencies = JFX_DEPENDENCIES.get(version);
             if (dependencies != null)
@@ -269,40 +301,14 @@ public class SelfDependencyPatcher {
         throw new AssertionError("Failed to get latest JFX artifact urls");
     }
 
-    private static void logError(Throwable t, String msg, Object... args) {
-        LOG.log(Level.SEVERE, t, () -> compile(msg, args));
-    }
-
-    /**
-     * Compiles message with "{}" arg patterns.
-     *
-     * @param msg
-     * 		Message pattern.
-     * @param args
-     * 		Values to pass.
-     *
-     * @return Compiled message with inlined arg values.
-     */
-    private static String compile(String msg, Object[] args) {
-        int c = 0;
-        while(msg.contains("{}")) {
-            // Failsafe, shouldn't occur if logging is written correctly
-            if (c == args.length)
-                return msg;
-            // Replace arg in pattern
-            Object arg = args[c];
-            String argStr = arg == null ? "null" : arg.toString();
-            msg = msg.replaceFirst("\\{}", Matcher.quoteReplacement(argStr));
-            c++;
-        }
-        return msg;
-    }
-
     private static String getMvnName() {
         switch (OperatingSystem.CURRENT_OS) {
-            case LINUX: return "linux";
-            case OSX: return "mac";
-            default: return "win";
+            case LINUX:
+                return "linux";
+            case OSX:
+                return "mac";
+            default:
+                return "win";
         }
     }
 
@@ -321,12 +327,12 @@ public class SelfDependencyPatcher {
             Field[] fields;
             try {
                 Method m = Class.class.getDeclaredMethod("getDeclaredFieldsImpl");
-                m.setAccessible(true);
+                ReflectionHelper.setAccessible(m);
                 fields = (Field[]) m.invoke(klass);
             } catch (NoSuchMethodException | InvocationTargetException ex) {
                 try {
                     Method m = Class.class.getDeclaredMethod("getDeclaredFields0", Boolean.TYPE);
-                    m.setAccessible(true);
+                    ReflectionHelper.setAccessible(m);
                     fields = (Field[]) m.invoke(klass, false);
                 } catch (InvocationTargetException | NoSuchMethodException ex1) {
                     ex.addSuppressed(ex1);
@@ -337,7 +343,7 @@ public class SelfDependencyPatcher {
             for (Field field : fields) {
                 String name = field.getName();
                 if ("fieldFilterMap".equals(name) || "methodFilterMap".equals(name)) {
-                    field.setAccessible(true);
+                    ReflectionHelper.setAccessible(field);
                     field.set(null, new HashMap<>(0));
                     if (++c == 2) {
                         return;
@@ -346,33 +352,80 @@ public class SelfDependencyPatcher {
             }
             throw new RuntimeException("One of field patches did not apply properly. " +
                     "Expected to patch two fields, but patched: " + c);
-        } catch (IllegalAccessException ex) {
+        } catch (IllegalAccessException | InvocationTargetException ex) {
             throw new RuntimeException("Unable to patch reflection filters", ex);
         }
     }
 
-    private static int vmVersion = -1;
-
-    /**
-     * @return running VM version.
-     */
-    public static int getVmVersion() {
-        if (vmVersion < 0) {
-            // Check for class version, ez
-            String property = System.getProperty("java.class.version", "");
-            if (!property.isEmpty())
-                return vmVersion = (int) (Float.parseFloat(property) - 44);
-            // Odd, not found. Try the spec version
-            LOG.warning("Using fallback vm-version fetch, no value for 'java.class.version'");
-            property = System.getProperty("java.vm.specification.version", "");
-            if (property.contains("."))
-                return vmVersion = (int) Float.parseFloat(property.substring(property.indexOf('.') + 1));
-            else if (!property.isEmpty())
-                return vmVersion = Integer.parseInt(property);
-            // Very odd
-            LOG.warning("Fallback vm-version fetch failed, defaulting to 8");
-            return 8;
+    public static class PatchException extends Exception {
+        PatchException(String message, Throwable cause) {
+            super(message, cause);
         }
-        return vmVersion;
+    }
+
+    public static class IncompatibleVersionException extends Exception {
+    }
+
+    public static class ProgressFrame extends JDialog {
+        private int totalTasks = 0;
+        private int finishedTasks = 0;
+
+        private final JProgressBar progressBar;
+        private final JLabel progressText;
+
+        public ProgressFrame(String title) {
+            super();
+
+            JPanel panel = new JPanel();
+
+            setResizable(false);
+            setTitle(title);
+            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            setBounds(100, 100, 600, 150);
+            setContentPane(panel);
+            setLocationRelativeTo(null);
+
+            GridBagLayout gridBagLayout = new GridBagLayout();
+            gridBagLayout.columnWidths = new int[]{600, 0};
+            gridBagLayout.rowHeights = new int[]{0, 0, 0, 200};
+            gridBagLayout.columnWeights = new double[]{1.0, Double.MIN_VALUE};
+            gridBagLayout.rowWeights = new double[]{0.0, 0.0, 0.0, 1.0};
+            panel.setLayout(gridBagLayout);
+
+            progressText = new JLabel("");
+            GridBagConstraints gbc_lblProgressText = new GridBagConstraints();
+            gbc_lblProgressText.insets = new Insets(10, 0, 5, 0);
+            gbc_lblProgressText.gridx = 0;
+            gbc_lblProgressText.gridy = 0;
+            panel.add(progressText, gbc_lblProgressText);
+
+            progressBar = new JProgressBar();
+            GridBagConstraints gbc_progressBar = new GridBagConstraints();
+            gbc_progressBar.insets = new Insets(0, 25, 5, 25);
+            gbc_progressBar.fill = GridBagConstraints.HORIZONTAL;
+            gbc_progressBar.gridx = 0;
+            gbc_progressBar.gridy = 1;
+            panel.add(progressBar, gbc_progressBar);
+
+            JButton btnCancel = new JButton(i18n("button.cancel"));
+            btnCancel.addActionListener(e -> {
+                System.exit(-1);
+            });
+            GridBagConstraints gbc_btnCancel = new GridBagConstraints();
+            gbc_btnCancel.insets = new Insets(0, 25, 5, 25);
+            gbc_btnCancel.fill = GridBagConstraints.HORIZONTAL;
+            gbc_btnCancel.gridx = 0;
+            gbc_btnCancel.gridy = 2;
+            panel.add(btnCancel, gbc_btnCancel);
+        }
+
+        public void setStatus(String status) {
+            progressText.setText(status);
+        }
+
+        public void setProgress(int current, int total) {
+            progressBar.setValue(current);
+            progressBar.setMaximum(total);
+        }
     }
 }
