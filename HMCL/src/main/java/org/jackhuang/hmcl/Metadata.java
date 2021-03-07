@@ -17,10 +17,11 @@
  */
 package org.jackhuang.hmcl;
 
-import java.nio.file.Path;
-
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Stores metadata about this application.
@@ -39,5 +40,14 @@ public final class Metadata {
     public static final String PUBLISH_URL = "http://www.mcbbs.net/thread-142335-1-1.html";
 
     public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
-    public static final Path HMCL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
+    public static final Path HMCL_DIRECTORY = getHMCLDirectory();
+
+    private static Path getHMCLDirectory() {
+        String home = System.getProperty("user.home", ".");
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            // to fulfill XDG standard.
+            return Paths.get(home, ".cache", "hmcl");
+        }
+        return OperatingSystem.getWorkingDirectory("hmcl");
+    }
 }

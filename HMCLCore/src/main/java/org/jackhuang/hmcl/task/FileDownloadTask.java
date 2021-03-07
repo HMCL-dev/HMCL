@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.net.URL;
@@ -47,8 +46,8 @@ import static org.jackhuang.hmcl.util.DigestUtils.getDigest;
 public class FileDownloadTask extends FetchTask<Void> {
 
     public static class IntegrityCheck {
-        private String algorithm;
-        private String checksum;
+        private final String algorithm;
+        private final String checksum;
 
         public IntegrityCheck(String algorithm, String checksum) {
             this.algorithm = requireNonNull(algorithm);
@@ -83,8 +82,6 @@ public class FileDownloadTask extends FetchTask<Void> {
     private final File file;
     private final IntegrityCheck integrityCheck;
     private Path candidate;
-    private RandomAccessFile rFile;
-    private InputStream stream;
     private final ArrayList<IntegrityCheckHandler> integrityCheckHandlers = new ArrayList<>();
 
     /**

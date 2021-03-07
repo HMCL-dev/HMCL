@@ -25,6 +25,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
+import org.jackhuang.hmcl.Metadata;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
@@ -43,6 +44,7 @@ public class WebStage extends Stage {
         setScene(new Scene(pane, width, height));
         getScene().getStylesheets().addAll(config().getTheme().getStylesheets());
         getIcons().add(newImage("/assets/img/icon.png"));
+        webView.getEngine().setUserDataDirectory(Metadata.HMCL_DIRECTORY.toFile());
         webView.setContextMenuEnabled(false);
         progressBar.progressProperty().bind(webView.getEngine().getLoadWorker().progressProperty());
 

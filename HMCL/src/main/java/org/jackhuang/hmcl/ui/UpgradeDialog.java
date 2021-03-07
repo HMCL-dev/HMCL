@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXDialogLayout;
 import javafx.scene.control.Label;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 
 import static org.jackhuang.hmcl.Metadata.CHANGELOG_URL;
@@ -29,8 +30,6 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class UpgradeDialog extends JFXDialogLayout {
-    private final WebView webView = new WebView();
-
     public UpgradeDialog(Runnable updateRunnable) {
         {
             setHeading(new Label(i18n("update.changelog")));
@@ -38,6 +37,7 @@ public class UpgradeDialog extends JFXDialogLayout {
 
         {
             WebView webView = new WebView();
+            webView.getEngine().setUserDataDirectory(Metadata.HMCL_DIRECTORY.toFile());
             WebEngine engine = webView.getEngine();
             engine.load(CHANGELOG_URL + config().getUpdateChannel().channelName);
             engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
