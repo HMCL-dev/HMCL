@@ -17,16 +17,17 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 
@@ -38,7 +39,7 @@ public final class ModInfo implements Comparable<ModInfo> {
 
     private Path file;
     private final String name;
-    private final String description;
+    private final Description description;
     private final String authors;
     private final String version;
     private final String gameVersion;
@@ -46,11 +47,11 @@ public final class ModInfo implements Comparable<ModInfo> {
     private final String fileName;
     private final BooleanProperty activeProperty;
 
-    public ModInfo(ModManager modManager, File file, String name, String description) {
+    public ModInfo(ModManager modManager, File file, String name, Description description) {
         this(modManager, file, name, description, "", "", "", "");
     }
 
-    public ModInfo(ModManager modManager, File file, String name, String description, String authors, String version, String gameVersion, String url) {
+    public ModInfo(ModManager modManager, File file, String name, Description description, String authors, String version, String gameVersion, String url) {
         this.file = file.toPath();
         this.name = name;
         this.description = description;
@@ -86,7 +87,7 @@ public final class ModInfo implements Comparable<ModInfo> {
         return name;
     }
 
-    public String getDescription() {
+    public Description getDescription() {
         return description;
     }
 
@@ -135,5 +136,49 @@ public final class ModInfo implements Comparable<ModInfo> {
     @Override
     public int hashCode() {
         return Objects.hash(getFileName());
+    }
+
+    public static class Description {
+        private final List<Part> parts;
+
+        public Description(String text) {
+            this.parts = new ArrayList<>();
+            this.parts.add(new Part(text, "black"));
+        }
+
+        public Description(List<Part> parts) {
+            this.parts = parts;
+        }
+
+        public List<Part> getParts() {
+            return parts;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            for (Part part : parts) {
+                builder.append(part.text);
+            }
+            return builder.toString();
+        }
+
+        public static class Part {
+            private final String text;
+            private final String color;
+
+            public Part(String text, String color) {
+                this.text = Objects.requireNonNull(text);
+                this.color = Objects.requireNonNull(color);
+            }
+
+            public String getText() {
+                return text;
+            }
+
+            public String getColor() {
+                return color;
+            }
+        }
     }
 }

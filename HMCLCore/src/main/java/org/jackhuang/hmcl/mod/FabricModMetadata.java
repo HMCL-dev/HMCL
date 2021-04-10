@@ -67,7 +67,7 @@ public final class FabricModMetadata {
                 throw new IOException("File " + modFile + " is not a Fabric mod.");
             FabricModMetadata metadata = JsonUtils.fromNonNullJson(FileUtils.readText(mcmod), FabricModMetadata.class);
             String authors = metadata.authors == null ? "" : metadata.authors.stream().map(author -> author.name).collect(Collectors.joining(", "));
-            return new ModInfo(modManager, modFile, metadata.name, metadata.description,
+            return new ModInfo(modManager, modFile, metadata.name, new ModInfo.Description(metadata.description),
                     authors,  metadata.version, "", metadata.contact != null ? metadata.contact.getOrDefault("homepage", "") : "");
         }
     }

@@ -132,7 +132,7 @@ public final class ForgeModMetadata {
                 authors = String.join(", ", metadata.getAuthorList());
             if (StringUtils.isBlank(authors))
                 authors = metadata.getCredits();
-            return new ModInfo(modManager, modFile, metadata.getName(), metadata.getDescription(),
+            return new ModInfo(modManager, modFile, metadata.getName(), new ModInfo.Description(metadata.getDescription()),
                     authors, metadata.getVersion(), metadata.getGameVersion(),
                     StringUtils.isBlank(metadata.getUrl()) ? metadata.getUpdateUrl() : metadata.url);
         }
