@@ -168,8 +168,13 @@ public class LibraryDownloadTask extends Task<Void> {
 
     @Override
     public void postExecute() throws Exception {
-        if (!cached)
-            cacheRepository.cacheLibrary(library, jar.toPath(), xz);
+        if (!cached) {
+            try {
+                cacheRepository.cacheLibrary(library, jar.toPath(), xz);
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to cache downloaded library " + library, e);
+            }
+        }
     }
 
     public static boolean checksumValid(File libPath, List<String> checksums) {
