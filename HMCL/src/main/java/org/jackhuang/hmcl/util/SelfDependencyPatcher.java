@@ -8,7 +8,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -19,7 +18,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import static java.lang.Class.forName;
@@ -89,15 +87,12 @@ public class SelfDependencyPatcher {
     /**
      * Patch in any missing dependencies, if any.
      */
-    public static void runInJavaFxEnvironment(Consumer<ClassLoader> runnable) throws PatchException, IncompatibleVersionException {
-        if (CURRENT_JAVA.getParsedVersion() > 8) {
-            patchReflectionFilters();
-        }
+    public static void patch() throws PatchException, IncompatibleVersionException {
         // Do nothing if JavaFX is detected
         try {
             try {
                 forName("javafx.application.Application");
-                runnable.accept(SelfDependencyPatcher.class.getClassLoader());
+                return;
             } catch (Exception ignored) {
             }
         } catch (UnsupportedClassVersionError error) {
@@ -140,33 +135,12 @@ public class SelfDependencyPatcher {
             loadFromCache();
         } catch (IOException ex) {
             throw new PatchException("Failed to load JavaFX cache", ex);
-        } catch (ReflectiveOperationException ex) {
+        } catch (ReflectiveOperationException | NoClassDefFoundError ex) {
             throw new PatchException("Failed to add dependencies to classpath!", ex);
         }
         LOG.info(" - Done!");
     }
 
-
-//    /**
-//     * Inject them into the current classpath.
-//     *
-//     * @throws IOException                  When the locally cached dependency urls cannot be resolved.
-//     * @throws ReflectiveOperationException When the call to add these urls to the system classpath failed.
-//     */
-//    private static void loadFromCache(Consumer<ClassLoader> runnable) throws IOException, ReflectiveOperationException {
-//        LOG.info(" - Loading dependencies...");
-//        // Get Jar URLs
-//        List<URL> jarUrls = new ArrayList<>();
-//        Files.walk(DEPENDENCIES_DIR_PATH).forEach(path -> {
-//            try {
-//                jarUrls.add(path.toUri().toURL());
-//            } catch (MalformedURLException ex) {
-//                LOG.log(Level.WARNING, "Failed to convert '" + path.toFile().getAbsolutePath() + "' to URL", ex);
-//            }
-//        });
-//        ClassLoader classLoader = new URLClassLoader(jarUrls.toArray(new URL[0]), SelfDependencyPatcher.class.getClassLoader());
-//        runnable.accept(classLoader);
-//    }
     /**
      * Inject them into the current classpath.
      *
@@ -309,51 +283,6 @@ public class SelfDependencyPatcher {
                 return "mac";
             default:
                 return "win";
-        }
-    }
-
-    /**
-     * Patches reflection filters.
-     */
-    private static void patchReflectionFilters() {
-        Class<?> klass;
-        try {
-            klass = Class.forName("jdk.internal.reflect.Reflection",
-                    true, null);
-        } catch (ClassNotFoundException ex) {
-            throw new RuntimeException("Unable to locate 'jdk.internal.reflect.Reflection' class", ex);
-        }
-        try {
-            Field[] fields;
-            try {
-                Method m = Class.class.getDeclaredMethod("getDeclaredFieldsImpl");
-                ReflectionHelper.setAccessible(m);
-                fields = (Field[]) m.invoke(klass);
-            } catch (NoSuchMethodException | InvocationTargetException ex) {
-                try {
-                    Method m = Class.class.getDeclaredMethod("getDeclaredFields0", Boolean.TYPE);
-                    ReflectionHelper.setAccessible(m);
-                    fields = (Field[]) m.invoke(klass, false);
-                } catch (InvocationTargetException | NoSuchMethodException ex1) {
-                    ex.addSuppressed(ex1);
-                    throw new RuntimeException("Unable to get all class fields", ex);
-                }
-            }
-            int c = 0;
-            for (Field field : fields) {
-                String name = field.getName();
-                if ("fieldFilterMap".equals(name) || "methodFilterMap".equals(name)) {
-                    ReflectionHelper.setAccessible(field);
-                    field.set(null, new HashMap<>(0));
-                    if (++c == 2) {
-                        return;
-                    }
-                }
-            }
-            throw new RuntimeException("One of field patches did not apply properly. " +
-                    "Expected to patch two fields, but patched: " + c);
-        } catch (IllegalAccessException | InvocationTargetException ex) {
-            throw new RuntimeException("Unable to patch reflection filters", ex);
         }
     }
 

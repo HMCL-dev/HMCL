@@ -199,7 +199,7 @@ public final class UpdateHandler {
         StackTraceElement[] stacktrace = Thread.currentThread().getStackTrace();
         for (int i = 0; i < stacktrace.length; i++) {
             StackTraceElement element = stacktrace[i];
-            if (Main.class.getName().equals(element.getClassName())) {
+            if (Main.class.getName().equals(element.getClassName()) && "main".equals(element.getMethodName())) {
                 // we've reached the main method
                 return i + 1 != stacktrace.length;
             }

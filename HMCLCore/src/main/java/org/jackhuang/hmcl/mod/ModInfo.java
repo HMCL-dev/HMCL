@@ -167,6 +167,10 @@ public final class ModInfo implements Comparable<ModInfo> {
             private final String text;
             private final String color;
 
+            public Part(String text) {
+                this(text, "");
+            }
+
             public Part(String text, String color) {
                 this.text = Objects.requireNonNull(text);
                 this.color = Objects.requireNonNull(color);
