@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.export;
 
 import com.jfoenix.controls.*;
-import com.jfoenix.validation.RequiredFieldValidator;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.ObservableList;
@@ -44,10 +43,7 @@ import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.NumberValidator;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -218,9 +214,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         txtModpackName.textProperty().bindBidirectional(skinnable.name);
                         txtModpackName.setLabelFloat(true);
                         txtModpackName.setPromptText(i18n("modpack.name"));
-                        RequiredFieldValidator validator = new RequiredFieldValidator();
-                        validator.setMessage(i18n("modpack.not_a_valid_name"));
-                        txtModpackName.getValidators().add(validator);
+                        txtModpackName.getValidators().add(new RequiredValidator(i18n("modpack.not_a_valid_name")));
                         StackPane.setMargin(txtModpackName, insets);
                         list.getContent().add(txtModpackName);
 
@@ -234,8 +228,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         txtModpackFileApi.setPromptText(i18n("modpack.file_api"));
 
                         if (skinnable.options.isValidateFileApi()) {
-                            RequiredFieldValidator validator = new RequiredFieldValidator();
-                            txtModpackFileApi.getValidators().add(validator);
+                            txtModpackFileApi.getValidators().add(new RequiredValidator());
                         }
 
                         txtModpackFileApi.getValidators().add(new Validator(s -> {
@@ -260,8 +253,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         txtModpackAuthor.textProperty().bindBidirectional(skinnable.author);
                         txtModpackAuthor.setLabelFloat(true);
                         txtModpackAuthor.setPromptText(i18n("archive.author"));
-                        RequiredFieldValidator validator = new RequiredFieldValidator();
-                        txtModpackAuthor.getValidators().add(validator);
+                        txtModpackAuthor.getValidators().add(new RequiredValidator());
                         StackPane.setMargin(txtModpackAuthor, insets);
                         list.getContent().add(txtModpackAuthor);
 
@@ -273,8 +265,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         txtModpackVersion.textProperty().bindBidirectional(skinnable.version);
                         txtModpackVersion.setLabelFloat(true);
                         txtModpackVersion.setPromptText(i18n("archive.version"));
-                        RequiredFieldValidator validator = new RequiredFieldValidator();
-                        txtModpackVersion.getValidators().add(validator);
+                        txtModpackVersion.getValidators().add(new RequiredValidator());
                         StackPane.setMargin(txtModpackVersion, insets);
                         list.getContent().add(txtModpackVersion);
 

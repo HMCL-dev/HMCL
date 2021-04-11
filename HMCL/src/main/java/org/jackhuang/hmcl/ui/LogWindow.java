@@ -198,7 +198,7 @@ public final class LogWindow extends Stage {
                 if (Desktop.isDesktopSupported()) {
                     try {
                         Desktop.getDesktop().open(logFile.toFile());
-                    } catch (IOException ignored) {
+                    } catch (IOException | IllegalArgumentException ignored) {
                     }
                 }
             });

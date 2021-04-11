@@ -4,8 +4,10 @@
 <?import com.jfoenix.validation.RequiredFieldValidator?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import org.jackhuang.hmcl.ui.FXUtils?>
+<?import javafx.scene.shape.SVGPath?>
+<?import org.jackhuang.hmcl.ui.construct.RequiredValidator?>
 <?import org.jackhuang.hmcl.ui.construct.SpinnerPane?>
+<?import org.jackhuang.hmcl.ui.FXUtils?>
 <fx:root xmlns:fx="http://javafx.com/fxml"
          xmlns="http://javafx.com/javafx"
          type="StackPane">
@@ -50,8 +52,8 @@
                 <JFXTextField fx:id="txtUsername" GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="2"
                               FXUtils.validateWhileTextChanged="true" onAction="#onCreationAccept">
                     <validators>
-                        <RequiredFieldValidator message="%input.not_empty">
-                        </RequiredFieldValidator>
+                        <RequiredValidator message="%input.not_empty">
+                        </RequiredValidator>
                     </validators>
                 </JFXTextField>
 
