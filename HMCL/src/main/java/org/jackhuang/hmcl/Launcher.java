@@ -23,6 +23,7 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
+import org.jackhuang.hmcl.ui.AwtUtils;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
@@ -31,6 +32,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -69,6 +71,8 @@ public final class Launcher extends Application {
                 Platform.setImplicitExit(false);
                 Controllers.initialize(primaryStage);
 
+                initIcon();
+
                 UpdateChecker.init();
 
                 primaryStage.show();
@@ -82,6 +86,12 @@ public final class Launcher extends Application {
     public void stop() throws Exception {
         super.stop();
         Controllers.onApplicationStop();
+    }
+
+    private void initIcon() {
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Image image = toolkit.getImage(Launcher.class.getResource("/assets/img/icon.png"));
+        AwtUtils.setAppleIcon(image);
     }
 
     public static void main(String[] args) {
