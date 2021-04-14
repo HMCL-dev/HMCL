@@ -1,5 +1,6 @@
 package java.lang.module;
 
+import java.nio.file.Path;
 import java.util.Set;
 
 /**
@@ -9,7 +10,7 @@ import java.util.Set;
  */
 public interface ModuleFinder {
     //CHECKSTYLE:OFF
-    static ModuleFinder ofSystem() {
+    static ModuleFinder of(Path... entries) {
         throw new UnsupportedOperationException();
     }
     Set<ModuleReference> findAll();

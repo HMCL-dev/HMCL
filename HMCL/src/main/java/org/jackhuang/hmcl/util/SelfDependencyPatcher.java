@@ -6,13 +6,13 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.*;
@@ -34,53 +34,12 @@ import static org.jackhuang.hmcl.util.platform.JavaVersion.CURRENT_JAVA;
  */
 public class SelfDependencyPatcher {
     private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies");
-    private static final Map<Integer, List<String>> JFX_DEPENDENCIES = new LinkedHashMap<Integer, List<String>>(5, 1F) {
+    private static final String DEFAULT_JFX_VERSION = "16";
+    private static final Map<String, String> JFX_DEPENDENCIES_ = new HashMap<String, String>() {
         {
-            put(15, Arrays.asList(
-                    jfxUrl("swing", "15.0.1"),
-                    jfxUrl("media", "15.0.1"),
-                    jfxUrl("fxml", "15.0.1"),
-                    jfxUrl("web", "15.0.1"),
-                    jfxUrl("controls", "15.0.1"),
-                    jfxUrl("graphics", "15.0.1"),
-                    jfxUrl("base", "15.0.1")
-            ));
-            put(14, Arrays.asList(
-                    jfxUrl("swing", "14.0.2"),
-                    jfxUrl("media", "14.0.2"),
-                    jfxUrl("fxml", "14.0.2"),
-                    jfxUrl("web", "14.0.2"),
-                    jfxUrl("controls", "14.0.2"),
-                    jfxUrl("graphics", "14.0.2"),
-                    jfxUrl("base", "14.0.2")
-            ));
-            put(13, Arrays.asList(
-                    jfxUrl("swing", "13.0.2"),
-                    jfxUrl("media", "13.0.2"),
-                    jfxUrl("fxml", "13.0.2"),
-                    jfxUrl("web", "13.0.2"),
-                    jfxUrl("controls", "13.0.2"),
-                    jfxUrl("graphics", "13.0.2"),
-                    jfxUrl("base", "13.0.2")
-            ));
-            put(12, Arrays.asList(
-                    jfxUrl("swing", "12.0.2"),
-                    jfxUrl("media", "12.0.2"),
-                    jfxUrl("fxml", "12.0.2"),
-                    jfxUrl("web", "12.0.2"),
-                    jfxUrl("controls", "12.0.2"),
-                    jfxUrl("graphics", "12.0.2"),
-                    jfxUrl("base", "12.0.2")
-            ));
-            put(11, Arrays.asList(
-                    jfxUrl("swing", "11.0.2"),
-                    jfxUrl("media", "11.0.2"),
-                    jfxUrl("fxml", "11.0.2"),
-                    jfxUrl("web", "11.0.2"),
-                    jfxUrl("controls", "11.0.2"),
-                    jfxUrl("graphics", "11.0.2"),
-                    jfxUrl("base", "11.0.2")
-            ));
+            for (String url : new String [] { jfxUrl("base"), jfxUrl("controls"), jfxUrl("fxml"), jfxUrl("graphics"), jfxUrl("media"), jfxUrl("swing"), jfxUrl("web") }) {
+                put(getFileName(url), url);
+            }
         }
     };
 
@@ -151,32 +110,9 @@ public class SelfDependencyPatcher {
      */
     private static void loadFromCache() throws IOException, ReflectiveOperationException {
         LOG.info(" - Loading dependencies...");
-        // Get Jar URLs
-        List<URL> jarUrls = new ArrayList<>();
-        Files.walk(DEPENDENCIES_DIR_PATH).forEach(path -> {
-            try {
-                jarUrls.add(path.toUri().toURL());
-            } catch(MalformedURLException ex) {
-                LOG.log(Level.WARNING, "Failed to convert '" + path.toFile().getAbsolutePath() + "' to URL", ex);
-            }
-        });
-        // Fetch UCP of application's ClassLoader
-        // - ((ClassLoaders.AppClassLoader) ClassLoaders.appClassLoader()).ucp
-        Class<?> clsClassLoaders = Class.forName("jdk.internal.loader.ClassLoaders");
-        Object appClassLoader = clsClassLoaders.getDeclaredMethod("appClassLoader").invoke(null);
-        Class<?> ucpOwner = appClassLoader.getClass();
-        // Field removed in 16, but still exists in parent class "BuiltinClassLoader"
-        if (CURRENT_JAVA.getParsedVersion() >= 16)
-            ucpOwner = ucpOwner.getSuperclass();
-        Field fieldUCP = ucpOwner.getDeclaredField("ucp");
-        fieldUCP.setAccessible(true);
-        Object ucp = fieldUCP.get(appClassLoader);
-        Class<?> clsUCP = ucp.getClass();
-        Method addURL = clsUCP.getDeclaredMethod("addURL", URL.class);
-        addURL.setAccessible(true);
-        // Add each jar.
-        for(URL url : jarUrls)
-            addURL.invoke(ucp, url);
+        List<Path> jarPaths = new ArrayList<>();
+        Files.walk(DEPENDENCIES_DIR_PATH).filter(p -> JFX_DEPENDENCIES_.containsKey(p.getFileName().toString())).forEach(jarPaths::add);
+        JavaFXPatcher.patch(jarPaths.toArray(new Path[0]));
     }
 
     /**
@@ -194,9 +130,9 @@ public class SelfDependencyPatcher {
 
         ForkJoinTask<Void> task = ForkJoinPool.commonPool().submit(() -> {
             // Download each dependency
-            List<String> dependencies = getLatestDependencies();
-            for (int i = 0; i < dependencies.size(); i++) {
-                String dependencyUrlPath = dependencies.get(i);
+            Collection<String> dependencies = JFX_DEPENDENCIES_.values();
+            int i = 0;
+            for (String dependencyUrlPath : dependencies) {
                 URL depURL = new URL(dependencyUrlPath);
                 Path dependencyFilePath = DEPENDENCIES_DIR_PATH.resolve(getFileName(dependencyUrlPath));
                 int finalI = i;
@@ -204,12 +140,9 @@ public class SelfDependencyPatcher {
                     dialog.setStatus(dependencyUrlPath);
                     dialog.setProgress(finalI, dependencies.size());
                 });
-                String expectedHash = NetworkUtils.doGet(NetworkUtils.toURL(dependencyUrlPath + ".sha1"));
                 Files.copy(depURL.openStream(), dependencyFilePath, StandardCopyOption.REPLACE_EXISTING);
-                String actualHash = Hex.encodeHex(DigestUtils.digest("SHA-1", dependencyFilePath));
-                if (!expectedHash.equalsIgnoreCase(actualHash)) {
-                    throw new ChecksumMismatchException("SHA-1", expectedHash, actualHash);
-                }
+                checksum(dependencyFilePath, dependencyUrlPath);
+                i++;
             }
 
             return null;
@@ -224,10 +157,31 @@ public class SelfDependencyPatcher {
      * @return {@code true} when the dependencies directory has files in it.
      */
     private static boolean hasCachedDependencies() {
-        String[] files = DEPENDENCIES_DIR_PATH.toFile().list();
-        if (files == null)
+        if (!Files.isDirectory(DEPENDENCIES_DIR_PATH))
             return false;
-        return files.length >= getLatestDependencies().size();
+
+        for (String name : JFX_DEPENDENCIES_.keySet()) {
+            Path dependencyFilePath = DEPENDENCIES_DIR_PATH.resolve(name);
+            if (!Files.exists(dependencyFilePath))
+                return false;
+
+            try {
+                checksum(dependencyFilePath, JFX_DEPENDENCIES_.get(name));
+            } catch (ChecksumMismatchException e) {
+                return false;
+            } catch (IOException ignored) {
+                // Ignore other situations
+            }
+        }
+        return true;
+    }
+
+    private static void checksum(Path dependencyFilePath, String dependencyUrlPath) throws IOException {
+        String expectedHash = NetworkUtils.doGet(NetworkUtils.toURL(dependencyUrlPath + ".sha1"));
+        String actualHash = Hex.encodeHex(DigestUtils.digest("SHA-1", dependencyFilePath));
+        if (!expectedHash.equalsIgnoreCase(actualHash)) {
+            throw new ChecksumMismatchException("SHA-1", expectedHash, actualHash);
+        }
     }
 
     /**
@@ -242,37 +196,16 @@ public class SelfDependencyPatcher {
      * @param component Name of the component.
      * @return Formed URL for the component.
      */
+    private static String jfxUrl(String component) {
+        return jfxUrl(component, DEFAULT_JFX_VERSION);
+    }
+
     private static String jfxUrl(String component, String version) {
         // https://repo1.maven.org/maven2/org/openjfx/javafx-%s/%s/javafx-%s-%s-%s.jar
         return String.format("https://maven.aliyun.com/repository/central/org/openjfx/javafx-%s/%s/javafx-%s-%s-%s.jar",
                 component, version, component, version, getMvnName());
 //        return String.format("https://bmclapi.bangbang93.com/maven/org/openjfx/javafx-%s/%s/javafx-%s-%s-%s.jar",
 //                component, version, component, version, getMvnName());
-    }
-
-    /**
-     * @return Latest JavaFX supported version for.
-     */
-    private static int getLatestSupportedJfxVersion() {
-        int version = CURRENT_JAVA.getParsedVersion();
-        while (version >= 11) {
-            List<String> dependencies = JFX_DEPENDENCIES.get(version);
-            if (dependencies != null)
-                return version;
-            version--;
-        }
-        throw new AssertionError("Failed to get latest supported JFX version");
-    }
-
-    /**
-     * @return JavaFX dependencies list for the current VM version.
-     */
-    private static List<String> getLatestDependencies() {
-        int version = getLatestSupportedJfxVersion();
-        if (version >= 11) {
-            return JFX_DEPENDENCIES.get(version);
-        }
-        throw new AssertionError("Failed to get latest JFX artifact urls");
     }
 
     private static String getMvnName() {

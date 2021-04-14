@@ -81,7 +81,20 @@ def repack(File file) {
     new JarOutputStream(file.newOutputStream()).withCloseable { unpacker.unpack(new ByteArrayInputStream(packed.toByteArray()), it) }
 }
 
+sourceSets {
+    java11 {
+        java {
+            srcDirs = ['src/main/java11']
+        }
+    }
+}
+
 jar {
+    into('META-INF/versions/11') {
+        from sourceSets.java11.output
+        exclude "java/**"
+        exclude "jdk/**"
+    }
     manifest {
         attributes 'Created-By': 'Copyright(c) 2013-2020 huangyuhui.',
                 'Main-Class': mainClassName,
@@ -99,6 +112,7 @@ jar {
                         'javafx.graphics/com.sun.javafx.stage'
                 ].join(" "),
                 'Add-Exports': [
+                        'java.base/jdk.internal.loader',
                         'javafx.controls/com.sun.javafx.scene.control.behavior',
                         'javafx.controls/javafx.scene.control.skin',
                         'javafx.controls/com.sun.javafx.scene.control',
