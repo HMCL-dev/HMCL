@@ -19,7 +19,6 @@ package org.jackhuang.hmcl;
 
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
-import org.jackhuang.hmcl.util.VMUtils;
 
 import javax.net.ssl.*;
 import javax.swing.*;
@@ -58,8 +57,6 @@ public final class Main {
         }, "CA Certificate Check", true);
 
         Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
-
-        VMUtils.patch();
 
         checkJavaFX();
 
