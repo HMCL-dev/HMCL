@@ -5,7 +5,7 @@ buildscript {
 }
 
 plugins {
-    id 'com.github.johnrengelman.shadow' version '4.0.0'
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
     id 'application'
 }
 
@@ -89,18 +89,23 @@ sourceSets {
     }
 }
 
-jar {
-    into('META-INF/versions/11') {
-        from sourceSets.java11.output
-        exclude "java/**"
-        exclude "jdk/**"
+compileJava11Java {
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(11)
     }
+    options.compilerArgs.add('--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED')
+    sourceCompatibility = 11
+    targetCompatibility = 11
+}
+
+jar {
     manifest {
         attributes 'Created-By': 'Copyright(c) 2013-2020 huangyuhui.',
                 'Main-Class': mainClassName,
                 'Multi-Release': 'true',
                 'Implementation-Version': version,
                 'Add-Opens': [
+                        'java.base/java.lang',
                         'java.base/java.lang.reflect',
                         'javafx.graphics/javafx.css',
                         'javafx.base/com.sun.javafx.runtime',
@@ -131,12 +136,16 @@ shadowJar {
     exclude 'META-INF/NOTICE.txt'
     exclude 'META-INF/LICENSE.txt'
 
+    into('META-INF/versions/11') {
+        from sourceSets.java11.output
+    }
+
     dependencies {
         exclude(dependency('org.jetbrains:annotations'))
     }
 
     doLast {
-        repack(jar.archivePath)
+        //repack(jar.archivePath)
         attachSignature(jar.archivePath)
         createChecksum(jar.archivePath)
     }
