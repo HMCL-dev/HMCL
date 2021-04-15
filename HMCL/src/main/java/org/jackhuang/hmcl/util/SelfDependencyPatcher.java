@@ -6,19 +6,16 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
-import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import static java.lang.Class.forName;
 import static org.jackhuang.hmcl.Metadata.HMCL_DIRECTORY;
@@ -35,13 +32,21 @@ import static org.jackhuang.hmcl.util.platform.JavaVersion.CURRENT_JAVA;
 public class SelfDependencyPatcher {
     private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies");
     private static final String DEFAULT_JFX_VERSION = "16";
-    private static final Map<String, String> JFX_DEPENDENCIES_ = new HashMap<String, String>() {
-        {
-            for (String url : new String [] { jfxUrl("base"), jfxUrl("controls"), jfxUrl("fxml"), jfxUrl("graphics"), jfxUrl("media"), jfxUrl("swing"), jfxUrl("web") }) {
-                put(getFileName(url), url);
-            }
-        }
-    };
+    private static final Map<String, String> JFX_DEPENDENCIES = new HashMap<>();
+
+    static {
+        addJfxDependency("base");
+        addJfxDependency("controls");
+        addJfxDependency("fxml");
+        addJfxDependency("graphics");
+        addJfxDependency("media");
+        addJfxDependency("swing");
+        addJfxDependency("web");
+    }
+
+    private static void addJfxDependency(String name) {
+        JFX_DEPENDENCIES.put("javafx." + name, jfxUrl(name));
+    }
 
     /**
      * Patch in any missing dependencies, if any.
@@ -111,8 +116,9 @@ public class SelfDependencyPatcher {
     private static void loadFromCache() throws IOException, ReflectiveOperationException {
         LOG.info(" - Loading dependencies...");
         List<Path> jarPaths = new ArrayList<>();
-        Files.walk(DEPENDENCIES_DIR_PATH).filter(p -> JFX_DEPENDENCIES_.containsKey(p.getFileName().toString())).forEach(jarPaths::add);
-        JavaFXPatcher.patch(jarPaths.toArray(new Path[0]));
+        List<String> jfxDepFile = JFX_DEPENDENCIES.values().stream().map(SelfDependencyPatcher::getFileName).collect(Collectors.toList());
+        Files.walk(DEPENDENCIES_DIR_PATH).filter(p -> jfxDepFile.contains(p.getFileName().toString())).forEach(jarPaths::add);
+        JavaFXPatcher.patch(JFX_DEPENDENCIES.keySet(), jarPaths.toArray(new Path[0]));
     }
 
     /**
@@ -130,8 +136,8 @@ public class SelfDependencyPatcher {
 
         ForkJoinTask<Void> task = ForkJoinPool.commonPool().submit(() -> {
             // Download each dependency
-            Collection<String> dependencies = JFX_DEPENDENCIES_.values();
-            int i = 0;
+            Collection<String> dependencies = JFX_DEPENDENCIES.values();
+            int i = 1;
             for (String dependencyUrlPath : dependencies) {
                 URL depURL = new URL(dependencyUrlPath);
                 Path dependencyFilePath = DEPENDENCIES_DIR_PATH.resolve(getFileName(dependencyUrlPath));
@@ -145,6 +151,7 @@ public class SelfDependencyPatcher {
                 i++;
             }
 
+            dialog.dispose();
             return null;
         });
 
@@ -160,13 +167,13 @@ public class SelfDependencyPatcher {
         if (!Files.isDirectory(DEPENDENCIES_DIR_PATH))
             return false;
 
-        for (String name : JFX_DEPENDENCIES_.keySet()) {
-            Path dependencyFilePath = DEPENDENCIES_DIR_PATH.resolve(name);
+        for (String url : JFX_DEPENDENCIES.values()) {
+            Path dependencyFilePath = DEPENDENCIES_DIR_PATH.resolve(getFileName(url));
             if (!Files.exists(dependencyFilePath))
                 return false;
 
             try {
-                checksum(dependencyFilePath, JFX_DEPENDENCIES_.get(name));
+                checksum(dependencyFilePath, url);
             } catch (ChecksumMismatchException e) {
                 return false;
             } catch (IOException ignored) {
@@ -236,7 +243,7 @@ public class SelfDependencyPatcher {
         private final JLabel progressText;
 
         public ProgressFrame(String title) {
-            super();
+            super((Dialog) null);
 
             JPanel panel = new JPanel();
 
