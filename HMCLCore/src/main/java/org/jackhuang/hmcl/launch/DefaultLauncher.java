@@ -301,6 +301,10 @@ public class DefaultLauncher extends Launcher {
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = generateCommandLine(nativeFolder).asList();
 
+        if (rawCommandLine.stream().anyMatch(StringUtils::isBlank)) {
+            throw new IllegalStateException("Illegal command line " + rawCommandLine);
+        }
+
         decompressNatives(nativeFolder);
 
         File runDirectory = repository.getRunDirectory(version.getId());
