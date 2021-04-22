@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.awt.*;
@@ -158,6 +159,11 @@ public final class Launcher extends Application {
                 } catch (URISyntaxException e) {
                     return null;
                 }
+        } else {
+            File jarFile = new File(Launcher.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+            String ext = FileUtils.getExtension(jarFile);
+            if ("jar".equals(ext) || "exe".equals(ext))
+            result.add(jarFile);
         }
         if (result.isEmpty())
             return null;

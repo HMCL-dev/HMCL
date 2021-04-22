@@ -45,14 +45,16 @@ public class ServerModpackExportTask extends Task<Void> {
     private final DefaultGameRepository repository;
     private final String versionId;
     private final ModpackExportInfo exportInfo;
+    private final File modpackFile;
 
-    public ServerModpackExportTask(DefaultGameRepository repository, String version, ModpackExportInfo exportInfo) {
+    public ServerModpackExportTask(DefaultGameRepository repository, String version, ModpackExportInfo exportInfo, File modpackFile) {
         this.repository = repository;
         this.versionId = version;
         this.exportInfo = exportInfo.validate();
+        this.modpackFile = modpackFile;
 
         onDone().register(event -> {
-            if (event.isFailed()) exportInfo.getOutput().toFile().delete();
+            if (event.isFailed()) modpackFile.delete();
         });
     }
 
@@ -62,7 +64,7 @@ public class ServerModpackExportTask extends Task<Void> {
         blackList.add(versionId + ".jar");
         blackList.add(versionId + ".json");
         Logging.LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
-        try (Zipper zip = new Zipper(exportInfo.getOutput())) {
+        try (Zipper zip = new Zipper(modpackFile.toPath())) {
             Path runDirectory = repository.getRunDirectory(versionId).toPath();
             List<ModpackConfiguration.FileInformation> files = new ArrayList<>();
             zip.putDirectory(runDirectory, "overrides", path -> {

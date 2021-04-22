@@ -3,7 +3,6 @@ package org.jackhuang.hmcl.mod;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,7 +27,6 @@ public class ModpackExportInfo {
 
     private String authlibInjectorServer;
 
-    private Path output;
     private List<McbbsModpackManifest.Origin> origins = new ArrayList<>();
 
     public ModpackExportInfo() {}
@@ -178,15 +176,6 @@ public class ModpackExportInfo {
         return this;
     }
 
-    public Path getOutput() {
-        return output;
-    }
-
-    public ModpackExportInfo setOutput(Path output) {
-        this.output = output;
-        return this;
-    }
-
     public List<McbbsModpackManifest.Origin> getOrigins() {
         return Collections.unmodifiableList(origins);
     }
@@ -198,8 +187,6 @@ public class ModpackExportInfo {
     }
 
     public ModpackExportInfo validate() throws NullPointerException {
-        if (output == null)
-            throw new NullPointerException("ModpackExportInfo.output cannot be null");
         return this;
     }
 

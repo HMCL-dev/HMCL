@@ -121,7 +121,6 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         exportInfo.setFileApi(fileApi.get());
         exportInfo.setVersion(version.get());
         exportInfo.setAuthor(author.get());
-        exportInfo.setOutput(file.toPath());
         exportInfo.setDescription(description.get());
         exportInfo.setPackWithLauncher(packWithLauncher.get());
         exportInfo.setUrl(url.get());
@@ -139,6 +138,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         }
 
         controller.getSettings().put(MODPACK_INFO, exportInfo);
+        controller.getSettings().put(MODPACK_FILE, file);
         controller.onNext();
     }
 
@@ -158,6 +158,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     }
 
     public static final String MODPACK_INFO = "modpack.info";
+    public static final String MODPACK_FILE = "modpack.file";
     public static final String MODPACK_INFO_OPTION = "modpack.info.option";
 
     public static class ModpackInfoPageSkin extends SkinBase<ModpackInfoPage> {
@@ -288,8 +289,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         list.getContent().add(pane);
 
                         JFXToggleButton button = new JFXToggleButton();
-                        button.setDisable(!skinnable.canIncludeLauncher);
-                        button.selectedProperty().bindBidirectional(skinnable.packWithLauncher);
+                        button.selectedProperty().bindBidirectional(skinnable.forceUpdate);
                         button.setSize(8);
                         button.setMinHeight(16);
                         button.setMaxHeight(16);
@@ -386,6 +386,20 @@ public final class ModpackInfoPage extends Control implements WizardPage {
 
                             validatingFields.add(txtMcbbs);
                         }
+                    }
+
+                    {
+                        BorderPane pane = new BorderPane();
+                        pane.setLeft(new Label(i18n("modpack.wizard.step.initialization.include_launcher")));
+                        list.getContent().add(pane);
+
+                        JFXToggleButton button = new JFXToggleButton();
+                        button.setDisable(!skinnable.canIncludeLauncher);
+                        button.selectedProperty().bindBidirectional(skinnable.packWithLauncher);
+                        button.setSize(8);
+                        button.setMinHeight(16);
+                        button.setMaxHeight(16);
+                        pane.setRight(button);
                     }
                 }
 
