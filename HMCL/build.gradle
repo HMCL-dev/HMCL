@@ -5,7 +5,6 @@ buildscript {
 }
 
 plugins {
-    id 'com.github.johnrengelman.shadow' version '5.2.0'
     id 'application'
 }
 
@@ -126,26 +125,21 @@ jar {
                         'javafx.base/com.sun.javafx.event'
                 ].join(" ")
     }
-    finalizedBy shadowJar
-}
 
-shadowJar {
-    classifier = null
-
-    exclude 'META-INF/maven/**'
-    exclude 'META-INF/NOTICE.txt'
-    exclude 'META-INF/LICENSE.txt'
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 
     into('META-INF/versions/11') {
         from sourceSets.java11.output
     }
 
-    dependencies {
-        exclude(dependency('org.jetbrains:annotations'))
-    }
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/NOTICE.txt'
+    exclude 'META-INF/LICENSE.txt'
 
     doLast {
-        //repack(jar.archivePath)
+        repack(jar.archivePath)
         attachSignature(jar.archivePath)
         createChecksum(jar.archivePath)
     }
