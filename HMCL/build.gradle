@@ -74,6 +74,9 @@ ext.packer = Pack200.newPacker()
 packer.properties()["pack.effort"] = "9"
 ext.unpacker = Pack200.newUnpacker()
 
+// Pack200 does not guarantee that unpacked .class file is bit-wise same as the .class file before packing
+// because of shrinking. So we should pack .class files and unpack it to make sure that after unpacking
+// .class files remain the same.
 def repack(File file) {
     def packed = new ByteArrayOutputStream()
     new JarFile(file).withCloseable { packer.pack(it, packed) }
@@ -130,16 +133,16 @@ jar {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
 
-    into('META-INF/versions/11') {
-        from sourceSets.java11.output
-    }
+   into('META-INF/versions/11') {
+       from sourceSets.java11.output
+   }
 
     exclude 'META-INF/maven/**'
     exclude 'META-INF/NOTICE.txt'
     exclude 'META-INF/LICENSE.txt'
 
     doLast {
-        repack(jar.archivePath)
+        repack(jar.archivePath) // see repack()
         attachSignature(jar.archivePath)
         createChecksum(jar.archivePath)
     }
@@ -182,6 +185,7 @@ task makePack(dependsOn: jar) {
 
 task makePackXz(dependsOn: makePack) doLast {
     def packXz = new File(makePack.outputPath.parentFile, makePack.outputPath.name + ".xz")
+    // Our CI server does not have enough memory space to compress file at highest level.
     new XZOutputStream(packXz.newOutputStream(), new LZMA2Options(5)).withCloseable { it << makePack.outputPath.bytes }
     createChecksum(packXz)
 }
