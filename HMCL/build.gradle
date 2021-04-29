@@ -1,4 +1,7 @@
 buildscript {
+    repositories {
+        gradlePluginPortal()
+    }
     dependencies {
         classpath 'org.tukaani:xz:1.8'
     }
@@ -6,6 +9,7 @@ buildscript {
 
 plugins {
     id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
 import java.nio.file.FileSystems
@@ -32,8 +36,8 @@ version = versionroot + '.' + buildnumber
 mainClassName = 'org.jackhuang.hmcl.Main'
 
 dependencies {
-    compile project(":HMCLCore")
-    compile rootProject.files("lib/JFoenix.jar")
+    implementation project(":HMCLCore")
+    implementation rootProject.files("lib/JFoenix.jar")
 }
 
 def digest(String algorithm, byte[] bytes) {
@@ -101,6 +105,13 @@ compileJava11Java {
 }
 
 jar {
+    enabled = false
+    dependsOn shadowJar
+}
+
+shadowJar {
+    classifier = null
+
     manifest {
         attributes 'Created-By': 'Copyright(c) 2013-2020 huangyuhui.',
                 'Main-Class': mainClassName,
@@ -128,18 +139,6 @@ jar {
                         'javafx.base/com.sun.javafx.event'
                 ].join(" ")
     }
-
-    from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-
-   into('META-INF/versions/11') {
-       from sourceSets.java11.output
-   }
-
-    exclude 'META-INF/maven/**'
-    exclude 'META-INF/NOTICE.txt'
-    exclude 'META-INF/LICENSE.txt'
 
     doLast {
         repack(jar.archivePath) // see repack()
@@ -171,6 +170,11 @@ processResources {
 
     convertToBSS "assets/css/root.css"
     convertToBSS "assets/css/blue.css"
+
+    into('META-INF/versions/11') {
+        from sourceSets.java11.output
+    }
+    dependsOn java11Classes
 }
 
 task makePack(dependsOn: jar) {

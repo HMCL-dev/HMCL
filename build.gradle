@@ -25,23 +25,7 @@ subprojects {
     compileTestJava.options.encoding = "UTF-8"
 
     dependencies {
-        compile group: 'com.google.code.gson', name: 'gson', version: '2.8.5'
-        compile group: 'org.tukaani', name: 'xz', version: '1.8'
-        compile group: 'org.hildan.fxgson', name: 'fx-gson', version: '3.1.0'
-        compile group: 'org.jenkins-ci', name: 'constant-pool-scanner', version: '1.2'
-        compile group: 'com.github.steveice10', name: 'opennbt', version: '1.1'
-        compile group: 'com.nqzero', name: 'permit-reflect', version: '0.3'
-        compileOnly group: 'org.jetbrains', name: 'annotations', version: '16.0.3'
-
-//        compileOnly group: 'org.openjfx', name: 'javafx-base', version: '15', classifier: 'win'
-//        compileOnly group: 'org.openjfx', name: 'javafx-controls', version: '15', classifier: 'win'
-//        compileOnly group: 'org.openjfx', name: 'javafx-fxml', version: '15', classifier: 'win'
-//        compileOnly group: 'org.openjfx', name: 'javafx-graphics', version: '15', classifier: 'win'
-//        compileOnly group: 'org.openjfx', name: 'javafx-media', version: '15', classifier: 'win'
-//        compileOnly group: 'org.openjfx', name: 'javafx-swing', version: '15', classifier: 'win'
-//        compileOnly group: 'org.openjfx', name: 'javafx-web', version: '15', classifier: 'win'
-
-        testCompile group: 'junit', name: 'junit', version: '4.12'
+        testImplementation group: 'junit', name: 'junit', version: '4.12'
     }
 
     publishing {
