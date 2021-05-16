@@ -96,6 +96,7 @@ public final class JavaVersion {
     public static final int JAVA_7 = 7;
     public static final int JAVA_8 = 8;
     public static final int JAVA_9 = 9;
+    public static final int JAVA_16 = 16;
 
     private static int parseVersion(String version) {
         Matcher matcher = VERSION.matcher(version);

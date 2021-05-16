@@ -130,6 +130,9 @@ public class DefaultLauncher extends Launcher {
             if (options.getMinMemory() != null && options.getMinMemory() > 0)
                 res.add("-Xms" + options.getMinMemory() + "m");
 
+            if (options.getJava().getParsedVersion() >= JavaVersion.JAVA_16)
+                res.add("--illegal-access=permit");
+
             res.add("-Dfml.ignoreInvalidMinecraftCertificates=true");
             res.add("-Dfml.ignorePatchDiscrepancies=true");
         }
