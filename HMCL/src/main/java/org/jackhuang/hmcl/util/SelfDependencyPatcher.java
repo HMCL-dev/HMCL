@@ -77,6 +77,7 @@ public class SelfDependencyPatcher {
             case "amd64":
             case "x64":
             case "x86-64":
+            case "x86_64":
                 break;
             default:
                 throw new IncompatibleVersionException();
