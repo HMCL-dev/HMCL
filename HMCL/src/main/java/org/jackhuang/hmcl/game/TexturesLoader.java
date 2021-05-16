@@ -19,13 +19,13 @@ package org.jackhuang.hmcl.game;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
-import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -136,6 +137,7 @@ public final class TexturesLoader {
 
     // ==== Skins ====
     private final static Map<TextureModel, LoadedTexture> DEFAULT_SKINS = new EnumMap<>(TextureModel.class);
+
     static {
         loadDefaultSkin("/assets/img/steve.png", TextureModel.STEVE);
         loadDefaultSkin("/assets/img/alex.png", TextureModel.ALEX);
@@ -231,18 +233,34 @@ public final class TexturesLoader {
     public static ObjectBinding<Image> fxAvatarBinding(YggdrasilService service, UUID uuid, int size) {
         return BindingMapping.of(skinBinding(service, uuid))
                 .map(it -> toAvatar(it.image, size))
-                .map(img -> SwingFXUtils.toFXImage(img, null));
+                .map(TexturesLoader::toFXImage);
     }
 
     public static ObjectBinding<Image> fxAvatarBinding(Account account, int size) {
         if (account instanceof YggdrasilAccount || account instanceof MicrosoftAccount) {
             return BindingMapping.of(skinBinding(account))
                     .map(it -> toAvatar(it.image, size))
-                    .map(img -> SwingFXUtils.toFXImage(img, null));
+                    .map(TexturesLoader::toFXImage);
         } else {
             return Bindings.createObjectBinding(
-                    () -> SwingFXUtils.toFXImage(toAvatar(getDefaultSkin(TextureModel.detectUUID(account.getUUID())).image, size), null));
+                    () -> toFXImage(toAvatar(getDefaultSkin(TextureModel.detectUUID(account.getUUID())).image, size)));
         }
     }
     // ====
+
+    // Based on https://stackoverflow.com/a/57552025
+    // Fix #874: Use it instead of SwingFXUtils.toFXImage
+    private static WritableImage toFXImage(BufferedImage image) {
+        WritableImage wr = new WritableImage(image.getWidth(), image.getHeight());
+        PixelWriter pw = wr.getPixelWriter();
+
+        final int iw = image.getWidth();
+        final int ih = image.getHeight();
+        for (int x = 0; x < iw; x++) {
+            for (int y = 0; y < ih; y++) {
+                pw.setArgb(x, y, image.getRGB(x, y));
+            }
+        }
+        return wr;
+    }
 }
