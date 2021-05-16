@@ -40,7 +40,8 @@ public class SelfDependencyPatcher {
         addJfxDependency("fxml");
         addJfxDependency("graphics");
         addJfxDependency("media");
-        addJfxDependency("swing");
+        // Fix #874: Remove the dependency on javafx.swing
+        // addJfxDependency("swing");
         addJfxDependency("web");
     }
 
