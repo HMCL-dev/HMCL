@@ -2,6 +2,7 @@ package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import javax.swing.*;
@@ -72,16 +73,10 @@ public class SelfDependencyPatcher {
             throw new IncompatibleVersionException();
         }
 
-        // We can only self-patch JavaFX on x86 platform.
+        // We can only self-patch JavaFX on x86-64 platform.
         // For ARM support, user's manual patch is required.
-        switch (System.getProperty("os.arch", "unknown").toLowerCase()) {
-            case "amd64":
-            case "x64":
-            case "x86-64":
-            case "x86_64":
-                break;
-            default:
-                throw new IncompatibleVersionException();
+        if (Architecture.CURRENT != Architecture.X86_64) {
+            throw new IncompatibleVersionException();
         }
 
         // Otherwise we're free to download in Java 11+

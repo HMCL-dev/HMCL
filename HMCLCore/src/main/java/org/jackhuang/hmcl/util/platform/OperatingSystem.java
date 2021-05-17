@@ -93,11 +93,6 @@ public enum OperatingSystem {
      */
     public static final String SYSTEM_VERSION = System.getProperty("os.version");
 
-    /**
-     * The architecture of current operating system.
-     */
-    public static final String SYSTEM_ARCHITECTURE;
-
     public static final Pattern INVALID_RESOURCE_CHARACTERS;
     private static final String[] INVALID_RESOURCE_BASENAMES;
     private static final String[] INVALID_RESOURCE_FULLNAMES;
@@ -118,11 +113,6 @@ public enum OperatingSystem {
                 .orElse(1024);
 
         SUGGESTED_MEMORY = (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);
-
-        String arch = System.getProperty("sun.arch.data.model");
-        if (arch == null)
-            arch = System.getProperty("os.arch");
-        SYSTEM_ARCHITECTURE = arch;
 
         // setup the invalid names
         if (CURRENT_OS == WINDOWS) {
