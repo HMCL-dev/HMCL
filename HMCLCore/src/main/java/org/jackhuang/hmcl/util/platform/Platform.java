@@ -45,14 +45,9 @@ public enum Platform {
     }
 
     /**
-     * True if current Java Environment is 64-bit.
-     */
-    public static final boolean IS_64_BIT = OperatingSystem.SYSTEM_ARCHITECTURE.contains("64");
-
-    /**
      * The platform of current Java Environment.
      */
-    public static final Platform PLATFORM = IS_64_BIT ? BIT_64 : BIT_32;
+    public static final Platform PLATFORM = Architecture.CURRENT.getPlatform();
 
     /**
      * The json serializer to {@link Platform}.

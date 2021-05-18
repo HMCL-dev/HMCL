@@ -54,10 +54,8 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
-import org.jackhuang.hmcl.util.platform.CommandBuilder;
+import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
-import org.jackhuang.hmcl.util.platform.ManagedProcess;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
@@ -373,7 +371,7 @@ public final class LauncherHelper {
         }
 
         if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.BIT_32 &&
-                org.jackhuang.hmcl.util.platform.Platform.IS_64_BIT) {
+                Architecture.CURRENT.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.BIT_64) {
             final JavaVersion java32 = java;
 
             // First find if same java version but whose platform is 64-bit installed.
