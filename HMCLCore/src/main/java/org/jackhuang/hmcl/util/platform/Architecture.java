@@ -127,10 +127,7 @@ public enum Architecture {
     }
 
     static {
-        String arch = System.getProperty("sun.arch.data.model");
-        if (arch == null)
-            arch = System.getProperty("os.arch");
-        SYSTEM_ARCHITECTURE = arch;
+        SYSTEM_ARCHITECTURE = System.getProperty("os.arch");
 
         CURRENT = normalizeArch(SYSTEM_ARCHITECTURE);
     }

@@ -22,12 +22,14 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
+import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
+import org.jackhuang.hmcl.download.java.JavaDownloadTask;
 import org.jackhuang.hmcl.launch.NotDecompressingNativesException;
 import org.jackhuang.hmcl.launch.PermissionException;
 import org.jackhuang.hmcl.launch.ProcessCreationException;
@@ -64,6 +66,7 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.RejectedExecutionException;
@@ -316,6 +319,20 @@ public final class LauncherHelper {
             flag = true;
         }
 
+        if (version.getJavaVersion() != null) {
+            if (java.getParsedVersion() < version.getJavaVersion().getMajorVersion()) {
+                Optional<JavaVersion> acceptableJava = JavaVersion.getJavas().stream()
+                        .filter(javaVersion -> javaVersion.getParsedVersion() >= version.getJavaVersion().getMajorVersion())
+                        .max(Comparator.comparing(JavaVersion::getVersionNumber));
+                if (acceptableJava.isPresent()) {
+                    setting.setJavaVersion(acceptableJava.get());
+                } else {
+                    downloadJava(version.getJavaVersion(), profile).thenAccept(x -> onAccept.run());
+                    flag = true;
+                }
+            }
+        }
+
         // Game later than 1.7.2 accepts Java 8.
         if (!flag && java.getParsedVersion() < JavaVersion.JAVA_8 && gameVersion.compareTo(VersionNumber.asVersion("1.7.2")) > 0) {
             Optional<JavaVersion> java8 = JavaVersion.getJavas().stream()
@@ -444,6 +461,36 @@ public final class LauncherHelper {
 
         if (!flag)
             onAccept.run();
+    }
+
+    private static CompletableFuture<Void> downloadJava(org.jackhuang.hmcl.game.JavaVersion javaVersion, Profile profile) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+
+        TaskExecutorDialogPane javaDownloadingPane = new TaskExecutorDialogPane(it -> {});
+
+        TaskExecutor executor = new JavaDownloadTask(javaVersion,
+                DefaultCacheRepository.getInstance().getCacheDirectory().resolve("java"),
+                profile.getDependency().getDownloadProvider()).executor(false);
+        executor.addTaskListener(new TaskListener() {
+            @Override
+            public void onStop(boolean success, TaskExecutor executor) {
+                super.onStop(success, executor);
+                Platform.runLater(() -> {
+                    if (!success) {
+                        future.completeExceptionally(executor.getException());
+                    } else {
+                        future.complete(null);
+                    }
+                });
+            }
+        });
+
+        javaDownloadingPane.setExecutor(executor, true);
+        Controllers.dialog(javaDownloadingPane);
+        executor.start();
+
+
+        return future;
     }
 
     private void checkExit() {

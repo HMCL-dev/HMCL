@@ -36,31 +36,31 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class JavaDownloadTask extends Task<Void> {
-    private final String javaName;
+    private final org.jackhuang.hmcl.game.JavaVersion javaVersion;
     private final Path rootDir;
-    private final String platform;
+    private String platform;
     private final Task<RemoteFiles> javaDownloadsTask;
     private JavaDownloads.JavaDownload download;
     private final List<Task<?>> dependencies = new ArrayList<>();
 
-    public JavaDownloadTask(String javaName, String javaVersion, Path rootDir, DownloadProvider downloadProvider) throws UnsupportedPlatformException {
-        this.javaName = javaName;
+    public JavaDownloadTask(org.jackhuang.hmcl.game.JavaVersion javaVersion, Path rootDir, DownloadProvider downloadProvider) {
+        this.javaVersion = javaVersion;
         this.rootDir = rootDir;
-        this.platform = getCurrentJavaPlatform().orElseThrow(UnsupportedPlatformException::new);
-        this.javaDownloadsTask = new GetTask(NetworkUtils.toURL(downloadProvider.injectURL(
-                "https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json")))
+        this.javaDownloadsTask = new GetTask(NetworkUtils.toURL(
+                "https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json"))
         .thenComposeAsync(javaDownloadsJson -> {
             JavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, JavaDownloads.class);
             if (!allDownloads.getDownloads().containsKey(platform)) throw new UnsupportedPlatformException();
             Map<String, List<JavaDownloads.JavaDownload>> osDownloads = allDownloads.getDownloads().get(platform);
-            if (!osDownloads.containsKey(javaName)) throw new UnsupportedPlatformException();
-            List<JavaDownloads.JavaDownload> candidates = osDownloads.get(javaName);
+            if (!osDownloads.containsKey(javaVersion.getComponent())) throw new UnsupportedPlatformException();
+            List<JavaDownloads.JavaDownload> candidates = osDownloads.get(javaVersion.getComponent());
             for (JavaDownloads.JavaDownload download : candidates) {
-                if (VersionNumber.VERSION_COMPARATOR.compare(download.getVersion().getName(), javaVersion) >= 0) {
+                if (VersionNumber.VERSION_COMPARATOR.compare(download.getVersion().getName(), Integer.toString(javaVersion.getMajorVersion())) >= 0) {
                     this.download = download;
                     return new GetTask(NetworkUtils.toURL(download.getManifest().getUrl()));
                 }
@@ -71,32 +71,50 @@ public class JavaDownloadTask extends Task<Void> {
     }
 
     @Override
+    public boolean doPreExecute() {
+        return true;
+    }
+
+    @Override
+    public void preExecute() throws Exception {
+        this.platform = getCurrentJavaPlatform().orElseThrow(UnsupportedPlatformException::new);
+    }
+
+    @Override
     public Collection<Task<?>> getDependents() {
         return Collections.singleton(javaDownloadsTask);
     }
 
     @Override
     public void execute() throws Exception {
-        Path jvmDir = rootDir.resolve(javaName).resolve(platform).resolve(javaName);
-        for (Map.Entry<String, RemoteFiles.RemoteFile> file : javaDownloadsTask.getResult().getFiles().entrySet()) {
-            Path dest = jvmDir.resolve(file.getKey());
-            if (file.getValue().getDownloads().containsKey("lzma")) {
-                DownloadInfo download = file.getValue().getDownloads().get("lzma");
-                File tempFile = Files.createTempFile("hmcl", "tmp").toFile();
-                FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(download.getUrl()), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
-                dependencies.add(task.thenRunAsync(() -> {
-                    try {
-                        Files.copy(new LZMAInputStream(new FileInputStream(tempFile)), dest);
-                    } catch (IOException e) {
-                        throw new ArtifactMalformedException("File " + file.getKey() + " is malformed");
-                    }
-                }));
-            } else if (file.getValue().getDownloads().containsKey("raw")) {
-                DownloadInfo download = file.getValue().getDownloads().get("raw");
-                FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(download.getUrl()), dest.toFile(), new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
-                dependencies.add(task);
-            } else {
-                throw new UnsupportedOperationException();
+        Path jvmDir = rootDir.resolve(javaVersion.getComponent()).resolve(platform).resolve(javaVersion.getComponent());
+        for (Map.Entry<String, RemoteFiles.Remote> entry : javaDownloadsTask.getResult().getFiles().entrySet()) {
+            Path dest = jvmDir.resolve(entry.getKey());
+            if (entry.getValue() instanceof RemoteFiles.RemoteFile) {
+                RemoteFiles.RemoteFile file = ((RemoteFiles.RemoteFile) entry.getValue());
+                if (file.getDownloads().containsKey("lzma")) {
+                    DownloadInfo download = file.getDownloads().get("lzma");
+                    File tempFile = Files.createTempFile("hmcl", "tmp").toFile();
+                    FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(download.getUrl()), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    dependencies.add(task.thenRunAsync(() -> {
+                        try {
+                            Files.copy(new LZMAInputStream(new FileInputStream(tempFile)), dest);
+                        } catch (IOException e) {
+                            throw new ArtifactMalformedException("File " + entry.getKey() + " is malformed");
+                        }
+                    }));
+                } else if (file.getDownloads().containsKey("raw")) {
+                    DownloadInfo download = file.getDownloads().get("raw");
+                    FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(download.getUrl()), dest.toFile(), new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    dependencies.add(task);
+                } else {
+                    continue;
+                }
+            } else if (entry.getValue() instanceof RemoteFiles.RemoteDirectory) {
+                Files.createDirectories(dest);
+            } else if (entry.getValue() instanceof RemoteFiles.RemoteLink) {
+                RemoteFiles.RemoteLink link = ((RemoteFiles.RemoteLink) entry.getValue());
+                Files.createSymbolicLink(dest, Paths.get(link.getTarget()));
             }
         }
     }
@@ -113,10 +131,14 @@ public class JavaDownloadTask extends Task<Void> {
 
     @Override
     public void postExecute() throws Exception {
-        FileUtils.writeText(rootDir.resolve(javaName).resolve(platform).resolve(".version").toFile(), download.getVersion().getName());
-        FileUtils.writeText(rootDir.resolve(javaName).resolve(platform).resolve(javaName + ".sha1").toFile(),
+        FileUtils.writeText(rootDir.resolve(javaVersion.getComponent()).resolve(platform).resolve(".version").toFile(), download.getVersion().getName());
+        FileUtils.writeText(rootDir.resolve(javaVersion.getComponent()).resolve(platform).resolve(javaVersion.getComponent() + ".sha1").toFile(),
                 javaDownloadsTask.getResult().getFiles().entrySet().stream()
-                        .map(entry -> entry.getKey() + " /#// " + entry.getValue().getDownloads().get("raw").getSha1() + " " + entry.getValue().getDownloads().get("raw").getSize())
+                        .filter(entry -> entry.getValue() instanceof RemoteFiles.RemoteFile)
+                        .map(entry -> {
+                            RemoteFiles.RemoteFile file = (RemoteFiles.RemoteFile) entry.getValue();
+                            return entry.getKey() + " /#// " + file.getDownloads().get("raw").getSha1() + " " + file.getDownloads().get("raw").getSize();
+                        })
                         .collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)));
     }
 

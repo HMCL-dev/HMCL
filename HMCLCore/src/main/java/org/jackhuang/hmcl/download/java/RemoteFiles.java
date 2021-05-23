@@ -21,16 +21,17 @@ import org.jackhuang.hmcl.game.DownloadInfo;
 import org.jackhuang.hmcl.util.gson.JsonSubtype;
 import org.jackhuang.hmcl.util.gson.JsonType;
 
+import java.util.Collections;
 import java.util.Map;
 
 public class RemoteFiles {
-    private final Map<String, RemoteFile> files;
+    private final Map<String, Remote> files;
 
-    public RemoteFiles(Map<String, RemoteFile> files) {
+    public RemoteFiles(Map<String, Remote> files) {
         this.files = files;
     }
 
-    public Map<String, RemoteFile> getFiles() {
+    public Map<String, Remote> getFiles() {
         return files;
     }
 
@@ -69,7 +70,7 @@ public class RemoteFiles {
         }
 
         public Map<String, DownloadInfo> getDownloads() {
-            return downloads;
+            return downloads == null ? Collections.emptyMap() : downloads;
         }
     }
 

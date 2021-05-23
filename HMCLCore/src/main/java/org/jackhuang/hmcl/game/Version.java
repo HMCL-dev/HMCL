@@ -59,6 +59,7 @@ public class Version implements Comparable<Version>, Validation {
     private final AssetIndexInfo assetIndex;
     private final String assets;
     private final Integer complianceLevel;
+    @Nullable
     private final JavaVersion javaVersion;
     private final List<Library> libraries;
     private final List<CompatibilityRule> compatibilityRules;
@@ -80,9 +81,10 @@ public class Version implements Comparable<Version>, Validation {
 
     /**
      * Constructor for patch
-     * @param id patch id
-     * @param version patch version
-     * @param priority patch priority
+     *
+     * @param id        patch id
+     * @param version   patch version
+     * @param priority  patch priority
      * @param arguments patch additional arguments
      * @param mainClass main class to override
      * @param libraries additional libraries
@@ -172,11 +174,21 @@ public class Version implements Comparable<Version>, Validation {
         return minimumLauncherVersion == null ? 0 : minimumLauncherVersion;
     }
 
+    public Integer getComplianceLevel() {
+        return complianceLevel;
+    }
+
+    public JavaVersion getJavaVersion() {
+        return javaVersion;
+    }
+
     public boolean isHidden() {
         return hidden == null ? false : hidden;
     }
 
-    public boolean isRoot() { return root == null ? false : root; }
+    public boolean isRoot() {
+        return root == null ? false : root;
+    }
 
     public boolean isResolved() {
         return resolved;
@@ -391,7 +403,7 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     public Version clearPatches() {
-        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root,null);
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, null);
     }
 
     public Version removePatchById(String patchId) {

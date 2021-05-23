@@ -78,6 +78,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
 
     @Override
     public String injectURL(String baseURL) {
+        if (baseURL.contains("v1/products/java-runtime")) return baseURL;
         return baseURL
                 .replace("https://bmclapi2.bangbang93.com", apiRoot)
                 .replace("https://launchermeta.mojang.com", apiRoot)
