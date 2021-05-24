@@ -17,15 +17,15 @@
  */
 package org.jackhuang.hmcl.game;
 
-public class JavaVersion {
+public class GameJavaVersion {
     private final String component;
     private final int majorVersion;
 
-    public JavaVersion() {
+    public GameJavaVersion() {
         this("", 0);
     }
 
-    public JavaVersion(String component, int majorVersion) {
+    public GameJavaVersion(String component, int majorVersion) {
         this.component = component;
         this.majorVersion = majorVersion;
     }

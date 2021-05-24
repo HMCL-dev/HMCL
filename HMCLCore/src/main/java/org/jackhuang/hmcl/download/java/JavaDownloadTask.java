@@ -20,13 +20,13 @@ package org.jackhuang.hmcl.download.java;
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DownloadInfo;
+import org.jackhuang.hmcl.game.GameJavaVersion;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.tukaani.xz.LZMAInputStream;
@@ -41,14 +41,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class JavaDownloadTask extends Task<Void> {
-    private final org.jackhuang.hmcl.game.JavaVersion javaVersion;
+    private final GameJavaVersion javaVersion;
     private final Path rootDir;
     private String platform;
     private final Task<RemoteFiles> javaDownloadsTask;
     private JavaDownloads.JavaDownload download;
     private final List<Task<?>> dependencies = new ArrayList<>();
 
-    public JavaDownloadTask(org.jackhuang.hmcl.game.JavaVersion javaVersion, Path rootDir, DownloadProvider downloadProvider) {
+    public JavaDownloadTask(GameJavaVersion javaVersion, Path rootDir, DownloadProvider downloadProvider) {
         this.javaVersion = javaVersion;
         this.rootDir = rootDir;
         this.javaDownloadsTask = new GetTask(NetworkUtils.toURL(
@@ -77,7 +77,7 @@ public class JavaDownloadTask extends Task<Void> {
 
     @Override
     public void preExecute() throws Exception {
-        this.platform = getCurrentJavaPlatform().orElseThrow(UnsupportedPlatformException::new);
+        this.platform = JavaRepository.getCurrentJavaPlatform().orElseThrow(UnsupportedPlatformException::new);
     }
 
     @Override
@@ -96,6 +96,7 @@ public class JavaDownloadTask extends Task<Void> {
                     DownloadInfo download = file.getDownloads().get("lzma");
                     File tempFile = Files.createTempFile("hmcl", "tmp").toFile();
                     FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(download.getUrl()), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
                         try {
                             Files.copy(new LZMAInputStream(new FileInputStream(tempFile)), dest);
@@ -106,6 +107,7 @@ public class JavaDownloadTask extends Task<Void> {
                 } else if (file.getDownloads().containsKey("raw")) {
                     DownloadInfo download = file.getDownloads().get("raw");
                     FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(download.getUrl()), dest.toFile(), new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    task.setName(entry.getKey());
                     dependencies.add(task);
                 } else {
                     continue;
@@ -140,27 +142,6 @@ public class JavaDownloadTask extends Task<Void> {
                             return entry.getKey() + " /#// " + file.getDownloads().get("raw").getSha1() + " " + file.getDownloads().get("raw").getSize();
                         })
                         .collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)));
-    }
-
-    public static Optional<String> getCurrentJavaPlatform() {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-            if (Architecture.CURRENT == Architecture.X86) {
-                return Optional.of("linux-i386");
-            } else if (Architecture.CURRENT == Architecture.X86_64) {
-                return Optional.of("linux");
-            }
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-            if (Architecture.CURRENT == Architecture.X86_64) {
-                return Optional.of("mac-os");
-            }
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            if (Architecture.CURRENT == Architecture.X86) {
-                return Optional.of("windows-x86");
-            } else if (Architecture.CURRENT == Architecture.X86_64) {
-                return Optional.of("windows-x64");
-            }
-        }
-        return Optional.empty();
     }
 
     public static class UnsupportedPlatformException extends Exception {}

@@ -22,14 +22,13 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
-import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
-import org.jackhuang.hmcl.download.java.JavaDownloadTask;
+import org.jackhuang.hmcl.download.java.JavaRepository;
 import org.jackhuang.hmcl.launch.NotDecompressingNativesException;
 import org.jackhuang.hmcl.launch.PermissionException;
 import org.jackhuang.hmcl.launch.ProcessCreationException;
@@ -57,7 +56,6 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.*;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
@@ -463,13 +461,13 @@ public final class LauncherHelper {
             onAccept.run();
     }
 
-    private static CompletableFuture<Void> downloadJava(org.jackhuang.hmcl.game.JavaVersion javaVersion, Profile profile) {
+    private static CompletableFuture<Void> downloadJava(GameJavaVersion javaVersion, Profile profile) {
         CompletableFuture<Void> future = new CompletableFuture<>();
 
-        TaskExecutorDialogPane javaDownloadingPane = new TaskExecutorDialogPane(it -> {});
+        TaskExecutorDialogPane javaDownloadingPane = new TaskExecutorDialogPane(it -> {
+        });
 
-        TaskExecutor executor = new JavaDownloadTask(javaVersion,
-                DefaultCacheRepository.getInstance().getCacheDirectory().resolve("java"),
+        TaskExecutor executor = JavaRepository.downloadJava(javaVersion,
                 profile.getDependency().getDownloadProvider()).executor(false);
         executor.addTaskListener(new TaskListener() {
             @Override

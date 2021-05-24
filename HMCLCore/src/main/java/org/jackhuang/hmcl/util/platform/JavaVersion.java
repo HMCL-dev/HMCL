@@ -28,9 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
@@ -38,7 +36,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static java.util.Collections.unmodifiableList;
 import static java.util.stream.Collectors.toList;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
@@ -144,7 +141,7 @@ public final class JavaVersion {
         return javaVersion;
     }
 
-    private static Path getExecutable(Path javaHome) {
+    public static Path getExecutable(Path javaHome) {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             return javaHome.resolve("bin").resolve("java.exe");
         } else {
@@ -171,10 +168,10 @@ public final class JavaVersion {
                 Platform.PLATFORM);
     }
 
-    private static List<JavaVersion> JAVAS;
+    private static Collection<JavaVersion> JAVAS;
     private static final CountDownLatch LATCH = new CountDownLatch(1);
 
-    public static List<JavaVersion> getJavas() throws InterruptedException {
+    public static Collection<JavaVersion> getJavas() throws InterruptedException {
         if (JAVAS != null)
             return JAVAS;
         LATCH.await();
@@ -199,7 +196,8 @@ public final class JavaVersion {
             javaVersions.add(CURRENT_JAVA);
         }
 
-        JAVAS = unmodifiableList(javaVersions);
+        JAVAS = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        JAVAS.addAll(javaVersions);
         LATCH.countDown();
     }
 

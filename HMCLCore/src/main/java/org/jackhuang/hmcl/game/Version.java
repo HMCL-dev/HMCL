@@ -60,7 +60,7 @@ public class Version implements Comparable<Version>, Validation {
     private final String assets;
     private final Integer complianceLevel;
     @Nullable
-    private final JavaVersion javaVersion;
+    private final GameJavaVersion javaVersion;
     private final List<Library> libraries;
     private final List<CompatibilityRule> compatibilityRules;
     private final JsonMap<DownloadType, DownloadInfo> downloads;
@@ -93,7 +93,7 @@ public class Version implements Comparable<Version>, Validation {
         this(false, id, version, priority, null, arguments, mainClass, null, null, null, null, null, null, libraries, null, null, null, null, null, null, null, null, null, null);
     }
 
-    public Version(boolean resolved, String id, String version, Integer priority, String minecraftArguments, Arguments arguments, String mainClass, String inheritsFrom, String jar, AssetIndexInfo assetIndex, String assets, Integer complianceLevel, JavaVersion javaVersion, List<Library> libraries, List<CompatibilityRule> compatibilityRules, Map<DownloadType, DownloadInfo> downloads, Map<DownloadType, LoggingInfo> logging, ReleaseType type, Date time, Date releaseTime, Integer minimumLauncherVersion, Boolean hidden, Boolean root, List<Version> patches) {
+    public Version(boolean resolved, String id, String version, Integer priority, String minecraftArguments, Arguments arguments, String mainClass, String inheritsFrom, String jar, AssetIndexInfo assetIndex, String assets, Integer complianceLevel, GameJavaVersion javaVersion, List<Library> libraries, List<CompatibilityRule> compatibilityRules, Map<DownloadType, DownloadInfo> downloads, Map<DownloadType, LoggingInfo> logging, ReleaseType type, Date time, Date releaseTime, Integer minimumLauncherVersion, Boolean hidden, Boolean root, List<Version> patches) {
         this.resolved = resolved;
         this.id = id;
         this.version = version;
@@ -178,7 +178,7 @@ public class Version implements Comparable<Version>, Validation {
         return complianceLevel;
     }
 
-    public JavaVersion getJavaVersion() {
+    public GameJavaVersion getJavaVersion() {
         return javaVersion;
     }
 
