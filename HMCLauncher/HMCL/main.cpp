@@ -6,7 +6,7 @@
 
 using namespace std;
 
-Version J8(TEXT("8")), J11(TEXT("11"));
+Version J8(TEXT("8"));
 
 void RawLaunchJVM(const wstring &javaPath, const wstring &jarPath)
 {
@@ -20,7 +20,7 @@ void LaunchJVM(const wstring &javaPath, const wstring &jarPath)
 	if (!MyGetFileVersionInfo(javaPath, javaVersion))
 		return;
 
-	if (J8 <= javaVersion && javaVersion < J11)
+	if (J8 <= javaVersion)
 	{
 		RawLaunchJVM(javaPath, jarPath);
 	}

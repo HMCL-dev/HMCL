@@ -77,7 +77,7 @@ bool FindFirstFileExists(LPCWSTR lpPath, DWORD dwFilter)
 bool GetArch(bool & is64Bit)
 {
 #if _WIN64
-	isWindows64bit = true;
+	is64Bit = true;
 	return true;
 #elif _WIN32
 	typedef BOOL(WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);

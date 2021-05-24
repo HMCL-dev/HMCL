@@ -9,7 +9,7 @@ const LPCWSTR JRE_OLD = L"SOFTWARE\\JavaSoft\\Java Runtime Environment";
 const LPCWSTR JDK_NEW = L"SOFTWARE\\JavaSoft\\JDK";
 const LPCWSTR JRE_NEW = L"SOFTWARE\\JavaSoft\\JRE";
 
-bool oldJavaFound = false, newJavaFound = false;
+bool oldJavaFound = false;
 
 bool FindJavaByRegistryKey(HKEY rootKey, LPCWSTR subKey, std::wstring & path)
 {
@@ -58,8 +58,6 @@ bool FindJavaByRegistryKey(HKEY rootKey, LPCWSTR subKey, std::wstring & path)
 		{
 			if (Version(javaVer) < JAVA_8)
 				oldJavaFound = true;
-			else if (JAVA_11 <= Version(javaVer))
-				newJavaFound = true;
 			else
 				flag = true;
 		}
