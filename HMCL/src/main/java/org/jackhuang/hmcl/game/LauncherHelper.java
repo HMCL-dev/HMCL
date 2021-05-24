@@ -317,7 +317,7 @@ public final class LauncherHelper {
             flag = true;
         }
 
-        if (version.getJavaVersion() != null) {
+        if (!flag && version.getJavaVersion() != null) {
             if (java.getParsedVersion() < version.getJavaVersion().getMajorVersion()) {
                 Optional<JavaVersion> acceptableJava = JavaVersion.getJavas().stream()
                         .filter(javaVersion -> javaVersion.getParsedVersion() >= version.getJavaVersion().getMajorVersion())
@@ -325,7 +325,9 @@ public final class LauncherHelper {
                 if (acceptableJava.isPresent()) {
                     setting.setJavaVersion(acceptableJava.get());
                 } else {
-                    downloadJava(version.getJavaVersion(), profile).thenAccept(x -> onAccept.run());
+                    Controllers.dialog(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), version.getJavaVersion().getMajorVersion()), i18n("message.warning"), MessageType.WARNING, () -> {
+                        downloadJava(version.getJavaVersion(), profile).thenAccept(x -> onAccept.run());
+                    });
                     flag = true;
                 }
             }
