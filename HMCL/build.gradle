@@ -28,7 +28,7 @@ import org.tukaani.xz.LZMA2Options
 import org.tukaani.xz.XZOutputStream
 
 def dev = ""
-def shortcommit = 'git rev-parse --short HEAD'.execute().text.trim().toUpperCase()
+def shortcommit = System.getenv("GITHUB_SHA").toUpperCase().substring(0, 7)
 if (!shortcommit.isEmpty()) dev = "dev-" + shortcommit
 def buildnumber = System.getenv("BUILD_NUMBER") ?: dev ?: "SNAPSHOT"
 if (System.getenv("BUILD_NUMBER") != null && System.getenv("BUILD_NUMBER_OFFSET") != null)
