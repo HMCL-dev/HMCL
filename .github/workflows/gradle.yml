@@ -20,4 +20,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: HMCL
-        path: HMCL/build/libsz
+        path: HMCL/build/libs
