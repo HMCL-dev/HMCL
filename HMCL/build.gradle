@@ -27,9 +27,9 @@ import java.nio.file.Files
 import org.tukaani.xz.LZMA2Options
 import org.tukaani.xz.XZOutputStream
 
-def dev = ""
-def shortcommit = System.getenv("GITHUB_SHA").toLowerCase().substring(0, 7)
-if (!shortcommit.isEmpty()) dev = "dev-" + shortcommit
+def dev = null
+def shortcommit = System.getenv("GITHUB_SHA")?.toLowerCase()?.substring(0, 7) ?: null
+if (shortcommit != null && !shortcommit.isEmpty()) dev = "dev-" + shortcommit
 def buildnumber = System.getenv("BUILD_NUMBER") ?: dev ?: "SNAPSHOT"
 if (System.getenv("BUILD_NUMBER") != null && System.getenv("BUILD_NUMBER_OFFSET") != null)
     buildnumber = (Integer.parseInt(System.getenv("BUILD_NUMBER")) - Integer.parseInt(System.getenv("BUILD_NUMBER_OFFSET"))).toString()
