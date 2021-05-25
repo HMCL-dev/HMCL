@@ -30,7 +30,7 @@ import org.tukaani.xz.XZOutputStream
 def buildnumber = System.getenv("BUILD_NUMBER") ?: "SNAPSHOT"
 if (System.getenv("BUILD_NUMBER") != null && System.getenv("BUILD_NUMBER_OFFSET") != null)
     buildnumber = (Integer.parseInt(System.getenv("BUILD_NUMBER")) - Integer.parseInt(System.getenv("BUILD_NUMBER_OFFSET"))).toString()
-def versionroot = System.getenv("VERSION_ROOT") ?: "3.2"
+def versionroot = System.getenv("VERSION_ROOT") ?: "3.3"
 version = versionroot + '.' + buildnumber
 
 mainClassName = 'org.jackhuang.hmcl.Main'
