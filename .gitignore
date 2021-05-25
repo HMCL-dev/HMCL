@@ -39,3 +39,4 @@ NVIDIA
 .nb-gradle
 
 *.exe
+!/HMCL/src/main/resources/assets/HMCLauncher.exe
