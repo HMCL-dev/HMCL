@@ -22,6 +22,7 @@ import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import org.jackhuang.hmcl.game.GameDirectoryType;
+import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
@@ -117,6 +118,39 @@ public final class VersionSetting implements Cloneable {
 
     public void setDefaultJavaPath(String defaultJavaPath) {
         defaultJavaPathProperty.set(defaultJavaPath);
+    }
+
+    /**
+     * 0 - .minecraft/versions/&lt;version&gt;/natives/<br/>
+     */
+    private final ObjectProperty<NativesDirectoryType> nativesDirTypeProperty = new SimpleObjectProperty<>(this, "nativesDirType", NativesDirectoryType.VERSION_FOLDER);
+
+    public ObjectProperty<NativesDirectoryType> nativesDirTypeProperty() {
+        return nativesDirTypeProperty;
+    }
+
+    public NativesDirectoryType getNativesDirType() {
+        return nativesDirTypeProperty.get();
+    }
+
+    public void setNativesDirType(NativesDirectoryType nativesDirType) {
+        nativesDirTypeProperty.set(nativesDirType);
+    }
+
+    // Path to lwjgl natives directory
+
+    private final StringProperty nativesDirProperty = new SimpleStringProperty(this, "nativesDirProperty", "");
+
+    public StringProperty nativesDirProperty(){
+        return nativesDirProperty;
+    }
+
+    public String getNativesDir(){
+        return nativesDirProperty.get();
+    }
+
+    public void setNativesDir(String nativesDir){
+        nativesDirProperty.set(nativesDir);
     }
 
     private final StringProperty javaDirProperty = new SimpleStringProperty(this, "javaDir", "");
@@ -526,6 +560,7 @@ public final class VersionSetting implements Cloneable {
         gameDirProperty.addListener(listener);
         launcherVisibilityProperty.addListener(listener);
         defaultJavaPathProperty.addListener(listener);
+        nativesDirProperty.addListener(listener);
     }
 
     @Override
@@ -553,6 +588,7 @@ public final class VersionSetting implements Cloneable {
         versionSetting.setGameDirType(getGameDirType());
         versionSetting.setGameDir(getGameDir());
         versionSetting.setLauncherVisibility(getLauncherVisibility());
+        versionSetting.setNativesDir(getNativesDir());
         return versionSetting;
     }
 
@@ -584,6 +620,8 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
             obj.addProperty("gameDirType", src.getGameDirType().ordinal());
             obj.addProperty("defaultJavaPath", src.getDefaultJavaPath());
+            obj.addProperty("nativesDir", src.getNativesDir());
+            obj.addProperty("nativesDirType", src.getNativesDirType().ordinal());
 
             return obj;
         }
@@ -613,6 +651,7 @@ public final class VersionSetting implements Cloneable {
             vs.setJava(Optional.ofNullable(obj.get("java")).map(JsonElement::getAsString).orElse(""));
             vs.setWrapper(Optional.ofNullable(obj.get("wrapper")).map(JsonElement::getAsString).orElse(""));
             vs.setGameDir(Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse(""));
+            vs.setNativesDir(Optional.ofNullable(obj.get("nativesDir")).map(JsonElement::getAsString).orElse(""));
             vs.setFullscreen(Optional.ofNullable(obj.get("fullscreen")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNoJVMArgs(Optional.ofNullable(obj.get("noJVMArgs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotCheckGame(Optional.ofNullable(obj.get("notCheckGame")).map(JsonElement::getAsBoolean).orElse(false));
@@ -621,6 +660,7 @@ public final class VersionSetting implements Cloneable {
             vs.setLauncherVisibility(LauncherVisibility.values()[Optional.ofNullable(obj.get("launcherVisibility")).map(JsonElement::getAsInt).orElse(1)]);
             vs.setGameDirType(GameDirectoryType.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(0)]);
             vs.setDefaultJavaPath(Optional.ofNullable(obj.get("defaultJavaPath")).map(JsonElement::getAsString).orElse(null));
+            vs.setNativesDirType(NativesDirectoryType.values()[Optional.ofNullable(obj.get("nativesDirType")).map(JsonElement::getAsInt).orElse(0)]);
 
             return vs;
         }
