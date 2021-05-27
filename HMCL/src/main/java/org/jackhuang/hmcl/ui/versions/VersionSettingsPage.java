@@ -35,6 +35,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameDirectoryType;
+import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -76,6 +77,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     @FXML private JFXTextField txtWidth;
     @FXML private JFXTextField txtHeight;
     @FXML private JFXTextField txtMaxMemory;
+    @FXML private JFXTextField txtNativesPath;
     @FXML private JFXTextField txtJVMArgs;
     @FXML private JFXTextField txtGameArgs;
     @FXML private JFXTextField txtMetaspace;
@@ -88,11 +90,13 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     @FXML private JFXComboBox<LauncherVisibility> cboLauncherVisibility;
     @FXML private JFXCheckBox chkFullscreen;
     @FXML private Label lblPhysicalMemory;
+    @FXML private Label lblCustomizedNativesPath;
     @FXML private JFXToggleButton chkNoJVMArgs;
     @FXML private JFXToggleButton chkNoGameCheck;
     @FXML private JFXToggleButton chkNoJVMCheck;
     @FXML private MultiFileItem<JavaVersion> javaItem;
     @FXML private MultiFileItem<GameDirectoryType> gameDirItem;
+    @FXML private MultiFileItem<NativesDirectoryType> nativesDirItem;
     @FXML private JFXToggleButton chkShowLogs;
     @FXML private ImagePickerItem iconPickerItem;
     @FXML private JFXCheckBox chkEnableSpecificSettings;
@@ -138,6 +142,11 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 gameDirItem.createChildren(i18n("settings.advanced.game_dir.independent"), GameDirectoryType.VERSION_FOLDER)
         ));
 
+        nativesDirItem.setCustomUserData(NativesDirectoryType.CUSTOM);
+        nativesDirItem.loadChildren(Arrays.asList(
+                nativesDirItem.createChildren(i18n("settings.advanced.natives_dir.default"), NativesDirectoryType.VERSION_FOLDER)
+        ));
+
         chkEnableSpecificSettings.selectedProperty().addListener((a, b, newValue) -> {
             if (versionId == null) return;
 
@@ -179,6 +188,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbindInt(txtMaxMemory, lastVersionSetting.maxMemoryProperty());
             FXUtils.unbindString(javaItem.getTxtCustom(), lastVersionSetting.javaDirProperty());
             FXUtils.unbindString(gameDirItem.getTxtCustom(), lastVersionSetting.gameDirProperty());
+            FXUtils.unbindString(nativesDirItem.getTxtCustom(), lastVersionSetting.nativesDirProperty());
             FXUtils.unbindString(txtJVMArgs, lastVersionSetting.javaArgsProperty());
             FXUtils.unbindString(txtGameArgs, lastVersionSetting.minecraftArgsProperty());
             FXUtils.unbindString(txtMetaspace, lastVersionSetting.permSizeProperty());
@@ -198,6 +208,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
             gameDirItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.gameDirTypeProperty());
             gameDirItem.subtitleProperty().unbind();
+
+            nativesDirItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.nativesDirTypeProperty());
+            nativesDirItem.subtitleProperty().unbind();
         }
 
         // unbind data fields
@@ -209,6 +222,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         FXUtils.bindInt(txtMaxMemory, versionSetting.maxMemoryProperty());
         FXUtils.bindString(javaItem.getTxtCustom(), versionSetting.javaDirProperty());
         FXUtils.bindString(gameDirItem.getTxtCustom(), versionSetting.gameDirProperty());
+        FXUtils.bindString(nativesDirItem.getTxtCustom(), versionSetting.nativesDirProperty());
         FXUtils.bindString(txtJVMArgs, versionSetting.javaArgsProperty());
         FXUtils.bindString(txtGameArgs, versionSetting.minecraftArgsProperty());
         FXUtils.bindString(txtMetaspace, versionSetting.permSizeProperty());
@@ -240,6 +254,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         gameDirItem.selectedDataProperty().bindBidirectional(versionSetting.gameDirTypeProperty());
         gameDirItem.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath()).normalize().toString(),
                 versionSetting.gameDirProperty(), versionSetting.gameDirTypeProperty()));
+        
+        nativesDirItem.selectedDataProperty().bindBidirectional(versionSetting.nativesDirTypeProperty());
+        nativesDirItem.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath() + "/natives").normalize().toString(),
+                versionSetting.nativesDirProperty(), versionSetting.nativesDirTypeProperty()));
 
         lastVersionSetting = versionSetting;
 

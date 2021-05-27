@@ -66,11 +66,15 @@ public class DefaultLauncher extends Launcher {
     }
 
     public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
-        this(repository, version, authInfo, options, listener, true);
+        this(repository, version, authInfo, options, listener, false, null, true);
     }
 
-    public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
-        super(repository, version, authInfo, options, listener, daemon);
+    public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean customized_natives, String customized_natives_path) {
+        this(repository, version, authInfo, options, listener, customized_natives, customized_natives_path, true);
+    }
+
+    public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean customized_natives, String customized_natives_path, boolean daemon) {
+        super(repository, version, authInfo, options, listener, customized_natives, customized_natives_path, daemon);
     }
 
     private CommandBuilder generateCommandLine(File nativeFolder) throws IOException {
@@ -299,8 +303,10 @@ public class DefaultLauncher extends Launcher {
 
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        File nativeFolder = repository.getNativeDirectory(version.getId());
-
+        File nativeFolder = null;
+        if (!customized_natives) nativeFolder = repository.getNativeDirectory(version.getId());
+        else nativeFolder = new File(customized_natives_path);
+        
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = generateCommandLine(nativeFolder).asList();
 
@@ -308,7 +314,7 @@ public class DefaultLauncher extends Launcher {
             throw new IllegalStateException("Illegal command line " + rawCommandLine);
         }
 
-        decompressNatives(nativeFolder);
+        if (!customized_natives) decompressNatives(nativeFolder);
 
         File runDirectory = repository.getRunDirectory(version.getId());
 
@@ -348,8 +354,11 @@ public class DefaultLauncher extends Launcher {
     public void makeLaunchScript(File scriptFile) throws IOException {
         boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
 
-        File nativeFolder = repository.getNativeDirectory(version.getId());
-        decompressNatives(nativeFolder);
+        File nativeFolder = null;
+        if (!customized_natives) nativeFolder = repository.getNativeDirectory(version.getId());
+        else nativeFolder = new File(customized_natives_path);
+        
+        if (!customized_natives) decompressNatives(nativeFolder);
 
         if (isWindows && !FileUtils.getExtension(scriptFile).equals("bat"))
             throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' in Windows");

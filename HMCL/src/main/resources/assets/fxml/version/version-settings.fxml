@@ -38,6 +38,9 @@
                 <MultiFileItem fx:id="gameDirItem" title="%settings.game.working_directory" chooserTitle="%settings.game.working_directory.choose"
                                hasSubtitle="true" customText="%settings.custom" directory="true" />
 
+                <MultiFileItem fx:id="nativesDirItem" title="%settings.game.natives_directory" chooserTitle="%settings.game.natives_directory.choose"
+                               hasSubtitle="true" customText="%settings.custom" directory="true" />
+
                 <BorderPane> <!-- Max Memory -->
                     <left>
                         <VBox>
@@ -53,7 +56,7 @@
                         </JFXTextField>
                     </right>
                 </BorderPane>
-
+                
                 <BorderPane> <!-- Launcher Visibility -->
                     <left>
                         <Label text="%settings.advanced.launcher_visible" BorderPane.alignment="CENTER_LEFT"/>

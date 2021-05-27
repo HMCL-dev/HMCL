@@ -178,7 +178,10 @@ public final class LauncherHelper {
                             repository.getLaunchOptions(selectedVersion, profile.getGameDir(), !setting.isNotCheckJVM()),
                             launcherVisibility == LauncherVisibility.CLOSE
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(repository, selectedVersion, authInfo, launchingLatch, gameVersion.isPresent())
+                                    : new HMCLProcessListener(repository, selectedVersion, authInfo, launchingLatch, gameVersion.isPresent()),
+                            NativesDirectoryType.CUSTOM.equals(setting.getNativesDirType()),
+                            setting.getNativesDir()
+                                    // TODO: yaoxi-std ADD custom natives path checking
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {

@@ -40,3 +40,6 @@ NVIDIA
 
 *.exe
 !/HMCL/src/main/resources/assets/HMCLauncher.exe
+
+# macos
+.DS_Store
