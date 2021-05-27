@@ -68,6 +68,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -329,7 +330,17 @@ public final class LauncherHelper {
                     setting.setJavaVersion(acceptableJava.get());
                 } else {
                     Controllers.dialog(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), version.getJavaVersion().getMajorVersion()), i18n("message.warning"), MessageType.WARNING, () -> {
-                        downloadJava(version.getJavaVersion(), profile).thenAccept(x -> onAccept.run());
+                        downloadJava(version.getJavaVersion(), profile)
+                                .thenAcceptAsync(x -> {
+                                    try {
+                                        Optional<JavaVersion> newAcceptableJava = JavaVersion.getJavas().stream()
+                                                .filter(javaVersion -> javaVersion.getParsedVersion() >= version.getJavaVersion().getMajorVersion())
+                                                .max(Comparator.comparing(JavaVersion::getVersionNumber));
+                                        newAcceptableJava.ifPresent(setting::setJavaVersion);
+                                    } catch (InterruptedException e) {
+                                        LOG.log(Level.SEVERE, "Cannot list javas", e);
+                                    }
+                                }, Platform::runLater).thenAccept(x -> onAccept.run());
                     });
                     flag = true;
                 }
