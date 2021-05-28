@@ -306,7 +306,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setServerIp(vs.getServerIp())
                 .setWrapper(vs.getWrapper())
                 .setPrecalledCommand(vs.getPreLaunchCommand())
-                .setNoGeneratedJVMArgs(vs.isNoJVMArgs());
+                .setNoGeneratedJVMArgs(vs.isNoJVMArgs())
+                .setNativesDirType(vs.getNativesDirType())
+                .setNativesDir(vs.getNativesDir());
         if (config().hasProxy()) {
             builder.setProxy(ProxyManager.getProxy());
             if (config().hasProxyAuth()) {
