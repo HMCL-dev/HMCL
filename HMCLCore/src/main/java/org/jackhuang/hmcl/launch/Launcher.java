@@ -38,30 +38,22 @@ public abstract class Launcher {
     protected final LaunchOptions options;
     protected final ProcessListener listener;
     protected final boolean daemon;
-    protected final boolean customized_natives;
-    protected final String customized_natives_path;
 
     public Launcher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
         this(repository, version, authInfo, options, null);
     }
 
     public Launcher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
-        this(repository, version, authInfo, options, listener, false, null, true);
+        this(repository, version, authInfo, options, listener, true);
     }
 
-    public Launcher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean customized_natives, String customized_natives_path) {
-        this(repository, version, authInfo, options, listener, customized_natives, customized_natives_path, true);
-    }
-
-    public Launcher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean customized_natives, String customized_natives_path, boolean daemon) {
+    public Launcher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
         this.repository = repository;
         this.version = version;
         this.authInfo = authInfo;
         this.options = options;
         this.listener = listener;
         this.daemon = daemon;
-        this.customized_natives = customized_natives;
-        this.customized_natives_path = customized_natives_path;
     }
 
     /**

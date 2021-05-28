@@ -42,15 +42,11 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
-        this(repository, version, authInfo, options, listener, false, null, true);
+        this(repository, version, authInfo, options, listener, true);
     }
 
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean customized_natives, String customized_natives_path) {
-        this(repository, version, authInfo, options, listener, customized_natives, customized_natives_path, true);
-    }
-
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean customized_natives, String customized_natives_path, boolean daemon) {
-        super(repository, version, authInfo, options, listener, customized_natives, customized_natives_path, daemon);
+    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
+        super(repository, version, authInfo, options, listener, daemon);
     }
 
     @Override

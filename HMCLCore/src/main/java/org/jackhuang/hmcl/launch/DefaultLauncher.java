@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
@@ -66,15 +67,11 @@ public class DefaultLauncher extends Launcher {
     }
 
     public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
-        this(repository, version, authInfo, options, listener, false, null, true);
+        this(repository, version, authInfo, options, listener, true);
     }
 
-    public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean customized_natives, String customized_natives_path) {
-        this(repository, version, authInfo, options, listener, customized_natives, customized_natives_path, true);
-    }
-
-    public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean customized_natives, String customized_natives_path, boolean daemon) {
-        super(repository, version, authInfo, options, listener, customized_natives, customized_natives_path, daemon);
+    public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
+        super(repository, version, authInfo, options, listener, daemon);
     }
 
     private CommandBuilder generateCommandLine(File nativeFolder) throws IOException {
@@ -304,8 +301,12 @@ public class DefaultLauncher extends Launcher {
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
         File nativeFolder = null;
-        if (!customized_natives) nativeFolder = repository.getNativeDirectory(version.getId());
-        else nativeFolder = new File(customized_natives_path);
+        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+            nativeFolder = repository.getNativeDirectory(version.getId());
+        }
+        else {
+            nativeFolder = new File(options.getNativesDir());
+        }
         
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = generateCommandLine(nativeFolder).asList();
@@ -314,7 +315,9 @@ public class DefaultLauncher extends Launcher {
             throw new IllegalStateException("Illegal command line " + rawCommandLine);
         }
 
-        if (!customized_natives) decompressNatives(nativeFolder);
+        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+            decompressNatives(nativeFolder);
+        } 
 
         File runDirectory = repository.getRunDirectory(version.getId());
 
@@ -355,10 +358,16 @@ public class DefaultLauncher extends Launcher {
         boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
 
         File nativeFolder = null;
-        if (!customized_natives) nativeFolder = repository.getNativeDirectory(version.getId());
-        else nativeFolder = new File(customized_natives_path);
+        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+            nativeFolder = repository.getNativeDirectory(version.getId());
+        }
+        else {
+            nativeFolder = new File(options.getNativesDir());
+        }
         
-        if (!customized_natives) decompressNatives(nativeFolder);
+        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+            decompressNatives(nativeFolder);
+        } 
 
         if (isWindows && !FileUtils.getExtension(scriptFile).equals("bat"))
             throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' in Windows");
