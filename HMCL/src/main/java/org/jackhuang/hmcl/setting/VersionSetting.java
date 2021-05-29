@@ -67,7 +67,7 @@ public final class VersionSetting implements Cloneable {
      * 1. Global settings.
      * 2. Version settings.
      * If a version claims that it uses global settings, its version setting will be disabled.
-     *
+     * <p>
      * Defaults false because if one version uses global first, custom version file will not be generated.
      */
     public boolean isUsesGlobal() {
@@ -141,15 +141,15 @@ public final class VersionSetting implements Cloneable {
 
     private final StringProperty nativesDirProperty = new SimpleStringProperty(this, "nativesDirProperty", "");
 
-    public StringProperty nativesDirProperty(){
+    public StringProperty nativesDirProperty() {
         return nativesDirProperty;
     }
 
-    public String getNativesDir(){
+    public String getNativesDir() {
         return nativesDirProperty.get();
     }
 
-    public void setNativesDir(String nativesDir){
+    public void setNativesDir(String nativesDir) {
         nativesDirProperty.set(nativesDir);
     }
 
@@ -370,7 +370,7 @@ public final class VersionSetting implements Cloneable {
 
     /**
      * The server ip that will be entered after Minecraft successfully loaded ly.
-     *
+     * <p>
      * Format: ip:port or without port.
      */
     public String getServerIp() {
@@ -407,7 +407,7 @@ public final class VersionSetting implements Cloneable {
 
     /**
      * The width of Minecraft window, defaults 800.
-     *
+     * <p>
      * The field saves int value.
      * String type prevents unexpected value from JsonParseException.
      * We can only reset this field instead of recreating the whole setting file.
@@ -429,7 +429,7 @@ public final class VersionSetting implements Cloneable {
 
     /**
      * The height of Minecraft window, defaults 480.
-     *
+     * <p>
      * The field saves int value.
      * String type prevents unexpected value from JsonParseException.
      * We can only reset this field instead of recreating the whole setting file.

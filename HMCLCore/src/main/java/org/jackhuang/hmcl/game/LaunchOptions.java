@@ -206,17 +206,17 @@ public class LaunchOptions implements Serializable {
      * 0 - ./minecraft/versions/&lt;version&gt;/natives
      * 1 - custom natives directory
      */
-    public NativesDirectoryType getNativesDirType(){
+    public NativesDirectoryType getNativesDirType() {
         return nativesDirType;
     }
 
     /**
      * Path to the natives directory, optional
      */
-    public String getNativesDir(){
+    public String getNativesDir() {
         return nativesDir;
     }
-    
+
     public static class Builder {
 
         private final LaunchOptions options = new LaunchOptions();
@@ -369,11 +369,11 @@ public class LaunchOptions implements Serializable {
             return options.preLaunchCommand;
         }
 
-        public NativesDirectoryType getNativesDirType(){
+        public NativesDirectoryType getNativesDirType() {
             return options.nativesDirType;
         }
 
-        public String getNativesDir(){
+        public String getNativesDir() {
             return options.nativesDir;
         }
 
@@ -479,12 +479,12 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setNativesDirType(NativesDirectoryType nativesDirType){
+        public Builder setNativesDirType(NativesDirectoryType nativesDirType) {
             options.nativesDirType = nativesDirType;
             return this;
         }
 
-        public Builder setNativesDir(String nativesDir){
+        public Builder setNativesDir(String nativesDir) {
             options.nativesDir = nativesDir;
             return this;
         }

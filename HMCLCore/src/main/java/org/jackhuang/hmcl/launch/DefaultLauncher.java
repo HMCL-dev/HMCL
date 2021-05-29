@@ -303,11 +303,10 @@ public class DefaultLauncher extends Launcher {
         File nativeFolder = null;
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
             nativeFolder = repository.getNativeDirectory(version.getId());
-        }
-        else {
+        } else {
             nativeFolder = new File(options.getNativesDir());
         }
-        
+
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = generateCommandLine(nativeFolder).asList();
 
@@ -317,7 +316,7 @@ public class DefaultLauncher extends Launcher {
 
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
             decompressNatives(nativeFolder);
-        } 
+        }
 
         File runDirectory = repository.getRunDirectory(version.getId());
 
@@ -360,14 +359,13 @@ public class DefaultLauncher extends Launcher {
         File nativeFolder = null;
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
             nativeFolder = repository.getNativeDirectory(version.getId());
-        }
-        else {
+        } else {
             nativeFolder = new File(options.getNativesDir());
         }
-        
+
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
             decompressNatives(nativeFolder);
-        } 
+        }
 
         if (isWindows && !FileUtils.getExtension(scriptFile).equals("bat"))
             throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' in Windows");
