@@ -27,7 +27,7 @@
     <ClInclude Include="main.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Version.h">
+    <ClInclude Include="version.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="java.h">
@@ -47,7 +47,7 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Version.cpp">
+    <ClCompile Include="version.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="java.cpp">
