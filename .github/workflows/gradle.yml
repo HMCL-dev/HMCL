@@ -13,7 +13,7 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
-        java-package: jdk+fxv
+        java-package: jdk+fx
     - name: Check style main
       run: ./gradlew checkstyleMain
     - name: Check style test
