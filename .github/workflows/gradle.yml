@@ -14,6 +14,8 @@ jobs:
       with:
         java-version: 1.8
         java-package: jdk+fx
+    - name: Check style
+      run: ./gradlew checkstyleMain
     - name: Build with Gradle
       run: ./gradlew build
     - name: Upload Artifacts
