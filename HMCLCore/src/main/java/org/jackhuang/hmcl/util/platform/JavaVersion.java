@@ -184,7 +184,7 @@ public final class JavaVersion {
 
         List<JavaVersion> javaVersions;
 
-        try (Stream<Path> stream = searchPotentialJavaHomes()) {
+        try (Stream<Path> stream = searchPotentialJavaExecutables()) {
             javaVersions = lookupJavas(stream);
         } catch (IOException e) {
             LOG.log(Level.WARNING, "Failed to search Java homes", e);
@@ -201,10 +201,8 @@ public final class JavaVersion {
         LATCH.countDown();
     }
 
-    private static List<JavaVersion> lookupJavas(Stream<Path> javaHomes) {
-        return javaHomes
-                .filter(Files::isDirectory)
-                .map(JavaVersion::getExecutable)
+    private static List<JavaVersion> lookupJavas(Stream<Path> javaExecutables) {
+        return javaExecutables
                 .filter(Files::isExecutable)
                 .flatMap(executable -> { // resolve symbolic links
                     try {
@@ -229,34 +227,56 @@ public final class JavaVersion {
                 .collect(toList());
     }
 
-    private static Stream<Path> searchPotentialJavaHomes() throws IOException {
+    private static Stream<Path> searchPotentialJavaExecutables() throws IOException {
+        List<Stream<Path>> javaExecutables = new ArrayList<>();
         switch (OperatingSystem.CURRENT_OS) {
 
             case WINDOWS:
-                List<Path> locations = new ArrayList<>();
-                locations.addAll(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\"));
-                locations.addAll(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\"));
-                locations.addAll(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JRE\\"));
-                locations.addAll(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JDK\\"));
-                return locations.stream();
+                javaExecutables.add(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\").stream().map(JavaVersion::getExecutable));
+                javaExecutables.add(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\").stream().map(JavaVersion::getExecutable));
+                javaExecutables.add(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JRE\\").stream().map(JavaVersion::getExecutable));
+                javaExecutables.add(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JDK\\").stream().map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(Paths.get("C:\\Program Files\\Java")).map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(Paths.get("C:\\Program Files\\BellSoft")).map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(Paths.get("C:\\Program Files\\AdoptOpenJDK")).map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(Paths.get("C:\\Program Files\\Zulu")).map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(Paths.get("C:\\Program Files\\Microsoft")).map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(Paths.get("C:\\Program Files (x86)\\Java")).map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(Paths.get("C:\\Program Files (x86)\\BellSoft")).map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(Paths.get("C:\\Program Files (x86)\\AdoptOpenJDK")).map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(Paths.get("C:\\Program Files (x86)\\Zulu")).map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(Paths.get("C:\\Program Files (x86)\\Microsoft")).map(JavaVersion::getExecutable));
+                javaExecutables.add(Arrays.stream(System.getenv("PATH").split(";")).map(path -> Paths.get(path, "java.exe")));
+                javaExecutables.add(Arrays.stream(System.getenv("PATH").split(";")).map(path -> Paths.get(path, "java.exe")));
+                break;
 
             case LINUX:
-                Path linuxJvmDir = Paths.get("/usr/lib/jvm");
-                if (Files.isDirectory(linuxJvmDir)) {
-                    return Files.list(linuxJvmDir);
-                }
-                return Stream.empty();
+                javaExecutables.add(listDirectory(Paths.get("/usr/lib/jvm")).map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(Paths.get("/usr/lib32/jvm")).map(JavaVersion::getExecutable));
+                javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).map(path -> Paths.get(path, "java")));
+                break;
 
             case OSX:
-                Path osxJvmDir = Paths.get("/Library/Java/JavaVirtualMachines");
-                if (Files.isDirectory(osxJvmDir)) {
-                    return Files.list(osxJvmDir)
-                            .map(dir -> dir.resolve("Contents/Home"));
-                }
-                return Stream.empty();
+                javaExecutables.add(listDirectory(Paths.get("/Library/Java/JavaVirtualMachines"))
+                        .flatMap(dir -> Stream.of(dir.resolve("Contents/Home"), dir.resolve("Contents/Home/jre")))
+                        .map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(Paths.get("/System/Library/Java/JavaVirtualMachines"))
+                        .map(dir -> dir.resolve("Contents/Home"))
+                        .map(JavaVersion::getExecutable));
+                javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).map(path -> Paths.get(path, "java")));
+                break;
 
             default:
-                return Stream.empty();
+                break;
+        }
+        return javaExecutables.stream().flatMap(stream -> stream);
+    }
+
+    private static Stream<Path> listDirectory(Path directory) throws IOException {
+        if (Files.isDirectory(directory)) {
+            return Files.list(directory);
+        } else {
+            return Stream.empty();
         }
     }
 
