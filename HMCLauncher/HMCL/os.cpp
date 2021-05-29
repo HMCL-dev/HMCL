@@ -52,7 +52,7 @@ LSTATUS MyGetEnvironmentVariable(LPCWSTR name, std::wstring & out)
 	}
 }
 
-bool MyCreateProcess(const std::wstring &command)
+bool MyCreateProcess(const std::wstring &command, const std::wstring &workdir)
 {
 	wstring writable_command = command;
 	STARTUPINFO si;
@@ -61,7 +61,12 @@ bool MyCreateProcess(const std::wstring &command)
 	ZeroMemory(&si, sizeof(si));
 	ZeroMemory(&pi, sizeof(pi));
 
-	return (CreateProcess(NULL, &writable_command[0], NULL, NULL, false, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi));
+	if (workdir.empty()) {
+		return CreateProcess(NULL, &writable_command[0], NULL, NULL, false, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+	}
+	else {
+		return CreateProcess(NULL, &writable_command[0], NULL, NULL, false, NORMAL_PRIORITY_CLASS, NULL, workdir.c_str(), &si, &pi);
+	}
 }
 
 bool FindFirstFileExists(LPCWSTR lpPath, DWORD dwFilter)

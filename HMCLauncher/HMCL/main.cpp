@@ -8,13 +8,13 @@ using namespace std;
 
 Version J8(TEXT("8"));
 
-void RawLaunchJVM(const wstring &javaPath, const wstring &jarPath)
+void RawLaunchJVM(const wstring &javaPath, const wstring& workdir, const wstring &jarPath)
 {
-	if (MyCreateProcess(L"\"" + javaPath + L"\" -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15 -jar \"" + jarPath + L"\""))
+	if (MyCreateProcess(L"\"" + javaPath + L"\" -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15 -jar \"" + jarPath + L"\"", workdir))
 		exit(EXIT_SUCCESS);
 }
 
-void LaunchJVM(const wstring &javaPath, const wstring &jarPath)
+void LaunchJVM(const wstring &javaPath, const wstring& workdir, const wstring &jarPath)
 {
 	Version javaVersion(L"");
 	if (!MyGetFileVersionInfo(javaPath, javaVersion))
@@ -22,7 +22,7 @@ void LaunchJVM(const wstring &javaPath, const wstring &jarPath)
 
 	if (J8 <= javaVersion)
 	{
-		RawLaunchJVM(javaPath, jarPath);
+		RawLaunchJVM(javaPath, workdir, jarPath);
 	}
 }
 
@@ -34,6 +34,13 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	if (ERROR_SUCCESS != MyGetModuleFileName(NULL, exeName))
 		return 1;
 
+	wstring workdir;
+	size_t last_slash = exeName.find_last_of(L"/\\");
+	if (last_slash != wstring::npos && last_slash + 1 < exeName.size()) {
+		workdir = exeName.substr(0, last_slash);
+		exeName = exeName.substr(last_slash + 1);
+	}
+
 	// TODO: check whether the bundled JRE is valid.
 	// First try the Java packaged together.
 	bool is64Bit = false;
@@ -41,15 +48,15 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
 	if (is64Bit)
 	{
-		RawLaunchJVM(L"jre-x64\\bin\\javaw.exe", exeName);
+		RawLaunchJVM(L"jre-x64\\bin\\javaw.exe", workdir, exeName);
 	}
 	else
 	{
-		RawLaunchJVM(L"jre-x86\\bin\\javaw.exe", exeName);
+		RawLaunchJVM(L"jre-x86\\bin\\javaw.exe", workdir, exeName);
 	}
 
 	if (FindJava(path))
-		LaunchJVM(path + L"\\bin\\javaw.exe", exeName);
+		LaunchJVM(path + L"\\bin\\javaw.exe", workdir, exeName);
 
 	// Or we try to search Java in C:\Program Files.
 	{
@@ -60,7 +67,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 			do {
 				wstring javaw = wstring(L"C:\\Program Files\\Java\\") + data.cFileName + wstring(L"\\bin\\javaw.exe");
 				if (FindFirstFileExists(javaw.c_str(), 0)) {
-					LaunchJVM(javaw, exeName);
+					LaunchJVM(javaw, workdir, exeName);
 				}
 			} while (FindNextFile(hFind, &data));
 			FindClose(hFind);
@@ -76,7 +83,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 			do {
 				wstring javaw = wstring(L"C:\\Program Files (x86)\\Java\\") + data.cFileName + L"\\bin\\javaw.exe";
 				if (FindFirstFileExists(javaw.c_str(), 0)) {
-					LaunchJVM(javaw, exeName);
+					LaunchJVM(javaw, workdir, exeName);
 				}
 			} while (FindNextFile(hFind, &data));
 			FindClose(hFind);
@@ -84,7 +91,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	}
 
 	// Try java in PATH
-	RawLaunchJVM(L"javaw", exeName);
+	RawLaunchJVM(L"javaw", workdir, exeName);
 
 	MessageBox(NULL, ERROR_PROMPT, L"Error", MB_ICONERROR | MB_OK);
 	ShellExecute(0, 0, L"https://java.com/", 0, 0, SW_SHOW);
