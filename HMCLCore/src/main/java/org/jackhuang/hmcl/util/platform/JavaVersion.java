@@ -247,7 +247,7 @@ public final class JavaVersion {
                 javaExecutables.add(listDirectory(Paths.get("C:\\Program Files (x86)\\Zulu")).map(JavaVersion::getExecutable));
                 javaExecutables.add(listDirectory(Paths.get("C:\\Program Files (x86)\\Microsoft")).map(JavaVersion::getExecutable));
                 javaExecutables.add(Arrays.stream(System.getenv("PATH").split(";")).map(path -> Paths.get(path, "java.exe")));
-                javaExecutables.add(Arrays.stream(System.getenv("PATH").split(";")).map(path -> Paths.get(path, "java.exe")));
+                javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(";")).map(path -> Paths.get(path, "java.exe")));
                 break;
 
             case LINUX:
@@ -255,6 +255,7 @@ public final class JavaVersion {
                 javaExecutables.add(listDirectory(Paths.get("/usr/lib/jvm")).map(JavaVersion::getExecutable)); // General locations
                 javaExecutables.add(listDirectory(Paths.get("/usr/lib32/jvm")).map(JavaVersion::getExecutable)); // General locations
                 javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).map(path -> Paths.get(path, "java")));
+                javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).map(path -> Paths.get(path, "java")));
                 break;
 
             case OSX:
@@ -267,6 +268,7 @@ public final class JavaVersion {
                 javaExecutables.add(Stream.of(Paths.get("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin/java")));
                 javaExecutables.add(Stream.of(Paths.get("/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/MacOS/itms/java/bin/java")));
                 javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).map(path -> Paths.get(path, "java")));
+                javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).map(path -> Paths.get(path, "java")));
                 break;
 
             default:
