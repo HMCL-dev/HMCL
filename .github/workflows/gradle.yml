@@ -13,9 +13,11 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
-        java-package: jdk+fx
-    - name: Check style
+        java-package: jdk+fxv
+    - name: Check style main
       run: ./gradlew checkstyleMain
+    - name: Check style test
+      run: ./gradlew checkstyleTest
     - name: Build with Gradle
       run: ./gradlew build
     - name: Upload Artifacts
