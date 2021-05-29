@@ -31,6 +31,8 @@ import java.util.logging.*;
  * @author huangyuhui
  */
 public final class Logging {
+    private Logging() {
+    }
 
     public static final Logger LOG = Logger.getLogger("HMCL");
     private static ByteArrayOutputStream storedLogs = new ByteArrayOutputStream();

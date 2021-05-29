@@ -42,11 +42,11 @@ public class SpinnerPane extends Control {
     private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading");
 
     public void showSpinner() {
-    	setLoading(true);
+        setLoading(true);
     }
 
     public void hideSpinner() {
-    	setLoading(false);
+        setLoading(false);
     }
 
     public Node getContent() {
@@ -62,15 +62,15 @@ public class SpinnerPane extends Control {
     }
 
     public boolean isLoading() {
-    	return loading.get();
+        return loading.get();
     }
-    
+
     public BooleanProperty loadingProperty() {
-    	return loading;
+        return loading;
     }
-    
+
     public void setLoading(boolean loading) {
-    	this.loading.set(loading);
+        this.loading.set(loading);
     }
 
     @Override

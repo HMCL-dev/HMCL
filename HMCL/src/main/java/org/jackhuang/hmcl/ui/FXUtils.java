@@ -430,6 +430,7 @@ public final class FXUtils {
      * You should <b>only and always</b> use {@code bindEnum} as well as {@code unbindEnum} at the same time.
      * @param comboBox the combo box being bound with the property which can be inferred by {@code bindEnum}.
      * @see #bindEnum(JFXComboBox, Property)
+     * @deprecated Use {@link ExtendedProperties#selectedItemPropertyFor(ComboBox)}
      */
     @SuppressWarnings("unchecked")
     @Deprecated

@@ -102,11 +102,11 @@ public class InstallerItem extends Control {
     }
 
     public static class InstallerItemGroup {
-        public InstallerItem game = new InstallerItem(MINECRAFT);
-        public InstallerItem fabric = new InstallerItem(FABRIC);
-        public InstallerItem forge = new InstallerItem(FORGE);
-        public InstallerItem liteLoader = new InstallerItem(LITELOADER);
-        public InstallerItem optiFine = new InstallerItem(OPTIFINE);
+        public final InstallerItem game = new InstallerItem(MINECRAFT);
+        public final InstallerItem fabric = new InstallerItem(FABRIC);
+        public final InstallerItem forge = new InstallerItem(FORGE);
+        public final InstallerItem liteLoader = new InstallerItem(LITELOADER);
+        public final InstallerItem optiFine = new InstallerItem(OPTIFINE);
 
         public InstallerItemGroup() {
             forge.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
@@ -133,7 +133,7 @@ public class InstallerItem extends Control {
         }
 
         public InstallerItem[] getLibraries() {
-             return new InstallerItem[]{game, fabric, forge, liteLoader, optiFine};
+            return new InstallerItem[]{game, fabric, forge, liteLoader, optiFine};
         }
     }
 

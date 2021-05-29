@@ -50,7 +50,6 @@ public class WorldExportPage extends WizardSinglePage {
         return new WorldExportPageSkin(this);
     }
 
-
     public StringProperty pathProperty() {
         return path;
     }

@@ -105,7 +105,6 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
         dependencies.add(task);
     }
 
-
     public static class GameAssetIndexMalformedException extends IOException {
     }
 }

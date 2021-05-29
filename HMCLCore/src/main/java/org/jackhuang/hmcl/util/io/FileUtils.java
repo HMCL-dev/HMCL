@@ -124,10 +124,11 @@ public final class FileUtils {
 
     /**
      * Write plain text to file. Characters are encoded into bytes using UTF-8.
-     *
+     * <p>
      * We don't care about platform difference of line separator. Because readText accept all possibilities of line separator.
      * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
      * All characters in text will be written into the file in binary format. Existing data will be erased.
+     *
      * @param file the path to the file
      * @param text the text being written to file
      * @throws IOException if an I/O error occurs
@@ -138,12 +139,13 @@ public final class FileUtils {
 
     /**
      * Write plain text to file.
-     *
+     * <p>
      * We don't care about platform difference of line separator. Because readText accept all possibilities of line separator.
      * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
      * All characters in text will be written into the file in binary format. Existing data will be erased.
-     * @param file the path to the file
-     * @param text the text being written to file
+     *
+     * @param file    the path to the file
+     * @param text    the text being written to file
      * @param charset the charset to use for encoding
      * @throws IOException if an I/O error occurs
      */
@@ -155,7 +157,8 @@ public final class FileUtils {
      * Write byte array to file.
      * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
      * All bytes in byte array will be written into the file in binary format. Existing data will be erased.
-     * @param file the path to the file
+     *
+     * @param file  the path to the file
      * @param array the data being written to file
      * @throws IOException if an I/O error occurs
      */
@@ -192,7 +195,7 @@ public final class FileUtils {
      * Copy directory.
      * Paths of all files relative to source directory will be the same as the ones relative to destination directory.
      *
-     * @param src the source directory.
+     * @param src  the source directory.
      * @param dest the destination directory, which will be created if not existing.
      * @throws IOException if an I/O error occurs.
      */
@@ -201,7 +204,7 @@ public final class FileUtils {
     }
 
     public static void copyDirectory(Path src, Path dest, Predicate<String> filePredicate) throws IOException {
-        Files.walkFileTree(src, new SimpleFileVisitor<Path>(){
+        Files.walkFileTree(src, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (!filePredicate.test(src.relativize(file).toString())) {
@@ -228,7 +231,7 @@ public final class FileUtils {
 
     /**
      * Move file to trash.
-     *
+     * <p>
      * This method is only implemented in Java 9. Please check we are using Java 9 by invoking isMovingToTrashSupported.
      * Example:
      * <pre>{@code
@@ -236,9 +239,10 @@ public final class FileUtils {
      *     FileUtils.moveToTrash(file);
      * }
      * }</pre>
+     *
      * @param file the file being moved to trash.
-     * @see FileUtils#isMovingToTrashSupported()
      * @return false if moveToTrash does not exist, or platform does not support Desktop.Action.MOVE_TO_TRASH
+     * @see FileUtils#isMovingToTrashSupported()
      */
     public static boolean moveToTrash(File file) {
         try {
@@ -253,6 +257,7 @@ public final class FileUtils {
 
     /**
      * Check if {@code java.awt.Desktop.moveToTrash} exists.
+     *
      * @return true if the method exists.
      */
     public static boolean isMovingToTrashSupported() {

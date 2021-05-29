@@ -1,0 +1,108 @@
+<?xml version="1.0" ?><!DOCTYPE module PUBLIC
+        "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
+        "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
+
+<module name="Checker">
+    <module name="NewlineAtEndOfFile"/> <!-- force newline, important for git merge and POSIX compatibility: http://checkstyle.sourceforge.net/config_misc.html#NewlineAtEndOfFile -->
+    <module name="FileTabCharacter"/> <!-- e.g. disallow tab character outside of strings -->
+    <module name="UniqueProperties"><!-- must not have duplicate properties in .properties files: http://checkstyle.sourceforge.net/config_misc.html#UniqueProperties -->
+        <property name="fileExtensions" value="properties"/>
+    </module>
+
+    <module name="FileLength"><!-- max line length for single file: http://checkstyle.sourceforge.net/config_sizes.html#FileLength -->
+        <property name="max" value="1500"/>
+    </module>
+
+    <module name="TreeWalker">
+        <module name="SuppressionCommentFilter"/> <!-- use //CHECKSTYLE:OFF (...) //CHECKSTYLE:ON to disable checkstyle: http://checkstyle.sourceforge.net/config_filters.html#SuppressionCommentFilter -->
+
+        <!-- Annotations -->
+        <module name="MissingDeprecated"> <!-- if @deprecated and javadoc is there, must be explained in javadoc: http://checkstyle.sourceforge.net/config_annotation.html#MissingDeprecated -->
+        </module>
+        <module name="MissingOverride"/> <!-- if has @inheritDoc in javadoc must have @Override http://checkstyle.sourceforge.net/config_annotation.html#MissingOverride -->
+        <module name="PackageAnnotation"/> <!-- must only be in package-info: http://checkstyle.sourceforge.net/config_annotation.html#PackageAnnotation -->
+
+        <!-- Blocks -->
+        <module name="EmptyCatchBlock"> <!-- empty catch blocks exception var name must be 'ignored' or must not be empty: http://checkstyle.sourceforge.net/config_blocks.html#EmptyCatchBlock -->
+            <property name="exceptionVariableName" value="expected|ignore"/>
+        </module>
+
+        <!-- Misc -->
+        <module name="ArrayTypeStyle"/> <!-- e.g. int[] array is ok int array[] not: http://checkstyle.sourceforge.net/config_misc.html#ArrayTypeStyle -->
+        <module name="MutableException"/> <!-- exception classes must be immutable: http://checkstyle.sourceforge.net/config_design.html#MutableException -->
+        <module name="UpperEll"/> <!-- long values must be postfixed with 'L' not 'l':  http://checkstyle.sourceforge.net/config_misc.html#UpperEll -->
+        <module name="Indentation">  <!-- Checks correct indentation of Java code:  http://checkstyle.sourceforge.net/config_misc.html#Indentation -->
+            <property name="basicOffset" value="4"/>
+            <property name="arrayInitIndent" value="8"/>
+            <property name="braceAdjustment" value="0"/>
+            <property name="caseIndent" value="4"/>
+            <property name="throwsIndent" value="4"/>
+            <property name="lineWrappingIndentation" value="4"/>
+            <property name="forceStrictCondition" value="false"/>
+        </module>
+
+        <!-- Modifier -->
+        <module name="RedundantModifier"> <!-- Checks for redundant modifiers:  http://checkstyle.sourceforge.net/config_modifier.html#RedundantModifier -->
+            <property name="tokens" value="METHOD_DEF, VARIABLE_DEF, INTERFACE_DEF, ANNOTATION_FIELD_DEF, ENUM_DEF, CLASS_DEF"/>
+        </module>
+
+        <!-- Classes -->
+        <module name="FinalClass"/> <!-- class with only private constructor must be final: http://checkstyle.sourceforge.net/config_design.html#FinalClass -->
+        <module name="SimplifyBooleanReturn"/> <!-- directly return boolean does not check and return http://checkstyle.sourceforge.net/config_design.html#SimplifyBooleanReturn -->
+        <module name="StringLiteralEquality"/> <!-- you can't write myString == "this" http://checkstyle.sourceforge.net/config_design.html#StringLiteralEquality -->
+        <module name="OneTopLevelClass"/> <!-- only one root class per file http://checkstyle.sourceforge.net/config_design.html#OneTopLevelClass -->
+        <module name="ThrowsCount"> <!-- max 5 throws definitions per method: http://checkstyle.sourceforge.net/config_design.html#ThrowsCount -->
+            <property name="max" value="5"/>
+        </module>
+        <module name="InterfaceIsType"/> <!-- interface must contain methods, should not be used for const only: http://checkstyle.sourceforge.net/config_design.html#InterfaceIsType -->
+        <module name="OuterTypeFilename"/> <!-- class Foo must be in Foo.java: http://checkstyle.sourceforge.net/config_misc.html#OuterTypeFilename -->
+
+        <module name="HideUtilityClassConstructor"/> <!-- utility class constructor must be private: http://checkstyle.sourceforge.net/config_design.html#HideUtilityClassConstructor -->
+<!--        <module name="VisibilityModifier"> &lt;!&ndash; most members must be private http://checkstyle.sourceforge.net/config_design.html#VisibilityModifier &ndash;&gt;-->
+<!--            <property name="protectedAllowed" value="true"/>-->
+<!--            <property name="packageAllowed" value="true"/>-->
+<!--            <property name="allowPublicImmutableFields" value="true"/>-->
+<!--            <property name="allowPublicFinalFields" value="true"/>-->
+<!--            <property name="publicMemberPattern" value="^TAG$|^CREATOR$"/>-->
+<!--        </module>-->
+
+        <!-- Coding -->
+        <module name="CovariantEquals"/> <!-- if you override equals with different type you must provide equals with same type: http://checkstyle.sourceforge.net/config_coding.html#CovariantEquals -->
+        <module name="DefaultComesLast"/> <!-- in switch case default must be the last elem: http://checkstyle.sourceforge.net/config_coding.html#DefaultComesLast -->
+        <module name="EmptyStatement"/> <!-- basically an empty semicolon: http://checkstyle.sourceforge.net/config_coding.html#EmptyStatement -->
+        <module name="EqualsHashCode"/> <!-- if you implement equals, you must implement hashcode and vice versa: http://checkstyle.sourceforge.net/config_coding.html#EqualsHashCode -->
+        <module name="NoFinalizer"/> <!-- Verifies there are no finalize() methods defined in a class: http://checkstyle.sourceforge.net/config_coding.html#NoFinalizer -->
+        <module name="FallThrough"/> <!-- switch fallthrough with statement not allowed http://checkstyle.sourceforge.net/config_coding.html#FallThrough -->
+        <module name="IllegalInstantiation"/> <!-- Must not use const of certain types (Activity, Fragment): http://checkstyle.sourceforge.net/config_coding.html#IllegalInstantiation -->
+
+        <!-- Size Limitiations -->
+        <module name="ParameterNumber"><!-- max params for method http://checkstyle.sourceforge.net/config_sizes.html#ParameterNumber -->
+            <property name="max" value="10"/>
+            <property name="ignoreOverriddenMethods" value="true"/>
+            <property name="tokens" value="METHOD_DEF"/>
+        </module>
+
+        <!-- Naming Conventions -->
+        <!--<module name="ConstantName" /> for possible futer use-->
+
+        <!-- Whitespaces -->
+        <module name="EmptyLineSeparator"> <!-- Checks for correct empty line placements, omit VAR token: http://checkstyle.sourceforge.net/config_whitespace.html#EmptyLineSeparator -->
+            <property name="allowMultipleEmptyLines" value="false"/>
+            <property name="tokens" value="IMPORT, CLASS_DEF, INTERFACE_DEF, ENUM_DEF, STATIC_INIT, INSTANCE_INIT, METHOD_DEF, CTOR_DEF"/>
+        </module>
+        <module name="SingleSpaceSeparator"/> <!-- Checks if a token is surrounded by whitespace: http://checkstyle.sourceforge.net/config_whitespace.html#SingleSpaceSeparator -->
+        <module name="GenericWhitespace"/> <!-- Checks whitespaces with Java Generics <>: http://checkstyle.sourceforge.net/config_whitespace.html#GenericWhitespace -->
+        <module name="WhitespaceAround"> <!-- Checks if a token is surrounded by whitespace: http://checkstyle.sourceforge.net/config_whitespace.html#WhitespaceAround -->
+            <property name="allowEmptyConstructors" value="true"/>
+            <property name="allowEmptyMethods" value="true"/>
+            <property name="allowEmptyTypes" value="true"/>
+            <property name="allowEmptyLambdas" value="true"/>
+            <property name="allowEmptyCatches" value="true"/>
+        </module>
+
+        <!-- Imports -->
+        <module name="RedundantImport"/> <!-- e.g. double import statements: http://checkstyle.sourceforge.net/config_imports.html#RedundantImport -->
+        <module name="UnusedImports"/> <!-- http://checkstyle.sourceforge.net/config_imports.html#UnusedImports -->
+        <module name="IllegalImport"/> <!-- checks if import sun.* is used http://checkstyle.sourceforge.net/config_imports.html#IllegalImport -->
+    </module>
+</module>

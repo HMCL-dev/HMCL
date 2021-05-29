@@ -56,7 +56,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
     private final DefaultGameRepository repository;
     private final List<Task<?>> dependencies = new LinkedList<>();
     private final List<Task<?>> dependents = new LinkedList<>();
-    
+
     public MultiMCModpackInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, MultiMCInstanceConfiguration manifest, String name) {
         this.zipFile = zipFile;
         this.modpack = modpack;
@@ -96,7 +96,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                 repository.removeVersionFromDisk(name);
         });
     }
-    
+
     @Override
     public List<Task<?>> getDependencies() {
         return dependencies;
@@ -138,7 +138,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
     public List<Task<?>> getDependents() {
         return dependents;
     }
-    
+
     @Override
     public void execute() throws Exception {
         Version version = repository.readVersionJson(name);
@@ -169,11 +169,11 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
 
             Path libraries = root.resolve("libraries");
             if (Files.exists(libraries))
-            FileUtils.copyDirectory(libraries, repository.getVersionRoot(name).toPath().resolve("libraries"));
+                FileUtils.copyDirectory(libraries, repository.getVersionRoot(name).toPath().resolve("libraries"));
 
             Path jarmods = root.resolve("jarmods");
             if (Files.exists(jarmods))
-            FileUtils.copyDirectory(jarmods, repository.getVersionRoot(name).toPath().resolve("jarmods"));
+                FileUtils.copyDirectory(jarmods, repository.getVersionRoot(name).toPath().resolve("jarmods"));
         }
 
         dependencies.add(repository.saveAsync(version));

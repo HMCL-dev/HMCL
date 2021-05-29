@@ -44,8 +44,6 @@ import java.util.stream.Collectors;
 @JsonAdapter(VersionSetting.Serializer.class)
 public final class VersionSetting implements Cloneable {
 
-    public transient String id;
-
     private boolean global = false;
 
     public boolean isGlobal() {

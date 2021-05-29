@@ -30,7 +30,10 @@ import static org.jackhuang.hmcl.util.platform.JavaVersion.CURRENT_JAVA;
  *
  * @author Matt
  */
-public class SelfDependencyPatcher {
+public final class SelfDependencyPatcher {
+    private SelfDependencyPatcher() {
+    }
+
     private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies");
     private static final String DEFAULT_JFX_VERSION = "16";
     private static final Map<String, String> JFX_DEPENDENCIES = new HashMap<>();
@@ -106,10 +109,8 @@ public class SelfDependencyPatcher {
     /**
      * Inject them into the current classpath.
      *
-     * @throws IOException
-     * 		When the locally cached dependency urls cannot be resolved.
-     * @throws ReflectiveOperationException
-     * 		When the call to add these urls to the system classpath failed.
+     * @throws IOException                  When the locally cached dependency urls cannot be resolved.
+     * @throws ReflectiveOperationException When the call to add these urls to the system classpath failed.
      */
     private static void loadFromCache() throws IOException, ReflectiveOperationException {
         LOG.info(" - Loading dependencies...");

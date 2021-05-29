@@ -24,7 +24,7 @@ import java.util.Objects;
  *
  * @author huangyuhui
  */
-public class Pair<K, V> implements Map.Entry<K, V> {
+public final class Pair<K, V> implements Map.Entry<K, V> {
 
     public static <K, V> Pair<K, V> pair(K key, V value) {
         return new Pair<>(key, value);

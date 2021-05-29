@@ -68,6 +68,7 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
             {
                 setMessage(i18n("profile.already_exists"));
             }
+
             @Override
             protected void eval() {
                 JFXTextField control = (JFXTextField) this.getSrcControl();

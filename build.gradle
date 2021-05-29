@@ -5,6 +5,10 @@ buildscript {
     }
 }
 
+plugins {
+    id 'checkstyle'
+}
+
 group 'org.jackhuang'
 version '3.0'
 
@@ -12,6 +16,7 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
     apply plugin: 'maven-publish'
+    apply plugin: 'checkstyle'
 
     repositories {
         mavenCentral()

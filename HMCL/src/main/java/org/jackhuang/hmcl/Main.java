@@ -43,6 +43,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Main {
 
+    private Main() {
+    }
+
     public static void main(String[] args) {
         System.setProperty("java.net.useSystemProxies", "true");
         System.setProperty("http.agent", "HMCL/" + Metadata.VERSION);

@@ -23,9 +23,13 @@ import java.util.Map;
 
 public interface WizardProvider {
     void start(Map<String, Object> settings);
+
     Object finish(Map<String, Object> settings);
+
     Node createPage(WizardController controller, int step, Map<String, Object> settings);
+
     boolean cancel();
+
     default boolean cancelIfCannotGoBack() {
         return false;
     }

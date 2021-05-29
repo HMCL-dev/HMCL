@@ -28,6 +28,8 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 public final class Locales {
+    private Locales() {
+    }
 
     public static final SupportedLocale DEFAULT = new SupportedLocale(Locale.getDefault(), "lang.default");
 
@@ -61,12 +63,18 @@ public final class Locales {
     public static SupportedLocale getLocaleByName(String name) {
         if (name == null) return DEFAULT;
         switch (name.toLowerCase()) {
-            case "en": return EN;
-            case "zh": return ZH;
-            case "zh_cn": return ZH_CN;
-            case "es": return ES;
-            case "ru": return RU;
-            default: return DEFAULT;
+            case "en":
+                return EN;
+            case "zh":
+                return ZH;
+            case "zh_cn":
+                return ZH_CN;
+            case "es":
+                return ES;
+            case "ru":
+                return RU;
+            default:
+                return DEFAULT;
         }
     }
 

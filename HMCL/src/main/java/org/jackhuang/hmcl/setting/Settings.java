@@ -23,11 +23,11 @@ import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-
 import java.util.Locale;
 
-public class Settings {
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+
+public final class Settings {
 
     private static Settings instance;
 

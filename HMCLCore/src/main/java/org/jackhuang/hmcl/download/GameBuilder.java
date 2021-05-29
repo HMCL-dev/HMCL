@@ -38,7 +38,7 @@ public abstract class GameBuilder {
     }
 
     /**
-     * The new game version name, for .minecraft/<version name>.
+     * The new game version name, for .minecraft/&lt;version name&gt;.
      *
      * @param name the name of new game version.
      */

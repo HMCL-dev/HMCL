@@ -535,8 +535,12 @@ public abstract class SettingsView extends StackPane {
     }
 
     protected abstract void onUpdate();
+
     protected abstract void onHelp();
+
     protected abstract void onExportLogs();
+
     protected abstract void onSponsor();
+
     protected abstract void clearCacheDirectory();
 }

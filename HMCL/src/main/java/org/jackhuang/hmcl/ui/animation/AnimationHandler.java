@@ -23,7 +23,10 @@ import javafx.util.Duration;
 
 public interface AnimationHandler {
     Duration getDuration();
+
     Pane getCurrentRoot();
+
     Node getPreviousNode();
+
     Node getCurrentNode();
 }

@@ -17,6 +17,8 @@ import java.util.logging.Level;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class JavaRepository {
+    private JavaRepository() {
+    }
 
     public static Task<?> downloadJava(GameJavaVersion javaVersion, DownloadProvider downloadProvider) {
         return new JavaDownloadTask(javaVersion, getJavaStoragePath(), downloadProvider)

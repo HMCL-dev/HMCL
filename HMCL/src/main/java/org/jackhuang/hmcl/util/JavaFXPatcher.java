@@ -8,7 +8,10 @@ import java.util.Set;
  *
  * @author ZekerZhayard
  */
-public class JavaFXPatcher {
+public final class JavaFXPatcher {
+    private JavaFXPatcher() {
+    }
+
     public static void patch(Set<String> modules, Path... jarPaths) {
         // Nothing to do with Java 8
     }

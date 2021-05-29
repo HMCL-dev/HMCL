@@ -67,9 +67,9 @@ public final class ModInfo implements Comparable<ModInfo> {
 
                 try {
                     if (get())
-                    	ModInfo.this.file = modManager.enableMod(path);
+                        ModInfo.this.file = modManager.enableMod(path);
                     else
-                    	ModInfo.this.file = modManager.disableMod(path);
+                        ModInfo.this.file = modManager.disableMod(path);
                 } catch (IOException e) {
                     Logging.LOG.log(Level.SEVERE, "Unable to invert state of mod file " + path, e);
                 }

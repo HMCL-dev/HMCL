@@ -87,21 +87,24 @@ public final class ModpackFileSelectionPage extends StackPane implements WizardP
 
         if (file.isDirectory()) {
             File[] files = file.listFiles();
-            if (files != null)
+            if (files != null) {
                 for (File it : files) {
                     CheckBoxTreeItem<String> subNode = getTreeItem(it, basePath + "/" + it.getName());
-                if (subNode != null) {
-                    node.setSelected(subNode.isSelected() || node.isSelected());
-                    if (!subNode.isSelected())
-                        node.setIndeterminate(true);
-                    node.getChildren().add(subNode);
+                    if (subNode != null) {
+                        node.setSelected(subNode.isSelected() || node.isSelected());
+                        if (!subNode.isSelected()) {
+                            node.setIndeterminate(true);
+                        }
+                        node.getChildren().add(subNode);
+                    }
                 }
             }
             if (!node.isSelected()) node.setIndeterminate(false);
 
             // Empty folder need not to be displayed.
-            if (node.getChildren().isEmpty())
+            if (node.getChildren().isEmpty()) {
                 return null;
+            }
         }
 
         HBox graphic = new HBox();
@@ -130,8 +133,9 @@ public final class ModpackFileSelectionPage extends StackPane implements WizardP
             if (basePath.length() > "minecraft/".length())
                 list.add(StringUtils.substringAfter(basePath, "minecraft/"));
             for (TreeItem<String> child : node.getChildren()) {
-                if (child instanceof CheckBoxTreeItem)
+                if (child instanceof CheckBoxTreeItem) {
                     getFilesNeeded(((CheckBoxTreeItem<String>) child), basePath + "/" + child.getValue(), list);
+                }
             }
         }
     }

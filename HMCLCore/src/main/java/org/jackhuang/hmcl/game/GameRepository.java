@@ -88,7 +88,7 @@ public interface GameRepository extends VersionProvider {
     /**
      * Gets the root folder of specific version.
      * The root folders the versions must be unique.
-     * For example, .minecraft/versions/<version name>/.
+     * For example, .minecraft/versions/&lt;version name&gt;/.
      */
     File getVersionRoot(String id);
 

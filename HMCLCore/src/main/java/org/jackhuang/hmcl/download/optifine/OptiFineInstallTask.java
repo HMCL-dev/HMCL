@@ -199,10 +199,10 @@ public final class OptiFineInstallTask extends Task<Version> {
      * Install OptiFine library from existing local file.
      *
      * @param dependencyManager game repository
-     * @param version version.json
-     * @param installer the OptiFine installer
+     * @param version           version.json
+     * @param installer         the OptiFine installer
      * @return the task to install library
-     * @throws IOException if unable to read compressed content of installer file, or installer file is corrupted, or the installer is not the one we want.
+     * @throws IOException              if unable to read compressed content of installer file, or installer file is corrupted, or the installer is not the one we want.
      * @throws VersionMismatchException if required game version of installer does not match the actual one.
      */
     public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
@@ -227,7 +227,7 @@ public final class OptiFineInstallTask extends Task<Version> {
                 throw new VersionMismatchException(mcVersion, gameVersion.get());
 
             return new OptiFineInstallTask(dependencyManager, version,
-                    new OptiFineRemoteVersion(mcVersion,  ofEdition + "_" + ofRelease, Collections.singletonList(""), false), installer);
+                    new OptiFineRemoteVersion(mcVersion, ofEdition + "_" + ofRelease, Collections.singletonList(""), false), installer);
         }
     }
 }

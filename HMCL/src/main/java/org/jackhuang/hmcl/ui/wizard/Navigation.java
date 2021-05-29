@@ -22,11 +22,17 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 public interface Navigation {
 
     void onStart();
+
     void onNext();
+
     void onPrev(boolean cleanUp);
+
     boolean canPrev();
+
     void onFinish();
+
     void onEnd();
+
     void onCancel();
 
     enum NavigationDirection {

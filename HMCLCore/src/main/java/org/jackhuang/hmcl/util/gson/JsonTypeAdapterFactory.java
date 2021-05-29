@@ -67,7 +67,6 @@ public class JsonTypeAdapterFactory implements TypeAdapterFactory {
         };
     }
 
-
     private <T> TypeAdapter<T> createForJsonSubtype(Gson gson, TypeToken<T> type) {
         Class<? super T> rawType = type.getRawType();
         if (rawType.getSuperclass() == null) return null;

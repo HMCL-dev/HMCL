@@ -163,7 +163,7 @@ public final class Launcher extends Application {
             File jarFile = new File(Launcher.class.getProtectionDomain().getCodeSource().getLocation().getPath());
             String ext = FileUtils.getExtension(jarFile);
             if ("jar".equals(ext) || "exe".equals(ext))
-            result.add(jarFile);
+                result.add(jarFile);
         }
         if (result.isEmpty())
             return null;

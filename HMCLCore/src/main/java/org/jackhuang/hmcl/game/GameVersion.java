@@ -45,6 +45,9 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  * @author huangyuhui
  */
 public final class GameVersion {
+    private GameVersion() {
+    }
+
     private static Optional<String> getVersionFromJson(Path versionJson) {
         try {
             Map<?, ?> version = JsonUtils.fromNonNullJson(FileUtils.readText(versionJson), Map.class);

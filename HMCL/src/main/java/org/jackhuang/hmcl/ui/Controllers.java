@@ -66,6 +66,9 @@ public final class Controllers {
     private static RootPage rootPage;
     private static DecoratorController decorator;
 
+    private Controllers() {
+    }
+
     public static Scene getScene() {
         return scene;
     }

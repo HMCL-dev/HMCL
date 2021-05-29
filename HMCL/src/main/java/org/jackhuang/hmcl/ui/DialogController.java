@@ -31,6 +31,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 
 public final class DialogController {
+    private DialogController() {
+    }
 
     public static AuthInfo logIn(Account account) throws CancellationException, AuthenticationException, InterruptedException {
         if (account instanceof YggdrasilAccount) {
@@ -38,8 +40,8 @@ public final class DialogController {
             AtomicReference<AuthInfo> res = new AtomicReference<>(null);
             runInFX(() -> {
                 AccountLoginPane pane = new AccountLoginPane(account, it -> {
-                        res.set(it);
-                        latch.countDown();
+                    res.set(it);
+                    latch.countDown();
                 }, latch::countDown);
                 Controllers.dialog(pane);
             });

@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
 /**
  * This event gets fired when a JavaProcess exited abnormally and the exit code is not zero.
- * <br></br>
+ *
  * This event is fired on the {@link org.jackhuang.hmcl.event.EventBus#EVENT_BUS}
  *
  * @author huangyuhui
@@ -34,7 +34,7 @@ public final class ProcessExitedAbnormallyEvent extends Event {
     /**
      * Constructor.
      *
-     * @param source {@link org.jackhuang.hmcl.launch.ExitWaiter}
+     * @param source  {@link org.jackhuang.hmcl.launch.ExitWaiter}
      * @param process The process that exited abnormally.
      */
     public ProcessExitedAbnormallyEvent(Object source, ManagedProcess process) {

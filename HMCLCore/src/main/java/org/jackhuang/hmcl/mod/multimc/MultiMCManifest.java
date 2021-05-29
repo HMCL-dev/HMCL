@@ -79,8 +79,6 @@ public final class MultiMCManifest {
         @SerializedName("suggests")
         private final String suggests;
 
-
-
         public MultiMCManifestCachedRequires(String equalsVersion, String uid, String suggests) {
             this.equalsVersion = equalsVersion;
             this.uid = uid;

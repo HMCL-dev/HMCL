@@ -17,20 +17,19 @@
  */
 package org.jackhuang.hmcl.util.javafx;
 
-import static java.util.Objects.requireNonNull;
-import static org.jackhuang.hmcl.util.Lang.handleUncaughtException;
+import javafx.application.Platform;
+import javafx.beans.Observable;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
+import javafx.beans.value.ObservableValue;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-
-import javafx.application.Platform;
-import javafx.beans.Observable;
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ObjectBinding;
-import javafx.beans.value.ObservableValue;
+import static java.util.Objects.requireNonNull;
+import static org.jackhuang.hmcl.util.Lang.handleUncaughtException;
 
 /**
  * @author yushijinhun

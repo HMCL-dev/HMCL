@@ -99,9 +99,10 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
                                 // we're getting dragged without getting a mouse press
                                 dragStart = thumb.localToParent(me.getX(), me.getY());
                             }
-                            double dragPos = getSkinnable().getOrientation() == Orientation.VERTICAL ? cur.getY() - dragStart.getY(): cur.getX() - dragStart.getX();
+                            double dragPos = getSkinnable().getOrientation() == Orientation.VERTICAL ? cur.getY() - dragStart.getY() : cur.getX() - dragStart.getX();
                             double position = preDragThumbPos + dragPos / (trackLength() - thumbLength());
-                            if (!getSkinnable().isFocused() && getSkinnable().isFocusTraversable()) getSkinnable().requestFocus();
+                            if (!getSkinnable().isFocused() && getSkinnable().isFocusTraversable())
+                                getSkinnable().requestFocus();
                             double newValue = (position * (getSkinnable().getMax() - getSkinnable().getMin())) + getSkinnable().getMin();
                             if (!Double.isNaN(newValue)) {
                                 getSkinnable().setValue(Lang.clamp(getSkinnable().getMin(), newValue, getSkinnable().getMax()));

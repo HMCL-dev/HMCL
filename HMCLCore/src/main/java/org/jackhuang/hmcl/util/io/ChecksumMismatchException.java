@@ -21,9 +21,9 @@ import java.io.IOException;
 
 public class ChecksumMismatchException extends IOException {
 
-    private String algorithm;
-    private String expectedChecksum;
-    private String actualChecksum;
+    private final String algorithm;
+    private final String expectedChecksum;
+    private final String actualChecksum;
 
     public ChecksumMismatchException(String algorithm, String expectedChecksum, String actualChecksum) {
         super("Incorrect checksum (" + algorithm + "), expected: " + expectedChecksum + ", actual: " + actualChecksum);

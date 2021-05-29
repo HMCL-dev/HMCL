@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.util.io.NetworkUtils;
-
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;

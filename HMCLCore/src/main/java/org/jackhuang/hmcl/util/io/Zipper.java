@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util.io;
 
-
 import org.jackhuang.hmcl.util.function.ExceptionalPredicate;
 
 import java.io.Closeable;

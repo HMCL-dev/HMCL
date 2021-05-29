@@ -46,7 +46,9 @@ import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class Versions {
+public final class Versions {
+    private Versions() {
+    }
 
     public static void deleteVersion(Profile profile, String version) {
         boolean isIndependent = profile.getVersionSetting(version).getGameDirType() == GameDirectoryType.VERSION_FOLDER;
@@ -156,7 +158,7 @@ public class Versions {
             Controllers.getRootPage().checkAccount();
         else if (id == null || !profile.getRepository().isLoaded() || !profile.getRepository().hasVersion(id))
             Controllers.dialog(i18n("version.empty.launch"), i18n("launch.failed"), MessageDialogPane.MessageType.ERROR, () -> {
-                 Controllers.getRootPage().getSelectionModel().select(Controllers.getRootPage().getGameTab());
+                Controllers.getRootPage().getSelectionModel().select(Controllers.getRootPage().getGameTab());
             });
         else
             return true;

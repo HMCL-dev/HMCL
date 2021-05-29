@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.util.Immutable;
 /**
  * CurseMetaMod is JSON structure for
  * https://cursemeta.dries007.net/&lt;projectID&gt;/&lt;fileID&gt;.json
- * https://addons-ecs.forgesvc.net/api/v2/addon/&lt;projectID&gt;/file/<fileID&gt;
+ * https://addons-ecs.forgesvc.net/api/v2/addon/&lt;projectID&gt;/file/&lt;fileID&gt;
  */
 @Immutable
 public final class CurseMetaMod {

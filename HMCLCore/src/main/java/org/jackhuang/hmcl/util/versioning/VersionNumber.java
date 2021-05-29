@@ -351,5 +351,5 @@ public class VersionNumber implements Comparable<VersionNumber> {
         return canonical.hashCode();
     }
 
-    public static Comparator<String> VERSION_COMPARATOR = Comparator.comparing(VersionNumber::asVersion);
+    public static final Comparator<String> VERSION_COMPARATOR = Comparator.comparing(VersionNumber::asVersion);
 }

@@ -36,7 +36,7 @@ public final class ModpackConfiguration<T> implements Validation {
     private final List<FileInformation> overrides;
 
     public ModpackConfiguration() {
-        this(null, null,  "", null, Collections.emptyList());
+        this(null, null, "", null, Collections.emptyList());
     }
 
     public ModpackConfiguration(T manifest, String type, String name, String version, List<FileInformation> overrides) {
@@ -110,6 +110,7 @@ public final class ModpackConfiguration<T> implements Validation {
 
         /**
          * The relative path to Minecraft run directory
+         *
          * @return the relative path to Minecraft run directory.
          */
         public String getPath() {

@@ -86,6 +86,7 @@ public final class NetworkUtils {
                     break;
                 case '?':
                     left = false;
+                    // fallthrough
                 default:
                     if (ch >= 0x80)
                         sb.append(encodeURL(Character.toString(ch)));

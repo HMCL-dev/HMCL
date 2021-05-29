@@ -130,7 +130,7 @@ public class ForgeNewInstallTask extends Task<Version> {
 
     @Override
     public void execute() throws Exception {
-        Path temp  = Files.createTempDirectory("forge_installer");
+        Path temp = Files.createTempDirectory("forge_installer");
         int finished = 0;
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             List<ForgeNewInstallProfile.Processor> processors = profile.getProcessors();

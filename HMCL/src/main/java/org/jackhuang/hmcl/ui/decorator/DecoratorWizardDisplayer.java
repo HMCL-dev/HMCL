@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.wizard.*;
 
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class DecoratorWizardDisplayer extends DecoratorTransitionPage implements WizardDisplayer {

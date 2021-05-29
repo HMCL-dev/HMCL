@@ -31,6 +31,8 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 public final class JarUtils {
+    private JarUtils() {
+    }
 
     public static Optional<Path> thisJar() {
         CodeSource codeSource = JarUtils.class.getProtectionDomain().getCodeSource();

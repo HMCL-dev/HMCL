@@ -31,7 +31,7 @@ import static org.jackhuang.hmcl.util.Lang.tryCast;
  *
  * @author huangyuhui
  */
-public class OfflineAccountFactory extends AccountFactory<OfflineAccount> {
+public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> {
     public static final OfflineAccountFactory INSTANCE = new OfflineAccountFactory();
 
     private OfflineAccountFactory() {

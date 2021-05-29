@@ -27,13 +27,16 @@ import java.util.function.Predicate;
  * @author huangyuhui
  */
 public final class ReflectionHelper {
+    private ReflectionHelper() {
+    }
+
     private static Method accessible0;
 
     static {
         try {
             accessible0 = AccessibleObject.class.getDeclaredMethod("setAccessible0", boolean.class);
             accessible0.setAccessible(true);
-        } catch (Throwable ex) {
+        } catch (Throwable ignored) {
         }
     }
 
@@ -43,6 +46,7 @@ public final class ReflectionHelper {
 
     /**
      * Get caller, this method is caller sensitive.
+     *
      * @param packageFilter returns false if we consider the given package is internal calls, not the caller
      * @return the caller, method name, source file, line number
      */

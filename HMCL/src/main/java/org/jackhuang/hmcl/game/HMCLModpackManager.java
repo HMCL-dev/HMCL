@@ -31,15 +31,17 @@ import java.nio.file.Path;
  * @author huangyuhui
  */
 public final class HMCLModpackManager {
+    private HMCLModpackManager() {
+    }
 
     /**
      * Read the manifest in a HMCL modpack.
      *
-     * @param file a HMCL modpack file.
+     * @param file     a HMCL modpack file.
      * @param encoding encoding of modpack zip file.
-     * @throws IOException if the file is not a valid zip file.
-     * @throws JsonParseException if the manifest.json is missing or malformed.
      * @return the manifest of HMCL modpack.
+     * @throws IOException        if the file is not a valid zip file.
+     * @throws JsonParseException if the manifest.json is missing or malformed.
      */
     public static Modpack readHMCLModpackManifest(Path file, Charset encoding) throws IOException, JsonParseException {
         String manifestJson = CompressingUtils.readTextZipEntry(file, "modpack.json", encoding);

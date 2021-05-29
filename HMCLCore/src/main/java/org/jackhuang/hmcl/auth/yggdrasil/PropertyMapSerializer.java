@@ -17,20 +17,13 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import static java.util.Collections.unmodifiableMap;
+import com.google.gson.*;
 
 import java.lang.reflect.Type;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
+import static java.util.Collections.unmodifiableMap;
 
 public class PropertyMapSerializer implements JsonSerializer<Map<String, String>>, JsonDeserializer<Map<String, String>> {
 

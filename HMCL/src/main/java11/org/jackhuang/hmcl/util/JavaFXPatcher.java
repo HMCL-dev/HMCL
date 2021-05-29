@@ -17,7 +17,10 @@ import jdk.internal.loader.BuiltinClassLoader;
  *
  * @author ZekerZhayard
  */
-public class JavaFXPatcher {
+public final class JavaFXPatcher {
+    private JavaFXPatcher() {
+    }
+
     private static final String[] addOpens = {
             "javafx.base/com.sun.javafx.runtime",
             "javafx.base/com.sun.javafx.binding",
