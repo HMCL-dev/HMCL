@@ -10,6 +10,12 @@ buildscript {
 plugins {
     id 'application'
     id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'org.openjfx.javafxplugin' version '0.0.9'
+}
+
+javafx {
+    version = "11.0.2"
+    modules = [ 'javafx.controls','javafx.fxml','javafx.web','javafx.swing']
 }
 
 import java.nio.file.FileSystems
