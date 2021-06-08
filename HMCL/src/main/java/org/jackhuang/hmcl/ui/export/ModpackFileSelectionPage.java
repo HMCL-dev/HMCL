@@ -129,7 +129,7 @@ public final class ModpackFileSelectionPage extends StackPane implements WizardP
 
     private void getFilesNeeded(CheckBoxTreeItem<String> node, String basePath, List<String> list) {
         if (node == null) return;
-        if (node.isSelected()) {
+        if (node.isSelected() || node.isIndeterminate()) {
             if (basePath.length() > "minecraft/".length())
                 list.add(StringUtils.substringAfter(basePath, "minecraft/"));
             for (TreeItem<String> child : node.getChildren()) {

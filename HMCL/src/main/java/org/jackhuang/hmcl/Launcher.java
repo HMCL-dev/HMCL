@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.net.*;
 import java.nio.file.Paths;
@@ -160,10 +161,15 @@ public final class Launcher extends Application {
                     return null;
                 }
         } else {
-            File jarFile = new File(Launcher.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-            String ext = FileUtils.getExtension(jarFile);
-            if ("jar".equals(ext) || "exe".equals(ext))
-                result.add(jarFile);
+            try {
+                File jarFile = new File(URLDecoder.decode(Launcher.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8"));
+                String ext = FileUtils.getExtension(jarFile);
+                if ("jar".equals(ext) || "exe".equals(ext))
+                    result.add(jarFile);
+            } catch (UnsupportedEncodingException e) {
+                LOG.log(Level.WARNING, "Failed to decode jar path", e);
+                return null;
+            }
         }
         if (result.isEmpty())
             return null;
