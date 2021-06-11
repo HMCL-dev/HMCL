@@ -83,6 +83,8 @@ public final class CurseInstallTask extends Task<Void> {
         for (CurseManifestModLoader modLoader : manifest.getMinecraft().getModLoaders())
             if (modLoader.getId().startsWith("forge-"))
                 builder.version("forge", modLoader.getId().substring("forge-".length()));
+            else if (modLoader.getId().startsWith("fabric-"))
+                builder.version("fabric", modLoader.getId().substring("fabric-".length()));
         dependents.add(builder.buildAsync());
 
         onDone().register(event -> {
