@@ -129,7 +129,7 @@
                 <JFXTextField labelFloat="true" promptText="%settings.advanced.server_ip" styleClass="fit-width"
                               fx:id="txtServerIP" StackPane.margin="$insets"/>
 
-                <MultiFileItem fx:id="nativesDirItem" title="%settings.game.natives_directory" chooserTitle="%settings.game.natives_directory.choose"
+                <MultiFileItem fx:id="nativesDirItem" title="%settings.advanced.natives_directory" chooserTitle="%settings.advanced.natives_directory.choose"
                                hasSubtitle="true" customText="%settings.custom" directory="true" />
                 <BorderPane>
                     <left>
