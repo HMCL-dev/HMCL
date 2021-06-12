@@ -488,7 +488,7 @@ public final class LauncherHelper {
                 super.onStop(success, executor);
                 Platform.runLater(() -> {
                     if (!success) {
-                        future.completeExceptionally(executor.getException());
+                        future.completeExceptionally(Optional.ofNullable(executor.getException()).orElseGet(InterruptedException::new));
                     } else {
                         future.complete(null);
                     }
