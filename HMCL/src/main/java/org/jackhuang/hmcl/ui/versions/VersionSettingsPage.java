@@ -147,7 +147,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         nativesDirItem.setCustomUserData(NativesDirectoryType.CUSTOM);
         nativesDirItem.loadChildren(Arrays.asList(
-                nativesDirItem.createChildren(i18n("settings.advanced.natives_dir.default"), NativesDirectoryType.VERSION_FOLDER)
+                nativesDirItem.createChildren(i18n("settings.advanced.natives_directory.default"), NativesDirectoryType.VERSION_FOLDER)
         ));
 
         chkEnableSpecificSettings.selectedProperty().addListener((a, b, newValue) -> {

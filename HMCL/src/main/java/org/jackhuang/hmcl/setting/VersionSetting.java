@@ -559,6 +559,7 @@ public final class VersionSetting implements Cloneable {
         launcherVisibilityProperty.addListener(listener);
         defaultJavaPathProperty.addListener(listener);
         nativesDirProperty.addListener(listener);
+        nativesDirTypeProperty.addListener(listener);
     }
 
     @Override
