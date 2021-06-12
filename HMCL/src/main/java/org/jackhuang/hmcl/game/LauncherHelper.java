@@ -326,7 +326,7 @@ public final class LauncherHelper {
                 if (acceptableJava.isPresent()) {
                     setting.setJavaVersion(acceptableJava.get());
                 } else {
-                    Controllers.dialog(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), version.getJavaVersion().getMajorVersion()), i18n("message.warning"), MessageType.WARNING, () -> {
+                    Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), version.getJavaVersion().getMajorVersion()), i18n("message.warning"), () -> {
                         downloadJava(version.getJavaVersion(), profile)
                                 .thenAcceptAsync(x -> {
                                     try {
@@ -338,7 +338,7 @@ public final class LauncherHelper {
                                         LOG.log(Level.SEVERE, "Cannot list javas", e);
                                     }
                                 }, Platform::runLater).thenAccept(x -> onAccept.run());
-                    });
+                    }, null);
                     flag = true;
                 }
             }
@@ -488,7 +488,7 @@ public final class LauncherHelper {
                 super.onStop(success, executor);
                 Platform.runLater(() -> {
                     if (!success) {
-                        future.completeExceptionally(executor.getException());
+                        future.completeExceptionally(Optional.ofNullable(executor.getException()).orElseGet(InterruptedException::new));
                     } else {
                         future.complete(null);
                     }
