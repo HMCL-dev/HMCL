@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -87,8 +87,8 @@ public class AddAccountPane extends StackPane {
         cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
         cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
         Bindings.bindContent(cboServers.getItems(), config().getAuthlibInjectorServers());
-        cboServers.getItems().addListener(onInvalidating(this::selectDefaultServer));
-        selectDefaultServer();
+        cboServers.getItems().addListener(onInvalidating(this::resetServerSelection));
+        resetServerSelection();
 
         cboType.getItems().setAll(Accounts.FACTORIES);
         cboType.setConverter(stringConverter(Accounts::getLocalizedLoginTypeName));
@@ -174,12 +174,13 @@ public class AddAccountPane extends StackPane {
         return unmodifiableList(result);
     }
 
-    /**
-     * Selects the first server if no server is selected.
-     */
-    private void selectDefaultServer() {
-        if (!cboServers.getItems().isEmpty() && cboServers.getSelectionModel().isEmpty()) {
-            cboServers.getSelectionModel().select(0);
+    private void resetServerSelection() {
+        if (!cboServers.getItems().isEmpty()) {
+            Platform.runLater(() -> {
+                // the selection will not be updated as expected
+                // if we call it immediately
+                cboServers.getSelectionModel().selectFirst();
+            });
         }
     }
 
