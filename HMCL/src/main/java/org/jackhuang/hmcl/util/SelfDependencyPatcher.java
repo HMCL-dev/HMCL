@@ -41,58 +41,103 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-
-import javax.swing.*;
-import java.awt.*;
-import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.List;
-import java.util.*;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
-import java.util.stream.Collectors;
-
 import static java.lang.Class.forName;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toSet;
 import static org.jackhuang.hmcl.Metadata.HMCL_DIRECTORY;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.platform.JavaVersion.CURRENT_JAVA;
 
-/**
- * Utility for patching self when missing dependencies.
- * Copy from https://github.com/Col-E/Recaf/blob/master/src/main/java/me/coley/recaf/util/self/SelfDependencyPatcher.java
- *
- * @author Matt
- */
+import java.awt.Dialog;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
+
+import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+// From: https://github.com/Col-E/Recaf/blob/7378b397cee664ae81b7963b0355ef8ff013c3a7/src/main/java/me/coley/recaf/util/self/SelfDependencyPatcher.java
 public final class SelfDependencyPatcher {
     private SelfDependencyPatcher() {
     }
 
-    private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies");
-    private static final String DEFAULT_JFX_VERSION = "16";
-    private static final Map<String, String> JFX_DEPENDENCIES = new HashMap<>();
+    static class DependencyDescriptor {
 
-    static {
-        addJfxDependency("base");
-        addJfxDependency("controls");
-        addJfxDependency("fxml");
-        addJfxDependency("graphics");
-        addJfxDependency("media");
-        // Fix #874: Remove the dependency on javafx.swing
-        // addJfxDependency("swing");
-        addJfxDependency("web");
+        private static final String REPOSITORY_URL = "https://maven.aliyun.com/repository/central/";
+        private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies");
+
+        private static String currentArchClassifier() {
+            switch (OperatingSystem.CURRENT_OS) {
+                case LINUX:
+                    return "linux";
+                case OSX:
+                    return "mac";
+                default:
+                    return "win";
+            }
+        }
+
+        public String module;
+        public String groupId;
+        public String artifactId;
+        public String version;
+        public Map<String, String> sha1;
+
+        public String filename() {
+            return artifactId + "-" + version + "-" + currentArchClassifier() + ".jar";
+        }
+
+        public String sha1() {
+            return sha1.get(currentArchClassifier());
+        }
+
+        public String url() {
+            return REPOSITORY_URL + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/" + filename();
+        }
+
+        public Path localPath() {
+            return DEPENDENCIES_DIR_PATH.resolve(filename());
+        }
     }
 
-    private static void addJfxDependency(String name) {
-        JFX_DEPENDENCIES.put("javafx." + name, jfxUrl(name));
+    private static final String DEPENDENCIES_LIST_FILE = "/assets/openjfx-dependencies.json";
+
+    private static List<DependencyDescriptor> readDependencies() {
+        String content;
+        try (InputStream in = SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE)) {
+            content = IOUtils.readFullyAsString(in, UTF_8);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return new Gson().fromJson(content, TypeToken.getParameterized(List.class, DependencyDescriptor.class).getType());
     }
+
+    private static final List<DependencyDescriptor> JFX_DEPENDENCIES = readDependencies();
 
     /**
      * Patch in any missing dependencies, if any.
@@ -125,17 +170,17 @@ public final class SelfDependencyPatcher {
 
         // Otherwise we're free to download in Java 11+
         LOG.info("Missing JavaFX dependencies, attempting to patch in missing classes");
-        // Check if dependencies need to be downloaded
-        if (!hasCachedDependencies()) {
-            LOG.info(" - No local cache, downloading dependencies...");
+
+        // Download missing dependencies
+        List<DependencyDescriptor> missingDependencies = checkMissingDependencies();
+        if (!missingDependencies.isEmpty()) {
             try {
-                fetchDependencies();
-            } catch (Exception ex) {
-                throw new PatchException("Failed to download dependencies", ex);
+                fetchDependencies(missingDependencies);
+            } catch (IOException e) {
+                throw new PatchException("Failed to download dependencies", e);
             }
-        } else {
-            LOG.info(" - Local cache found!");
         }
+
         // Add the dependencies
         try {
             loadFromCache();
@@ -155,10 +200,16 @@ public final class SelfDependencyPatcher {
      */
     private static void loadFromCache() throws IOException, ReflectiveOperationException {
         LOG.info(" - Loading dependencies...");
-        List<Path> jarPaths = new ArrayList<>();
-        List<String> jfxDepFile = JFX_DEPENDENCIES.values().stream().map(SelfDependencyPatcher::getFileName).collect(Collectors.toList());
-        Files.walk(DEPENDENCIES_DIR_PATH).filter(p -> jfxDepFile.contains(p.getFileName().toString())).forEach(jarPaths::add);
-        JavaFXPatcher.patch(JFX_DEPENDENCIES.keySet(), jarPaths.toArray(new Path[0]));
+
+        Set<String> modules = JFX_DEPENDENCIES.stream()
+                .map(it -> it.module)
+                .collect(toSet());
+
+        Path[] jars = JFX_DEPENDENCIES.stream()
+                .map(it -> it.localPath())
+                .toArray(Path[]::new);
+
+        JavaFXPatcher.patch(modules, jars);
     }
 
     /**
@@ -166,103 +217,54 @@ public final class SelfDependencyPatcher {
      *
      * @throws IOException When the files cannot be fetched or saved.
      */
-    private static void fetchDependencies() throws Exception {
-        // Get dir to store dependencies in
-        Path dependenciesDir = DEPENDENCIES_DIR_PATH;
-        if (!Files.isDirectory(dependenciesDir)) {
-            Files.createDirectories(dependenciesDir);
-        }
+    private static void fetchDependencies(List<DependencyDescriptor> dependencies) throws IOException {
         ProgressFrame dialog = new ProgressFrame(i18n("download.javafx"));
-
-        ForkJoinTask<Void> task = ForkJoinPool.commonPool().submit(() -> {
-            // Download each dependency
-            Collection<String> dependencies = JFX_DEPENDENCIES.values();
-            int i = 1;
-            for (String dependencyUrlPath : dependencies) {
-                URL depURL = new URL(dependencyUrlPath);
-                Path dependencyFilePath = DEPENDENCIES_DIR_PATH.resolve(getFileName(dependencyUrlPath));
-                int finalI = i;
-                SwingUtilities.invokeLater(() -> {
-                    dialog.setStatus(dependencyUrlPath);
-                    dialog.setProgress(finalI, dependencies.size());
-                });
-                Files.copy(depURL.openStream(), dependencyFilePath, StandardCopyOption.REPLACE_EXISTING);
-                checksum(dependencyFilePath, dependencyUrlPath);
-                i++;
-            }
-
-            dialog.dispose();
-            return null;
-        });
-
         dialog.setVisible(true);
 
-        task.get();
+        int progress = 0;
+        for (DependencyDescriptor dependency : dependencies) {
+            int currentProgress = ++progress;
+            SwingUtilities.invokeLater(() -> {
+                dialog.setStatus(dependency.url());
+                dialog.setProgress(currentProgress, dependencies.size());
+            });
+
+            LOG.info("Downloading " + dependency.url());
+            Files.createDirectories(dependency.localPath().getParent());
+            Files.copy(new URL(dependency.url()).openStream(), dependency.localPath(), StandardCopyOption.REPLACE_EXISTING);
+            verifyChecksum(dependency);
+        }
+
+        dialog.dispose();
     }
 
-    /**
-     * @return {@code true} when the dependencies directory has files in it.
-     */
-    private static boolean hasCachedDependencies() {
-        if (!Files.isDirectory(DEPENDENCIES_DIR_PATH))
-            return false;
+    private static List<DependencyDescriptor> checkMissingDependencies() {
+        List<DependencyDescriptor> missing = new ArrayList<>();
 
-        for (String url : JFX_DEPENDENCIES.values()) {
-            Path dependencyFilePath = DEPENDENCIES_DIR_PATH.resolve(getFileName(url));
-            if (!Files.exists(dependencyFilePath))
-                return false;
+        for (DependencyDescriptor dependency : JFX_DEPENDENCIES) {
+            if (!Files.exists(dependency.localPath())) {
+                missing.add(dependency);
+                continue;
+            }
 
             try {
-                checksum(dependencyFilePath, url);
+                verifyChecksum(dependency);
             } catch (ChecksumMismatchException e) {
-                return false;
-            } catch (IOException ignored) {
-                // Ignore other situations
+                LOG.warning("Corrupted dependency " + dependency.filename() + ": " + e.getMessage());
+                missing.add(dependency);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
             }
         }
-        return true;
+
+        return missing;
     }
 
-    private static void checksum(Path dependencyFilePath, String dependencyUrlPath) throws IOException {
-        String expectedHash = NetworkUtils.doGet(NetworkUtils.toURL(dependencyUrlPath + ".sha1"));
-        String actualHash = Hex.encodeHex(DigestUtils.digest("SHA-1", dependencyFilePath));
+    private static void verifyChecksum(DependencyDescriptor dependency) throws IOException, ChecksumMismatchException {
+        String expectedHash = dependency.sha1();
+        String actualHash = Hex.encodeHex(DigestUtils.digest("SHA-1", dependency.localPath()));
         if (!expectedHash.equalsIgnoreCase(actualHash)) {
             throw new ChecksumMismatchException("SHA-1", expectedHash, actualHash);
-        }
-    }
-
-    /**
-     * @param url Full url path.
-     * @return Name of file at url.
-     */
-    private static String getFileName(String url) {
-        return url.substring(url.lastIndexOf('/') + 1);
-    }
-
-    /**
-     * @param component Name of the component.
-     * @return Formed URL for the component.
-     */
-    private static String jfxUrl(String component) {
-        return jfxUrl(component, DEFAULT_JFX_VERSION);
-    }
-
-    private static String jfxUrl(String component, String version) {
-        // https://repo1.maven.org/maven2/org/openjfx/javafx-%s/%s/javafx-%s-%s-%s.jar
-        return String.format("https://maven.aliyun.com/repository/central/org/openjfx/javafx-%s/%s/javafx-%s-%s-%s.jar",
-                component, version, component, version, getMvnName());
-//        return String.format("https://bmclapi.bangbang93.com/maven/org/openjfx/javafx-%s/%s/javafx-%s-%s-%s.jar",
-//                component, version, component, version, getMvnName());
-    }
-
-    private static String getMvnName() {
-        switch (OperatingSystem.CURRENT_OS) {
-            case LINUX:
-                return "linux";
-            case OSX:
-                return "mac";
-            default:
-                return "win";
         }
     }
 
@@ -276,8 +278,6 @@ public final class SelfDependencyPatcher {
     }
 
     public static class ProgressFrame extends JDialog {
-        private int totalTasks = 0;
-        private int finishedTasks = 0;
 
         private final JProgressBar progressBar;
         private final JLabel progressText;
@@ -295,10 +295,10 @@ public final class SelfDependencyPatcher {
             setLocationRelativeTo(null);
 
             GridBagLayout gridBagLayout = new GridBagLayout();
-            gridBagLayout.columnWidths = new int[]{600, 0};
-            gridBagLayout.rowHeights = new int[]{0, 0, 0, 200};
-            gridBagLayout.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-            gridBagLayout.rowWeights = new double[]{0.0, 0.0, 0.0, 1.0};
+            gridBagLayout.columnWidths = new int[] { 600, 0 };
+            gridBagLayout.rowHeights = new int[] { 0, 0, 0, 200 };
+            gridBagLayout.columnWeights = new double[] { 1.0, Double.MIN_VALUE };
+            gridBagLayout.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0 };
             panel.setLayout(gridBagLayout);
 
             progressText = new JLabel("");
