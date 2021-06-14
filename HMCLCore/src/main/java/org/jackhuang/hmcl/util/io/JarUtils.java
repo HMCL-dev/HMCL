@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,12 +47,14 @@ public final class JarUtils {
 
         Path path;
         try {
-            path = Paths.get(url.toURI());
+            path = Paths.get(url.toURI()).toAbsolutePath();
         } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException e) {
             return Optional.empty();
         }
 
-        if (!Files.isRegularFile(path)) {
+        // When running HMCL from classes directory (instead of a JAR file),
+        // path will be a directory.
+        if (!Files.exists(path) || Files.isDirectory(path)) {
             return Optional.empty();
         }
 

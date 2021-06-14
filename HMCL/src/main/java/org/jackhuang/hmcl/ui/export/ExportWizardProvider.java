@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.export;
 
 import javafx.scene.Node;
-import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
@@ -37,12 +36,14 @@ import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.io.JarUtils.thisJar;
 
 public final class ExportWizardProvider implements WizardProvider {
     private final Profile profile;
@@ -70,8 +71,8 @@ public final class ExportWizardProvider implements WizardProvider {
     }
 
     private Task<?> exportWithLauncher(String modpackType, ModpackExportInfo exportInfo, File modpackFile) {
-        List<File> launcherJar = Launcher.getCurrentJarFiles();
-        boolean packWithLauncher = exportInfo.isPackWithLauncher() && launcherJar != null;
+        Path launcherJar = thisJar().orElse(null);
+        boolean packWithLauncher = launcherJar != null;
         return new Task<Object>() {
             File tempModpack;
             Task<?> exportTask;
@@ -139,8 +140,7 @@ public final class ExportWizardProvider implements WizardProvider {
                     if (background_jpg.isFile())
                         zip.putFile(background_jpg, "background.jpg");
 
-                    for (File jar : launcherJar)
-                        zip.putFile(jar, jar.getName());
+                    zip.putFile(launcherJar, launcherJar.getFileName().toString());
                 }
             }
         };

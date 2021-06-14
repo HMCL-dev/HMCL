@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,9 @@ import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.io.JarUtils.thisJar;
+import static org.jackhuang.hmcl.util.platform.OperatingSystem.CURRENT_OS;
+import static org.jackhuang.hmcl.util.platform.OperatingSystem.WINDOWS;
 
 public final class ConfigHolder {
 
@@ -91,36 +94,28 @@ public final class ConfigHolder {
     }
 
     private static Path locateConfig() {
-        Path exePath = Paths.get("");
-        try {
-            Path jarPath = Paths.get(ConfigHolder.class.getProtectionDomain().getCodeSource().getLocation()
-                    .toURI()).toAbsolutePath();
-            if (Files.isRegularFile(jarPath)) {
-                jarPath = jarPath.getParent();
-                exePath = jarPath;
+        // 1. Find JAR or EXE location, using current directory as fallback
+        Path configDirectory = thisJar().map(Path::getParent)
+                .orElseGet(() -> Paths.get("").toAbsolutePath());
 
-                Path config = jarPath.resolve(CONFIG_FILENAME);
-                if (Files.isRegularFile(config))
-                    return config;
-
-                Path dotConfig = jarPath.resolve(CONFIG_FILENAME_LINUX);
-                if (Files.isRegularFile(dotConfig))
-                    return dotConfig;
-            }
-
-        } catch (Throwable ignore) {
-        }
-
-        Path config = Paths.get(CONFIG_FILENAME);
-        if (Files.isRegularFile(config))
+        // 2. Try hmcl.json
+        Path config = configDirectory.resolve(CONFIG_FILENAME);
+        if (Files.exists(config))
             return config;
 
-        Path dotConfig = Paths.get(CONFIG_FILENAME_LINUX);
-        if (Files.isRegularFile(dotConfig))
+        // 3. Try .hmcl.json
+        Path dotConfig = configDirectory.resolve(CONFIG_FILENAME_LINUX);
+        if (Files.exists(dotConfig))
             return dotConfig;
 
-        // create new
-        return exePath.resolve(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? CONFIG_FILENAME : CONFIG_FILENAME_LINUX);
+        // 4. Create new config file
+        //   - On Windows, we use hmcl.json
+        //   - On Linux or OSX, we use .hmcl.json
+        if (CURRENT_OS == WINDOWS) {
+            return config;
+        } else {
+            return dotConfig;
+        }
     }
 
     private static Config loadConfig() throws IOException {

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -61,6 +60,7 @@ import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_SERVER;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.io.JarUtils.thisJar;
 
 public final class ModpackInfoPage extends Control implements WizardPage {
     private final WizardController controller;
@@ -101,8 +101,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         launchArguments.set(versionSetting.getMinecraftArgs());
         javaArguments.set(versionSetting.getJavaArgs());
 
-        List<File> launcherJar = Launcher.getCurrentJarFiles();
-        canIncludeLauncher = launcherJar != null;
+        canIncludeLauncher = thisJar().isPresent();
 
         next.set(e -> onNext());
     }
