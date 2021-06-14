@@ -54,6 +54,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
@@ -113,15 +114,17 @@ public class DefaultLauncher extends Launcher {
                     res.addUnstableDefault("G1NewSizePercent", "20");
                     res.addUnstableDefault("G1ReservePercent", "20");
                     res.addUnstableDefault("MaxGCPauseMillis", "50");
-                    res.addUnstableDefault("G1HeapRegionSize", "16M");
+                    res.addUnstableDefault("G1HeapRegionSize", "16m");
                 }
             }
 
             if (options.getMetaspace() != null && options.getMetaspace() > 0)
                 if (options.getJava().getParsedVersion() < JavaVersion.JAVA_8)
-                    res.addUnstableDefault("PermSize", options.getMetaspace() + "m");
+                    res.addOrReplace("-XX:PermSize=", options.getMetaspace() + "m")
+                            .ifPresent(old -> LOG.warning("JVM Argument '" + old + "' be overridden"));
                 else
-                    res.addUnstableDefault("MetaspaceSize", options.getMetaspace() + "m");
+                    res.addOrReplace("-XX:MetaspaceSize=", options.getMetaspace() + "m")
+                            .ifPresent(old -> LOG.warning("JVM Argument '" + old + "' be overridden"));
 
             res.addUnstableDefault("UseAdaptiveSizePolicy", false);
             res.addUnstableDefault("OmitStackTraceInFastThrow", false);
@@ -130,14 +133,16 @@ public class DefaultLauncher extends Launcher {
             // As 32-bit JVM allocate 320KB for stack by default rather than 64-bit version allocating 1MB,
             // causing Minecraft 1.13 crashed accounting for java.lang.StackOverflowError.
             if (options.getJava().getPlatform() == Platform.BIT_32) {
-                res.addDefault("-Xss", "1M");
+                res.addDefault("-Xss", "1m");
             }
 
             if (options.getMaxMemory() != null && options.getMaxMemory() > 0)
-                res.addDefault("-Xmx", options.getMaxMemory() + "m");
+                res.addOrReplace("-Xmx", options.getMaxMemory() + "m")
+                        .ifPresent(old -> LOG.warning("JVM Argument '" + old + "' be overridden"));
 
             if (options.getMinMemory() != null && options.getMinMemory() > 0)
-                res.addDefault("-Xms", options.getMinMemory() + "m");
+                res.addOrReplace("-Xms", options.getMinMemory() + "m")
+                        .ifPresent(old -> LOG.warning("JVM Argument '" + old + "' be overridden"));
 
             if (options.getJava().getParsedVersion() == JavaVersion.JAVA_16)
                 res.addDefault("--illegal-access=", "permit");

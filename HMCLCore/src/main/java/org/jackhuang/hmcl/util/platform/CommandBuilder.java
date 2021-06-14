@@ -19,9 +19,7 @@ package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.StringUtils;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -98,6 +96,20 @@ public final class CommandBuilder {
         }
         raw.add(new Item(opt + value, true));
         return this;
+    }
+
+    public Optional<String> addOrReplace(String opt, String value) {
+        final ListIterator<Item> it = raw.listIterator();
+        while (it.hasNext()) {
+            final String arg = it.next().arg;
+            if (arg.startsWith(opt)) {
+                it.remove();
+                it.add(new Item(opt + value, true));
+                return Optional.of(arg);
+            }
+        }
+        raw.add(new Item(opt + value, true));
+        return Optional.empty();
     }
 
     public CommandBuilder addUnstableDefault(String opt, boolean value) {
