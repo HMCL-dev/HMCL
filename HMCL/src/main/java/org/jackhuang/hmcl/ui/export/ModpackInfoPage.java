@@ -78,13 +78,13 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     private final SimpleStringProperty url = new SimpleStringProperty("");
     private final SimpleBooleanProperty forceUpdate = new SimpleBooleanProperty();
     private final SimpleBooleanProperty packWithLauncher = new SimpleBooleanProperty();
-    private final SimpleStringProperty fileApi = new SimpleStringProperty();
+    private final SimpleStringProperty fileApi = new SimpleStringProperty("");
     private final SimpleIntegerProperty minMemory = new SimpleIntegerProperty(0);
     private final SimpleStringProperty authlibInjectorServer = new SimpleStringProperty();
     private final SimpleStringProperty launchArguments = new SimpleStringProperty("");
     private final SimpleStringProperty javaArguments = new SimpleStringProperty("");
     private final ObjectProperty<EventHandler<? super MouseEvent>> next = new SimpleObjectProperty<>();
-    private final SimpleStringProperty mcbbsThreadId = new SimpleStringProperty();
+    private final SimpleStringProperty mcbbsThreadId = new SimpleStringProperty("");
 
     public ModpackInfoPage(WizardController controller, HMCLGameRepository gameRepository, String version) {
         this.controller = controller;
