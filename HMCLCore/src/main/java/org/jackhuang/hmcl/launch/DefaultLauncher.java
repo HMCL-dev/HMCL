@@ -99,14 +99,23 @@ public class DefaultLauncher extends Launcher {
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
                 res.add("-Duser.home=" + options.getGameDir().getParent());
 
-            // Force using G1GC with its settings
+            // Using G1GC with its settings by default
             if (options.getJava().getParsedVersion() >= JavaVersion.JAVA_8) {
-                res.add("-XX:+UnlockExperimentalVMOptions");
-                res.add("-XX:+UseG1GC");
-                res.add("-XX:G1NewSizePercent=20");
-                res.add("-XX:G1ReservePercent=20");
-                res.add("-XX:MaxGCPauseMillis=50");
-                res.add("-XX:G1HeapRegionSize=16M");
+                boolean addG1Args = true;
+                for (String javaArg : options.getJavaArguments()) {
+                    if ("-XX:-UseG1GC".equals(javaArg) || (javaArg.startsWith("-XX:+Use") && javaArg.endsWith("GC"))) {
+                        addG1Args = false;
+                        break;
+                    }
+                }
+                if (addG1Args) {
+                    res.add("-XX:+UnlockExperimentalVMOptions");
+                    res.add("-XX:+UseG1GC");
+                    res.add("-XX:G1NewSizePercent=20");
+                    res.add("-XX:G1ReservePercent=20");
+                    res.add("-XX:MaxGCPauseMillis=50");
+                    res.add("-XX:G1HeapRegionSize=16M");
+                }
             }
 
             if (options.getMetaspace() != null && options.getMetaspace() > 0)
