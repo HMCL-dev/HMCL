@@ -57,7 +57,6 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
- *
  * @author huangyuhui
  */
 public class DefaultLauncher extends Launcher {
@@ -89,15 +88,15 @@ public class DefaultLauncher extends Launcher {
         if (!options.isNoGeneratedJVMArgs()) {
             appendJvmArgs(res);
 
-            res.add("-Dminecraft.client.jar=" + repository.getVersionJar(version));
+            res.addDefault("-Dminecraft.client.jar=", repository.getVersionJar(version).toString());
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-                res.add("-Xdock:name=Minecraft " + version.getId());
-                res.add("-Xdock:icon=" + repository.getAssetObject(version.getId(), version.getAssetIndex().getId(), "icons/minecraft.icns").getAbsolutePath());
+                res.addDefault("-Xdock:name=", "Minecraft " + version.getId());
+                res.addDefault("-Xdock:icon=", repository.getAssetObject(version.getId(), version.getAssetIndex().getId(), "icons/minecraft.icns").getAbsolutePath());
             }
 
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
-                res.add("-Duser.home=" + options.getGameDir().getParent());
+                res.addDefault("-Duser.home=", options.getGameDir().getParent());
 
             // Using G1GC with its settings by default
             if (options.getJava().getParsedVersion() >= JavaVersion.JAVA_8) {
@@ -109,42 +108,42 @@ public class DefaultLauncher extends Launcher {
                     }
                 }
                 if (addG1Args) {
-                    res.add("-XX:+UnlockExperimentalVMOptions");
-                    res.add("-XX:+UseG1GC");
-                    res.add("-XX:G1NewSizePercent=20");
-                    res.add("-XX:G1ReservePercent=20");
-                    res.add("-XX:MaxGCPauseMillis=50");
-                    res.add("-XX:G1HeapRegionSize=16M");
+                    res.addUnstableDefault("UnlockExperimentalVMOptions", true);
+                    res.addUnstableDefault("UseG1GC", true);
+                    res.addUnstableDefault("G1NewSizePercent", "20");
+                    res.addUnstableDefault("G1ReservePercent", "20");
+                    res.addUnstableDefault("MaxGCPauseMillis", "50");
+                    res.addUnstableDefault("G1HeapRegionSize", "16M");
                 }
             }
 
             if (options.getMetaspace() != null && options.getMetaspace() > 0)
                 if (options.getJava().getParsedVersion() < JavaVersion.JAVA_8)
-                    res.add("-XX:PermSize= " + options.getMetaspace() + "m");
+                    res.addUnstableDefault("PermSize", options.getMetaspace() + "m");
                 else
-                    res.add("-XX:MetaspaceSize=" + options.getMetaspace() + "m");
+                    res.addUnstableDefault("MetaspaceSize", options.getMetaspace() + "m");
 
-            res.add("-XX:-UseAdaptiveSizePolicy");
-            res.add("-XX:-OmitStackTraceInFastThrow");
-            res.add("-Xmn128m");
+            res.addUnstableDefault("UseAdaptiveSizePolicy", false);
+            res.addUnstableDefault("OmitStackTraceInFastThrow", false);
+            res.addDefault("-Xmn", "128m");
 
             // As 32-bit JVM allocate 320KB for stack by default rather than 64-bit version allocating 1MB,
             // causing Minecraft 1.13 crashed accounting for java.lang.StackOverflowError.
             if (options.getJava().getPlatform() == Platform.BIT_32) {
-                res.add("-Xss1M");
+                res.addDefault("-Xss", "1M");
             }
 
             if (options.getMaxMemory() != null && options.getMaxMemory() > 0)
-                res.add("-Xmx" + options.getMaxMemory() + "m");
+                res.addDefault("-Xmx", options.getMaxMemory() + "m");
 
             if (options.getMinMemory() != null && options.getMinMemory() > 0)
-                res.add("-Xms" + options.getMinMemory() + "m");
+                res.addDefault("-Xms", options.getMinMemory() + "m");
 
             if (options.getJava().getParsedVersion() == JavaVersion.JAVA_16)
-                res.add("--illegal-access=permit");
+                res.addDefault("--illegal-access=", "permit");
 
-            res.add("-Dfml.ignoreInvalidMinecraftCertificates=true");
-            res.add("-Dfml.ignorePatchDiscrepancies=true");
+            res.addDefault("-Dfml.ignoreInvalidMinecraftCertificates=", "true");
+            res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
         }
 
         Proxy proxy = options.getProxy();
@@ -154,13 +153,13 @@ public class DefaultLauncher extends Launcher {
                 String host = address.getHostString();
                 int port = address.getPort();
                 if (proxy.type() == Proxy.Type.HTTP) {
-                    res.add("-Dhttp.proxyHost=" + host);
-                    res.add("-Dhttp.proxyPort=" + port);
-                    res.add("-Dhttps.proxyHost=" + host);
-                    res.add("-Dhttps.proxyPort=" + port);
+                    res.addDefault("-Dhttp.proxyHost=", host);
+                    res.addDefault("-Dhttp.proxyPort=", String.valueOf(port));
+                    res.addDefault("-Dhttps.proxyHost=", host);
+                    res.addDefault("-Dhttps.proxyPort=", String.valueOf(port));
                 } else if (proxy.type() == Proxy.Type.SOCKS) {
-                    res.add("-DsocksProxyHost=" + host);
-                    res.add("-DsocksProxyPort=" + port);
+                    res.addDefault("-DsocksProxyHost=", host);
+                    res.addDefault("-DsocksProxyPort=", String.valueOf(port));
                 }
             }
         }

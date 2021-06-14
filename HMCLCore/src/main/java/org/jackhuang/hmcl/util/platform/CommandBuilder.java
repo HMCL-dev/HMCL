@@ -23,11 +23,16 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public final class CommandBuilder {
+    private static final Pattern UNSTABLE_OPTION_PATTERN = Pattern.compile("-XX:(?<key>[a-zA-Z0-9]+)=(?<value>.*)");
+    private static final Pattern UNSTABLE_BOOLEAN_OPTION_PATTERN = Pattern.compile("-XX:(?<value>[+\\-])(?<key>[a-zA-Z0-9]+)");
+
     private final OperatingSystem os;
-    private List<Item> raw = new LinkedList<>();
+    private final List<Item> raw = new LinkedList<>();
 
     public CommandBuilder() {
         this(OperatingSystem.CURRENT_OS);
@@ -75,13 +80,65 @@ public final class CommandBuilder {
         return this;
     }
 
+    public CommandBuilder addDefault(String opt) {
+        for (Item item : raw) {
+            if (item.arg.equals(opt)) {
+                return this;
+            }
+        }
+        raw.add(new Item(opt, true));
+        return this;
+    }
+
+    public CommandBuilder addDefault(String opt, String value) {
+        for (Item item : raw) {
+            if (item.arg.startsWith(opt)) {
+                return this;
+            }
+        }
+        raw.add(new Item(opt + value, true));
+        return this;
+    }
+
+    public CommandBuilder addUnstableDefault(String opt, boolean value) {
+        for (Item item : raw) {
+            final Matcher matcher = UNSTABLE_BOOLEAN_OPTION_PATTERN.matcher(item.arg);
+            if (matcher.matches()) {
+                if (matcher.group("key").equals(opt)) {
+                    return this;
+                }
+            }
+        }
+
+        if (value) {
+            raw.add(new Item("-XX:+" + opt, true));
+        } else {
+            raw.add(new Item("-XX:-" + opt, true));
+        }
+        return this;
+    }
+
+    public CommandBuilder addUnstableDefault(String opt, String value) {
+        for (Item item : raw) {
+            final Matcher matcher = UNSTABLE_OPTION_PATTERN.matcher(item.arg);
+            if (matcher.matches()) {
+                if (matcher.group("key").equals(opt)) {
+                    return this;
+                }
+            }
+        }
+
+        raw.add(new Item("-XX:" + opt + "=" + value, true));
+        return this;
+    }
+
     public boolean removeIf(Predicate<String> pred) {
         return raw.removeIf(i -> pred.test(i.arg));
     }
 
     @Override
     public String toString() {
-        return String.join(" ", raw.stream().map(i -> i.parse ? parse(i.arg) : i.arg).collect(Collectors.toList()));
+        return raw.stream().map(i -> i.parse ? parse(i.arg) : i.arg).collect(Collectors.joining(" "));
     }
 
     public List<String> asList() {
