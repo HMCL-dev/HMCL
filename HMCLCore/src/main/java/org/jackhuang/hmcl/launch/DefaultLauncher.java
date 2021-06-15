@@ -128,6 +128,7 @@ public class DefaultLauncher extends Launcher {
 
             res.addUnstableDefault("UseAdaptiveSizePolicy", false);
             res.addUnstableDefault("OmitStackTraceInFastThrow", false);
+            res.addUnstableDefault("DontCompileHugeMethods", false);
             res.addDefault("-Xmn", "128m");
 
             // As 32-bit JVM allocate 320KB for stack by default rather than 64-bit version allocating 1MB,
