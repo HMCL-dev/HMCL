@@ -216,7 +216,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
     public VersionSetting getVersionSetting(String id) {
         VersionSetting vs = getLocalVersionSetting(id);
         if (vs == null || vs.isUsesGlobal()) {
-            profile.getGlobal().setGlobal(true); // always keep global.isGlobal = true
+            profile.getGlobal().setGlobal(); // always keep global.isGlobal = true
             profile.getGlobal().setUsesGlobal(true);
             return profile.getGlobal();
         } else

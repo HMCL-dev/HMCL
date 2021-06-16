@@ -44,14 +44,74 @@ import java.util.stream.Collectors;
 @JsonAdapter(VersionSetting.Serializer.class)
 public final class VersionSetting implements Cloneable {
 
-    private boolean global = false;
+    private VersionSettingType versionSettingType;
 
     public boolean isGlobal() {
-        return global;
+        return versionSettingType == VersionSettingType.GLOBAL_VERSION;
     }
 
-    public void setGlobal(boolean global) {
-        this.global = global;
+    public boolean isClientType() {
+        return versionSettingType == VersionSettingType.CLIENT_VERSION;
+    }
+
+    public boolean isServerType() {
+        return versionSettingType == VersionSettingType.SERVER_VERSION;
+    }
+
+    /**
+     * If this is an unknown version,
+     * then it contains properties that
+     * both client and server setting
+     * should contain.
+     * 
+     * This happens when we use clone()
+     * method from a global version, or
+     * we have detected a new version.
+     * 
+     * @see VersionSettingType.UNKNOWN_VERSION
+     */
+    public boolean isUnknownType() {
+        return versionSettingType == VersionSettingType.UNKNOWN_VERSION;
+    }
+
+    /**
+     * If this version contains properties
+     * that a client version should contain.
+     */
+    public boolean containsClientType() {
+        return versionSettingType != VersionSettingType.SERVER_VERSION;
+    }
+
+    /**
+     * If this version contains properties
+     * that a server version should contain.
+     */
+    public boolean containsServerType() {
+        return versionSettingType != VersionSettingType.CLIENT_VERSION;
+    }
+
+    public VersionSettingType getVersionSettingType() {
+        return versionSettingType;
+    }
+
+    public void setGlobal() {
+        this.versionSettingType = VersionSettingType.GLOBAL_VERSION;
+    }
+
+    public void setClientType() {
+        this.versionSettingType = VersionSettingType.CLIENT_VERSION;
+    }
+
+    public void setServerType() {
+        this.versionSettingType = VersionSettingType.SERVER_VERSION;
+    }
+
+    public void setUnknownType() {
+        this.versionSettingType = VersionSettingType.UNKNOWN_VERSION;
+    }
+
+    public void setVersionSettingType(VersionSettingType versionSettingType) {
+        this.versionSettingType = versionSettingType;
     }
 
     private final BooleanProperty usesGlobalProperty = new SimpleBooleanProperty(this, "usesGlobal", false);
@@ -496,6 +556,24 @@ public final class VersionSetting implements Cloneable {
         launcherVisibilityProperty.set(launcherVisibility);
     }
 
+    private final BooleanProperty noGraphicsUserInterfaceProperty = new SimpleBooleanProperty(this, "noGraphicsUserInterface", false);
+
+    public BooleanProperty noGraphicsUserInterfaceProperty() {
+        return noGraphicsUserInterfaceProperty;
+    }
+
+    /**
+     * Server only.
+     * Should server launch with `nogui` arg?
+     */
+    public boolean isNoGraphicsUserInterface() {
+        return noGraphicsUserInterfaceProperty.get();
+    }
+
+    public void setNoGraphicsUserInterface(boolean nogui) {
+        noGraphicsUserInterfaceProperty.set(nogui);
+    }
+
     public JavaVersion getJavaVersion() throws InterruptedException {
         return getJavaVersion(true);
     }
@@ -560,11 +638,18 @@ public final class VersionSetting implements Cloneable {
         defaultJavaPathProperty.addListener(listener);
         nativesDirProperty.addListener(listener);
         nativesDirTypeProperty.addListener(listener);
+        noGraphicsUserInterfaceProperty.addListener(listener);
     }
 
     @Override
     public VersionSetting clone() {
         VersionSetting versionSetting = new VersionSetting();
+
+        if (isGlobal() || isUnknownType())
+            versionSetting.setUnknownType();
+        else
+            versionSetting.setVersionSettingType(getVersionSettingType());
+
         versionSetting.setUsesGlobal(isUsesGlobal());
         versionSetting.setJava(getJava());
         versionSetting.setDefaultJavaPath(getDefaultJavaPath());
@@ -579,15 +664,24 @@ public final class VersionSetting implements Cloneable {
         versionSetting.setNoJVMArgs(isNoJVMArgs());
         versionSetting.setNotCheckGame(isNotCheckGame());
         versionSetting.setNotCheckJVM(isNotCheckJVM());
-        versionSetting.setShowLogs(isShowLogs());
-        versionSetting.setServerIp(getServerIp());
-        versionSetting.setFullscreen(isFullscreen());
-        versionSetting.setWidth(getWidth());
-        versionSetting.setHeight(getHeight());
-        versionSetting.setGameDirType(getGameDirType());
-        versionSetting.setGameDir(getGameDir());
         versionSetting.setLauncherVisibility(getLauncherVisibility());
-        versionSetting.setNativesDir(getNativesDir());
+
+        if (containsClientType()) {
+            versionSetting.setShowLogs(isShowLogs());
+            versionSetting.setServerIp(getServerIp());
+            versionSetting.setFullscreen(isFullscreen());
+            versionSetting.setWidth(getWidth());
+            versionSetting.setHeight(getHeight());
+            versionSetting.setGameDirType(getGameDirType());
+            versionSetting.setGameDir(getGameDir());
+            versionSetting.setNativesDir(getNativesDir());
+            versionSetting.setNativesDirType(getNativesDirType());
+        }
+
+        if (containsServerType()) {
+            versionSetting.setNoGraphicsUserInterface(isNoGraphicsUserInterface());
+        }
+
         return versionSetting;
     }
 
@@ -595,32 +689,43 @@ public final class VersionSetting implements Cloneable {
         @Override
         public JsonElement serialize(VersionSetting src, Type typeOfSrc, JsonSerializationContext context) {
             if (src == null) return JsonNull.INSTANCE;
+            if (src.isUnknownType()) return JsonNull.INSTANCE; // Should not serialize an unknown type.
             JsonObject obj = new JsonObject();
 
+            obj.addProperty("versionSettingType", src.getVersionSettingType().toString());
             obj.addProperty("usesGlobal", src.isUsesGlobal());
             obj.addProperty("javaArgs", src.getJavaArgs());
             obj.addProperty("minecraftArgs", src.getMinecraftArgs());
             obj.addProperty("maxMemory", src.getMaxMemory() <= 0 ? OperatingSystem.SUGGESTED_MEMORY : src.getMaxMemory());
             obj.addProperty("minMemory", src.getMinMemory());
             obj.addProperty("permSize", src.getPermSize());
-            obj.addProperty("width", src.getWidth());
-            obj.addProperty("height", src.getHeight());
             obj.addProperty("javaDir", src.getJavaDir());
             obj.addProperty("precalledCommand", src.getPreLaunchCommand());
-            obj.addProperty("serverIp", src.getServerIp());
             obj.addProperty("java", src.getJava());
             obj.addProperty("wrapper", src.getWrapper());
-            obj.addProperty("fullscreen", src.isFullscreen());
             obj.addProperty("noJVMArgs", src.isNoJVMArgs());
             obj.addProperty("notCheckGame", src.isNotCheckGame());
             obj.addProperty("notCheckJVM", src.isNotCheckJVM());
-            obj.addProperty("showLogs", src.isShowLogs());
-            obj.addProperty("gameDir", src.getGameDir());
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
-            obj.addProperty("gameDirType", src.getGameDirType().ordinal());
             obj.addProperty("defaultJavaPath", src.getDefaultJavaPath());
-            obj.addProperty("nativesDir", src.getNativesDir());
-            obj.addProperty("nativesDirType", src.getNativesDirType().ordinal());
+
+            if (src.containsClientType()) {
+                // It may be a client version,
+                obj.addProperty("width", src.getWidth());
+                obj.addProperty("height", src.getHeight());
+                obj.addProperty("serverIp", src.getServerIp());
+                obj.addProperty("fullscreen", src.isFullscreen());
+                obj.addProperty("showLogs", src.isShowLogs());
+                obj.addProperty("gameDir", src.getGameDir());
+                obj.addProperty("gameDirType", src.getGameDirType().ordinal());
+                obj.addProperty("nativesDir", src.getNativesDir());
+                obj.addProperty("nativesDirType", src.getNativesDirType().ordinal());
+            }
+
+            if (src.containsServerType()) {
+                // It may be a server version.
+                obj.addProperty("noGraphicsUserInterface", src.isNoGraphicsUserInterface());
+            }
 
             return obj;
         }
@@ -636,30 +741,42 @@ public final class VersionSetting implements Cloneable {
 
             VersionSetting vs = new VersionSetting();
 
+            vs.setVersionSettingType(VersionSettingType.values()[Optional.ofNullable(obj.get("versionSettingType")).map(JsonElement::getAsInt).orElse(0)]); // Default is UNKNOWN_VERSION.
+
+            // The followings are properties that both client and server version should contain.
             vs.setUsesGlobal(Optional.ofNullable(obj.get("usesGlobal")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setJavaArgs(Optional.ofNullable(obj.get("javaArgs")).map(JsonElement::getAsString).orElse(""));
             vs.setMinecraftArgs(Optional.ofNullable(obj.get("minecraftArgs")).map(JsonElement::getAsString).orElse(""));
             vs.setMaxMemory(maxMemoryN);
             vs.setMinMemory(Optional.ofNullable(obj.get("minMemory")).map(JsonElement::getAsInt).orElse(null));
             vs.setPermSize(Optional.ofNullable(obj.get("permSize")).map(JsonElement::getAsString).orElse(""));
-            vs.setWidth(Optional.ofNullable(obj.get("width")).map(JsonElement::getAsJsonPrimitive).map(this::parseJsonPrimitive).orElse(0));
-            vs.setHeight(Optional.ofNullable(obj.get("height")).map(JsonElement::getAsJsonPrimitive).map(this::parseJsonPrimitive).orElse(0));
             vs.setJavaDir(Optional.ofNullable(obj.get("javaDir")).map(JsonElement::getAsString).orElse(""));
             vs.setPreLaunchCommand(Optional.ofNullable(obj.get("precalledCommand")).map(JsonElement::getAsString).orElse(""));
-            vs.setServerIp(Optional.ofNullable(obj.get("serverIp")).map(JsonElement::getAsString).orElse(""));
             vs.setJava(Optional.ofNullable(obj.get("java")).map(JsonElement::getAsString).orElse(""));
             vs.setWrapper(Optional.ofNullable(obj.get("wrapper")).map(JsonElement::getAsString).orElse(""));
-            vs.setGameDir(Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse(""));
-            vs.setNativesDir(Optional.ofNullable(obj.get("nativesDir")).map(JsonElement::getAsString).orElse(""));
-            vs.setFullscreen(Optional.ofNullable(obj.get("fullscreen")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNoJVMArgs(Optional.ofNullable(obj.get("noJVMArgs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotCheckGame(Optional.ofNullable(obj.get("notCheckGame")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotCheckJVM(Optional.ofNullable(obj.get("notCheckJVM")).map(JsonElement::getAsBoolean).orElse(false));
-            vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setLauncherVisibility(LauncherVisibility.values()[Optional.ofNullable(obj.get("launcherVisibility")).map(JsonElement::getAsInt).orElse(1)]);
-            vs.setGameDirType(GameDirectoryType.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(0)]);
             vs.setDefaultJavaPath(Optional.ofNullable(obj.get("defaultJavaPath")).map(JsonElement::getAsString).orElse(null));
-            vs.setNativesDirType(NativesDirectoryType.values()[Optional.ofNullable(obj.get("nativesDirType")).map(JsonElement::getAsInt).orElse(0)]);
+
+            if (vs.containsClientType()) {
+                // It may be a client version.
+                vs.setWidth(Optional.ofNullable(obj.get("width")).map(JsonElement::getAsJsonPrimitive).map(this::parseJsonPrimitive).orElse(0));
+                vs.setHeight(Optional.ofNullable(obj.get("height")).map(JsonElement::getAsJsonPrimitive).map(this::parseJsonPrimitive).orElse(0));
+                vs.setServerIp(Optional.ofNullable(obj.get("serverIp")).map(JsonElement::getAsString).orElse(""));
+                vs.setNativesDir(Optional.ofNullable(obj.get("nativesDir")).map(JsonElement::getAsString).orElse(""));
+                vs.setFullscreen(Optional.ofNullable(obj.get("fullscreen")).map(JsonElement::getAsBoolean).orElse(false));
+                vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
+                vs.setGameDir(Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse(""));
+                vs.setGameDirType(GameDirectoryType.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(0)]);
+                vs.setNativesDirType(NativesDirectoryType.values()[Optional.ofNullable(obj.get("nativesDirType")).map(JsonElement::getAsInt).orElse(0)]);
+            }
+
+            if (vs.containsServerType()) {
+                // It may be a server version.
+                vs.setNoGraphicsUserInterface(Optional.ofNullable(obj.get("noGraphicsUserInterface")).map(JsonElement::getAsBoolean).orElse(false));
+            }
 
             return vs;
         }
