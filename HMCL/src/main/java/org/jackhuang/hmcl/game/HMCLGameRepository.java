@@ -164,6 +164,10 @@ public class HMCLGameRepository extends DefaultGameRepository {
     private File getLocalVersionSettingFile(String id) {
         return new File(getVersionRoot(id), "hmclversion.cfg");
     }
+    
+    private File getLocalVersionClientFile(String id) {
+        return new File(getVersionRoot(id), id + ".jar");
+    }
 
     private void loadLocalVersionSetting(String id) {
         File file = getLocalVersionSettingFile(id);
@@ -192,6 +196,11 @@ public class HMCLGameRepository extends DefaultGameRepository {
     }
 
     private VersionSetting initLocalVersionSetting(String id, VersionSetting vs) {
+        File file = getLocalVersionClientFile(id);
+        if (file.exists())
+            vs.setClientType();
+        else
+            vs.setServerType();
         localVersionSettings.put(id, vs);
         vs.addPropertyChangedListener(a -> saveVersionSetting(id));
         return vs;

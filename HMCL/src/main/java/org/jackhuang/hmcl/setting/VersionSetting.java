@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 @JsonAdapter(VersionSetting.Serializer.class)
 public final class VersionSetting implements Cloneable {
 
-    private VersionSettingType versionSettingType;
+    private VersionSettingType versionSettingType = VersionSettingType.UNKNOWN_VERSION;
 
     public boolean isGlobal() {
         return versionSettingType == VersionSettingType.GLOBAL_VERSION;
@@ -689,10 +689,9 @@ public final class VersionSetting implements Cloneable {
         @Override
         public JsonElement serialize(VersionSetting src, Type typeOfSrc, JsonSerializationContext context) {
             if (src == null) return JsonNull.INSTANCE;
-            if (src.isUnknownType()) return JsonNull.INSTANCE; // Should not serialize an unknown type.
             JsonObject obj = new JsonObject();
 
-            obj.addProperty("versionSettingType", src.getVersionSettingType().toString());
+            obj.addProperty("versionSettingType", src.getVersionSettingType().ordinal());
             obj.addProperty("usesGlobal", src.isUsesGlobal());
             obj.addProperty("javaArgs", src.getJavaArgs());
             obj.addProperty("minecraftArgs", src.getMinecraftArgs());
