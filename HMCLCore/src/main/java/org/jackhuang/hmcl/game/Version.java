@@ -214,13 +214,27 @@ public class Version implements Comparable<Version>, Validation {
         return compatibilityRules == null ? Collections.emptyList() : Collections.unmodifiableList(compatibilityRules);
     }
 
-    public DownloadInfo getDownloadInfo() {
+    public DownloadInfo getDownloadInfo(boolean isClient) {
+        return isClient ? getClientDownloadInfo() : getServerDownloadInfo();
+    }
+
+    public DownloadInfo getClientDownloadInfo() {
         DownloadInfo client = downloads == null ? null : downloads.get(DownloadType.CLIENT);
         String jarName = jar == null ? id : jar;
+        // What the hell is this doing?
         if (client == null)
             return new DownloadInfo(String.format("%s%s/%s.jar", Constants.DEFAULT_VERSION_DOWNLOAD_URL, jarName, jarName));
         else
             return client;
+    }
+    
+    public DownloadInfo getServerDownloadInfo() {
+        DownloadInfo server = downloads == null ? null : downloads.get(DownloadType.SERVER);
+        String jarName = jar == null ? id : jar;
+        if (server == null)
+            return new DownloadInfo(String.format("%s%s/%s.jar", Constants.DEFAULT_VERSION_DOWNLOAD_URL, jarName, jarName));
+        else
+            return server;
     }
 
     public AssetIndexInfo getAssetIndex() {

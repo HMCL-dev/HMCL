@@ -132,6 +132,23 @@ public interface GameRepository extends VersionProvider {
      */
     File getVersionJar(Version version);
 
+
+    /**
+     * Get minecraft client jar
+     * 
+     * @param version resolvedVersion
+     * @return the minecraft client jar
+     */
+    File getClientJar(Version version);
+
+    /**
+     * Get minecraft server jar
+     * 
+     * @param version resolvedVersion
+     * @return the minecraft server jar
+     */
+    File getServerJar(Version version);
+
     /**
      * Get minecraft jar
      *

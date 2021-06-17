@@ -54,6 +54,14 @@ public interface DependencyManager {
      *
      * @return the task to check game completion.
      */
+    Task<?> checkGameCompletionAsync(Version version, boolean integrityCheck, boolean isClient);
+
+    /**
+     * Check if the game is complete.
+     * Check libraries, assets files and so on.
+     *
+     * @return the task to check game completion.
+     */
     Task<?> checkLibraryCompletionAsync(Version version, boolean integrityCheck);
 
     /**

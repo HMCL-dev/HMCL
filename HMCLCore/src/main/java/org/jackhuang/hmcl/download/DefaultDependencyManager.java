@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -75,11 +76,17 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     @Override
     public Task<?> checkGameCompletionAsync(Version original, boolean integrityCheck) {
+        return checkGameCompletionAsync(original, integrityCheck, true);
+    }
+
+    @Override
+    public Task<?> checkGameCompletionAsync(Version original, boolean integrityCheck, boolean isClient) {
         Version version = original.resolve(repository);
         return Task.allOf(
                 Task.composeAsync(() -> {
-                    if (!repository.getVersionJar(version).exists())
-                        return new GameDownloadTask(this, null, version);
+                    File jar = isClient ? repository.getClientJar(version) : repository.getServerJar(version);
+                    if (!jar.exists())
+                        return new GameDownloadTask(this, null, version, isClient);
                     else
                         return null;
                 }),

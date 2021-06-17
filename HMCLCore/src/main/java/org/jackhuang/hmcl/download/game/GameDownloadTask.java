@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
@@ -38,11 +39,17 @@ public final class GameDownloadTask extends Task<Void> {
     private final String gameVersion;
     private final Version version;
     private final List<Task<?>> dependencies = new LinkedList<>();
+    private final boolean isClient;
 
     public GameDownloadTask(DefaultDependencyManager dependencyManager, String gameVersion, Version version) {
+        this(dependencyManager, gameVersion, version, true);
+    }
+
+    public GameDownloadTask(DefaultDependencyManager dependencyManager, String gameVersion, Version version, boolean isClient) {
         this.dependencyManager = dependencyManager;
         this.gameVersion = gameVersion;
         this.version = version.resolve(dependencyManager.getGameRepository());
+        this.isClient = isClient;
 
         setSignificance(TaskSignificance.MODERATE);
     }
@@ -54,12 +61,13 @@ public final class GameDownloadTask extends Task<Void> {
 
     @Override
     public void execute() {
-        File jar = dependencyManager.getGameRepository().getVersionJar(version);
+        DefaultGameRepository repository = dependencyManager.getGameRepository();
+        File jar = isClient ? repository.getClientJar(version) : repository.getServerJar(version);
 
         FileDownloadTask task = new FileDownloadTask(
-                dependencyManager.getDownloadProvider().injectURLWithCandidates(version.getDownloadInfo().getUrl()),
+                dependencyManager.getDownloadProvider().injectURLWithCandidates(version.getDownloadInfo(isClient).getUrl()),
                 jar,
-                IntegrityCheck.of(CacheRepository.SHA1, version.getDownloadInfo().getSha1()));
+                IntegrityCheck.of(CacheRepository.SHA1, version.getDownloadInfo(isClient).getSha1()));
         task.setCaching(true);
         task.setCacheRepository(dependencyManager.getCacheRepository());
 

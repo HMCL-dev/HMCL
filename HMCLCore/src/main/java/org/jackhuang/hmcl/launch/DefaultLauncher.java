@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.VersionSettingType;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -74,7 +75,7 @@ public class DefaultLauncher extends Launcher {
         super(repository, version, authInfo, options, listener, daemon);
     }
 
-    private CommandBuilder generateCommandLine(File nativeFolder) throws IOException {
+    private CommandBuilder generateClientCommandLine(File nativeFolder) throws IOException {
         CommandBuilder res = new CommandBuilder();
 
         // Executable
@@ -89,7 +90,7 @@ public class DefaultLauncher extends Launcher {
         if (!options.isNoGeneratedJVMArgs()) {
             appendJvmArgs(res);
 
-            res.add("-Dminecraft.client.jar=" + repository.getVersionJar(version));
+            res.add("-Dminecraft.client.jar=" + repository.getClientJar(version));
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                 res.add("-Xdock:name=Minecraft " + version.getId());
@@ -164,9 +165,9 @@ public class DefaultLauncher extends Launcher {
                     classpath.add(f.getAbsolutePath());
             }
 
-        File jar = repository.getVersionJar(version);
+        File jar = repository.getClientJar(version);
         if (!jar.exists() || !jar.isFile())
-            throw new IOException("Minecraft jar does not exist");
+            throw new IOException("Minecraft client jar does not exist");
         classpath.add(jar.getAbsolutePath());
 
         // Provided Minecraft arguments
@@ -224,6 +225,103 @@ public class DefaultLauncher extends Launcher {
         res.addAllWithoutParsing(options.getGameArguments());
 
         res.removeIf(it -> getForbiddens().containsKey(it) && getForbiddens().get(it).get());
+        return res;
+    }
+
+    private CommandBuilder generateServerCommandLine() throws IOException {
+        CommandBuilder res = new CommandBuilder();
+
+        // Executable
+        if (StringUtils.isNotBlank(options.getWrapper()))
+            res.add(options.getWrapper());
+
+        res.add(options.getJava().getBinary().toString());
+
+        res.addAllWithoutParsing(options.getJavaArguments());
+
+        // JVM Args
+        if (!options.isNoGeneratedJVMArgs()) {
+            appendJvmArgs(res);
+
+            // Force using G1GC with its settings
+            if (options.getJava().getParsedVersion() >= JavaVersion.JAVA_8) {
+                res.add("-XX:+UnlockExperimentalVMOptions");
+                res.add("-XX:+UseG1GC");
+                res.add("-XX:G1NewSizePercent=20");
+                res.add("-XX:G1ReservePercent=20");
+                res.add("-XX:MaxGCPauseMillis=50");
+                res.add("-XX:G1HeapRegionSize=16M");
+            }
+
+            if (options.getMetaspace() != null && options.getMetaspace() > 0)
+                if (options.getJava().getParsedVersion() < JavaVersion.JAVA_8)
+                    res.add("-XX:PermSize= " + options.getMetaspace() + "m");
+                else
+                    res.add("-XX:MetaspaceSize=" + options.getMetaspace() + "m");
+
+            res.add("-XX:-UseAdaptiveSizePolicy");
+            res.add("-XX:-OmitStackTraceInFastThrow");
+            res.add("-Xmn128m");
+
+            // As 32-bit JVM allocate 320KB for stack by default rather than 64-bit version allocating 1MB,
+            // causing Minecraft 1.13 crashed accounting for java.lang.StackOverflowError.
+            if (options.getJava().getPlatform() == Platform.BIT_32) {
+                res.add("-Xss1M");
+            }
+
+            if (options.getMaxMemory() != null && options.getMaxMemory() > 0)
+                res.add("-Xmx" + options.getMaxMemory() + "m");
+
+            if (options.getMinMemory() != null && options.getMinMemory() > 0)
+                res.add("-Xms" + options.getMinMemory() + "m");
+
+            if (options.getJava().getParsedVersion() == JavaVersion.JAVA_16)
+                res.add("--illegal-access=permit");
+
+        }
+
+        Proxy proxy = options.getProxy();
+        if (proxy != null && StringUtils.isBlank(options.getProxyUser()) && StringUtils.isBlank(options.getProxyPass())) {
+            InetSocketAddress address = (InetSocketAddress) options.getProxy().address();
+            if (address != null) {
+                String host = address.getHostString();
+                int port = address.getPort();
+                if (proxy.type() == Proxy.Type.HTTP) {
+                    res.add("-Dhttp.proxyHost=" + host);
+                    res.add("-Dhttp.proxyPort=" + port);
+                    res.add("-Dhttps.proxyHost=" + host);
+                    res.add("-Dhttps.proxyPort=" + port);
+                } else if (proxy.type() == Proxy.Type.SOCKS) {
+                    res.add("-DsocksProxyHost=" + host);
+                    res.add("-DsocksProxyPort=" + port);
+                }
+            }
+        }
+
+        if (options.getProxy() != null && options.getProxy().type() == Proxy.Type.SOCKS) {
+            InetSocketAddress address = (InetSocketAddress) options.getProxy().address();
+            if (address != null) {
+                res.add("--proxyHost");
+                res.add(address.getHostString());
+                res.add("--proxyPort");
+                res.add(String.valueOf(address.getPort()));
+                if (StringUtils.isNotBlank(options.getProxyUser()) && StringUtils.isNotBlank(options.getProxyPass())) {
+                    res.add("--proxyUser");
+                    res.add(options.getProxyUser());
+                    res.add("--proxyPass");
+                    res.add(options.getProxyPass());
+                }
+            }
+        }
+
+        File jar = repository.getServerJar(version);
+        if (!jar.exists() || !jar.isFile())
+            throw new IOException("Minecraft server jar does not exist");
+        res.add("-jar " + jar);
+
+        if (options.isNoGraphicsUserInterface())
+            res.add("nogui");
+
         return res;
     }
 
@@ -300,22 +398,29 @@ public class DefaultLauncher extends Launcher {
 
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        File nativeFolder = null;
-        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            nativeFolder = repository.getNativeDirectory(version.getId());
+
+        List<String> rawCommandLine = null;
+
+        if (options.getVersionSettingType() == VersionSettingType.CLIENT_VERSION) {
+            // Use custom native folder.
+            File nativeFolder = null;
+            if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+                nativeFolder = repository.getNativeDirectory(version.getId());
+            } else {
+                nativeFolder = new File(options.getNativesDir());
+            }
+            if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+                decompressNatives(nativeFolder);
+            }  
+
+            // To guarantee that when failed to generate launch command line, we will not call pre-launch command
+            rawCommandLine = generateClientCommandLine(nativeFolder).asList();
+
+            if (rawCommandLine.stream().anyMatch(StringUtils::isBlank)) {
+                throw new IllegalStateException("Illegal command line " + rawCommandLine);
+            }
         } else {
-            nativeFolder = new File(options.getNativesDir());
-        }
-
-        // To guarantee that when failed to generate launch command line, we will not call pre-launch command
-        List<String> rawCommandLine = generateCommandLine(nativeFolder).asList();
-
-        if (rawCommandLine.stream().anyMatch(StringUtils::isBlank)) {
-            throw new IllegalStateException("Illegal command line " + rawCommandLine);
-        }
-
-        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            decompressNatives(nativeFolder);
+            rawCommandLine = generateServerCommandLine().asList();
         }
 
         File runDirectory = repository.getRunDirectory(version.getId());
@@ -356,17 +461,6 @@ public class DefaultLauncher extends Launcher {
     public void makeLaunchScript(File scriptFile) throws IOException {
         boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
 
-        File nativeFolder = null;
-        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            nativeFolder = repository.getNativeDirectory(version.getId());
-        } else {
-            nativeFolder = new File(options.getNativesDir());
-        }
-
-        if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            decompressNatives(nativeFolder);
-        }
-
         if (isWindows && !FileUtils.getExtension(scriptFile).equals("bat"))
             throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' in Windows");
         else if (!isWindows && !FileUtils.getExtension(scriptFile).equals("sh"))
@@ -386,8 +480,24 @@ public class DefaultLauncher extends Launcher {
             if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
                 writer.write(options.getPreLaunchCommand());
                 writer.newLine();
+            }        
+            if (options.getVersionSettingType() == VersionSettingType.CLIENT_VERSION) {
+                // Use custom natives folder.
+                File nativeFolder = null;
+                if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+                    nativeFolder = repository.getNativeDirectory(version.getId());
+                } else {
+                    nativeFolder = new File(options.getNativesDir());
+                }
+
+                if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+                    decompressNatives(nativeFolder);
+                }
+                writer.write(generateClientCommandLine(nativeFolder).toString());
+
+            } else {
+                writer.write(generateServerCommandLine().toString());
             }
-            writer.write(generateCommandLine(nativeFolder).toString());
         }
         if (!scriptFile.setExecutable(true))
             throw new PermissionException();

@@ -165,8 +165,12 @@ public class HMCLGameRepository extends DefaultGameRepository {
         return new File(getVersionRoot(id), "hmclversion.cfg");
     }
     
-    private File getLocalVersionClientFile(String id) {
+    private File getLocalVersionClientJar(String id) {
         return new File(getVersionRoot(id), id + ".jar");
+    }
+
+    private File getLocalVersionServerJar(String id) {
+        return new File(getVersionRoot(id), id + ".server.jar");
     }
 
     private void loadLocalVersionSetting(String id) {
@@ -195,12 +199,17 @@ public class HMCLGameRepository extends DefaultGameRepository {
             return initLocalVersionSetting(id, new VersionSetting());
     }
 
-    private VersionSetting initLocalVersionSetting(String id, VersionSetting vs) {
-        File file = getLocalVersionClientFile(id);
-        if (file.exists())
-            vs.setClientType();
+    private VersionSettingType getLocalVersionSettingType(String id) {
+        if (getLocalVersionClientJar(id).exists())
+            return VersionSettingType.CLIENT_VERSION;
+        else if (getLocalVersionServerJar(id).exists())
+            return VersionSettingType.SERVER_VERSION;
         else
-            vs.setServerType();
+            return VersionSettingType.UNKNOWN_VERSION;
+    }
+
+    private VersionSetting initLocalVersionSetting(String id, VersionSetting vs) {
+        vs.setVersionSettingType(getLocalVersionSettingType(id));
         localVersionSettings.put(id, vs);
         vs.addPropertyChangedListener(a -> saveVersionSetting(id));
         return vs;
@@ -227,9 +236,10 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (vs == null || vs.isUsesGlobal()) {
             profile.getGlobal().setGlobal(); // always keep global.isGlobal = true
             profile.getGlobal().setUsesGlobal(true);
-            return profile.getGlobal();
-        } else
-            return vs;
+            vs = profile.getGlobal().clone();
+            vs.setVersionSettingType(getLocalVersionSettingType(id));
+        }
+        return vs;
     }
 
     public File getVersionIconFile(String id) {
@@ -299,6 +309,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
         JavaVersion javaVersion = Optional.ofNullable(vs.getJavaVersion(checkJava)).orElse(JavaVersion.fromCurrentEnvironment());
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
+                .setVersionSettingType(vs.getVersionSettingType())
                 .setGameDir(gameDir)
                 .setJava(javaVersion)
                 .setVersionName(Metadata.TITLE)
@@ -317,7 +328,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setPrecalledCommand(vs.getPreLaunchCommand())
                 .setNoGeneratedJVMArgs(vs.isNoJVMArgs())
                 .setNativesDirType(vs.getNativesDirType())
-                .setNativesDir(vs.getNativesDir());
+                .setNativesDir(vs.getNativesDir())
+                .setNoGraphicsUserInterface(vs.isNoGraphicsUserInterface());
         if (config().hasProxy()) {
             builder.setProxy(ProxyManager.getProxy());
             if (config().hasProxyAuth()) {

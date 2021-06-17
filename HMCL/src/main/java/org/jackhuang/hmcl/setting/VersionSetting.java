@@ -23,6 +23,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
+import org.jackhuang.hmcl.game.VersionSettingType;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;

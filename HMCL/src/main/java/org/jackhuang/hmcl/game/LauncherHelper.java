@@ -130,6 +130,7 @@ public final class LauncherHelper {
         HMCLGameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
         Version version = MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion));
+        VersionSetting versionSetting = repository.getVersionSetting(version.getId());
         Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
         boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
         CountDownLatch launchingLatch = new CountDownLatch(1);
@@ -140,7 +141,7 @@ public final class LauncherHelper {
                             if (setting.isNotCheckGame())
                                 return null;
                             else
-                                return dependencyManager.checkGameCompletionAsync(version, integrityCheck);
+                                return dependencyManager.checkGameCompletionAsync(version, integrityCheck, versionSetting.isClientType());
                         }), Task.composeAsync(() -> {
                             try {
                                 ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));

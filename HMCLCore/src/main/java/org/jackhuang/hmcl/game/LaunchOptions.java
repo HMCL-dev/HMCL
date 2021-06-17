@@ -33,6 +33,7 @@ import java.util.List;
  */
 public class LaunchOptions implements Serializable {
 
+    private VersionSettingType versionSettingType;
     private File gameDir;
     private JavaVersion java;
     private String versionName;
@@ -55,6 +56,15 @@ public class LaunchOptions implements Serializable {
     private String preLaunchCommand;
     private NativesDirectoryType nativesDirType;
     private String nativesDir;
+    private boolean noGraphicsUserInterface;
+
+    /**
+     * 1 - Client
+     * 2 - Server
+     */
+    public VersionSettingType getVersionSettingType() {
+        return versionSettingType;
+    }
 
     /**
      * The game directory
@@ -217,12 +227,26 @@ public class LaunchOptions implements Serializable {
         return nativesDir;
     }
 
+    /**
+     * Whether to launch server with `nogui` mode.
+     */
+    public boolean isNoGraphicsUserInterface() {
+        return noGraphicsUserInterface;
+    }
+
     public static class Builder {
 
         private final LaunchOptions options = new LaunchOptions();
 
         public LaunchOptions create() {
             return options;
+        }
+
+        /**
+         * The version setting type, client or server.
+         */
+        public VersionSettingType getVersionSettingType() {
+            return options.versionSettingType;
         }
 
         /**
@@ -369,12 +393,30 @@ public class LaunchOptions implements Serializable {
             return options.preLaunchCommand;
         }
 
+        /**
+         * Whether to use custom natives directory.
+         */
         public NativesDirectoryType getNativesDirType() {
             return options.nativesDirType;
         }
 
+        /**
+         * The custom natives directory
+         */
         public String getNativesDir() {
             return options.nativesDir;
+        }
+
+        /**
+         * Whether to launch server with `nogui` mode.
+         */
+        public boolean isNoGraphicsUserInterface() {
+            return options.noGraphicsUserInterface;
+        }
+
+        public Builder setVersionSettingType(VersionSettingType versionSettingType) {
+            options.versionSettingType = versionSettingType;
+            return this;
         }
 
         public Builder setGameDir(File gameDir) {
@@ -486,6 +528,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setNativesDir(String nativesDir) {
             options.nativesDir = nativesDir;
+            return this;
+        }
+
+        public Builder setNoGraphicsUserInterface(boolean nogui) {
+            options.noGraphicsUserInterface = nogui;
             return this;
         }
 

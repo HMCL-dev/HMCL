@@ -135,6 +135,20 @@ public class DefaultGameRepository implements GameRepository {
         String id = Optional.ofNullable(v.getJar()).orElse(v.getId());
         return new File(getVersionRoot(id), id + ".jar");
     }
+    
+    @Override
+    public File getClientJar(Version version) {
+        Version v = version.resolve(this);
+        String id = Optional.ofNullable(v.getJar()).orElse(v.getId());
+        return new File(getVersionRoot(id), id + ".jar");
+    }
+
+    @Override
+    public File getServerJar(Version version) {
+        Version v = version.resolve(this);
+        String id = Optional.ofNullable(v.getJar()).orElse(v.getId());
+        return new File(getVersionRoot(id), id + ".server.jar");
+    }
 
     @Override
     public File getNativeDirectory(String id) {
@@ -170,17 +184,27 @@ public class DefaultGameRepository implements GameRepository {
             Files.move(fromDir, toDir);
 
             Path fromJson = toDir.resolve(from + ".json");
-            Path fromJar = toDir.resolve(from + ".jar");
+            Path fromClientJar = toDir.resolve(from + ".jar");
+            Path fromServerJar = toDir.resolve(from + ".server.jar");
             Path toJson = toDir.resolve(to + ".json");
-            Path toJar = toDir.resolve(to + ".jar");
+            Path toClientJar = toDir.resolve(to + ".jar");
+            Path toServerJar = toDir.resolve(to + ".server.jar");
+
+            // Either fromClientJar or fromServerJar should exist.
+            if (!Files.exists(fromClientJar) && !Files.exists(fromServerJar))
+                throw new IOException();
 
             try {
                 Files.move(fromJson, toJson);
-                Files.move(fromJar, toJar);
+                if (Files.exists(fromClientJar))
+                    Files.move(fromClientJar, toClientJar);
+                if (Files.exists(fromServerJar))
+                    Files.move(fromServerJar, toServerJar);
             } catch (IOException e) {
                 // recovery
                 Lang.ignoringException(() -> Files.move(toJson, fromJson));
-                Lang.ignoringException(() -> Files.move(toJar, fromJar));
+                Lang.ignoringException(() -> Files.move(toClientJar, fromClientJar));
+                Lang.ignoringException(() -> Files.move(toServerJar, fromServerJar));
                 Lang.ignoringException(() -> Files.move(toDir, fromDir));
                 throw e;
             }
@@ -269,7 +293,10 @@ public class DefaultGameRepository implements GameRepository {
                         }
 
                         File jar = new File(dir, FileUtils.getNameWithoutExtension(jsons.get(0)) + ".jar");
-                        if (jar.exists() && !jar.renameTo(new File(dir, id + ".jar"))) {
+                        File renameJar = null;
+                        if (jar.getName().endsWith(".server.jar")) renameJar = new File(dir, id + ".server.jar");
+                        else renameJar = new File(dir, id + ".jar");
+                        if (jar.exists() && !jar.renameTo(renameJar)) {
                             LOG.warning("Cannot rename jar file, ignoring version " + id);
                             return Stream.empty();
                         }
