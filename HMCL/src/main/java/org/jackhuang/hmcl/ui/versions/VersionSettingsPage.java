@@ -31,6 +31,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -77,6 +78,12 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
     @FXML private VBox rootPane;
     @FXML private ScrollPane scroll;
+    @FXML private ComponentList universalComponentList;
+    @FXML private ComponentList clientComponentList;
+    @FXML private ComponentList serverComponentList;
+    @FXML private HBox universalHBox;
+    @FXML private HBox clientHBox;
+    @FXML private HBox serverHBox;
     @FXML private JFXTextField txtWidth;
     @FXML private JFXTextField txtHeight;
     @FXML private JFXTextField txtMaxMemory;
@@ -87,8 +94,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     @FXML private JFXTextField txtWrapper;
     @FXML private JFXTextField txtPrecallingCommand;
     @FXML private JFXTextField txtServerIP;
-    @FXML private ComponentList advancedSettingsPane;
-    @FXML private ComponentList componentList;
     @FXML private ComponentList iconPickerItemWrapper;
     @FXML private JFXComboBox<LauncherVisibility> cboLauncherVisibility;
     @FXML private JFXCheckBox chkFullscreen;
@@ -165,32 +170,113 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             Platform.runLater(() -> loadVersion(profile, versionId));
         });
 
-        componentList.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
-        advancedSettingsPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
+        universalComponentList.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
+        clientComponentList.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
+        serverComponentList.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
     }
 
     private void bindVersionSettingProperties(VersionSetting vs) {
+        // bind new data fields
+        FXUtils.bindInt(txtMaxMemory, vs.maxMemoryProperty());
+        FXUtils.bindString(javaItem.getTxtCustom(), vs.javaDirProperty());
+        FXUtils.bindString(txtJVMArgs, vs.javaArgsProperty());
+        FXUtils.bindString(txtGameArgs, vs.minecraftArgsProperty());
+        FXUtils.bindString(txtMetaspace, vs.permSizeProperty());
+        FXUtils.bindString(txtWrapper, vs.wrapperProperty());
+        FXUtils.bindString(txtPrecallingCommand, vs.preLaunchCommandProperty());
+        FXUtils.bindBoolean(chkNoGameCheck, vs.notCheckGameProperty());
+        FXUtils.bindBoolean(chkNoJVMCheck, vs.notCheckJVMProperty());
+        FXUtils.bindBoolean(chkNoJVMArgs, vs.noJVMArgsProperty());
+        FXUtils.bindEnum(cboLauncherVisibility, vs.launcherVisibilityProperty());
 
+        vs.usesGlobalProperty().addListener(specificSettingsListener);
+        if (!vs.isGlobal())
+            chkEnableSpecificSettings.setSelected(!vs.isUsesGlobal());
+
+        javaItem.setToggleSelectedListener(newValue -> {
+            if (javaItem.isCustomToggle(newValue)) {
+                vs.setUsesCustomJavaDir();
+            } else {
+                vs.setJavaVersion((JavaVersion) newValue.getUserData());
+            }
+        });
+
+        vs.javaDirProperty().addListener(javaListener);
+        vs.javaProperty().addListener(javaListener);
+
+        if (vs.containsClientType())
+            bindClientVersionSettingProperties(vs);
+        
+        if (vs.containsServerType())
+            bindServerVersionSettingProperties(vs);
     }
 
     private void bindClientVersionSettingProperties(VersionSetting vs) {
+        FXUtils.bindInt(txtWidth, vs.widthProperty());
+        FXUtils.bindInt(txtHeight, vs.heightProperty());
+        FXUtils.bindString(gameDirItem.getTxtCustom(), vs.gameDirProperty());
+        FXUtils.bindString(nativesDirItem.getTxtCustom(), vs.nativesDirProperty());
+        FXUtils.bindString(txtServerIP, vs.serverIpProperty());
+        FXUtils.bindBoolean(chkFullscreen, vs.fullscreenProperty());
+        FXUtils.bindBoolean(chkShowLogs, vs.showLogsProperty());
 
+        gameDirItem.selectedDataProperty().bindBidirectional(vs.gameDirTypeProperty());
+        gameDirItem.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath()).normalize().toString(),
+                vs.gameDirProperty(), vs.gameDirTypeProperty()));
+        
+        nativesDirItem.selectedDataProperty().bindBidirectional(vs.nativesDirTypeProperty());
+        nativesDirItem.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath() + "/natives").normalize().toString(),
+                vs.nativesDirProperty(), vs.nativesDirTypeProperty()));
     }
 
     private void bindServerVersionSettingProperties(VersionSetting vs) {
-
+        FXUtils.bindBoolean(chkServerUseGui, vs.useGraphicsUserInterfaceProperty());
     }
 
     private void unbindVersionSettingProperties(VersionSetting vs) {
+        // unbind data fields
+        FXUtils.unbindInt(txtMaxMemory, vs.maxMemoryProperty());
+        FXUtils.unbindString(javaItem.getTxtCustom(), vs.javaDirProperty());
+        FXUtils.unbindString(txtJVMArgs, vs.javaArgsProperty());
+        FXUtils.unbindString(txtGameArgs, vs.minecraftArgsProperty());
+        FXUtils.unbindString(txtMetaspace, vs.permSizeProperty());
+        FXUtils.unbindString(txtWrapper, vs.wrapperProperty());
+        FXUtils.unbindString(txtPrecallingCommand, vs.preLaunchCommandProperty());
+        FXUtils.unbindBoolean(chkNoGameCheck, vs.notCheckGameProperty());
+        FXUtils.unbindBoolean(chkNoJVMCheck, vs.notCheckJVMProperty());
+        FXUtils.unbindBoolean(chkNoJVMArgs, vs.noJVMArgsProperty());
+        FXUtils.unbindEnum(cboLauncherVisibility);
 
+        vs.usesGlobalProperty().removeListener(specificSettingsListener);
+        vs.javaDirProperty().removeListener(javaListener);
+        vs.javaProperty().removeListener(javaListener);
+
+        javaItem.setToggleSelectedListener(null);
+
+        if (vs.containsClientType())
+            unbindClientVersionSettingProperties(vs);
+        
+        if (vs.containsServerType())
+            unbindServerVersionSettingProperties(vs);
     }
 
     private void unbindClientVersionSettingProperties(VersionSetting vs) {
+        FXUtils.unbindInt(txtWidth, vs.widthProperty());
+        FXUtils.unbindInt(txtHeight, vs.heightProperty());
+        FXUtils.unbindString(gameDirItem.getTxtCustom(), vs.gameDirProperty());
+        FXUtils.unbindString(nativesDirItem.getTxtCustom(), vs.nativesDirProperty());
+        FXUtils.unbindString(txtServerIP, vs.serverIpProperty());
+        FXUtils.unbindBoolean(chkFullscreen, vs.fullscreenProperty());
+        FXUtils.unbindBoolean(chkShowLogs, vs.showLogsProperty());
 
+        gameDirItem.selectedDataProperty().unbindBidirectional(vs.gameDirTypeProperty());
+        gameDirItem.subtitleProperty().unbind();
+        nativesDirItem.selectedDataProperty().unbindBidirectional(vs.nativesDirTypeProperty());
+        nativesDirItem.subtitleProperty().unbind();
     }
 
     private void unbindServerVersionSettingProperties(VersionSetting vs) {
-
+        FXUtils.unbindBoolean(chkServerUseGui, vs.useGraphicsUserInterfaceProperty());
     }
 
     public void loadVersion(Profile profile, String versionId) {
@@ -209,87 +295,26 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         gameDirItem.setDisable(versionId != null && profile.getRepository().isModpack(versionId));
         settingsTypePane.setDisable(versionId != null && profile.getRepository().isModpack(versionId));
 
-        // unbind data fields
-        if (lastVersionSetting != null) {
-            FXUtils.unbindInt(txtWidth, lastVersionSetting.widthProperty());
-            FXUtils.unbindInt(txtHeight, lastVersionSetting.heightProperty());
-            FXUtils.unbindInt(txtMaxMemory, lastVersionSetting.maxMemoryProperty());
-            FXUtils.unbindString(javaItem.getTxtCustom(), lastVersionSetting.javaDirProperty());
-            FXUtils.unbindString(gameDirItem.getTxtCustom(), lastVersionSetting.gameDirProperty());
-            FXUtils.unbindString(nativesDirItem.getTxtCustom(), lastVersionSetting.nativesDirProperty());
-            FXUtils.unbindString(txtJVMArgs, lastVersionSetting.javaArgsProperty());
-            FXUtils.unbindString(txtGameArgs, lastVersionSetting.minecraftArgsProperty());
-            FXUtils.unbindString(txtMetaspace, lastVersionSetting.permSizeProperty());
-            FXUtils.unbindString(txtWrapper, lastVersionSetting.wrapperProperty());
-            FXUtils.unbindString(txtPrecallingCommand, lastVersionSetting.preLaunchCommandProperty());
-            FXUtils.unbindString(txtServerIP, lastVersionSetting.serverIpProperty());
-            FXUtils.unbindBoolean(chkFullscreen, lastVersionSetting.fullscreenProperty());
-            FXUtils.unbindBoolean(chkNoGameCheck, lastVersionSetting.notCheckGameProperty());
-            FXUtils.unbindBoolean(chkNoJVMCheck, lastVersionSetting.notCheckJVMProperty());
-            FXUtils.unbindBoolean(chkNoJVMArgs, lastVersionSetting.noJVMArgsProperty());
-            FXUtils.unbindBoolean(chkShowLogs, lastVersionSetting.showLogsProperty());
-            FXUtils.unbindBoolean(chkServerUseGui, lastVersionSetting.useGraphicsUserInterfaceProperty());
-            FXUtils.unbindEnum(cboLauncherVisibility);
+        if (lastVersionSetting != null)
+            unbindVersionSettingProperties(lastVersionSetting);
 
-            lastVersionSetting.usesGlobalProperty().removeListener(specificSettingsListener);
-            lastVersionSetting.javaDirProperty().removeListener(javaListener);
-            lastVersionSetting.javaProperty().removeListener(javaListener);
-
-            gameDirItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.gameDirTypeProperty());
-            gameDirItem.subtitleProperty().unbind();
-
-            nativesDirItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.nativesDirTypeProperty());
-            nativesDirItem.subtitleProperty().unbind();
-        }
-
-        // unbind data fields
-        javaItem.setToggleSelectedListener(null);
-
-        // bind new data fields
-        FXUtils.bindInt(txtWidth, versionSetting.widthProperty());
-        FXUtils.bindInt(txtHeight, versionSetting.heightProperty());
-        FXUtils.bindInt(txtMaxMemory, versionSetting.maxMemoryProperty());
-        FXUtils.bindString(javaItem.getTxtCustom(), versionSetting.javaDirProperty());
-        FXUtils.bindString(gameDirItem.getTxtCustom(), versionSetting.gameDirProperty());
-        FXUtils.bindString(nativesDirItem.getTxtCustom(), versionSetting.nativesDirProperty());
-        FXUtils.bindString(txtJVMArgs, versionSetting.javaArgsProperty());
-        FXUtils.bindString(txtGameArgs, versionSetting.minecraftArgsProperty());
-        FXUtils.bindString(txtMetaspace, versionSetting.permSizeProperty());
-        FXUtils.bindString(txtWrapper, versionSetting.wrapperProperty());
-        FXUtils.bindString(txtPrecallingCommand, versionSetting.preLaunchCommandProperty());
-        FXUtils.bindString(txtServerIP, versionSetting.serverIpProperty());
-        FXUtils.bindBoolean(chkFullscreen, versionSetting.fullscreenProperty());
-        FXUtils.bindBoolean(chkNoGameCheck, versionSetting.notCheckGameProperty());
-        FXUtils.bindBoolean(chkNoJVMCheck, versionSetting.notCheckJVMProperty());
-        FXUtils.bindBoolean(chkNoJVMArgs, versionSetting.noJVMArgsProperty());
-        FXUtils.bindBoolean(chkShowLogs, versionSetting.showLogsProperty());
-        FXUtils.bindBoolean(chkServerUseGui, versionSetting.useGraphicsUserInterfaceProperty());
-        FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
-
-        versionSetting.usesGlobalProperty().addListener(specificSettingsListener);
-        if (versionId != null)
-            chkEnableSpecificSettings.setSelected(!versionSetting.isUsesGlobal());
-
-        javaItem.setToggleSelectedListener(newValue -> {
-            if (javaItem.isCustomToggle(newValue)) {
-                versionSetting.setUsesCustomJavaDir();
-            } else {
-                versionSetting.setJavaVersion((JavaVersion) newValue.getUserData());
-            }
-        });
-
-        versionSetting.javaDirProperty().addListener(javaListener);
-        versionSetting.javaProperty().addListener(javaListener);
-
-        gameDirItem.selectedDataProperty().bindBidirectional(versionSetting.gameDirTypeProperty());
-        gameDirItem.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath()).normalize().toString(),
-                versionSetting.gameDirProperty(), versionSetting.gameDirTypeProperty()));
-        
-        nativesDirItem.selectedDataProperty().bindBidirectional(versionSetting.nativesDirTypeProperty());
-        nativesDirItem.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath() + "/natives").normalize().toString(),
-                versionSetting.nativesDirProperty(), versionSetting.nativesDirTypeProperty()));
+        bindVersionSettingProperties(versionSetting);
 
         lastVersionSetting = versionSetting;
+
+        Platform.runLater(() -> {
+
+            rootPane.getChildren().removeAll(clientHBox, clientComponentList,
+                                             serverHBox, serverComponentList);
+
+            if (versionSetting.containsClientType()) {
+                rootPane.getChildren().addAll(clientHBox, clientComponentList);
+            }
+            if (versionSetting.containsServerType()) {
+                rootPane.getChildren().addAll(serverHBox, serverComponentList);
+            }
+            
+        });
 
         initializeSelectedJava();
         initJavaSubtitle();
