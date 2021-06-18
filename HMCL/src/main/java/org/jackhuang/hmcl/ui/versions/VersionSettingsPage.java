@@ -103,6 +103,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     @FXML private JFXToggleButton chkShowLogs;
     @FXML private ImagePickerItem iconPickerItem;
     @FXML private JFXCheckBox chkEnableSpecificSettings;
+    @FXML private JFXToggleButton chkServerUseGui;
     @FXML private BorderPane settingsTypePane;
 
     private InvalidationListener specificSettingsListener = any -> {
@@ -203,6 +204,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbindBoolean(chkNoJVMCheck, lastVersionSetting.notCheckJVMProperty());
             FXUtils.unbindBoolean(chkNoJVMArgs, lastVersionSetting.noJVMArgsProperty());
             FXUtils.unbindBoolean(chkShowLogs, lastVersionSetting.showLogsProperty());
+            FXUtils.unbindBoolean(chkServerUseGui, lastVersionSetting.useGraphicsUserInterfaceProperty());
             FXUtils.unbindEnum(cboLauncherVisibility);
 
             lastVersionSetting.usesGlobalProperty().removeListener(specificSettingsListener);
@@ -237,6 +239,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         FXUtils.bindBoolean(chkNoJVMCheck, versionSetting.notCheckJVMProperty());
         FXUtils.bindBoolean(chkNoJVMArgs, versionSetting.noJVMArgsProperty());
         FXUtils.bindBoolean(chkShowLogs, versionSetting.showLogsProperty());
+        FXUtils.bindBoolean(chkServerUseGui, versionSetting.useGraphicsUserInterfaceProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
 
         versionSetting.usesGlobalProperty().addListener(specificSettingsListener);

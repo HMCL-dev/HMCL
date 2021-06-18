@@ -329,7 +329,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setNoGeneratedJVMArgs(vs.isNoJVMArgs())
                 .setNativesDirType(vs.getNativesDirType())
                 .setNativesDir(vs.getNativesDir())
-                .setNoGraphicsUserInterface(vs.isNoGraphicsUserInterface());
+                .setNoGraphicsUserInterface(!vs.isUsingGraphicsUserInterface());
         if (config().hasProxy()) {
             builder.setProxy(ProxyManager.getProxy());
             if (config().hasProxyAuth()) {

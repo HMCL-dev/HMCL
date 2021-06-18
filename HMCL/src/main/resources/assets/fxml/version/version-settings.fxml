@@ -155,6 +155,14 @@
                         <JFXToggleButton fx:id="chkNoJVMCheck" size="8" FXUtils.limitHeight="20" />
                     </right>
                 </BorderPane>
+                <BorderPane>
+                    <left>
+                        <Label BorderPane.alignment="CENTER_LEFT" text="%settings.advanced.server_use_gui"/>
+                    </left>
+                    <right>
+                        <JFXToggleButton fx:id="chkServerUseGui" size="8" FXUtils.limitHeight="20" />
+                    </right>
+                </BorderPane>
             </ComponentList>
         </VBox>
     </ScrollPane>

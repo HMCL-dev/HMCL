@@ -557,22 +557,22 @@ public final class VersionSetting implements Cloneable {
         launcherVisibilityProperty.set(launcherVisibility);
     }
 
-    private final BooleanProperty noGraphicsUserInterfaceProperty = new SimpleBooleanProperty(this, "noGraphicsUserInterface", false);
+    private final BooleanProperty useGraphicsUserInterfaceProperty = new SimpleBooleanProperty(this, "useGraphicsUserInterface", true);
 
-    public BooleanProperty noGraphicsUserInterfaceProperty() {
-        return noGraphicsUserInterfaceProperty;
+    public BooleanProperty useGraphicsUserInterfaceProperty() {
+        return useGraphicsUserInterfaceProperty;
     }
 
     /**
      * Server only.
-     * Should server launch with `nogui` arg?
+     * Should server launch with GUI mode?
      */
-    public boolean isNoGraphicsUserInterface() {
-        return noGraphicsUserInterfaceProperty.get();
+    public boolean isUsingGraphicsUserInterface() {
+        return useGraphicsUserInterfaceProperty.get();
     }
 
-    public void setNoGraphicsUserInterface(boolean nogui) {
-        noGraphicsUserInterfaceProperty.set(nogui);
+    public void setUsingGraphicsUserInterface(boolean nogui) {
+        useGraphicsUserInterfaceProperty.set(nogui);
     }
 
     public JavaVersion getJavaVersion() throws InterruptedException {
@@ -639,7 +639,7 @@ public final class VersionSetting implements Cloneable {
         defaultJavaPathProperty.addListener(listener);
         nativesDirProperty.addListener(listener);
         nativesDirTypeProperty.addListener(listener);
-        noGraphicsUserInterfaceProperty.addListener(listener);
+        useGraphicsUserInterfaceProperty.addListener(listener);
     }
 
     @Override
@@ -680,7 +680,7 @@ public final class VersionSetting implements Cloneable {
         }
 
         if (containsServerType()) {
-            versionSetting.setNoGraphicsUserInterface(isNoGraphicsUserInterface());
+            versionSetting.setUsingGraphicsUserInterface(isUsingGraphicsUserInterface());
         }
 
         return versionSetting;
@@ -724,7 +724,7 @@ public final class VersionSetting implements Cloneable {
 
             if (src.containsServerType()) {
                 // It may be a server version.
-                obj.addProperty("noGraphicsUserInterface", src.isNoGraphicsUserInterface());
+                obj.addProperty("useGraphicsUserInterface", src.isUsingGraphicsUserInterface());
             }
 
             return obj;
@@ -775,7 +775,7 @@ public final class VersionSetting implements Cloneable {
 
             if (vs.containsServerType()) {
                 // It may be a server version.
-                vs.setNoGraphicsUserInterface(Optional.ofNullable(obj.get("noGraphicsUserInterface")).map(JsonElement::getAsBoolean).orElse(false));
+                vs.setUsingGraphicsUserInterface(Optional.ofNullable(obj.get("useGraphicsUserInterface")).map(JsonElement::getAsBoolean).orElse(true));
             }
 
             return vs;
