@@ -317,7 +317,7 @@ public class DefaultLauncher extends Launcher {
         File jar = repository.getServerJar(version);
         if (!jar.exists() || !jar.isFile())
             throw new IOException("Minecraft server jar does not exist");
-        res.add("-jar " + jar);
+        res.add("-jar", jar.getAbsolutePath());
 
         if (options.isNoGraphicsUserInterface())
             res.add("nogui");
@@ -398,10 +398,12 @@ public class DefaultLauncher extends Launcher {
 
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
+        boolean isClient = options.getVersionSettingType() == VersionSettingType.CLIENT_VERSION;
 
         List<String> rawCommandLine = null;
+        File runDirectory = null;
 
-        if (options.getVersionSettingType() == VersionSettingType.CLIENT_VERSION) {
+        if (isClient) {
             // Use custom native folder.
             File nativeFolder = null;
             if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
@@ -419,11 +421,12 @@ public class DefaultLauncher extends Launcher {
             if (rawCommandLine.stream().anyMatch(StringUtils::isBlank)) {
                 throw new IllegalStateException("Illegal command line " + rawCommandLine);
             }
+
+            runDirectory = repository.getRunDirectory(version.getId());
         } else {
             rawCommandLine = generateServerCommandLine().asList();
+            runDirectory = repository.getVersionRoot(version.getId());
         }
-
-        File runDirectory = repository.getRunDirectory(version.getId());
 
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
             String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
@@ -440,6 +443,7 @@ public class DefaultLauncher extends Launcher {
 
         Process process;
         try {
+            System.out.println(rawCommandLine);
             ProcessBuilder builder = new ProcessBuilder(rawCommandLine).directory(runDirectory);
             if (listener == null) {
                 builder.inheritIO();
@@ -460,6 +464,7 @@ public class DefaultLauncher extends Launcher {
     @Override
     public void makeLaunchScript(File scriptFile) throws IOException {
         boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
+        boolean isClient = options.getVersionSettingType() == VersionSettingType.CLIENT_VERSION;
 
         if (isWindows && !FileUtils.getExtension(scriptFile).equals("bat"))
             throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' in Windows");
@@ -469,13 +474,27 @@ public class DefaultLauncher extends Launcher {
         if (!FileUtils.makeFile(scriptFile))
             throw new IOException("Script file: " + scriptFile + " cannot be created.");
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(scriptFile)))) {
-            if (isWindows) {
-                writer.write("@echo off");
-                writer.newLine();
-                writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
-                writer.newLine();
-                writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
-                writer.newLine();
+            if (isClient) {
+                if (isWindows) {
+                    writer.write("@echo off");
+                    writer.newLine();
+                    writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
+                    writer.newLine();
+                    writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
+                    writer.newLine();
+                }
+            } else {
+                if (isWindows) {
+                    writer.write("@echo off");
+                    writer.newLine();
+                    writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
+                    writer.newLine();
+                    writer.write(new CommandBuilder().add("cd", "/D", repository.getVersionRoot(version.getId()).getAbsolutePath()).toString());
+                    writer.newLine();
+                } else {
+                    writer.write(new CommandBuilder().add("cd", repository.getVersionRoot(version.getId()).getAbsolutePath()).toString());
+                    writer.newLine();
+                }
             }
             if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
                 writer.write(options.getPreLaunchCommand());
