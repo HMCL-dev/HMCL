@@ -169,6 +169,30 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         advancedSettingsPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
     }
 
+    private void bindVersionSettingProperties(VersionSetting vs) {
+
+    }
+
+    private void bindClientVersionSettingProperties(VersionSetting vs) {
+
+    }
+
+    private void bindServerVersionSettingProperties(VersionSetting vs) {
+
+    }
+
+    private void unbindVersionSettingProperties(VersionSetting vs) {
+
+    }
+
+    private void unbindClientVersionSettingProperties(VersionSetting vs) {
+
+    }
+
+    private void unbindServerVersionSettingProperties(VersionSetting vs) {
+
+    }
+
     public void loadVersion(Profile profile, String versionId) {
         this.profile = profile;
         this.versionId = versionId;

@@ -647,10 +647,7 @@ public final class VersionSetting implements Cloneable {
     public VersionSetting clone() {
         VersionSetting versionSetting = new VersionSetting();
 
-        if (isGlobal() || isUnknownType())
-            versionSetting.setUnknownType();
-        else
-            versionSetting.setVersionSettingType(getVersionSettingType());
+        versionSetting.setVersionSettingType(getVersionSettingType());
 
         versionSetting.setUsesGlobal(isUsesGlobal());
         versionSetting.setJava(getJava());
