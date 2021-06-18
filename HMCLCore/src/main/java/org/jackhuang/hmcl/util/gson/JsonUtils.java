@@ -76,7 +76,7 @@ public final class JsonUtils {
 
     public static JsonObject mergeJsonObjects(JsonObject firstObj, JsonObject secondObj) {
         JsonObject result = firstObj.deepCopy();
-        for(Map.Entry<String, JsonElement> entry : secondObj.entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : secondObj.entrySet()) {
             if (!firstObj.has(entry.getKey()))
                 result.add(entry.getKey(), entry.getValue());
         }
