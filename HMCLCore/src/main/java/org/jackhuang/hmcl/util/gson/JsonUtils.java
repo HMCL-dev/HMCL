@@ -19,12 +19,15 @@ package org.jackhuang.hmcl.util.gson;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 
 import java.io.File;
 import java.lang.reflect.Type;
 import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -69,5 +72,14 @@ public final class JsonUtils {
                 .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
                 .registerTypeAdapterFactory(LowerCaseEnumTypeAdapterFactory.INSTANCE)
                 .registerTypeAdapterFactory(JsonTypeAdapterFactory.INSTANCE);
+    }
+
+    public static JsonObject mergeJsonObjects(JsonObject firstObj, JsonObject secondObj) {
+        JsonObject result = firstObj.deepCopy();
+        for(Map.Entry<String, JsonElement> entry : secondObj.entrySet()) {
+            if (!firstObj.has(entry.getKey()))
+                result.add(entry.getKey(), entry.getValue());
+        }
+        return result;
     }
 }

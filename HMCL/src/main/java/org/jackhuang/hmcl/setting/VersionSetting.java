@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.game.VersionSettingType;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -709,23 +710,35 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
             obj.addProperty("defaultJavaPath", src.getDefaultJavaPath());
 
-            if (src.containsClientType()) {
-                // It may be a client version,
-                obj.addProperty("width", src.getWidth());
-                obj.addProperty("height", src.getHeight());
-                obj.addProperty("serverIp", src.getServerIp());
-                obj.addProperty("fullscreen", src.isFullscreen());
-                obj.addProperty("showLogs", src.isShowLogs());
-                obj.addProperty("gameDir", src.getGameDir());
-                obj.addProperty("gameDirType", src.getGameDirType().ordinal());
-                obj.addProperty("nativesDir", src.getNativesDir());
-                obj.addProperty("nativesDirType", src.getNativesDirType().ordinal());
-            }
+            if (src.containsClientType())
+                obj = JsonUtils.mergeJsonObjects(obj, serializeClientObject(src, context));
 
-            if (src.containsServerType()) {
-                // It may be a server version.
-                obj.addProperty("useGraphicsUserInterface", src.isUsingGraphicsUserInterface());
-            }
+            if (src.containsServerType())
+                obj = JsonUtils.mergeJsonObjects(obj, serializeServerObject(src, context));
+
+            return obj;
+        }
+
+        private JsonObject serializeClientObject(VersionSetting src, JsonSerializationContext context) {
+            JsonObject obj = new JsonObject();
+
+            obj.addProperty("width", src.getWidth());
+            obj.addProperty("height", src.getHeight());
+            obj.addProperty("serverIp", src.getServerIp());
+            obj.addProperty("fullscreen", src.isFullscreen());
+            obj.addProperty("showLogs", src.isShowLogs());
+            obj.addProperty("gameDir", src.getGameDir());
+            obj.addProperty("gameDirType", src.getGameDirType().ordinal());
+            obj.addProperty("nativesDir", src.getNativesDir());
+            obj.addProperty("nativesDirType", src.getNativesDirType().ordinal());
+
+            return obj;
+        }
+
+        private JsonObject serializeServerObject(VersionSetting src, JsonSerializationContext context) {
+            JsonObject obj = new JsonObject();
+
+            obj.addProperty("useGraphicsUserInterface", src.isUsingGraphicsUserInterface());
 
             return obj;
         }
@@ -760,25 +773,29 @@ public final class VersionSetting implements Cloneable {
             vs.setLauncherVisibility(LauncherVisibility.values()[Optional.ofNullable(obj.get("launcherVisibility")).map(JsonElement::getAsInt).orElse(1)]);
             vs.setDefaultJavaPath(Optional.ofNullable(obj.get("defaultJavaPath")).map(JsonElement::getAsString).orElse(null));
 
-            if (vs.containsClientType()) {
-                // It may be a client version.
-                vs.setWidth(Optional.ofNullable(obj.get("width")).map(JsonElement::getAsJsonPrimitive).map(this::parseJsonPrimitive).orElse(0));
-                vs.setHeight(Optional.ofNullable(obj.get("height")).map(JsonElement::getAsJsonPrimitive).map(this::parseJsonPrimitive).orElse(0));
-                vs.setServerIp(Optional.ofNullable(obj.get("serverIp")).map(JsonElement::getAsString).orElse(""));
-                vs.setNativesDir(Optional.ofNullable(obj.get("nativesDir")).map(JsonElement::getAsString).orElse(""));
-                vs.setFullscreen(Optional.ofNullable(obj.get("fullscreen")).map(JsonElement::getAsBoolean).orElse(false));
-                vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
-                vs.setGameDir(Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse(""));
-                vs.setGameDirType(GameDirectoryType.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(0)]);
-                vs.setNativesDirType(NativesDirectoryType.values()[Optional.ofNullable(obj.get("nativesDirType")).map(JsonElement::getAsInt).orElse(0)]);
-            }
+            if (vs.containsClientType())
+                deserializeClientObject(vs, obj, context);
 
-            if (vs.containsServerType()) {
-                // It may be a server version.
-                vs.setUsingGraphicsUserInterface(Optional.ofNullable(obj.get("useGraphicsUserInterface")).map(JsonElement::getAsBoolean).orElse(true));
-            }
+            if (vs.containsServerType())
+                deserializeServerObject(vs, obj, context);
 
             return vs;
+        }
+
+        private void deserializeClientObject(VersionSetting vs, JsonObject obj, JsonDeserializationContext context) {
+            vs.setWidth(Optional.ofNullable(obj.get("width")).map(JsonElement::getAsJsonPrimitive).map(this::parseJsonPrimitive).orElse(0));
+            vs.setHeight(Optional.ofNullable(obj.get("height")).map(JsonElement::getAsJsonPrimitive).map(this::parseJsonPrimitive).orElse(0));
+            vs.setServerIp(Optional.ofNullable(obj.get("serverIp")).map(JsonElement::getAsString).orElse(""));
+            vs.setNativesDir(Optional.ofNullable(obj.get("nativesDir")).map(JsonElement::getAsString).orElse(""));
+            vs.setFullscreen(Optional.ofNullable(obj.get("fullscreen")).map(JsonElement::getAsBoolean).orElse(false));
+            vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
+            vs.setGameDir(Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse(""));
+            vs.setGameDirType(GameDirectoryType.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(0)]);
+            vs.setNativesDirType(NativesDirectoryType.values()[Optional.ofNullable(obj.get("nativesDirType")).map(JsonElement::getAsInt).orElse(0)]);
+        }
+
+        private void deserializeServerObject(VersionSetting vs, JsonObject obj, JsonDeserializationContext context) {
+            vs.setUsingGraphicsUserInterface(Optional.ofNullable(obj.get("useGraphicsUserInterface")).map(JsonElement::getAsBoolean).orElse(true));
         }
 
         private int parseJsonPrimitive(JsonPrimitive primitive) {
