@@ -122,7 +122,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onDecoratorPageNavigating);
 
         cboLauncherVisibility.getItems().setAll(LauncherVisibility.values());
-        cboLauncherVisibility.setConverter(stringConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase())));
+        cboLauncherVisibility.setConverter(stringConverter(e -> i18n("settings.universal.launcher_visibility." + e.name().toLowerCase())));
     }
 
     @FXML
@@ -133,7 +133,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         Task.supplyAsync(JavaVersion::getJavas).thenAcceptAsync(Schedulers.javafx(), list -> {
             javaItem.loadChildren(list.stream()
-                    .map(javaVersion -> javaItem.createChildren(javaVersion.getVersion() + i18n("settings.game.java_directory.bit",
+                    .map(javaVersion -> javaItem.createChildren(javaVersion.getVersion() + i18n("settings.universal.java_directory.bit",
                             javaVersion.getPlatform().getBit()), javaVersion.getBinary().toString(), javaVersion))
                     .collect(Collectors.toList()));
             javaItemsLoaded = true;
@@ -147,13 +147,13 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         gameDirItem.setCustomUserData(GameDirectoryType.CUSTOM);
         gameDirItem.loadChildren(Arrays.asList(
-                gameDirItem.createChildren(i18n("settings.advanced.game_dir.default"), GameDirectoryType.ROOT_FOLDER),
-                gameDirItem.createChildren(i18n("settings.advanced.game_dir.independent"), GameDirectoryType.VERSION_FOLDER)
+                gameDirItem.createChildren(i18n("settings.client.game_dir.default"), GameDirectoryType.ROOT_FOLDER),
+                gameDirItem.createChildren(i18n("settings.client.game_dir.independent"), GameDirectoryType.VERSION_FOLDER)
         ));
 
         nativesDirItem.setCustomUserData(NativesDirectoryType.CUSTOM);
         nativesDirItem.loadChildren(Arrays.asList(
-                nativesDirItem.createChildren(i18n("settings.advanced.natives_directory.default"), NativesDirectoryType.VERSION_FOLDER)
+                nativesDirItem.createChildren(i18n("settings.client.natives_directory.default"), NativesDirectoryType.VERSION_FOLDER)
         ));
 
         chkEnableSpecificSettings.selectedProperty().addListener((a, b, newValue) -> {

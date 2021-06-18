@@ -36,13 +36,13 @@
             </HBox>
             <ComponentList fx:id="universalComponentList" depth="1">
             
-                <MultiFileItem fx:id="javaItem" title="%settings.game.java_directory" chooserTitle="%settings.game.java_directory.choose"
+                <MultiFileItem fx:id="javaItem" title="%settings.universal.java_directory" chooserTitle="%settings.universal.java_directory.choose"
                                hasSubtitle="true" customText="%settings.custom" directory="false" />
                 
                 <BorderPane> <!-- Max Memory -->
                     <left>
                         <VBox>
-                            <Label text="%settings.max_memory" BorderPane.alignment="CENTER_LEFT"/>
+                            <Label text="%settings.universal.max_memory" BorderPane.alignment="CENTER_LEFT"/>
                             <Label fx:id="lblPhysicalMemory" styleClass="subtitle-label"/>
                         </VBox>
                     </left>
@@ -57,39 +57,39 @@
 
                 <BorderPane> <!-- Launcher Visibility -->
                     <left>
-                        <Label text="%settings.advanced.launcher_visible" BorderPane.alignment="CENTER_LEFT"/>
+                        <Label text="%settings.universal.launcher_visible" BorderPane.alignment="CENTER_LEFT"/>
                     </left>
                     <right>
                         <JFXComboBox fx:id="cboLauncherVisibility" BorderPane.alignment="CENTER_RIGHT" FXUtils.limitWidth="300" />
                     </right>
                 </BorderPane>
 
-                <JFXTextField labelFloat="true" promptText="%settings.advanced.jvm_args" styleClass="fit-width"
+                <JFXTextField labelFloat="true" promptText="%settings.universal.jvm_args" styleClass="fit-width"
                               fx:id="txtJVMArgs" />
                 
                 <fx:define>
                     <Insets fx:id="insets" bottom="8"/>
                 </fx:define>
 
-                <JFXTextField labelFloat="true" promptText="%settings.advanced.minecraft_arguments"
+                <JFXTextField labelFloat="true" promptText="%settings.universal.minecraft_arguments"
                               styleClass="fit-width" fx:id="txtGameArgs" StackPane.margin="$insets"/>
 
-                <JFXTextField labelFloat="true" promptText="%settings.advanced.java_permanent_generation_space"
+                <JFXTextField labelFloat="true" promptText="%settings.universal.java_permanent_generation_space"
                               styleClass="fit-width" fx:id="txtMetaspace" StackPane.margin="$insets" FXUtils.validateWhileTextChanged="true">
                     <validators>
                         <NumberValidator message="%input.number" nullable="true" />
                     </validators>
                 </JFXTextField>
 
-                <JFXTextField labelFloat="true" promptText="%settings.advanced.wrapper_launcher" styleClass="fit-width"
+                <JFXTextField labelFloat="true" promptText="%settings.universal.wrapper_launcher" styleClass="fit-width"
                               fx:id="txtWrapper" StackPane.margin="$insets"/>
 
-                <JFXTextField labelFloat="true" promptText="%settings.advanced.precall_command" styleClass="fit-width"
+                <JFXTextField labelFloat="true" promptText="%settings.universal.precall_command" styleClass="fit-width"
                               fx:id="txtPrecallingCommand" StackPane.margin="$insets"/>
                 
                 <BorderPane>
                     <left>
-                        <Label BorderPane.alignment="CENTER_LEFT" text="%settings.advanced.no_jvm_args"/>
+                        <Label BorderPane.alignment="CENTER_LEFT" text="%settings.universal.no_jvm_args"/>
                     </left>
                     <right>
                         <JFXToggleButton fx:id="chkNoJVMArgs" size="8" FXUtils.limitHeight="20" />
@@ -98,7 +98,7 @@
 
                 <BorderPane>
                     <left>
-                        <Label BorderPane.alignment="CENTER_LEFT" text="%settings.advanced.dont_check_game_completeness"/>
+                        <Label BorderPane.alignment="CENTER_LEFT" text="%settings.universal.dont_check_game_completeness"/>
                     </left>
                     <right>
                         <JFXToggleButton fx:id="chkNoGameCheck" size="8" FXUtils.limitHeight="20" />
@@ -107,7 +107,7 @@
 
                 <BorderPane>
                     <left>
-                        <Label BorderPane.alignment="CENTER_LEFT" text="%settings.advanced.dont_check_jvm_validity"/>
+                        <Label BorderPane.alignment="CENTER_LEFT" text="%settings.universal.dont_check_jvm_validity"/>
                     </left>
                     <right>
                         <JFXToggleButton fx:id="chkNoJVMCheck" size="8" FXUtils.limitHeight="20" />
@@ -122,12 +122,13 @@
             </HBox>
             <ComponentList fx:id="clientComponentList" depth="1">
 
-                <MultiFileItem fx:id="gameDirItem" title="%settings.game.working_directory" chooserTitle="%settings.game.working_directory.choose"
+                <MultiFileItem fx:id="gameDirItem" title="%settings.client.working_directory"
+                               chooserTitle="%settings.client.working_directory.choose"
                                hasSubtitle="true" customText="%settings.custom" directory="true" />
             
                 <BorderPane> <!-- Dimension -->
                     <left>
-                        <Label text="%settings.game.dimension" BorderPane.alignment="CENTER_LEFT"/>
+                        <Label text="%settings.client.dimension" BorderPane.alignment="CENTER_LEFT"/>
                     </left>
                     <right>
                         <BorderPane>
@@ -147,7 +148,7 @@
                                 </HBox>
                             </left>
                             <right>
-                                <JFXCheckBox fx:id="chkFullscreen" text="%settings.game.fullscreen" alignment="CENTER"
+                                <JFXCheckBox fx:id="chkFullscreen" text="%settings.client.fullscreen" alignment="CENTER"
                                              BorderPane.alignment="CENTER">
                                     <BorderPane.margin>
                                         <Insets right="7"/>
@@ -160,17 +161,17 @@
 
                 <BorderPane>
                     <left>
-                        <Label BorderPane.alignment="CENTER_LEFT" text="%settings.show_log"/>
+                        <Label BorderPane.alignment="CENTER_LEFT" text="%settings.client.show_log"/>
                     </left>
                     <right>
                         <JFXToggleButton fx:id="chkShowLogs" size="8" FXUtils.limitHeight="20" />
                     </right>
                 </BorderPane>
 
-                <JFXTextField labelFloat="true" promptText="%settings.advanced.server_ip" styleClass="fit-width"
+                <JFXTextField labelFloat="true" promptText="%settings.client.server_ip" styleClass="fit-width"
                               fx:id="txtServerIP" StackPane.margin="$insets"/>
                 
-                <MultiFileItem fx:id="nativesDirItem" title="%settings.advanced.natives_directory" chooserTitle="%settings.advanced.natives_directory.choose"
+                <MultiFileItem fx:id="nativesDirItem" title="%settings.client.natives_directory" chooserTitle="%settings.client.natives_directory.choose"
                                hasSubtitle="true" customText="%settings.custom" directory="true" />
                 
 
@@ -185,7 +186,7 @@
 
                 <BorderPane>
                     <left>
-                        <Label BorderPane.alignment="CENTER_LEFT" text="%settings.advanced.server_use_gui"/>
+                        <Label BorderPane.alignment="CENTER_LEFT" text="%settings.server.allows_gui"/>
                     </left>
                     <right>
                         <JFXToggleButton fx:id="chkServerUseGui" size="8" FXUtils.limitHeight="20" />

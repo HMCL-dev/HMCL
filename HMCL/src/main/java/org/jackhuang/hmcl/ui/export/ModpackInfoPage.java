@@ -338,7 +338,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         JFXTextField txtLaunchArguments = new JFXTextField();
                         txtLaunchArguments.textProperty().bindBidirectional(skinnable.launchArguments);
                         txtLaunchArguments.setLabelFloat(true);
-                        txtLaunchArguments.setPromptText(i18n("settings.advanced.minecraft_arguments"));
+                        txtLaunchArguments.setPromptText(i18n("settings.universal.minecraft_arguments"));
                         StackPane.setMargin(txtLaunchArguments, insets);
                         list.getContent().add(txtLaunchArguments);
                     }
@@ -347,7 +347,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         JFXTextField txtJavaArguments = new JFXTextField();
                         txtJavaArguments.textProperty().bindBidirectional(skinnable.javaArguments);
                         txtJavaArguments.setLabelFloat(true);
-                        txtJavaArguments.setPromptText(i18n("settings.advanced.jvm_args"));
+                        txtJavaArguments.setPromptText(i18n("settings.universal.jvm_args"));
                         StackPane.setMargin(txtJavaArguments, insets);
                         list.getContent().add(txtJavaArguments);
                     }
