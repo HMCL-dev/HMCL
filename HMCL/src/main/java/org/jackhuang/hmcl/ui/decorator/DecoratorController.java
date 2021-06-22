@@ -72,7 +72,6 @@ public class DecoratorController {
     private static final String PROPERTY_DIALOG_CLOSE_HANDLER = DecoratorController.class.getName() + ".dialog.closeListener";
 
     private final Decorator decorator;
-    private final ImageView welcomeView;
     private final Navigator navigator;
 
     private JFXDialog dialog;
@@ -91,23 +90,22 @@ public class DecoratorController {
         decorator.onBackNavButtonActionProperty().set(e -> back());
         decorator.onRefreshNavButtonActionProperty().set(e -> refresh());
 
-        welcomeView = new ImageView();
-        welcomeView.setImage(newImage("/assets/img/welcome.png"));
-        welcomeView.setCursor(Cursor.HAND);
-        FXUtils.limitSize(welcomeView, 796, 517);
-        welcomeView.setOnMouseClicked(e -> {
-            Timeline nowAnimation = new Timeline();
-            nowAnimation.getKeyFrames().addAll(
-                    new KeyFrame(Duration.ZERO, new KeyValue(welcomeView.opacityProperty(), 1.0D, Interpolator.EASE_BOTH)),
-                    new KeyFrame(new Duration(300), new KeyValue(welcomeView.opacityProperty(), 0.0D, Interpolator.EASE_BOTH)),
-                    new KeyFrame(new Duration(300), e2 -> decorator.getContainer().remove(welcomeView))
-            );
-            nowAnimation.play();
-        });
-
         if (switchedToNewUI()) {
             if (config().getLocalization().getLocale() == Locale.CHINA) {
                 // currently, user guide is only available in Chinese
+                ImageView welcomeView = new ImageView();
+                welcomeView.setImage(newImage("/assets/img/welcome.png"));
+                welcomeView.setCursor(Cursor.HAND);
+                FXUtils.limitSize(welcomeView, 796, 517);
+                welcomeView.setOnMouseClicked(e -> {
+                    Timeline nowAnimation = new Timeline();
+                    nowAnimation.getKeyFrames().addAll(
+                            new KeyFrame(Duration.ZERO, new KeyValue(welcomeView.opacityProperty(), 1.0D, Interpolator.EASE_BOTH)),
+                            new KeyFrame(new Duration(300), new KeyValue(welcomeView.opacityProperty(), 0.0D, Interpolator.EASE_BOTH)),
+                            new KeyFrame(new Duration(300), e2 -> decorator.getContainer().remove(welcomeView))
+                    );
+                    nowAnimation.play();
+                });
                 decorator.getContainer().setAll(welcomeView);
             }
         }
