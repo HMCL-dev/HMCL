@@ -25,10 +25,10 @@ import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Pack200Utils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.tukaani.xz.XZInputStream;
 
 import java.io.*;
@@ -38,7 +38,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
-import java.util.jar.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
@@ -129,7 +131,7 @@ public class LibraryDownloadTask extends Task<Void> {
             }
         }
 
-        if (SystemUtils.JRE_CAPABILITY_PACK200 && testURLExistence(url)) {
+        if (Pack200Utils.isSupported() && testURLExistence(url)) {
             List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url + ".pack.xz");
             task = new FileDownloadTask(urls, xzFile, null);
             task.setCacheRepository(cacheRepository);
@@ -264,7 +266,7 @@ public class LibraryDownloadTask extends Task<Void> {
         }
 
         try (FileOutputStream jarBytes = new FileOutputStream(dest); JarOutputStream jos = new JarOutputStream(jarBytes)) {
-            Pack200.newUnpacker().unpack(temp.toFile(), jos);
+            Pack200Utils.unpack(temp.toFile(), jos);
 
             JarEntry checksumsFile = new JarEntry("checksums.sha1");
             checksumsFile.setTime(0L);

@@ -1,9 +1,11 @@
 buildscript {
     repositories {
         gradlePluginPortal()
+        maven { url 'https://jitpack.io' }
     }
     dependencies {
         classpath 'org.tukaani:xz:1.8'
+        classpath 'org.glavo:pack200:0.3.0'
     }
 }
 
@@ -19,13 +21,13 @@ import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
-import java.util.jar.Pack200
 import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipFile
 import java.nio.file.Files
 
 import org.tukaani.xz.LZMA2Options
 import org.tukaani.xz.XZOutputStream
+import org.glavo.pack200.Pack200
 
 def dev = null
 def shortcommit = System.getenv("GITHUB_SHA")?.toLowerCase()?.substring(0, 7) ?: null
@@ -99,8 +101,10 @@ sourceSets {
 }
 
 compileJava11Java {
-    javaCompiler = javaToolchains.compilerFor {
-        languageVersion = JavaLanguageVersion.of(11)
+    if(JavaVersion.current() < JavaVersion.VERSION_11) {
+        javaCompiler = javaToolchains.compilerFor {
+            languageVersion = JavaLanguageVersion.of(11)
+        }
     }
     options.compilerArgs.add('--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED')
     sourceCompatibility = 11
@@ -164,8 +168,9 @@ processResources {
             def cssFile = new File(this.projectDir, "src/main/resources/" + resource)
             def bssFile = new File(this.projectDir, "build/compiled-resources/" + resource[0..-4] + "bss")
             bssFile.parentFile.mkdirs()
-            exec {
-                commandLine 'javapackager', '-createbss', '-outdir', bssFile.parent, '-srcfiles', cssFile.path
+            javaexec {
+                main = "com.sun.javafx.css.parser.Css2Bin"
+                args = [cssFile, bssFile]
             }
         }
     }

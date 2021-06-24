@@ -21,9 +21,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
+import org.jackhuang.hmcl.util.Pack200Utils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -38,7 +38,7 @@ public class RemoteVersion {
             String jarHash = Optional.ofNullable(response.get("jarsha1")).map(JsonElement::getAsString).orElse(null);
             String packXZUrl = Optional.ofNullable(response.get("packxz")).map(JsonElement::getAsString).orElse(null);
             String packXZHash = Optional.ofNullable(response.get("packxzsha1")).map(JsonElement::getAsString).orElse(null);
-            if (SystemUtils.JRE_CAPABILITY_PACK200 && packXZUrl != null && packXZHash != null) {
+            if (Pack200Utils.isSupported() && packXZUrl != null && packXZHash != null) {
                 return new RemoteVersion(version, packXZUrl, Type.PACK_XZ, new IntegrityCheck("SHA-1", packXZHash));
             } else if (jarUrl != null && jarHash != null) {
                 return new RemoteVersion(version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash));
