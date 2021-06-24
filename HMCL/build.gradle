@@ -124,6 +124,7 @@ shadowJar {
                 'Main-Class': mainClassName,
                 'Multi-Release': 'true',
                 'Implementation-Version': version,
+                'Class-Path': 'pack200.jar',
                 'Add-Opens': [
                         'java.base/java.lang',
                         'java.base/java.lang.reflect',
