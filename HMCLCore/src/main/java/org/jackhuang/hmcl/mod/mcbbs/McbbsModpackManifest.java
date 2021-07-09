@@ -202,7 +202,7 @@ public class McbbsModpackManifest implements Validation {
     }
 
     public static final class Settings {
-        @SerializedName("install_modes")
+        @SerializedName("install_mods")
         private final boolean installMods;
 
         @SerializedName("install_resourcepack")
