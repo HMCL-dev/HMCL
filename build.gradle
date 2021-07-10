@@ -25,6 +25,10 @@ subprojects {
         maven { url 'https://jitpack.io' }
     }
 
+    checkstyle {
+        sourceSets = []
+    }
+
     sourceCompatibility = 1.8
     compileJava.options.encoding = "UTF-8"
     compileTestJava.options.encoding = "UTF-8"

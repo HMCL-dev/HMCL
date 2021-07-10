@@ -42,7 +42,7 @@ Simply execute following command:
 ```bash
 ./gradlew clean build
 ```
-Make sure you have Java installed with Pack200 and JavaFX 8 at least. Liberica full JDK 8~11 is recommended.
+Make sure you have Java installed with JavaFX 8 at least. Liberica full JDK 8~16 is recommended.
 
 ## JVM Options (for debugging)
 |Parameter|Description|
