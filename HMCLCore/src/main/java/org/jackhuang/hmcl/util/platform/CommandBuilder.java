@@ -25,6 +25,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.util.Logging.LOG;
+
 public final class CommandBuilder {
     private static final Pattern UNSTABLE_OPTION_PATTERN = Pattern.compile("-XX:(?<key>[a-zA-Z0-9]+)=(?<value>.*)");
     private static final Pattern UNSTABLE_BOOLEAN_OPTION_PATTERN = Pattern.compile("-XX:(?<value>[+\\-])(?<key>[a-zA-Z0-9]+)");
@@ -91,25 +93,12 @@ public final class CommandBuilder {
     public CommandBuilder addDefault(String opt, String value) {
         for (Item item : raw) {
             if (item.arg.startsWith(opt)) {
+                LOG.info("Default option '" + opt + value + "' is suppressed by '" + item.arg + "'");
                 return this;
             }
         }
         raw.add(new Item(opt + value, true));
         return this;
-    }
-
-    public Optional<String> addOrReplace(String opt, String value) {
-        final ListIterator<Item> it = raw.listIterator();
-        while (it.hasNext()) {
-            final String arg = it.next().arg;
-            if (arg.startsWith(opt)) {
-                it.remove();
-                it.add(new Item(opt + value, true));
-                return Optional.of(arg);
-            }
-        }
-        raw.add(new Item(opt + value, true));
-        return Optional.empty();
     }
 
     public CommandBuilder addUnstableDefault(String opt, boolean value) {

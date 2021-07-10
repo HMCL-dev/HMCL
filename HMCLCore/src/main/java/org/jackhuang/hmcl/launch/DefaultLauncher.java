@@ -54,7 +54,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
@@ -120,11 +119,9 @@ public class DefaultLauncher extends Launcher {
 
             if (options.getMetaspace() != null && options.getMetaspace() > 0)
                 if (options.getJava().getParsedVersion() < JavaVersion.JAVA_8)
-                    res.addOrReplace("-XX:PermSize=", options.getMetaspace() + "m")
-                            .ifPresent(old -> LOG.warning("JVM Argument '" + old + "' be overridden"));
+                    res.addDefault("-XX:PermSize=", options.getMetaspace() + "m");
                 else
-                    res.addOrReplace("-XX:MetaspaceSize=", options.getMetaspace() + "m")
-                            .ifPresent(old -> LOG.warning("JVM Argument '" + old + "' be overridden"));
+                    res.addDefault("-XX:MetaspaceSize=", options.getMetaspace() + "m");
 
             res.addUnstableDefault("UseAdaptiveSizePolicy", false);
             res.addUnstableDefault("OmitStackTraceInFastThrow", false);
@@ -138,12 +135,10 @@ public class DefaultLauncher extends Launcher {
             }
 
             if (options.getMaxMemory() != null && options.getMaxMemory() > 0)
-                res.addOrReplace("-Xmx", options.getMaxMemory() + "m")
-                        .ifPresent(old -> LOG.warning("JVM Argument '" + old + "' be overridden"));
+                res.addDefault("-Xmx", options.getMaxMemory() + "m");
 
             if (options.getMinMemory() != null && options.getMinMemory() > 0)
-                res.addOrReplace("-Xms", options.getMinMemory() + "m")
-                        .ifPresent(old -> LOG.warning("JVM Argument '" + old + "' be overridden"));
+                res.addDefault("-Xms", options.getMinMemory() + "m");
 
             if (options.getJava().getParsedVersion() == JavaVersion.JAVA_16)
                 res.addDefault("--illegal-access=", "permit");
