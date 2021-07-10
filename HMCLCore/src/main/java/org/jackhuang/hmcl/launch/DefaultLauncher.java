@@ -171,11 +171,6 @@ public class DefaultLauncher extends Launcher {
         configuration.put("${natives_directory}", nativeFolder.getAbsolutePath());
         configuration.put("${game_assets}", gameAssets.getAbsolutePath());
         configuration.put("${assets_root}", gameAssets.getAbsolutePath());
-        configuration.put("${libraries_directory}", repository.getLibrariesDirectory(version).getAbsolutePath());
-        configuration.put("${library_directory}", repository.getLibrariesDirectory(version).getAbsolutePath());
-        configuration.put("${classpath_separator}", OperatingSystem.PATH_SEPARATOR);
-        configuration.put("${primary_jar}", repository.getVersionJar(version).getAbsolutePath());
-        configuration.put("${language}", Locale.getDefault().toString());
 
         res.addAll(Arguments.parseArguments(version.getArguments().map(Arguments::getJvm).orElseGet(this::getDefaultJVMArguments), configuration));
         if (authInfo.getArguments() != null && authInfo.getArguments().getJvm() != null && !authInfo.getArguments().getJvm().isEmpty())
@@ -281,6 +276,7 @@ public class DefaultLauncher extends Launcher {
 
     protected Map<String, String> getConfigurations() {
         return mapOf(
+                // defined by Minecraft official launcher
                 pair("${auth_player_name}", authInfo.getUsername()),
                 pair("${auth_session}", authInfo.getAccessToken()),
                 pair("${auth_access_token}", authInfo.getAccessToken()),
@@ -293,7 +289,17 @@ public class DefaultLauncher extends Launcher {
                 pair("${assets_index_name}", version.getAssetIndex().getId()),
                 pair("${user_properties}", authInfo.getUserProperties()),
                 pair("${resolution_width}", options.getWidth().toString()),
-                pair("${resolution_height}", options.getHeight().toString())
+                pair("${resolution_height}", options.getHeight().toString()),
+                pair("${library_directory}", repository.getLibrariesDirectory(version).getAbsolutePath()),
+                pair("${classpath_separator}", OperatingSystem.PATH_SEPARATOR),
+                pair("${primary_jar}", repository.getVersionJar(version).getAbsolutePath()),
+                pair("${language}", Locale.getDefault().toString()),
+
+                // defined by HMCL
+                // libraries_directory stands for historical reasons here. We don't know the official launcher
+                // had already defined "library_directory" as the placeholder for path to ".minecraft/libraries"
+                // when we propose this placeholder.
+                pair("${libraries_directory}", repository.getLibrariesDirectory(version).getAbsolutePath())
         );
     }
 
