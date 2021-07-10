@@ -133,7 +133,7 @@ public class MaintainTask extends Task<Version> {
             Optional<Library> optiFine = version.getLibraries().stream().filter(library -> library.is("optifine", "OptiFine")).findAny();
             boolean libraryExisting = version.getLibraries().stream().anyMatch(library -> library.is("org.jackhuang.hmcl", "transformer-discovery-service"));
             optiFine.ifPresent(library -> {
-                builder.addJvmArgument("-Dhmcl.transformer.candidates=${libraries_directory}/" + library.getPath());
+                builder.addJvmArgument("-Dhmcl.transformer.candidates=${library_directory}/" + library.getPath());
                 if (!libraryExisting) builder.addLibrary(hmclTransformerDiscoveryService);
                 Path libraryPath = repository.getLibraryFile(version, hmclTransformerDiscoveryService).toPath();
                 try {
