@@ -215,7 +215,7 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        res.addAllWithoutParsing(options.getGameArguments());
+        res.addAllWithoutParsing(Arguments.parseStringArguments(options.getGameArguments(), configuration));
 
         res.removeIf(it -> getForbiddens().containsKey(it) && getForbiddens().get(it).get());
         return res;
