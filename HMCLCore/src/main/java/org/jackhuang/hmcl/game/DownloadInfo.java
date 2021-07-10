@@ -63,7 +63,7 @@ public class DownloadInfo implements Validation {
     }
 
     public String getSha1() {
-        return sha1;
+        return "invalid".equals(sha1) ? null : sha1;
     }
 
     public int getSize() {
