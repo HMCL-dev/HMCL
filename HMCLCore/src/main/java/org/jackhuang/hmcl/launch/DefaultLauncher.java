@@ -45,12 +45,7 @@ import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -177,6 +172,10 @@ public class DefaultLauncher extends Launcher {
         configuration.put("${game_assets}", gameAssets.getAbsolutePath());
         configuration.put("${assets_root}", gameAssets.getAbsolutePath());
         configuration.put("${libraries_directory}", repository.getLibrariesDirectory(version).getAbsolutePath());
+        configuration.put("${library_directory}", repository.getLibrariesDirectory(version).getAbsolutePath());
+        configuration.put("${classpath_separator}", OperatingSystem.PATH_SEPARATOR);
+        configuration.put("${primary_jar}", repository.getVersionJar(version).getAbsolutePath());
+        configuration.put("${language}", Locale.getDefault().toString());
 
         res.addAll(Arguments.parseArguments(version.getArguments().map(Arguments::getJvm).orElseGet(this::getDefaultJVMArguments), configuration));
         if (authInfo.getArguments() != null && authInfo.getArguments().getJvm() != null && !authInfo.getArguments().getJvm().isEmpty())
