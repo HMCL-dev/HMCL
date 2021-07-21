@@ -5,10 +5,10 @@
 
 const Version JAVA_8(L"1.8"), JAVA_11(L"11");
 
-const LPCWSTR JDK_OLD = L"SOFTWARE\\JavaSoft\\Java Development Kit";
-const LPCWSTR JRE_OLD = L"SOFTWARE\\JavaSoft\\Java Runtime Environment";
 const LPCWSTR JDK_NEW = L"SOFTWARE\\JavaSoft\\JDK";
 const LPCWSTR JRE_NEW = L"SOFTWARE\\JavaSoft\\JRE";
+const LPCWSTR JDK_OLD = L"SOFTWARE\\JavaSoft\\Java Development Kit";
+const LPCWSTR JRE_OLD = L"SOFTWARE\\JavaSoft\\Java Runtime Environment";
 
 bool oldJavaFound = false;
 
@@ -71,10 +71,10 @@ bool FindJavaByRegistryKey(HKEY rootKey, LPCWSTR subKey, std::wstring& path) {
 }
 
 bool FindJavaInRegistry(std::wstring& path) {
-  return FindJavaByRegistryKey(HKEY_LOCAL_MACHINE, JDK_OLD, path) ||
-         FindJavaByRegistryKey(HKEY_LOCAL_MACHINE, JRE_OLD, path) ||
-         FindJavaByRegistryKey(HKEY_LOCAL_MACHINE, JDK_NEW, path) ||
-         FindJavaByRegistryKey(HKEY_LOCAL_MACHINE, JRE_NEW, path);
+  return FindJavaByRegistryKey(HKEY_LOCAL_MACHINE, JDK_NEW, path) ||
+         FindJavaByRegistryKey(HKEY_LOCAL_MACHINE, JRE_NEW, path) ||
+         FindJavaByRegistryKey(HKEY_LOCAL_MACHINE, JDK_OLD, path) ||
+         FindJavaByRegistryKey(HKEY_LOCAL_MACHINE, JRE_OLD, path);
 }
 
 bool FindJava(std::wstring& path) {
