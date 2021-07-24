@@ -64,7 +64,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         try {
             // TODO: Dirty implementation here
             if (I18n.getCurrentLocale().getLocale() == Locale.CHINA)
-                FileUtils.writeText(optionsFile, "lang:zh_cn\nforceUnicodeFont:true\n");
+                FileUtils.writeText(optionsFile, "lang:zh_CN\nforceUnicodeFont:true\n");
         } catch (IOException e) {
             Logging.LOG.log(Level.WARNING, "Unable to generate options.txt", e);
         }
