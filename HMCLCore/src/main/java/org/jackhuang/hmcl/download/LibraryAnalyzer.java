@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.VersionProvider;
 import org.jackhuang.hmcl.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,6 +85,11 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return modLauncher.equals(version.getMainClass()) || version.getPatches().stream().anyMatch(patch -> modLauncher.equals(patch.getMainClass()));
     }
 
+    public boolean hasBootstrapLauncher() {
+        final String bootstrapLauncher = "cpw.mods.bootstraplauncher.BootstrapLauncher";
+        return bootstrapLauncher.equals(version.getMainClass()) || version.getPatches().stream().anyMatch(patch -> bootstrapLauncher.equals(patch.getMainClass()));
+    }
+
     private Version removingMatchedLibrary(Version version, String libraryId) {
         LibraryType type = LibraryType.fromPatchId(libraryId);
         if (type == null) return version;
@@ -141,10 +147,16 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return new LibraryAnalyzer(version, libraries);
     }
 
+    public static boolean isModded(VersionProvider provider, Version version) {
+        Version resolvedVersion = version.resolve(provider);
+        String mainClass = resolvedVersion.getMainClass();
+        return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass) || mainClass.startsWith("net.fabricmc") || mainClass.startsWith("cpw.mods"));
+    }
+
     public enum LibraryType {
         MINECRAFT(true, "game", Pattern.compile("^$"), Pattern.compile("^$")),
         FABRIC(true, "fabric", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-loader")),
-        FORGE(true, "forge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("forge")),
+        FORGE(true, "forge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("(forge|fmlloader)")),
         LITELOADER(true, "liteloader", Pattern.compile("com\\.mumfrey"), Pattern.compile("liteloader")),
         OPTIFINE(false, "optifine", Pattern.compile("(net\\.)?optifine"), Pattern.compile("^(?!.*launchwrapper).*$"));
 

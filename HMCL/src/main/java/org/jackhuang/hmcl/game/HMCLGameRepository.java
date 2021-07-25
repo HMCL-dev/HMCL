@@ -235,10 +235,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         File iconFile = getVersionIconFile(id);
         if (iconFile.exists())
             return new Image("file:" + iconFile.getAbsolutePath());
-        else if (version.getMainClass() != null &&
-                (LibraryAnalyzer.LAUNCH_WRAPPER_MAIN.equals(version.getMainClass())
-                        || version.getMainClass().startsWith("net.fabricmc")
-                        || LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(version.getMainClass())))
+        else if (LibraryAnalyzer.isModded(this, version))
             return newImage("/assets/img/furnace.png");
         else
             return newImage("/assets/img/grass.png");
