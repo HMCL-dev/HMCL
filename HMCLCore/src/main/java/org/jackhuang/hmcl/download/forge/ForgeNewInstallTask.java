@@ -76,6 +76,50 @@ public class ForgeNewInstallTask extends Task<Version> {
         setSignificance(TaskSignificance.MINOR);
     }
 
+    private static String replaceTokens(Map<String, String> tokens, String value) {
+        StringBuilder buf = new StringBuilder();
+        for (int x = 0; x < value.length(); x++) {
+            char c = value.charAt(x);
+            if (c == '\\') {
+                if (x == value.length() - 1)
+                    throw new IllegalArgumentException("Illegal pattern (Bad escape): " + value);
+                buf.append(value.charAt(++x));
+            } else if (c == '{' || c == '\'') {
+                StringBuilder key = new StringBuilder();
+                for (int y = x + 1; y <= value.length(); y++) {
+                    if (y == value.length())
+                        throw new IllegalArgumentException("Illegal pattern (Unclosed " + c + "): " + value);
+                    char d = value.charAt(y);
+                    if (d == '\\') {
+                        if (y == value.length() - 1)
+                            throw new IllegalArgumentException("Illegal pattern (Bad escape): " + value);
+                        key.append(value.charAt(++y));
+                    } else {
+                        if (c == '{' && d == '}') {
+                            x = y;
+                            break;
+                        }
+                        if (c == '\'' && d == '\'') {
+                            x = y;
+                            break;
+                        }
+                        key.append(d);
+                    }
+                }
+                if (c == '\'') {
+                    buf.append(key);
+                } else {
+                    if (!tokens.containsKey(key.toString()))
+                        throw new IllegalArgumentException("Illegal pattern: " + value + " Missing Key: " + key);
+                    buf.append(tokens.get(key.toString()));
+                }
+            } else {
+                buf.append(c);
+            }
+        }
+        return buf.toString();
+    }
+
     private <E extends Exception> String parseLiteral(String literal, Map<String, String> var, ExceptionalFunction<String, String, E> plainConverter) throws E {
         if (StringUtils.isSurrounded(literal, "{", "}"))
             return var.get(StringUtils.removeSurrounding(literal, "{", "}"));
@@ -84,7 +128,7 @@ public class ForgeNewInstallTask extends Task<Version> {
         else if (StringUtils.isSurrounded(literal, "[", "]"))
             return gameRepository.getArtifactFile(version, Artifact.fromDescriptor(StringUtils.removeSurrounding(literal, "[", "]"))).toString();
         else
-            return plainConverter.apply(literal);
+            return plainConverter.apply(replaceTokens(var, literal));
     }
 
     @Override
@@ -116,10 +160,10 @@ public class ForgeNewInstallTask extends Task<Version> {
                 }
             }
 
-            {
-                Path mainJar = profile.getPath().getPath(fs.getPath("maven"));
+            if (profile.getPath().isPresent()) {
+                Path mainJar = profile.getPath().get().getPath(fs.getPath("maven"));
                 if (Files.exists(mainJar)) {
-                    Path dest = gameRepository.getArtifactFile(version, profile.getPath());
+                    Path dest = gameRepository.getArtifactFile(version, profile.getPath().get());
                     FileUtils.copyFile(mainJar, dest);
                 }
             }
@@ -153,6 +197,10 @@ public class ForgeNewInstallTask extends Task<Version> {
 
             data.put("SIDE", "client");
             data.put("MINECRAFT_JAR", gameRepository.getVersionJar(version).getAbsolutePath());
+            data.put("MINECRAFT_VERSION", gameRepository.getVersionJar(version).getAbsolutePath());
+            data.put("ROOT", gameRepository.getBaseDirectory().getAbsolutePath());
+            data.put("INSTALLER", installer.toAbsolutePath().toString());
+            data.put("LIBRARY_DIR", gameRepository.getLibrariesDirectory(version).getAbsolutePath());
 
             for (ForgeNewInstallProfile.Processor processor : processors) {
                 Map<String, String> outputs = new HashMap<>();

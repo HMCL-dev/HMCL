@@ -25,10 +25,7 @@ import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Immutable
@@ -37,15 +34,17 @@ public class ForgeNewInstallProfile implements Validation {
     private final int spec;
     private final String minecraft;
     private final String json;
+    private final String version;
     private final Artifact path;
     private final List<Library> libraries;
     private final List<Processor> processors;
     private final Map<String, Datum> data;
 
-    public ForgeNewInstallProfile(int spec, String minecraft, String json, Artifact path, List<Library> libraries, List<Processor> processors, Map<String, Datum> data) {
+    public ForgeNewInstallProfile(int spec, String minecraft, String json, String version, Artifact path, List<Library> libraries, List<Processor> processors, Map<String, Datum> data) {
         this.spec = spec;
         this.minecraft = minecraft;
         this.json = json;
+        this.version = version;
         this.path = path;
         this.libraries = libraries;
         this.processors = processors;
@@ -75,11 +74,19 @@ public class ForgeNewInstallProfile implements Validation {
     }
 
     /**
+     *
+     * @return forge version.
+     */
+    public String getVersion() {
+        return version;
+    }
+
+    /**
      * Maven artifact path for the main jar to install.
      * @return artifact path of the main jar.
      */
-    public Artifact getPath() {
-        return path;
+    public Optional<Artifact> getPath() {
+        return Optional.ofNullable(path);
     }
 
     /**
@@ -112,7 +119,7 @@ public class ForgeNewInstallProfile implements Validation {
 
     @Override
     public void validate() throws JsonParseException, TolerableValidationException {
-        if (minecraft == null || json == null || path == null)
+        if (minecraft == null || json == null || version == null)
             throw new JsonParseException("ForgeNewInstallProfile is malformed");
     }
 

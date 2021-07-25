@@ -21,7 +21,9 @@ import org.jackhuang.hmcl.task.Task;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Supports operations on versioning.
@@ -220,4 +222,14 @@ public interface GameRepository extends VersionProvider {
      */
     File getLoggingObject(String version, String assetId, LoggingInfo loggingInfo);
 
+    default List<String> getClasspath(Version version) {
+        List<String> classpath = new ArrayList<>();
+        for (Library library : version.getLibraries())
+            if (library.appliesToCurrentEnvironment() && !library.isNative()) {
+                File f = getLibraryFile(version, library);
+                if (f.exists() && f.isFile())
+                    classpath.add(f.getAbsolutePath());
+            }
+        return classpath;
+    }
 }

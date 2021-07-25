@@ -160,13 +160,7 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        LinkedList<String> classpath = new LinkedList<>();
-        for (Library library : version.getLibraries())
-            if (library.appliesToCurrentEnvironment() && !library.isNative()) {
-                File f = repository.getLibraryFile(version, library);
-                if (f.exists() && f.isFile())
-                    classpath.add(f.getAbsolutePath());
-            }
+        List<String> classpath = repository.getClasspath(version);
 
         File jar = repository.getVersionJar(version);
         if (!jar.exists() || !jar.isFile())
@@ -308,7 +302,9 @@ public class DefaultLauncher extends Launcher {
                 // libraries_directory stands for historical reasons here. We don't know the official launcher
                 // had already defined "library_directory" as the placeholder for path to ".minecraft/libraries"
                 // when we propose this placeholder.
-                pair("${libraries_directory}", repository.getLibrariesDirectory(version).getAbsolutePath())
+                pair("${libraries_directory}", repository.getLibrariesDirectory(version).getAbsolutePath()),
+                // file_separator is used in -DignoreList
+                pair("${file_separator}", OperatingSystem.FILE_SEPARATOR)
         );
     }
 

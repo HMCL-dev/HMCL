@@ -17,29 +17,26 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.CompatibilityRule;
-import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.game.VersionLibraryBuilder;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SimpleMultimap;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.FORGE;
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.LITELOADER;
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.OPTIFINE;
+import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 
 public class MaintainTask extends Task<Version> {
     private final GameRepository repository;
@@ -68,7 +65,10 @@ public class MaintainTask extends Task<Version> {
             return maintainOptiFineLibrary(repository, maintainGameWithLaunchWrapper(unique(version), true), false);
         } else if (mainClass != null && mainClass.equals(LibraryAnalyzer.MOD_LAUNCHER_MAIN)) {
             // Forge 1.13 and OptiFine
-            return maintainOptiFineLibrary(repository, maintainGameWithModLauncher(repository, unique(version)), true);
+            return maintainOptiFineLibrary(repository, maintainGameWithCpwModLauncher(repository, unique(version)), true);
+        } else if (mainClass != null && mainClass.equals(LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN)) {
+            // Forge 1.17
+            return maintainGameWithCpwBoostrapLauncher(repository, unique(version));
         } else {
             // Vanilla Minecraft does not need maintain
             // Fabric does not need maintain, nothing compatible with fabric now.
@@ -122,7 +122,7 @@ public class MaintainTask extends Task<Version> {
         return mainClass == null ? ret : ret.setMainClass(mainClass);
     }
 
-    private static Version maintainGameWithModLauncher(GameRepository repository, Version version) {
+    private static Version maintainGameWithCpwModLauncher(GameRepository repository, Version version) {
         LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
         VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
 
@@ -144,6 +144,59 @@ public class MaintainTask extends Task<Version> {
                     Logging.LOG.log(Level.WARNING, "Unable to unpack HMCLTransformerDiscoveryService", e);
                 }
             });
+        }
+
+        return builder.build();
+    }
+
+    private static String updateIgnoreList(GameRepository repository, Version version, String ignoreList) {
+        String[] ignores = ignoreList.split(",");
+        List<String> newIgnoreList = new ArrayList<>();
+
+        // To resolve the the problem that name of primary jar may conflict with the module naming convention,
+        // we need to manually ignore ${primary_jar}.
+        newIgnoreList.add("${primary_jar}");
+
+        Path libraryDirectory = repository.getLibrariesDirectory(version).toPath().toAbsolutePath();
+
+        // The default ignoreList is too loose and may cause some problems, we replace them with the absolute version.
+        // For example, if "client-extra" is in ignoreList, and game directory contains "client-extra" component, all
+        // libraries will be ignored, which is not expected.
+        for (String classpathName : repository.getClasspath(version)) {
+            Path classpathFile = Paths.get(classpathName).toAbsolutePath();
+            String fileName = classpathFile.getFileName().toString();
+            if (Stream.of(ignores).anyMatch(fileName::contains)) {
+                // This library should be ignored for Jigsaw module finding by Forge.
+                String absolutePath;
+                if (classpathFile.startsWith(libraryDirectory)) {
+                    // Note: It's assumed using "/" instead of File.separator in classpath
+                    absolutePath = "${library_directory}${file_separator}" + libraryDirectory.relativize(classpathFile).toString().replace(File.separator, "${file_separator}");
+                } else {
+                    absolutePath = classpathFile.toString();
+                }
+                newIgnoreList.add(StringUtils.substringBefore(absolutePath, ","));
+            }
+        }
+        return String.join(",", newIgnoreList);
+    }
+
+    // Fix wrong configurations when launching 1.17+ with Forge.
+    private static Version maintainGameWithCpwBoostrapLauncher(GameRepository repository, Version version) {
+        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
+        VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
+
+        if (!libraryAnalyzer.has(FORGE)) return version;
+
+        // The default ignoreList set by Forge installer does not fulfill our requirements
+        List<Argument> jvm = builder.getMutableJvmArguments();
+        for (int i = 0; i < jvm.size(); i++) {
+            Argument jvmArg = jvm.get(i);
+            if (jvmArg instanceof StringArgument) {
+                String jvmArgStr = jvmArg.toString();
+                if (jvmArgStr.startsWith("-DignoreList=")) {
+                    jvm.set(i, new StringArgument("-DignoreList=" + updateIgnoreList(repository, version, jvmArgStr.substring("-DignoreList=".length()))));
+                }
+            }
         }
 
         return builder.build();

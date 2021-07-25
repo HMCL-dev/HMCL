@@ -173,7 +173,7 @@ public final class ForgeInstallTask extends Task<Version> {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());
-                return new ForgeNewInstallTask(dependencyManager, version, modifyVersion(gameVersion.get(), profile.getPath().getVersion().replaceAll("(?i)forge", "")), installer);
+                return new ForgeNewInstallTask(dependencyManager, version, modifyVersion(gameVersion.get(), profile.getVersion()), installer);
             } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
                 ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getInstall().getMinecraft()))

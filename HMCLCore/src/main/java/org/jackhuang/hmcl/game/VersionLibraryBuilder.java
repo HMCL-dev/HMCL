@@ -20,7 +20,8 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -143,6 +144,11 @@ public final class VersionLibraryBuilder {
             game.add(new StringArgument("--tweakClass"));
             game.add(new StringArgument(replacement));
         }
+    }
+
+    public List<Argument> getMutableJvmArguments() {
+        jvmChanged = true;
+        return jvm;
     }
 
     public void addGameArgument(String... args) {
