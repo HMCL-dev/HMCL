@@ -163,7 +163,7 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     public String getJar() {
-        return jar == null ? id : jar;
+        return jar;
     }
 
     public String getInheritsFrom() {
@@ -275,14 +275,14 @@ public class Version implements Comparable<Version>, Validation {
 
         if (inheritsFrom == null) {
             if (isRoot())
-                thisVersion = new Version(id).setPatches(patches);
+                thisVersion = new Version(id).setPatches(patches).setJar(id);
             else
-                thisVersion = this;
+                thisVersion = this.jar == null ? this.setJar(id) : this;
         } else {
             // To maximize the compatibility.
             if (!resolvedSoFar.add(id)) {
                 Logging.LOG.log(Level.WARNING, "Found circular dependency versions: " + resolvedSoFar);
-                thisVersion = this;
+                thisVersion = this.jar == null ? this.setJar(id) : this;
             } else {
                 // It is supposed to auto install an version in getVersion.
                 thisVersion = merge(provider.getVersion(inheritsFrom).resolve(provider, resolvedSoFar), false);
