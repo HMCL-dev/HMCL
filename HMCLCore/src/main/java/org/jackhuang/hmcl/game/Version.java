@@ -274,10 +274,12 @@ public class Version implements Comparable<Version>, Validation {
         Version thisVersion;
 
         if (inheritsFrom == null) {
-            if (isRoot())
-                thisVersion = new Version(id).setPatches(patches).setJar(id);
-            else
-                thisVersion = this.jar == null ? this.setJar(id) : this;
+            if (isRoot()) {
+                thisVersion = new Version(id).setPatches(patches);
+            } else {
+                thisVersion = this;
+            }
+            thisVersion = this.jar == null ? thisVersion.setJar(id) : thisVersion.setJar(this.jar);
         } else {
             // To maximize the compatibility.
             if (!resolvedSoFar.add(id)) {
@@ -333,7 +335,7 @@ public class Version implements Comparable<Version>, Validation {
             }
         }
 
-        return thisVersion.setId(id);
+       return thisVersion.setId(id).setJar(resolve(provider).getJar());
     }
 
     private Version markAsResolved() {
