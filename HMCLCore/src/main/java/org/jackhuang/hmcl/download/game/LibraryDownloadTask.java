@@ -104,10 +104,6 @@ public class LibraryDownloadTask extends Task<Void> {
                 throw new LibraryDownloadException(library, t);
         } else {
             if (xz) unpackLibrary(jar, Files.readAllBytes(xzFile.toPath()));
-            if (!checksumValid(jar, library.getChecksums())) {
-                jar.delete();
-                throw new IOException("Checksum failed for " + library);
-            }
         }
     }
 
