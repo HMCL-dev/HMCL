@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.OPTIFINE;
 
@@ -130,9 +131,14 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     public Task<Version> installLibraryAsync(Version baseVersion, RemoteVersion libraryVersion) {
         if (baseVersion.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
 
+        AtomicReference<Version> removedLibraryVersion = new AtomicReference<>();
+
         return removeLibraryAsync(baseVersion.resolvePreservingPatches(repository), libraryVersion.getLibraryId())
-                .thenComposeAsync(version -> libraryVersion.getInstallTask(this, version))
-                .thenApplyAsync(baseVersion::addPatch)
+                .thenComposeAsync(version -> {
+                    removedLibraryVersion.set(version);
+                    return libraryVersion.getInstallTask(this, version);
+                })
+                .thenApplyAsync(patch -> removedLibraryVersion.get().addPatch(patch))
                 .withStage(String.format("hmcl.install.%s:%s", libraryVersion.getLibraryId(), libraryVersion.getSelfVersion()));
     }
 
