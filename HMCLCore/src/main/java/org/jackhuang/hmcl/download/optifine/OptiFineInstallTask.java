@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jenkinsci.constant_pool_scanner.ConstantPool;
@@ -133,7 +134,7 @@ public final class OptiFineInstallTask extends Task<Version> {
         boolean hasLaunchWrapper = false;
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(dest)) {
             if (Files.exists(fs.getPath("optifine/Patcher.class"))) {
-                int exitCode = SystemUtils.callExternalProcess(
+                String[] command = {
                         JavaVersion.fromCurrentEnvironment().getBinary().toString(),
                         "-cp",
                         dest.toString(),
@@ -141,9 +142,10 @@ public final class OptiFineInstallTask extends Task<Version> {
                         gameRepository.getVersionJar(version).getAbsolutePath(),
                         dest.toString(),
                         gameRepository.getLibraryFile(version, optiFineLibrary).toString()
-                );
+                };
+                int exitCode = SystemUtils.callExternalProcess(command);
                 if (exitCode != 0)
-                    throw new IOException("OptiFine patcher failed");
+                    throw new IOException("OptiFine patcher failed, command: " + new CommandBuilder().addAll(Arrays.asList(command)));
             } else {
                 FileUtils.copyFile(dest, gameRepository.getLibraryFile(version, optiFineLibrary).toPath());
             }
