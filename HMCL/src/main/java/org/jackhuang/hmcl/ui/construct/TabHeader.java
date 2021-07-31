@@ -218,14 +218,23 @@ public class TabHeader extends Control implements TabControl {
                 this.selectedTabLineOffset = newTransX;
                 // newTransX += offsetStart * (double)this.direction;
                 double transDiff = newTransX - oldTransX;
-                double midScaleX = tempScaleX != 0.0D ? tempScaleX : (Math.abs(transDiff) / 1.3D + oldWidth) * oldScaleX / oldWidth;
                 if (transDiff < 0.0D) {
                     this.selectedTabLine.setTranslateX(this.selectedTabLine.getTranslateX() + oldWidth);
                     newTransX += newWidth;
                     this.rotate.setAngle(180.0D);
                 }
 
-                this.timeline = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(this.selectedTabLine.translateXProperty(), this.selectedTabLine.getTranslateX(), Interpolator.EASE_BOTH)), new KeyFrame(Duration.seconds(0.12D), new KeyValue(this.scale.xProperty(), midScaleX, Interpolator.EASE_BOTH), new KeyValue(this.selectedTabLine.translateXProperty(), this.selectedTabLine.getTranslateX(), Interpolator.EASE_BOTH)), new KeyFrame(Duration.seconds(0.24D), new KeyValue(this.scale.xProperty(), newScaleX, Interpolator.EASE_BOTH), new KeyValue(this.selectedTabLine.translateXProperty(), newTransX, Interpolator.EASE_BOTH)));
+                this.timeline = new Timeline(
+                        new KeyFrame(
+                                Duration.ZERO,
+                                new KeyValue(this.selectedTabLine.translateXProperty(), this.selectedTabLine.getTranslateX(), Interpolator.EASE_BOTH)
+                        ),
+                        new KeyFrame(
+                                Duration.seconds(0.24D),
+                                new KeyValue(this.scale.xProperty(), newScaleX, Interpolator.EASE_BOTH),
+                                new KeyValue(this.selectedTabLine.translateXProperty(), newTransX, Interpolator.EASE_BOTH)
+                        )
+                );
                 this.timeline.setOnFinished((finish) -> {
                     if (this.rotate.getAngle() != 0.0D) {
                         this.rotate.setAngle(0.0D);
