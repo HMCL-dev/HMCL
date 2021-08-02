@@ -87,6 +87,10 @@ public final class SVG {
         return createSVGPath("M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z", fill, width, height);
     }
 
+    public static Node deleteOutline(ObjectBinding<? extends Paint> fill, double width, double height) {
+        return createSVGPath("M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19M8,9H16V19H8V9M15.5,4L14.5,3H9.5L8.5,4H5V6H19V4H15.5Z", fill, width, height);
+    }
+
     public static Node accountEdit(ObjectBinding<? extends Paint> fill, double width, double height) {
         return createSVGPath("M21.7,13.35L20.7,14.35L18.65,12.3L19.65,11.3C19.86,11.09 20.21,11.09 20.42,11.3L21.7,12.58C21.91,12.79 21.91,13.14 21.7,13.35M12,18.94L18.06,12.88L20.11,14.93L14.06,21H12V18.94M12,14C7.58,14 4,15.79 4,18V20H10V18.11L14,14.11C13.34,14.03 12.67,14 12,14M12,4A4,4 0 0,0 8,8A4,4 0 0,0 12,12A4,4 0 0,0 16,8A4,4 0 0,0 12,4Z", fill, width, height);
     }
@@ -117,6 +121,10 @@ public final class SVG {
 
     public static Node pencil(ObjectBinding<? extends Paint> fill, double width, double height) {
         return createSVGPath("M20.71,4.04C21.1,3.65 21.1,3 20.71,2.63L18.37,0.29C18,-0.1 17.35,-0.1 16.96,0.29L15,2.25L18.75,6M17.75,7L14,3.25L4,13.25V17H7.75L17.75,7Z", fill, width, height);
+    }
+
+    public static Node pencilOutline(ObjectBinding<? extends Paint> fill, double width, double height) {
+        return createSVGPath("M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z", fill, width, height);
     }
 
     public static Node refresh(ObjectBinding<? extends Paint> fill, double width, double height) {

@@ -57,6 +57,5 @@ public class GameAdvancedListItem extends AdvancedListItem {
         });
 
         setActionButtonVisible(false);
-//        setRightGraphic(SVG.gear(Theme.blackFillBinding(), -1, -1));
     }
 }

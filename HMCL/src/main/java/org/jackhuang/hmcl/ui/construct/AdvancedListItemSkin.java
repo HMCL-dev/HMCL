@@ -91,7 +91,6 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
                         right.getChildren().setAll(newGraphic);
                     }
                 });
-        root.setRight(right);
 
         FXUtils.onChangeAndOperate(skinnable.actionButtonVisibleProperty(),
                 visible -> root.setRight(visible ? right : null));

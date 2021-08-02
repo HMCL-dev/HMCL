@@ -44,7 +44,7 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
         btnRemove.setOnMouseClicked(e -> skinnable.remove());
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
-        btnRemove.setGraphic(SVG.delete(Theme.blackFillBinding(), -1, -1));
+        btnRemove.setGraphic(SVG.close(Theme.blackFillBinding(), 14, 14));
         right.getChildren().add(btnRemove);
         root.setRight(right);
 

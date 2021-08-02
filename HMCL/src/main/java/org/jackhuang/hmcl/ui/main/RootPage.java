@@ -184,7 +184,6 @@ public class RootPage extends DecoratorTabPage {
 
             // second item in left sidebar
             GameAdvancedListItem gameListItem = new GameAdvancedListItem();
-            gameListItem.actionButtonVisibleProperty().bind(Profiles.selectedVersionProperty().isNotNull());
             gameListItem.setOnAction(e -> {
                 Profile profile = Profiles.getSelectedProfile();
                 String version = Profiles.getSelectedVersion();

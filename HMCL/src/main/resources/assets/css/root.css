@@ -73,13 +73,11 @@
 }
 
 .advanced-list-item .container .title {
-    -fx-max-width: 90;
     -fx-font-size: 13;
     -fx-text-alignment: justify;
 }
 
 .advanced-list-item .container .subtitle {
-    -fx-max-width: 90;
     -fx-font-size: 10;
     -fx-text-alignment: justify;
 }
@@ -95,6 +93,10 @@
 
 .navigation-drawer-item .container VBox {
     -fx-padding: 0 0 0 0;
+}
+
+.navigation-drawer-item .title {
+    -fx-font-size: 10;
 }
 
 .notice-pane > .label {
