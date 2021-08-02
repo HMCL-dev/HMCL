@@ -21,9 +21,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.util.Pair;
 
