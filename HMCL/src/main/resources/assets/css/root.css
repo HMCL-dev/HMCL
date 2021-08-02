@@ -95,8 +95,20 @@
     -fx-padding: 0 0 0 0;
 }
 
-.navigation-drawer-item .title {
+.navigation-drawer-item .two-line-list-item .title {
+    -fx-font-size: 13;
+}
+
+.navigation-drawer-item .two-line-list-item .subtitle {
     -fx-font-size: 10;
+}
+
+.profile-list-item BorderPane {
+    -fx-padding: 8 0 8 16;
+}
+
+.profile-list-item:selected BorderPane {
+    -fx-background-color: -fx-base-rippler-color;
 }
 
 .notice-pane > .label {

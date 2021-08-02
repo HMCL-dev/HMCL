@@ -67,7 +67,11 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
             if (event.getSource() == Profiles.getSelectedProfile().getRepository())
                 runInFX(() -> setLoading(true));
         });
-        profileListItems = MappedObservableList.create(profilesProperty(), ProfileListItem::new);
+        profileListItems = MappedObservableList.create(profilesProperty(), profile -> {
+            ProfileListItem item = new ProfileListItem(profile);
+            FXUtils.setLimitWidth(item, 300);
+            return item;
+        });
         selectedProfile = createSelectedItemPropertyFor(profileListItems, Profile.class);
     }
 
@@ -120,7 +124,7 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
                     addProfileItem.getStyleClass().add("navigation-drawer-item");
                     addProfileItem.setTitle(i18n("profile.new"));
                     addProfileItem.setActionButtonVisible(false);
-                    addProfileItem.setLeftGraphic(VersionPage.wrap(SVG.plus(Theme.blackFillBinding(), -1, -1)));
+                    addProfileItem.setLeftGraphic(VersionPage.wrap(SVG.plusCircleOutline(Theme.blackFillBinding(), 24, 24)));
                     addProfileItem.setOnAction(e -> Controllers.navigate(new ProfilePage(null)));
 
                     ScrollPane pane = new ScrollPane();
@@ -137,14 +141,14 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
                     installNewGameItem.getStyleClass().add("navigation-drawer-item");
                     installNewGameItem.setTitle(i18n("install.new_game"));
                     installNewGameItem.setActionButtonVisible(false);
-                    installNewGameItem.setLeftGraphic(VersionPage.wrap(SVG.plus(Theme.blackFillBinding(), 24, 24)));
+                    installNewGameItem.setLeftGraphic(VersionPage.wrap(SVG.plusCircleOutline(Theme.blackFillBinding(), 24, 24)));
                     installNewGameItem.setOnAction(e -> Versions.addNewGame());
 
                     AdvancedListItem installModpackItem = new AdvancedListItem();
                     installModpackItem.getStyleClass().add("navigation-drawer-item");
                     installModpackItem.setTitle(i18n("install.modpack"));
                     installModpackItem.setActionButtonVisible(false);
-                    installModpackItem.setLeftGraphic(VersionPage.wrap(SVG.importIcon(Theme.blackFillBinding(), 24, 24)));
+                    installModpackItem.setLeftGraphic(VersionPage.wrap(SVG.pack(Theme.blackFillBinding(), 24, 24)));
                     installModpackItem.setOnAction(e -> Versions.importModpack());
 
                     AdvancedListItem refreshItem = new AdvancedListItem();

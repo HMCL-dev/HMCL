@@ -18,22 +18,46 @@
 package org.jackhuang.hmcl.ui.profile;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.css.PseudoClass;
+import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.versions.VersionPage;
 
 public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
+    private final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
     public ProfileListItemSkin(ProfileListItem skinnable) {
         super(skinnable);
 
+
         BorderPane root = new BorderPane();
+        root.setPickOnBounds(false);
+        RipplerContainer container = new RipplerContainer(root);
+
+        FXUtils.onChangeAndOperate(skinnable.selectedProperty(), active -> {
+            skinnable.pseudoClassStateChanged(SELECTED, active);
+        });
+
+        getSkinnable().addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            getSkinnable().setSelected(true);
+        });
+
+        Node left = VersionPage.wrap(SVG.folderOutline(Theme.blackFillBinding(), 24, 24));
+        root.setLeft(left);
+        BorderPane.setAlignment(left, Pos.CENTER_LEFT);
 
         TwoLineListItem item = new TwoLineListItem();
+        item.setPickOnBounds(false);
         BorderPane.setAlignment(item, Pos.CENTER);
         root.setCenter(item);
 
@@ -51,6 +75,6 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
         item.titleProperty().bind(skinnable.titleProperty());
         item.subtitleProperty().bind(skinnable.subtitleProperty());
 
-        getChildren().setAll(root);
+        getChildren().setAll(container);
     }
 }
