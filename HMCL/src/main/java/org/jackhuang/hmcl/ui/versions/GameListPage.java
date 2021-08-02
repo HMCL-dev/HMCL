@@ -69,7 +69,7 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
         });
         profileListItems = MappedObservableList.create(profilesProperty(), profile -> {
             ProfileListItem item = new ProfileListItem(profile);
-            FXUtils.setLimitWidth(item, 300);
+            FXUtils.setLimitWidth(item, 200);
             return item;
         });
         selectedProfile = createSelectedItemPropertyFor(profileListItems, Profile.class);
@@ -116,7 +116,7 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
 
             {
                 BorderPane left = new BorderPane();
-                FXUtils.setLimitWidth(left, 300);
+                FXUtils.setLimitWidth(left, 200);
                 root.setLeft(left);
 
                 {
@@ -129,6 +129,7 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
 
                     ScrollPane pane = new ScrollPane();
                     VBox wrapper = new VBox();
+                    wrapper.getStyleClass().add("advanced-list-box-content");
                     VBox box = new VBox();
                     Bindings.bindContent(box.getChildren(), profileListItems);
                     wrapper.getChildren().setAll(box, addProfileItem);
@@ -170,7 +171,7 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
                             .add(installModpackItem)
                             .add(refreshItem)
                             .add(globalManageItem);
-                    FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 4 + 18);
+                    FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 4 + 12 * 2);
                     left.setBottom(bottomLeftCornerList);
                 }
             }
@@ -235,7 +236,7 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
             public GameListSkin() {
                 super(GameList.this);
 
-                state.set(new State(i18n("version.manage"), null, true, false, true, false, 300));
+                state.set(new State(i18n("version.manage"), null, true, false, true, false, 200));
             }
 
             @Override

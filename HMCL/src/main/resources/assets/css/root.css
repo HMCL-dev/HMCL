@@ -127,7 +127,7 @@
 }
 
 .advanced-list-box-content {
-    -fx-padding: 18 0 0 0;
+    -fx-padding: 12 0 12 0;
     -fx-spacing: 0;
 }
 
@@ -774,7 +774,7 @@
 }
 
 .card {
-    -fx-background-color: WHITE;
+    -fx-background-color: rgba(255, 255, 255, 0.8);
     -fx-background-radius: 4;
     -fx-padding: 8px;
 }

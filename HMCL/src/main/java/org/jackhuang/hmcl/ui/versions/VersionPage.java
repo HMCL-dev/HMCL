@@ -332,7 +332,7 @@ public class VersionPage extends Control implements DecoratorPage {
                         .add(browseMenuItem)
                         .add(managementItem);
                 toolbar.getStyleClass().add("advanced-list-box-clear-padding");
-                FXUtils.setLimitHeight(toolbar, 40 * 4 + 18);
+                FXUtils.setLimitHeight(toolbar, 40 * 4 + 12 * 2);
                 left.setBottom(toolbar);
             }
 
