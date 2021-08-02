@@ -80,7 +80,7 @@ class ComponentListCell extends StackPane {
 
             BorderPane groupNode = new BorderPane();
 
-            Node expandIcon = SVG.expand(Theme.blackFillBinding(), 10, 10);
+            Node expandIcon = SVG.expand(Theme.blackFillBinding(), 20, 20);
             JFXButton expandButton = new JFXButton();
             expandButton.setGraphic(expandIcon);
             expandButton.getStyleClass().add("options-list-item-expand-button");

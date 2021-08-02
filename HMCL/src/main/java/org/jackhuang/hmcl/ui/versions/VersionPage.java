@@ -232,7 +232,7 @@ public class VersionPage extends Control implements DecoratorPage {
                 AdvancedListItem versionSettingsItem = new AdvancedListItem();
                 versionSettingsItem.getStyleClass().add("navigation-drawer-item");
                 versionSettingsItem.setTitle(i18n("settings"));
-                versionSettingsItem.setLeftGraphic(wrap(SVG.gear(Theme.blackFillBinding(), 20, 20)));
+                versionSettingsItem.setLeftGraphic(wrap(SVG.gearOutline(Theme.blackFillBinding(), 20, 20)));
                 versionSettingsItem.setActionButtonVisible(false);
                 versionSettingsItem.activeProperty().bind(control.selectedTab.isEqualTo(control.versionSettingsTab));
                 versionSettingsItem.setOnAction(e -> control.selectedTab.set(control.versionSettingsTab));
@@ -272,18 +272,18 @@ public class VersionPage extends Control implements DecoratorPage {
                 PopupMenu browseList = new PopupMenu();
                 JFXPopup browsePopup = new JFXPopup(browseList);
                 browseList.getContent().setAll(
-                        new IconedMenuItem(null, i18n("folder.game"), FXUtils.withJFXPopupClosing(() -> control.onBrowse(""), browsePopup)),
-                        new IconedMenuItem(null, i18n("folder.mod"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("mods"), browsePopup)),
-                        new IconedMenuItem(null, i18n("folder.config"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("config"), browsePopup)),
-                        new IconedMenuItem(null, i18n("folder.resourcepacks"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("resourcepacks"), browsePopup)),
-                        new IconedMenuItem(null, i18n("folder.screenshots"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("screenshots"), browsePopup)),
-                        new IconedMenuItem(null, i18n("folder.saves"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("saves"), browsePopup))
+                        new IconedMenuItem(FXUtils.limitingSize(SVG.gamepad(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.game"), FXUtils.withJFXPopupClosing(() -> control.onBrowse(""), browsePopup)),
+                        new IconedMenuItem(FXUtils.limitingSize(SVG.puzzle(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.mod"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("mods"), browsePopup)),
+                        new IconedMenuItem(FXUtils.limitingSize(SVG.gearOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.config"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("config"), browsePopup)),
+                        new IconedMenuItem(FXUtils.limitingSize(SVG.texture(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.resourcepacks"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("resourcepacks"), browsePopup)),
+                        new IconedMenuItem(FXUtils.limitingSize(SVG.monitorScreenshot(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.screenshots"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("screenshots"), browsePopup)),
+                        new IconedMenuItem(FXUtils.limitingSize(SVG.gamepad(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.saves"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("saves"), browsePopup))
                 );
 
                 PopupMenu managementList = new PopupMenu();
                 JFXPopup managementPopup = new JFXPopup(managementList);
                 managementList.getContent().setAll(
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.launch(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch.test"), FXUtils.withJFXPopupClosing(control::testGame, managementPopup)),
+                        new IconedMenuItem(FXUtils.limitingSize(SVG.launchOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch.test"), FXUtils.withJFXPopupClosing(control::testGame, managementPopup)),
                         new IconedMenuItem(FXUtils.limitingSize(SVG.script(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch_script"), FXUtils.withJFXPopupClosing(control::generateLaunchScript, managementPopup)),
                         new MenuSeparator(),
                         new IconedMenuItem(FXUtils.limitingSize(SVG.pencil(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(control::rename, managementPopup)),
@@ -307,21 +307,21 @@ public class VersionPage extends Control implements DecoratorPage {
                 AdvancedListItem testGameItem = new AdvancedListItem();
                 testGameItem.getStyleClass().add("navigation-drawer-item");
                 testGameItem.setTitle(i18n("version.launch.test"));
-                testGameItem.setLeftGraphic(wrap(SVG.launch(Theme.blackFillBinding(), 20, 20)));
+                testGameItem.setLeftGraphic(wrap(SVG.launchOutline(Theme.blackFillBinding(), 20, 20)));
                 testGameItem.setActionButtonVisible(false);
                 testGameItem.setOnAction(e -> control.testGame());
 
                 AdvancedListItem browseMenuItem = new AdvancedListItem();
                 browseMenuItem.getStyleClass().add("navigation-drawer-item");
                 browseMenuItem.setTitle(i18n("settings.game.exploration"));
-                browseMenuItem.setLeftGraphic(wrap(SVG.folderOpen(Theme.blackFillBinding(), 20, 20)));
+                browseMenuItem.setLeftGraphic(wrap(SVG.folderOutline(Theme.blackFillBinding(), 20, 20)));
                 browseMenuItem.setActionButtonVisible(false);
                 browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0));
 
                 AdvancedListItem managementItem = new AdvancedListItem();
                 managementItem.getStyleClass().add("navigation-drawer-item");
                 managementItem.setTitle(i18n("settings.game.management"));
-                managementItem.setLeftGraphic(wrap(SVG.wrench(Theme.blackFillBinding(), 20, 20)));
+                managementItem.setLeftGraphic(wrap(SVG.wrenchOutline(Theme.blackFillBinding(), 20, 20)));
                 managementItem.setActionButtonVisible(false);
                 managementItem.setOnAction(e -> managementPopup.show(managementItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managementItem.getWidth(), 0));
 
