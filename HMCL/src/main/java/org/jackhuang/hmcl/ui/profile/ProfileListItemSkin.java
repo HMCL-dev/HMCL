@@ -18,19 +18,13 @@
 package org.jackhuang.hmcl.ui.profile;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXRadioButton;
-import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.setting.Theme;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 
 public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
 
@@ -39,28 +33,9 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
 
         BorderPane root = new BorderPane();
 
-        JFXRadioButton chkSelected = new JFXRadioButton() {
-            @Override
-            public void fire() {
-                skinnable.fire();
-            }
-        };
-        BorderPane.setAlignment(chkSelected, Pos.CENTER);
-        chkSelected.selectedProperty().bind(skinnable.selectedProperty());
-        root.setLeft(chkSelected);
-
-        HBox center = new HBox();
-        center.setSpacing(8);
-        center.setAlignment(Pos.CENTER_LEFT);
-
-        ImageView imageView = new ImageView();
-        FXUtils.limitSize(imageView, 32, 32);
-        imageView.imageProperty().set(newImage("/assets/img/craft_table.png"));
-
         TwoLineListItem item = new TwoLineListItem();
         BorderPane.setAlignment(item, Pos.CENTER);
-        center.getChildren().setAll(imageView, item);
-        root.setCenter(center);
+        root.setCenter(item);
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
@@ -73,9 +48,6 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
         right.getChildren().add(btnRemove);
         root.setRight(right);
 
-        root.getStyleClass().add("card");
-        root.setStyle("-fx-padding: 8 8 8 0");
-        JFXDepthManager.setDepth(root, 1);
         item.titleProperty().bind(skinnable.titleProperty());
         item.subtitleProperty().bind(skinnable.subtitleProperty());
 

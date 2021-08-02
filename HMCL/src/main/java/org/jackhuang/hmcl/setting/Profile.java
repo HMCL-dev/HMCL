@@ -208,6 +208,24 @@ public final class Profile implements Observable {
         Platform.runLater(observableHelper::invalidate);
     }
 
+    public static class ProfileVersion {
+        private final Profile profile;
+        private final String version;
+
+        public ProfileVersion(Profile profile, String version) {
+            this.profile = profile;
+            this.version = version;
+        }
+
+        public Profile getProfile() {
+            return profile;
+        }
+
+        public String getVersion() {
+            return version;
+        }
+    }
+
     public static final class Serializer implements JsonSerializer<Profile>, JsonDeserializer<Profile> {
         @Override
         public JsonElement serialize(Profile src, Type typeOfSrc, JsonSerializationContext context) {

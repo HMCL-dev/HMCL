@@ -37,7 +37,6 @@ public class AdvancedListBox extends ScrollPane {
         setFitToWidth(true);
         setHbarPolicy(ScrollBarPolicy.NEVER);
 
-        container.setSpacing(5);
         container.getStyleClass().add("advanced-list-box-content");
     }
 

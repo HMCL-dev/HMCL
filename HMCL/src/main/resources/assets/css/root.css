@@ -49,15 +49,52 @@
 }
 
 .rippler-container {
-    -jfx-rippler-fill: -fx-base-check-color;
+    -jfx-rippler-fill: derive(-fx-base-color, 100%);
 }
 
 .rippler-container:selected .label {
     -fx-text-fill: -fx-base-text-fill;
 }
 
+.advanced-list-item .container {
+    -fx-padding: 10 16 10 16;
+    -fx-background-color: null;
+}
+
+.advanced-list-item .container VBox {
+    -fx-padding: 0 0 0 10;
+}
+
+.advanced-list-item .container .image-container {
+    -fx-max-width: 32;
+    -fx-min-width: 32;
+    -fx-max-height: 32;
+    -fx-min-height: 32;
+}
+
+.advanced-list-item .container .title {
+    -fx-max-width: 90;
+    -fx-font-size: 13;
+    -fx-text-alignment: justify;
+}
+
+.advanced-list-item .container .subtitle {
+    -fx-max-width: 90;
+    -fx-font-size: 10;
+    -fx-text-alignment: justify;
+}
+
 .advanced-list-item:selected .container {
     -fx-background-color: -fx-base-rippler-color;
+}
+
+.advanced-list-item:selected .container .title {
+    -fx-text-fill: -fx-base-color;
+    -fx-font-weight: bold;
+}
+
+.navigation-drawer-item .container VBox {
+    -fx-padding: 0 0 0 0;
 }
 
 .notice-pane > .label {
@@ -69,15 +106,15 @@
 
 .class-title {
     -fx-font-size: 12px;
-    -fx-padding: 0 16 0 16;
+    -fx-padding: 16 16 8 16;
 }
 
 .advanced-list-box-item {
-    -fx-padding: 0 16 0 16;
 }
 
 .advanced-list-box-content {
-    -fx-padding: 20 0 20 0;
+    -fx-padding: 18 0 0 0;
+    -fx-spacing: 0;
 }
 
 .iconed-item {

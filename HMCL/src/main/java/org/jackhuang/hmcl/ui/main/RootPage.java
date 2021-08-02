@@ -41,10 +41,7 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorTabPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
-import org.jackhuang.hmcl.ui.profile.ProfileAdvancedListItem;
-import org.jackhuang.hmcl.ui.profile.ProfileList;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
-import org.jackhuang.hmcl.ui.versions.GameList;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -65,15 +62,11 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class RootPage extends DecoratorTabPage {
     private MainPage mainPage = null;
     private SettingsPage settingsPage = null;
-    private GameList gameListPage = null;
     private AccountList accountListPage = null;
-    private ProfileList profileListPage = null;
 
     private final TabHeader.Tab mainTab = new TabHeader.Tab("main");
     private final TabHeader.Tab settingsTab = new TabHeader.Tab("settings");
-    private final TabHeader.Tab gameTab = new TabHeader.Tab("game");
     private final TabHeader.Tab accountTab = new TabHeader.Tab("account");
-    private final TabHeader.Tab profileTab = new TabHeader.Tab("profile");
 
     public RootPage() {
         setLeftPaneWidth(200);
@@ -86,10 +79,8 @@ public class RootPage extends DecoratorTabPage {
 
         mainTab.setNodeSupplier(this::getMainPage);
         settingsTab.setNodeSupplier(this::getSettingsPage);
-        gameTab.setNodeSupplier(this::getGameListPage);
         accountTab.setNodeSupplier(this::getAccountListPage);
-        profileTab.setNodeSupplier(this::getProfileListPage);
-        getTabs().setAll(mainTab, settingsTab, gameTab, accountTab, profileTab);
+        getTabs().setAll(mainTab, settingsTab, accountTab);
     }
 
     @Override
@@ -151,17 +142,6 @@ public class RootPage extends DecoratorTabPage {
         return settingsPage;
     }
 
-    private GameList getGameListPage() {
-        if (gameListPage == null) {
-            gameListPage = new GameList();
-            FXUtils.applyDragListener(gameListPage, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
-                File modpack = modpacks.get(0);
-                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
-            });
-        }
-        return gameListPage;
-    }
-
     private AccountList getAccountListPage() {
         if (accountListPage == null) {
             accountListPage = new AccountList();
@@ -169,15 +149,6 @@ public class RootPage extends DecoratorTabPage {
             accountListPage.accountsProperty().bindContent(Accounts.accountsProperty());
         }
         return accountListPage;
-    }
-
-    private ProfileList getProfileListPage() {
-        if (profileListPage == null) {
-            profileListPage = new ProfileList();
-            profileListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
-            profileListPage.profilesProperty().bindContent(Profiles.profilesProperty());
-        }
-        return profileListPage;
     }
 
     public Tab getMainTab() {
@@ -188,16 +159,8 @@ public class RootPage extends DecoratorTabPage {
         return settingsTab;
     }
 
-    public Tab getGameTab() {
-        return gameTab;
-    }
-
     public Tab getAccountTab() {
         return accountTab;
-    }
-
-    public Tab getProfileTab() {
-        return profileTab;
     }
 
     private void selectPage(Tab tab) {
@@ -226,7 +189,7 @@ public class RootPage extends DecoratorTabPage {
                 Profile profile = Profiles.getSelectedProfile();
                 String version = Profiles.getSelectedVersion();
                 if (version == null) {
-                    control.selectPage(control.gameTab);
+                    Controllers.navigate(Controllers.getGameListPage());
                 } else {
                     Versions.modifyGameSettings(profile, version);
                 }
@@ -234,21 +197,14 @@ public class RootPage extends DecoratorTabPage {
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
-            gameItem.activeProperty().bind(control.gameTab.selectedProperty());
-            gameItem.setImage(newImage("/assets/img/bookshelf.png"));
+            gameItem.setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/bookshelf.png")).getKey());
             gameItem.setTitle(i18n("version.manage"));
-            gameItem.setOnAction(e -> control.selectPage(control.gameTab));
-
-            // forth item in left sidebar
-            ProfileAdvancedListItem profileListItem = new ProfileAdvancedListItem();
-            profileListItem.activeProperty().bind(control.profileTab.selectedProperty());
-            profileListItem.setOnAction(e -> control.selectPage(control.profileTab));
-            profileListItem.profileProperty().bind(Profiles.selectedProfileProperty());
+            gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
 
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
             launcherSettingsItem.activeProperty().bind(control.settingsTab.selectedProperty());
-            launcherSettingsItem.setImage(newImage("/assets/img/command.png"));
+            launcherSettingsItem.setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/command.png")).getKey());
             launcherSettingsItem.setTitle(i18n("settings.launcher"));
             launcherSettingsItem.setOnAction(e -> control.selectPage(control.settingsTab));
 
@@ -259,8 +215,6 @@ public class RootPage extends DecoratorTabPage {
                     .startCategory(i18n("version").toUpperCase())
                     .add(gameListItem)
                     .add(gameItem)
-                    .startCategory(i18n("profile.title").toUpperCase())
-                    .add(profileListItem)
                     .startCategory(i18n("launcher").toUpperCase())
                     .add(launcherSettingsItem);
 

@@ -88,8 +88,8 @@ public final class MessageDialogPane extends StackPane {
         }
     }
 
-    public MessageDialogPane(String text, String title, Runnable onAccept, Runnable onCancel) {
-        this(text, title, MessageType.QUESTION, onAccept);
+    public MessageDialogPane(String text, String title, MessageType type, Runnable onAccept, Runnable onCancel) {
+        this(text, title, type, onAccept);
 
         cancelButton.setVisible(true);
         cancelButton.setOnMouseClicked(e -> {

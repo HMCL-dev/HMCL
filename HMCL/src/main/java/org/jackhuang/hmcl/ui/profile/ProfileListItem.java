@@ -32,7 +32,7 @@ public class ProfileListItem extends RadioButton {
 
     public ProfileListItem(Profile profile) {
         this.profile = profile;
-        getStyleClass().clear();
+        getStyleClass().setAll("navigation-drawer-item");
         setUserData(profile);
 
         title.set(Profiles.getProfileDisplayName(profile));

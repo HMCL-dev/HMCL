@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.java.JavaRepository;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AuthlibInjectorServersPage;
@@ -40,13 +41,16 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
+import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.main.RootPage;
+import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -62,6 +66,7 @@ public final class Controllers {
     private static Scene scene;
     private static Stage stage;
     private static VersionPage versionPage = null;
+    private static GameListPage gameListPage = null;
     private static AuthlibInjectorServersPage serversPage = null;
     private static RootPage rootPage;
     private static DecoratorController decorator;
@@ -82,6 +87,20 @@ public final class Controllers {
         if (versionPage == null)
             versionPage = new VersionPage();
         return versionPage;
+    }
+
+    // FXThread
+    public static GameListPage getGameListPage() {
+        if (gameListPage == null) {
+            gameListPage = new GameListPage();
+            gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
+            gameListPage.profilesProperty().bindContent(Profiles.profilesProperty());
+            FXUtils.applyDragListener(gameListPage, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
+                File modpack = modpacks.get(0);
+                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
+            });
+        }
+        return gameListPage;
     }
 
     // FXThread
@@ -167,7 +186,11 @@ public final class Controllers {
     }
 
     public static void confirm(String text, String title, Runnable onAccept, Runnable onCancel) {
-        dialog(new MessageDialogPane(text, title, onAccept, onCancel));
+        confirm(text, title, MessageType.QUESTION, onAccept, onCancel);
+    }
+
+    public static void confirm(String text, String title, MessageType type, Runnable onAccept, Runnable onCancel) {
+        dialog(new MessageDialogPane(text, title, type, onAccept, onCancel));
     }
 
     public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {

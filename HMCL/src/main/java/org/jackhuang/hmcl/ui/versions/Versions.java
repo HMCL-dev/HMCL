@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -33,6 +34,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
+import org.jackhuang.hmcl.ui.download.VanillaInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -50,13 +52,27 @@ public final class Versions {
     private Versions() {
     }
 
+    public static void addNewGame() {
+        Profile profile = Profiles.getSelectedProfile();
+        if (profile.getRepository().isLoaded()) {
+            Controllers.getDecorator().startWizard(new VanillaInstallWizardProvider(profile), i18n("install.new_game"));
+        }
+    }
+
+    public static void importModpack() {
+        Profile profile = Profiles.getSelectedProfile();
+        if (profile.getRepository().isLoaded()) {
+            Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile), i18n("install.modpack"));
+        }
+    }
+
     public static void deleteVersion(Profile profile, String version) {
         boolean isIndependent = profile.getVersionSetting(version).getGameDirType() == GameDirectoryType.VERSION_FOLDER;
         boolean isMovingToTrashSupported = FileUtils.isMovingToTrashSupported();
         String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
                 isMovingToTrashSupported ? i18n("version.manage.remove.confirm.trash", version, version + "_removed") :
                         i18n("version.manage.remove.confirm", version);
-        Controllers.confirm(message, i18n("message.confirm"), () -> {
+        Controllers.confirm(message, i18n("message.warning"), MessageDialogPane.MessageType.WARNING, () -> {
             profile.getRepository().removeVersionFromDisk(version);
         }, null);
     }
@@ -158,7 +174,7 @@ public final class Versions {
             Controllers.getRootPage().checkAccount();
         else if (id == null || !profile.getRepository().isLoaded() || !profile.getRepository().hasVersion(id))
             Controllers.dialog(i18n("version.empty.launch"), i18n("launch.failed"), MessageDialogPane.MessageType.ERROR, () -> {
-                Controllers.getRootPage().getSelectionModel().select(Controllers.getRootPage().getGameTab());
+                Controllers.navigate(Controllers.getGameListPage());
             });
         else
             return true;

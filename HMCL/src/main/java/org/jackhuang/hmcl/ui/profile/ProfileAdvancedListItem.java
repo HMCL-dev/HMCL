@@ -42,7 +42,7 @@ public class ProfileAdvancedListItem extends AdvancedListItem {
     };
 
     public ProfileAdvancedListItem() {
-        setImage(newImage("/assets/img/craft_table.png"));
+        setLeftGraphic(createImageView(newImage("/assets/img/craft_table.png")).getKey());
         setRightGraphic(SVG.viewList(Theme.blackFillBinding(), -1, -1));
     }
 

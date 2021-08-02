@@ -24,10 +24,16 @@ import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.Pair;
+
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class AdvancedListItem extends Control {
-    private final ObjectProperty<Image> image = new SimpleObjectProperty<>(this, "image");
+    private final ObjectProperty<Node> leftGraphic = new SimpleObjectProperty<>(this, "leftGraphic");
     private final ObjectProperty<Node> rightGraphic = new SimpleObjectProperty<>(this, "rightGraphic");
     private final StringProperty title = new SimpleStringProperty(this, "title");
     private final BooleanProperty active = new SimpleBooleanProperty(this, "active");
@@ -39,16 +45,16 @@ public class AdvancedListItem extends Control {
         addEventHandler(MouseEvent.MOUSE_CLICKED, e -> fireEvent(new ActionEvent()));
     }
 
-    public Image getImage() {
-        return image.get();
+    public Node getLeftGraphic() {
+        return leftGraphic.get();
     }
 
-    public ObjectProperty<Image> imageProperty() {
-        return image;
+    public ObjectProperty<Node> leftGraphicProperty() {
+        return leftGraphic;
     }
 
-    public void setImage(Image image) {
-        this.image.set(image);
+    public void setLeftGraphic(Node leftGraphic) {
+        this.leftGraphic.set(leftGraphic);
     }
 
     public Node getRightGraphic() {
@@ -133,5 +139,18 @@ public class AdvancedListItem extends Control {
     @Override
     protected Skin<?> createDefaultSkin() {
         return new AdvancedListItemSkin(this);
+    }
+
+    public static Pair<Node, ImageView> createImageView(Image image) {
+        StackPane imageViewContainer = new StackPane();
+        FXUtils.setLimitWidth(imageViewContainer, 32);
+        FXUtils.setLimitHeight(imageViewContainer, 32);
+
+        ImageView imageView = new ImageView();
+        FXUtils.limitSize(imageView, 32, 32);
+        imageView.setPreserveRatio(true);
+        imageView.setImage(image);
+        imageViewContainer.getChildren().setAll(imageView);
+        return pair(imageViewContainer, imageView);
     }
 }
