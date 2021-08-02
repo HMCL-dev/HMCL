@@ -783,6 +783,11 @@
     -fx-background-color: derive(-fx-base-color, 60%);
 }
 
+.card-list {
+    -fx-padding: 10;
+    -fx-spacing: 10;
+}
+
 .options-sublist {
     -fx-background-color: white;
 }

@@ -61,10 +61,9 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
             
             VBox vBox = new VBox();
             {
+                vBox.getStyleClass().add("card-list");
                 vBox.setAlignment(Pos.BOTTOM_RIGHT);
                 vBox.setPickOnBounds(false);
-                vBox.setPadding(new Insets(15));
-                vBox.setSpacing(15);
 
                 JFXButton btnAdd = new JFXButton();
                 FXUtils.setLimitWidth(btnAdd, 40);

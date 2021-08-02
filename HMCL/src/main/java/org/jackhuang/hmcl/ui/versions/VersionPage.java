@@ -50,6 +50,8 @@ public class VersionPage extends Control implements DecoratorPage {
     private final VersionSettingsPage versionSettingsPage = new VersionSettingsPage();
     private final TabHeader.Tab modListTab = new TabHeader.Tab("modListTab");
     private final ModListPage modListPage = new ModListPage(modListTab);
+    private final TabHeader.Tab curseModListTab = new TabHeader.Tab("modListTab");
+    private final ModDownloadListPage curseModListPage = new ModDownloadListPage();
     private final TabHeader.Tab installerListTab = new TabHeader.Tab("installerListTab");
     private final InstallerListPage installerListPage = new InstallerListPage();
     private final TabHeader.Tab worldListTab = new TabHeader.Tab("worldList");
@@ -64,6 +66,7 @@ public class VersionPage extends Control implements DecoratorPage {
     {
         versionSettingsTab.setNode(versionSettingsPage);
         modListTab.setNode(modListPage);
+        curseModListTab.setNode(curseModListPage);
         installerListTab.setNode(installerListPage);
         worldListTab.setNode(worldListPage);
 
@@ -92,6 +95,7 @@ public class VersionPage extends Control implements DecoratorPage {
         preferredVersionName = version;
 
         versionSettingsPage.loadVersion(profile, version);
+        curseModListPage.loadVersion(profile, version);
         currentVersionUpgradable.set(profile.getRepository().isModpack(version));
 
         CompletableFuture.allOf(
@@ -245,6 +249,14 @@ public class VersionPage extends Control implements DecoratorPage {
                 modListItem.activeProperty().bind(control.selectedTab.isEqualTo(control.modListTab));
                 modListItem.setOnAction(e -> control.selectedTab.set(control.modListTab));
 
+                AdvancedListItem curseModListItem = new AdvancedListItem();
+                curseModListItem.getStyleClass().add("navigation-drawer-item");
+                curseModListItem.setTitle(i18n("mods.download"));
+                curseModListItem.setLeftGraphic(wrap(SVG.fire(Theme.blackFillBinding(), 20, 20)));
+                curseModListItem.setActionButtonVisible(false);
+                curseModListItem.activeProperty().bind(control.selectedTab.isEqualTo(control.curseModListTab));
+                curseModListItem.setOnAction(e -> control.selectedTab.set(control.curseModListTab));
+
                 AdvancedListItem installerListItem = new AdvancedListItem();
                 installerListItem.getStyleClass().add("navigation-drawer-item");
                 installerListItem.setTitle(i18n("settings.tabs.installers"));
@@ -264,6 +276,7 @@ public class VersionPage extends Control implements DecoratorPage {
                 AdvancedListBox sideBar = new AdvancedListBox()
                         .add(versionSettingsItem)
                         .add(modListItem)
+                        .add(curseModListItem)
                         .add(installerListItem)
                         .add(worldListItem);
                 left.setCenter(sideBar);

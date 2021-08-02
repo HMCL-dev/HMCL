@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.profile;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.css.PseudoClass;
-import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
