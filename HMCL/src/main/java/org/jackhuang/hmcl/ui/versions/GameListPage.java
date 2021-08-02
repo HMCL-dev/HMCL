@@ -137,28 +137,28 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
                     installNewGameItem.getStyleClass().add("navigation-drawer-item");
                     installNewGameItem.setTitle(i18n("install.new_game"));
                     installNewGameItem.setActionButtonVisible(false);
-                    installNewGameItem.setLeftGraphic(VersionPage.wrap(SVG.plus(Theme.blackFillBinding(), -1, -1)));
+                    installNewGameItem.setLeftGraphic(VersionPage.wrap(SVG.plus(Theme.blackFillBinding(), 24, 24)));
                     installNewGameItem.setOnAction(e -> Versions.addNewGame());
 
                     AdvancedListItem installModpackItem = new AdvancedListItem();
                     installModpackItem.getStyleClass().add("navigation-drawer-item");
                     installModpackItem.setTitle(i18n("install.modpack"));
                     installModpackItem.setActionButtonVisible(false);
-                    installModpackItem.setLeftGraphic(VersionPage.wrap(SVG.importIcon(Theme.blackFillBinding(), -1, -1)));
+                    installModpackItem.setLeftGraphic(VersionPage.wrap(SVG.importIcon(Theme.blackFillBinding(), 24, 24)));
                     installModpackItem.setOnAction(e -> Versions.importModpack());
 
                     AdvancedListItem refreshItem = new AdvancedListItem();
                     refreshItem.getStyleClass().add("navigation-drawer-item");
                     refreshItem.setTitle(i18n("button.refresh"));
                     refreshItem.setActionButtonVisible(false);
-                    refreshItem.setLeftGraphic(VersionPage.wrap(SVG.refresh(Theme.blackFillBinding(), -1, -1)));
+                    refreshItem.setLeftGraphic(VersionPage.wrap(SVG.refresh(Theme.blackFillBinding(), 24, 24)));
                     refreshItem.setOnAction(e -> gameList.refreshList());
 
                     AdvancedListItem globalManageItem = new AdvancedListItem();
                     globalManageItem.getStyleClass().add("navigation-drawer-item");
                     globalManageItem.setTitle(i18n("settings.type.global.manage"));
                     globalManageItem.setActionButtonVisible(false);
-                    globalManageItem.setLeftGraphic(VersionPage.wrap(SVG.gear(Theme.blackFillBinding(), -1, -1)));
+                    globalManageItem.setLeftGraphic(VersionPage.wrap(SVG.gearOutline(Theme.blackFillBinding(), 24, 24)));
                     globalManageItem.setOnAction(e -> modifyGlobalGameSettings());
 
                     AdvancedListBox bottomLeftCornerList = new AdvancedListBox()

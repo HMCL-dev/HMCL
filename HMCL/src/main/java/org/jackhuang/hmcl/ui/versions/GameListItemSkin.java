@@ -81,7 +81,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             JFXButton btnUpgrade = new JFXButton();
             btnUpgrade.setOnMouseClicked(e -> skinnable.update());
             btnUpgrade.getStyleClass().add("toggle-icon4");
-            btnUpgrade.setGraphic(SVG.update(Theme.blackFillBinding(), -1, -1));
+            btnUpgrade.setGraphic(FXUtils.limitingSize(SVG.update(Theme.blackFillBinding(), 24, 24), 24, 24));
             runInFX(() -> FXUtils.installFastTooltip(btnUpgrade, i18n("version.update")));
             right.getChildren().add(btnUpgrade);
         }
@@ -91,7 +91,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             btnLaunch.setOnMouseClicked(e -> skinnable.launch());
             btnLaunch.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnLaunch, Pos.CENTER);
-            btnLaunch.setGraphic(SVG.launch(Theme.blackFillBinding(), 20, 20));
+            btnLaunch.setGraphic(FXUtils.limitingSize(SVG.launchOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
             right.getChildren().add(btnLaunch);
         }
 
@@ -103,7 +103,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             });
             btnManage.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnManage, Pos.CENTER);
-            btnManage.setGraphic(SVG.dotsVertical(Theme.blackFillBinding(), -1, -1));
+            btnManage.setGraphic(FXUtils.limitingSize(SVG.dotsVertical(Theme.blackFillBinding(), 24, 24), 24, 24));
             right.getChildren().add(btnManage);
         }
 
