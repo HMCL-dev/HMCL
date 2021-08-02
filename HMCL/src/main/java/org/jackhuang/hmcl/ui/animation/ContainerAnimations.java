@@ -173,7 +173,49 @@ public enum ContainerAnimations {
                             new KeyValue(c.getPreviousNode().translateXProperty(), 0, Interpolator.EASE_BOTH)),
                     new KeyFrame(c.getDuration(),
                             new KeyValue(c.getCurrentNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().translateXProperty(), c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH))));
+                            new KeyValue(c.getPreviousNode().translateXProperty(), c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH)))),
+
+    SWIPE_LEFT_FADE_SHORT(c -> {
+        c.getPreviousNode().setScaleX(1);
+        c.getPreviousNode().setScaleY(1);
+        c.getPreviousNode().setOpacity(0);
+        c.getPreviousNode().setTranslateX(0);
+        c.getCurrentNode().setScaleX(1);
+        c.getCurrentNode().setScaleY(1);
+        c.getCurrentNode().setOpacity(1);
+        c.getCurrentNode().setTranslateX(c.getCurrentRoot().getWidth());
+    }, c ->
+            Arrays.asList(new KeyFrame(Duration.ZERO,
+                            new KeyValue(c.getCurrentNode().translateXProperty(), 50, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getCurrentNode().opacityProperty(), 0, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().opacityProperty(), 1, Interpolator.EASE_BOTH)),
+                    new KeyFrame(c.getDuration(),
+                            new KeyValue(c.getCurrentNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().translateXProperty(), -50, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getCurrentNode().opacityProperty(), 1, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH)))),
+
+    SWIPE_RIGHT_FADE_SHORT(c -> {
+        c.getPreviousNode().setScaleX(1);
+        c.getPreviousNode().setScaleY(1);
+        c.getPreviousNode().setOpacity(0);
+        c.getPreviousNode().setTranslateX(0);
+        c.getCurrentNode().setScaleX(1);
+        c.getCurrentNode().setScaleY(1);
+        c.getCurrentNode().setOpacity(1);
+        c.getCurrentNode().setTranslateX(c.getCurrentRoot().getWidth());
+    }, c ->
+            Arrays.asList(new KeyFrame(Duration.ZERO,
+                            new KeyValue(c.getCurrentNode().translateXProperty(), -50, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getCurrentNode().opacityProperty(), 0, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().opacityProperty(), 1, Interpolator.EASE_BOTH)),
+                    new KeyFrame(c.getDuration(),
+                            new KeyValue(c.getCurrentNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().translateXProperty(), 50, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getCurrentNode().opacityProperty(), 1, Interpolator.EASE_BOTH),
+                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH))));
 
     private final AnimationProducer animationProducer;
     private ContainerAnimations opposite;

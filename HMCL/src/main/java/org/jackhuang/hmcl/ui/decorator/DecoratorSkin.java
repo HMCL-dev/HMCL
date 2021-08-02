@@ -41,8 +41,10 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.Lang;
 
 public class DecoratorSkin extends SkinBase<Decorator> {
@@ -165,7 +167,16 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 Node node = createNavBar(skinnable, s.isTitleBarTransparent(), s.getLeftPaneWidth(), s.isBackable(), skinnable.canCloseProperty().get(), skinnable.showCloseAsHomeProperty().get(), s.isRefreshable(), s.getTitle(), s.getTitleNode());
                 double targetOpacity = s.isTitleBarTransparent() ? 0 : 1;
                 if (s.isAnimate()) {
-                    navBarPane.setContent(node, ContainerAnimations.FADE.getAnimationProducer());
+                    AnimationProducer animation;
+                    if (skinnable.getNavigationDirection() == Navigation.NavigationDirection.NEXT) {
+                        animation = ContainerAnimations.SWIPE_LEFT_FADE_SHORT.getAnimationProducer();
+                    } else if (skinnable.getNavigationDirection() == Navigation.NavigationDirection.PREVIOUS) {
+                        animation = ContainerAnimations.SWIPE_RIGHT_FADE_SHORT.getAnimationProducer();
+                    } else {
+                        animation = ContainerAnimations.FADE.getAnimationProducer();
+                    }
+                    skinnable.setNavigationDirection(Navigation.NavigationDirection.START);
+                    navBarPane.setContent(node, animation);
                 } else {
                     navBarPane.getChildren().setAll(node);
                 }

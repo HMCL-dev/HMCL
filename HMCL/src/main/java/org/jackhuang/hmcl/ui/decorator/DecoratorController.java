@@ -243,6 +243,8 @@ public class DecoratorController {
             decorator.showCloseAsHomeProperty().set(true);
         }
 
+        decorator.setNavigationDirection(event.getDirection());
+
         // state property should be updated at last.
         if (to instanceof DecoratorPage) {
             decorator.stateProperty().bind(((DecoratorPage) to).stateProperty());

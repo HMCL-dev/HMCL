@@ -34,6 +34,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import org.jackhuang.hmcl.ui.wizard.Navigation;
 
 public class Decorator extends Control {
     private final ListProperty<Node> drawer = new SimpleListProperty<>(FXCollections.observableArrayList());
@@ -51,6 +52,7 @@ public class Decorator extends Control {
     private final BooleanProperty canClose = new SimpleBooleanProperty(false);
     private final BooleanProperty showCloseAsHome = new SimpleBooleanProperty(false);
     private final Stage primaryStage;
+    private Navigation.NavigationDirection navigationDirection = Navigation.NavigationDirection.START;
     private StackPane drawerWrapper;
 
     private final ReadOnlyBooleanWrapper allowMove = new ReadOnlyBooleanWrapper();
@@ -237,5 +239,14 @@ public class Decorator extends Control {
             allowMove.set(false);
             e.consume();
         });
+    }
+
+    // TODO: Dirty implementation.
+    public Navigation.NavigationDirection getNavigationDirection() {
+        return navigationDirection;
+    }
+
+    public void setNavigationDirection(Navigation.NavigationDirection navigationDirection) {
+        this.navigationDirection = navigationDirection;
     }
 }

@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.Logging;
 
 import java.util.Optional;
@@ -48,7 +49,7 @@ public class Navigator extends TransitionPane {
         backable.set(canGoBack());
         getChildren().setAll(init);
 
-        fireEvent(new NavigationEvent(this, init, NavigationEvent.NAVIGATED));
+        fireEvent(new NavigationEvent(this, init, Navigation.NavigationDirection.START, NavigationEvent.NAVIGATED));
 
         initialized = true;
     }
@@ -68,14 +69,14 @@ public class Navigator extends TransitionPane {
         stack.push(node);
         backable.set(canGoBack());
 
-        NavigationEvent navigating = new NavigationEvent(this, from, NavigationEvent.NAVIGATING);
+        NavigationEvent navigating = new NavigationEvent(this, from, Navigation.NavigationDirection.NEXT, NavigationEvent.NAVIGATING);
         fireEvent(navigating);
         node.fireEvent(navigating);
 
         node.getProperties().put("hmcl.navigator.animation", animationProducer);
         setContent(node, animationProducer);
 
-        NavigationEvent navigated = new NavigationEvent(this, node, NavigationEvent.NAVIGATED);
+        NavigationEvent navigated = new NavigationEvent(this, node, Navigation.NavigationDirection.NEXT, NavigationEvent.NAVIGATED);
         node.fireEvent(navigated);
 
         EventHandler<PageCloseEvent> handler = event -> close(node);
@@ -111,7 +112,7 @@ public class Navigator extends TransitionPane {
         backable.set(canGoBack());
         Node node = stack.peek();
 
-        NavigationEvent navigating = new NavigationEvent(this, from, NavigationEvent.NAVIGATING);
+        NavigationEvent navigating = new NavigationEvent(this, from, Navigation.NavigationDirection.PREVIOUS, NavigationEvent.NAVIGATING);
         fireEvent(navigating);
         node.fireEvent(navigating);
 
@@ -122,7 +123,7 @@ public class Navigator extends TransitionPane {
             setContent(node, ContainerAnimations.NONE.getAnimationProducer());
         }
 
-        NavigationEvent navigated = new NavigationEvent(this, node, NavigationEvent.NAVIGATED);
+        NavigationEvent navigated = new NavigationEvent(this, node, Navigation.NavigationDirection.PREVIOUS, NavigationEvent.NAVIGATED);
         node.fireEvent(navigated);
 
         Optional.ofNullable(from.getProperties().get(PROPERTY_DIALOG_CLOSE_HANDLER))
@@ -206,12 +207,14 @@ public class Navigator extends TransitionPane {
 
         private final Navigator source;
         private final Node node;
+        private final Navigation.NavigationDirection direction;
 
-        public NavigationEvent(Navigator source, Node target, EventType<? extends Event> eventType) {
+        public NavigationEvent(Navigator source, Node target, Navigation.NavigationDirection direction, EventType<? extends Event> eventType) {
             super(source, target, eventType);
 
             this.source = source;
             this.node = target;
+            this.direction = direction;
         }
 
         @Override
@@ -221,6 +224,10 @@ public class Navigator extends TransitionPane {
 
         public Node getNode() {
             return node;
+        }
+
+        public Navigation.NavigationDirection getDirection() {
+            return direction;
         }
     }
 }
