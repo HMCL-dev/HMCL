@@ -335,7 +335,7 @@ public class Version implements Comparable<Version>, Validation {
             }
         }
 
-       return thisVersion.setId(id).setJar(resolve(provider).getJar());
+        return thisVersion.setId(id).setJar(resolve(provider).getJar());
     }
 
     private Version markAsResolved() {
