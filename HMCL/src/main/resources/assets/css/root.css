@@ -18,6 +18,10 @@
 .root {
 }
 
+.svg {
+    -fx-fill: black;
+}
+
 .scroll-bar .thumb {
     -fx-fill: rgba(255, 255, 255, 0.5);
     -fx-arc-width: 5px;
@@ -91,6 +95,10 @@
     -fx-font-weight: bold;
 }
 
+.advanced-list-item:selected .svg {
+    -fx-fill: -fx-base-color;
+}
+
 .navigation-drawer-item .container VBox {
     -fx-padding: 0 0 0 0;
 }
@@ -109,6 +117,15 @@
 
 .profile-list-item:selected BorderPane {
     -fx-background-color: -fx-base-rippler-color;
+}
+
+.profile-list-item:selected .two-line-list-item .title {
+    -fx-text-fill: -fx-base-color;
+    -fx-font-weight: bold;
+}
+
+.profile-list-item:selected .svg {
+    -fx-fill: -fx-base-color;
 }
 
 .notice-pane > .label {

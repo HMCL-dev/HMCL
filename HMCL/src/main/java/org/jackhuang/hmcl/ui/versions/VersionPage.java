@@ -267,7 +267,7 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
                 AdvancedListItem versionSettingsItem = new AdvancedListItem();
                 versionSettingsItem.getStyleClass().add("navigation-drawer-item");
                 versionSettingsItem.setTitle(i18n("settings"));
-                versionSettingsItem.setLeftGraphic(wrap(SVG.gearOutline(Theme.blackFillBinding(), 20, 20)));
+                versionSettingsItem.setLeftGraphic(wrap(SVG.gearOutline(null, 20, 20)));
                 versionSettingsItem.setActionButtonVisible(false);
                 versionSettingsItem.activeProperty().bind(control.selectedTab.isEqualTo(control.versionSettingsTab));
                 versionSettingsItem.setOnAction(e -> control.selectedTab.set(control.versionSettingsTab));
@@ -275,7 +275,7 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
                 AdvancedListItem modListItem = new AdvancedListItem();
                 modListItem.getStyleClass().add("navigation-drawer-item");
                 modListItem.setTitle(i18n("mods"));
-                modListItem.setLeftGraphic(wrap(SVG.puzzle(Theme.blackFillBinding(), 20, 20)));
+                modListItem.setLeftGraphic(wrap(SVG.puzzle(null, 20, 20)));
                 modListItem.setActionButtonVisible(false);
                 modListItem.activeProperty().bind(control.selectedTab.isEqualTo(control.modListTab));
                 modListItem.setOnAction(e -> control.selectedTab.set(control.modListTab));
@@ -283,7 +283,7 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
                 AdvancedListItem curseModListItem = new AdvancedListItem();
                 curseModListItem.getStyleClass().add("navigation-drawer-item");
                 curseModListItem.setTitle(i18n("mods.download"));
-                curseModListItem.setLeftGraphic(wrap(SVG.fire(Theme.blackFillBinding(), 20, 20)));
+                curseModListItem.setLeftGraphic(wrap(SVG.fire(null, 20, 20)));
                 curseModListItem.setActionButtonVisible(false);
                 curseModListItem.activeProperty().bind(control.selectedTab.isEqualTo(control.curseModListTab));
                 curseModListItem.setOnAction(e -> control.selectedTab.set(control.curseModListTab));
@@ -291,7 +291,7 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
                 AdvancedListItem installerListItem = new AdvancedListItem();
                 installerListItem.getStyleClass().add("navigation-drawer-item");
                 installerListItem.setTitle(i18n("settings.tabs.installers"));
-                installerListItem.setLeftGraphic(wrap(SVG.cube(Theme.blackFillBinding(), 20, 20)));
+                installerListItem.setLeftGraphic(wrap(SVG.cube(null, 20, 20)));
                 installerListItem.setActionButtonVisible(false);
                 installerListItem.activeProperty().bind(control.selectedTab.isEqualTo(control.installerListTab));
                 installerListItem.setOnAction(e -> control.selectedTab.set(control.installerListTab));
@@ -299,7 +299,7 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
                 AdvancedListItem worldListItem = new AdvancedListItem();
                 worldListItem.getStyleClass().add("navigation-drawer-item");
                 worldListItem.setTitle(i18n("world"));
-                worldListItem.setLeftGraphic(wrap(SVG.gamepad(Theme.blackFillBinding(), 20, 20)));
+                worldListItem.setLeftGraphic(wrap(SVG.gamepad(null, 20, 20)));
                 worldListItem.setActionButtonVisible(false);
                 worldListItem.activeProperty().bind(control.selectedTab.isEqualTo(control.worldListTab));
                 worldListItem.setOnAction(e -> control.selectedTab.set(control.worldListTab));
