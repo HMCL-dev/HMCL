@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import com.jfoenix.controls.JFXButton;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.game.GameDirectoryType;
@@ -112,9 +113,15 @@ public final class Versions {
         String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
                 isMovingToTrashSupported ? i18n("version.manage.remove.confirm.trash", version, version + "_removed") :
                         i18n("version.manage.remove.confirm", version);
-        Controllers.confirm(message, i18n("message.warning"), MessageDialogPane.MessageType.WARNING, () -> {
-            profile.getRepository().removeVersionFromDisk(version);
-        }, null);
+
+        JFXButton deleteButton = new JFXButton(i18n("button.delete"));
+        deleteButton.getStyleClass().add("dialog-error");
+        deleteButton.setOnAction(e -> profile.getRepository().removeVersionFromDisk(version));
+
+        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+        cancelButton.getStyleClass().add("dialog-cancel");
+        
+        Controllers.dialogWithButtons(message, i18n("message.warning"), MessageDialogPane.MessageType.WARNING, deleteButton, cancelButton);
     }
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {

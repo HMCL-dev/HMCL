@@ -332,6 +332,12 @@
     -fx-alignment: center-right;
 }
 
+.dialog-error {
+    -fx-text-fill: #d32f2f;
+    -fx-font-family: -fx-base-font-family;
+    -fx-padding: 0.7em 0.8em;
+}
+
 .dialog-accept {
     -fx-text-fill: #03A9F4;
     -fx-font-family: -fx-base-font-family;
