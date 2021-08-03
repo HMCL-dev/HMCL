@@ -175,13 +175,16 @@ public class ModDownloadListPage extends Control implements DecoratorPage {
 
                 StackPane categoryStackPane = new StackPane();
                 JFXComboBox<CategoryIndented> categoryComboBox = new JFXComboBox<>();
+                categoryComboBox.getItems().setAll(new CategoryIndented(0, 0));
                 categoryStackPane.getChildren().setAll(categoryComboBox);
                 categoryComboBox.prefWidthProperty().bind(categoryStackPane.widthProperty());
                 categoryComboBox.getStyleClass().add("fit-width");
                 categoryComboBox.setPromptText(i18n("mods.category"));
+                categoryComboBox.getSelectionModel().select(0);
                 Task.supplyAsync(() -> CurseModManager.getCategories(getSkinnable().section))
                         .thenAcceptAsync(Schedulers.javafx(), categories -> {
                             List<CategoryIndented> result = new ArrayList<>();
+                            result.add(new CategoryIndented(0, 0));
                             for (CurseModManager.Category category : categories) {
                                 resolveCategory(category, 0, result);
                             }
@@ -214,8 +217,7 @@ public class ModDownloadListPage extends Control implements DecoratorPage {
                 searchButton.setOnAction(e -> {
                     getSkinnable().search(gameVersionField.getText(),
                             Optional.ofNullable(categoryComboBox.getSelectionModel().getSelectedItem())
-                                    .map(CategoryIndented::getCategory)
-                                    .map(CurseModManager.Category::getId)
+                                    .map(CategoryIndented::getCategoryId)
                                     .orElse(0),
                             0,
                             nameField.getText(),
@@ -289,29 +291,29 @@ public class ModDownloadListPage extends Control implements DecoratorPage {
 
         private static class CategoryIndented {
             private final int indent;
-            private final CurseModManager.Category category;
+            private final int categoryId;
 
-            public CategoryIndented(int indent, CurseModManager.Category category) {
+            public CategoryIndented(int indent, int categoryId) {
                 this.indent = indent;
-                this.category = category;
+                this.categoryId = categoryId;
             }
 
             public int getIndent() {
                 return indent;
             }
 
-            public CurseModManager.Category getCategory() {
-                return category;
+            public int getCategoryId() {
+                return categoryId;
             }
 
             @Override
             public String toString() {
-                return StringUtils.repeats(' ', indent) + i18n("curse.category." + category.getId());
+                return StringUtils.repeats(' ', indent) + i18n("curse.category." + categoryId);
             }
         }
 
         private static void resolveCategory(CurseModManager.Category category, int indent, List<CategoryIndented> result) {
-            result.add(new CategoryIndented(indent, category));
+            result.add(new CategoryIndented(indent, category.getId()));
             for (CurseModManager.Category subcategory : category.getSubcategories()) {
                 resolveCategory(subcategory, indent + 1, result);
             }
