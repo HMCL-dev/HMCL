@@ -70,7 +70,13 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
             root.setCenter(scrollPane);
         }
 
-        spinnerPane.loadingProperty().bind(skinnable.loadingProperty());
+        FXUtils.onChangeAndOperate(skinnable.loadingProperty(), loading -> {
+            if (loading) {
+                spinnerPane.showSpinner();
+            } else {
+                spinnerPane.hideSpinner();
+            }
+        });
         spinnerPane.setContent(root);
 
         getChildren().setAll(spinnerPane);

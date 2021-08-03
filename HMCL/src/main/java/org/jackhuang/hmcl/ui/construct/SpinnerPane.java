@@ -18,34 +18,30 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXSpinner;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.beans.DefaultProperty;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.WeakInvalidationListener;
+import javafx.beans.property.*;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
+import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
-import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.animation.AnimationHandler;
-import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 
 @DefaultProperty("content")
 public class SpinnerPane extends Control {
     private final ObjectProperty<Node> content = new SimpleObjectProperty<>(this, "content");
     private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading");
+    private final StringProperty failedReason = new SimpleStringProperty(this, "failedReason");
 
     public void showSpinner() {
         setLoading(true);
     }
 
     public void hideSpinner() {
+        setFailedReason(null);
         setLoading(false);
     }
 
@@ -73,6 +69,18 @@ public class SpinnerPane extends Control {
         this.loading.set(loading);
     }
 
+    public String getFailedReason() {
+        return failedReason.get();
+    }
+
+    public StringProperty failedReasonProperty() {
+        return failedReason;
+    }
+
+    public void setFailedReason(String failedReason) {
+        this.failedReason.set(failedReason);
+    }
+
     @Override
     protected Skin createDefaultSkin() {
         return new Skin(this);
@@ -82,62 +90,57 @@ public class SpinnerPane extends Control {
         private final JFXSpinner spinner = new JFXSpinner();
         private final StackPane contentPane = new StackPane();
         private final StackPane topPane = new StackPane();
-        private final StackPane root = new StackPane();
-        private Timeline animation;
+        private final TransitionPane root = new TransitionPane();
+        private final StackPane failedPane = new StackPane();
+        private final Label failedReasonLabel = new Label();
+        @SuppressWarnings("FieldCanBeLocal") // prevent from gc.
+        private final WeakInvalidationListener observer;
 
         protected Skin(SpinnerPane control) {
             super(control);
 
             root.getStyleClass().add("spinner-pane");
             topPane.getChildren().setAll(spinner);
-            root.getChildren().setAll(contentPane, topPane);
-            FXUtils.onChangeAndOperate(getSkinnable().content, newValue -> contentPane.getChildren().setAll(newValue));
+            topPane.getStyleClass().add("notice-pane");
+            failedPane.getChildren().setAll(failedReasonLabel);
+
+            FXUtils.onChangeAndOperate(getSkinnable().content, newValue -> {
+                if (newValue == null) {
+                    contentPane.getChildren().clear();
+                } else {
+                    contentPane.getChildren().setAll(newValue);
+                }
+            });
             getChildren().setAll(root);
 
-            FXUtils.onChangeAndOperate(getSkinnable().loadingProperty(), newValue -> {
-                Timeline prev = animation;
-                if (prev != null) prev.stop();
+            observer = FXUtils.observeWeak(() -> {
+                if (getSkinnable().getFailedReason() != null) {
+                    root.setContent(failedPane, ContainerAnimations.FADE.getAnimationProducer());
+                    failedReasonLabel.setText(getSkinnable().getFailedReason());
+                } else if (getSkinnable().isLoading()) {
+                    root.setContent(topPane, ContainerAnimations.FADE.getAnimationProducer());
+                } else {
+                    root.setContent(contentPane, ContainerAnimations.FADE.getAnimationProducer());
+                }
+            }, getSkinnable().loadingProperty(), getSkinnable().failedReasonProperty());
+        }
+    }
 
-                AnimationProducer transition;
-                topPane.setMouseTransparent(true);
-                topPane.setVisible(true);
-                topPane.getStyleClass().add("gray-background");
-                if (newValue)
-                    transition = ContainerAnimations.FADE_IN.getAnimationProducer();
-                else
-                    transition = ContainerAnimations.FADE_OUT.getAnimationProducer();
+    public interface State {}
 
-                AnimationHandler handler = new AnimationHandler() {
-                    @Override
-                    public Duration getDuration() {
-                        return Duration.millis(160);
-                    }
+    public static class LoadedState implements State {}
 
-                    @Override
-                    public Pane getCurrentRoot() {
-                        return root;
-                    }
+    public static class LoadingState implements State {}
 
-                    @Override
-                    public Node getPreviousNode() {
-                        return null;
-                    }
+    public static class FailedState implements State {
+        private final String reason;
 
-                    @Override
-                    public Node getCurrentNode() {
-                        return topPane;
-                    }
-                };
+        public FailedState(String reason) {
+            this.reason = reason;
+        }
 
-                Timeline now = new Timeline();
-                now.getKeyFrames().addAll(transition.animate(handler));
-                now.getKeyFrames().add(new KeyFrame(handler.getDuration(), e -> {
-                    topPane.setMouseTransparent(!newValue);
-                    topPane.setVisible(newValue);
-                }));
-                now.play();
-                animation = now;
-            });
+        public String getReason() {
+            return reason;
         }
     }
 }

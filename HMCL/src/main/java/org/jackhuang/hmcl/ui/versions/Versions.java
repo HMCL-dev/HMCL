@@ -22,9 +22,11 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.mod.curse.CurseAddon;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -43,9 +45,13 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.ui.download.LocalModpackPage.MODPACK_FILE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Versions {
@@ -64,6 +70,41 @@ public final class Versions {
         if (profile.getRepository().isLoaded()) {
             Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile), i18n("install.modpack"));
         }
+    }
+
+    public static void downloadModpack() {
+        Profile profile = Profiles.getSelectedProfile();
+        if (profile.getRepository().isLoaded()) {
+            Controllers.getModpackDownloadListPage().loadVersion(profile, null);
+            Controllers.navigate(Controllers.getModpackDownloadListPage());
+        }
+    }
+
+    public static void downloadModpackImpl(Profile profile, String version, CurseAddon.LatestFile file) {
+        Path modpack;
+        URL downloadURL;
+        try {
+            modpack = Files.createTempFile("modpack", ".zip");
+            downloadURL = new URL(file.getDownloadUrl());
+        } catch (IOException e) {
+            Controllers.dialog(
+                    i18n("install.failed.downloading.detail", file.getDownloadUrl()) + "\n" + StringUtils.getStackTrace(e),
+                    i18n("download.failed"), MessageDialogPane.MessageType.ERROR);
+            return;
+        }
+        Controllers.taskDialog(
+                new FileDownloadTask(downloadURL, modpack.toFile())
+                        .whenComplete(Schedulers.javafx(), e -> {
+                            if (e == null) {
+                                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack.toFile()));
+                            } else {
+                                Controllers.dialog(
+                                        i18n("install.failed.downloading.detail", file.getDownloadUrl()) + "\n" + StringUtils.getStackTrace(e),
+                                        i18n("download.failed"), MessageDialogPane.MessageType.ERROR);
+                            }
+                        }).executor(true),
+                i18n("message.downloading")
+        );
     }
 
     public static void deleteVersion(Profile profile, String version) {

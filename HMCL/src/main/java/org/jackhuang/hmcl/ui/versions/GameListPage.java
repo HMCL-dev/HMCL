@@ -152,6 +152,13 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
                     installModpackItem.setLeftGraphic(VersionPage.wrap(SVG.pack(Theme.blackFillBinding(), 24, 24)));
                     installModpackItem.setOnAction(e -> Versions.importModpack());
 
+                    AdvancedListItem downloadModpackItem = new AdvancedListItem();
+                    downloadModpackItem.getStyleClass().add("navigation-drawer-item");
+                    downloadModpackItem.setTitle(i18n("modpack.download"));
+                    downloadModpackItem.setActionButtonVisible(false);
+                    downloadModpackItem.setLeftGraphic(VersionPage.wrap(SVG.fire(Theme.blackFillBinding(), 24, 24)));
+                    downloadModpackItem.setOnAction(e -> Versions.downloadModpack());
+
                     AdvancedListItem refreshItem = new AdvancedListItem();
                     refreshItem.getStyleClass().add("navigation-drawer-item");
                     refreshItem.setTitle(i18n("button.refresh"));
@@ -169,9 +176,10 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
                     AdvancedListBox bottomLeftCornerList = new AdvancedListBox()
                             .add(installNewGameItem)
                             .add(installModpackItem)
+                            .add(downloadModpackItem)
                             .add(refreshItem)
                             .add(globalManageItem);
-                    FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 4 + 12 * 2);
+                    FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 5 + 12 * 2);
                     left.setBottom(bottomLeftCornerList);
                 }
             }

@@ -20,17 +20,21 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
-    private final StringProperty tag = new SimpleStringProperty(this, "tag");
+    private final ObservableList<String> tags = FXCollections.observableArrayList();
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
+
+    private final ObservableList<Label> tagLabels;
 
     public TwoLineListItem(String titleString, String subtitleString) {
         this();
@@ -48,15 +52,17 @@ public class TwoLineListItem extends VBox {
         lblTitle.getStyleClass().add("title");
         lblTitle.textProperty().bind(title);
 
-        Label lblTag = new Label();
-        lblTag.getStyleClass().add("tag");
-        lblTag.textProperty().bind(tag);
+        HBox tagContainer = new HBox();
 
-        lblTag.visibleProperty().bind(Bindings.createBooleanBinding(
-                () -> StringUtils.isNotBlank(tag.getValue()),
-                tag));
+        tagLabels = MappedObservableList.create(tags, tag -> {
+            Label tagLabel = new Label();
+            tagLabel.getStyleClass().add("tag");
+            tagLabel.setText(tag);
+            return tagLabel;
+        });
+        Bindings.bindContent(tagContainer.getChildren(), tagLabels);
 
-        firstLine.getChildren().addAll(lblTitle, lblTag);
+        firstLine.getChildren().addAll(lblTitle, tagContainer);
 
         Label lblSubtitle = new Label();
         lblSubtitle.getStyleClass().add("subtitle");
@@ -90,16 +96,8 @@ public class TwoLineListItem extends VBox {
         this.subtitle.set(subtitle);
     }
 
-    public String getTag() {
-        return tag.get();
-    }
-
-    public StringProperty tagProperty() {
-        return tag;
-    }
-
-    public void setTag(String tag) {
-        this.tag.set(tag);
+    public ObservableList<String> getTags() {
+        return tags;
     }
 
     @Override

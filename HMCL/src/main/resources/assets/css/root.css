@@ -773,10 +773,36 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
 }
 
+.depth-0 {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0), 0, 0, 0, 0);
+}
+
+.depth-1 {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+}
+
+.depth-2 {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 15, 0.16, 0, 4);
+}
+
+.depth-3 {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 20, 0.19, 0, 6);
+}
+
+.depth-4 {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 25, 0.25, 0, 8);
+}
+
+.depth-5 {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 30, 0.3, 0, 10);
+}
+
 .card {
     -fx-background-color: rgba(255, 255, 255, 0.8);
     -fx-background-radius: 4;
     -fx-padding: 8px;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
 .card:selected {

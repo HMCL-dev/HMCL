@@ -86,7 +86,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 BooleanProperty booleanProperty;
 
                 {
-
                     Region clippedContainer = (Region)listView.lookup(".clipped-container");
                     setPrefWidth(0);
                     HBox container = new HBox(8);

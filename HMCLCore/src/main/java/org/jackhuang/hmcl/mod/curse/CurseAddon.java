@@ -9,6 +9,7 @@ public class CurseAddon {
     private final int id;
     private final String name;
     private final List<Author> authors;
+    private final List<Attachment> attachments;
     private final String websiteUrl;
     private final int gameId;
     private final String summary;
@@ -27,10 +28,11 @@ public class CurseAddon {
     private final boolean isAvailable;
     private final boolean isExperimental;
 
-    public CurseAddon(int id, String name, List<Author> authors, String websiteUrl, int gameId, String summary, int defaultFileId, List<LatestFile> latestFiles, List<Category> categories, int status, int primaryCategoryId, String slug, List<GameVersionLatestFile> gameVersionLatestFiles, boolean isFeatured, double popularityScore, int gamePopularityRank, String primaryLanguage, List<String> modLoaders, boolean isAvailable, boolean isExperimental) {
+    public CurseAddon(int id, String name, List<Author> authors, List<Attachment> attachments, String websiteUrl, int gameId, String summary, int defaultFileId, List<LatestFile> latestFiles, List<Category> categories, int status, int primaryCategoryId, String slug, List<GameVersionLatestFile> gameVersionLatestFiles, boolean isFeatured, double popularityScore, int gamePopularityRank, String primaryLanguage, List<String> modLoaders, boolean isAvailable, boolean isExperimental) {
         this.id = id;
         this.name = name;
         this.authors = authors;
+        this.attachments = attachments;
         this.websiteUrl = websiteUrl;
         this.gameId = gameId;
         this.summary = summary;
@@ -60,6 +62,10 @@ public class CurseAddon {
 
     public List<Author> getAuthors() {
         return authors;
+    }
+
+    public List<Attachment> getAttachments() {
+        return attachments;
     }
 
     public String getWebsiteUrl() {
@@ -174,6 +180,61 @@ public class CurseAddon {
     }
 
     @Immutable
+    public static class Attachment {
+        private final int id;
+        private final int projectId;
+        private final String description;
+        private final boolean isDefault;
+        private final String thumbnailUrl;
+        private final String title;
+        private final String url;
+        private final int status;
+
+        public Attachment(int id, int projectId, String description, boolean isDefault, String thumbnailUrl, String title, String url, int status) {
+            this.id = id;
+            this.projectId = projectId;
+            this.description = description;
+            this.isDefault = isDefault;
+            this.thumbnailUrl = thumbnailUrl;
+            this.title = title;
+            this.url = url;
+            this.status = status;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public int getProjectId() {
+            return projectId;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public boolean isDefault() {
+            return isDefault;
+        }
+
+        public String getThumbnailUrl() {
+            return thumbnailUrl;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public int getStatus() {
+            return status;
+        }
+    }
+
+    @Immutable
     public static class Dependency {
         private final int id;
         private final int addonId;
@@ -212,6 +273,7 @@ public class CurseAddon {
     public static class LatestFile {
         private final int id;
         private final String displayName;
+        private final String fileName;
         private final String fileDate;
         private final int fileLength;
         private final int releaseType;
@@ -228,12 +290,13 @@ public class CurseAddon {
         private final int restrictProjectFileAccess;
         private final int projectStatus;
         private final int projectId;
-        private final int isServerPack;
+        private final boolean isServerPack;
         private final int serverPackFileId;
 
-        public LatestFile(int id, String displayName, String fileDate, int fileLength, int releaseType, int fileStatus, String downloadUrl, boolean isAlternate, int alternateFileId, List<Dependency> dependencies, boolean isAvailable, List<String> gameVersion, boolean hasInstallScript, boolean isCompatibleWIthClient, int categorySectionPackageType, int restrictProjectFileAccess, int projectStatus, int projectId, int isServerPack, int serverPackFileId) {
+        public LatestFile(int id, String displayName, String fileName, String fileDate, int fileLength, int releaseType, int fileStatus, String downloadUrl, boolean isAlternate, int alternateFileId, List<Dependency> dependencies, boolean isAvailable, List<String> gameVersion, boolean hasInstallScript, boolean isCompatibleWIthClient, int categorySectionPackageType, int restrictProjectFileAccess, int projectStatus, int projectId, boolean isServerPack, int serverPackFileId) {
             this.id = id;
             this.displayName = displayName;
+            this.fileName = fileName;
             this.fileDate = fileDate;
             this.fileLength = fileLength;
             this.releaseType = releaseType;
@@ -260,6 +323,10 @@ public class CurseAddon {
 
         public String getDisplayName() {
             return displayName;
+        }
+
+        public String getFileName() {
+            return fileName;
         }
 
         public String getFileDate() {
@@ -326,7 +393,7 @@ public class CurseAddon {
             return projectId;
         }
 
-        public int getIsServerPack() {
+        public boolean isServerPack() {
             return isServerPack;
         }
 

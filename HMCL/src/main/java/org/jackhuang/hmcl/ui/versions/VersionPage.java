@@ -27,8 +27,14 @@ import javafx.scene.control.Control;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.mod.curse.CurseAddon;
+import org.jackhuang.hmcl.mod.curse.CurseModManager;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -36,14 +42,17 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class VersionPage extends Control implements DecoratorPage {
+public class VersionPage extends Control implements DecoratorPage, ModDownloadPage.DownloadCallback {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty();
     private final TabHeader.Tab versionSettingsTab = new TabHeader.Tab("versionSettingsTab");
@@ -51,7 +60,7 @@ public class VersionPage extends Control implements DecoratorPage {
     private final TabHeader.Tab modListTab = new TabHeader.Tab("modListTab");
     private final ModListPage modListPage = new ModListPage(modListTab);
     private final TabHeader.Tab curseModListTab = new TabHeader.Tab("modListTab");
-    private final ModDownloadListPage curseModListPage = new ModDownloadListPage();
+    private final ModDownloadListPage curseModListPage = new ModDownloadListPage(CurseModManager.SECTION_MOD, this);
     private final TabHeader.Tab installerListTab = new TabHeader.Tab("installerListTab");
     private final InstallerListPage installerListPage = new InstallerListPage();
     private final TabHeader.Tab worldListTab = new TabHeader.Tab("worldList");
@@ -180,6 +189,28 @@ public class VersionPage extends Control implements DecoratorPage {
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state.getReadOnlyProperty();
+    }
+
+    @Override
+    public void download(Profile profile, @Nullable String version, CurseAddon.LatestFile file) {
+        if (version == null) {
+            throw new InternalError();
+        }
+
+        Path dest = profile.getRepository().getRunDirectory(version).toPath().resolve("mods").resolve(file.getFileName());
+
+        TaskExecutorDialogPane downloadingPane = new TaskExecutorDialogPane(it -> {
+        });
+
+        TaskExecutor executor = Task.composeAsync(() -> {
+            FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(file.getDownloadUrl()), dest.toFile());
+            task.setName(file.getDisplayName());
+            return task;
+        }).executor(false);
+
+        downloadingPane.setExecutor(executor, true);
+        Controllers.dialog(downloadingPane);
+        executor.start();
     }
 
     public static class Skin extends SkinBase<VersionPage> {
