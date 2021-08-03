@@ -42,7 +42,6 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
-import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.main.RootPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
@@ -84,12 +83,13 @@ public final class Controllers {
     private static AuthlibInjectorServersPage serversPage = null;
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     private static DecoratorController decorator;
-    private static Lazy<ModDownloadListPage> modDownloadListPage = new Lazy<>(() ->
-            new ModDownloadListPage(CurseModManager.SECTION_MODPACK, Versions::downloadModpackImpl) {
-                {
-                    state.set(State.fromTitle(i18n("modpack.download")));
-                }
-            });
+    private static Lazy<ModDownloadListPage> modDownloadListPage = new Lazy<>(() -> {
+        return new ModDownloadListPage(CurseModManager.SECTION_MODPACK, Versions::downloadModpackImpl) {
+            {
+                state.set(State.fromTitle(i18n("modpack.download")));
+            }
+        };
+    });
 
     private Controllers() {
     }

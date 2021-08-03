@@ -51,7 +51,6 @@ import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.ui.download.LocalModpackPage.MODPACK_FILE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Versions {

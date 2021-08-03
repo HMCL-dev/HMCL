@@ -17,9 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.*;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -44,6 +42,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -174,13 +173,37 @@ public class ModDownloadListPage extends Control implements DecoratorPage {
                     }
                 });
 
-                JFXTextField categoryField = new JFXTextField();
-                categoryField.setPromptText(i18n("mods.category"));
-                searchPane.add(categoryField, 0, 1);
+                StackPane categoryStackPane = new StackPane();
+                JFXComboBox<CategoryIndented> categoryComboBox = new JFXComboBox<>();
+                categoryStackPane.getChildren().setAll(categoryComboBox);
+                categoryComboBox.prefWidthProperty().bind(categoryStackPane.widthProperty());
+                categoryComboBox.getStyleClass().add("fit-width");
+                categoryComboBox.setPromptText(i18n("mods.category"));
+                Task.supplyAsync(() -> CurseModManager.getCategories(getSkinnable().section))
+                        .thenAcceptAsync(Schedulers.javafx(), categories -> {
+                            List<CategoryIndented> result = new ArrayList<>();
+                            for (CurseModManager.Category category : categories) {
+                                resolveCategory(category, 0, result);
+                            }
+                            categoryComboBox.getItems().setAll(result);
+                        }).start();
+                searchPane.add(categoryStackPane, 0, 1);
 
-                JFXTextField sortField = new JFXTextField();
-                sortField.setPromptText(i18n("search.sort"));
-                searchPane.add(sortField, 1, 1);
+                StackPane sortStackPane = new StackPane();
+                JFXComboBox<String> sortComboBox = new JFXComboBox<>();
+                sortStackPane.getChildren().setAll(sortComboBox);
+                sortComboBox.prefWidthProperty().bind(sortStackPane.widthProperty());
+                sortComboBox.getStyleClass().add("fit-width");
+                sortComboBox.setPromptText(i18n("search.sort"));
+                sortComboBox.getItems().setAll(
+                        i18n("curse.sort.date_created"),
+                        i18n("curse.sort.popularity"),
+                        i18n("curse.sort.last_updated"),
+                        i18n("curse.sort.name"),
+                        i18n("curse.sort.author"),
+                        i18n("curse.sort.total_downloads"));
+                sortComboBox.getSelectionModel().select(0);
+                searchPane.add(sortStackPane, 1, 1);
 
                 VBox vbox = new VBox();
                 vbox.setAlignment(Pos.CENTER_RIGHT);
@@ -189,7 +212,14 @@ public class ModDownloadListPage extends Control implements DecoratorPage {
                 JFXButton searchButton = new JFXButton();
                 searchButton.setText(i18n("search"));
                 searchButton.setOnAction(e -> {
-                    getSkinnable().search(gameVersionField.getText(), 0, 0, nameField.getText(), 0);
+                    getSkinnable().search(gameVersionField.getText(),
+                            Optional.ofNullable(categoryComboBox.getSelectionModel().getSelectedItem())
+                                    .map(CategoryIndented::getCategory)
+                                    .map(CurseModManager.Category::getId)
+                                    .orElse(0),
+                            0,
+                            nameField.getText(),
+                            sortComboBox.getSelectionModel().getSelectedIndex());
                 });
                 searchPane.add(searchButton, 0, 2);
                 vbox.getChildren().setAll(searchButton);
@@ -255,6 +285,36 @@ public class ModDownloadListPage extends Control implements DecoratorPage {
             pane.getChildren().setAll(searchPane, spinnerPane);
 
             getChildren().setAll(pane);
+        }
+
+        private static class CategoryIndented {
+            private final int indent;
+            private final CurseModManager.Category category;
+
+            public CategoryIndented(int indent, CurseModManager.Category category) {
+                this.indent = indent;
+                this.category = category;
+            }
+
+            public int getIndent() {
+                return indent;
+            }
+
+            public CurseModManager.Category getCategory() {
+                return category;
+            }
+
+            @Override
+            public String toString() {
+                return StringUtils.repeats(' ', indent) + i18n("curse.category." + category.getId());
+            }
+        }
+
+        private static void resolveCategory(CurseModManager.Category category, int indent, List<CategoryIndented> result) {
+            result.add(new CategoryIndented(indent, category));
+            for (CurseModManager.Category subcategory : category.getSubcategories()) {
+                resolveCategory(subcategory, indent + 1, result);
+            }
         }
     }
 }

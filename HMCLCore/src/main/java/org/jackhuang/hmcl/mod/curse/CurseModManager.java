@@ -11,7 +11,9 @@ import java.util.*;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
-public class CurseModManager {
+public final class CurseModManager {
+    private CurseModManager() {
+    }
 
     public static List<CurseAddon> searchPaginated(String gameVersion, int category, int section, int pageOffset, String searchFilter, int sort) throws IOException {
         String response = NetworkUtils.doGet(new URL(NetworkUtils.withQuery("https://addons-ecs.forgesvc.net/api/v2/addon/search", mapOf(

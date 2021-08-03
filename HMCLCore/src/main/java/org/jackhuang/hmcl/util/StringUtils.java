@@ -235,4 +235,12 @@ public final class StringUtils {
         }
         return builder.toString();
     }
+
+    public static String repeats(char ch, int repeat) {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < repeat; i++) {
+            result.append(ch);
+        }
+        return result.toString();
+    }
 }
