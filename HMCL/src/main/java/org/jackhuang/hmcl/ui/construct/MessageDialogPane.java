@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXButton;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.setting.Theme;
@@ -101,5 +102,18 @@ public final class MessageDialogPane extends StackPane {
         cancelButton.setText(i18n("button.no"));
 
         actions.getChildren().add(cancelButton);
+    }
+
+    public static MessageDialogPane fromButtons(String text, String title, MessageType type, JFXButton[] buttons) {
+        MessageDialogPane pane = new MessageDialogPane(text, title, type, null);
+
+        for (JFXButton button : buttons) {
+            button.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+                pane.fireEvent(new DialogCloseEvent());
+            });
+        }
+
+        pane.actions.getChildren().setAll(buttons);
+        return pane;
     }
 }

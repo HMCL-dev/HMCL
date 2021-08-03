@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.Node;
@@ -203,6 +204,10 @@ public final class Controllers {
 
     public static void confirm(String text, String title, MessageType type, Runnable onAccept, Runnable onCancel) {
         dialog(new MessageDialogPane(text, title, type, onAccept, onCancel));
+    }
+
+    public static void dialogWithButtons(String text, String title, MessageType type, JFXButton... buttons) {
+        dialog(MessageDialogPane.fromButtons(text, title, type, buttons));
     }
 
     public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {

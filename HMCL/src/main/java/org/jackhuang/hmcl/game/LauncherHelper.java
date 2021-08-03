@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
@@ -47,6 +48,7 @@ import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.LogWindow;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
@@ -326,7 +328,11 @@ public final class LauncherHelper {
                 if (acceptableJava.isPresent()) {
                     setting.setJavaVersion(acceptableJava.get());
                 } else {
-                    Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), version.getJavaVersion().getMajorVersion()), i18n("message.warning"), () -> {
+                    JFXButton linkButton = new JFXButton(i18n("download.external_link"));
+                    linkButton.setOnAction(e -> FXUtils.openLink("https://adoptopenjdk.net/"));
+                    linkButton.getStyleClass().add("dialog-accept");
+                    JFXButton yesButton = new JFXButton(i18n("button.ok"));
+                    yesButton.setOnAction(event -> {
                         downloadJava(version.getJavaVersion(), profile)
                                 .thenAcceptAsync(x -> {
                                     try {
@@ -338,10 +344,36 @@ public final class LauncherHelper {
                                         LOG.log(Level.SEVERE, "Cannot list javas", e);
                                     }
                                 }, Platform::runLater).thenAccept(x -> onAccept.run());
-                    }, null);
+                    });
+                    yesButton.getStyleClass().add("dialog-accept");
+                    JFXButton noButton = new JFXButton(i18n("button.cancel"));
+                    noButton.getStyleClass().add("dialog-cancel");
+
+                    Controllers.dialogWithButtons(
+                            i18n("launch.advice.require_newer_java_version",
+                                    gameVersion.toString(),
+                                    version.getJavaVersion().getMajorVersion()),
+                            i18n("message.warning"),
+                            MessageType.QUESTION,
+                            linkButton, yesButton, noButton);
                     flag = true;
                 }
             }
+        }
+
+        // Game later than 1.17 requires Java 16.
+        if (!flag && java.getParsedVersion() < JavaVersion.JAVA_16 && gameVersion.compareTo(VersionNumber.asVersion("1.17")) >= 0) {
+            Optional<JavaVersion> acceptableJava = JavaVersion.getJavas().stream()
+                    .filter(javaVersion -> javaVersion.getParsedVersion() >= JavaVersion.JAVA_16)
+                    .max(Comparator.comparing(JavaVersion::getVersionNumber));
+            if (acceptableJava.isPresent()) {
+                setting.setJavaVersion(acceptableJava.get());
+            } else {
+                Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 16), i18n("message.warning"), () -> {
+                    FXUtils.openLink("https://adoptopenjdk.net/");
+                }, null);
+            }
+            flag = true;
         }
 
         // Game later than 1.7.2 accepts Java 8.
