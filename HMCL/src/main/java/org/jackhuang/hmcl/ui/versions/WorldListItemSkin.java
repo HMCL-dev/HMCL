@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
-import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
@@ -66,9 +65,9 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         JFXPopup popup = new JFXPopup(menu);
 
         menu.getContent().setAll(
-                new IconedMenuItem(FXUtils.limitingSize(SVG.gear(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.datapack"), FXUtils.withJFXPopupClosing(skinnable::manageDatapacks, popup)),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.gearOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.datapack"), FXUtils.withJFXPopupClosing(skinnable::manageDatapacks, popup)),
                 new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.export"), FXUtils.withJFXPopupClosing(skinnable::export, popup)),
-                new IconedMenuItem(FXUtils.limitingSize(SVG.folderOpen(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.reveal"), FXUtils.withJFXPopupClosing(skinnable::reveal, popup)));
+                new IconedMenuItem(FXUtils.limitingSize(SVG.folderOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.reveal"), FXUtils.withJFXPopupClosing(skinnable::reveal, popup)));
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
@@ -85,7 +84,6 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
 
         root.getStyleClass().add("card");
         root.setStyle("-fx-padding: 8 8 8 0");
-        JFXDepthManager.setDepth(root, 1);
 
         getChildren().setAll(root);
     }
