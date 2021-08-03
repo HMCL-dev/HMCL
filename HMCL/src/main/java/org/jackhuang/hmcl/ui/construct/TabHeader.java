@@ -41,32 +41,32 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 public class TabHeader extends Control implements TabControl {
 
-    public TabHeader(Tab... tabs) {
+    public TabHeader(Tab<?>... tabs) {
         getStyleClass().setAll("tab-header");
         if (tabs != null) {
             getTabs().addAll(tabs);
         }
     }
 
-    private ObservableList<Tab> tabs = FXCollections.observableArrayList();
+    private ObservableList<Tab<?>> tabs = FXCollections.observableArrayList();
     private ObjectProperty<Side> side = new SimpleObjectProperty<>(Side.TOP);
 
     @Override
-    public ObservableList<Tab> getTabs() {
+    public ObservableList<Tab<?>> getTabs() {
         return tabs;
     }
 
-    private final ObjectProperty<SingleSelectionModel<Tab>> selectionModel = new SimpleObjectProperty<>(this, "selectionModel", new TabControlSelectionModel(this));
+    private final ObjectProperty<SingleSelectionModel<Tab<?>>> selectionModel = new SimpleObjectProperty<>(this, "selectionModel", new TabControlSelectionModel(this));
 
-    public SingleSelectionModel<Tab> getSelectionModel() {
+    public SingleSelectionModel<Tab<?>> getSelectionModel() {
         return selectionModel.get();
     }
 
-    public ObjectProperty<SingleSelectionModel<Tab>> selectionModelProperty() {
+    public ObjectProperty<SingleSelectionModel<Tab<?>>> selectionModelProperty() {
         return selectionModel;
     }
 
-    public void setSelectionModel(SingleSelectionModel<Tab> selectionModel) {
+    public void setSelectionModel(SingleSelectionModel<Tab<?>> selectionModel) {
         this.selectionModel.set(selectionModel);
     }
 
@@ -104,7 +104,7 @@ public class TabHeader extends Control implements TabControl {
 
         private final HeaderContainer header;
         private boolean isSelectingTab = false;
-        private Tab selectedTab;
+        private Tab<?> selectedTab;
 
         protected TabHeaderSkin(TabHeader control) {
             super(control);
@@ -537,12 +537,12 @@ public class TabHeader extends Control implements TabControl {
 
         protected class TabHeaderContainer extends StackPane {
 
-            private final Tab tab;
+            private final Tab<?> tab;
             private final Label tabText;
             private final BorderPane inner;
             private final JFXRippler rippler;
 
-            public TabHeaderContainer(Tab tab) {
+            public TabHeaderContainer(Tab<?> tab) {
                 this.tab = tab;
 
                 tabText = new Label();

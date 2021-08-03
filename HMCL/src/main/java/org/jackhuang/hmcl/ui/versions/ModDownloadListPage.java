@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ModDownloadListPage extends Control implements DecoratorPage {
+public class ModDownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
@@ -66,6 +66,7 @@ public class ModDownloadListPage extends Control implements DecoratorPage {
         this.callback = callback;
     }
 
+    @Override
     public void loadVersion(Profile profile, String version) {
         this.version.set(new Profile.ProfileVersion(profile, version));
 

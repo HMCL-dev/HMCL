@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXSpinner;
 import javafx.beans.DefaultProperty;
-import javafx.beans.WeakInvalidationListener;
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
@@ -94,7 +94,7 @@ public class SpinnerPane extends Control {
         private final StackPane failedPane = new StackPane();
         private final Label failedReasonLabel = new Label();
         @SuppressWarnings("FieldCanBeLocal") // prevent from gc.
-        private final WeakInvalidationListener observer;
+        private final InvalidationListener observer;
 
         protected Skin(SpinnerPane control) {
             super(control);

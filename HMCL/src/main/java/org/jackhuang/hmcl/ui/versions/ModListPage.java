@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
-import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -50,16 +49,13 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> {
+public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.VersionLoadable {
     private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
 
-    private TabHeader.Tab tab;
     private ModManager modManager;
     private LibraryAnalyzer libraryAnalyzer;
 
-    public ModListPage(TabHeader.Tab tab) {
-        this.tab = tab;
-
+    public ModListPage() {
         FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)), mods -> {
             mods.forEach(it -> {
                 try {
@@ -81,10 +77,11 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         loadMods(modManager);
     }
 
-    public CompletableFuture<?> loadVersion(Profile profile, String id) {
+    @Override
+    public void loadVersion(Profile profile, String id) {
         libraryAnalyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id));
         modded.set(libraryAnalyzer.hasModLoader());
-        return loadMods(profile.getRepository().getModManager(id));
+        loadMods(profile.getRepository().getModManager(id));
     }
 
     private CompletableFuture<?> loadMods(ModManager modManager) {
@@ -99,13 +96,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
-        }).whenCompleteAsync((list, exception) -> {
+        }, Schedulers.defaultScheduler()).whenCompleteAsync((list, exception) -> {
             loadingProperty().set(false);
             if (exception == null)
-                getProperties().put(ModListPage.class, FXUtils.onWeakChangeAndOperate(tab.selectedProperty(), newValue -> {
-                    if (newValue)
-                        itemsProperty().setAll(list.stream().map(ModListPageSkin.ModInfoObject::new).sorted().collect(Collectors.toList()));
-                }));
+                itemsProperty().setAll(list.stream().map(ModListPageSkin.ModInfoObject::new).sorted().collect(Collectors.toList()));
             else
                 getProperties().remove(ModListPage.class);
         }, Platform::runLater);

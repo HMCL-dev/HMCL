@@ -32,9 +32,7 @@ public abstract class DecoratorTabPage extends DecoratorTransitionPage implement
 
     public DecoratorTabPage() {
         getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
-            if (newValue.getNode() == null && newValue.getNodeSupplier() != null) {
-                newValue.setNode(newValue.getNodeSupplier().get());
-            }
+            newValue.initializeIfNeeded();
             if (newValue.getNode() != null) {
                 onNavigating(getCurrentPage());
                 if (getCurrentPage() != null) getCurrentPage().fireEvent(new Navigator.NavigationEvent(null, getCurrentPage(), Navigation.NavigationDirection.NEXT, Navigator.NavigationEvent.NAVIGATING));
@@ -45,31 +43,31 @@ public abstract class DecoratorTabPage extends DecoratorTransitionPage implement
         });
     }
 
-    public DecoratorTabPage(TabHeader.Tab... tabs) {
+    public DecoratorTabPage(TabHeader.Tab<?>... tabs) {
         this();
         if (tabs != null) {
             getTabs().addAll(tabs);
         }
     }
 
-    private ObservableList<TabHeader.Tab> tabs = FXCollections.observableArrayList();
+    private ObservableList<TabHeader.Tab<?>> tabs = FXCollections.observableArrayList();
 
     @Override
-    public ObservableList<TabHeader.Tab> getTabs() {
+    public ObservableList<TabHeader.Tab<?>> getTabs() {
         return tabs;
     }
 
-    private final ObjectProperty<SingleSelectionModel<TabHeader.Tab>> selectionModel = new SimpleObjectProperty<>(this, "selectionModel", new TabControl.TabControlSelectionModel(this));
+    private final ObjectProperty<SingleSelectionModel<TabHeader.Tab<?>>> selectionModel = new SimpleObjectProperty<>(this, "selectionModel", new TabControl.TabControlSelectionModel(this));
 
-    public SingleSelectionModel<TabHeader.Tab> getSelectionModel() {
+    public SingleSelectionModel<TabHeader.Tab<?>> getSelectionModel() {
         return selectionModel.get();
     }
 
-    public ObjectProperty<SingleSelectionModel<TabHeader.Tab>> selectionModelProperty() {
+    public ObjectProperty<SingleSelectionModel<TabHeader.Tab<?>>> selectionModelProperty() {
         return selectionModel;
     }
 
-    public void setSelectionModel(SingleSelectionModel<TabHeader.Tab> selectionModel) {
+    public void setSelectionModel(SingleSelectionModel<TabHeader.Tab<?>> selectionModel) {
         this.selectionModel.set(selectionModel);
     }
 }

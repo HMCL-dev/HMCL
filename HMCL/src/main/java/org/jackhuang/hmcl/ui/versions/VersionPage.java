@@ -48,41 +48,45 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class VersionPage extends Control implements DecoratorPage, ModDownloadPage.DownloadCallback {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty();
-    private final TabHeader.Tab versionSettingsTab = new TabHeader.Tab("versionSettingsTab");
-    private final VersionSettingsPage versionSettingsPage = new VersionSettingsPage();
-    private final TabHeader.Tab modListTab = new TabHeader.Tab("modListTab");
-    private final ModListPage modListPage = new ModListPage(modListTab);
-    private final TabHeader.Tab curseModListTab = new TabHeader.Tab("modListTab");
-    private final ModDownloadListPage curseModListPage = new ModDownloadListPage(CurseModManager.SECTION_MOD, this);
-    private final TabHeader.Tab installerListTab = new TabHeader.Tab("installerListTab");
-    private final InstallerListPage installerListPage = new InstallerListPage();
-    private final TabHeader.Tab worldListTab = new TabHeader.Tab("worldList");
-    private final WorldListPage worldListPage = new WorldListPage();
+    private final TabHeader tab;
+    private final TabHeader.Tab<VersionSettingsPage> versionSettingsTab = new TabHeader.Tab<>("versionSettingsTab");
+    private final TabHeader.Tab<ModListPage> modListTab = new TabHeader.Tab<>("modListTab");
+    private final TabHeader.Tab<ModDownloadListPage> curseModListTab = new TabHeader.Tab<>("modListTab");
+    private final TabHeader.Tab<InstallerListPage> installerListTab = new TabHeader.Tab<>("installerListTab");
+    private final TabHeader.Tab<WorldListPage> worldListTab = new TabHeader.Tab<>("worldList");
     private final TransitionPane transitionPane = new TransitionPane();
-    private final ObjectProperty<TabHeader.Tab> selectedTab = new SimpleObjectProperty<>();
     private final BooleanProperty currentVersionUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
 
     private String preferredVersionName = null;
 
     {
-        versionSettingsTab.setNode(versionSettingsPage);
-        modListTab.setNode(modListPage);
-        curseModListTab.setNode(curseModListPage);
-        installerListTab.setNode(installerListPage);
-        worldListTab.setNode(worldListPage);
+        versionSettingsTab.setNodeSupplier(VersionSettingsPage::new);
+        modListTab.setNodeSupplier(ModListPage::new);
+        curseModListTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_MOD, this));
+        installerListTab.setNodeSupplier(InstallerListPage::new);
+        worldListTab.setNodeSupplier(WorldListPage::new);
+
+        tab = new TabHeader(versionSettingsTab, modListTab, curseModListTab, installerListTab, worldListTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
-        selectedTab.set(versionSettingsTab);
-        FXUtils.onChangeAndOperate(selectedTab, newValue -> {
+        tab.getSelectionModel().select(versionSettingsTab);
+        FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
+            if (newValue.initializeIfNeeded()) {
+                if (this.version.get() != null) {
+                    if (newValue.getNode() instanceof VersionLoadable) {
+                        ((VersionLoadable) newValue.getNode()).loadVersion(version.get().getProfile(), version.get().getVersion());
+                    }
+                }
+            }
+
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE.getAnimationProducer());
         });
     }
@@ -103,14 +107,17 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
         setVersion(version, profile);
         preferredVersionName = version;
 
-        versionSettingsPage.loadVersion(profile, version);
-        curseModListPage.loadVersion(profile, version);
+        if (versionSettingsTab.getNode() != null)
+            versionSettingsTab.getNode().loadVersion(profile, version);
+        if (modListTab.getNode() != null)
+            modListTab.getNode().loadVersion(profile, version);
+        if (curseModListTab.getNode() != null)
+            curseModListTab.getNode().loadVersion(profile, version);
+        if (installerListTab.getNode() != null)
+            installerListTab.getNode().loadVersion(profile, version);
+        if (worldListTab.getNode() != null)
+            worldListTab.getNode().loadVersion(profile, version);
         currentVersionUpgradable.set(profile.getRepository().isModpack(version));
-
-        CompletableFuture.allOf(
-                modListPage.loadVersion(profile, version),
-                installerListPage.loadVersion(profile, version),
-                worldListPage.loadVersion(profile, version));
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
@@ -269,40 +276,40 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
                 versionSettingsItem.setTitle(i18n("settings"));
                 versionSettingsItem.setLeftGraphic(wrap(SVG.gearOutline(null, 20, 20)));
                 versionSettingsItem.setActionButtonVisible(false);
-                versionSettingsItem.activeProperty().bind(control.selectedTab.isEqualTo(control.versionSettingsTab));
-                versionSettingsItem.setOnAction(e -> control.selectedTab.set(control.versionSettingsTab));
+                versionSettingsItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.versionSettingsTab));
+                versionSettingsItem.setOnAction(e -> control.tab.getSelectionModel().select(control.versionSettingsTab));
 
                 AdvancedListItem modListItem = new AdvancedListItem();
                 modListItem.getStyleClass().add("navigation-drawer-item");
                 modListItem.setTitle(i18n("mods"));
                 modListItem.setLeftGraphic(wrap(SVG.puzzle(null, 20, 20)));
                 modListItem.setActionButtonVisible(false);
-                modListItem.activeProperty().bind(control.selectedTab.isEqualTo(control.modListTab));
-                modListItem.setOnAction(e -> control.selectedTab.set(control.modListTab));
+                modListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.modListTab));
+                modListItem.setOnAction(e -> control.tab.getSelectionModel().select(control.modListTab));
 
                 AdvancedListItem curseModListItem = new AdvancedListItem();
                 curseModListItem.getStyleClass().add("navigation-drawer-item");
                 curseModListItem.setTitle(i18n("mods.download"));
                 curseModListItem.setLeftGraphic(wrap(SVG.fire(null, 20, 20)));
                 curseModListItem.setActionButtonVisible(false);
-                curseModListItem.activeProperty().bind(control.selectedTab.isEqualTo(control.curseModListTab));
-                curseModListItem.setOnAction(e -> control.selectedTab.set(control.curseModListTab));
+                curseModListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.curseModListTab));
+                curseModListItem.setOnAction(e -> control.tab.getSelectionModel().select(control.curseModListTab));
 
                 AdvancedListItem installerListItem = new AdvancedListItem();
                 installerListItem.getStyleClass().add("navigation-drawer-item");
                 installerListItem.setTitle(i18n("settings.tabs.installers"));
                 installerListItem.setLeftGraphic(wrap(SVG.cube(null, 20, 20)));
                 installerListItem.setActionButtonVisible(false);
-                installerListItem.activeProperty().bind(control.selectedTab.isEqualTo(control.installerListTab));
-                installerListItem.setOnAction(e -> control.selectedTab.set(control.installerListTab));
+                installerListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.installerListTab));
+                installerListItem.setOnAction(e -> control.tab.getSelectionModel().select(control.installerListTab));
 
                 AdvancedListItem worldListItem = new AdvancedListItem();
                 worldListItem.getStyleClass().add("navigation-drawer-item");
                 worldListItem.setTitle(i18n("world"));
                 worldListItem.setLeftGraphic(wrap(SVG.gamepad(null, 20, 20)));
                 worldListItem.setActionButtonVisible(false);
-                worldListItem.activeProperty().bind(control.selectedTab.isEqualTo(control.worldListTab));
-                worldListItem.setOnAction(e -> control.selectedTab.set(control.worldListTab));
+                worldListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.worldListTab));
+                worldListItem.setOnAction(e -> control.tab.getSelectionModel().select(control.worldListTab));
 
                 AdvancedListBox sideBar = new AdvancedListBox()
                         .add(versionSettingsItem)
@@ -403,4 +410,7 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
         return stackPane;
     }
 
+    interface VersionLoadable {
+        void loadVersion(Profile profile, String version);
+    }
 }

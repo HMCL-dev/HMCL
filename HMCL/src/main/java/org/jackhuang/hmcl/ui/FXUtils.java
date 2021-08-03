@@ -114,13 +114,14 @@ public final class FXUtils {
         return onWeakChange(value, consumer);
     }
 
-    public static WeakInvalidationListener observeWeak(Runnable runnable, Observable... observables) {
-        WeakInvalidationListener listener = new WeakInvalidationListener(observable -> runnable.run());
+    public static InvalidationListener observeWeak(Runnable runnable, Observable... observables) {
+        InvalidationListener originalListener = observable -> runnable.run();
+        WeakInvalidationListener listener = new WeakInvalidationListener(originalListener);
         for (Observable observable : observables) {
             observable.addListener(listener);
         }
         runnable.run();
-        return listener;
+        return originalListener;
     }
 
     public static void runLaterIf(BooleanSupplier condition, Runnable runnable) {

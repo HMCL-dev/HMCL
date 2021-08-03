@@ -44,7 +44,7 @@ import java.util.function.Function;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class InstallerListPage extends ListPageBase<InstallerItem> {
+public class InstallerListPage extends ListPageBase<InstallerItem> implements VersionPage.VersionLoadable {
     private Profile profile;
     private String versionId;
     private Version version;
@@ -62,13 +62,14 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         return new InstallerListPageSkin();
     }
 
-    public CompletableFuture<?> loadVersion(Profile profile, String versionId) {
+    @Override
+    public void loadVersion(Profile profile, String versionId) {
         this.profile = profile;
         this.versionId = versionId;
         this.version = profile.getRepository().getVersion(versionId);
         this.gameVersion = null;
 
-        return CompletableFuture.supplyAsync(() -> {
+        CompletableFuture.supplyAsync(() -> {
             gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)).orElse(null);
 
             return LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(versionId));

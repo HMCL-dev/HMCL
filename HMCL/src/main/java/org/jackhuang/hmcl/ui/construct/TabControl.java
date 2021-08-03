@@ -27,9 +27,9 @@ import javafx.scene.control.SingleSelectionModel;
 import java.util.function.Supplier;
 
 public interface TabControl {
-    ObservableList<Tab> getTabs();
+    ObservableList<Tab<?>> getTabs();
 
-    class TabControlSelectionModel extends SingleSelectionModel<Tab> {
+    class TabControlSelectionModel extends SingleSelectionModel<Tab<?>> {
         private final TabControl tabHeader;
 
         public TabControlSelectionModel(final TabControl t) {
@@ -39,9 +39,9 @@ public interface TabControl {
             this.tabHeader = t;
 
             // watching for changes to the items list content
-            final ListChangeListener<Tab> itemsContentObserver = c -> {
+            final ListChangeListener<Tab<?>> itemsContentObserver = c -> {
                 while (c.next()) {
-                    for (Tab tab : c.getRemoved()) {
+                    for (Tab<?> tab : c.getRemoved()) {
                         if (tab != null && !tabHeader.getTabs().contains(tab)) {
                             if (tab.isSelected()) {
                                 tab.setSelected(false);
@@ -117,29 +117,29 @@ public interface TabControl {
             }
         }
 
-        @Override protected Tab getModelItem(int index) {
-            final ObservableList<Tab> items = tabHeader.getTabs();
+        @Override protected Tab<?> getModelItem(int index) {
+            final ObservableList<Tab<?>> items = tabHeader.getTabs();
             if (items == null) return null;
             if (index < 0 || index >= items.size()) return null;
             return items.get(index);
         }
 
         @Override protected int getItemCount() {
-            final ObservableList<Tab> items = tabHeader.getTabs();
+            final ObservableList<Tab<?>> items = tabHeader.getTabs();
             return items == null ? 0 : items.size();
         }
 
-        private Tab findNearestAvailableTab(int tabIndex, boolean doSelect) {
+        private Tab<?> findNearestAvailableTab(int tabIndex, boolean doSelect) {
             // we always try to select the nearest, non-disabled
             // tab from the position of the closed tab.
             final int tabCount = getItemCount();
             int i = 1;
-            Tab bestTab = null;
+            Tab<?> bestTab = null;
             while (true) {
                 // look leftwards
                 int downPos = tabIndex - i;
                 if (downPos >= 0) {
-                    Tab _tab = getModelItem(downPos);
+                    Tab<?> _tab = getModelItem(downPos);
                     if (_tab != null) {
                         bestTab = _tab;
                         break;
@@ -153,7 +153,7 @@ public interface TabControl {
                 // the removed tabs position).
                 int upPos = tabIndex + i - 1;
                 if (upPos < tabCount) {
-                    Tab _tab = getModelItem(upPos);
+                    Tab<?> _tab = getModelItem(upPos);
                     if (_tab != null) {
                         bestTab = _tab;
                         break;
@@ -174,12 +174,12 @@ public interface TabControl {
         }
     }
 
-    class Tab {
+    class Tab<T extends Node> {
         private final StringProperty id = new SimpleStringProperty(this, "id");
         private final StringProperty text = new SimpleStringProperty(this, "text");
         private final ReadOnlyBooleanWrapper selected = new ReadOnlyBooleanWrapper(this, "selected");
-        private final ObjectProperty<Node> node = new SimpleObjectProperty<>(this, "node");
-        private Supplier<Node> nodeSupplier;
+        private final ObjectProperty<T> node = new SimpleObjectProperty<>(this, "node");
+        private Supplier<? extends T> nodeSupplier;
 
         public Tab(String id) {
             setId(id);
@@ -190,11 +190,11 @@ public interface TabControl {
             setText(text);
         }
 
-        public Supplier<Node> getNodeSupplier() {
+        public Supplier<? extends T> getNodeSupplier() {
             return nodeSupplier;
         }
 
-        public void setNodeSupplier(Supplier<Node> nodeSupplier) {
+        public void setNodeSupplier(Supplier<? extends T> nodeSupplier) {
             this.nodeSupplier = nodeSupplier;
         }
 
@@ -234,16 +234,27 @@ public interface TabControl {
             this.selected.set(selected);
         }
 
-        public Node getNode() {
+        public T getNode() {
             return node.get();
         }
 
-        public ObjectProperty<Node> nodeProperty() {
+        public ObjectProperty<T> nodeProperty() {
             return node;
         }
 
-        public void setNode(Node node) {
+        public void setNode(T node) {
             this.node.set(node);
+        }
+
+        public boolean initializeIfNeeded() {
+            if (getNode() == null) {
+                if (getNodeSupplier() == null) {
+                    return false;
+                }
+                setNode(getNodeSupplier().get());
+                return true;
+            }
+            return false;
         }
     }
 }
