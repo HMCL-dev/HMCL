@@ -81,7 +81,12 @@ public class DatapackListPage extends ListPageBase<DatapackListPageSkin.Datapack
     public void refresh() {
         setLoading(true);
         Task.runAsync(datapack::loadFromDir)
-                .withRunAsync(Schedulers.javafx(), () -> setLoading(false))
+                .withRunAsync(Schedulers.javafx(), () -> {
+                    setLoading(false);
+
+                    // https://github.com/huanghongxun/HMCL/issues/938
+                    System.gc();
+                })
                 .start();
     }
 

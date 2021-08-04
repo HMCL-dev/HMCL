@@ -106,6 +106,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
         } catch (IOException ex) {
             Logging.LOG.log(Level.WARNING, "Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex);
         }
+
+        // https://github.com/huanghongxun/HMCL/issues/938
+        System.gc();
     }
 
     public void changeDirectory(File newDirectory) {
