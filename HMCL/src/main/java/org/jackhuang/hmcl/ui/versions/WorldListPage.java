@@ -100,6 +100,9 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
                         itemsProperty().setAll(result.stream()
                                 .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
                                 .map(WorldListItem::new).collect(Collectors.toList()));
+
+                    // https://github.com/huanghongxun/HMCL/issues/938
+                    System.gc();
                 }, Platform::runLater);
     }
 
