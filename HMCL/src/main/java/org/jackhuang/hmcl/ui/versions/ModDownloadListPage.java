@@ -138,11 +138,12 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
         protected ModDownloadListPageSkin(ModDownloadListPage control) {
             super(control);
 
-            VBox pane = new VBox();
+            BorderPane pane = new BorderPane();
 
             GridPane searchPane = new GridPane();
+            pane.setTop(searchPane);
             searchPane.getStyleClass().addAll("card");
-            VBox.setMargin(searchPane, new Insets(10, 10, 0, 10));
+            BorderPane.setMargin(searchPane, new Insets(10, 10, 0, 10));
 
             ColumnConstraints column1 = new ColumnConstraints();
             column1.setPercentWidth(50);
@@ -229,6 +230,7 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
             }
 
             SpinnerPane spinnerPane = new SpinnerPane();
+            pane.setCenter(spinnerPane);
             {
                 spinnerPane.loadingProperty().bind(getSkinnable().loadingProperty());
                 spinnerPane.failedReasonProperty().bind(Bindings.createStringBinding(() -> {
@@ -284,8 +286,6 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
                     }
                 });
             }
-
-            pane.getChildren().setAll(searchPane, spinnerPane);
 
             getChildren().setAll(pane);
         }
