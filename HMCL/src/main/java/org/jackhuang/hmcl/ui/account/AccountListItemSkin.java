@@ -93,7 +93,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         btnRefresh.setOnMouseClicked(e -> {
             spinnerRefresh.showSpinner();
             skinnable.refreshAsync()
-                    .whenComplete(ex -> spinnerRefresh.hideSpinner())
+                    .whenComplete(Schedulers.javafx(), ex -> spinnerRefresh.hideSpinner())
                     .start();
         });
         btnRefresh.getStyleClass().add("toggle-icon4");
