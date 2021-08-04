@@ -46,7 +46,12 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -82,6 +87,7 @@ public class ModDownloadPage extends Control implements DecoratorPage {
                 }
             }
             List<CurseAddon.LatestFile> files = CurseModManager.getFiles(addon);
+            files.sort(Comparator.comparing(CurseAddon.LatestFile::getParsedFileDate).reversed());
             items.setAll(files);
         }).start();
 
@@ -208,6 +214,7 @@ public class ModDownloadPage extends Control implements DecoratorPage {
                     protected void updateControl(CurseAddon.LatestFile dataItem, boolean empty) {
                         if (empty) return;
                         content.setTitle(dataItem.getDisplayName());
+                        content.setSubtitle(FORMATTER.format(dataItem.getParsedFileDate()));
                         content.getTags().setAll(dataItem.getGameVersion());
 
                         switch (dataItem.getReleaseType()) {
@@ -238,6 +245,8 @@ public class ModDownloadPage extends Control implements DecoratorPage {
             getChildren().setAll(pane);
         }
     }
+
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault());
 
     public interface DownloadCallback {
         void download(Profile profile, @Nullable String version, CurseAddon.LatestFile file);

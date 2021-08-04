@@ -2,6 +2,7 @@ package org.jackhuang.hmcl.mod.curse;
 
 import org.jackhuang.hmcl.util.Immutable;
 
+import java.time.Instant;
 import java.util.List;
 
 @Immutable
@@ -293,6 +294,8 @@ public class CurseAddon {
         private final boolean isServerPack;
         private final int serverPackFileId;
 
+        private transient Instant fileDataInstant;
+
         public LatestFile(int id, String displayName, String fileName, String fileDate, int fileLength, int releaseType, int fileStatus, String downloadUrl, boolean isAlternate, int alternateFileId, List<Dependency> dependencies, boolean isAvailable, List<String> gameVersion, boolean hasInstallScript, boolean isCompatibleWIthClient, int categorySectionPackageType, int restrictProjectFileAccess, int projectStatus, int projectId, boolean isServerPack, int serverPackFileId) {
             this.id = id;
             this.displayName = displayName;
@@ -399,6 +402,13 @@ public class CurseAddon {
 
         public int getServerPackFileId() {
             return serverPackFileId;
+        }
+
+        public Instant getParsedFileDate() {
+            if (fileDataInstant == null) {
+                fileDataInstant = Instant.parse(fileDate);
+            }
+            return fileDataInstant;
         }
     }
 
