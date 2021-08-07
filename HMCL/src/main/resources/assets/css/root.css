@@ -24,8 +24,8 @@
 
 .scroll-bar .thumb {
     -fx-fill: rgba(255, 255, 255, 0.5);
-    -fx-arc-width: 5px;
-    -fx-arc-height: 5px;
+    -fx-arc-width: 0;
+    -fx-arc-height: 0;
 }
 
 .disabled Label {
@@ -60,37 +60,31 @@
     -fx-text-fill: -fx-base-text-fill;
 }
 
-.advanced-list-item .container {
+.advanced-list-item > .rippler-container > .container {
     -fx-padding: 10 16 10 16;
     -fx-background-color: null;
 }
 
-.advanced-list-item .container VBox {
+.advanced-list-item > .rippler-container > .container > .two-line-list-item {
+    -fx-alignment: center-left;
     -fx-padding: 0 0 0 10;
 }
 
-.advanced-list-item .container .image-container {
-    -fx-max-width: 32;
-    -fx-min-width: 32;
-    -fx-max-height: 32;
-    -fx-min-height: 32;
-}
-
-.advanced-list-item .container .title {
+.advanced-list-item > .rippler-container > .container > .two-line-list-item > HBox > .title {
     -fx-font-size: 13;
     -fx-text-alignment: justify;
 }
 
-.advanced-list-item .container .subtitle {
+.advanced-list-item > .rippler-container > .container > .two-line-list-item > HBox > .subtitle {
     -fx-font-size: 10;
     -fx-text-alignment: justify;
 }
 
-.advanced-list-item:selected .container {
+.advanced-list-item:selected > .rippler-container > .container {
     -fx-background-color: -fx-base-rippler-color;
 }
 
-.advanced-list-item:selected .container .title {
+.advanced-list-item:selected > .rippler-container > .container > .two-line-list-item > HBox > .title {
     -fx-text-fill: -fx-base-color;
     -fx-font-weight: bold;
 }
@@ -99,27 +93,27 @@
     -fx-fill: -fx-base-color;
 }
 
-.navigation-drawer-item .container VBox {
+.navigation-drawer-item > .rippler-container > .container > VBox {
     -fx-padding: 0 0 0 0;
 }
 
-.navigation-drawer-item .two-line-list-item .title {
+.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > HBox > .title {
     -fx-font-size: 13;
 }
 
-.navigation-drawer-item .two-line-list-item .subtitle {
+.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > HBox > .subtitle {
     -fx-font-size: 10;
 }
 
-.profile-list-item BorderPane {
+.profile-list-item > .rippler-container > BorderPane {
     -fx-padding: 8 0 8 16;
 }
 
-.profile-list-item:selected BorderPane {
+.profile-list-item:selected > .rippler-container > BorderPane {
     -fx-background-color: -fx-base-rippler-color;
 }
 
-.profile-list-item:selected .two-line-list-item .title {
+.profile-list-item:selected > .rippler-container > BorderPane > .two-line-list-item > HBox .title {
     -fx-text-fill: -fx-base-color;
     -fx-font-weight: bold;
 }
@@ -178,25 +172,25 @@
     -fx-fill: rgba(0, 0, 0, 0.5);
 }
 
-.popup-menu .content {
+.popup-menu-content {
     -fx-padding: 4 0 4 0;
 }
 
-.two-line-list-item HBox {
+.two-line-list-item > HBox {
     -fx-spacing: 8;
     -fx-alignment: center-left;
 }
 
-.two-line-list-item .title {
+.two-line-list-item > HBox > .title {
 	-fx-text-fill: #292929;
 	-fx-font-size: 15px;
 }
 
-.two-line-list-item .subtitle {
+.two-line-list-item > HBox > .subtitle {
 	-fx-text-fill: rgba(0, 0, 0, 0.5);
 }
 
-.two-line-list-item .tag {
+.two-line-list-item > HBox > HBox > .tag {
     -fx-text-fill: -fx-base-color;
     -fx-background-color: -fx-base-rippler-color;
     -fx-padding: 2;
@@ -208,8 +202,8 @@
     -fx-text-fill: white;
 }
 
-.bubble .two-line-list-item > .title,
-.bubble .two-line-list-item > .subtitle {
+.bubble > HBox > .two-line-list-item > HBox > .title,
+.bubble > HBox > .two-line-list-item > HBox > .subtitle {
 	-fx-text-fill: white;
 }
 
@@ -218,7 +212,7 @@
     -fx-cursor: hand;
 }
 
-.sponsor-pane .label {
+.sponsor-pane > .label {
     -fx-wrap-text: true;
 }
 
@@ -228,23 +222,23 @@
  *                                                                             *
  ******************************************************************************/
 
-.launch-pane .jfx-button {
+.launch-pane > .jfx-button {
     -fx-background-color: -fx-base-color;
     -fx-cursor: hand;
 }
 
-.launch-pane .jfx-button .jfx-rippler {
+.launch-pane > .jfx-button > StackPane > .jfx-rippler {
     -jfx-rippler-fill: white;
     -jfx-mask-type: CIRCLE;
     -fx-padding: 0.0;
 }
 
-.launch-pane .jfx-button, .jfx-button * {
+.launch-pane > .jfx-button, .jfx-button * {
     -fx-text-fill: -fx-base-text-fill;
     -fx-font-size: 14px;
 }
 
-.launch-pane Rectangle {
+.launch-pane > Rectangle {
     -fx-fill: -fx-base-darker-color;
 }
 
@@ -276,27 +270,9 @@
 
 /*******************************************************************************
  *                                                                             *
- * JFX Drawer                                                                  *
- *                                                                             *
- ******************************************************************************/
-
-.jfx-drawer-overlay-pane {
-    -fx-background-color: rgba(0.0, 0.0, 0.0, 0.1)
-}
-
-.jfx-drawer-side-pane {
-    -fx-background-color: WHITE;
-}
-
-/*******************************************************************************
- *                                                                             *
  * JFX Dialog Layout                                                           *
  *                                                                             *
  ******************************************************************************/
-
-.jfx-dialog-overlay-pane {
-    -fx-background-color: rgba(0.0, 0.0, 0.0, 0.1);
-}
 
 .dialog-trigger {
     -fx-background-color: WHITE;
@@ -321,7 +297,7 @@
     -fx-wrap-text: true;
 }
 
-.jfx-layout-body .label {
+.jfx-layout-body > .label {
     -fx-font-size: 14.0px;
     -fx-pref-width: 400.0px;
     -fx-wrap-text: true;
@@ -390,62 +366,6 @@
     -fx-fill: #FE774D;
     -fx-padding: 10.0;
     -fx-cursor: hand;
-}
-
-.icons-rippler {
-    -jfx-rippler-fill: #FE774D;
-    -jfx-mask-type: CIRCLE;
-}
-
-.icons-rippler1 {
-    -jfx-rippler-fill: #4285F4;
-    -jfx-mask-type: CIRCLE;
-}
-
-.icons-rippler:hover {
-    -fx-cursor: hand;
-}
-
-.animated-burgers .jfx-hamburger StackPane {
-    -fx-background-color: -fx-base-color;
-    -fx-background-radius: 4px;
-}
-
-.animated-burgers .jfx-rippler {
-    -jfx-rippler-fill: -fx-base-color;
-}
-
-.icons-badge .badge-pane {
-    -fx-background-color: #ff4081;
-    -fx-background-radius: 23;
-    -fx-pref-width: 23;
-    -fx-pref-height: 23;
-    -fx-alignment: center;
-}
-
-.icons-badge Label {
-    -fx-font-weight: BOLD;
-    -fx-font-size: 14.0px;
-    -fx-text-fill: WHITE;
-}
-
-/*******************************************************************************
-*                                                                              *
-* JFX Hamburger Icon                                                           *
-*                                                                              *
-*******************************************************************************/
-
-.jfx-hamburger {
-    -fx-padding: 10.0;
-    -fx-spacing: 4px;
-    -fx-cursor: hand;
-}
-
-.jfx-hamburger StackPane {
-    -fx-pref-width: 30px;
-    -fx-pref-height: 4px;
-    -fx-background-color: #FFF;
-    -fx-background-radius: 5px;
 }
 
 /*******************************************************************************
@@ -556,17 +476,6 @@
     -jfx-rippler-fill: white;
     -jfx-mask-type: CIRCLE;
     -fx-padding: 0.0;
-}
-
-.option-list-view {
-    -fx-pref-width: 160.0px;
-    -fx-background-color: WHITE;
-}
-
-.option-jfx-list-view-icon {
-    -fx-fill: -fx-base-color;
-    -fx-padding: 0.0 10.0 0.0 5.0;
-    -fx-cursor: hand;
 }
 
 /*******************************************************************************
@@ -877,53 +786,9 @@
     -jfx-untoggle-color: transparent;
 }
 
-.options-list-item-expand-button .icon {
-    -fx-fill: rgb(204.0, 204.0, 51.0);
-    -fx-padding: 10.0;
-}
-
 .options-list-item-expand-button .jfx-rippler {
     -jfx-rippler-fill: -fx-base-check-color;
     -jfx-mask-type: CIRCLE;
-}
-
-/*******************************************************************************
-*                                                                              *
-* JFX SUBLIST IMPORTANT                                                        *
-*                                                                              *
-*******************************************************************************/
-.sublist .scroll-bar:vertical .increment-arrow,
-.sublist .scroll-bar:vertical .decrement-arrow,
-.sublist .scroll-bar:vertical .increment-button,
-.sublist .scroll-bar:vertical .decrement-button {
-    -fx-padding: 0;
-}
-
-.sublist .scroll-bar:vertical .track,
-.sublist .scroll-bar:vertical .thumb {
-    -fx-background-color: WHITE;
-}
-
-.sublist {
-    -fx-background-color: TRANSPARENT;
-}
-
-.sublist .jfx-list-cell:odd:selected > .jfx-rippler > StackPane,
-.sublist .jfx-list-cell:even:selected > .jfx-rippler > StackPane {
-    -fx-background-color: rgba(255, 0, 0, 0.2);
-}
-
-.sublist .jfx-list-cell {
-    -fx-background-insets: 0.0;
-    -fx-text-fill: BLACK;
-}
-
-.sublist-header {
-    -fx-alignment: center-left;
-}
-
-.sublist-header .sub-label {
-    -fx-padding: 0 0 0 12;
 }
 
 /*******************************************************************************
@@ -1075,37 +940,37 @@
     -fx-fill: rgba(0, 0, 0, 0.5);
 }
 
-.log-window .list-cell {
+.log-window-list-cell {
     -fx-text-fill: black;
     -fx-border-width: 0 0 1 0;
     -fx-border-color: #dddddd;
 }
 
-.log-window .list-cell:empty {
+.log-window-list-cell:empty {
     -fx-border-width: 0;
 }
 
-.log-window .list-cell:fatal {
+.log-window-list-cell:fatal {
     -fx-background-color: #F7A699;
 }
 
-.log-window .list-cell:error {
+.log-window-list-cell:error {
     -fx-background-color: #FFCCBB;
 }
 
-.log-window .list-cell:warn {
+.log-window-list-cell:warn {
     -fx-background-color: #FFEECC;
 }
 
-.log-window .list-cell:info {
+.log-window-list-cell:info {
     -fx-background-color: #FFFFFF;
 }
 
-.log-window .list-cell:debug {
+.log-window-list-cell:debug {
     -fx-background-color: #EEE9E0;
 }
 
-.log-window .list-cell:trace {
+.log-window-list-cell:trace {
     -fx-background-color: #EEE9E0;
 }
 

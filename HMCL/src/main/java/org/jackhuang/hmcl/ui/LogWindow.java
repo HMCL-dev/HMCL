@@ -276,6 +276,7 @@ public final class LogWindow extends Stage {
                 listView.setStyle("-fx-font-family: " + config().getFontFamily() + "; -fx-font-size: " + config().getFontSize() + "px;");
                 listView.setCellFactory(x -> new ListCell<Log>() {
                     {
+                        getStyleClass().add("log-window-list-cell");
                         Region clippedContainer = (Region)listView.lookup(".clipped-container");
                         if (clippedContainer != null) {
                             maxWidthProperty().bind(clippedContainer.widthProperty());

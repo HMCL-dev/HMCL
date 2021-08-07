@@ -83,7 +83,7 @@ public class PopupMenu extends Control {
                     .otherwise(ScrollPane.ScrollBarPolicy.AS_NEEDED));
 
             VBox content = new VBox();
-            content.getStyleClass().add("content");
+            content.getStyleClass().add("popup-menu-content");
             Bindings.bindContent(content.getChildren(), PopupMenu.this.getContent());
             scrollPane.setContent(content);
 

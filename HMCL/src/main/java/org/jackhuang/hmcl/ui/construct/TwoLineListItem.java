@@ -25,6 +25,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 public class TwoLineListItem extends VBox {
@@ -68,7 +69,16 @@ public class TwoLineListItem extends VBox {
         lblSubtitle.getStyleClass().add("subtitle");
         lblSubtitle.textProperty().bind(subtitle);
 
-        getChildren().setAll(firstLine, lblSubtitle);
+        HBox secondLine = new HBox();
+        secondLine.getChildren().setAll(lblSubtitle);
+
+        getChildren().setAll(firstLine, secondLine);
+
+        FXUtils.onChangeAndOperate(subtitle, subtitleString -> {
+            if (subtitleString == null) getChildren().setAll(firstLine);
+            else getChildren().setAll(firstLine, secondLine);
+        });
+
         getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
