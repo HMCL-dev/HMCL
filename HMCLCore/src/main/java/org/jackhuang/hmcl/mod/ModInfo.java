@@ -45,13 +45,14 @@ public final class ModInfo implements Comparable<ModInfo> {
     private final String gameVersion;
     private final String url;
     private final String fileName;
+    private final String logoPath;
     private final BooleanProperty activeProperty;
 
     public ModInfo(ModManager modManager, File file, String name, Description description) {
-        this(modManager, file, name, description, "", "", "", "");
+        this(modManager, file, name, description, "", "", "", "", "");
     }
 
-    public ModInfo(ModManager modManager, File file, String name, Description description, String authors, String version, String gameVersion, String url) {
+    public ModInfo(ModManager modManager, File file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
         this.file = file.toPath();
         this.name = name;
         this.description = description;
@@ -59,6 +60,7 @@ public final class ModInfo implements Comparable<ModInfo> {
         this.version = version;
         this.gameVersion = gameVersion;
         this.url = url;
+        this.logoPath = logoPath;
 
         activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
             @Override
@@ -105,6 +107,10 @@ public final class ModInfo implements Comparable<ModInfo> {
 
     public String getUrl() {
         return url;
+    }
+
+    public String getLogoPath() {
+        return logoPath;
     }
 
     public BooleanProperty activeProperty() {

@@ -37,7 +37,7 @@ import java.util.List;
  * @author huangyuhui
  */
 @Immutable
-public final class ForgeModMetadata {
+public final class ForgeOldModMetadata {
 
     @SerializedName("modid")
     private final String modId;
@@ -45,6 +45,7 @@ public final class ForgeModMetadata {
     private final String description;
     private final String author;
     private final String version;
+    private final String logoFile;
     private final String mcversion;
     private final String url;
     private final String updateUrl;
@@ -52,16 +53,17 @@ public final class ForgeModMetadata {
     private final String[] authorList;
     private final String[] authors;
 
-    public ForgeModMetadata() {
-        this("", "", "", "", "", "", "", "", "", new String[0], new String[0]);
+    public ForgeOldModMetadata() {
+        this("", "", "", "", "", "", "", "", "", "", new String[0], new String[0]);
     }
 
-    public ForgeModMetadata(String modId, String name, String description, String author, String version, String mcversion, String url, String updateUrl, String credits, String[] authorList, String[] authors) {
+    public ForgeOldModMetadata(String modId, String name, String description, String author, String version, String logoFile, String mcversion, String url, String updateUrl, String credits, String[] authorList, String[] authors) {
         this.modId = modId;
         this.name = name;
         this.description = description;
         this.author = author;
         this.version = version;
+        this.logoFile = logoFile;
         this.mcversion = mcversion;
         this.url = url;
         this.updateUrl = updateUrl;
@@ -88,6 +90,10 @@ public final class ForgeModMetadata {
 
     public String getVersion() {
         return version;
+    }
+
+    public String getLogoFile() {
+        return logoFile;
     }
 
     public String getGameVersion() {
@@ -119,12 +125,12 @@ public final class ForgeModMetadata {
             Path mcmod = fs.getPath("mcmod.info");
             if (Files.notExists(mcmod))
                 throw new IOException("File " + modFile + " is not a Forge mod.");
-            List<ForgeModMetadata> modList = JsonUtils.GSON.fromJson(FileUtils.readText(mcmod),
-                    new TypeToken<List<ForgeModMetadata>>() {
+            List<ForgeOldModMetadata> modList = JsonUtils.GSON.fromJson(FileUtils.readText(mcmod),
+                    new TypeToken<List<ForgeOldModMetadata>>() {
                     }.getType());
             if (modList == null || modList.isEmpty())
                 throw new IOException("Mod " + modFile + " `mcmod.info` is malformed..");
-            ForgeModMetadata metadata = modList.get(0);
+            ForgeOldModMetadata metadata = modList.get(0);
             String authors = metadata.getAuthor();
             if (StringUtils.isBlank(authors) && metadata.getAuthors().length > 0)
                 authors = String.join(", ", metadata.getAuthors());
@@ -134,7 +140,8 @@ public final class ForgeModMetadata {
                 authors = metadata.getCredits();
             return new ModInfo(modManager, modFile, metadata.getName(), new ModInfo.Description(metadata.getDescription()),
                     authors, metadata.getVersion(), metadata.getGameVersion(),
-                    StringUtils.isBlank(metadata.getUrl()) ? metadata.getUpdateUrl() : metadata.url);
+                    StringUtils.isBlank(metadata.getUrl()) ? metadata.getUpdateUrl() : metadata.url,
+                    metadata.getLogoFile());
         }
     }
 }

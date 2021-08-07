@@ -150,7 +150,7 @@ public class PackMcMeta implements Validation {
             if (Files.notExists(mcmod))
                 throw new IOException("File " + modFile + " is not a resource pack.");
             PackMcMeta metadata = JsonUtils.fromNonNullJson(FileUtils.readText(mcmod), PackMcMeta.class);
-            return new ModInfo(modManager, modFile, FileUtils.getNameWithoutExtension(modFile), metadata.pack.description, "", "", "", "");
+            return new ModInfo(modManager, modFile, FileUtils.getNameWithoutExtension(modFile), metadata.pack.description, "", "", "", "", "");
         }
     }
 }

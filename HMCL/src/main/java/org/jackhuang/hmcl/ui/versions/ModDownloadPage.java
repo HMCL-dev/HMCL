@@ -191,22 +191,14 @@ public class ModDownloadPage extends Control implements DecoratorPage {
                 JFXListView<CurseAddon.LatestFile> listView = new JFXListView<>();
                 spinnerPane.setContent(listView);
                 Bindings.bindContent(listView.getItems(), getSkinnable().items);
-                listView.setCellFactory(x -> new FloatListCell<CurseAddon.LatestFile>() {
+                listView.setCellFactory(x -> new FloatListCell<CurseAddon.LatestFile>(listView) {
                     TwoLineListItem content = new TwoLineListItem();
                     StackPane graphicPane = new StackPane();
 
                     {
-                        Region clippedContainer = (Region)listView.lookup(".clipped-container");
-                        setPrefWidth(0);
                         HBox container = new HBox(8);
                         container.setAlignment(Pos.CENTER_LEFT);
                         pane.getChildren().add(container);
-                        if (clippedContainer != null) {
-                            maxWidthProperty().bind(clippedContainer.widthProperty());
-                            prefWidthProperty().bind(clippedContainer.widthProperty());
-                            minWidthProperty().bind(clippedContainer.widthProperty());
-                        }
-
                         container.getChildren().setAll(graphicPane, content);
                     }
 

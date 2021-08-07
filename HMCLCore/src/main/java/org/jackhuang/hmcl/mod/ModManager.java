@@ -68,7 +68,12 @@ public final class ModManager {
             case "zip":
             case "jar":
                 try {
-                    return ForgeModMetadata.fromFile(this, modFile);
+                    return ForgeOldModMetadata.fromFile(this, modFile);
+                } catch (Exception ignore) {
+                }
+
+                try {
+                    return ForgeNewModMetadata.fromFile(this, modFile);
                 } catch (Exception ignore) {
                 }
 

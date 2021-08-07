@@ -17,11 +17,13 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import com.jfoenix.controls.JFXListView;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 
@@ -30,7 +32,7 @@ public abstract class FloatListCell<T> extends ListCell<T> {
 
     protected final StackPane pane = new StackPane();
 
-    {
+    public FloatListCell(JFXListView<T> listView) {
         setText(null);
         setGraphic(null);
 
@@ -42,6 +44,14 @@ public abstract class FloatListCell<T> extends ListCell<T> {
         FXUtils.onChangeAndOperate(selectedProperty(), selected -> {
             pane.pseudoClassStateChanged(SELECTED, selected);
         });
+
+        Region clippedContainer = (Region) listView.lookup(".clipped-container");
+        setPrefWidth(0);
+        if (clippedContainer != null) {
+            maxWidthProperty().bind(clippedContainer.widthProperty());
+            prefWidthProperty().bind(clippedContainer.widthProperty());
+            minWidthProperty().bind(clippedContainer.widthProperty());
+        }
     }
 
     @Override

@@ -75,7 +75,7 @@ class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            listView.setCellFactory(x -> new FloatListCell<DatapackInfoObject>() {
+            listView.setCellFactory(x -> new FloatListCell<DatapackInfoObject>(listView) {
                 JFXCheckBox checkBox = new JFXCheckBox();
                 TwoLineListItem content = new TwoLineListItem();
                 BooleanProperty booleanProperty;

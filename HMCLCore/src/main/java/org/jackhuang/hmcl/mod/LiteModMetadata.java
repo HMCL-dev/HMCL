@@ -117,7 +117,7 @@ public final class LiteModMetadata {
             if (metadata == null)
                 throw new IOException("Mod " + modFile + " `litemod.json` is malformed.");
             return new ModInfo(modManager, modFile, metadata.getName(), new ModInfo.Description(metadata.getDescription()), metadata.getAuthor(),
-                    metadata.getVersion(), metadata.getGameVersion(), metadata.getUpdateURI());
+                    metadata.getVersion(), metadata.getGameVersion(), metadata.getUpdateURI(), "");
         }
     }
     

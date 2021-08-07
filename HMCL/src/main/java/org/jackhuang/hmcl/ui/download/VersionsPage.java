@@ -119,7 +119,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         chkSnapshot.selectedProperty().addListener(listener);
         chkOld.selectedProperty().addListener(listener);
 
-        list.setCellFactory(listView -> new FloatListCell<RemoteVersion>() {
+        list.setCellFactory(listView -> new FloatListCell<RemoteVersion>(list) {
             ImageView imageView = new ImageView();
             TwoLineListItem content = new TwoLineListItem();
 

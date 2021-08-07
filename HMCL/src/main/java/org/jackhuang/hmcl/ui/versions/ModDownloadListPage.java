@@ -250,7 +250,7 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
                     CurseAddon selectedItem = listView.getSelectionModel().getSelectedItem();
                     Controllers.navigate(new ModDownloadPage(selectedItem, getSkinnable().version.get(), getSkinnable().callback));
                 });
-                listView.setCellFactory(x -> new FloatListCell<CurseAddon>() {
+                listView.setCellFactory(x -> new FloatListCell<CurseAddon>(listView) {
                     TwoLineListItem content = new TwoLineListItem();
                     ImageView imageView = new ImageView();
 

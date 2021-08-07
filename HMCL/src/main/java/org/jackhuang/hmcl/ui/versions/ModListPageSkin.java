@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import com.jfoenix.effects.JFXDepthManager;
@@ -27,20 +29,38 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.mod.ModInfo;
+import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.FloatListCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton;
+import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.StringUtils.isNotBlank;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -80,37 +100,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            listView.setCellFactory(x -> new FloatListCell<ModInfoObject>() {
-                JFXCheckBox checkBox = new JFXCheckBox();
-                TwoLineListItem content = new TwoLineListItem();
-                BooleanProperty booleanProperty;
-
-                {
-                    Region clippedContainer = (Region)listView.lookup(".clipped-container");
-                    setPrefWidth(0);
-                    HBox container = new HBox(8);
-                    container.setAlignment(Pos.CENTER_LEFT);
-                    pane.getChildren().add(container);
-                    if (clippedContainer != null) {
-                        maxWidthProperty().bind(clippedContainer.widthProperty());
-                        prefWidthProperty().bind(clippedContainer.widthProperty());
-                        minWidthProperty().bind(clippedContainer.widthProperty());
-                    }
-
-                    container.getChildren().setAll(checkBox, content);
-                }
-
-                @Override
-                protected void updateControl(ModInfoObject dataItem, boolean empty) {
-                    if (empty) return;
-                    content.setTitle(dataItem.getTitle());
-                    content.setSubtitle(dataItem.getSubtitle());
-                    if (booleanProperty != null) {
-                        checkBox.selectedProperty().unbindBidirectional(booleanProperty);
-                    }
-                    checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
-                }
-            });
+            listView.setCellFactory(x -> new ModInfoListCell(listView));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
 
@@ -162,6 +152,113 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         @Override
         public int compareTo(@NotNull ModListPageSkin.ModInfoObject o) {
             return modInfo.getFileName().toLowerCase().compareTo(o.modInfo.getFileName().toLowerCase());
+        }
+    }
+
+    static class ModInfoDialog extends JFXDialogLayout {
+
+        ModInfoDialog(ModInfoObject modInfo) {
+            HBox titleContainer = new HBox();
+            titleContainer.setSpacing(8);
+
+            ImageView imageView = new ImageView();
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getLogoPath())) {
+                Task.supplyAsync(() -> {
+                    try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
+                        Path iconPath = fs.getPath(modInfo.getModInfo().getLogoPath());
+                        if (Files.exists(iconPath)) {
+                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                            Files.copy(iconPath, stream);
+                            return new ByteArrayInputStream(stream.toByteArray());
+                        }
+                    }
+                    return null;
+                }).whenComplete(Schedulers.javafx(), (stream, exception) -> {
+                    if (stream != null) {
+                        imageView.setImage(new Image(stream, 40, 40, true, true));
+                    } else {
+                        imageView.setImage(new Image("/assets/img/command.png", 40, 40, true, true));
+                    }
+                }).start();
+            }
+
+            TwoLineListItem title = new TwoLineListItem();
+            title.setTitle(modInfo.getModInfo().getName());
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
+                title.getTags().setAll(modInfo.getModInfo().getVersion());
+            }
+            title.setSubtitle(FileUtils.getName(modInfo.getModInfo().getFile()));
+
+            titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
+            setHeading(titleContainer);
+
+            Label description = new Label(modInfo.getModInfo().getDescription().toString());
+            setBody(description);
+
+            JFXButton okButton = new JFXButton();
+            okButton.getStyleClass().add("dialog-accept");
+            okButton.setText(i18n("button.ok"));
+            okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+            JFXButton searchButton = new JFXButton();
+            searchButton.getStyleClass().add("dialog-cancel");
+            searchButton.setText(i18n("mods.mcmod.search"));
+            searchButton.setOnAction(e -> {
+                fireEvent(new DialogCloseEvent());
+                FXUtils.openLink(NetworkUtils.withQuery("https://search.mcmod.cn/s", mapOf(
+                        pair("key", modInfo.getModInfo().getName()),
+                        pair("site", "all"),
+                        pair("filter", "0")
+                )));
+            });
+
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getUrl())) {
+                JFXButton officialPageButton = new JFXButton();
+                officialPageButton.getStyleClass().add("dialog-cancel");
+                officialPageButton.setText(i18n("mods.url"));
+                officialPageButton.setOnAction(e -> {
+                    fireEvent(new DialogCloseEvent());
+                    FXUtils.openLink(modInfo.getModInfo().getUrl());
+                });
+
+                setActions(okButton, officialPageButton, searchButton);
+            } else {
+                setActions(okButton, searchButton);
+            }
+        }
+    }
+
+    static class ModInfoListCell extends FloatListCell<ModInfoObject> {
+        JFXCheckBox checkBox = new JFXCheckBox();
+        TwoLineListItem content = new TwoLineListItem();
+        JFXButton infoButton = new JFXButton();
+        BooleanProperty booleanProperty;
+
+        ModInfoListCell(JFXListView<ModInfoObject> listView) {
+            super(listView);
+            HBox container = new HBox(8);
+            container.setAlignment(Pos.CENTER_LEFT);
+            pane.getChildren().add(container);
+            HBox.setHgrow(content, Priority.ALWAYS);
+
+            infoButton.getStyleClass().add("toggle-icon4");
+            infoButton.setGraphic(FXUtils.limitingSize(SVG.informationOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
+
+            container.getChildren().setAll(checkBox, content, infoButton);
+        }
+
+        @Override
+        protected void updateControl(ModInfoObject dataItem, boolean empty) {
+            if (empty) return;
+            content.setTitle(dataItem.getTitle());
+            content.setSubtitle(dataItem.getSubtitle());
+            if (booleanProperty != null) {
+                checkBox.selectedProperty().unbindBidirectional(booleanProperty);
+            }
+            checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
+            infoButton.setOnMouseClicked(e -> {
+                Controllers.dialog(new ModInfoDialog(dataItem));
+            });
         }
     }
 }

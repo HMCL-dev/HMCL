@@ -188,12 +188,16 @@
 
 .two-line-list-item > HBox > .subtitle {
 	-fx-text-fill: rgba(0, 0, 0, 0.5);
+    -fx-font-weight: normal;
+    -fx-font-size: 12px;
 }
 
 .two-line-list-item > HBox > HBox > .tag {
     -fx-text-fill: -fx-base-color;
     -fx-background-color: -fx-base-rippler-color;
     -fx-padding: 2;
+    -fx-font-weight: normal;
+    -fx-font-size: 12px;
 }
 
 .bubble {
