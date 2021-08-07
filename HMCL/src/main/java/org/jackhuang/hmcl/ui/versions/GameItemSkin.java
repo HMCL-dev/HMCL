@@ -25,6 +25,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.util.StringUtils;
 
 public class GameItemSkin extends SkinBase<GameItem> {
     public GameItemSkin(GameItem skinnable) {
@@ -46,7 +47,11 @@ public class GameItemSkin extends SkinBase<GameItem> {
         TwoLineListItem item = new TwoLineListItem();
         item.titleProperty().bind(skinnable.titleProperty());
         FXUtils.onChangeAndOperate(skinnable.tagProperty(), tag -> {
-            item.getTags().setAll(tag);
+            if (StringUtils.isNotBlank(tag)) {
+                item.getTags().setAll(tag);
+            } else {
+                item.getTags().clear();
+            }
         });
         item.subtitleProperty().bind(skinnable.subtitleProperty());
         BorderPane.setAlignment(item, Pos.CENTER);
