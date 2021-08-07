@@ -33,13 +33,31 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
+import org.jackhuang.hmcl.util.Lazy;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameListItemSkin extends SkinBase<GameListItem> {
-    private static JFXPopup popup;
     private static GameListItem currentSkinnable;
+    private static Lazy<JFXPopup> popup = new Lazy<>(() -> {
+        PopupMenu menu = new PopupMenu();
+        JFXPopup popup = new JFXPopup(menu);
+
+        menu.getContent().setAll(
+                new IconedMenuItem(FXUtils.limitingSize(SVG.launchOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch.test"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.launch(), popup)),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.script(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch_script"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.generateLaunchScript(), popup)),
+                new MenuSeparator(),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.gearOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.manage"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.modifyGameSettings(), popup)),
+                new MenuSeparator(),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.pencilOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.rename(), popup)),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.copy(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.duplicate"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.duplicate(), popup)),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.deleteOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.remove"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.remove(), popup)),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("modpack.export"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.export(), popup)),
+                new MenuSeparator(),
+                new IconedMenuItem(FXUtils.limitingSize(SVG.folderOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.game"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.browse(), popup)));
+        return popup;
+    });
 
     public GameListItemSkin(GameListItem skinnable) {
         super(skinnable);
@@ -56,24 +74,6 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         GameItem gameItem = new GameItem(skinnable.getProfile(), skinnable.getVersion());
         gameItem.setMouseTransparent(true);
         root.setCenter(gameItem);
-
-        if (popup == null) {
-            PopupMenu menu = new PopupMenu();
-            popup = new JFXPopup(menu);
-
-            menu.getContent().setAll(
-                    new IconedMenuItem(FXUtils.limitingSize(SVG.launchOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch.test"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.launch(), popup)),
-                    new IconedMenuItem(FXUtils.limitingSize(SVG.script(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch_script"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.generateLaunchScript(), popup)),
-                    new MenuSeparator(),
-                    new IconedMenuItem(FXUtils.limitingSize(SVG.gearOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.manage"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.modifyGameSettings(), popup)),
-                    new MenuSeparator(),
-                    new IconedMenuItem(FXUtils.limitingSize(SVG.pencilOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.rename(), popup)),
-                    new IconedMenuItem(FXUtils.limitingSize(SVG.copy(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.duplicate"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.duplicate(), popup)),
-                    new IconedMenuItem(FXUtils.limitingSize(SVG.deleteOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.remove"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.remove(), popup)),
-                    new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("modpack.export"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.export(), popup)),
-                    new MenuSeparator(),
-                    new IconedMenuItem(FXUtils.limitingSize(SVG.folderOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.game"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.browse(), popup)));
-        }
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
@@ -99,7 +99,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             JFXButton btnManage = new JFXButton();
             btnManage.setOnMouseClicked(e -> {
                 currentSkinnable = skinnable;
-                popup.show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
+                popup.get().show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
             });
             btnManage.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnManage, Pos.CENTER);
@@ -123,7 +123,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
                 }
             } else if (e.getButton() == MouseButton.SECONDARY) {
                 currentSkinnable = skinnable;
-                popup.show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
+                popup.get().show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
             }
         });
     }
