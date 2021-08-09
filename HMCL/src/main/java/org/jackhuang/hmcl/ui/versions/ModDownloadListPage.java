@@ -255,16 +255,9 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
                     ImageView imageView = new ImageView();
 
                     {
-                        Region clippedContainer = (Region) listView.lookup(".clipped-container");
-                        setPrefWidth(0);
                         HBox container = new HBox(8);
                         container.setAlignment(Pos.CENTER_LEFT);
                         pane.getChildren().add(container);
-                        if (clippedContainer != null) {
-                            maxWidthProperty().bind(clippedContainer.widthProperty());
-                            prefWidthProperty().bind(clippedContainer.widthProperty());
-                            minWidthProperty().bind(clippedContainer.widthProperty());
-                        }
 
                         container.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
                     }
