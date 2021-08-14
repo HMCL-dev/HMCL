@@ -304,7 +304,8 @@ public class DefaultLauncher extends Launcher {
                 // when we propose this placeholder.
                 pair("${libraries_directory}", repository.getLibrariesDirectory(version).getAbsolutePath()),
                 // file_separator is used in -DignoreList
-                pair("${file_separator}", OperatingSystem.FILE_SEPARATOR)
+                pair("${file_separator}", OperatingSystem.FILE_SEPARATOR),
+                pair("${primary_jar_name}", FileUtils.getName(repository.getVersionJar(version).toPath()))
         );
     }
 

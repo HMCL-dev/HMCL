@@ -187,14 +187,35 @@ public class MaintainTask extends Task<Version> {
 
         if (!libraryAnalyzer.has(FORGE)) return version;
 
-        // The default ignoreList set by Forge installer does not fulfill our requirements
-        List<Argument> jvm = builder.getMutableJvmArguments();
-        for (int i = 0; i < jvm.size(); i++) {
-            Argument jvmArg = jvm.get(i);
-            if (jvmArg instanceof StringArgument) {
-                String jvmArgStr = jvmArg.toString();
-                if (jvmArgStr.startsWith("-DignoreList=")) {
-                    jvm.set(i, new StringArgument("-DignoreList=" + updateIgnoreList(repository, version, jvmArgStr.substring("-DignoreList=".length()))));
+        Optional<String> bslVersion = libraryAnalyzer.getVersion(BOOTSTRAP_LAUNCHER);
+
+        if (bslVersion.isPresent()) {
+            if (VersionNumber.VERSION_COMPARATOR.compare(bslVersion.get(), "0.1.17") < 0) {
+                // The default ignoreList will be applied to all components of libraries in classpath,
+                // so if game directory located in some directory like /Users/asm, all libraries will be ignored,
+                // which is not expected. We fix this here.
+                List<Argument> jvm = builder.getMutableJvmArguments();
+                for (int i = 0; i < jvm.size(); i++) {
+                    Argument jvmArg = jvm.get(i);
+                    if (jvmArg instanceof StringArgument) {
+                        String jvmArgStr = jvmArg.toString();
+                        if (jvmArgStr.startsWith("-DignoreList=")) {
+                            jvm.set(i, new StringArgument("-DignoreList=" + updateIgnoreList(repository, version, jvmArgStr.substring("-DignoreList=".length()))));
+                        }
+                    }
+                }
+            } else {
+                // bootstraplauncher 0.1.17 will only apply ignoreList to file name of libraries in classpath.
+                // So we only fixes name of primary jar.
+                List<Argument> jvm = builder.getMutableJvmArguments();
+                for (int i = 0; i < jvm.size(); i++) {
+                    Argument jvmArg = jvm.get(i);
+                    if (jvmArg instanceof StringArgument) {
+                        String jvmArgStr = jvmArg.toString();
+                        if (jvmArgStr.startsWith("-DignoreList=")) {
+                            jvm.set(i, new StringArgument(jvmArgStr + ",${primary_jar_name}"));
+                        }
+                    }
                 }
             }
         }

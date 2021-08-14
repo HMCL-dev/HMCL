@@ -158,7 +158,8 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         FABRIC(true, "fabric", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-loader")),
         FORGE(true, "forge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("(forge|fmlloader)")),
         LITELOADER(true, "liteloader", Pattern.compile("com\\.mumfrey"), Pattern.compile("liteloader")),
-        OPTIFINE(false, "optifine", Pattern.compile("(net\\.)?optifine"), Pattern.compile("^(?!.*launchwrapper).*$"));
+        OPTIFINE(false, "optifine", Pattern.compile("(net\\.)?optifine"), Pattern.compile("^(?!.*launchwrapper).*$")),
+        BOOTSTRAP_LAUNCHER(false, "", Pattern.compile("cpw\\.mods"), Pattern.compile("bootstraplauncher"));
 
         private final boolean modLoader;
         private final String patchId;
