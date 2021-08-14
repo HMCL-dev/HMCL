@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXColorPicker;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -26,6 +25,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.When;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -184,9 +184,7 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
         // ====
 
         // ==== Theme ====
-        JFXColorPicker picker = new JFXColorPicker(Color.web(config().getTheme().getColor()), null);
-        picker.setCustomColorText(i18n("color.custom"));
-        picker.setRecentColorsText(i18n("color.recent"));
+        ColorPicker picker = new ColorPicker(Color.web(config().getTheme().getColor()));
         picker.getCustomColors().setAll(Theme.SUGGESTED_COLORS);
         picker.setOnAction(e -> {
             Theme theme = Theme.custom(Theme.getColorDisplayName(picker.getValue()));
