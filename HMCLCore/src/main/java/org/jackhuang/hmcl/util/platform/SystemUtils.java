@@ -17,9 +17,8 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.lang.ProcessBuilder.Redirect;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,12 +30,10 @@ public final class SystemUtils {
     }
 
     public static int callExternalProcess(List<String> command) throws IOException, InterruptedException {
-        Process process = new ProcessBuilder(command).start();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            for (String line; (line = reader.readLine()) != null;) {
-                System.out.println(line);
-            }
-        }
+        Process process = new ProcessBuilder(command)
+                .redirectOutput(Redirect.INHERIT)
+                .redirectError(Redirect.INHERIT)
+                .start();
         return process.waitFor();
     }
 }
