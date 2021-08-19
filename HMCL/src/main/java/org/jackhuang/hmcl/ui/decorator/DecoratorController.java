@@ -304,6 +304,8 @@ public class DecoratorController {
             dialog.setDialogContainer(decorator.getDrawerWrapper());
             dialog.setOverlayClose(false);
             dialog.show();
+
+            navigator.setDisable(true);
         }
         dialogPane.push(node);
 
@@ -343,6 +345,8 @@ public class DecoratorController {
                 dialog.close();
                 dialog = null;
                 dialogPane = null;
+
+                navigator.setDisable(false);
             }
         }
     }
