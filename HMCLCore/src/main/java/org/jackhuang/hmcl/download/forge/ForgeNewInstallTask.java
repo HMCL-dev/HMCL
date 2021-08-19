@@ -22,11 +22,16 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
+import org.jackhuang.hmcl.download.game.VersionJsonDownloadTask;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.DownloadInfo;
+import org.jackhuang.hmcl.game.DownloadType;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -39,9 +44,11 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,6 +62,7 @@ import java.util.zip.ZipException;
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
 import static org.jackhuang.hmcl.util.Hex.encodeHex;
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.fromNonNullJson;
 
 public class ForgeNewInstallTask extends Task<Version> {
 
@@ -78,8 +86,8 @@ public class ForgeNewInstallTask extends Task<Version> {
                 String key = entry.getKey();
                 String value = entry.getValue();
 
-                key = parseLiteral(key, vars, ExceptionalFunction.identity());
-                value = parseLiteral(value, vars, ExceptionalFunction.identity());
+                key = parseLiteral(key, vars);
+                value = parseLiteral(value, vars);
 
                 if (key == null || value == null) {
                     throw new ArtifactMalformedException("Invalid forge installation configuration");
@@ -139,7 +147,7 @@ public class ForgeNewInstallTask extends Task<Version> {
 
             List<String> args = new ArrayList<>(processor.getArgs().size());
             for (String arg : processor.getArgs()) {
-                String parsed = parseLiteral(arg, vars, ExceptionalFunction.identity());
+                String parsed = parseLiteral(arg, vars);
                 if (parsed == null)
                     throw new ArtifactMalformedException("Invalid forge installation configuration");
                 args.add(parsed);
@@ -250,6 +258,10 @@ public class ForgeNewInstallTask extends Task<Version> {
             return plainConverter.apply(replaceTokens(var, literal));
     }
 
+    private String parseLiteral(String literal, Map<String, String> var) {
+        return parseLiteral(literal, var, ExceptionalFunction.identity());
+    }
+
     @Override
     public Collection<Task<?>> getDependents() {
         return dependents;
@@ -294,8 +306,65 @@ public class ForgeNewInstallTask extends Task<Version> {
         dependents.add(new GameLibrariesTask(dependencyManager, version, true, profile.getLibraries()));
     }
 
+    private Map<String, String> parseOptions(List<String> args, Map<String, String> vars) {
+        Map<String, String> options = new LinkedHashMap<>();
+        String optionName = null;
+        for (String arg : args) {
+            if (arg.startsWith("--")) {
+                if (optionName != null) {
+                    options.put(optionName, "");
+                }
+                optionName = arg.substring(2);
+            } else {
+                if (optionName == null) {
+                    // ignore
+                } else {
+                    options.put(optionName, parseLiteral(arg, vars));
+                    optionName = null;
+                }
+            }
+        }
+        if (optionName != null) {
+            options.put(optionName, "");
+        }
+        return options;
+    }
+
+    private Task<?> patchDownloadMojangMappingsTask(Processor processor, Map<String, String> vars) {
+        Map<String, String> options = parseOptions(processor.getArgs(), vars);
+        if (!"DOWNLOAD_MOJMAPS".equals(options.get("task")) || !"client".equals(options.get("side")))
+            return null;
+        String version = options.get("version");
+        String output = options.get("output");
+        if (version == null || output == null)
+            return null;
+
+        LOG.info("Patching DOWNLOAD_MOJMAPS task");
+        return new VersionJsonDownloadTask(version, dependencyManager)
+                .thenComposeAsync(json -> {
+                    DownloadInfo mappings = fromNonNullJson(json, Version.class)
+                            .getDownloads().get(DownloadType.CLIENT_MAPPINGS);
+                    if (mappings == null) {
+                        throw new Exception("client_mappings download info not found");
+                    }
+
+                    List<URL> mappingsUrl = dependencyManager.getDownloadProvider()
+                            .injectURLWithCandidates(mappings.getUrl());
+                    FileDownloadTask mappingsTask = new FileDownloadTask(
+                            mappingsUrl,
+                            new File(output),
+                            IntegrityCheck.of("SHA-1", mappings.getSha1()));
+                    mappingsTask.setCaching(true);
+                    mappingsTask.setCacheRepository(dependencyManager.getCacheRepository());
+                    return mappingsTask;
+                });
+    }
+
     private Task<?> createProcessorTask(Processor processor, Map<String, String> vars) {
-        Task<?> task = new ProcessorTask(processor, vars);
+        Task<?> task = patchDownloadMojangMappingsTask(processor, vars);
+        if (task == null) {
+            task = new ProcessorTask(processor, vars);
+        }
         task.onDone().register(
                 () -> updateProgress(processorDoneCount.incrementAndGet(), processors.size()));
         return task;

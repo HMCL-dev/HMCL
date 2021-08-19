@@ -214,6 +214,10 @@ public class Version implements Comparable<Version>, Validation {
         return compatibilityRules == null ? Collections.emptyList() : Collections.unmodifiableList(compatibilityRules);
     }
 
+    public Map<DownloadType, DownloadInfo> getDownloads() {
+        return downloads == null ? Collections.emptyMap() : Collections.unmodifiableMap(downloads);
+    }
+
     public DownloadInfo getDownloadInfo() {
         DownloadInfo client = downloads == null ? null : downloads.get(DownloadType.CLIENT);
         String jarName = jar == null ? id : jar;
