@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -131,7 +131,8 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
                     lblModpackLocation.setText(selectedFile.getAbsolutePath());
 
                     if (!name.isPresent()) {
-                        txtModpackName.setText(manifest.getName());
+                        // trim: https://github.com/huanghongxun/HMCL/issues/962
+                        txtModpackName.setText(manifest.getName().trim());
                     }
                 }, e -> {
                     Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageType.ERROR);

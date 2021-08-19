@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -101,7 +101,8 @@ public class RemoteModpackPage extends StackPane implements WizardPage {
         lblAuthor.setText(manifest.getAuthor());
 
         if (!name.isPresent()) {
-            txtModpackName.setText(manifest.getName());
+            // trim: https://github.com/huanghongxun/HMCL/issues/962
+            txtModpackName.setText(manifest.getName().trim());
             txtModpackName.getValidators().addAll(
                     new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().hasVersion(str) && StringUtils.isNotBlank(str)),
                     new Validator(i18n("version.forbidden_name"), str -> !profile.getRepository().forbidsVersion(str))
