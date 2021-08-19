@@ -21,6 +21,8 @@ import com.jfoenix.controls.*;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -216,17 +218,22 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
 
                 JFXButton searchButton = new JFXButton();
                 searchButton.setText(i18n("search"));
-                searchButton.setOnAction(e -> {
-                    getSkinnable().search(gameVersionField.getText(),
-                            Optional.ofNullable(categoryComboBox.getSelectionModel().getSelectedItem())
-                                    .map(CategoryIndented::getCategoryId)
-                                    .orElse(0),
-                            0,
-                            nameField.getText(),
-                            sortComboBox.getSelectionModel().getSelectedIndex());
-                });
                 searchPane.add(searchButton, 0, 2);
                 vbox.getChildren().setAll(searchButton);
+
+                EventHandler<ActionEvent> searchAction = e -> getSkinnable()
+                        .search(gameVersionField.getText(),
+                                Optional.ofNullable(categoryComboBox.getSelectionModel().getSelectedItem())
+                                        .map(CategoryIndented::getCategoryId)
+                                        .orElse(0),
+                                0,
+                                nameField.getText(),
+                                sortComboBox.getSelectionModel().getSelectedIndex());
+                searchButton.setOnAction(searchAction);
+                nameField.setOnAction(searchAction);
+                gameVersionField.setOnAction(searchAction);
+                categoryComboBox.setOnAction(searchAction);
+                sortComboBox.setOnAction(searchAction);
             }
 
             SpinnerPane spinnerPane = new SpinnerPane();
