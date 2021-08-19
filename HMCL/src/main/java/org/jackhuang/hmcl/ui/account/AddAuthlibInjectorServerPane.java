@@ -38,6 +38,7 @@ import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.loadFXML;
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -68,6 +69,8 @@ public class AddAuthlibInjectorServerPane extends StackPane implements DialogAwa
 
         btnAddNext.disableProperty().bind(txtServerUrl.textProperty().isEmpty());
         nextPane.hideSpinner();
+
+        onEscPressed(this, this::onAddCancel);
     }
 
     @Override

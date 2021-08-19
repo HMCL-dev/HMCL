@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,10 +21,19 @@ import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.util.Logging;
 
+import java.util.Optional;
 import java.util.Stack;
 
 public class StackContainerPane extends StackPane {
     private final Stack<Node> stack = new Stack<>();
+
+    public Optional<Node> peek() {
+        if (stack.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(stack.peek());
+        }
+    }
 
     public void push(Node node) {
         stack.push(node);

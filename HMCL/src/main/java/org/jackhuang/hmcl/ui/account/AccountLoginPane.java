@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class AccountLoginPane extends StackPane {
@@ -54,6 +55,8 @@ public class AccountLoginPane extends StackPane {
 
         lblUsername.setText(oldAccount.getUsername());
         txtPassword.setOnAction(e -> onAccept());
+
+        onEscPressed(this, this::onCancel);
     }
 
     @FXML

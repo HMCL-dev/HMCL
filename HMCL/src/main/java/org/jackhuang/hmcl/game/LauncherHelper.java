@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.LogWindow;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
@@ -328,9 +329,18 @@ public final class LauncherHelper {
                 if (acceptableJava.isPresent()) {
                     setting.setJavaVersion(acceptableJava.get());
                 } else {
+                    MessageDialogPane dialog = new MessageDialogPane(
+                            i18n("launch.advice.require_newer_java_version",
+                                    gameVersion.toString(),
+                                    version.getJavaVersion().getMajorVersion()),
+                            i18n("message.warning"),
+                            MessageType.QUESTION);
+
                     JFXButton linkButton = new JFXButton(i18n("download.external_link"));
                     linkButton.setOnAction(e -> FXUtils.openLink("https://adoptopenjdk.net/"));
                     linkButton.getStyleClass().add("dialog-accept");
+                    dialog.addButton(linkButton);
+
                     JFXButton yesButton = new JFXButton(i18n("button.ok"));
                     yesButton.setOnAction(event -> {
                         downloadJava(version.getJavaVersion(), profile)
@@ -346,16 +356,14 @@ public final class LauncherHelper {
                                 }, Platform::runLater).thenAccept(x -> onAccept.run());
                     });
                     yesButton.getStyleClass().add("dialog-accept");
+                    dialog.addButton(yesButton);
+
                     JFXButton noButton = new JFXButton(i18n("button.cancel"));
                     noButton.getStyleClass().add("dialog-cancel");
+                    dialog.addButton(noButton);
+                    dialog.setCancelButton(noButton);
 
-                    Controllers.dialogWithButtons(
-                            i18n("launch.advice.require_newer_java_version",
-                                    gameVersion.toString(),
-                                    version.getJavaVersion().getMajorVersion()),
-                            i18n("message.warning"),
-                            MessageType.QUESTION,
-                            linkButton, yesButton, noButton);
+                    Controllers.dialog(dialog);
                     flag = true;
                 }
             }

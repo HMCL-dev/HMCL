@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -118,10 +118,7 @@ public final class Versions {
         deleteButton.getStyleClass().add("dialog-error");
         deleteButton.setOnAction(e -> profile.getRepository().removeVersionFromDisk(version));
 
-        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-        cancelButton.getStyleClass().add("dialog-cancel");
-        
-        Controllers.dialogWithButtons(message, i18n("message.warning"), MessageDialogPane.MessageType.WARNING, deleteButton, cancelButton);
+        Controllers.confirmAction(message, i18n("message.warning"), MessageDialogPane.MessageType.WARNING, deleteButton);
     }
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {

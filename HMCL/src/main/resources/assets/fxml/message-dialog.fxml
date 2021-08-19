@@ -20,10 +20,7 @@
             <StackPane styleClass="jfx-layout-body">
                 <Label fx:id="content" wrapText="true" />
             </StackPane>
-            <HBox fx:id="actions" styleClass="jfx-layout-actions">
-                <JFXButton fx:id="acceptButton" styleClass="dialog-accept" text="%button.ok" />
-                <JFXButton fx:id="cancelButton" visible="false" styleClass="dialog-cancel" text="%button.cancel" />
-            </HBox>
+            <HBox fx:id="actions" styleClass="jfx-layout-actions" />
         </VBox>
     </HBox>
 </fx:root>

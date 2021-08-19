@@ -137,6 +137,8 @@ public class AddAccountPane extends StackPane {
                 .map(FXCollections::observableList));
         Bindings.bindContent(linksContainer.getChildren(), links);
         linksContainer.visibleProperty().bind(cboServers.visibleProperty());
+
+        onEscPressed(this, this::onCreationCancel);
     }
 
     private boolean validateUsername(String username) {
@@ -283,6 +285,8 @@ public class AddAccountPane extends StackPane {
             hbox.setAlignment(Pos.CENTER_RIGHT);
             hbox.getChildren().add(cancel);
             setBottom(hbox);
+
+            onEscPressed(this, cancel::fire);
         }
 
         @Override

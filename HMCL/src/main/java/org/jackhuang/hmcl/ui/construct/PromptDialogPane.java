@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,8 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.StringUtils;
+
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -115,6 +117,8 @@ public class PromptDialogPane extends StackPane {
                 lblCreationWarning.setText(msg);
             });
         });
+
+        onEscPressed(this, cancelButton::fire);
     }
 
     public CompletableFuture<List<Builder.Question<?>>> getCompletableFuture() {

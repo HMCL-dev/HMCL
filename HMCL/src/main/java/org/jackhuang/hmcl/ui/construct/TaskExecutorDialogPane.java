@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 
 public class TaskExecutorDialogPane extends StackPane {
@@ -53,7 +54,7 @@ public class TaskExecutorDialogPane extends StackPane {
 
         setCancel(cancel);
 
-        btnCancel.setOnMouseClicked(e -> {
+        btnCancel.setOnAction(e -> {
             Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
             onCancel.accept(this);
         });
@@ -76,6 +77,8 @@ public class TaskExecutorDialogPane extends StackPane {
             });
         };
         FileDownloadTask.speedEvent.channel(FileDownloadTask.SpeedEvent.class).registerWeak(speedEventHandler);
+
+        onEscPressed(this, btnCancel::fire);
     }
 
     public void setExecutor(TaskExecutor executor) {

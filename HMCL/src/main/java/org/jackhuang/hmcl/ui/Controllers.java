@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +17,11 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.ButtonBase;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -194,20 +194,24 @@ public final class Controllers {
         dialog(text, title, type, null);
     }
 
-    public static void dialog(String text, String title, MessageType type, Runnable onAccept) {
-        dialog(new MessageDialogPane(text, title, type, onAccept));
+    public static void dialog(String text, String title, MessageType type, Runnable ok) {
+        dialog(MessageDialogPane.ok(text, title, type, ok));
     }
 
-    public static void confirm(String text, String title, Runnable onAccept, Runnable onCancel) {
-        confirm(text, title, MessageType.QUESTION, onAccept, onCancel);
+    public static void confirm(String text, String title, Runnable yes, Runnable no) {
+        confirm(text, title, MessageType.QUESTION, yes, no);
     }
 
-    public static void confirm(String text, String title, MessageType type, Runnable onAccept, Runnable onCancel) {
-        dialog(new MessageDialogPane(text, title, type, onAccept, onCancel));
+    public static void confirm(String text, String title, MessageType type, Runnable yes, Runnable no) {
+        dialog(MessageDialogPane.yesOrNo(text, title, type, yes, no));
     }
 
-    public static void dialogWithButtons(String text, String title, MessageType type, JFXButton... buttons) {
-        dialog(MessageDialogPane.fromButtons(text, title, type, buttons));
+    public static void confirmAction(String text, String title, MessageType type, ButtonBase actionButton) {
+        dialog(MessageDialogPane.actionOrCancel(text, title, type, actionButton, null));
+    }
+
+    public static void confirmAction(String text, String title, MessageType type, ButtonBase actionButton, Runnable cancel) {
+        dialog(MessageDialogPane.actionOrCancel(text, title, type, actionButton, cancel));
     }
 
     public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {

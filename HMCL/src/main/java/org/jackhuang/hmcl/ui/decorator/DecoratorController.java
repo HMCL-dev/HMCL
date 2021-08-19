@@ -26,6 +26,7 @@ import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.input.DragEvent;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
@@ -84,6 +85,34 @@ public class DecoratorController {
         setupBackground();
 
         setupAuthlibInjectorDnD();
+
+        // pass key events to current dialog
+        decorator.addEventFilter(KeyEvent.ANY, e -> {
+            if (dialogPane == null || !dialogPane.peek().isPresent()) {
+                return;
+            }
+            Node currentDialog = dialogPane.peek().get();
+
+            if (!(e.getTarget() instanceof Node)) {
+                return;
+            }
+
+            boolean targetInDialog = false;
+            Node t = (Node) e.getTarget();
+            while (t != null) {
+                if (t == currentDialog) {
+                    targetInDialog = true;
+                    break;
+                }
+                t = t.getParent();
+            }
+            if (targetInDialog) {
+                return;
+            }
+
+            e.consume();
+            currentDialog.fireEvent(e.copyFor(e.getSource(), currentDialog));
+        });
     }
 
     public Decorator getDecorator() {
@@ -214,14 +243,6 @@ public class DecoratorController {
             if (refreshable.refreshableProperty().get())
                 refreshable.refresh();
         }
-    }
-
-    private void onNavigating(Navigator.NavigationEvent event) {
-        if (event.getSource() != this.navigator) return;
-        Node from = event.getNode();
-
-        if (from instanceof DecoratorPage)
-            ((DecoratorPage) from).back();
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
