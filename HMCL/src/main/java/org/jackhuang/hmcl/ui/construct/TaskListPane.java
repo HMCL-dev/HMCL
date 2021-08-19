@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,7 +29,8 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
-import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
+import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
+import org.jackhuang.hmcl.download.forge.ForgeOldInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
@@ -110,7 +111,7 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("assets.download_all"));
                 } else if (task instanceof GameInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.game")));
-                } else if (task instanceof ForgeInstallTask) {
+                } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
                 } else if (task instanceof LiteLoaderInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.liteloader")));

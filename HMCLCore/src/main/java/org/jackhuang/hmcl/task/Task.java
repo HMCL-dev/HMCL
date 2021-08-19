@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -900,6 +900,25 @@ public abstract class Task<T> {
                 return tasks.stream().flatMap(task -> task.getStages().stream()).collect(Collectors.toList());
             }
         };
+    }
+
+    /**
+     * Returns a new task that runs the given tasks sequentially
+     * and returns the result of the last task.
+     *
+     * @param tasks tasks to run sequentially
+     * @return the combination of these tasks
+     */
+    public static Task<?> runSequentially(Task<?>... tasks) {
+        if (tasks.length == 0) {
+            return new SimpleTask<>(() -> null);
+        }
+
+        Task<?> task = tasks[0];
+        for (int i = 1; i < tasks.length; i++) {
+            task = task.thenComposeAsync(tasks[i]);
+        }
+        return task;
     }
 
     public enum TaskSignificance {
