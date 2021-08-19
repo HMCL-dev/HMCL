@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,11 +21,12 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.util.Collection;
 import java.util.Collections;
+
+import static org.jackhuang.hmcl.util.gson.JsonUtils.GSON;
 
 /**
  *
@@ -50,33 +51,24 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
 
     @Override
     public Task<?> refreshAsync() {
-        GetTask task = new GetTask(NetworkUtils.toURL(downloadProvider.getVersionListURL()));
-        return new Task<Void>() {
-            @Override
-            public Collection<Task<?>> getDependents() {
-                return Collections.singleton(task);
-            }
+        return new GetTask(NetworkUtils.toURL(downloadProvider.getVersionListURL()))
+                .thenAcceptAsync(json -> {
+                    GameRemoteVersions root = GSON.fromJson(json, GameRemoteVersions.class);
 
-            @Override
-            public void execute() {
-                lock.writeLock().lock();
+                    lock.writeLock().lock();
+                    try {
+                        versions.clear();
 
-                try {
-                    versions.clear();
-
-                    GameRemoteVersions root = JsonUtils.GSON.fromJson(task.getResult(), GameRemoteVersions.class);
-                    for (GameRemoteVersionInfo remoteVersion : root.getVersions()) {
-                        versions.put(remoteVersion.getGameVersion(), new GameRemoteVersion(
-                                remoteVersion.getGameVersion(),
-                                remoteVersion.getGameVersion(),
-                                Collections.singletonList(remoteVersion.getUrl()),
-                                remoteVersion.getType(), remoteVersion.getReleaseTime())
-                        );
+                        for (GameRemoteVersionInfo remoteVersion : root.getVersions()) {
+                            versions.put(remoteVersion.getGameVersion(), new GameRemoteVersion(
+                                    remoteVersion.getGameVersion(),
+                                    remoteVersion.getGameVersion(),
+                                    Collections.singletonList(remoteVersion.getUrl()),
+                                    remoteVersion.getType(), remoteVersion.getReleaseTime()));
+                        }
+                    } finally {
+                        lock.writeLock().unlock();
                     }
-                } finally {
-                    lock.writeLock().unlock();
-                }
-            }
-        };
+                });
     }
 }
