@@ -52,8 +52,7 @@
                 <JFXTextField fx:id="txtUsername" GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.columnSpan="2"
                               FXUtils.validateWhileTextChanged="true" onAction="#onCreationAccept">
                     <validators>
-                        <RequiredValidator message="%input.not_empty">
-                        </RequiredValidator>
+                        <RequiredValidator />
                     </validators>
                 </JFXTextField>
 
@@ -62,8 +61,7 @@
                 <JFXPasswordField fx:id="txtPassword" GridPane.columnIndex="1" GridPane.rowIndex="3"
                                   GridPane.columnSpan="2" FXUtils.validateWhileTextChanged="true" onAction="#onCreationAccept">
                     <validators>
-                        <RequiredFieldValidator message="%input.not_empty">
-                        </RequiredFieldValidator>
+                        <RequiredFieldValidator />
                     </validators>
                 </JFXPasswordField>
             </GridPane>

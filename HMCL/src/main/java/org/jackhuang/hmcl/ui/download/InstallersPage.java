@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -32,16 +31,16 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.ui.InstallerItem;
+import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.util.Map;
 
+import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class InstallersPage extends Control implements WizardPage {
@@ -51,16 +50,14 @@ public class InstallersPage extends Control implements WizardPage {
     protected JFXTextField txtName = new JFXTextField();
     protected BooleanProperty installable = new SimpleBooleanProperty();
 
-    public InstallersPage(WizardController controller, GameRepository repository, String gameVersion, InstallerWizardDownloadProvider downloadProvider) {
+    public InstallersPage(WizardController controller, HMCLGameRepository repository, String gameVersion, InstallerWizardDownloadProvider downloadProvider) {
         this.controller = controller;
 
-        Validator hasVersion = new Validator(s -> !repository.hasVersion(s) && StringUtils.isNotBlank(s));
-        hasVersion.setMessage(i18n("install.new_game.already_exists"));
-        Validator nameValidator = new Validator(OperatingSystem::isNameValid);
-        nameValidator.setMessage(i18n("install.new_game.malformed"));
-        txtName.getValidators().addAll(hasVersion, nameValidator);
-        installable.bind(Bindings.createBooleanBinding(() -> txtName.validate(),
-                txtName.textProperty()));
+        txtName.getValidators().addAll(
+                new RequiredValidator(),
+                new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
+                new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
+        installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
         txtName.setText(gameVersion);
 
         group.game.installable.setValue(false);

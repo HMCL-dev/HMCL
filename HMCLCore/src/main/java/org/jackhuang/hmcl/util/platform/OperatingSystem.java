@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -118,12 +118,12 @@ public enum OperatingSystem {
         if (CURRENT_OS == WINDOWS) {
             // valid names and characters taken from http://msdn.microsoft.com/library/default.asp?url=/library/en-us/fileio/fs/naming_a_file.asp
             INVALID_RESOURCE_CHARACTERS = Pattern.compile("[/\"<>|?*:\\\\]");
-            INVALID_RESOURCE_BASENAMES = new String[]{"aux", "com1", "com2", "com3", "com4", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-                    "com5", "com6", "com7", "com8", "com9", "con", "lpt1", "lpt2", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
-                    "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9", "nul", "prn"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
+            INVALID_RESOURCE_BASENAMES = new String[]{"aux", "com1", "com2", "com3", "com4",
+                    "com5", "com6", "com7", "com8", "com9", "con", "lpt1", "lpt2",
+                    "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9", "nul", "prn"};
             Arrays.sort(INVALID_RESOURCE_BASENAMES);
             //CLOCK$ may be used if an extension is provided
-            INVALID_RESOURCE_FULLNAMES = new String[]{"clock$"}; //$NON-NLS-1$
+            INVALID_RESOURCE_FULLNAMES = new String[]{"clock$"};
         } else {
             //only front slash and null char are invalid on UNIXes
             //taken from http://www.faqs.org/faqs/unix-faq/faq/part2/section-2.html
@@ -168,19 +168,22 @@ public enum OperatingSystem {
     }
 
     /**
-     * Returns true if the given name is a valid resource name on this operating system,
+     * Returns true if the given name is a valid file name on this operating system,
      * and false otherwise.
      */
     public static boolean isNameValid(String name) {
-        //. and .. have special meaning on all platforms
-        if (name.equals(".") || name.equals("..") || name.indexOf('/') == 0 || name.indexOf('\0') >= 0) //$NON-NLS-1$ //$NON-NLS-2$
+        // empty filename is not allowed
+        if (name.isEmpty())
             return false;
-        if (CURRENT_OS == WINDOWS) {
-            //empty names are not valid
-            final int length = name.length();
-            if (length == 0)
-                return false;
-            final char lastChar = name.charAt(length - 1);
+        // . and .. have special meaning on all platforms
+        if (name.isEmpty() || name.equals("."))
+            return false;
+        // \0 and / are forbidden on all platforms
+        if (name.indexOf('/') != -1 || name.indexOf('\0') != -1)
+            return false;
+
+        if (CURRENT_OS == WINDOWS) { // Windows only
+            char lastChar = name.charAt(name.length() - 1);
             // filenames ending in dot are not valid
             if (lastChar == '.')
                 return false;
@@ -194,7 +197,7 @@ public enum OperatingSystem {
                 return false;
             if (Arrays.binarySearch(INVALID_RESOURCE_FULLNAMES, name.toLowerCase()) >= 0)
                 return false;
-            if (INVALID_RESOURCE_CHARACTERS != null && INVALID_RESOURCE_CHARACTERS.matcher(name).find())
+            if (INVALID_RESOURCE_CHARACTERS.matcher(name).find())
                 return false;
         }
 

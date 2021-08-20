@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -40,7 +41,7 @@ class AdditionalInstallersPage extends InstallersPage {
     protected final String gameVersion;
     protected final Version version;
 
-    public AdditionalInstallersPage(String gameVersion, Version version, WizardController controller, GameRepository repository, InstallerWizardDownloadProvider downloadProvider) {
+    public AdditionalInstallersPage(String gameVersion, Version version, WizardController controller, HMCLGameRepository repository, InstallerWizardDownloadProvider downloadProvider) {
         super(controller, repository, gameVersion, downloadProvider);
         this.gameVersion = gameVersion;
         this.version = version;

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -215,7 +215,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         txtModpackName.textProperty().bindBidirectional(skinnable.name);
                         txtModpackName.setLabelFloat(true);
                         txtModpackName.setPromptText(i18n("modpack.name"));
-                        txtModpackName.getValidators().add(new RequiredValidator(i18n("modpack.not_a_valid_name")));
+                        txtModpackName.getValidators().add(new RequiredValidator());
                         StackPane.setMargin(txtModpackName, insets);
                         list.getContent().add(txtModpackName);
 

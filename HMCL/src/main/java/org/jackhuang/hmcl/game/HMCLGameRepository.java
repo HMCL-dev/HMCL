@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
@@ -283,10 +284,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
             vs.setUsesGlobal(true);
     }
 
-    public boolean forbidsVersion(String id) {
-        return FORBIDDEN.contains(id);
-    }
-
     public LaunchOptions getLaunchOptions(String version, File gameDir, boolean checkJava) throws InterruptedException {
         VersionSetting vs = getVersionSetting(version);
 
@@ -368,7 +365,38 @@ public class HMCLGameRepository extends DefaultGameRepository {
             .setPrettyPrinting()
             .create();
 
-    private static final HashSet<String> FORBIDDEN = new HashSet<>(Arrays.asList("modpack", "minecraftinstance", "manifest"));
-
     private static final String PROFILE = "{\"selectedProfile\": \"(Default)\",\"profiles\": {\"(Default)\": {\"name\": \"(Default)\"}},\"clientToken\": \"88888888-8888-8888-8888-888888888888\"}";
+
+
+    // These version ids are forbidden because they may conflict with modpack configuration filenames
+    private static final Set<String> FORBIDDEN_VERSION_IDS = new HashSet<>(Arrays.asList(
+            "modpack", "minecraftinstance", "manifest"));
+
+    public static boolean isValidVersionId(String id) {
+        if (FORBIDDEN_VERSION_IDS.contains(id))
+            return false;
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS &&
+                FORBIDDEN_VERSION_IDS.contains(id.toLowerCase()))
+            return false;
+
+        return OperatingSystem.isNameValid(id);
+    }
+
+    /**
+     * Returns true if the given version id conflicts with an existing version.
+     */
+    public boolean versionIdConflicts(String id) {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            // on Windows, filenames are case-insensitive
+            for (String existingId : versions.keySet()) {
+                if (existingId.equalsIgnoreCase(id)) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return versions.containsKey(id);
+        }
+    }
 }
