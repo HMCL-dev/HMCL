@@ -123,7 +123,7 @@ shadowJar {
         attributes 'Created-By': 'Copyright(c) 2013-2020 huangyuhui.',
                 'Main-Class': mainClassName,
                 'Multi-Release': 'true',
-                'Implementation-Version': version,
+                'Implementation-Version': project.version,
                 'Class-Path': 'pack200.jar',
                 'Add-Opens': [
                         'java.base/java.lang',
