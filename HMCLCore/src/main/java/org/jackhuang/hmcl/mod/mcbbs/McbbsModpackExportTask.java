@@ -23,6 +23,9 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
+import org.jackhuang.hmcl.mod.curse.CurseManifest;
+import org.jackhuang.hmcl.mod.curse.CurseManifestMinecraft;
+import org.jackhuang.hmcl.mod.curse.CurseManifestModLoader;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -34,6 +37,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
@@ -83,6 +87,7 @@ public class McbbsModpackExportTask extends Task<Void> {
             String gameVersion = repository.getGameVersion(version)
                     .orElseThrow(() -> new IOException("Cannot parse the version of " + version));
 
+            // Mcbbs manifest
             List<McbbsModpackManifest.Addon> addons = new ArrayList<>();
             addons.add(new McbbsModpackManifest.Addon(MINECRAFT.getPatchId(), gameVersion));
             analyzer.getVersion(FORGE).ifPresent(forgeVersion ->
@@ -103,8 +108,16 @@ public class McbbsModpackExportTask extends Task<Void> {
             McbbsModpackManifest.Settings settings = new McbbsModpackManifest.Settings();
             McbbsModpackManifest.LaunchInfo launchInfo = new McbbsModpackManifest.LaunchInfo(info.getMinMemory(), info.getSupportedJavaVersions(), StringUtils.tokenize(info.getLaunchArguments()), StringUtils.tokenize(info.getJavaArguments()));
 
-            McbbsModpackManifest manifest = new McbbsModpackManifest(McbbsModpackManifest.MANIFEST_TYPE, 1, info.getName(), info.getVersion(), info.getAuthor(), info.getDescription(), info.getFileApi() == null ? null : StringUtils.removeSuffix(info.getFileApi(), "/"), info.getUrl(), info.isForceUpdate(), origins, addons, libraries, files, settings, launchInfo);
-            zip.putTextFile(JsonUtils.GSON.toJson(manifest), "manifest.json");
+            McbbsModpackManifest mcbbsManifest = new McbbsModpackManifest(McbbsModpackManifest.MANIFEST_TYPE, 2, info.getName(), info.getVersion(), info.getAuthor(), info.getDescription(), info.getFileApi() == null ? null : StringUtils.removeSuffix(info.getFileApi(), "/"), info.getUrl(), info.isForceUpdate(), origins, addons, libraries, files, settings, launchInfo);
+            zip.putTextFile(JsonUtils.GSON.toJson(mcbbsManifest), "mcbbs.packmeta");
+
+            // CurseForge manifest
+            List<CurseManifestModLoader> modLoaders = new ArrayList<>();
+            analyzer.getVersion(FORGE).ifPresent(forgeVersion -> modLoaders.add(new CurseManifestModLoader("forge-" + forgeVersion, true)));
+            analyzer.getVersion(FABRIC).ifPresent(fabricVersion -> modLoaders.add(new CurseManifestModLoader("fabric-" + fabricVersion, true)));
+            // OptiFine and LiteLoader are not supported by CurseForge modpack.
+            CurseManifest curseManifest = new CurseManifest(CurseManifest.MINECRAFT_MODPACK, 1, info.getName(), info.getVersion(), info.getAuthor(), "overrides", new CurseManifestMinecraft(gameVersion, modLoaders), Collections.emptyList());
+            zip.putTextFile(JsonUtils.GSON.toJson(curseManifest), "manifest.json");
         }
     }
 

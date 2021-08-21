@@ -43,7 +43,9 @@ public interface ModAdviser {
     List<String> MODPACK_BLACK_LIST = Lang.immutableListOf(
             "regex:(.*?)\\.log",
             "usernamecache.json", "usercache.json", // Minecraft
-            "launcher_profiles.json", "launcher.pack.lzma", // Minecraft Launcher
+            "launcher_profiles.json", "launcher.pack.lzma", // Old Minecraft Launcher
+            "launcher_accounts.json", "launcher_cef_log.txt", "launcher_log.txt", "launcher_msa_credentials.bin", "launcher_settings.json", "launcher_ui_state.json", "realms_persistence.json", "webcache2", "treatment_tags.json", // New Minecraft Launcher
+            "clientId.txt", "PCL.ini", // Plain Craft Launcher
             "backup", "pack.json", "launcher.jar", "cache", "modpack.cfg", // HMCL
             "manifest.json", "minecraftinstance.json", ".curseclient", // Curse
             ".fabric", ".mixin.out", // Fabric

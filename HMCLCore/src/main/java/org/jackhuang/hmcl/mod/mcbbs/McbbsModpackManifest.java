@@ -155,6 +155,8 @@ public class McbbsModpackManifest implements Validation {
 //            throw new JsonParseException("Only supports version 1 of McbbsModpackManifest");
         if (files == null)
             throw new JsonParseException("McbbsModpackManifest.files cannot be null");
+        if (addons == null)
+            throw new JsonParseException("McbbsModpackManifest.addons cannot be null");
     }
 
     public static final class Origin {
