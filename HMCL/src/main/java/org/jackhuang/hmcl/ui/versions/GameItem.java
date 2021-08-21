@@ -69,7 +69,7 @@ public class GameItem extends Control {
                         if (I18n.hasKey("install.installer." + libraryId)) {
                             libraries.append(", ").append(i18n("install.installer." + libraryId));
                             if (libraryVersion != null)
-                                libraries.append(": ").append(LibraryAnalyzer.modifyVersion(game, libraryVersion.replaceAll("(?i)" + libraryId, "")));
+                                libraries.append(": ").append(libraryVersion.replaceAll("(?i)" + libraryId, ""));
                         }
                     }
 

@@ -25,12 +25,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
-import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
-import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 
 public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMark> {
     private Version version;
@@ -135,7 +134,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         for (Library library : version.resolve(null).getLibraries()) {
             for (LibraryType type : LibraryType.values()) {
                 if (type.matchLibrary(library)) {
-                    libraries.put(type.getPatchId(), pair(library, library.getVersion()));
+                    libraries.put(type.getPatchId(), pair(library, type.patchVersion(library.getVersion())));
                     break;
                 }
             }
@@ -155,14 +154,21 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass) || mainClass.startsWith("net.fabricmc") || mainClass.startsWith("cpw.mods"));
     }
 
-    public static String modifyVersion(String gameVersion, String version) {
-        return removeSuffix(removePrefix(removeSuffix(removePrefix(version.replace(gameVersion, "").trim(), "-"), "-"), "_"), "_");
-    }
-
     public enum LibraryType {
         MINECRAFT(true, "game", Pattern.compile("^$"), Pattern.compile("^$")),
         FABRIC(true, "fabric", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-loader")),
-        FORGE(true, "forge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("(forge|fmlloader)")),
+        FORGE(true, "forge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("(forge|fmlloader)")) {
+            private final Pattern FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
+
+            @Override
+            public String patchVersion(String libraryVersion) {
+                Matcher matcher = FORGE_VERSION_MATCHER.matcher(libraryVersion);
+                if (matcher.find()) {
+                    return matcher.group("forge");
+                }
+                return super.patchVersion(libraryVersion);
+            }
+        },
         LITELOADER(true, "liteloader", Pattern.compile("com\\.mumfrey"), Pattern.compile("liteloader")),
         OPTIFINE(false, "optifine", Pattern.compile("(net\\.)?optifine"), Pattern.compile("^(?!.*launchwrapper).*$")),
         BOOTSTRAP_LAUNCHER(false, "", Pattern.compile("cpw\\.mods"), Pattern.compile("bootstraplauncher"));
@@ -195,6 +201,10 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
 
         public boolean matchLibrary(Library library) {
             return group.matcher(library.getGroupId()).matches() && artifact.matcher(library.getArtifactId()).matches();
+        }
+
+        public String patchVersion(String libraryVersion) {
+            return libraryVersion;
         }
     }
 
