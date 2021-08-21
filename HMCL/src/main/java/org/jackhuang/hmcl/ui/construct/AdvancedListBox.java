@@ -85,10 +85,6 @@ public class AdvancedListBox extends ScrollPane {
         }
     }
 
-    public AdvancedListBox startCategory() {
-        return add(new ClassTitle());
-    }
-
     public AdvancedListBox startCategory(String category) {
         return add(new ClassTitle(category));
     }

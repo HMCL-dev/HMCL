@@ -33,7 +33,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.account.AccountList;
 import org.jackhuang.hmcl.ui.account.AddAccountPane;
@@ -56,8 +55,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
-import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class RootPage extends DecoratorTabPage {
@@ -191,23 +190,22 @@ public class RootPage extends DecoratorTabPage {
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
-            gameItem.getStyleClass().add("navigation-drawer-item");
-            gameItem.setLeftGraphic(wrap(SVG.gamepad(null, 20, 20)));
+            gameItem.setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/bookshelf.png")).getKey());
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
 
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
-            launcherSettingsItem.getStyleClass().add("navigation-drawer-item");
-            launcherSettingsItem.setLeftGraphic(wrap(SVG.gearOutline(null, 20, 20)));
+            launcherSettingsItem.setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/command.png")).getKey());
             launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings.launcher"));
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
 
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
+                    .startCategory(i18n("account").toUpperCase())
                     .add(accountListItem)
-                    .startCategory()
+                    .startCategory(i18n("version").toUpperCase())
                     .add(gameListItem)
                     .add(gameItem)
                     .startCategory(i18n("launcher").toUpperCase())
