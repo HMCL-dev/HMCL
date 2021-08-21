@@ -46,11 +46,14 @@ public abstract class SettingsView extends StackPane {
     protected final JFXTextField txtProxyUsername;
     protected final JFXPasswordField txtProxyPassword;
     protected final JFXTextField txtFontSize;
+    protected final JFXTextField txtLogFontSize;
     protected final JFXComboBox<SupportedLocale> cboLanguage;
     protected final JFXComboBox<String> cboDownloadSource;
     protected final FontComboBox cboFont;
+    protected final FontComboBox cboLogFont;
     protected final MultiFileItem<EnumCommonDirectory> fileCommonLocation;
-    protected final Label lblDisplay;
+    protected final Label lblLogFontDisplay;
+    protected final Label lblFontDisplay;
     protected final Label lblUpdate;
     protected final Label lblUpdateSub;
     protected final Text lblUpdateNote;
@@ -405,6 +408,44 @@ public abstract class SettingsView extends StackPane {
                                 HBox hBox = new HBox();
                                 hBox.setSpacing(3);
 
+                                cboLogFont = new FontComboBox(12);
+                                txtLogFontSize = new JFXTextField();
+                                FXUtils.setLimitWidth(txtLogFontSize, 50);
+                                hBox.getChildren().setAll(cboLogFont, txtLogFontSize);
+
+                                borderPane.setRight(hBox);
+                            }
+                        }
+
+                        lblLogFontDisplay = new Label("[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower.");
+                        fontPane.getChildren().add(lblLogFontDisplay);
+
+                        logPane.getContent().add(fontPane);
+                    }
+                    settingsPane.getContent().add(logPane);
+                }
+
+                {
+                    ComponentSublist fontPane = new ComponentSublist();
+                    fontPane.setTitle(i18n("settings.launcher.font"));
+
+                    {
+                        VBox vbox = new VBox();
+                        vbox.setSpacing(5);
+
+                        {
+                            BorderPane borderPane = new BorderPane();
+                            vbox.getChildren().add(borderPane);
+                            {
+                                Label left = new Label(i18n("settings.launcher.font"));
+                                BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                                borderPane.setLeft(left);
+                            }
+
+                            {
+                                HBox hBox = new HBox();
+                                hBox.setSpacing(3);
+
                                 cboFont = new FontComboBox(12);
                                 txtFontSize = new JFXTextField();
                                 FXUtils.setLimitWidth(txtFontSize, 50);
@@ -414,119 +455,12 @@ public abstract class SettingsView extends StackPane {
                             }
                         }
 
-                        lblDisplay = new Label("[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower.");
-                        fontPane.getChildren().add(lblDisplay);
+                        lblFontDisplay = new Label("Hello Minecraft! Launcher");
+                        vbox.getChildren().add(lblFontDisplay);
 
-                        logPane.getContent().add(fontPane);
+                        fontPane.getContent().add(vbox);
                     }
-                    settingsPane.getContent().add(logPane);
-                }
-
-                {
-                    StackPane aboutPane = new StackPane();
-                    GridPane gridPane = new GridPane();
-                    gridPane.setHgap(20);
-                    gridPane.setVgap(10);
-
-                    ColumnConstraints col1 = new ColumnConstraints();
-                    col1.setHgrow(Priority.SOMETIMES);
-                    col1.setMaxWidth(Double.NEGATIVE_INFINITY);
-                    col1.setMinWidth(Double.NEGATIVE_INFINITY);
-
-                    ColumnConstraints col2 = new ColumnConstraints();
-                    col2.setHgrow(Priority.SOMETIMES);
-                    col2.setMinWidth(20);
-                    col2.setMaxWidth(Double.POSITIVE_INFINITY);
-
-                    gridPane.getColumnConstraints().setAll(col1, col2);
-
-                    RowConstraints row = new RowConstraints();
-                    row.setMinHeight(Double.NEGATIVE_INFINITY);
-                    row.setValignment(VPos.TOP);
-                    row.setVgrow(Priority.SOMETIMES);
-                    gridPane.getRowConstraints().setAll(row, row, row, row, row, row);
-
-                    {
-                        Label label = new Label(i18n("about.copyright"));
-                        GridPane.setRowIndex(label, 0);
-                        GridPane.setColumnIndex(label, 0);
-                        gridPane.getChildren().add(label);
-                    }
-                    {
-                        Label label = new Label(i18n("about.copyright.statement"));
-                        label.setWrapText(true);
-                        GridPane.setRowIndex(label, 0);
-                        GridPane.setColumnIndex(label, 1);
-                        gridPane.getChildren().add(label);
-                    }
-                    {
-                        Label label = new Label(i18n("about.author"));
-                        GridPane.setRowIndex(label, 1);
-                        GridPane.setColumnIndex(label, 0);
-                        gridPane.getChildren().add(label);
-                    }
-                    {
-                        Label label = new Label(i18n("about.author.statement"));
-                        label.setWrapText(true);
-                        GridPane.setRowIndex(label, 1);
-                        GridPane.setColumnIndex(label, 1);
-                        gridPane.getChildren().add(label);
-                    }
-                    {
-                        Label label = new Label(i18n("about.thanks_to"));
-                        GridPane.setRowIndex(label, 2);
-                        GridPane.setColumnIndex(label, 0);
-                        gridPane.getChildren().add(label);
-                    }
-                    {
-                        Label label = new Label(i18n("about.thanks_to.statement"));
-                        label.setWrapText(true);
-                        GridPane.setRowIndex(label, 2);
-                        GridPane.setColumnIndex(label, 1);
-                        gridPane.getChildren().add(label);
-                    }
-                    {
-                        Label label = new Label(i18n("about.dependency"));
-                        GridPane.setRowIndex(label, 3);
-                        GridPane.setColumnIndex(label, 0);
-                        gridPane.getChildren().add(label);
-                    }
-                    {
-                        Label label = new Label(i18n("about.dependency.statement"));
-                        label.setWrapText(true);
-                        GridPane.setRowIndex(label, 3);
-                        GridPane.setColumnIndex(label, 1);
-                        gridPane.getChildren().add(label);
-                    }
-                    {
-                        Label label = new Label(i18n("about.claim"));
-                        GridPane.setRowIndex(label, 4);
-                        GridPane.setColumnIndex(label, 0);
-                        gridPane.getChildren().add(label);
-                    }
-                    {
-                        Label label = new Label(i18n("about.claim.statement"));
-                        label.setWrapText(true);
-                        label.setTextAlignment(TextAlignment.JUSTIFY);
-                        GridPane.setRowIndex(label, 4);
-                        GridPane.setColumnIndex(label, 1);
-                        gridPane.getChildren().add(label);
-                    }
-                    {
-                        Label label = new Label(i18n("about.open_source"));
-                        GridPane.setRowIndex(label, 5);
-                        GridPane.setColumnIndex(label, 0);
-                        gridPane.getChildren().add(label);
-                    }
-                    {
-                        Label label = new Label(i18n("about.open_source.statement"));
-                        label.setWrapText(true);
-                        GridPane.setRowIndex(label, 5);
-                        GridPane.setColumnIndex(label, 1);
-                        gridPane.getChildren().add(label);
-                    }
-                    aboutPane.getChildren().setAll(gridPane);
-                    settingsPane.getContent().add(aboutPane);
+                    settingsPane.getContent().add(fontPane);
                 }
                 rootPane.getChildren().add(settingsPane);
             }

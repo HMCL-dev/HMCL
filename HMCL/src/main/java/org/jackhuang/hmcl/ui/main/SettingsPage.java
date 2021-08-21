@@ -83,7 +83,19 @@ public final class SettingsPage extends SettingsView {
                         .fallbackTo(12.0)
                         .asPredicate(Validator.addTo(txtFontSize)));
 
-        lblDisplay.fontProperty().bind(Bindings.createObjectBinding(
+        lblFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
+                () -> Font.font(config().getFontFamily(), config().getFontSize()),
+                config().fontFamilyProperty(), config().fontSizeProperty()));
+
+        cboLogFont.valueProperty().bindBidirectional(config().fontFamilyProperty());
+
+        txtLogFontSize.textProperty().bindBidirectional(config().fontSizeProperty(),
+                SafeStringConverter.fromFiniteDouble()
+                        .restrict(it -> it > 0)
+                        .fallbackTo(12.0)
+                        .asPredicate(Validator.addTo(txtLogFontSize)));
+
+        lblLogFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
                 () -> Font.font(config().getFontFamily(), config().getFontSize()),
                 config().fontFamilyProperty(), config().fontSizeProperty()));
         // ====
