@@ -23,7 +23,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
@@ -87,7 +86,7 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
 
         setLoading(true);
         return CompletableFuture
-                .runAsync(() -> gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(id)).orElse(null))
+                .runAsync(() -> gameVersion = profile.getRepository().getGameVersion(id).orElse(null))
                 .thenApplyAsync(unused -> {
                     try (Stream<World> stream = World.getWorlds(savesDir)) {
                         return stream.parallel().collect(Collectors.toList());

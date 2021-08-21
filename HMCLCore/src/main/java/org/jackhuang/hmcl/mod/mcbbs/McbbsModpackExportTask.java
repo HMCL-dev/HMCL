@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.mod.mcbbs;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
@@ -81,7 +80,7 @@ public class McbbsModpackExportTask extends Task<Void> {
             });
 
             LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(version));
-            String gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version))
+            String gameVersion = repository.getGameVersion(version)
                     .orElseThrow(() -> new IOException("Cannot parse the version of " + version));
 
             List<McbbsModpackManifest.Addon> addons = new ArrayList<>();

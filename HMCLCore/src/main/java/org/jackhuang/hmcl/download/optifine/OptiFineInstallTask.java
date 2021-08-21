@@ -208,8 +208,7 @@ public final class OptiFineInstallTask extends Task<Version> {
      * @throws VersionMismatchException if required game version of installer does not match the actual one.
      */
     public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
-        File jar = dependencyManager.getGameRepository().getVersionJar(version);
-        Optional<String> gameVersion = GameVersion.minecraftVersion(jar);
+        Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
         if (!gameVersion.isPresent()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             Path configClass = fs.getPath("Config.class");

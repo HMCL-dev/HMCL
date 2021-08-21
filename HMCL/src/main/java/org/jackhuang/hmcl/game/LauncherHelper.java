@@ -133,7 +133,7 @@ public final class LauncherHelper {
         HMCLGameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
         Version version = MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion));
-        Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
+        Optional<String> gameVersion = repository.getGameVersion(version);
         boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
         CountDownLatch launchingLatch = new CountDownLatch(1);
 
@@ -311,7 +311,7 @@ public final class LauncherHelper {
 
         // Without onAccept called, the launching operation will be terminated.
 
-        VersionNumber gameVersion = VersionNumber.asVersion(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)).orElse("Unknown"));
+        VersionNumber gameVersion = VersionNumber.asVersion(profile.getRepository().getGameVersion(version).orElse("Unknown"));
         JavaVersion java = setting.getJavaVersion();
         if (java == null) {
             Controllers.dialog(i18n("launch.wrong_javadir"), i18n("message.warning"), MessageType.WARNING, onAccept);

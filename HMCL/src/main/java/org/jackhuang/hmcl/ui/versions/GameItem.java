@@ -26,7 +26,6 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -41,8 +40,6 @@ import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 import static org.jackhuang.hmcl.util.Lang.handleUncaught;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.Logging.LOG;
-import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
-import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameItem extends Control {
@@ -61,7 +58,7 @@ public class GameItem extends Control {
         this.version = id;
 
         // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
-        CompletableFuture.supplyAsync(() -> GameVersion.minecraftVersion(profile.getRepository().getVersionJar(id)).orElse(i18n("message.unknown")), POOL_VERSION_RESOLVE)
+        CompletableFuture.supplyAsync(() -> profile.getRepository().getGameVersion(id).orElse(i18n("message.unknown")), POOL_VERSION_RESOLVE)
                 .thenAcceptAsync(game -> {
                     StringBuilder libraries = new StringBuilder(game);
                     LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id));
@@ -72,7 +69,7 @@ public class GameItem extends Control {
                         if (I18n.hasKey("install.installer." + libraryId)) {
                             libraries.append(", ").append(i18n("install.installer." + libraryId));
                             if (libraryVersion != null)
-                                libraries.append(": ").append(modifyVersion("", libraryVersion.replaceAll("(?i)" + libraryId, "")));
+                                libraries.append(": ").append(LibraryAnalyzer.modifyVersion(game, libraryVersion.replaceAll("(?i)" + libraryId, "")));
                         }
                     }
 
@@ -122,9 +119,5 @@ public class GameItem extends Control {
 
     public ObjectProperty<Image> imageProperty() {
         return image;
-    }
-
-    private static String modifyVersion(String gameVersion, String version) {
-        return removeSuffix(removePrefix(removeSuffix(removePrefix(version.replace(gameVersion, "").trim(), "-"), "-"), "_"), "_");
     }
 }

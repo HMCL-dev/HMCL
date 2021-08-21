@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Supports operations on versioning.
@@ -133,6 +134,30 @@ public interface GameRepository extends VersionProvider {
      * @return the minecraft jar
      */
     File getVersionJar(Version version);
+
+    /**
+     * Detect game version.
+     *
+     * This method is time-consuming, but the result will be cached.
+     * Consider running this job in IO scheduler.
+     *
+     * @param version version
+     * @return game version, or empty if an error occurred in detection.
+     */
+    Optional<String> getGameVersion(Version version);
+
+    /**
+     * Detect game version.
+     *
+     * This method is time-consuming, but the result will be cached.
+     * Consider running this job in IO scheduler.
+     *
+     * @param versionId id of version
+     * @return game version, or empty if an error occurred in detection.
+     */
+    default Optional<String> getGameVersion(String versionId) throws VersionNotFoundException {
+        return getGameVersion(getVersion(versionId));
+    }
 
     /**
      * Get minecraft jar

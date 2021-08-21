@@ -29,6 +29,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
+import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 
 public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMark> {
     private Version version;
@@ -151,6 +153,10 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         Version resolvedVersion = version.resolve(provider);
         String mainClass = resolvedVersion.getMainClass();
         return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass) || mainClass.startsWith("net.fabricmc") || mainClass.startsWith("cpw.mods"));
+    }
+
+    public static String modifyVersion(String gameVersion, String version) {
+        return removeSuffix(removePrefix(removeSuffix(removePrefix(version.replace(gameVersion, "").trim(), "-"), "-"), "_"), "_");
     }
 
     public enum LibraryType {

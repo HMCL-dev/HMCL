@@ -22,7 +22,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -70,7 +69,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
         this.gameVersion = null;
 
         CompletableFuture.supplyAsync(() -> {
-            gameVersion = GameVersion.minecraftVersion(profile.getRepository().getVersionJar(version)).orElse(null);
+            gameVersion = profile.getRepository().getGameVersion(version).orElse(null);
 
             return LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(versionId));
         }).thenAcceptAsync(analyzer -> {

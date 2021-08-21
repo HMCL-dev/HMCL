@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
@@ -99,7 +98,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         return Task.composeAsync(() -> {
             List<Task<?>> tasks = new ArrayList<>();
 
-            Optional<String> gameVersion = GameVersion.minecraftVersion(repository.getVersionJar(version));
+            Optional<String> gameVersion = repository.getGameVersion(version);
             if (!gameVersion.isPresent()) return null;
 
             LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version.resolvePreservingPatches(getGameRepository()));

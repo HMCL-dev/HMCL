@@ -50,6 +50,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -64,6 +65,7 @@ public class DefaultGameRepository implements GameRepository {
 
     private File baseDirectory;
     protected Map<String, Version> versions;
+    private ConcurrentHashMap<File, Optional<String>> gameVersions = new ConcurrentHashMap<>();
 
     public DefaultGameRepository(File baseDirectory) {
         this.baseDirectory = baseDirectory;
@@ -134,6 +136,21 @@ public class DefaultGameRepository implements GameRepository {
         Version v = version.resolve(this);
         String id = Optional.ofNullable(v.getJar()).orElse(v.getId());
         return new File(getVersionRoot(id), id + ".jar");
+    }
+
+    @Override
+    public Optional<String> getGameVersion(Version version) {
+        // This implementation may cause multiple flows against the same version entering
+        // this function, which is accepted because GameVersion::minecraftVersion should
+        // be consistent.
+        File versionJar = getVersionJar(version);
+        if (gameVersions.containsKey(versionJar)) {
+            return gameVersions.get(versionJar);
+        } else {
+            Optional<String> gameVersion = GameVersion.minecraftVersion(versionJar);
+            gameVersions.put(versionJar, gameVersion);
+            return gameVersion;
+        }
     }
 
     @Override
@@ -321,6 +338,7 @@ public class DefaultGameRepository implements GameRepository {
             }
         }
 
+        this.gameVersions.clear();
         this.versions = versions;
     }
 
