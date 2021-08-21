@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -32,20 +34,29 @@ import org.jackhuang.hmcl.util.Lang;
 public class ClassTitle extends StackPane {
     private final Node content;
 
+    public ClassTitle() {
+        this((Node) null);
+    }
+
     public ClassTitle(String text) {
-        this(new Text(text));
+        this(new Label(text));
     }
 
     public ClassTitle(Node content) {
         this.content = content;
 
         VBox vbox = new VBox();
-        vbox.getChildren().addAll(content);
         Rectangle rectangle = new Rectangle();
         rectangle.widthProperty().bind(vbox.widthProperty());
         rectangle.setHeight(1.0);
         rectangle.setFill(Color.GRAY);
         vbox.getChildren().add(rectangle);
+
+        if (content != null) {
+            vbox.getChildren().addAll(content);
+            VBox.setMargin(content, new Insets(16, 16, 0, 16));
+        }
+
         getChildren().setAll(vbox);
         getStyleClass().add("class-title");
     }

@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.account.AccountList;
 import org.jackhuang.hmcl.ui.account.AddAccountPane;
@@ -55,8 +56,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class RootPage extends DecoratorTabPage {
@@ -64,9 +65,8 @@ public class RootPage extends DecoratorTabPage {
     private SettingsPage settingsPage = null;
     private AccountList accountListPage = null;
 
-    private final TabHeader.Tab mainTab = new TabHeader.Tab("main");
-    private final TabHeader.Tab settingsTab = new TabHeader.Tab("settings");
-    private final TabHeader.Tab accountTab = new TabHeader.Tab("account");
+    private final TabHeader.Tab<MainPage> mainTab = new TabHeader.Tab<>("main");
+    private final TabHeader.Tab<AccountList> accountTab = new TabHeader.Tab<>("account");
 
     public RootPage() {
         setLeftPaneWidth(200);
@@ -78,9 +78,8 @@ public class RootPage extends DecoratorTabPage {
             onRefreshedVersions(Profiles.selectedProfileProperty().get().getRepository());
 
         mainTab.setNodeSupplier(this::getMainPage);
-        settingsTab.setNodeSupplier(this::getSettingsPage);
         accountTab.setNodeSupplier(this::getAccountListPage);
-        getTabs().setAll(mainTab, settingsTab, accountTab);
+        getTabs().setAll(mainTab, accountTab);
     }
 
     @Override
@@ -155,10 +154,6 @@ public class RootPage extends DecoratorTabPage {
         return mainTab;
     }
 
-    public Tab getSettingsTab() {
-        return settingsTab;
-    }
-
     public Tab getAccountTab() {
         return accountTab;
     }
@@ -196,22 +191,23 @@ public class RootPage extends DecoratorTabPage {
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
-            gameItem.setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/bookshelf.png")).getKey());
+            gameItem.getStyleClass().add("navigation-drawer-item");
+            gameItem.setLeftGraphic(wrap(SVG.gamepad(null, 20, 20)));
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
 
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
-            launcherSettingsItem.activeProperty().bind(control.settingsTab.selectedProperty());
-            launcherSettingsItem.setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/command.png")).getKey());
+            launcherSettingsItem.getStyleClass().add("navigation-drawer-item");
+            launcherSettingsItem.setLeftGraphic(wrap(SVG.gearOutline(null, 20, 20)));
+            launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings.launcher"));
-            launcherSettingsItem.setOnAction(e -> control.selectPage(control.settingsTab));
+            launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
 
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
-                    .startCategory(i18n("account").toUpperCase())
                     .add(accountListItem)
-                    .startCategory(i18n("version").toUpperCase())
+                    .startCategory()
                     .add(gameListItem)
                     .add(gameItem)
                     .startCategory(i18n("launcher").toUpperCase())

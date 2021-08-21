@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import org.jackhuang.hmcl.util.javafx.MappedObservableList;
-
 import javafx.beans.DefaultProperty;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
@@ -29,10 +27,15 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
+import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.util.function.Consumer;
 
@@ -153,8 +156,21 @@ public class ComponentList extends Control {
                 list.get(list.size() - 1).pseudoClassStateChanged(PSEUDO_CLASS_LAST, true);
 
             VBox vbox = new VBox();
+            vbox.setFillWidth(true);
             Bindings.bindContent(vbox.getChildren(), list);
             getChildren().setAll(vbox);
         }
+    }
+
+    public static Node createComponentListTitle(String title) {
+        HBox node = new HBox();
+        node.setAlignment(Pos.CENTER_LEFT);
+        node.setPadding(new Insets(8, 0, 0, 0));
+        {
+            Label advanced = new Label(title);
+            advanced.setStyle("-fx-text-fill: #616161");
+            node.getChildren().setAll(advanced);
+        }
+        return node;
     }
 }

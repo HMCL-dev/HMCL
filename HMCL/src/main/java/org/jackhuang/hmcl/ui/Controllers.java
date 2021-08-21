@@ -44,7 +44,9 @@ import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
+import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
+import org.jackhuang.hmcl.ui.main.SettingsPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.ModDownloadListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
@@ -91,6 +93,7 @@ public final class Controllers {
             }
         };
     });
+    private static Lazy<LauncherSettingsPage> settingsPage = new Lazy<>(LauncherSettingsPage::new);
 
     private Controllers() {
     }
@@ -128,6 +131,11 @@ public final class Controllers {
     // FXThread
     public static ModDownloadListPage getModpackDownloadListPage() {
         return modDownloadListPage.get();
+    }
+
+    // FXThread
+    public static LauncherSettingsPage getSettingsPage() {
+        return settingsPage.get();
     }
 
     // FXThread
@@ -255,6 +263,7 @@ public final class Controllers {
         versionPage = null;
         serversPage = null;
         gameListPage = null;
+        settingsPage = null;
         modDownloadListPage = null;
         decorator = null;
         stage = null;

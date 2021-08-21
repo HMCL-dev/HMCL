@@ -23,8 +23,6 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.When;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.paint.Color;
@@ -35,7 +33,6 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.Validator;
-import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
@@ -65,8 +62,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.reversedSelectedPropertyFor;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 
-public final class SettingsPage extends SettingsView implements DecoratorPage {
-    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("settings.launcher")));
+public final class SettingsPage extends SettingsView {
 
     private InvalidationListener updateListener;
 
@@ -194,11 +190,6 @@ public final class SettingsPage extends SettingsView implements DecoratorPage {
         themeColorPickerContainer.getChildren().setAll(picker);
         Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
         // ====
-    }
-
-    @Override
-    public ReadOnlyObjectProperty<State> stateProperty() {
-        return state.getReadOnlyProperty();
     }
 
     @Override

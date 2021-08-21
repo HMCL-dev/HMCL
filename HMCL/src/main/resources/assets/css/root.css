@@ -131,7 +131,8 @@
 
 .class-title {
     -fx-font-size: 12px;
-    -fx-padding: 16 16 8 16;
+    -fx-text-fill: gray;
+    -fx-padding: 8 0 8 0;
 }
 
 .advanced-list-box-item {

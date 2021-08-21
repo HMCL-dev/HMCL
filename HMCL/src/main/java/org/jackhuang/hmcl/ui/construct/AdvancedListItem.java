@@ -142,12 +142,16 @@ public class AdvancedListItem extends Control {
     }
 
     public static Pair<Node, ImageView> createImageView(Image image) {
+        return createImageView(image, 32, 32);
+    }
+
+    public static Pair<Node, ImageView> createImageView(Image image, double width, double height) {
         StackPane imageViewContainer = new StackPane();
-        FXUtils.setLimitWidth(imageViewContainer, 32);
-        FXUtils.setLimitHeight(imageViewContainer, 32);
+        FXUtils.setLimitWidth(imageViewContainer, width);
+        FXUtils.setLimitHeight(imageViewContainer, height);
 
         ImageView imageView = new ImageView();
-        FXUtils.limitSize(imageView, 32, 32);
+        FXUtils.limitSize(imageView, width, height);
         imageView.setPreserveRatio(true);
         imageView.setImage(image);
         imageViewContainer.getChildren().setAll(imageView);

@@ -25,6 +25,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
@@ -246,14 +247,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             componentList.getContent().setAll(javaItem, gameDirItem, maxMemoryPane, launcherVisibilityPane, dimensionPane, showLogsPane);
         }
 
-        HBox advancedHintPane = new HBox();
-        advancedHintPane.setAlignment(Pos.CENTER_LEFT);
-        advancedHintPane.setPadding(new Insets(8, 0, 0, 0));
-        {
-            Label advanced = new Label(i18n("settings.advanced"));
-            advanced.setStyle("-fx-text-fill: #616161");
-            advancedHintPane.getChildren().setAll(advanced);
-        }
+        Node advancedHintPane = ComponentList.createComponentListTitle(i18n("settings.advanced"));
 
         advancedSettingsPane = new ComponentList();
         advancedSettingsPane.setDepth(1);
