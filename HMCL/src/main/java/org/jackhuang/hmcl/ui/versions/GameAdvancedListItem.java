@@ -17,41 +17,32 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.scene.Node;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.ImageView;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.util.Pair;
 
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
+import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameAdvancedListItem extends AdvancedListItem {
     private final Tooltip tooltip;
-    private final ImageView imageView;
 
     public GameAdvancedListItem() {
         tooltip = new Tooltip();
 
-        Pair<Node, ImageView> view = createImageView(null);
-        setLeftGraphic(view.getKey());
-        imageView = view.getValue();
+        setLeftGraphic(wrap(SVG.wrenchOutline(null, 20, 20)));
 
         FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
             if (version != null && Profiles.getSelectedProfile() != null &&
                     Profiles.getSelectedProfile().getRepository().hasVersion(version)) {
                 FXUtils.installFastTooltip(this, tooltip);
-                setTitle(version);
-                setSubtitle(null);
-                imageView.setImage(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
+                setTitle(i18n("version.manage.manage"));
                 tooltip.setText(version);
             } else {
                 Tooltip.uninstall(this,tooltip);
                 setTitle(i18n("version.empty"));
-                setSubtitle(i18n("version.empty.add"));
-                imageView.setImage(newImage("/assets/img/grass.png"));
                 tooltip.setText("");
             }
         });

@@ -51,12 +51,12 @@ public class AccountAdvancedListItem extends AdvancedListItem {
                 setTitle(i18n("account.missing"));
                 setSubtitle(i18n("account.missing.add"));
                 imageView.imageProperty().unbind();
-                imageView.setImage(newImage("/assets/img/craft_table.png"));
+                imageView.setImage(newImage("/assets/img/steve.png"));
                 tooltip.setText("");
             } else {
                 titleProperty().bind(Bindings.createStringBinding(account::getCharacter, account));
                 setSubtitle(accountSubtitle(account));
-                imageView.imageProperty().bind(TexturesLoader.fxAvatarBinding(account, 32));
+                imageView.imageProperty().bind(TexturesLoader.fxAvatarBinding(account, 42));
                 tooltip.setText(account.getCharacter() + " " + accountTooltip(account));
             }
         }
@@ -66,7 +66,7 @@ public class AccountAdvancedListItem extends AdvancedListItem {
         tooltip = new Tooltip();
         FXUtils.installFastTooltip(this, tooltip);
 
-        Pair<Node, ImageView> view = createImageView(null);
+        Pair<Node, ImageView> view = createImageView(null, 42, 42);
         setLeftGraphic(view.getKey());
         imageView = view.getValue();
 
@@ -107,4 +107,61 @@ public class AccountAdvancedListItem extends AdvancedListItem {
             return "";
         }
     }
+
+//    private static class AccountAdvancedListItemSkin extends SkinBase<AccountAdvancedListItemSkin> {
+//        private final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
+//
+//        public AccountAdvancedListItemSkin(AccountAdvancedListItemSkin skinnable) {
+//            super(skinnable);
+//
+//            FXUtils.onChangeAndOperate(skinnable.activeProperty(), active -> {
+//                skinnable.pseudoClassStateChanged(SELECTED, active);
+//            });
+//
+//            BorderPane root = new BorderPane();
+//            root.getStyleClass().add("container");
+//            root.setPickOnBounds(false);
+//
+//            RipplerContainer container = new RipplerContainer(root);
+//
+//            HBox left = new HBox();
+//            left.setAlignment(Pos.CENTER_LEFT);
+//            left.setMouseTransparent(true);
+//
+//            TwoLineListItem item = new TwoLineListItem();
+//            root.setCenter(item);
+//            item.setMouseTransparent(true);
+//            item.titleProperty().bind(skinnable.titleProperty());
+//            item.subtitleProperty().bind(skinnable.subtitleProperty());
+//
+//            FXUtils.onChangeAndOperate(skinnable.leftGraphicProperty(),
+//                    newGraphic -> {
+//                        if (newGraphic == null) {
+//                            left.getChildren().clear();
+//                        } else {
+//                            left.getChildren().setAll(newGraphic);
+//                        }
+//                    });
+//            root.setLeft(left);
+//
+//            HBox right = new HBox();
+//            right.setAlignment(Pos.CENTER);
+//            right.setMouseTransparent(true);
+//            right.getStyleClass().add("toggle-icon4");
+//            FXUtils.setLimitWidth(right, 40);
+//            FXUtils.onChangeAndOperate(skinnable.rightGraphicProperty(),
+//                    newGraphic -> {
+//                        if (newGraphic == null) {
+//                            right.getChildren().clear();
+//                        } else {
+//                            right.getChildren().setAll(newGraphic);
+//                        }
+//                    });
+//
+//            FXUtils.onChangeAndOperate(skinnable.actionButtonVisibleProperty(),
+//                    visible -> root.setRight(visible ? right : null));
+//
+//            getChildren().setAll(container);
+//        }
+//    }
 }
