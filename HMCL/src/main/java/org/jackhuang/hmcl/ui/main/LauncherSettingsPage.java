@@ -37,12 +37,14 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
     private final TabHeader tab;
     private final TabHeader.Tab<SettingsPage> settingsTab = new TabHeader.Tab<>("settingsPage");
     private final TabHeader.Tab<AboutPage> aboutTab = new TabHeader.Tab<>("aboutPage");
+    private final TabHeader.Tab<SponsorPage> sponsorTab = new TabHeader.Tab<>("sponsorPage");
     private final TransitionPane transitionPane = new TransitionPane();
 
     public LauncherSettingsPage() {
         settingsTab.setNodeSupplier(SettingsPage::new);
+        sponsorTab.setNodeSupplier(SponsorPage::new);
         aboutTab.setNodeSupplier(AboutPage::new);
-        tab = new TabHeader(settingsTab, aboutTab);
+        tab = new TabHeader(settingsTab, sponsorTab, aboutTab);
 
         tab.getSelectionModel().select(settingsTab);
         FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
@@ -59,6 +61,14 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
             settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(settingsTab));
             settingsItem.setOnAction(e -> tab.getSelectionModel().select(settingsTab));
 
+            AdvancedListItem sponsorItem = new AdvancedListItem();
+            sponsorItem.getStyleClass().add("navigation-drawer-item");
+            sponsorItem.setTitle(i18n("sponsor"));
+            sponsorItem.setLeftGraphic(wrap(SVG.handHearOutline(null, 20, 20)));
+            sponsorItem.setActionButtonVisible(false);
+            sponsorItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(sponsorTab));
+            sponsorItem.setOnAction(e -> tab.getSelectionModel().select(sponsorTab));
+
             AdvancedListItem aboutItem = new AdvancedListItem();
             aboutItem.getStyleClass().add("navigation-drawer-item");
             aboutItem.setTitle(i18n("about"));
@@ -69,6 +79,7 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
 
             AdvancedListBox sideBar = new AdvancedListBox()
                     .add(settingsItem)
+                    .add(sponsorItem)
                     .add(aboutItem);
             FXUtils.setLimitWidth(sideBar, 200);
             setLeft(sideBar);
