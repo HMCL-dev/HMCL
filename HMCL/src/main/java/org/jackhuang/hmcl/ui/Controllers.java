@@ -267,5 +267,7 @@ public final class Controllers {
         decorator = null;
         stage = null;
         scene = null;
+        stageHeight = null;
+        stageWidth = null;
     }
 }
