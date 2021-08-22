@@ -35,7 +35,7 @@ import java.util.logging.Level;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.thread;
 
-public class MicrosoftAuthenticationServer extends NanoHTTPD implements MicrosoftService.OAuthSession {
+public final class MicrosoftAuthenticationServer extends NanoHTTPD implements MicrosoftService.OAuthSession {
     private final int port;
     private final CompletableFuture<String> future = new CompletableFuture<>();
 

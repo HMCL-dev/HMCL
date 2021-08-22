@@ -107,7 +107,7 @@ public abstract class HttpRequest {
             return string(payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         }
 
-        public final HttpPostRequest form(Map<String, String> params) {
+        public HttpPostRequest form(Map<String, String> params) {
             return string(NetworkUtils.withQuery("", params), "application/x-www-form-urlencoded");
         }
 
