@@ -179,6 +179,7 @@ public interface TabControl {
         private final StringProperty text = new SimpleStringProperty(this, "text");
         private final ReadOnlyBooleanWrapper selected = new ReadOnlyBooleanWrapper(this, "selected");
         private final ObjectProperty<T> node = new SimpleObjectProperty<>(this, "node");
+        private final ObjectProperty<Object> userData = new SimpleObjectProperty<>(this, "userData");
         private Supplier<? extends T> nodeSupplier;
 
         public Tab(String id) {
@@ -244,6 +245,18 @@ public interface TabControl {
 
         public void setNode(T node) {
             this.node.set(node);
+        }
+
+        public Object getUserData() {
+            return userData.get();
+        }
+
+        public ObjectProperty<?> userDataProperty() {
+            return userData;
+        }
+
+        public void setUserData(Object userData) {
+            this.userData.set(userData);
         }
 
         public boolean initializeIfNeeded() {

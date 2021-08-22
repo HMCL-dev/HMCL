@@ -29,11 +29,13 @@ import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
@@ -52,6 +54,7 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -65,24 +68,61 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AddAccountPane extends StackPane {
 
-    @FXML private JFXTextField txtUsername;
-    @FXML private JFXPasswordField txtPassword;
-    @FXML private Label lblCreationWarning;
-    @FXML private Label lblPassword;
-    @FXML private Label lblUsername;
-    @FXML private JFXComboBox<AccountFactory<?>> cboType;
-    @FXML private JFXComboBox<AuthlibInjectorServer> cboServers;
-    @FXML private Label lblInjectorServer;
-    @FXML private JFXButton btnAccept;
-    @FXML private JFXButton btnAddServer;
-    @FXML private JFXButton btnManageServer;
-    @FXML private SpinnerPane acceptPane;
-    @FXML private HBox linksContainer;
+    @FXML
+    private JFXTextField txtUsername;
+    @FXML
+    private JFXPasswordField txtPassword;
+    @FXML
+    private Label lblCreationWarning;
+    @FXML
+    private Label lblPassword;
+    @FXML
+    private Label lblUsername;
+    @FXML
+    private StackPane tabHeaderPane;
+    @FXML
+    private JFXComboBox<AuthlibInjectorServer> cboServers;
+    @FXML
+    private Label lblInjectorServer;
+    @FXML
+    private JFXButton btnAccept;
+    @FXML
+    private JFXButton btnAddServer;
+    @FXML
+    private JFXButton btnManageServer;
+    @FXML
+    private SpinnerPane acceptPane;
+    @FXML
+    private HBox linksContainer;
+
+    private final TabHeader tabHeader;
 
     private ListProperty<Hyperlink> links = new SimpleListProperty<>();
 
+    private final Map<AccountFactory<?>, TabControl.Tab<Node>> tabMap = new HashMap<>();
+
     public AddAccountPane() {
         FXUtils.loadFXML(this, "/assets/fxml/account-add.fxml");
+
+        List<TabControl.Tab<Node>> tabs = new ArrayList<>();
+        for (AccountFactory<?> factory : Accounts.FACTORIES) {
+            TabControl.Tab<Node> tab = new TabControl.Tab<>(factory.getLoginType().name(), Accounts.getLocalizedLoginTypeName(factory));
+            tab.setUserData(factory);
+            tabMap.put(factory, tab);
+            tabs.add(tab);
+        }
+
+        tabHeader = new TabHeader(tabs.toArray(new TabControl.Tab[0]));
+        tabHeader.getStyleClass().add("add-account-tab-header");
+        // try selecting the preferred login type
+        tabHeader.getSelectionModel().select(
+                tabMap.get(tabMap.keySet().stream().filter(factory -> Accounts.getLoginType(factory).equals(config().getPreferredLoginType()))
+                        .findFirst().orElse(Accounts.FACTORY_OFFLINE))
+        );
+
+        tabHeaderPane.getChildren().setAll(tabHeader);
+        tabHeader.setMinWidth(Region.USE_PREF_SIZE);
+
 
         cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
         cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
@@ -90,32 +130,23 @@ public class AddAccountPane extends StackPane {
         cboServers.getItems().addListener(onInvalidating(this::resetServerSelection));
         resetServerSelection();
 
-        cboType.getItems().setAll(Accounts.FACTORIES);
-        cboType.setConverter(stringConverter(Accounts::getLocalizedLoginTypeName));
-        // try selecting the preferred login type
-        cboType.getSelectionModel().select(
-                cboType.getItems().stream()
-                        .filter(type -> Accounts.getLoginType(type).equals(config().getPreferredLoginType()))
-                        .findFirst()
-                        .orElse(Accounts.FACTORY_OFFLINE));
-
         btnAddServer.visibleProperty().bind(cboServers.visibleProperty());
         btnManageServer.visibleProperty().bind(cboServers.visibleProperty());
 
         cboServers.getItems().addListener(onInvalidating(this::checkIfNoServer));
         checkIfNoServer();
 
-        ReadOnlyObjectProperty<AccountFactory<?>> loginType = cboType.getSelectionModel().selectedItemProperty();
+        ReadOnlyObjectProperty<TabHeader.Tab<?>> loginType = tabHeader.getSelectionModel().selectedItemProperty();
 
         // remember the last used login type
-        loginType.addListener((observable, oldValue, newValue) -> config().setPreferredLoginType(Accounts.getLoginType(newValue)));
+        loginType.addListener((observable, oldValue, newValue) -> config().setPreferredLoginType(Accounts.getLoginType((AccountFactory<?>) newValue.getUserData())));
 
-        txtUsername.visibleProperty().bind(Bindings.createBooleanBinding(() -> loginType.get().getLoginType().requiresUsername, loginType));
+        txtUsername.visibleProperty().bind(Bindings.createBooleanBinding(() -> ((AccountFactory<?>) loginType.get().getUserData()).getLoginType().requiresUsername, loginType));
         lblUsername.visibleProperty().bind(txtUsername.visibleProperty());
-        txtPassword.visibleProperty().bind(Bindings.createBooleanBinding(() -> loginType.get().getLoginType().requiresPassword, loginType));
+        txtPassword.visibleProperty().bind(Bindings.createBooleanBinding(() -> ((AccountFactory<?>) loginType.get().getUserData()).getLoginType().requiresPassword, loginType));
         lblPassword.visibleProperty().bind(txtPassword.visibleProperty());
 
-        cboServers.visibleProperty().bind(loginType.isEqualTo(Accounts.FACTORY_AUTHLIB_INJECTOR));
+        cboServers.visibleProperty().bind(loginType.isEqualTo(tabMap.get(Accounts.FACTORY_AUTHLIB_INJECTOR)));
         lblInjectorServer.visibleProperty().bind(cboServers.visibleProperty());
 
         txtUsername.getValidators().add(new Validator(i18n("input.email"), this::validateUsername));
@@ -123,9 +154,9 @@ public class AddAccountPane extends StackPane {
         btnAccept.disableProperty().bind(Bindings.createBooleanBinding(
                 () -> !( // consider the opposite situation: input is valid
                         (!txtUsername.isVisible() || txtUsername.validate()) &&
-                        // invisible means the field is not needed, neither should it be validated
-                        (!txtPassword.isVisible() || txtPassword.validate()) &&
-                        (!cboServers.isVisible() || cboServers.getSelectionModel().getSelectedItem() != null)
+                                // invisible means the field is not needed, neither should it be validated
+                                (!txtPassword.isVisible() || txtPassword.validate()) &&
+                                (!cboServers.isVisible() || cboServers.getSelectionModel().getSelectedItem() != null)
                 ),
                 txtUsername.textProperty(), txtPassword.textProperty(),
                 loginType, cboServers.getSelectionModel().selectedItemProperty(),
@@ -142,7 +173,7 @@ public class AddAccountPane extends StackPane {
     }
 
     private boolean validateUsername(String username) {
-        AccountFactory<?> loginType = cboType.getSelectionModel().getSelectedItem();
+        AccountFactory<?> loginType = ((AccountFactory<?>) tabHeader.getSelectionModel().getSelectedItem().getUserData());
         if (loginType == Accounts.FACTORY_OFFLINE) {
             return true;
         } else if (loginType == Accounts.FACTORY_AUTHLIB_INJECTOR) {
@@ -155,7 +186,7 @@ public class AddAccountPane extends StackPane {
         return username.contains("@");
     }
 
-    private static final String[] ALLOWED_LINKS = { "register" };
+    private static final String[] ALLOWED_LINKS = {"register"};
 
     public static List<Hyperlink> createHyperlinks(AuthlibInjectorServer server) {
         if (server == null) {
@@ -197,7 +228,7 @@ public class AddAccountPane extends StackPane {
      * Gets the additional data that needs to be passed into {@link AccountFactory#create(CharacterSelector, String, String, Object)}.
      */
     private Object getAuthAdditionalData() {
-        AccountFactory<?> factory = cboType.getSelectionModel().getSelectedItem();
+        AccountFactory<?> factory = ((AccountFactory<?>) tabHeader.getSelectionModel().getSelectedItem().getUserData());
         if (factory == Accounts.FACTORY_AUTHLIB_INJECTOR) {
             return requireNonNull(cboServers.getSelectionModel().getSelectedItem(), "selected server cannot be null");
         }
@@ -215,7 +246,7 @@ public class AddAccountPane extends StackPane {
 
         String username = txtUsername.getText();
         String password = txtPassword.getText();
-        AccountFactory<?> factory = cboType.getSelectionModel().getSelectedItem();
+        AccountFactory<?> factory = ((AccountFactory<?>) tabHeader.getSelectionModel().getSelectedItem().getUserData());
         Object additionalData = getAuthAdditionalData();
 
         Task.supplyAsync(() -> factory.create(new Selector(), username, password, additionalData))

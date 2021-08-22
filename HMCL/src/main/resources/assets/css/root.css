@@ -260,6 +260,10 @@
     -fx-background-color: derive(-fx-base-color, -30%);
 }
 
+.tab-rippler {
+    -jfx-rippler-fill: -fx-base-check-color;
+}
+
 .jfx-tab-pane .jfx-rippler {
     -jfx-rippler-fill: white;
 }
@@ -270,6 +274,10 @@
 
 .tab-label {
     -fx-padding: 10 17 10 17;
+}
+
+.add-account-tab-header .tab-label {
+    -fx-font-size: 12;
 }
 
 /*******************************************************************************

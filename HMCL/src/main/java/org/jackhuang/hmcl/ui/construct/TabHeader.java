@@ -161,7 +161,6 @@ public class TabHeader extends Control implements TabControl {
                 getChildren().setAll(headersRegion, selectedTabLine);
                 headersRegion.setPickOnBounds(false);
                 headersRegion.prefHeightProperty().bind(heightProperty());
-                prefWidthProperty().bind(headersRegion.widthProperty());
                 rotate.pivotXProperty().bind(Bindings.createDoubleBinding(() -> getSkinnable().getSide().isHorizontal() ? 0.0 : 1, getSkinnable().sideProperty()));
                 rotate.pivotYProperty().bind(Bindings.createDoubleBinding(() -> getSkinnable().getSide().isHorizontal() ? 1.0 : 0, getSkinnable().sideProperty()));
 
@@ -552,6 +551,7 @@ public class TabHeader extends Control implements TabControl {
                 inner.setCenter(tabText);
                 inner.getStyleClass().add("tab-container");
                 rippler = new JFXRippler(inner, JFXRippler.RipplerPos.FRONT);
+                rippler.getStyleClass().add("tab-rippler");
                 rippler.setRipplerFill(ripplerColor);
                 getChildren().setAll(rippler);
 

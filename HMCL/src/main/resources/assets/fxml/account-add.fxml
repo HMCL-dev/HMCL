@@ -23,10 +23,7 @@
                     <ColumnConstraints minWidth="140"/>
                 </columnConstraints>
 
-                <Label text="%account.methods" GridPane.halignment="LEFT" GridPane.columnIndex="0"
-                       GridPane.rowIndex="0"/>
-
-                <JFXComboBox fx:id="cboType" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="2"/>
+                <StackPane fx:id="tabHeaderPane" GridPane.columnIndex="0" GridPane.columnSpan="3" GridPane.rowIndex="0" />
 
                 <Label fx:id="lblInjectorServer" text="%account.injector.server" GridPane.halignment="LEFT"
                        GridPane.columnIndex="0" GridPane.rowIndex="1"/>
