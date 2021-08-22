@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -79,15 +80,15 @@ public class MicrosoftAccount extends Account {
             if (service.validate(session.getTokenType(), session.getAccessToken())) {
                 authenticated = true;
             } else {
-                MicrosoftSession acquiredSession = service.authenticate();
-                if (acquiredSession.getProfile() == null) {
-                    session = service.refresh(acquiredSession);
-                } else {
-                    session = acquiredSession;
+                MicrosoftSession acquiredSession = service.refresh(session);
+                if (!Objects.equals(acquiredSession.getProfile().getId(), session.getProfile().getId())) {
+                    throw new ServerResponseMalformedException("Selected profile changed");
                 }
 
-                characterUUID = session.getProfile().getId();
+                session = acquiredSession;
+
                 authenticated = true;
+                invalidate();
             }
         }
 

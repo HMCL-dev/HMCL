@@ -32,13 +32,15 @@ public class MicrosoftSession {
     private final String tokenType;
     private final long notAfter;
     private final String accessToken;
+    private final String refreshToken;
     private final User user;
     private final GameProfile profile;
 
-    public MicrosoftSession(String tokenType, String accessToken, long notAfter, User user, GameProfile profile) {
+    public MicrosoftSession(String tokenType, String accessToken, long notAfter, String refreshToken, User user, GameProfile profile) {
         this.tokenType = tokenType;
         this.accessToken = accessToken;
         this.notAfter = notAfter;
+        this.refreshToken = refreshToken;
         this.user = user;
         this.profile = profile;
     }
@@ -53,6 +55,10 @@ public class MicrosoftSession {
 
     public long getNotAfter() {
         return notAfter;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
     }
 
     public String getAuthorization() {
@@ -76,18 +82,25 @@ public class MicrosoftSession {
                 .orElseThrow(() -> new IllegalArgumentException("tokenType is missing"));
         String accessToken = tryCast(storage.get("accessToken"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("accessToken is missing"));
+        String refreshToken = tryCast(storage.get("refreshToken"), String.class)
+                .orElseThrow(() -> new IllegalArgumentException("refreshToken is missing"));
         Long notAfter = tryCast(storage.get("notAfter"), Long.class).orElse(0L);
         String userId = tryCast(storage.get("userid"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("userid is missing"));
-        return new MicrosoftSession(tokenType, accessToken, notAfter, new User(userId), new GameProfile(uuid, name));
+        return new MicrosoftSession(tokenType, accessToken, notAfter, refreshToken, new User(userId), new GameProfile(uuid, name));
     }
 
     public Map<Object, Object> toStorage() {
         requireNonNull(profile);
         requireNonNull(user);
 
-        return mapOf(pair("tokenType", tokenType), pair("accessToken", accessToken),
-                pair("uuid", UUIDTypeAdapter.fromUUID(profile.getId())), pair("displayName", profile.getName()),
+        return mapOf(
+                pair("uuid", UUIDTypeAdapter.fromUUID(profile.getId())),
+                pair("displayName", profile.getName()),
+                pair("tokenType", tokenType),
+                pair("accessToken", accessToken),
+                pair("refreshToken", refreshToken),
+                pair("notAfter", notAfter),
                 pair("userid", user.id));
     }
 

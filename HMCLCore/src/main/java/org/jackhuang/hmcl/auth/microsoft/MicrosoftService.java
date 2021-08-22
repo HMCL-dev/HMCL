@@ -48,7 +48,6 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class MicrosoftService {
-    private static final String CLIENT_ID = "6a3728d6-27a3-4180-99bb-479895b8f88e";
     private static final String AUTHORIZATION_URL = "https://login.live.com/oauth20_authorize.srf";
     private static final String ACCESS_TOKEN_URL = "https://login.live.com/oauth20_token.srf";
     private static final String SCOPE = "XboxLive.signin offline_access";
@@ -81,81 +80,21 @@ public class MicrosoftService {
             // Microsoft OAuth Flow
             OAuthSession session = callback.startServer();
             callback.openBrowser(NetworkUtils.withQuery(AUTHORIZATION_URL,
-                    mapOf(pair("client_id", CLIENT_ID), pair("response_type", "code"),
+                    mapOf(pair("client_id", callback.getClientId()), pair("response_type", "code"),
                             pair("redirect_uri", session.getRedirectURI()), pair("scope", SCOPE),
                             pair("prompt", "select_account"))));
             String code = session.waitFor();
 
             // Authorization Code -> Token
-            String responseText = HttpRequest.POST("https://login.live.com/oauth20_token.srf")
-                    .form(mapOf(pair("client_id", CLIENT_ID), pair("code", code),
-                            pair("grant_type", "authorization_code"), pair("client_secret", session.getClientSecret()),
+            String responseText = HttpRequest.POST(ACCESS_TOKEN_URL)
+                    .form(mapOf(pair("client_id", callback.getClientId()), pair("code", code),
+                            pair("grant_type", "authorization_code"), pair("client_secret", callback.getClientSecret()),
                             pair("redirect_uri", session.getRedirectURI()), pair("scope", SCOPE)))
                     .getString();
             LiveAuthorizationResponse response = JsonUtils.fromNonNullJson(responseText,
                     LiveAuthorizationResponse.class);
 
-            // Authenticate with XBox Live
-            XBoxLiveAuthenticationResponse xboxResponse = HttpRequest
-                    .POST("https://user.auth.xboxlive.com/user/authenticate")
-                    .json(mapOf(
-                            pair("Properties",
-                                    mapOf(pair("AuthMethod", "RPS"), pair("SiteName", "user.auth.xboxlive.com"),
-                                            pair("RpsTicket", "d=" + response.accessToken))),
-                            pair("RelyingParty", "http://auth.xboxlive.com"), pair("TokenType", "JWT")))
-                    .accept("application/json").getJson(XBoxLiveAuthenticationResponse.class);
-            String uhs = (String) xboxResponse.displayClaims.xui.get(0).get("uhs");
-
-            // Authenticate Minecraft with XSTS
-            XBoxLiveAuthenticationResponse minecraftXstsResponse = HttpRequest
-                    .POST("https://xsts.auth.xboxlive.com/xsts/authorize")
-                    .json(mapOf(
-                            pair("Properties",
-                                    mapOf(pair("SandboxId", "RETAIL"),
-                                            pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
-                            pair("RelyingParty", "rp://api.minecraftservices.com/"), pair("TokenType", "JWT")))
-                    .getJson(XBoxLiveAuthenticationResponse.class);
-            String minecraftXstsUhs = (String) minecraftXstsResponse.displayClaims.xui.get(0).get("uhs");
-            if (!Objects.equals(uhs, minecraftXstsUhs)) {
-                throw new ServerResponseMalformedException("uhs mismatched");
-            }
-
-            // Authenticate XBox with XSTS
-            XBoxLiveAuthenticationResponse xboxXstsResponse = HttpRequest
-                    .POST("https://xsts.auth.xboxlive.com/xsts/authorize")
-                    .json(mapOf(
-                            pair("Properties",
-                                    mapOf(pair("SandboxId", "RETAIL"),
-                                            pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
-                            pair("RelyingParty", "http://xboxlive.com"), pair("TokenType", "JWT")))
-                    .getJson(XBoxLiveAuthenticationResponse.class);
-            String xboxXstsUhs = (String) xboxXstsResponse.displayClaims.xui.get(0).get("uhs");
-            if (!Objects.equals(uhs, xboxXstsUhs)) {
-                throw new ServerResponseMalformedException("uhs mismatched");
-            }
-
-            getXBoxProfile(uhs, xboxXstsResponse.token);
-
-            // Authenticate with Minecraft
-            MinecraftLoginWithXBoxResponse minecraftResponse = HttpRequest
-                    .POST("https://api.minecraftservices.com/authentication/login_with_xbox")
-                    .json(mapOf(pair("identityToken", "XBL3.0 x=" + uhs + ";" + minecraftXstsResponse.token)))
-                    .accept("application/json").getJson(MinecraftLoginWithXBoxResponse.class);
-
-            long notAfter = minecraftResponse.expiresIn * 1000L + System.currentTimeMillis();
-
-            // Checking Game Ownership
-            MinecraftStoreResponse storeResponse = HttpRequest
-                    .GET("https://api.minecraftservices.com/entitlements/mcstore")
-                    .authorization(String.format("%s %s", minecraftResponse.tokenType, minecraftResponse.accessToken))
-                    .getJson(MinecraftStoreResponse.class);
-            handleErrorResponse(storeResponse);
-            if (storeResponse.items.isEmpty()) {
-                throw new NoCharacterException();
-            }
-
-            return new MicrosoftSession(minecraftResponse.tokenType, minecraftResponse.accessToken, notAfter,
-                    new MicrosoftSession.User(minecraftResponse.username), null);
+            return authenticateViaLiveAccessToken(response.accessToken, response.refreshToken);
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         } catch (InterruptedException e) {
@@ -173,20 +112,77 @@ public class MicrosoftService {
 
     public MicrosoftSession refresh(MicrosoftSession oldSession) throws AuthenticationException {
         try {
-            // Get the profile
-            MinecraftProfileResponse profileResponse = HttpRequest
-                    .GET(NetworkUtils.toURL("https://api.minecraftservices.com/minecraft/profile"))
-                    .authorization(String.format("%s %s", oldSession.getTokenType(), oldSession.getAccessToken()))
-                    .getJson(MinecraftProfileResponse.class);
-            handleErrorResponse(profileResponse);
-            return new MicrosoftSession(oldSession.getTokenType(), oldSession.getAccessToken(),
-                    oldSession.getNotAfter(), oldSession.getUser(),
-                    new MicrosoftSession.GameProfile(profileResponse.id, profileResponse.name));
+            LiveRefreshResponse response = HttpRequest.POST(ACCESS_TOKEN_URL)
+                    .form(pair("client_id", callback.getClientId()),
+                            pair("client_secret", callback.getClientSecret()),
+                            pair("refresh_token", oldSession.getRefreshToken()),
+                            pair("grant_type", "refresh_token"))
+                    .accept("application/json").getJson(LiveRefreshResponse.class);
+
+            return authenticateViaLiveAccessToken(response.accessToken, response.refreshToken);
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         } catch (JsonParseException e) {
             throw new ServerResponseMalformedException(e);
         }
+    }
+
+    private MicrosoftSession authenticateViaLiveAccessToken(String liveAccessToken, String liveRefreshToken) throws IOException, JsonParseException, AuthenticationException {
+        // Authenticate with XBox Live
+        XBoxLiveAuthenticationResponse xboxResponse = HttpRequest
+                .POST("https://user.auth.xboxlive.com/user/authenticate")
+                .json(mapOf(
+                        pair("Properties",
+                                mapOf(pair("AuthMethod", "RPS"), pair("SiteName", "user.auth.xboxlive.com"),
+                                        pair("RpsTicket", "d=" + liveAccessToken))),
+                        pair("RelyingParty", "http://auth.xboxlive.com"), pair("TokenType", "JWT")))
+                .accept("application/json").getJson(XBoxLiveAuthenticationResponse.class);
+        String uhs = (String) xboxResponse.displayClaims.xui.get(0).get("uhs");
+
+        // Authenticate Minecraft with XSTS
+        XBoxLiveAuthenticationResponse minecraftXstsResponse = HttpRequest
+                .POST("https://xsts.auth.xboxlive.com/xsts/authorize")
+                .json(mapOf(
+                        pair("Properties",
+                                mapOf(pair("SandboxId", "RETAIL"),
+                                        pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
+                        pair("RelyingParty", "rp://api.minecraftservices.com/"), pair("TokenType", "JWT")))
+                .getJson(XBoxLiveAuthenticationResponse.class);
+        String minecraftXstsUhs = (String) minecraftXstsResponse.displayClaims.xui.get(0).get("uhs");
+        if (!Objects.equals(uhs, minecraftXstsUhs)) {
+            throw new ServerResponseMalformedException("uhs mismatched");
+        }
+
+        // Authenticate XBox with XSTS
+        XBoxLiveAuthenticationResponse xboxXstsResponse = HttpRequest
+                .POST("https://xsts.auth.xboxlive.com/xsts/authorize")
+                .json(mapOf(
+                        pair("Properties",
+                                mapOf(pair("SandboxId", "RETAIL"),
+                                        pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
+                        pair("RelyingParty", "http://xboxlive.com"), pair("TokenType", "JWT")))
+                .getJson(XBoxLiveAuthenticationResponse.class);
+        String xboxXstsUhs = (String) xboxXstsResponse.displayClaims.xui.get(0).get("uhs");
+        if (!Objects.equals(uhs, xboxXstsUhs)) {
+            throw new ServerResponseMalformedException("uhs mismatched");
+        }
+
+        getXBoxProfile(uhs, xboxXstsResponse.token);
+
+        // Authenticate with Minecraft
+        MinecraftLoginWithXBoxResponse minecraftResponse = HttpRequest
+                .POST("https://api.minecraftservices.com/authentication/login_with_xbox")
+                .json(mapOf(pair("identityToken", "XBL3.0 x=" + uhs + ";" + minecraftXstsResponse.token)))
+                .accept("application/json").getJson(MinecraftLoginWithXBoxResponse.class);
+
+        long notAfter = minecraftResponse.expiresIn * 1000L + System.currentTimeMillis();
+
+        // Get Minecraft Account UUID
+        MinecraftProfileResponse profileResponse = getMinecraftProfile(minecraftResponse.tokenType, minecraftResponse.accessToken);
+        handleErrorResponse(profileResponse);
+
+        return new MicrosoftSession(minecraftResponse.tokenType, minecraftResponse.accessToken, notAfter, liveRefreshToken,
+                new MicrosoftSession.User(minecraftResponse.username), new MicrosoftSession.GameProfile(profileResponse.id, profileResponse.name));
     }
 
     public Optional<MinecraftProfileResponse> getCompleteProfile(String authorization) throws AuthenticationException {
@@ -202,16 +198,12 @@ public class MicrosoftService {
     }
 
     public boolean validate(String tokenType, String accessToken) throws AuthenticationException {
+        if (true) return false;
         requireNonNull(tokenType);
         requireNonNull(accessToken);
 
         try {
-            HttpRequest.GET(NetworkUtils.toURL("https://api.minecraftservices.com/minecraft/profile"))
-                    .authorization(String.format("%s %s", tokenType, accessToken)).filter((url, responseCode) -> {
-                        if (responseCode / 100 == 4) {
-                            throw new ResponseCodeException(url, responseCode);
-                        }
-                    }).getString();
+            getMinecraftProfile(tokenType, accessToken);
             return true;
         } catch (ResponseCodeException e) {
             return false;
@@ -293,6 +285,17 @@ public class MicrosoftService {
 
         @SerializedName("foci")
         String foci;
+    }
+
+    private static class LiveRefreshResponse {
+        @SerializedName("expires_in")
+        int expiresIn;
+
+        @SerializedName("access_token")
+        String accessToken;
+
+        @SerializedName("refresh_token")
+        String refreshToken;
     }
 
     private static class XBoxLiveAuthenticationResponseDisplayClaims {
@@ -421,13 +424,15 @@ public class MicrosoftService {
          * @param url OAuth url.
          */
         void openBrowser(String url) throws IOException;
+
+        String getClientId();
+
+        String getClientSecret();
     }
 
     public interface OAuthSession {
 
         String getRedirectURI();
-
-        String getClientSecret() throws IOException;
 
         /**
          * Wait for authentication

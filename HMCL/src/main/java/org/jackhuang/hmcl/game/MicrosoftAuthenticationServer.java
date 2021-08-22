@@ -51,12 +51,6 @@ public class MicrosoftAuthenticationServer extends NanoHTTPD implements Microsof
     }
 
     @Override
-    public String getClientSecret() {
-        return System.getProperty("hmcl.microsoft.auth.secret",
-                JarUtils.thisJar().flatMap(JarUtils::getManifest).map(manifest -> manifest.getMainAttributes().getValue("Microsoft-Auth-Secret")).orElse(""));
-    }
-
-    @Override
     public String waitFor() throws InterruptedException, ExecutionException {
         return future.get();
     }
@@ -113,5 +107,18 @@ public class MicrosoftAuthenticationServer extends NanoHTTPD implements Microsof
             // TODO: error!
             FXUtils.openLink(url);
         }
+
+        @Override
+        public String getClientId() {
+            return System.getProperty("hmcl.microsoft.auth.id",
+                    JarUtils.thisJar().flatMap(JarUtils::getManifest).map(manifest -> manifest.getMainAttributes().getValue("Microsoft-Auth-Id")).orElse(""));
+        }
+
+        @Override
+        public String getClientSecret() {
+            return System.getProperty("hmcl.microsoft.auth.secret",
+                    JarUtils.thisJar().flatMap(JarUtils::getManifest).map(manifest -> manifest.getMainAttributes().getValue("Microsoft-Auth-Secret")).orElse(""));
+        }
+
     }
 }

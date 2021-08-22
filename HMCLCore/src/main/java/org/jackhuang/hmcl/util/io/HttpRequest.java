@@ -96,19 +96,24 @@ public abstract class HttpRequest {
         }
     }
 
-    public static class HttpPostRequest extends HttpRequest {
+    public static final class HttpPostRequest extends HttpRequest {
         private byte[] bytes;
 
         public HttpPostRequest(URL url) {
             super(url, "POST");
         }
 
-        public <T> HttpPostRequest json(Object payload) throws JsonParseException {
+        public HttpPostRequest json(Object payload) throws JsonParseException {
             return string(payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         }
 
-        public HttpPostRequest form(Map<String, String> params) {
+        public final HttpPostRequest form(Map<String, String> params) {
             return string(NetworkUtils.withQuery("", params), "application/x-www-form-urlencoded");
+        }
+
+        @SafeVarargs
+        public final HttpPostRequest form(Pair<String, String>... params) {
+            return form(mapOf(params));
         }
 
         public HttpPostRequest string(String payload, String contentType) {
