@@ -124,11 +124,6 @@ public class AboutPage extends StackPane {
             legal.getContent().setAll(copyright, claim, openSource);
         }
 
-        ComponentList donations = new ComponentList();
-        {
-            // TODO
-        }
-
         VBox content = new VBox(16);
         content.setPadding(new Insets(10));
         content.getChildren().setAll(
@@ -142,10 +137,7 @@ public class AboutPage extends StackPane {
                 dep,
 
                 ComponentList.createComponentListTitle(i18n("about.legal")),
-                legal,
-
-                ComponentList.createComponentListTitle(i18n("about.donations")),
-                donations
+                legal
         );
 
 

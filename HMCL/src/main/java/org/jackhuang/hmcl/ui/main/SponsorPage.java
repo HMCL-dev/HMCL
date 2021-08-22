@@ -17,23 +17,39 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
+import com.jfoenix.controls.JFXListCell;
+import com.jfoenix.controls.JFXListView;
+import javafx.geometry.Insets;
 import javafx.geometry.VPos;
 import javafx.scene.Cursor;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.text.TextAlignment;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.io.HttpRequest;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class SponsorPage extends StackPane {
+    private final JFXListView<Sponsor> listView;
+
     public SponsorPage() {
         VBox content = new VBox();
+        content.setPadding(new Insets(10));
+        content.setSpacing(10);
         content.setFillWidth(true);
 
         {
             StackPane sponsorPane = new StackPane();
+            sponsorPane.getStyleClass().add("card");
             sponsorPane.setCursor(Cursor.HAND);
             sponsorPane.setOnMouseClicked(e -> onSponsor());
 
@@ -64,13 +80,88 @@ public class SponsorPage extends StackPane {
             content.getChildren().add(sponsorPane);
         }
 
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setContent(content);
-        scrollPane.setFitToWidth(true);
-        getChildren().setAll(scrollPane);
+        {
+            StackPane pane = new StackPane();
+            pane.getStyleClass().add("card");
+            listView = new JFXListView<>();
+            listView.setCellFactory((listView) -> new JFXListCell<Sponsor>() {
+                @Override
+                public void updateItem(Sponsor item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (!empty) {
+                        setText(item.getName());
+                        setGraphic(null);
+                    }
+                }
+            });
+            VBox.setVgrow(pane, Priority.ALWAYS);
+            pane.getChildren().setAll(listView);
+            content.getChildren().add(pane);
+        }
+
+        loadSponsorList();
+
+        getChildren().setAll(content);
     }
 
     private void onSponsor() {
         FXUtils.openLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
+    }
+
+    private void loadSponsorList() {
+        Task.<List<Sponsor>>supplyAsync(() -> HttpRequest.GET("https://hmcl.huangyuhui.net/api/sponsor").getJson(new TypeToken<List<Sponsor>>() {
+                }.getType())
+        ).thenAcceptAsync(Schedulers.javafx(), sponsors -> {
+            listView.getItems().setAll(sponsors);
+        }).start();
+    }
+
+    private static class Sponsor {
+        @SerializedName("name")
+        private final String name;
+
+        @SerializedName("create_time")
+        private final Date createTime;
+
+        @SerializedName("money")
+        private final BigDecimal money;
+
+        @SerializedName("contact")
+        private final String contact;
+
+        @SerializedName("afdian_id")
+        private final String afdianId;
+
+        public Sponsor() {
+            this("", new Date(), BigDecimal.ZERO, "", "");
+        }
+
+        public Sponsor(String name, Date createTime, BigDecimal money, String contact, String afdianId) {
+            this.name = name;
+            this.createTime = createTime;
+            this.money = money;
+            this.contact = contact;
+            this.afdianId = afdianId;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Date getCreateTime() {
+            return createTime;
+        }
+
+        public BigDecimal getMoney() {
+            return money;
+        }
+
+        public String getContact() {
+            return contact;
+        }
+
+        public String getAfdianId() {
+            return afdianId;
+        }
     }
 }

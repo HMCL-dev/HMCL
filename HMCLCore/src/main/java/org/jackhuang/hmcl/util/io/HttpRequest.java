@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -68,6 +69,10 @@ public abstract class HttpRequest {
 
     public <T> T getJson(Class<T> typeOfT) throws IOException, JsonParseException {
         return JsonUtils.fromNonNullJson(getString(), typeOfT);
+    }
+
+    public <T> T getJson(Type type) throws IOException, JsonParseException {
+        return JsonUtils.fromNonNullJson(getString(), type);
     }
 
     public HttpRequest filter(ExceptionalBiConsumer<URL, Integer, IOException> responseCodeTester) {
