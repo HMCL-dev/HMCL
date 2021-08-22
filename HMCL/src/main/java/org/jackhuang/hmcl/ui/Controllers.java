@@ -46,7 +46,6 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorController;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
-import org.jackhuang.hmcl.ui.main.SettingsPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.ModDownloadListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
