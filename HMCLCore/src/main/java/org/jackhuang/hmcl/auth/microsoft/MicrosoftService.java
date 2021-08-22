@@ -198,7 +198,6 @@ public class MicrosoftService {
     }
 
     public boolean validate(String tokenType, String accessToken) throws AuthenticationException {
-        if (true) return false;
         requireNonNull(tokenType);
         requireNonNull(accessToken);
 
