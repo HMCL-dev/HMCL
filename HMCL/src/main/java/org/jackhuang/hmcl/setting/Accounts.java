@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,13 +27,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccountFactory;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactInfo;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactProvider;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloader;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.auth.authlibinjector.SimpleAuthlibInjectorArtifactProvider;
+import org.jackhuang.hmcl.auth.authlibinjector.*;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccountFactory;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
@@ -41,8 +35,8 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
+import org.jackhuang.hmcl.game.MicrosoftAuthenticationServer;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.ui.account.MicrosoftAccountLoginStage;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -84,7 +78,7 @@ public final class Accounts {
     public static final OfflineAccountFactory FACTORY_OFFLINE = OfflineAccountFactory.INSTANCE;
     public static final YggdrasilAccountFactory FACTORY_MOJANG = YggdrasilAccountFactory.MOJANG;
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
-    public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(MicrosoftAccountLoginStage.INSTANCE));
+    public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(new MicrosoftAuthenticationServer.Factory()));
     public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MOJANG, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
 
     // ==== login type / account factory mapping ====

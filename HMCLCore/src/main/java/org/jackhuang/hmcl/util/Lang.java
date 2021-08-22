@@ -47,6 +47,17 @@ public final class Lang {
      */
     @SafeVarargs
     public static <K, V> Map<K, V> mapOf(Pair<K, V>... pairs) {
+        return mapOf(Arrays.asList(pairs));
+    }
+
+    /**
+     * Construct a mutable map by given key-value pairs.
+     * @param pairs entries in the new map
+     * @param <K> the type of keys
+     * @param <V> the type of values
+     * @return the map which contains data in {@code pairs}.
+     */
+    public static <K, V> Map<K, V> mapOf(Iterable<Pair<K, V>> pairs) {
         Map<K, V> map = new LinkedHashMap<>();
         for (Pair<K, V> pair : pairs)
             map.put(pair.getKey(), pair.getValue());

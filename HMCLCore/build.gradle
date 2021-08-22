@@ -12,6 +12,7 @@ dependencies {
     api group: 'org.jenkins-ci', name: 'constant-pool-scanner', version: '1.2'
     api group: 'com.github.steveice10', name: 'opennbt', version: '1.1'
     api group: 'com.nqzero', name: 'permit-reflect', version: '0.3'
+    api group: 'org.nanohttpd', name: 'nanohttpd', version: '2.3.1'
     compileOnlyApi group: 'org.jetbrains', name: 'annotations', version: '16.0.3'
 
     // compileOnlyApi group: 'org.openjfx', name: 'javafx-base', version: '15', classifier: 'win'

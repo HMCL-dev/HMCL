@@ -36,6 +36,7 @@ def buildnumber = System.getenv("BUILD_NUMBER") ?: dev ?: "SNAPSHOT"
 if (System.getenv("BUILD_NUMBER") != null && System.getenv("BUILD_NUMBER_OFFSET") != null)
     buildnumber = (Integer.parseInt(System.getenv("BUILD_NUMBER")) - Integer.parseInt(System.getenv("BUILD_NUMBER_OFFSET"))).toString()
 def versionroot = System.getenv("VERSION_ROOT") ?: "3.3"
+def microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 version = versionroot + '.' + buildnumber
 
 mainClassName = 'org.jackhuang.hmcl.Main'
@@ -120,10 +121,11 @@ shadowJar {
     classifier = null
 
     manifest {
-        attributes 'Created-By': 'Copyright(c) 2013-2020 huangyuhui.',
+        attributes 'Created-By': 'Copyright(c) 2013-2021 huangyuhui.',
                 'Main-Class': mainClassName,
                 'Multi-Release': 'true',
                 'Implementation-Version': project.version,
+                'Microsoft-Auth-Secret': microsoftAuthSecret,
                 'Class-Path': 'pack200.jar',
                 'Add-Opens': [
                         'java.base/java.lang',

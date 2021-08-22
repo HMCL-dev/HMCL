@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.function.ExceptionalBiConsumer;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.GSON;
 import static org.jackhuang.hmcl.util.io.NetworkUtils.createHttpConnection;
 import static org.jackhuang.hmcl.util.io.NetworkUtils.resolveConnection;
@@ -73,7 +75,7 @@ public abstract class HttpRequest {
         return this;
     }
 
-    protected HttpURLConnection createConnection() throws IOException {
+    public HttpURLConnection createConnection() throws IOException {
         HttpURLConnection con = createHttpConnection(url);
         con.setRequestMethod(method);
         for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -102,8 +104,7 @@ public abstract class HttpRequest {
         }
 
         public <T> HttpPostRequest json(Object payload) throws JsonParseException {
-            return string(payload instanceof String ? (String) payload : GSON.toJson(payload),
-                    "application/json");
+            return string(payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         }
 
         public HttpPostRequest form(Map<String, String> params) {
@@ -134,6 +135,11 @@ public abstract class HttpRequest {
 
     public static HttpGetRequest GET(String url) throws MalformedURLException {
         return GET(new URL(url));
+    }
+
+    @SafeVarargs
+    public static HttpGetRequest GET(String url, Pair<String, String>... query) throws MalformedURLException {
+        return GET(new URL(NetworkUtils.withQuery(url, mapOf(query))));
     }
 
     public static HttpGetRequest GET(URL url) {

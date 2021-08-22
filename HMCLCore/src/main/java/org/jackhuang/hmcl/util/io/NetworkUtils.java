@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,14 +17,15 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import org.jackhuang.hmcl.util.Pair;
+
 import java.io.*;
 import java.net.*;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.StringUtils.*;
 
 /**
@@ -32,6 +33,8 @@ import static org.jackhuang.hmcl.util.StringUtils.*;
  * @author huangyuhui
  */
 public final class NetworkUtils {
+    public static final String PARAMETER_SEPARATOR = "&";
+    public static final String NAME_VALUE_SEPARATOR = "=";
 
     private NetworkUtils() {
     }
@@ -48,13 +51,36 @@ public final class NetworkUtils {
                 }
                 first = false;
             } else {
-                sb.append('&');
+                sb.append(PARAMETER_SEPARATOR);
             }
             sb.append(encodeURL(param.getKey()));
-            sb.append('=');
+            sb.append(NAME_VALUE_SEPARATOR);
             sb.append(encodeURL(param.getValue()));
         }
         return sb.toString();
+    }
+
+    public static List<Pair<String, String>> parseQuery(URI uri) {
+        return parseQuery(uri.getRawQuery());
+    }
+
+    public static List<Pair<String, String>> parseQuery(String queryParameterString) {
+        List<Pair<String, String>> result = new ArrayList<>();
+
+        try (Scanner scanner = new Scanner(queryParameterString)) {
+            scanner.useDelimiter("&");
+            while (scanner.hasNext()) {
+                String[] nameValue = scanner.next().split(NAME_VALUE_SEPARATOR);
+                if (nameValue.length <= 0 || nameValue.length > 2) {
+                    throw new IllegalArgumentException("bad query string");
+                }
+
+                String name = decodeURL(nameValue[0]);
+                String value = nameValue.length == 2 ? decodeURL(nameValue[1]) : null;
+                result.add(pair(name, value));
+            }
+        }
+        return result;
     }
 
     public static URLConnection createConnection(URL url) throws IOException {
@@ -71,7 +97,8 @@ public final class NetworkUtils {
     }
 
     /**
-     * @see <a href="https://github.com/curl/curl/blob/3f7b1bb89f92c13e69ee51b710ac54f775aab320/lib/transfer.c#L1427-L1461">Curl</a>
+     * @see <a href=
+     *      "https://github.com/curl/curl/blob/3f7b1bb89f92c13e69ee51b710ac54f775aab320/lib/transfer.c#L1427-L1461">Curl</a>
      * @param location the url to be URL encoded
      * @return encoded URL
      */
@@ -81,8 +108,10 @@ public final class NetworkUtils {
         for (char ch : location.toCharArray()) {
             switch (ch) {
                 case ' ':
-                    if (left) sb.append("%20");
-                    else sb.append('+');
+                    if (left)
+                        sb.append("%20");
+                    else
+                        sb.append('+');
                     break;
                 case '?':
                     left = false;
@@ -100,7 +129,9 @@ public final class NetworkUtils {
     }
 
     /**
-     * This method is a work-around that aims to solve problem when "Location" in stupid server's response is not encoded.
+     * This method is a work-around that aims to solve problem when "Location" in
+     * stupid server's response is not encoded.
+     * 
      * @see <a href="https://github.com/curl/curl/issues/473">Issue with libcurl</a>
      * @param conn the stupid http connection.
      * @return manually redirected http connection.
@@ -125,8 +156,10 @@ public final class NetworkUtils {
                     throw new IOException("Too much redirects");
                 }
 
-                HttpURLConnection redirected = (HttpURLConnection) new URL(conn.getURL(), encodeLocation(newURL)).openConnection();
-                properties.forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));
+                HttpURLConnection redirected = (HttpURLConnection) new URL(conn.getURL(), encodeLocation(newURL))
+                        .openConnection();
+                properties
+                        .forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));
                 redirected.setRequestMethod(method);
                 conn = redirected;
                 ++redirect;
@@ -178,7 +211,8 @@ public final class NetworkUtils {
             }
         } catch (IOException e) {
             try (InputStream stderr = con.getErrorStream()) {
-                if (stderr == null) throw e;
+                if (stderr == null)
+                    throw e;
                 return IOUtils.readFullyAsString(stderr, UTF_8);
             }
         }

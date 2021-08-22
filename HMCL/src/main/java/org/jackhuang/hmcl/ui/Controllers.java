@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AuthlibInjectorServersPage;
-import org.jackhuang.hmcl.ui.account.MicrosoftAccountLoginStage;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -151,7 +150,6 @@ public final class Controllers {
         Logging.LOG.info("Start initializing application");
 
         Controllers.stage = stage;
-        MicrosoftAccountLoginStage.INSTANCE.initOwner(stage);
 
         stage.setHeight(config().getHeight());
         stageHeight.bind(stage.heightProperty());
