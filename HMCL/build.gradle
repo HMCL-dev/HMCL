@@ -36,6 +36,7 @@ def buildnumber = System.getenv("BUILD_NUMBER") ?: dev ?: "SNAPSHOT"
 if (System.getenv("BUILD_NUMBER") != null && System.getenv("BUILD_NUMBER_OFFSET") != null)
     buildnumber = (Integer.parseInt(System.getenv("BUILD_NUMBER")) - Integer.parseInt(System.getenv("BUILD_NUMBER_OFFSET"))).toString()
 def versionroot = System.getenv("VERSION_ROOT") ?: "3.3"
+def microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 def microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 version = versionroot + '.' + buildnumber
 
@@ -125,6 +126,7 @@ shadowJar {
                 'Main-Class': mainClassName,
                 'Multi-Release': 'true',
                 'Implementation-Version': project.version,
+                'Microsoft-Auth-Id': microsoftAuthId,
                 'Microsoft-Auth-Secret': microsoftAuthSecret,
                 'Class-Path': 'pack200.jar',
                 'Add-Opens': [
