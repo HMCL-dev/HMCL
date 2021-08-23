@@ -28,6 +28,7 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -97,7 +98,7 @@ public abstract class HttpRequest {
         public String getString() throws IOException {
             HttpURLConnection con = createConnection();
             con = resolveConnection(con);
-            return IOUtils.readFullyAsString(con.getInputStream());
+            return IOUtils.readFullyAsString(con.getInputStream(), StandardCharsets.UTF_8);
         }
     }
 

@@ -110,8 +110,7 @@ public class SponsorPage extends StackPane {
 
     private void loadSponsorList() {
         Task.<List<Sponsor>>supplyAsync(() -> HttpRequest.GET("https://hmcl.huangyuhui.net/api/sponsor").getJson(new TypeToken<List<Sponsor>>() {
-                }.getType())
-        ).thenAcceptAsync(Schedulers.javafx(), sponsors -> {
+        }.getType())).thenAcceptAsync(Schedulers.javafx(), sponsors -> {
             listView.getItems().setAll(sponsors);
         }).start();
     }
