@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -251,6 +252,8 @@ public class MicrosoftService {
         int responseCode = conn.getResponseCode();
         if (responseCode == HTTP_NOT_FOUND) {
             throw new NoCharacterException();
+        } else if (responseCode != 200) {
+            throw new ResponseCodeException(new URL("https://api.minecraftservices.com/minecraft/profile"), responseCode);
         }
 
         String result = NetworkUtils.readData(conn);
