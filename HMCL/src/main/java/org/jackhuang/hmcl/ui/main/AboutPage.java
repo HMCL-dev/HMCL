@@ -80,7 +80,7 @@ public class AboutPage extends StackPane {
             contributors.setTitle(i18n("about.thanks_to.contributors"));
             contributors.setSubtitle(i18n("about.thanks_to.contributors.statement"));
             contributors.setExternalLink("https://github.com/huanghongxun/HMCL/graphs/contributors");
-            mcbbs.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
+            contributors.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
 
             IconedTwoLineListItem users = new IconedTwoLineListItem();
             users.setImage(new Image("/assets/img/craft_table.png", 32, 32, false, true));
