@@ -77,17 +77,28 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         root = new StackPane();
         root.getStyleClass().add("window");
 
+        StackPane shadowContainer = new StackPane();
+        shadowContainer.getStyleClass().add("body");
+        shadowContainer.setPickOnBounds(false);
+
         parent = new StackPane();
-        parent.getStyleClass().add("body");
         parent.backgroundProperty().bind(skinnable.contentBackgroundProperty());
         parent.setPickOnBounds(false);
         parent.prefHeightProperty().bind(control.prefHeightProperty());
         parent.prefWidthProperty().bind(control.prefWidthProperty());
+        Rectangle clip = new Rectangle();
+        clip.widthProperty().bind(parent.widthProperty());
+        clip.heightProperty().bind(parent.heightProperty());
+        clip.setArcWidth(8);
+        clip.setArcHeight(8);
+        parent.setClip(clip);
+
         root.addEventFilter(MouseEvent.MOUSE_RELEASED, this::onMouseReleased);
         root.addEventFilter(MouseEvent.MOUSE_DRAGGED, this::onMouseDragged);
         root.addEventFilter(MouseEvent.MOUSE_MOVED, this::onMouseMoved);
 
-        root.getChildren().setAll(parent);
+        shadowContainer.getChildren().setAll(parent);
+        root.getChildren().setAll(shadowContainer);
 
         // animation layer at bottom
         {
