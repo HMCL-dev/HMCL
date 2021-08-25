@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,6 +55,7 @@ public class LaunchOptions implements Serializable {
     private String preLaunchCommand;
     private NativesDirectoryType nativesDirType;
     private String nativesDir;
+    private ProcessPriority processPriority;
 
     /**
      * The game directory
@@ -215,6 +216,13 @@ public class LaunchOptions implements Serializable {
      */
     public String getNativesDir() {
         return nativesDir;
+    }
+
+    /**
+     * Process priority
+     */
+    public ProcessPriority getProcessPriority() {
+        return processPriority;
     }
 
     public static class Builder {
@@ -486,6 +494,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setNativesDir(String nativesDir) {
             options.nativesDir = nativesDir;
+            return this;
+        }
+
+        public Builder setProcessPriority(ProcessPriority processPriority) {
+            options.processPriority = processPriority;
             return this;
         }
 
