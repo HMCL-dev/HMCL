@@ -163,7 +163,7 @@ public abstract class SettingsView extends StackPane {
                     {
                         VBox headerLeft = new VBox();
 
-                        Label help = new Label(i18n("help"));
+                        Label help = new Label(i18n("help.doc"));
                         Label helpSubtitle = new Label(i18n("help.detail"));
                         helpSubtitle.getStyleClass().add("subtitle-label");
 

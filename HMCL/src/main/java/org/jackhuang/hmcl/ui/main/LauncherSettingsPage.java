@@ -36,15 +36,17 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(new State(i18n("settings.launcher"), null, true, false, true, false, 200));
     private final TabHeader tab;
     private final TabHeader.Tab<SettingsPage> settingsTab = new TabHeader.Tab<>("settingsPage");
+    private final TabHeader.Tab<HelpPage> helpTab = new TabHeader.Tab<>("helpPage");
     private final TabHeader.Tab<AboutPage> aboutTab = new TabHeader.Tab<>("aboutPage");
     private final TabHeader.Tab<SponsorPage> sponsorTab = new TabHeader.Tab<>("sponsorPage");
     private final TransitionPane transitionPane = new TransitionPane();
 
     public LauncherSettingsPage() {
         settingsTab.setNodeSupplier(SettingsPage::new);
+        helpTab.setNodeSupplier(HelpPage::new);
         sponsorTab.setNodeSupplier(SponsorPage::new);
         aboutTab.setNodeSupplier(AboutPage::new);
-        tab = new TabHeader(settingsTab, sponsorTab, aboutTab);
+        tab = new TabHeader(settingsTab, helpTab, sponsorTab, aboutTab);
 
         tab.getSelectionModel().select(settingsTab);
         FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
@@ -60,6 +62,14 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
             settingsItem.setActionButtonVisible(false);
             settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(settingsTab));
             settingsItem.setOnAction(e -> tab.getSelectionModel().select(settingsTab));
+
+            AdvancedListItem helpItem = new AdvancedListItem();
+            helpItem.getStyleClass().add("navigation-drawer-item");
+            helpItem.setTitle(i18n("help"));
+            helpItem.setLeftGraphic(wrap(SVG.helpCircleOutline(null, 20, 20)));
+            helpItem.setActionButtonVisible(false);
+            helpItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(helpTab));
+            helpItem.setOnAction(e -> tab.getSelectionModel().select(helpTab));
 
             AdvancedListItem sponsorItem = new AdvancedListItem();
             sponsorItem.getStyleClass().add("navigation-drawer-item");
@@ -79,6 +89,7 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
 
             AdvancedListBox sideBar = new AdvancedListBox()
                     .add(settingsItem)
+                    .add(helpItem)
                     .add(sponsorItem)
                     .add(aboutItem);
             FXUtils.setLimitWidth(sideBar, 200);
