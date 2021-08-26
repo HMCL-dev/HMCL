@@ -597,8 +597,7 @@ public final class LauncherHelper {
             else
                 forbiddenTokens = mapOf(
                         pair(authInfo.getAccessToken(), "<access token>"),
-                        pair(UUIDTypeAdapter.fromUUID(authInfo.getUUID()), "<uuid>"),
-                        pair(authInfo.getUsername(), "<player>")
+                        pair(UUIDTypeAdapter.fromUUID(authInfo.getUUID()), "<uuid>")
                 );
 
             logs = new LinkedList<>();
