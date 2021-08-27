@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -157,11 +157,16 @@ public class RootPage extends DecoratorTabPage {
         return accountTab;
     }
 
-    private void selectPage(Tab tab) {
+    /**
+     * @return true if the tab is being opened, or false if the tab is being closed
+     */
+    private boolean selectPage(Tab tab) {
         if (getSelectionModel().getSelectedItem() == tab) {
             getSelectionModel().select(getMainTab());
+            return false;
         } else {
             getSelectionModel().select(tab);
+            return true;
         }
     }
 
@@ -173,7 +178,14 @@ public class RootPage extends DecoratorTabPage {
             // first item in left sidebar
             AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
             accountListItem.activeProperty().bind(control.accountTab.selectedProperty());
-            accountListItem.setOnAction(e -> control.selectPage(control.accountTab));
+            accountListItem.setOnAction(e -> {
+                if (control.selectPage(control.accountTab)) {
+                    // open create account dialog if no account exists
+                    if (Accounts.getAccounts().isEmpty()) {
+                        Controllers.dialog(new AddAccountPane());
+                    }
+                }
+            });
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
             // second item in left sidebar
