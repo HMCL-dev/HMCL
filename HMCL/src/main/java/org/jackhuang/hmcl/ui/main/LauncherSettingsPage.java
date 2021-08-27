@@ -33,7 +33,7 @@ import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
-    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(new State(i18n("settings.launcher"), null, true, false, true, false, 200));
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(new State(i18n("settings.launcher"), null, true, false, true, 200));
     private final TabHeader tab;
     private final TabHeader.Tab<SettingsPage> settingsTab = new TabHeader.Tab<>("settingsPage");
     private final TabHeader.Tab<HelpPage> helpTab = new TabHeader.Tab<>("helpPage");

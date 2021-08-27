@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.ui.wizard.Refreshable;
 public abstract class DecoratorTransitionPage extends Control implements DecoratorPage {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(""));
     private final DoubleProperty leftPaneWidth = new SimpleDoubleProperty();
-    private final BooleanProperty titleBarTransparent = new SimpleBooleanProperty(false);
     private final BooleanProperty backable = new SimpleBooleanProperty(false);
     private final BooleanProperty refreshable = new SimpleBooleanProperty(false);
     private Node currentPage;
@@ -57,11 +56,11 @@ public abstract class DecoratorTransitionPage extends Control implements Decorat
         if (to instanceof DecoratorPage) {
             state.bind(Bindings.createObjectBinding(() -> {
                 State state = ((DecoratorPage) to).stateProperty().get();
-                return new State(state.getTitle(), state.getTitleNode(), backable.get(), state.isRefreshable(), true, titleBarTransparent.get(), leftPaneWidth.get());
+                return new State(state.getTitle(), state.getTitleNode(), backable.get(), state.isRefreshable(), true, leftPaneWidth.get());
             }, ((DecoratorPage) to).stateProperty()));
         } else {
             state.unbind();
-            state.set(new State("", null, backable.get(), false, true, titleBarTransparent.get(), leftPaneWidth.get()));
+            state.set(new State("", null, backable.get(), false, true, leftPaneWidth.get()));
         }
 
         if (to instanceof Region) {
@@ -120,17 +119,5 @@ public abstract class DecoratorTransitionPage extends Control implements Decorat
 
     public void setLeftPaneWidth(double leftPaneWidth) {
         this.leftPaneWidth.set(leftPaneWidth);
-    }
-
-    public boolean isTitleBarTransparent() {
-        return titleBarTransparent.get();
-    }
-
-    public BooleanProperty titleBarTransparentProperty() {
-        return titleBarTransparent;
-    }
-
-    public void setTitleBarTransparent(boolean titleBarTransparent) {
-        this.titleBarTransparent.set(titleBarTransparent);
     }
 }

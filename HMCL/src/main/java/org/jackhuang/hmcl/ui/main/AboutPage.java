@@ -63,11 +63,10 @@ public class AboutPage extends StackPane {
             bangbang93.setSubtitle(i18n("about.thanks_to.bangbang93.statement"));
             bangbang93.setExternalLink("https://bmclapi2.bangbang93.com/");
 
-            IconedTwoLineListItem gamerteam = new IconedTwoLineListItem();
-            gamerteam.setTitle("gamerteam");
-            gamerteam.setImage(new Image("/assets/img/gamerteam.jpg", 32, 32, false, true));
-            gamerteam.setSubtitle(i18n("about.thanks_to.gamerteam.statement"));
-            gamerteam.setExternalLink("http://www.zhaisoul.com/");
+            IconedTwoLineListItem redLnn = new IconedTwoLineListItem();
+            redLnn.setTitle("Red_lnn");
+            redLnn.setImage(new Image("/assets/img/red_lnn.jpg", 32, 32, false, true));
+            redLnn.setSubtitle(i18n("about.thanks_to.gamerteam.statement"));
 
             IconedTwoLineListItem mcbbs = new IconedTwoLineListItem();
             mcbbs.setImage(new Image("/assets/img/chest.png", 32, 32, false, true));
@@ -80,14 +79,14 @@ public class AboutPage extends StackPane {
             contributors.setTitle(i18n("about.thanks_to.contributors"));
             contributors.setSubtitle(i18n("about.thanks_to.contributors.statement"));
             contributors.setExternalLink("https://github.com/huanghongxun/HMCL/graphs/contributors");
-            contributors.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
 
             IconedTwoLineListItem users = new IconedTwoLineListItem();
             users.setImage(new Image("/assets/img/craft_table.png", 32, 32, false, true));
             users.setTitle(i18n("about.thanks_to.users"));
             users.setSubtitle(i18n("about.thanks_to.users.statement"));
+            users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, gamerteam, mcbbs, users, contributors);
+            thanks.getContent().setAll(yushijinhun, bangbang93, mcbbs, redLnn, users, contributors);
         }
 
         ComponentList dep = new ComponentList();

@@ -244,7 +244,7 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
             public GameListSkin() {
                 super(GameList.this);
 
-                state.set(new State(i18n("version.manage"), null, true, false, true, false, 200));
+                state.set(new State(i18n("version.manage"), null, true, false, true, 200));
             }
 
             @Override
