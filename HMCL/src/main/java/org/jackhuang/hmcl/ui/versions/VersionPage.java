@@ -388,7 +388,7 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
             }
 
             control.state.bind(Bindings.createObjectBinding(() ->
-                            new State(i18n("version.manage.manage.title", getSkinnable().getVersion()), null, true, false, true, false, 200),
+                            new State(i18n("version.manage.manage.title", getSkinnable().getVersion()), null, true, false, true, 200),
                     getSkinnable().version));
 
             //control.transitionPane.getStyleClass().add("gray-background");

@@ -398,7 +398,7 @@
     -fx-font-weight: BOLD;
 }
 
-.jfx-tool-bar .background {
+.jfx-tool-bar.background {
     -fx-background-color: -fx-base-color;
 }
 
@@ -1140,12 +1140,12 @@
 
 .window {
     -fx-background-color: transparent;
-    -fx-padding: 16;
+    -fx-padding: 8;
 }
 
 .body {
     -fx-border-radius: 5;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 20, 0.3, 0.0, 0.0);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 10, 0.3, 0.0, 0.0);
 }
 
 .debug-border {

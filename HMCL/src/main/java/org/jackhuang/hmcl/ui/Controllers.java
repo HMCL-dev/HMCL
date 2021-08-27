@@ -172,8 +172,8 @@ public final class Controllers {
 
         scene = new Scene(decorator.getDecorator());
         scene.setFill(Color.TRANSPARENT);
-        stage.setMinHeight(482 + 32);
-        stage.setMinWidth(802 + 32);
+        stage.setMinHeight(450 + 2 + 40 + 16); // bg height + border width*2 + toolbar height + shadow width*2
+        stage.setMinWidth(800 + 2 + 16); // bg width + border width*2 + shadow width*2
         decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
         decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
         scene.getStylesheets().setAll(config().getTheme().getStylesheets());

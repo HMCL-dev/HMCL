@@ -93,7 +93,6 @@ public class RootPage extends DecoratorTabPage {
     @Override
     protected void onNavigated(Node to) {
         backableProperty().set(!(to instanceof MainPage));
-        setTitleBarTransparent(to instanceof MainPage);
 
         super.onNavigated(to);
     }
