@@ -16,7 +16,7 @@
             <Label text="%account.create"/>
         </heading>
         <body>
-            <GridPane vgap="15" hgap="15" style="-fx-padding: 15 0 0 0;">
+            <GridPane fx:id="body" vgap="15" hgap="15" style="-fx-padding: 15 0 0 0;">
                 <columnConstraints>
                     <ColumnConstraints maxWidth="70" minWidth="70"/>
                     <ColumnConstraints/>

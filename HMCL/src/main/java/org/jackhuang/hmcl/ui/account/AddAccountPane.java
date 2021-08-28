@@ -33,10 +33,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
@@ -47,6 +44,7 @@ import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -94,8 +92,11 @@ public class AddAccountPane extends StackPane {
     private SpinnerPane acceptPane;
     @FXML
     private HBox linksContainer;
+    @FXML
+    private GridPane body;
 
     private final TabHeader tabHeader;
+    private TaskExecutor loginTask;
 
     private ListProperty<Hyperlink> links = new SimpleListProperty<>();
 
@@ -242,14 +243,14 @@ public class AddAccountPane extends StackPane {
 
         acceptPane.showSpinner();
         lblCreationWarning.setText("");
-        setDisable(true);
+        body.setDisable(true);
 
         String username = txtUsername.getText();
         String password = txtPassword.getText();
         AccountFactory<?> factory = ((AccountFactory<?>) tabHeader.getSelectionModel().getSelectedItem().getUserData());
         Object additionalData = getAuthAdditionalData();
 
-        Task.supplyAsync(() -> factory.create(new Selector(), username, password, additionalData))
+        loginTask = Task.supplyAsync(() -> factory.create(new Selector(), username, password, additionalData))
                 .whenComplete(Schedulers.javafx(), account -> {
                     int oldIndex = Accounts.getAccounts().indexOf(account);
                     if (oldIndex == -1) {
@@ -274,11 +275,14 @@ public class AddAccountPane extends StackPane {
                     }
                     setDisable(false);
                     acceptPane.hideSpinner();
-                }).start();
+                }).executor(true);
     }
 
     @FXML
     private void onCreationCancel() {
+        if (loginTask != null) {
+            loginTask.cancel();
+        }
         fireEvent(new DialogCloseEvent());
     }
 
