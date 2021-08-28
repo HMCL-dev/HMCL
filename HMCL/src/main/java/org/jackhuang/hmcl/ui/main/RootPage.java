@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
-import org.jackhuang.hmcl.ui.account.AccountList;
 import org.jackhuang.hmcl.ui.account.AddAccountPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
@@ -61,11 +60,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class RootPage extends DecoratorTabPage {
     private MainPage mainPage = null;
-    private SettingsPage settingsPage = null;
-    private AccountList accountListPage = null;
 
     private final TabHeader.Tab<MainPage> mainTab = new TabHeader.Tab<>("main");
-    private final TabHeader.Tab<AccountList> accountTab = new TabHeader.Tab<>("account");
 
     public RootPage() {
         setLeftPaneWidth(200);
@@ -77,8 +73,7 @@ public class RootPage extends DecoratorTabPage {
             onRefreshedVersions(Profiles.selectedProfileProperty().get().getRepository());
 
         mainTab.setNodeSupplier(this::getMainPage);
-        accountTab.setNodeSupplier(this::getAccountListPage);
-        getTabs().setAll(mainTab, accountTab);
+        getTabs().setAll(mainTab);
     }
 
     @Override
@@ -133,37 +128,6 @@ public class RootPage extends DecoratorTabPage {
         return mainPage;
     }
 
-    private SettingsPage getSettingsPage() {
-        if (settingsPage == null)
-            settingsPage = new SettingsPage();
-        return settingsPage;
-    }
-
-    private AccountList getAccountListPage() {
-        if (accountListPage == null) {
-            accountListPage = new AccountList();
-            accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
-            accountListPage.accountsProperty().bindContent(Accounts.accountsProperty());
-        }
-        return accountListPage;
-    }
-
-    public Tab getMainTab() {
-        return mainTab;
-    }
-
-    public Tab getAccountTab() {
-        return accountTab;
-    }
-
-    private void selectPage(Tab tab) {
-        if (getSelectionModel().getSelectedItem() == tab) {
-            getSelectionModel().select(getMainTab());
-        } else {
-            getSelectionModel().select(tab);
-        }
-    }
-
     private static class Skin extends SkinBase<RootPage> {
 
         protected Skin(RootPage control) {
@@ -171,8 +135,7 @@ public class RootPage extends DecoratorTabPage {
 
             // first item in left sidebar
             AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
-            accountListItem.activeProperty().bind(control.accountTab.selectedProperty());
-            accountListItem.setOnAction(e -> control.selectPage(control.accountTab));
+            accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
             // second item in left sidebar

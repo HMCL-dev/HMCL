@@ -69,6 +69,10 @@ public interface DecoratorPage extends Refreshable {
             return new State(title, null, true, false, true);
         }
 
+        public static State fromTitle(String title, double leftPaneWidth) {
+            return new State(title, null, true, false, true, leftPaneWidth);
+        }
+
         public static State fromTitleNode(Node titleNode) {
             return new State(null, titleNode, true, false, true);
         }

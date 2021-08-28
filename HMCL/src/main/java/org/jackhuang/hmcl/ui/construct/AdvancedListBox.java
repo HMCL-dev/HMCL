@@ -25,6 +25,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 
+import java.util.function.Consumer;
+
 public class AdvancedListBox extends ScrollPane {
     private final VBox container = new VBox();
 
@@ -50,6 +52,14 @@ public class AdvancedListBox extends ScrollPane {
             container.getChildren().add(pane);
         }
         return this;
+    }
+
+    public AdvancedListBox addNavigationDrawerItem(Consumer<AdvancedListItem> fn) {
+        AdvancedListItem item = new AdvancedListItem();
+        item.getStyleClass().add("navigation-drawer-item");
+        item.setActionButtonVisible(false);
+        fn.accept(item);
+        return add(item);
     }
 
     public AdvancedListBox add(int index, Node child) {

@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
-import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 
@@ -33,7 +32,7 @@ import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
-    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(new State(i18n("settings.launcher"), null, true, false, true, 200));
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("settings.launcher"), 200));
     private final TabHeader tab;
     private final TabHeader.Tab<SettingsPage> settingsTab = new TabHeader.Tab<>("settingsPage");
     private final TabHeader.Tab<HelpPage> helpTab = new TabHeader.Tab<>("helpPage");
@@ -55,43 +54,31 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
         });
 
         {
-            AdvancedListItem settingsItem = new AdvancedListItem();
-            settingsItem.getStyleClass().add("navigation-drawer-item");
-            settingsItem.setTitle(i18n("settings.launcher"));
-            settingsItem.setLeftGraphic(wrap(SVG.gearOutline(null, 20, 20)));
-            settingsItem.setActionButtonVisible(false);
-            settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(settingsTab));
-            settingsItem.setOnAction(e -> tab.getSelectionModel().select(settingsTab));
-
-            AdvancedListItem helpItem = new AdvancedListItem();
-            helpItem.getStyleClass().add("navigation-drawer-item");
-            helpItem.setTitle(i18n("help"));
-            helpItem.setLeftGraphic(wrap(SVG.helpCircleOutline(null, 20, 20)));
-            helpItem.setActionButtonVisible(false);
-            helpItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(helpTab));
-            helpItem.setOnAction(e -> tab.getSelectionModel().select(helpTab));
-
-            AdvancedListItem sponsorItem = new AdvancedListItem();
-            sponsorItem.getStyleClass().add("navigation-drawer-item");
-            sponsorItem.setTitle(i18n("sponsor"));
-            sponsorItem.setLeftGraphic(wrap(SVG.handHearOutline(null, 20, 20)));
-            sponsorItem.setActionButtonVisible(false);
-            sponsorItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(sponsorTab));
-            sponsorItem.setOnAction(e -> tab.getSelectionModel().select(sponsorTab));
-
-            AdvancedListItem aboutItem = new AdvancedListItem();
-            aboutItem.getStyleClass().add("navigation-drawer-item");
-            aboutItem.setTitle(i18n("about"));
-            aboutItem.setLeftGraphic(wrap(SVG.informationOutline(null, 20, 20)));
-            aboutItem.setActionButtonVisible(false);
-            aboutItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(aboutTab));
-            aboutItem.setOnAction(e -> tab.getSelectionModel().select(aboutTab));
-
             AdvancedListBox sideBar = new AdvancedListBox()
-                    .add(settingsItem)
-                    .add(helpItem)
-                    .add(sponsorItem)
-                    .add(aboutItem);
+                    .addNavigationDrawerItem(settingsItem -> {
+                        settingsItem.setTitle(i18n("settings.launcher"));
+                        settingsItem.setLeftGraphic(wrap(SVG.gearOutline(null, 20, 20)));
+                        settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(settingsTab));
+                        settingsItem.setOnAction(e -> tab.getSelectionModel().select(settingsTab));
+                    })
+                    .addNavigationDrawerItem(helpItem -> {
+                        helpItem.setTitle(i18n("help"));
+                        helpItem.setLeftGraphic(wrap(SVG.helpCircleOutline(null, 20, 20)));
+                        helpItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(helpTab));
+                        helpItem.setOnAction(e -> tab.getSelectionModel().select(helpTab));
+                    })
+                    .addNavigationDrawerItem(sponsorItem -> {
+                        sponsorItem.setTitle(i18n("sponsor"));
+                        sponsorItem.setLeftGraphic(wrap(SVG.handHearOutline(null, 20, 20)));
+                        sponsorItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(sponsorTab));
+                        sponsorItem.setOnAction(e -> tab.getSelectionModel().select(sponsorTab));
+                    })
+                    .addNavigationDrawerItem(aboutItem -> {
+                        aboutItem.setTitle(i18n("about"));
+                        aboutItem.setLeftGraphic(wrap(SVG.informationOutline(null, 20, 20)));
+                        aboutItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(aboutTab));
+                        aboutItem.setOnAction(e -> tab.getSelectionModel().select(aboutTab));
+                    });
             FXUtils.setLimitWidth(sideBar, 200);
             setLeft(sideBar);
         }
