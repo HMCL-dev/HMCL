@@ -56,6 +56,8 @@ public class LaunchOptions implements Serializable {
     private NativesDirectoryType nativesDirType;
     private String nativesDir;
     private ProcessPriority processPriority = ProcessPriority.NORMAL;
+    private boolean useNativeGLFW;
+    private boolean useNativeOpenAL;
 
     /**
      * The game directory
@@ -225,6 +227,14 @@ public class LaunchOptions implements Serializable {
         return processPriority;
     }
 
+    public boolean isUseNativeGLFW() {
+        return useNativeGLFW;
+    }
+
+    public boolean isUseNativeOpenAL() {
+        return useNativeOpenAL;
+    }
+
     public static class Builder {
 
         private final LaunchOptions options = new LaunchOptions();
@@ -385,6 +395,14 @@ public class LaunchOptions implements Serializable {
             return options.nativesDir;
         }
 
+        public boolean isUseNativeGLFW() {
+            return options.useNativeGLFW;
+        }
+
+        public boolean isUseNativeOpenAL() {
+            return options.useNativeOpenAL;
+        }
+
         public Builder setGameDir(File gameDir) {
             options.gameDir = gameDir;
             return this;
@@ -499,6 +517,16 @@ public class LaunchOptions implements Serializable {
 
         public Builder setProcessPriority(@NotNull ProcessPriority processPriority) {
             options.processPriority = processPriority;
+            return this;
+        }
+
+        public Builder setUseNativeGLFW(boolean useNativeGLFW) {
+            options.useNativeGLFW = useNativeGLFW;
+            return this;
+        }
+
+        public Builder setUseNativeOpenAL(boolean useNativeOpenAL) {
+            options.useNativeOpenAL = useNativeOpenAL;
             return this;
         }
 

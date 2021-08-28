@@ -91,6 +91,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final JFXToggleButton chkNoJVMArgs;
     private final JFXToggleButton chkNoGameCheck;
     private final JFXToggleButton chkNoJVMCheck;
+    private final JFXToggleButton chkUseNativeGLFW;
+    private final JFXToggleButton chkUseNativeOpenAL;
     private final MultiFileItem<JavaVersion> javaItem;
     private final MultiFileItem<GameDirectoryType> gameDirItem;
     private final MultiFileItem<NativesDirectoryType> nativesDirItem;
@@ -449,7 +451,31 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 FXUtils.setLimitHeight(chkNoJVMCheck, 20);
             }
 
-            advancedSettingsPane.getContent().setAll(processPriorityPane, txtJVMArgs, txtGameArgs, txtMetaspace, txtWrapper, txtPrecallingCommand, txtServerIP, nativesDirItem, noJVMArgsPane, noGameCheckPane, noJVMCheckPane);
+            BorderPane useNativeGLFWPane = new BorderPane();
+            {
+                Label label = new Label(i18n("settings.advanced.use_native_glfw"));
+                useNativeGLFWPane.setLeft(label);
+                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+
+                chkUseNativeGLFW = new JFXToggleButton();
+                useNativeGLFWPane.setRight(chkUseNativeGLFW);
+                chkUseNativeGLFW.setSize(8);
+                FXUtils.setLimitHeight(chkUseNativeGLFW, 20);
+            }
+
+            BorderPane useNativeOpenALPane = new BorderPane();
+            {
+                Label label = new Label(i18n("settings.advanced.use_native_openal"));
+                useNativeOpenALPane.setLeft(label);
+                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+
+                chkUseNativeOpenAL = new JFXToggleButton();
+                useNativeOpenALPane.setRight(chkUseNativeOpenAL);
+                chkUseNativeOpenAL.setSize(8);
+                FXUtils.setLimitHeight(chkUseNativeOpenAL, 20);
+            }
+
+            advancedSettingsPane.getContent().setAll(processPriorityPane, txtJVMArgs, txtGameArgs, txtMetaspace, txtWrapper, txtPrecallingCommand, txtServerIP, nativesDirItem, noJVMArgsPane, noGameCheckPane, noJVMCheckPane, useNativeGLFWPane, useNativeOpenALPane);
         }
 
         rootPane.getChildren().setAll(iconPickerItemWrapper, settingsTypePane, componentList, advancedHintPane, advancedSettingsPane);
@@ -552,6 +578,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbindBoolean(chkNoJVMCheck, lastVersionSetting.notCheckJVMProperty());
             FXUtils.unbindBoolean(chkNoJVMArgs, lastVersionSetting.noJVMArgsProperty());
             FXUtils.unbindBoolean(chkShowLogs, lastVersionSetting.showLogsProperty());
+            FXUtils.unbindBoolean(chkUseNativeGLFW, lastVersionSetting.useNativeGLFWProperty());
+            FXUtils.unbindBoolean(chkUseNativeOpenAL, lastVersionSetting.useNativeOpenALProperty());
             FXUtils.unbindEnum(cboLauncherVisibility);
             FXUtils.unbindEnum(cboProcessPriority);
 
@@ -588,6 +616,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         FXUtils.bindBoolean(chkNoJVMCheck, versionSetting.notCheckJVMProperty());
         FXUtils.bindBoolean(chkNoJVMArgs, versionSetting.noJVMArgsProperty());
         FXUtils.bindBoolean(chkShowLogs, versionSetting.showLogsProperty());
+        FXUtils.bindBoolean(chkUseNativeGLFW, versionSetting.useNativeGLFWProperty());
+        FXUtils.bindBoolean(chkUseNativeOpenAL, versionSetting.useNativeOpenALProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
         FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
 

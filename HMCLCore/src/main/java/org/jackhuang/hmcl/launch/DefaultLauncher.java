@@ -303,6 +303,14 @@ public class DefaultLauncher extends Launcher {
                                 String ext = FileUtils.getExtension(destFile);
                                 if (ext.equals("sha1") || ext.equals("git"))
                                     return false;
+
+                                if (options.isUseNativeGLFW() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("glfw")) {
+                                    return false;
+                                }
+                                if (options.isUseNativeOpenAL() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("openal")) {
+                                    return false;
+                                }
+
                                 return library.getExtract().shouldExtract(path);
                             })
                             .setReplaceExistentFile(false).unzip();

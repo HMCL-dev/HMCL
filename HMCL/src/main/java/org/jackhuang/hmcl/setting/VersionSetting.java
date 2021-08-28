@@ -504,6 +504,34 @@ public final class VersionSetting implements Cloneable {
         processPriorityProperty.set(processPriority);
     }
 
+    private final BooleanProperty useNativeGLFW = new SimpleBooleanProperty(this, "nativeGLFW", false);
+
+    public boolean isUseNativeGLFW() {
+        return useNativeGLFW.get();
+    }
+
+    public BooleanProperty useNativeGLFWProperty() {
+        return useNativeGLFW;
+    }
+
+    public void setUseNativeGLFW(boolean useNativeGLFW) {
+        this.useNativeGLFW.set(useNativeGLFW);
+    }
+
+    private final BooleanProperty useNativeOpenAL = new SimpleBooleanProperty(this, "nativeOpenAL", false);
+
+    public boolean isUseNativeOpenAL() {
+        return useNativeOpenAL.get();
+    }
+
+    public BooleanProperty useNativeOpenALProperty() {
+        return useNativeOpenAL;
+    }
+
+    public void setUseNativeOpenAL(boolean useNativeOpenAL) {
+        this.useNativeOpenAL.set(useNativeOpenAL);
+    }
+
     // launcher settings
 
     /**
@@ -587,6 +615,8 @@ public final class VersionSetting implements Cloneable {
         gameDirTypeProperty.addListener(listener);
         gameDirProperty.addListener(listener);
         processPriorityProperty.addListener(listener);
+        useNativeGLFW.addListener(listener);
+        useNativeOpenAL.addListener(listener);
         launcherVisibilityProperty.addListener(listener);
         defaultJavaPathProperty.addListener(listener);
         nativesDirProperty.addListener(listener);
@@ -619,6 +649,8 @@ public final class VersionSetting implements Cloneable {
         versionSetting.setGameDirType(getGameDirType());
         versionSetting.setGameDir(getGameDir());
         versionSetting.setProcessPriority(getProcessPriority());
+        versionSetting.setUseNativeGLFW(isUseNativeGLFW());
+        versionSetting.setUseNativeOpenAL(isUseNativeOpenAL());
         versionSetting.setLauncherVisibility(getLauncherVisibility());
         versionSetting.setNativesDir(getNativesDir());
         return versionSetting;
@@ -652,6 +684,8 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("gameDir", src.getGameDir());
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
             obj.addProperty("processPriority", src.getProcessPriority().ordinal());
+            obj.addProperty("useNativeGLFW", src.isUseNativeGLFW());
+            obj.addProperty("useNativeOpenAL", src.isUseNativeOpenAL());
             obj.addProperty("gameDirType", src.getGameDirType().ordinal());
             obj.addProperty("defaultJavaPath", src.getDefaultJavaPath());
             obj.addProperty("nativesDir", src.getNativesDir());
@@ -694,6 +728,8 @@ public final class VersionSetting implements Cloneable {
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setLauncherVisibility(LauncherVisibility.values()[Optional.ofNullable(obj.get("launcherVisibility")).map(JsonElement::getAsInt).orElse(LauncherVisibility.HIDE.ordinal())]);
             vs.setProcessPriority(ProcessPriority.values()[Optional.ofNullable(obj.get("processPriority")).map(JsonElement::getAsInt).orElse(ProcessPriority.NORMAL.ordinal())]);
+            vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useNativeGLFW")).map(JsonElement::getAsBoolean).orElse(false));
+            vs.setUseNativeOpenAL(Optional.ofNullable(obj.get("useNativeOpenAL")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setGameDirType(GameDirectoryType.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(GameDirectoryType.ROOT_FOLDER.ordinal())]);
             vs.setDefaultJavaPath(Optional.ofNullable(obj.get("defaultJavaPath")).map(JsonElement::getAsString).orElse(null));
             vs.setNativesDirType(NativesDirectoryType.values()[Optional.ofNullable(obj.get("nativesDirType")).map(JsonElement::getAsInt).orElse(0)]);
