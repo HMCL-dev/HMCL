@@ -17,21 +17,16 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.When;
-import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.setting.EnumCommonDirectory;
+import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
@@ -39,12 +34,10 @@ import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.net.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -58,7 +51,6 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.reversedSelectedPropertyFor;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 
 public final class SettingsPage extends SettingsView {
@@ -68,64 +60,9 @@ public final class SettingsPage extends SettingsView {
     public SettingsPage() {
         FXUtils.smoothScrolling(scroll);
 
-        // ==== Download sources ====
-        cboDownloadSource.getItems().setAll(DownloadProviders.providersById.keySet());
-        selectedItemPropertyFor(cboDownloadSource).bindBidirectional(config().downloadTypeProperty());
-        // ====
-
-        // ==== Font ====
-        cboFont.valueProperty().bindBidirectional(config().fontFamilyProperty());
-
-        txtFontSize.textProperty().bindBidirectional(config().fontSizeProperty(),
-                SafeStringConverter.fromFiniteDouble()
-                        .restrict(it -> it > 0)
-                        .fallbackTo(12.0)
-                        .asPredicate(Validator.addTo(txtFontSize)));
-
-        lblFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
-                () -> Font.font(config().getFontFamily(), config().getFontSize()),
-                config().fontFamilyProperty(), config().fontSizeProperty()));
-
-        cboLogFont.valueProperty().bindBidirectional(config().fontFamilyProperty());
-
-        txtLogFontSize.textProperty().bindBidirectional(config().fontSizeProperty(),
-                SafeStringConverter.fromFiniteDouble()
-                        .restrict(it -> it > 0)
-                        .fallbackTo(12.0)
-                        .asPredicate(Validator.addTo(txtLogFontSize)));
-
-        lblLogFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
-                () -> Font.font(config().getFontFamily(), config().getFontSize()),
-                config().fontFamilyProperty(), config().fontSizeProperty()));
-        // ====
-
         // ==== Languages ====
         cboLanguage.getItems().setAll(Locales.LOCALES);
         selectedItemPropertyFor(cboLanguage).bindBidirectional(config().localizationProperty());
-        // ====
-
-        // ==== Proxy ====
-        txtProxyHost.textProperty().bindBidirectional(config().proxyHostProperty());
-        txtProxyPort.textProperty().bindBidirectional(config().proxyPortProperty(),
-                SafeStringConverter.fromInteger()
-                        .restrict(it -> it >= 0 && it <= 0xFFFF)
-                        .fallbackTo(0)
-                        .asPredicate(Validator.addTo(txtProxyPort)));
-        txtProxyUsername.textProperty().bindBidirectional(config().proxyUserProperty());
-        txtProxyPassword.textProperty().bindBidirectional(config().proxyPassProperty());
-
-        proxyPane.disableProperty().bind(chkDisableProxy.selectedProperty());
-        authPane.disableProperty().bind(chkProxyAuthentication.selectedProperty().not());
-
-        reversedSelectedPropertyFor(chkDisableProxy).bindBidirectional(config().hasProxyProperty());
-        chkProxyAuthentication.selectedProperty().bindBidirectional(config().hasProxyAuthProperty());
-
-        ToggleGroup proxyConfigurationGroup = new ToggleGroup();
-        chkProxyHttp.setUserData(Proxy.Type.HTTP);
-        chkProxyHttp.setToggleGroup(proxyConfigurationGroup);
-        chkProxySocks.setUserData(Proxy.Type.SOCKS);
-        chkProxySocks.setToggleGroup(proxyConfigurationGroup);
-        selectedItemPropertyFor(proxyConfigurationGroup, Proxy.Type.class).bindBidirectional(config().proxyTypeProperty());
         // ====
 
         fileCommonLocation.loadChildren(Collections.singletonList(
@@ -176,30 +113,6 @@ public final class SettingsPage extends SettingsView {
         chkUpdateStable.setToggleGroup(updateChannelGroup);
         chkUpdateStable.setUserData(UpdateChannel.STABLE);
         selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class).bindBidirectional(config().updateChannelProperty());
-        // ====
-
-        // ==== Background ====
-        backgroundItem.loadChildren(Collections.singletonList(
-                backgroundItem.createChildren(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
-        ), EnumBackgroundImage.CUSTOM);
-        backgroundItem.customTextProperty().bindBidirectional(config().backgroundImageProperty());
-        backgroundItem.selectedDataProperty().bindBidirectional(config().backgroundImageTypeProperty());
-        backgroundItem.subtitleProperty().bind(
-                new When(backgroundItem.selectedDataProperty().isEqualTo(EnumBackgroundImage.DEFAULT))
-                        .then(i18n("launcher.background.default"))
-                        .otherwise(config().backgroundImageProperty()));
-        // ====
-
-        // ==== Theme ====
-        ColorPicker picker = new ColorPicker(Color.web(config().getTheme().getColor()));
-        picker.getCustomColors().setAll(Theme.SUGGESTED_COLORS);
-        picker.setOnAction(e -> {
-            Theme theme = Theme.custom(Theme.getColorDisplayName(picker.getValue()));
-            config().setTheme(theme);
-            Controllers.getScene().getStylesheets().setAll(theme.getStylesheets());
-        });
-        themeColorPickerContainer.getChildren().setAll(picker);
-        Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
         // ====
     }
 

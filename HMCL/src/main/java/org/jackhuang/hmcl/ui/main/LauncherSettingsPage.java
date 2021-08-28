@@ -35,6 +35,8 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("settings.launcher"), 200));
     private final TabHeader tab;
     private final TabHeader.Tab<SettingsPage> settingsTab = new TabHeader.Tab<>("settingsPage");
+    private final TabHeader.Tab<PersonalizationPage> personalizationTab = new TabHeader.Tab<>("personalizationPage");
+    private final TabHeader.Tab<DownloadSettingsPage> downloadTab = new TabHeader.Tab<>("downloadSettingsPage");
     private final TabHeader.Tab<HelpPage> helpTab = new TabHeader.Tab<>("helpPage");
     private final TabHeader.Tab<AboutPage> aboutTab = new TabHeader.Tab<>("aboutPage");
     private final TabHeader.Tab<SponsorPage> sponsorTab = new TabHeader.Tab<>("sponsorPage");
@@ -42,10 +44,12 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
 
     public LauncherSettingsPage() {
         settingsTab.setNodeSupplier(SettingsPage::new);
+        personalizationTab.setNodeSupplier(PersonalizationPage::new);
+        downloadTab.setNodeSupplier(DownloadSettingsPage::new);
         helpTab.setNodeSupplier(HelpPage::new);
         sponsorTab.setNodeSupplier(SponsorPage::new);
         aboutTab.setNodeSupplier(AboutPage::new);
-        tab = new TabHeader(settingsTab, helpTab, sponsorTab, aboutTab);
+        tab = new TabHeader(settingsTab, personalizationTab, downloadTab, helpTab, sponsorTab, aboutTab);
 
         tab.getSelectionModel().select(settingsTab);
         FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
@@ -60,6 +64,18 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
                         settingsItem.setLeftGraphic(wrap(SVG.gearOutline(null, 20, 20)));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(settingsTab));
                         settingsItem.setOnAction(e -> tab.getSelectionModel().select(settingsTab));
+                    })
+                    .addNavigationDrawerItem(personalizationItem -> {
+                        personalizationItem.setTitle(i18n("settings.launcher.appearance"));
+                        personalizationItem.setLeftGraphic(wrap(SVG.styleOutline(null, 20, 20)));
+                        personalizationItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(personalizationTab));
+                        personalizationItem.setOnAction(e -> tab.getSelectionModel().select(personalizationTab));
+                    })
+                    .addNavigationDrawerItem(downloadItem -> {
+                        downloadItem.setTitle(i18n("download"));
+                        downloadItem.setLeftGraphic(wrap(SVG.downloadOutline(null, 20, 20)));
+                        downloadItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(downloadTab));
+                        downloadItem.setOnAction(e -> tab.getSelectionModel().select(downloadTab));
                     })
                     .addNavigationDrawerItem(helpItem -> {
                         helpItem.setTitle(i18n("help"));

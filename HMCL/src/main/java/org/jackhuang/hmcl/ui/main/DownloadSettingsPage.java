@@ -1,0 +1,228 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.ui.main;
+
+import com.jfoenix.controls.*;
+import javafx.geometry.HPos;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.*;
+import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.NumberValidator;
+import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
+
+import java.net.Proxy;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.reversedSelectedPropertyFor;
+import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
+
+public class DownloadSettingsPage extends StackPane {
+
+    public DownloadSettingsPage() {
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(10));
+        content.setFillWidth(true);
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        getChildren().setAll(scrollPane);
+
+        {
+            ComponentList downloadSource = new ComponentList();
+
+            {
+                BorderPane downloadSourcePane = new BorderPane();
+                {
+                    Label label = new Label(i18n("settings.launcher.download_source"));
+                    BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+                    downloadSourcePane.setLeft(label);
+                }
+
+                {
+                    JFXComboBox<String> cboDownloadSource = new JFXComboBox<>();
+                    cboDownloadSource.setConverter(stringConverter(key -> i18n("download.provider." + key)));
+                    downloadSourcePane.setRight(cboDownloadSource);
+
+                    cboDownloadSource.getItems().setAll(DownloadProviders.providersById.keySet());
+                    selectedItemPropertyFor(cboDownloadSource).bindBidirectional(config().downloadTypeProperty());
+                }
+                downloadSource.getContent().add(downloadSourcePane);
+            }
+
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.download_source")), downloadSource);
+        }
+
+        {
+            ComponentList proxyList = new ComponentList();
+
+            VBox proxyWrapper = new VBox();
+            proxyWrapper.setPadding(new Insets(8, 0, 8, 0));
+            proxyWrapper.setSpacing(10);
+
+            VBox proxyPane = new VBox();
+            {
+                JFXCheckBox chkDisableProxy = new JFXCheckBox(i18n("settings.launcher.proxy.disable"));
+                proxyWrapper.getChildren().add(chkDisableProxy);
+                reversedSelectedPropertyFor(chkDisableProxy).bindBidirectional(config().hasProxyProperty());
+                proxyPane.disableProperty().bind(chkDisableProxy.selectedProperty());
+            }
+
+            {
+                proxyPane.setPadding(new Insets(0, 0, 0, 30));
+
+                ColumnConstraints colHgrow = new ColumnConstraints();
+                colHgrow.setHgrow(Priority.ALWAYS);
+
+                JFXRadioButton chkProxyNone;
+                JFXRadioButton chkProxyHttp;
+                JFXRadioButton chkProxySocks;
+                {
+                    HBox hBox = new HBox();
+                    chkProxyNone = new JFXRadioButton(i18n("settings.launcher.proxy.none"));
+                    chkProxyHttp = new JFXRadioButton(i18n("settings.launcher.proxy.http"));
+                    chkProxySocks = new JFXRadioButton(i18n("settings.launcher.proxy.socks"));
+                    hBox.getChildren().setAll(chkProxyNone, chkProxyHttp, chkProxySocks);
+                    proxyPane.getChildren().add(hBox);
+                }
+
+                {
+                    GridPane gridPane = new GridPane();
+                    gridPane.setHgap(20);
+                    gridPane.setVgap(10);
+                    gridPane.setStyle("-fx-padding: 0 0 0 15;");
+                    gridPane.getColumnConstraints().setAll(new ColumnConstraints(), colHgrow);
+                    gridPane.getRowConstraints().setAll(new RowConstraints(), new RowConstraints());
+
+                    {
+                        Label host = new Label(i18n("settings.launcher.proxy.host"));
+                        GridPane.setRowIndex(host, 1);
+                        GridPane.setColumnIndex(host, 0);
+                        GridPane.setHalignment(host, HPos.RIGHT);
+                        gridPane.getChildren().add(host);
+                    }
+
+                    {
+                        JFXTextField txtProxyHost = new JFXTextField();
+                        GridPane.setRowIndex(txtProxyHost, 1);
+                        GridPane.setColumnIndex(txtProxyHost, 1);
+                        gridPane.getChildren().add(txtProxyHost);
+                        txtProxyHost.textProperty().bindBidirectional(config().proxyHostProperty());
+                        txtProxyHost.getValidators().setAll(new NumberValidator(i18n("input.number"), false));
+                    }
+
+                    {
+                        Label port = new Label(i18n("settings.launcher.proxy.port"));
+                        GridPane.setRowIndex(port, 2);
+                        GridPane.setColumnIndex(port, 0);
+                        GridPane.setHalignment(port, HPos.RIGHT);
+                        gridPane.getChildren().add(port);
+                    }
+
+                    {
+                        JFXTextField txtProxyPort = new JFXTextField();
+                        GridPane.setRowIndex(txtProxyPort, 2);
+                        GridPane.setColumnIndex(txtProxyPort, 1);
+                        FXUtils.setValidateWhileTextChanged(txtProxyPort, true);
+                        gridPane.getChildren().add(txtProxyPort);
+
+                        txtProxyPort.textProperty().bindBidirectional(config().proxyPortProperty(),
+                                SafeStringConverter.fromInteger()
+                                        .restrict(it -> it >= 0 && it <= 0xFFFF)
+                                        .fallbackTo(0)
+                                        .asPredicate(Validator.addTo(txtProxyPort)));
+                    }
+                    proxyPane.getChildren().add(gridPane);
+                }
+
+                GridPane authPane = new GridPane();
+                {
+                    VBox vBox = new VBox();
+                    vBox.setStyle("-fx-padding: 20 0 20 5;");
+
+                    JFXCheckBox chkProxyAuthentication = new JFXCheckBox(i18n("settings.launcher.proxy.authentication"));
+                    vBox.getChildren().setAll(chkProxyAuthentication);
+                    authPane.disableProperty().bind(chkProxyAuthentication.selectedProperty().not());
+                    chkProxyAuthentication.selectedProperty().bindBidirectional(config().hasProxyAuthProperty());
+
+                    proxyPane.getChildren().add(vBox);
+                }
+
+                {
+                    authPane.setHgap(20);
+                    authPane.setVgap(10);
+                    authPane.setStyle("-fx-padding: 0 0 0 15;");
+                    authPane.getColumnConstraints().setAll(new ColumnConstraints(), colHgrow);
+                    authPane.getRowConstraints().setAll(new RowConstraints(), new RowConstraints());
+
+                    {
+                        Label username = new Label(i18n("settings.launcher.proxy.username"));
+                        GridPane.setRowIndex(username, 0);
+                        GridPane.setColumnIndex(username, 0);
+                        authPane.getChildren().add(username);
+                    }
+
+                    {
+                        JFXTextField txtProxyUsername = new JFXTextField();
+                        GridPane.setRowIndex(txtProxyUsername, 0);
+                        GridPane.setColumnIndex(txtProxyUsername, 1);
+                        authPane.getChildren().add(txtProxyUsername);
+                        txtProxyUsername.textProperty().bindBidirectional(config().proxyUserProperty());
+                    }
+
+                    {
+                        Label password = new Label(i18n("settings.launcher.proxy.password"));
+                        GridPane.setRowIndex(password, 1);
+                        GridPane.setColumnIndex(password, 0);
+                        authPane.getChildren().add(password);
+                    }
+
+                    {
+                        JFXPasswordField txtProxyPassword = new JFXPasswordField();
+                        GridPane.setRowIndex(txtProxyPassword, 1);
+                        GridPane.setColumnIndex(txtProxyPassword, 1);
+                        authPane.getChildren().add(txtProxyPassword);
+                        txtProxyPassword.textProperty().bindBidirectional(config().proxyPassProperty());
+                    }
+
+                    ToggleGroup proxyConfigurationGroup = new ToggleGroup();
+                    chkProxyNone.setUserData(Proxy.Type.DIRECT);
+                    chkProxyNone.setToggleGroup(proxyConfigurationGroup);
+                    chkProxyHttp.setUserData(Proxy.Type.HTTP);
+                    chkProxyHttp.setToggleGroup(proxyConfigurationGroup);
+                    chkProxySocks.setUserData(Proxy.Type.SOCKS);
+                    chkProxySocks.setToggleGroup(proxyConfigurationGroup);
+                    selectedItemPropertyFor(proxyConfigurationGroup, Proxy.Type.class).bindBidirectional(config().proxyTypeProperty());
+
+                    proxyPane.getChildren().add(authPane);
+                }
+                proxyWrapper.getChildren().add(proxyPane);
+            }
+            proxyList.getContent().add(proxyWrapper);
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.proxy")), proxyList);
+        }
+
+    }
+}

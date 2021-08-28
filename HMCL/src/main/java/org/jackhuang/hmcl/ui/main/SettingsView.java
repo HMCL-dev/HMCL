@@ -17,8 +17,9 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.*;
-import javafx.geometry.HPos;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXRadioButton;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
@@ -28,12 +29,13 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
-import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.ComponentSublist;
+import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -41,19 +43,8 @@ import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public abstract class SettingsView extends StackPane {
-    protected final JFXTextField txtProxyHost;
-    protected final JFXTextField txtProxyPort;
-    protected final JFXTextField txtProxyUsername;
-    protected final JFXPasswordField txtProxyPassword;
-    protected final JFXTextField txtFontSize;
-    protected final JFXTextField txtLogFontSize;
     protected final JFXComboBox<SupportedLocale> cboLanguage;
-    protected final JFXComboBox<String> cboDownloadSource;
-    protected final FontComboBox cboFont;
-    protected final FontComboBox cboLogFont;
     protected final MultiFileItem<EnumCommonDirectory> fileCommonLocation;
-    protected final Label lblLogFontDisplay;
-    protected final Label lblFontDisplay;
     protected final Label lblUpdate;
     protected final Label lblUpdateSub;
     protected final Text lblUpdateNote;
@@ -61,14 +52,6 @@ public abstract class SettingsView extends StackPane {
     protected final JFXRadioButton chkUpdateDev;
     protected final JFXButton btnUpdate;
     protected final ScrollPane scroll;
-    protected final MultiFileItem<EnumBackgroundImage> backgroundItem;
-    protected final StackPane themeColorPickerContainer;
-    protected final JFXCheckBox chkDisableProxy;
-    protected final JFXRadioButton chkProxyHttp;
-    protected final JFXRadioButton chkProxySocks;
-    protected final JFXCheckBox chkProxyAuthentication;
-    protected final GridPane authPane;
-    protected final Pane proxyPane;
 
     public SettingsView() {
         scroll = new ScrollPane();
@@ -178,32 +161,6 @@ public abstract class SettingsView extends StackPane {
                 }
 
                 {
-                    backgroundItem = new MultiFileItem<>(true);
-                    backgroundItem.setTitle(i18n("launcher.background"));
-                    backgroundItem.setChooserTitle(i18n("launcher.background.choose"));
-                    backgroundItem.setHasSubtitle(true);
-                    backgroundItem.setCustomText(i18n("settings.custom"));
-
-                    settingsPane.getContent().add(backgroundItem);
-                }
-
-                {
-                    BorderPane downloadSourcePane = new BorderPane();
-                    {
-                        Label label = new Label(i18n("settings.launcher.download_source"));
-                        BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                        downloadSourcePane.setLeft(label);
-                    }
-
-                    {
-                        cboDownloadSource = new JFXComboBox<>();
-                        cboDownloadSource.setConverter(stringConverter(key -> i18n("download.provider." + key)));
-                        downloadSourcePane.setRight(cboDownloadSource);
-                    }
-                    settingsPane.getContent().add(downloadSourcePane);
-                }
-
-                {
                     BorderPane languagePane = new BorderPane();
 
                     Label left = new Label(i18n("settings.launcher.language"));
@@ -219,225 +176,20 @@ public abstract class SettingsView extends StackPane {
                 }
 
                 {
-                    ComponentList proxyList = new ComponentList();
-                    proxyList.setTitle(i18n("settings.launcher.proxy"));
+                    BorderPane debugPane = new BorderPane();
 
-                    VBox proxyWrapper = new VBox();
-                    proxyWrapper.setSpacing(10);
-
-                    {
-                        chkDisableProxy = new JFXCheckBox(i18n("settings.launcher.proxy.disable"));
-                        proxyWrapper.getChildren().add(chkDisableProxy);
-                    }
-
-                    {
-                        proxyPane = new VBox();
-                        proxyPane.setStyle("-fx-padding: 0 0 0 30;");
-
-                        ColumnConstraints colHgrow = new ColumnConstraints();
-                        colHgrow.setHgrow(Priority.ALWAYS);
-
-                        {
-                            HBox hBox = new HBox();
-                            chkProxyHttp = new JFXRadioButton(i18n("settings.launcher.proxy.http"));
-                            chkProxySocks = new JFXRadioButton(i18n("settings.launcher.proxy.socks"));
-                            hBox.getChildren().setAll(chkProxyHttp, chkProxySocks);
-                            proxyPane.getChildren().add(hBox);
-                        }
-
-                        {
-                            GridPane gridPane = new GridPane();
-                            gridPane.setHgap(20);
-                            gridPane.setVgap(10);
-                            gridPane.setStyle("-fx-padding: 0 0 0 15;");
-                            gridPane.getColumnConstraints().setAll(new ColumnConstraints(), colHgrow);
-                            gridPane.getRowConstraints().setAll(new RowConstraints(), new RowConstraints());
-
-                            {
-                                Label host = new Label(i18n("settings.launcher.proxy.host"));
-                                GridPane.setRowIndex(host, 1);
-                                GridPane.setColumnIndex(host, 0);
-                                GridPane.setHalignment(host, HPos.RIGHT);
-                                gridPane.getChildren().add(host);
-                            }
-
-                            {
-                                txtProxyHost = new JFXTextField();
-                                GridPane.setRowIndex(txtProxyHost, 1);
-                                GridPane.setColumnIndex(txtProxyHost, 1);
-                                gridPane.getChildren().add(txtProxyHost);
-                            }
-
-                            {
-                                Label port = new Label(i18n("settings.launcher.proxy.port"));
-                                GridPane.setRowIndex(port, 2);
-                                GridPane.setColumnIndex(port, 0);
-                                GridPane.setHalignment(port, HPos.RIGHT);
-                                gridPane.getChildren().add(port);
-                            }
-
-                            {
-                                txtProxyPort = new JFXTextField();
-                                GridPane.setRowIndex(txtProxyPort, 2);
-                                GridPane.setColumnIndex(txtProxyPort, 1);
-                                FXUtils.setValidateWhileTextChanged(txtProxyPort, true);
-                                txtProxyHost.getValidators().setAll(new NumberValidator(i18n("input.number"), false));
-                                gridPane.getChildren().add(txtProxyPort);
-                            }
-                            proxyPane.getChildren().add(gridPane);
-                        }
-
-                        {
-                            VBox vBox = new VBox();
-                            vBox.setStyle("-fx-padding: 20 0 20 5;");
-
-                            chkProxyAuthentication = new JFXCheckBox(i18n("settings.launcher.proxy.authentication"));
-                            vBox.getChildren().setAll(chkProxyAuthentication);
-
-                            proxyPane.getChildren().add(vBox);
-                        }
-
-                        {
-                            authPane = new GridPane();
-                            authPane.setHgap(20);
-                            authPane.setVgap(10);
-                            authPane.setStyle("-fx-padding: 0 0 0 15;");
-                            authPane.getColumnConstraints().setAll(new ColumnConstraints(), colHgrow);
-                            authPane.getRowConstraints().setAll(new RowConstraints(), new RowConstraints());
-
-                            {
-                                Label username = new Label(i18n("settings.launcher.proxy.username"));
-                                GridPane.setRowIndex(username, 0);
-                                GridPane.setColumnIndex(username, 0);
-                                authPane.getChildren().add(username);
-                            }
-
-                            {
-                                txtProxyUsername = new JFXTextField();
-                                GridPane.setRowIndex(txtProxyUsername, 0);
-                                GridPane.setColumnIndex(txtProxyUsername, 1);
-                                authPane.getChildren().add(txtProxyUsername);
-                            }
-
-                            {
-                                Label password = new Label(i18n("settings.launcher.proxy.password"));
-                                GridPane.setRowIndex(password, 1);
-                                GridPane.setColumnIndex(password, 0);
-                                authPane.getChildren().add(password);
-                            }
-
-                            {
-                                txtProxyPassword = new JFXPasswordField();
-                                GridPane.setRowIndex(txtProxyPassword, 1);
-                                GridPane.setColumnIndex(txtProxyPassword, 1);
-                                authPane.getChildren().add(txtProxyPassword);
-                            }
-
-                            proxyPane.getChildren().add(authPane);
-                        }
-                        proxyWrapper.getChildren().add(proxyPane);
-                    }
-                    proxyList.getContent().add(proxyWrapper);
-                    settingsPane.getContent().add(proxyList);
-                }
-
-                {
-                    BorderPane themePane = new BorderPane();
-
-                    Label left = new Label(i18n("settings.launcher.theme"));
+                    Label left = new Label(i18n("settings.launcher.debug"));
                     BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                    themePane.setLeft(left);
+                    debugPane.setLeft(left);
 
-                    themeColorPickerContainer = new StackPane();
-                    themeColorPickerContainer.setMinHeight(30);
-                    themePane.setRight(themeColorPickerContainer);
+                    JFXButton logButton = new JFXButton(i18n("settings.launcher.launcher_log.export"));
+                    logButton.setOnMouseClicked(e -> onExportLogs());
+                    logButton.getStyleClass().add("jfx-button-border");
+                    debugPane.setRight(logButton);
 
-                    settingsPane.getContent().add(themePane);
+                    settingsPane.getContent().add(debugPane);
                 }
 
-                {
-                    ComponentSublist logPane = new ComponentSublist();
-                    logPane.setTitle(i18n("settings.launcher.log"));
-
-                    {
-                        JFXButton logButton = new JFXButton(i18n("settings.launcher.launcher_log.export"));
-                        logButton.setOnMouseClicked(e -> onExportLogs());
-                        logButton.getStyleClass().add("jfx-button-border");
-
-                        logPane.setHeaderRight(logButton);
-                    }
-
-                    {
-                        VBox fontPane = new VBox();
-                        fontPane.setSpacing(5);
-
-                        {
-                            BorderPane borderPane = new BorderPane();
-                            fontPane.getChildren().add(borderPane);
-                            {
-                                Label left = new Label(i18n("settings.launcher.log.font"));
-                                BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                                borderPane.setLeft(left);
-                            }
-
-                            {
-                                HBox hBox = new HBox();
-                                hBox.setSpacing(3);
-
-                                cboLogFont = new FontComboBox(12);
-                                txtLogFontSize = new JFXTextField();
-                                FXUtils.setLimitWidth(txtLogFontSize, 50);
-                                hBox.getChildren().setAll(cboLogFont, txtLogFontSize);
-
-                                borderPane.setRight(hBox);
-                            }
-                        }
-
-                        lblLogFontDisplay = new Label("[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower.");
-                        fontPane.getChildren().add(lblLogFontDisplay);
-
-                        logPane.getContent().add(fontPane);
-                    }
-                    settingsPane.getContent().add(logPane);
-                }
-
-                {
-                    ComponentSublist fontPane = new ComponentSublist();
-                    fontPane.setTitle(i18n("settings.launcher.font"));
-
-                    {
-                        VBox vbox = new VBox();
-                        vbox.setSpacing(5);
-
-                        {
-                            BorderPane borderPane = new BorderPane();
-                            vbox.getChildren().add(borderPane);
-                            {
-                                Label left = new Label(i18n("settings.launcher.font"));
-                                BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                                borderPane.setLeft(left);
-                            }
-
-                            {
-                                HBox hBox = new HBox();
-                                hBox.setSpacing(3);
-
-                                cboFont = new FontComboBox(12);
-                                txtFontSize = new JFXTextField();
-                                FXUtils.setLimitWidth(txtFontSize, 50);
-                                hBox.getChildren().setAll(cboFont, txtFontSize);
-
-                                borderPane.setRight(hBox);
-                            }
-                        }
-
-                        lblFontDisplay = new Label("Hello Minecraft! Launcher");
-                        vbox.getChildren().add(lblFontDisplay);
-
-                        fontPane.getContent().add(vbox);
-                    }
-                    settingsPane.getContent().add(fontPane);
-                }
                 rootPane.getChildren().add(settingsPane);
             }
             scroll.setContent(rootPane);
