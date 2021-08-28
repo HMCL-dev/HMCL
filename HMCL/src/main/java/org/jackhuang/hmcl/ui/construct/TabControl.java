@@ -259,6 +259,10 @@ public interface TabControl {
             this.userData.set(userData);
         }
 
+        public boolean isInitialized() {
+            return getNode() == null;
+        }
+
         public boolean initializeIfNeeded() {
             if (getNode() == null) {
                 if (getNodeSupplier() == null) {

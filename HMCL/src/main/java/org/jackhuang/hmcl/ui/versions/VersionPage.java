@@ -107,15 +107,15 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
         setVersion(version, profile);
         preferredVersionName = version;
 
-        if (versionSettingsTab.getNode() != null)
+        if (versionSettingsTab.isInitialized())
             versionSettingsTab.getNode().loadVersion(profile, version);
-        if (modListTab.getNode() != null)
+        if (modListTab.isInitialized())
             modListTab.getNode().loadVersion(profile, version);
-        if (curseModListTab.getNode() != null)
+        if (curseModListTab.isInitialized())
             curseModListTab.getNode().loadVersion(profile, version);
-        if (installerListTab.getNode() != null)
+        if (installerListTab.isInitialized())
             installerListTab.getNode().loadVersion(profile, version);
-        if (worldListTab.getNode() != null)
+        if (worldListTab.isInitialized())
             worldListTab.getNode().loadVersion(profile, version);
         currentVersionUpgradable.set(profile.getRepository().isModpack(version));
     }
@@ -251,7 +251,7 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
 
                 AdvancedListItem modListItem = new AdvancedListItem();
                 modListItem.getStyleClass().add("navigation-drawer-item");
-                modListItem.setTitle(i18n("mods"));
+                modListItem.setTitle(i18n("mods.manage"));
                 modListItem.setLeftGraphic(wrap(SVG.puzzle(null, 20, 20)));
                 modListItem.setActionButtonVisible(false);
                 modListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.modListTab));
@@ -380,7 +380,7 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
         return stackPane;
     }
 
-    interface VersionLoadable {
+    public interface VersionLoadable {
         void loadVersion(Profile profile, String version);
     }
 }

@@ -167,6 +167,14 @@ public class RootPage extends DecoratorTabPage {
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
 
+            // forth item in left sidebar
+            AdvancedListItem downloadItem = new AdvancedListItem();
+            downloadItem
+                    .setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/chest.png")).getKey());
+            downloadItem.setActionButtonVisible(false);
+            downloadItem.setTitle(i18n("download"));
+            downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
+
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
             launcherSettingsItem
@@ -182,6 +190,7 @@ public class RootPage extends DecoratorTabPage {
                     .startCategory(i18n("version").toUpperCase())
                     .add(gameListItem)
                     .add(gameItem)
+                    .add(downloadItem)
                     .add(launcherSettingsItem);
 
             // the root page, with the sidebar in left, navigator in center.

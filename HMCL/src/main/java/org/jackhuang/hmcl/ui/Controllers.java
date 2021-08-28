@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
+import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
@@ -93,6 +94,7 @@ public final class Controllers {
             }
         };
     });
+    private static Lazy<DownloadPage> downloadPage = new Lazy<>(DownloadPage::new);
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
         accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
@@ -147,6 +149,11 @@ public final class Controllers {
     // FXThread
     public static AccountListPage getAccountListPage() {
         return accountListPage.get();
+    }
+
+    // FXThread
+    public static DownloadPage getDownloadPage() {
+        return downloadPage.get();
     }
 
     // FXThread
