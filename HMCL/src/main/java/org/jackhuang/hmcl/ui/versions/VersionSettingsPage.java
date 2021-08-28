@@ -36,6 +36,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
+import org.jackhuang.hmcl.game.ProcessPriority;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -94,6 +95,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final MultiFileItem<JavaVersion> javaItem;
     private final MultiFileItem<GameDirectoryType> gameDirItem;
     private final MultiFileItem<NativesDirectoryType> nativesDirItem;
+    private final JFXComboBox<ProcessPriority> cboProcessPriority;
     private final JFXToggleButton chkShowLogs;
     private final ImagePickerItem iconPickerItem;
     private final JFXCheckBox chkEnableSpecificSettings;
@@ -252,6 +254,18 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         advancedSettingsPane = new ComponentList();
         advancedSettingsPane.setDepth(1);
         {
+            BorderPane processPriorityPane = new BorderPane();
+            {
+                Label label = new Label(i18n("settings.advanced.process_priority"));
+                processPriorityPane.setLeft(label);
+                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+
+                cboProcessPriority = new JFXComboBox<>();
+                processPriorityPane.setRight(cboProcessPriority);
+                BorderPane.setAlignment(cboProcessPriority, Pos.CENTER_RIGHT);
+                FXUtils.setLimitWidth(cboProcessPriority, 300);
+            }
+
             txtJVMArgs = new JFXTextField();
             txtJVMArgs.setLabelFloat(true);
             txtJVMArgs.setPromptText(i18n("settings.advanced.jvm_args"));
@@ -333,7 +347,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 FXUtils.setLimitHeight(chkNoJVMCheck, 20);
             }
 
-            advancedSettingsPane.getContent().setAll(txtJVMArgs, txtGameArgs, txtMetaspace, txtWrapper, txtPrecallingCommand, txtServerIP, nativesDirItem, noJVMArgsPane, noGameCheckPane, noJVMCheckPane);
+            advancedSettingsPane.getContent().setAll(processPriorityPane, txtJVMArgs, txtGameArgs, txtMetaspace, txtWrapper, txtPrecallingCommand, txtServerIP, nativesDirItem, noJVMArgsPane, noGameCheckPane, noJVMCheckPane);
         }
 
         rootPane.getChildren().setAll(iconPickerItemWrapper, settingsTypePane, componentList, advancedHintPane, advancedSettingsPane);
@@ -348,6 +362,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         cboLauncherVisibility.getItems().setAll(LauncherVisibility.values());
         cboLauncherVisibility.setConverter(stringConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase())));
+
+        cboProcessPriority.getItems().setAll(ProcessPriority.values());
+        cboProcessPriority.setConverter(stringConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase())));
     }
 
     private void initialize() {
@@ -433,6 +450,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbindBoolean(chkNoJVMArgs, lastVersionSetting.noJVMArgsProperty());
             FXUtils.unbindBoolean(chkShowLogs, lastVersionSetting.showLogsProperty());
             FXUtils.unbindEnum(cboLauncherVisibility);
+            FXUtils.unbindEnum(cboProcessPriority);
 
             lastVersionSetting.usesGlobalProperty().removeListener(specificSettingsListener);
             lastVersionSetting.javaDirProperty().removeListener(javaListener);
@@ -467,6 +485,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         FXUtils.bindBoolean(chkNoJVMArgs, versionSetting.noJVMArgsProperty());
         FXUtils.bindBoolean(chkShowLogs, versionSetting.showLogsProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
+        FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
 
         versionSetting.usesGlobalProperty().addListener(specificSettingsListener);
         if (versionId != null)

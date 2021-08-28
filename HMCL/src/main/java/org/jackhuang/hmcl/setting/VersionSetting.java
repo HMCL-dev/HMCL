@@ -23,6 +23,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
+import org.jackhuang.hmcl.game.ProcessPriority;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
@@ -475,6 +476,20 @@ public final class VersionSetting implements Cloneable {
         gameDirProperty.set(gameDir);
     }
 
+    private final ObjectProperty<ProcessPriority> processPriorityProperty = new SimpleObjectProperty<>(this, "processPriority", ProcessPriority.NORMAL);
+
+    public ObjectProperty<ProcessPriority> processPriorityProperty() {
+        return processPriorityProperty;
+    }
+
+    public ProcessPriority getProcessPriority() {
+        return processPriorityProperty.get();
+    }
+
+    public void setProcessPriority(ProcessPriority processPriority) {
+        processPriorityProperty.set(processPriority);
+    }
+
     // launcher settings
 
     /**
@@ -556,6 +571,7 @@ public final class VersionSetting implements Cloneable {
         heightProperty.addListener(listener);
         gameDirTypeProperty.addListener(listener);
         gameDirProperty.addListener(listener);
+        processPriorityProperty.addListener(listener);
         launcherVisibilityProperty.addListener(listener);
         defaultJavaPathProperty.addListener(listener);
         nativesDirProperty.addListener(listener);
@@ -586,6 +602,7 @@ public final class VersionSetting implements Cloneable {
         versionSetting.setHeight(getHeight());
         versionSetting.setGameDirType(getGameDirType());
         versionSetting.setGameDir(getGameDir());
+        versionSetting.setProcessPriority(getProcessPriority());
         versionSetting.setLauncherVisibility(getLauncherVisibility());
         versionSetting.setNativesDir(getNativesDir());
         return versionSetting;
@@ -617,6 +634,7 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("showLogs", src.isShowLogs());
             obj.addProperty("gameDir", src.getGameDir());
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
+            obj.addProperty("processPriority", src.getProcessPriority().ordinal());
             obj.addProperty("gameDirType", src.getGameDirType().ordinal());
             obj.addProperty("defaultJavaPath", src.getDefaultJavaPath());
             obj.addProperty("nativesDir", src.getNativesDir());
@@ -656,8 +674,9 @@ public final class VersionSetting implements Cloneable {
             vs.setNotCheckGame(Optional.ofNullable(obj.get("notCheckGame")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotCheckJVM(Optional.ofNullable(obj.get("notCheckJVM")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
-            vs.setLauncherVisibility(LauncherVisibility.values()[Optional.ofNullable(obj.get("launcherVisibility")).map(JsonElement::getAsInt).orElse(1)]);
-            vs.setGameDirType(GameDirectoryType.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(0)]);
+            vs.setLauncherVisibility(LauncherVisibility.values()[Optional.ofNullable(obj.get("launcherVisibility")).map(JsonElement::getAsInt).orElse(LauncherVisibility.HIDE.ordinal())]);
+            vs.setProcessPriority(ProcessPriority.values()[Optional.ofNullable(obj.get("processPriority")).map(JsonElement::getAsInt).orElse(ProcessPriority.NORMAL.ordinal())]);
+            vs.setGameDirType(GameDirectoryType.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(GameDirectoryType.ROOT_FOLDER.ordinal())]);
             vs.setDefaultJavaPath(Optional.ofNullable(obj.get("defaultJavaPath")).map(JsonElement::getAsString).orElse(null));
             vs.setNativesDirType(NativesDirectoryType.values()[Optional.ofNullable(obj.get("nativesDirType")).map(JsonElement::getAsInt).orElse(0)]);
 
