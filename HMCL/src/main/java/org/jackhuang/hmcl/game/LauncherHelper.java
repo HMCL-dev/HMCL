@@ -55,7 +55,6 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.*;
@@ -603,7 +602,7 @@ public final class LauncherHelper {
                 forbiddenTokens = Collections.emptyMap();
             else
                 forbiddenTokens = mapOf(
-                        pair(authInfo.getAccessToken(), "<access token>"),
+                        pair(authInfo.getAccessToken(), "<access token>")
                 );
 
             logs = new LinkedList<>();
