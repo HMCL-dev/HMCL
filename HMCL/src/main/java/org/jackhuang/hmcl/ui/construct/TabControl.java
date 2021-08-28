@@ -260,7 +260,7 @@ public interface TabControl {
         }
 
         public boolean isInitialized() {
-            return getNode() == null;
+            return getNode() != null;
         }
 
         public boolean initializeIfNeeded() {
