@@ -19,6 +19,7 @@
     -fx-base-color: %base-color%;
     -fx-base-darker-color: derive(-fx-base-color, -10%);
     -fx-base-check-color: derive(-fx-base-color, 30%);
+    -fx-rippler-color: %base-rippler-color%;
     -fx-base-rippler-color: derive(%base-rippler-color%, 100%);
     -fx-base-disabled-text-fill: %disabled-font-color%;
     -fx-base-text-fill: %font-color%;

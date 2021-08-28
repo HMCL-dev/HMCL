@@ -23,7 +23,7 @@
 }
 
 .scroll-bar .thumb {
-    -fx-fill: rgba(255, 255, 255, 0.5);
+    -fx-fill: -fx-rippler-color;
     -fx-arc-width: 0;
     -fx-arc-height: 0;
 }
@@ -671,6 +671,10 @@
 *                                                                              *
 *******************************************************************************/
 
+.list-cell {
+    -fx-padding: 0;
+}
+
 .jfx-list-cell, .list-cell {
     /*-fx-background-color: WHITE;*/
     -fx-background-color: transparent;
@@ -753,6 +757,14 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
+.card-non-transparent {
+    -fx-background-color: white;
+    -fx-background-radius: 4;
+    -fx-padding: 8px;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+}
+
 .card:selected {
     -fx-background-color: derive(-fx-base-color, 60%);
 }
@@ -760,6 +772,11 @@
 .card-list {
     -fx-padding: 10;
     -fx-spacing: 10;
+}
+
+.md-list-cell {
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 0 1 0;
 }
 
 .options-sublist {
@@ -772,6 +789,10 @@
     -fx-border-width: 1 0 0 0;
     -fx-padding: 10 16 10 16;
     -fx-font-size: 12;
+}
+
+.no-padding .options-list-item {
+    -fx-padding: 0;
 }
 
 .options-list-item:first {
@@ -1180,7 +1201,7 @@
     -fx-background-insets: 0.0;
 }
 
-.scroll-bar:vertical > .thumb, .scroll-bar:horizontal > .thumb {
+.scroll-bar:vertical .thumb, .scroll-bar:horizontal .thumb {
     -fx-background-color: #BCBCBC;
     -fx-background-insets: 0.0;
     -fx-background-radius: 1.0;
