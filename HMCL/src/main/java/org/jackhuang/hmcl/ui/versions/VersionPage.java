@@ -222,8 +222,6 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
 
     public static class Skin extends SkinBase<VersionPage> {
 
-        private JFXPopup listViewItemPopup;
-
         /**
          * Constructor for all SkinBase instances.
          *
@@ -231,34 +229,6 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
          */
         protected Skin(VersionPage control) {
             super(control);
-
-            PopupMenu menu = new PopupMenu();
-            listViewItemPopup = new JFXPopup(menu);
-            menu.getContent().setAll(
-                    new IconedMenuItem(FXUtils.limitingSize(SVG.launch(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch.test"), FXUtils.withJFXPopupClosing(() -> {
-                        Versions.testGame(getSkinnable().getProfile(), getSkinnable().getVersion());
-                    }, listViewItemPopup)),
-                    new IconedMenuItem(FXUtils.limitingSize(SVG.script(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch_script"), FXUtils.withJFXPopupClosing(() -> {
-                        Versions.generateLaunchScript(getSkinnable().getProfile(), getSkinnable().getVersion());
-                    }, listViewItemPopup)),
-                    new MenuSeparator(),
-                    new IconedMenuItem(FXUtils.limitingSize(SVG.pencil(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(() -> {
-                        Versions.renameVersion(getSkinnable().getProfile(), getSkinnable().getVersion()).thenApply(name -> getSkinnable().preferredVersionName = name);
-                    }, listViewItemPopup)),
-                    new IconedMenuItem(FXUtils.limitingSize(SVG.copy(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.duplicate"), FXUtils.withJFXPopupClosing(() -> {
-                        Versions.duplicateVersion(getSkinnable().getProfile(), getSkinnable().getVersion());
-                    }, listViewItemPopup)),
-                    new IconedMenuItem(FXUtils.limitingSize(SVG.delete(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.remove"), FXUtils.withJFXPopupClosing(() -> {
-                        Versions.deleteVersion(getSkinnable().getProfile(), getSkinnable().getVersion());
-                    }, listViewItemPopup)),
-                    new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("modpack.export"), FXUtils.withJFXPopupClosing(() -> {
-                        Versions.exportVersion(getSkinnable().getProfile(), getSkinnable().getVersion());
-                    }, listViewItemPopup)),
-                    new MenuSeparator(),
-                    new IconedMenuItem(FXUtils.limitingSize(SVG.folderOpen(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.game"), FXUtils.withJFXPopupClosing(() -> {
-                        Versions.openFolder(getSkinnable().getProfile(), getSkinnable().getVersion());
-                    }, listViewItemPopup))
-            );
 
             SpinnerPane spinnerPane = new SpinnerPane();
             spinnerPane.getStyleClass().add("large-spinner-pane");
@@ -334,7 +304,7 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
                 PopupMenu managementList = new PopupMenu();
                 JFXPopup managementPopup = new JFXPopup(managementList);
                 managementList.getContent().setAll(
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.launchOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch.test"), FXUtils.withJFXPopupClosing(control::testGame, managementPopup)),
+                        new IconedMenuItem(FXUtils.limitingSize(SVG.rocketLaunchOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch.test"), FXUtils.withJFXPopupClosing(control::testGame, managementPopup)),
                         new IconedMenuItem(FXUtils.limitingSize(SVG.script(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch_script"), FXUtils.withJFXPopupClosing(control::generateLaunchScript, managementPopup)),
                         new MenuSeparator(),
                         new IconedMenuItem(FXUtils.limitingSize(SVG.pencil(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(control::rename, managementPopup)),
@@ -358,7 +328,7 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
                 AdvancedListItem testGameItem = new AdvancedListItem();
                 testGameItem.getStyleClass().add("navigation-drawer-item");
                 testGameItem.setTitle(i18n("version.launch.test"));
-                testGameItem.setLeftGraphic(wrap(SVG.launchOutline(Theme.blackFillBinding(), 20, 20)));
+                testGameItem.setLeftGraphic(wrap(SVG.rocketLaunchOutline(Theme.blackFillBinding(), 20, 20)));
                 testGameItem.setActionButtonVisible(false);
                 testGameItem.setOnAction(e -> control.testGame());
 
