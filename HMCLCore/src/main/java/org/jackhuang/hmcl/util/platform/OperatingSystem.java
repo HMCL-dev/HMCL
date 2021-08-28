@@ -135,15 +135,6 @@ public enum OperatingSystem {
             com.sun.management.OperatingSystemMXBean sunBean =
                     (com.sun.management.OperatingSystemMXBean)
                             java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-
-            if (CURRENT_OS == LINUX) {
-                // On Linux, real amount of memory that is free for using is "available" size of memory,
-                // which also includes size of memory for caching that can be make use of.
-                // But available size of memory cannot be obtained by OperatingSystemMXBean interface.
-                // So we simply disable reporting free physical memory size on Linux.
-                return Optional.of(new PhysicalMemoryStatus(sunBean.getTotalPhysicalMemorySize(), -1));
-            }
-
             return Optional.of(new PhysicalMemoryStatus(sunBean.getTotalPhysicalMemorySize(), sunBean.getFreePhysicalMemorySize()));
         }
         return Optional.empty();
