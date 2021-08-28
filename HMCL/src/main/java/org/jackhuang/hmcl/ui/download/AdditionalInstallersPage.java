@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.download;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.GameRepository;
@@ -41,7 +42,7 @@ class AdditionalInstallersPage extends InstallersPage {
     protected final String gameVersion;
     protected final Version version;
 
-    public AdditionalInstallersPage(String gameVersion, Version version, WizardController controller, HMCLGameRepository repository, InstallerWizardDownloadProvider downloadProvider) {
+    public AdditionalInstallersPage(String gameVersion, Version version, WizardController controller, HMCLGameRepository repository, DownloadProvider downloadProvider) {
         super(controller, repository, gameVersion, downloadProvider);
         this.gameVersion = gameVersion;
         this.version = version;

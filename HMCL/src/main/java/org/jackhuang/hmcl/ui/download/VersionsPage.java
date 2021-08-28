@@ -18,20 +18,18 @@
 package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.JFXCheckBox;
-import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXSpinner;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
+import javafx.scene.control.ListCell;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
@@ -39,13 +37,13 @@ import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
-import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.FloatListCell;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
@@ -55,7 +53,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -84,14 +81,14 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     @FXML
     private HBox checkPane;
     @FXML
-    private VBox centrePane;
+    private ComponentList centrePane;
     @FXML
-    private JFXComboBox<String> downloadSourceComboBox;
+    private StackPane center;
 
     private VersionList<?> versionList;
     private TaskExecutor executor;
 
-    public VersionsPage(WizardController controller, String title, String gameVersion, InstallerWizardDownloadProvider downloadProvider, String libraryId, Runnable callback) {
+    public VersionsPage(WizardController controller, String title, String gameVersion, DownloadProvider downloadProvider, String libraryId, Runnable callback) {
         this.title = title;
         this.gameVersion = gameVersion;
         this.libraryId = libraryId;
@@ -99,42 +96,38 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
         FXUtils.loadFXML(this, "/assets/fxml/download/versions.fxml");
 
-        downloadSourceComboBox.getItems().setAll(DownloadProviders.providersById.keySet());
-        downloadSourceComboBox.setConverter(stringConverter(key -> i18n("download.provider." + key)));
-        downloadSourceComboBox.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
-            controller.getSettings().put("downloadProvider", newValue);
-            downloadProvider.setDownloadProvider(DownloadProviders.getDownloadProviderByPrimaryId(newValue));
-            versionList = downloadProvider.getVersionListById(libraryId);
-            if (versionList.hasType()) {
-                centrePane.getChildren().setAll(checkPane, list);
-            } else {
-                centrePane.getChildren().setAll(list);
-            }
-            refresh();
-        });
-        downloadSourceComboBox.getSelectionModel().select((String)controller.getSettings().getOrDefault("downloadProvider", DownloadProviders.getPrimaryDownloadProviderId()));
+        versionList = downloadProvider.getVersionListById(libraryId);
+        if (versionList.hasType()) {
+            centrePane.getContent().setAll(checkPane, list);
+        } else {
+            centrePane.getContent().setAll(list);
+        }
 
         InvalidationListener listener = o -> list.getItems().setAll(loadVersions());
         chkRelease.selectedProperty().addListener(listener);
         chkSnapshot.selectedProperty().addListener(listener);
         chkOld.selectedProperty().addListener(listener);
 
-        list.setCellFactory(listView -> new FloatListCell<RemoteVersion>(list) {
-            ImageView imageView = new ImageView();
-            TwoLineListItem content = new TwoLineListItem();
+        list.setCellFactory(listView -> new ListCell<RemoteVersion>() {
+            IconedTwoLineListItem content = new IconedTwoLineListItem();
+            RipplerContainer ripplerContainer = new RipplerContainer(content);
+            StackPane pane = new StackPane();
 
             {
-                HBox container = new HBox(12);
-                container.setPadding(new Insets(0, 0, 0, 6));
-                container.setAlignment(Pos.CENTER_LEFT);
-                pane.getChildren().add(container);
-
-                container.getChildren().setAll(imageView, content);
+                pane.getStyleClass().add("md-list-cell");
+                StackPane.setMargin(content, new Insets(10, 16, 10, 16));
+                pane.getChildren().setAll(ripplerContainer);
             }
 
             @Override
-            protected void updateControl(RemoteVersion remoteVersion, boolean empty) {
-                if (empty) return;
+            public void updateItem(RemoteVersion remoteVersion, boolean empty) {
+                super.updateItem(remoteVersion, empty);
+                if (empty) {
+                    setGraphic(null);
+                    return;
+                }
+                setGraphic(pane);
+
                 content.setTitle(remoteVersion.getSelfVersion());
                 content.setSubtitle(remoteVersion.getGameVersion());
 
@@ -142,28 +135,28 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     switch (remoteVersion.getVersionType()) {
                         case RELEASE:
                             content.setSubtitle(i18n("version.game.release"));
-                            imageView.setImage(new Image("/assets/img/grass.png", 32, 32, false, true));
+                            content.setImage(new Image("/assets/img/grass.png", 32, 32, false, true));
                             break;
                         case SNAPSHOT:
                             content.setSubtitle(i18n("version.game.snapshot"));
-                            imageView.setImage(new Image("/assets/img/command.png", 32, 32, false, true));
+                            content.setImage(new Image("/assets/img/command.png", 32, 32, false, true));
                             break;
                         default:
                             content.setSubtitle(i18n("version.game.old"));
-                            imageView.setImage(new Image("/assets/img/craft_table.png", 32, 32, false, true));
+                            content.setImage(new Image("/assets/img/craft_table.png", 32, 32, false, true));
                             break;
                     }
                 } else if (remoteVersion instanceof LiteLoaderRemoteVersion) {
-                    imageView.setImage(new Image("/assets/img/chicken.png", 32, 32, false, true));
+                    content.setImage(new Image("/assets/img/chicken.png", 32, 32, false, true));
                     content.setSubtitle(remoteVersion.getGameVersion());
                 } else if (remoteVersion instanceof OptiFineRemoteVersion) {
-                    imageView.setImage(new Image("/assets/img/command.png", 32, 32, false, true));
+                    content.setImage(new Image("/assets/img/command.png", 32, 32, false, true));
                     content.setSubtitle(remoteVersion.getGameVersion());
                 } else if (remoteVersion instanceof ForgeRemoteVersion) {
-                    imageView.setImage(new Image("/assets/img/forge.png", 32, 32, false, true));
+                    content.setImage(new Image("/assets/img/forge.png", 32, 32, false, true));
                     content.setSubtitle(remoteVersion.getGameVersion());
                 } else if (remoteVersion instanceof FabricRemoteVersion) {
-                    imageView.setImage(new Image("/assets/img/fabric.png", 32, 32, false, true));
+                    content.setImage(new Image("/assets/img/fabric.png", 32, 32, false, true));
                     content.setSubtitle(remoteVersion.getGameVersion());
                 }
             }
@@ -175,6 +168,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             controller.getSettings().put(libraryId, list.getSelectionModel().getSelectedItem());
             callback.run();
         });
+
         refresh();
     }
 
@@ -215,7 +209,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         } else {
                             list.getItems().setAll(items);
                         }
-                        root.setContent(centrePane, ContainerAnimations.FADE.getAnimationProducer());
+                        root.setContent(center, ContainerAnimations.FADE.getAnimationProducer());
                     }
                 });
             } else {

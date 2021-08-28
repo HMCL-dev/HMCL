@@ -96,6 +96,11 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
                         item.setLeftGraphic(wrap(SVG.textureBox(null, 20, 20)));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(resourcePackTab));
                         item.setOnAction(e -> tab.getSelectionModel().select(resourcePackTab));
+                    })
+                    .addNavigationDrawerItem(item -> {
+                        item.setTitle(i18n("install.new_game"));
+                        item.setLeftGraphic(wrap(SVG.gamepad(null, 20, 20)));
+                        item.setOnAction(e -> Versions.addNewGame());
                     });
             FXUtils.setLimitWidth(sideBar, 200);
             setLeft(sideBar);

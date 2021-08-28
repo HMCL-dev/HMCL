@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.setting.DownloadProviders;
@@ -35,11 +36,11 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class VanillaInstallWizardProvider implements WizardProvider {
     private final Profile profile;
     private final DefaultDependencyManager dependencyManager;
-    private final InstallerWizardDownloadProvider downloadProvider;
+    private final DownloadProvider downloadProvider;
 
     public VanillaInstallWizardProvider(Profile profile) {
         this.profile = profile;
-        this.downloadProvider = new InstallerWizardDownloadProvider(DownloadProviders.getDownloadProvider());
+        this.downloadProvider = DownloadProviders.getDownloadProvider();
         this.dependencyManager = profile.getDependency(downloadProvider);
     }
 

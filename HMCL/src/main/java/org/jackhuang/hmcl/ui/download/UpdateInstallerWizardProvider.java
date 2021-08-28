@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
-import org.jackhuang.hmcl.download.ArtifactMalformedException;
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.download.VersionMismatchException;
+import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
@@ -57,7 +54,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     private final Version version;
     private final String libraryId;
     private final String oldLibraryVersion;
-    private final InstallerWizardDownloadProvider downloadProvider;
+    private final DownloadProvider downloadProvider;
 
     public UpdateInstallerWizardProvider(@NotNull Profile profile, @NotNull String gameVersion, @NotNull Version version, @NotNull String libraryId, @Nullable String oldLibraryVersion) {
         this.profile = profile;
@@ -65,7 +62,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         this.version = version;
         this.libraryId = libraryId;
         this.oldLibraryVersion = oldLibraryVersion;
-        this.downloadProvider = new InstallerWizardDownloadProvider(DownloadProviders.getDownloadProvider());
+        this.downloadProvider = DownloadProviders.getDownloadProvider();
         this.dependencyManager = profile.getDependency(downloadProvider);
     }
 
