@@ -178,7 +178,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
                 HBox lowerBoundPane = new HBox();
                 lowerBoundPane.setAlignment(Pos.CENTER);
-                VBox.setMargin(lowerBoundPane, new Insets(8, 0, 0, 16));
+                VBox.setMargin(lowerBoundPane, new Insets(0, 0, 0, 16));
                 {
                     Label label = new Label();
                     label.textProperty().bind(Bindings.createStringBinding(() -> {
@@ -213,28 +213,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label("MB"));
                 }
 
-                BorderPane titlePane = new BorderPane();
-                VBox.setMargin(titlePane, new Insets(0, 0, 0, 16));
-                {
-                    Label left = new Label(i18n("settings.memory.used_per_total"));
-                    left.getStyleClass().add("subtitle-label");
-                    titlePane.setLeft(left);
-
-                    Label right = new Label();
-                    right.textProperty().bind(Bindings.createStringBinding(() -> {
-                        if (chkAutoAllocate.isSelected()) {
-                            return i18n("settings.memory.allocate.auto");
-                        } else {
-                            return i18n("settings.memory.allocate.manual");
-                        }
-                    }, chkAutoAllocate.selectedProperty()));
-                    right.getStyleClass().add("subtitle-label");
-                    titlePane.setRight(right);
-                }
-
                 StackPane progressBarPane = new StackPane();
                 progressBarPane.setAlignment(Pos.CENTER_LEFT);
-                VBox.setMargin(progressBarPane, new Insets(0, 0, 0, 16));
+                VBox.setMargin(progressBarPane, new Insets(8, 0, 0, 16));
                 {
                     progressBarPane.setMinHeight(4);
                     progressBarPane.getStyleClass().add("memory-total");
@@ -264,15 +245,15 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     lblPhysicalMemory.getStyleClass().add("memory-label");
                     digitalPane.setLeft(lblPhysicalMemory);
                     lblPhysicalMemory.textProperty().bind(Bindings.createStringBinding(() -> {
-                        return i18n("settings.memory.used_per_total.format", memoryStatusProperty.get().getUsedGB(), memoryStatusProperty.get().getTotalGB());
+                        return i18n("settings.memory.used_per_total", memoryStatusProperty.get().getUsedGB(), memoryStatusProperty.get().getTotalGB());
                     }, memoryStatusProperty));
 
                     Label lblAllocateMemory = new Label();
                     lblAllocateMemory.textProperty().bind(Bindings.createStringBinding(() -> {
                         long maxMemory = Lang.parseInt(maxMemoryProperty.get(), 0) * 1024L * 1024L;
                         return i18n(memoryStatusProperty.get().hasAvailable() && maxMemory > memoryStatusProperty.get().getAvailable()
-                                        ? (chkAutoAllocate.isSelected() ? "settings.memory.allocate.format.auto.exceeded" : "settings.memory.allocate.format.manual.exceeded")
-                                        : (chkAutoAllocate.isSelected() ? "settings.memory.allocate.format.auto" : "settings.memory.allocate.format.manual"),
+                                        ? (chkAutoAllocate.isSelected() ? "settings.memory.allocate.auto.exceeded" : "settings.memory.allocate.manual.exceeded")
+                                        : (chkAutoAllocate.isSelected() ? "settings.memory.allocate.auto" : "settings.memory.allocate.manual"),
                                 OperatingSystem.PhysicalMemoryStatus.toGigaBytes(maxMemory),
                                 OperatingSystem.PhysicalMemoryStatus.toGigaBytes(HMCLGameRepository.getAllocatedMemory(maxMemory, memoryStatusProperty.get().getAvailable(), chkAutoAllocate.isSelected())),
                                 OperatingSystem.PhysicalMemoryStatus.toGigaBytes(memoryStatusProperty.get().getAvailable()));
@@ -281,7 +262,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     digitalPane.setRight(lblAllocateMemory);
                 }
 
-                maxMemoryPane.getChildren().setAll(title, chkAutoAllocate, lowerBoundPane, titlePane, progressBarPane, digitalPane);
+                maxMemoryPane.getChildren().setAll(title, chkAutoAllocate, lowerBoundPane, progressBarPane, digitalPane);
             }
 
             BorderPane launcherVisibilityPane = new BorderPane();
