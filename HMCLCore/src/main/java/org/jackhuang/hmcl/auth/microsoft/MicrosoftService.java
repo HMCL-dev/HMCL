@@ -239,7 +239,7 @@ public class MicrosoftService {
                         + "PublicGamerpic,ShowUserAsAvatar,Gamerscore,Gamertag,ModernGamertag,ModernGamertagSuffix,"
                         + "UniqueModernGamertag,AccountTier,TenureLevel,XboxOneRep,"
                         + "PreferredColor,Location,Bio,Watermarks," + "RealName,RealNameOverride,IsQuarantined"))
-                .contentType("application/json").accept("application/json")
+                .accept("application/json")
                 .authorization(String.format("XBL3.0 x=%s;%s", uhs, xstsToken)).header("x-xbl-contract-version", "3")
                 .getString();
     }
@@ -247,7 +247,7 @@ public class MicrosoftService {
     private static MinecraftProfileResponse getMinecraftProfile(String tokenType, String accessToken)
             throws IOException, AuthenticationException {
         HttpURLConnection conn = HttpRequest.GET("https://api.minecraftservices.com/minecraft/profile")
-                .contentType("application/json").authorization(String.format("%s %s", tokenType, accessToken))
+                .authorization(String.format("%s %s", tokenType, accessToken))
                 .createConnection();
         int responseCode = conn.getResponseCode();
         if (responseCode == HTTP_NOT_FOUND) {
