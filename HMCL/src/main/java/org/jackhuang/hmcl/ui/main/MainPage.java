@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -84,7 +84,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         ImageView titleIcon = new ImageView();
         titleIcon.setImage(new Image("/assets/img/icon.png", 20, 20, false, false));
 
-        Label titleLabel = new Label(Metadata.TITLE);
+        Label titleLabel = new Label(Metadata.FULL_TITLE);
         titleLabel.getStyleClass().add("jfx-decorator-title");
         titleNode.getChildren().setAll(titleIcon, titleLabel);
 

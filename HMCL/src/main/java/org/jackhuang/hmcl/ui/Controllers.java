@@ -192,7 +192,7 @@ public final class Controllers {
         scene.getStylesheets().setAll(config().getTheme().getStylesheets());
 
         stage.getIcons().add(newImage("/assets/img/icon.png"));
-        stage.setTitle(Metadata.TITLE);
+        stage.setTitle(Metadata.FULL_TITLE);
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.setScene(scene);
     }
