@@ -13,6 +13,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
+import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 @Immutable
 public final class ForgeNewModMetadata {
@@ -120,8 +125,18 @@ public final class ForgeNewModMetadata {
             if (metadata == null || metadata.getMods().isEmpty())
                 throw new IOException("Mod " + modFile + " `mods.toml` is malformed..");
             Mod mod = metadata.getMods().get(0);
+            Path manifestMF = fs.getPath("META-INF/MANIFEST.MF");
+            String jarVersion = "";
+            if (Files.exists(manifestMF)) {
+                try {
+                    Manifest manifest = new Manifest(Files.newInputStream(manifestMF));
+                    jarVersion = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to parse MANIFEST.MF in file " + modFile.getPath());
+                }
+            }
             return new ModInfo(modManager, modFile, mod.getDisplayName(), new ModInfo.Description(mod.getDescription()),
-                    mod.getAuthors(), mod.getVersion(), "",
+                    mod.getAuthors(), mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                     mod.getDisplayURL(),
                     metadata.getLogoFile());
         }
