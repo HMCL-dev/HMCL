@@ -121,8 +121,6 @@ jar {
 shadowJar {
     classifier = null
 
-    minimize()
-
     manifest {
         attributes 'Created-By': 'Copyright(c) 2013-2021 huangyuhui.',
                 'Main-Class': mainClassName,
