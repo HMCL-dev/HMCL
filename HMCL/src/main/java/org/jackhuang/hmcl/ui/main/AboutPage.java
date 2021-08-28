@@ -91,6 +91,11 @@ public class AboutPage extends StackPane {
 
         ComponentList dep = new ComponentList();
         {
+            IconedTwoLineListItem javafx = new IconedTwoLineListItem();
+            javafx.setTitle("JavaFX");
+            javafx.setSubtitle("Copyright (c) 2013, 2021, Oracle and/or its affiliates.\nLicensed under the GPL 2 with Classpath Exception.");
+            javafx.setExternalLink("https://openjfx.io/");
+
             IconedTwoLineListItem jfoenix = new IconedTwoLineListItem();
             jfoenix.setTitle("JFoenix");
             jfoenix.setSubtitle("Copyright (c) 2016 JFoenix.\nLicensed under the MIT License.");
@@ -121,7 +126,7 @@ public class AboutPage extends StackPane {
             openNBT.setSubtitle("Copyright (C) 2013-2021 Steveice10.\nLicensed under the MIT License.");
             openNBT.setExternalLink("https://github.com/Steveice10/OpenNBT");
 
-            dep.getContent().setAll(jfoenix, gson, xz, fxgson, constantPoolScanner, openNBT);
+            dep.getContent().setAll(javafx, jfoenix, gson, xz, fxgson, constantPoolScanner, openNBT);
         }
 
         ComponentList legal = new ComponentList();
