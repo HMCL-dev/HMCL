@@ -130,7 +130,7 @@ public enum OperatingSystem {
     }
 
     public static Optional<PhysicalMemoryStatus> getPhysicalMemoryStatus() {
-        java.lang.management.OperatingSystemMXBean bean =  java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+        java.lang.management.OperatingSystemMXBean bean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
         if (bean instanceof com.sun.management.OperatingSystemMXBean) {
             com.sun.management.OperatingSystemMXBean sunBean =
                     (com.sun.management.OperatingSystemMXBean)
