@@ -7,7 +7,7 @@
 
 
 我们发现，对于不经常检查邮箱的人来说，GitHub Issues 的反馈效率太低，时隔几个小时甚至一天的情况很多。
-为了改善反馈效率，并将积极为 HMCL 提供问题反馈和建议的人聚集起来，我们希望在这里反馈的人可以在 [开黑啦频道](https://kaihei.co/Kx7n3t) 中反馈信息，**而不在 GitHub Issues 中反馈问题**。
+为了改善反馈效率，并将积极为 HMCL 提供问题反馈和建议的人聚集起来，我们希望在这里反馈的人可以在 [Discord频道](https://discord.gg/jVvC7HfM6U)  [开黑啦频道](https://kaihei.co/Kx7n3t) 中反馈信息，**而不在 GitHub Issues 中反馈问题**。
 
 如果你希望在 QQ 群中反馈问题，请[赞助 HMCL](https://afdian.net/@huanghongxun) 后申请加入群聊，也请将下面的信息表填好直接发在群中，加快我们的沟通速度。
 
