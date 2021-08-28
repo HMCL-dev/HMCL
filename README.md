@@ -1,4 +1,6 @@
-# Hello Minecraft! Launcher [![Build Status](https://ci.huangyuhui.net/job/HMCL/badge/icon?.svg)](https://ci.huangyuhui.net/job/HMCL) [![Discord Shield](https://discordapp.com/api/guilds/879708313435123742/widget.png?style=shield)](https://discord.gg/jVvC7HfM6U)
+# Hello Minecraft! Launcher [![Build Status](https://ci.huangyuhui.net/job/HMCL/badge/icon?.svg)](https://ci.huangyuhui.net/job/HMCL)
+
+Join chat! [KaiHeiLa](https://kaihei.co/Kx7n3t)
 
 ## Introduction
 
