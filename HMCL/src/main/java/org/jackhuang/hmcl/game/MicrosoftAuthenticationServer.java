@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -34,6 +35,7 @@ import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.thread;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class MicrosoftAuthenticationServer extends NanoHTTPD implements MicrosoftService.OAuthSession {
     private final int port;
@@ -69,7 +71,8 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
 
         String html;
         try {
-            html = IOUtils.readFullyAsString(MicrosoftAuthenticationServer.class.getResourceAsStream("/assets/microsoft_auth.html"));
+            html = IOUtils.readFullyAsString(MicrosoftAuthenticationServer.class.getResourceAsStream("/assets/microsoft_auth.html"), StandardCharsets.UTF_8)
+            .replace("%close-page%", i18n("account.methods.microsoft.close_page"));
         } catch (IOException e) {
             Logging.LOG.log(Level.SEVERE, "Failed to load html");
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_HTML, "");
@@ -82,7 +85,7 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
                 Logging.LOG.log(Level.SEVERE, "Failed to sleep for 1 second");
             }
         });
-        return newFixedLengthResponse(html);
+        return newFixedLengthResponse(Response.Status.OK, "text/html; charset=UTF-8", html);
     }
 
     public static class Factory implements MicrosoftService.OAuthCallback {

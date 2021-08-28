@@ -57,10 +57,6 @@ public abstract class HttpRequest {
         return header("Authorization", token);
     }
 
-    public HttpRequest contentType(String contentType) {
-        return header("Content-Type", contentType);
-    }
-
     public HttpRequest header(String key, String value) {
         headers.put(key, value);
         return this;
@@ -107,6 +103,11 @@ public abstract class HttpRequest {
 
         public HttpPostRequest(URL url) {
             super(url, "POST");
+        }
+
+        public HttpPostRequest contentType(String contentType) {
+            headers.put("Content-Type", contentType);
+            return this;
         }
 
         public HttpPostRequest json(Object payload) throws JsonParseException {
