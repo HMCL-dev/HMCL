@@ -30,10 +30,12 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.java.JavaRepository;
 import org.jackhuang.hmcl.mod.curse.CurseModManager;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.account.AuthlibInjectorServersPage;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.InputDialogPane;
@@ -91,6 +93,12 @@ public final class Controllers {
             }
         };
     });
+    private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
+        AccountListPage accountListPage = new AccountListPage();
+        accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
+        accountListPage.accountsProperty().bindContent(Accounts.accountsProperty());
+        return accountListPage;
+    });
     private static Lazy<LauncherSettingsPage> settingsPage = new Lazy<>(LauncherSettingsPage::new);
 
     private Controllers() {
@@ -134,6 +142,11 @@ public final class Controllers {
     // FXThread
     public static LauncherSettingsPage getSettingsPage() {
         return settingsPage.get();
+    }
+
+    // FXThread
+    public static AccountListPage getAccountListPage() {
+        return accountListPage.get();
     }
 
     // FXThread
