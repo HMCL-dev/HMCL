@@ -78,6 +78,8 @@ public class AccountAdvancedListItem extends AdvancedListItem {
         setLeftGraphic(view.getKey());
         imageView = view.getValue();
 
+        setActionButtonVisible(false);
+
         setOnScroll(event -> {
             Account current = account.get();
             if (current == null) return;

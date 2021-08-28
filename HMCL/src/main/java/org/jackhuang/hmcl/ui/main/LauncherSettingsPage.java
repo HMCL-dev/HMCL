@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.main;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.layout.BorderPane;
+import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -66,11 +67,12 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
         {
             AdvancedListBox sideBar = new AdvancedListBox()
                     .addNavigationDrawerItem(settingsItem -> {
-                        settingsItem.setTitle(i18n("settings.game"));
+                        settingsItem.setTitle(i18n("settings.type.global.manage"));
                         settingsItem.setLeftGraphic(wrap(SVG.gamepad(null, 20, 20)));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(gameTab));
                         settingsItem.setOnAction(e -> tab.getSelectionModel().select(gameTab));
                     })
+                    .startCategory(i18n("settings.launcher"))
                     .addNavigationDrawerItem(settingsItem -> {
                         settingsItem.setTitle(i18n("settings.launcher"));
                         settingsItem.setLeftGraphic(wrap(SVG.applicationOutline(null, 20, 20)));
@@ -112,6 +114,11 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
         }
 
         setCenter(transitionPane);
+    }
+
+    public void showGameSettings(Profile profile) {
+        gameTab.getNode().loadVersion(profile, null);
+        tab.getSelectionModel().select(gameTab);
     }
 
     @Override

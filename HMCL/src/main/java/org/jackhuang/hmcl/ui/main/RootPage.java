@@ -182,7 +182,6 @@ public class RootPage extends DecoratorTabPage {
                     .startCategory(i18n("version").toUpperCase())
                     .add(gameListItem)
                     .add(gameItem)
-                    .startCategory(i18n("launcher").toUpperCase())
                     .add(launcherSettingsItem);
 
             // the root page, with the sidebar in left, navigator in center.

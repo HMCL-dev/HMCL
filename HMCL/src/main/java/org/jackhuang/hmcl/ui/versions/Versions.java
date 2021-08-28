@@ -226,9 +226,11 @@ public final class Versions {
     }
 
     public static void modifyGlobalSettings(Profile profile) {
-        VersionSettingsPage page = new VersionSettingsPage();
-        page.loadVersion(profile, null);
-        Controllers.navigate(page);
+        Controllers.getSettingsPage().showGameSettings(profile);
+        Controllers.navigate(Controllers.getSettingsPage());
+//        VersionSettingsPage page = new VersionSettingsPage();
+//        page.loadVersion(profile, null);
+//        Controllers.navigate(page);
     }
 
     public static void modifyGameSettings(Profile profile, String version) {
