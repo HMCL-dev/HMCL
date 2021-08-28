@@ -243,7 +243,7 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
 
                 AdvancedListItem versionSettingsItem = new AdvancedListItem();
                 versionSettingsItem.getStyleClass().add("navigation-drawer-item");
-                versionSettingsItem.setTitle(i18n("settings"));
+                versionSettingsItem.setTitle(i18n("settings.game"));
                 versionSettingsItem.setLeftGraphic(wrap(SVG.gearOutline(null, 20, 20)));
                 versionSettingsItem.setActionButtonVisible(false);
                 versionSettingsItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.versionSettingsTab));

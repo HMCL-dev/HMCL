@@ -172,13 +172,18 @@ public class RootPage extends DecoratorTabPage {
             launcherSettingsItem
                     .setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/command.png")).getKey());
             launcherSettingsItem.setActionButtonVisible(false);
-            launcherSettingsItem.setTitle(i18n("settings.launcher"));
+            launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
 
             // the left sidebar
-            AdvancedListBox sideBar = new AdvancedListBox().startCategory(i18n("account").toUpperCase())
-                    .add(accountListItem).startCategory(i18n("version").toUpperCase()).add(gameListItem).add(gameItem)
-                    .startCategory(i18n("launcher").toUpperCase()).add(launcherSettingsItem);
+            AdvancedListBox sideBar = new AdvancedListBox()
+                    .startCategory(i18n("account").toUpperCase())
+                    .add(accountListItem)
+                    .startCategory(i18n("version").toUpperCase())
+                    .add(gameListItem)
+                    .add(gameItem)
+                    .startCategory(i18n("launcher").toUpperCase())
+                    .add(launcherSettingsItem);
 
             // the root page, with the sidebar in left, navigator in center.
             BorderPane root = new BorderPane();

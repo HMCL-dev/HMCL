@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.main;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.layout.BorderPane;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -27,13 +28,15 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.versions.VersionSettingsPage;
 
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
-    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("settings.launcher"), 200));
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("settings"), 200));
     private final TabHeader tab;
+    private final TabHeader.Tab<VersionSettingsPage> gameTab = new TabHeader.Tab<>("versionSettingsPage");
     private final TabHeader.Tab<SettingsPage> settingsTab = new TabHeader.Tab<>("settingsPage");
     private final TabHeader.Tab<PersonalizationPage> personalizationTab = new TabHeader.Tab<>("personalizationPage");
     private final TabHeader.Tab<DownloadSettingsPage> downloadTab = new TabHeader.Tab<>("downloadSettingsPage");
@@ -43,15 +46,18 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
     private final TransitionPane transitionPane = new TransitionPane();
 
     public LauncherSettingsPage() {
+        gameTab.setNodeSupplier(VersionSettingsPage::new);
         settingsTab.setNodeSupplier(SettingsPage::new);
         personalizationTab.setNodeSupplier(PersonalizationPage::new);
         downloadTab.setNodeSupplier(DownloadSettingsPage::new);
         helpTab.setNodeSupplier(HelpPage::new);
         sponsorTab.setNodeSupplier(SponsorPage::new);
         aboutTab.setNodeSupplier(AboutPage::new);
-        tab = new TabHeader(settingsTab, personalizationTab, downloadTab, helpTab, sponsorTab, aboutTab);
+        tab = new TabHeader(gameTab, settingsTab, personalizationTab, downloadTab, helpTab, sponsorTab, aboutTab);
 
-        tab.getSelectionModel().select(settingsTab);
+        tab.getSelectionModel().select(gameTab);
+        gameTab.initializeIfNeeded();
+        gameTab.getNode().loadVersion(Profiles.getSelectedProfile(), null);
         FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
             newValue.initializeIfNeeded();
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE.getAnimationProducer());
@@ -60,8 +66,14 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
         {
             AdvancedListBox sideBar = new AdvancedListBox()
                     .addNavigationDrawerItem(settingsItem -> {
+                        settingsItem.setTitle(i18n("settings.game"));
+                        settingsItem.setLeftGraphic(wrap(SVG.gamepad(null, 20, 20)));
+                        settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(gameTab));
+                        settingsItem.setOnAction(e -> tab.getSelectionModel().select(gameTab));
+                    })
+                    .addNavigationDrawerItem(settingsItem -> {
                         settingsItem.setTitle(i18n("settings.launcher"));
-                        settingsItem.setLeftGraphic(wrap(SVG.gearOutline(null, 20, 20)));
+                        settingsItem.setLeftGraphic(wrap(SVG.applicationOutline(null, 20, 20)));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(settingsTab));
                         settingsItem.setOnAction(e -> tab.getSelectionModel().select(settingsTab));
                     })
