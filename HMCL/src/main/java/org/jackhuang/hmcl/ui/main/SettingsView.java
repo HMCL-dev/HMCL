@@ -159,30 +159,6 @@ public abstract class SettingsView extends StackPane {
                 }
 
                 {
-                    BorderPane docPane = new BorderPane();
-                    {
-                        VBox headerLeft = new VBox();
-
-                        Label help = new Label(i18n("help.doc"));
-                        Label helpSubtitle = new Label(i18n("help.detail"));
-                        helpSubtitle.getStyleClass().add("subtitle-label");
-
-                        headerLeft.getChildren().setAll(help, helpSubtitle);
-                        docPane.setLeft(headerLeft);
-                    }
-
-                    {
-                        JFXButton btnExternal = new JFXButton();
-                        btnExternal.setOnMouseClicked(e -> onHelp());
-                        btnExternal.getStyleClass().add("toggle-icon4");
-                        btnExternal.setGraphic(SVG.openInNew(Theme.blackFillBinding(), -1, -1));
-
-                        docPane.setRight(btnExternal);
-                    }
-                    settingsPane.getContent().add(docPane);
-                }
-
-                {
                     fileCommonLocation = new MultiFileItem<>(true);
                     fileCommonLocation.setTitle(i18n("launcher.cache_directory"));
                     fileCommonLocation.setDirectory(true);
@@ -469,8 +445,6 @@ public abstract class SettingsView extends StackPane {
     }
 
     protected abstract void onUpdate();
-
-    protected abstract void onHelp();
 
     protected abstract void onExportLogs();
 

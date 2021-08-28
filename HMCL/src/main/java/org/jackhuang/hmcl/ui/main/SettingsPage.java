@@ -27,7 +27,6 @@ import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -237,11 +236,6 @@ public final class SettingsPage extends SettingsView {
                 }
             }
         });
-    }
-
-    @Override
-    protected void onHelp() {
-        FXUtils.openLink(Metadata.HELP_URL);
     }
 
     @Override

@@ -21,6 +21,7 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import javafx.geometry.Insets;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
@@ -30,6 +31,8 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.util.Collections;
 import java.util.List;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class HelpPage extends SpinnerPane {
 
@@ -41,6 +44,14 @@ public class HelpPage extends SpinnerPane {
         content.setSpacing(10);
         content.setFillWidth(true);
         setContent(content);
+
+        IconedTwoLineListItem docPane = new IconedTwoLineListItem();
+        docPane.setTitle(i18n("help.doc"));
+        docPane.setSubtitle(i18n("help.detail"));
+        docPane.setExternalLink(Metadata.HELP_URL);
+        ComponentList doc = new ComponentList();
+        doc.getContent().setAll(docPane);
+        content.getChildren().add(doc);
 
         loadHelp();
     }
