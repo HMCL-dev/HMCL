@@ -123,7 +123,13 @@ public final class Config implements Cloneable, Observable {
     private ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
 
     @SerializedName("downloadType")
-    private StringProperty downloadType = new SimpleStringProperty("bmclapi");
+    private StringProperty downloadType = new SimpleStringProperty("mcbbs");
+
+    @SerializedName("autoChooseDownloadType")
+    private BooleanProperty autoChooseDownloadType = new SimpleBooleanProperty(true);
+
+    @SerializedName("versionListSource")
+    private StringProperty versionListSource = new SimpleStringProperty("balanced");
 
     @SerializedName("configurations")
     private ObservableMap<String, Profile> configurations = FXCollections.observableMap(new TreeMap<>());
@@ -393,6 +399,30 @@ public final class Config implements Cloneable, Observable {
 
     public StringProperty downloadTypeProperty() {
         return downloadType;
+    }
+
+    public boolean isAutoChooseDownloadType() {
+        return autoChooseDownloadType.get();
+    }
+
+    public BooleanProperty autoChooseDownloadTypeProperty() {
+        return autoChooseDownloadType;
+    }
+
+    public void setAutoChooseDownloadType(boolean autoChooseDownloadType) {
+        this.autoChooseDownloadType.set(autoChooseDownloadType);
+    }
+
+    public String getVersionListSource() {
+        return versionListSource.get();
+    }
+
+    public void setVersionListSource(String versionListSource) {
+        this.versionListSource.set(versionListSource);
+    }
+
+    public StringProperty versionListSourceProperty() {
+        return versionListSource;
     }
 
     public ObservableMap<String, Profile> getConfigurations() {

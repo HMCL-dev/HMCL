@@ -54,25 +54,53 @@ public class DownloadSettingsPage extends StackPane {
             ComponentList downloadSource = new ComponentList();
 
             {
+                VBox pane = new VBox(8);
+
+                VBox chooseWrapper = new VBox();
+                chooseWrapper.setPadding(new Insets(8, 0, 8, 0));
+                JFXCheckBox chkAutoChooseDownloadSource = new JFXCheckBox(i18n("settings.launcher.download_source.auto"));
+                chkAutoChooseDownloadSource.selectedProperty().bindBidirectional(config().autoChooseDownloadTypeProperty());
+                chooseWrapper.getChildren().setAll(chkAutoChooseDownloadSource);
+
+                BorderPane versionListSourcePane = new BorderPane();
+                versionListSourcePane.setPadding(new Insets(0, 0, 8, 30));
+                versionListSourcePane.disableProperty().bind(chkAutoChooseDownloadSource.selectedProperty().not());
+                {
+                    Label label = new Label(i18n("settings.launcher.version_list_source"));
+                    BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+                    versionListSourcePane.setLeft(label);
+
+                    JFXComboBox<String> cboVersionListSource = new JFXComboBox<>();
+                    cboVersionListSource.setConverter(stringConverter(key -> i18n("download.provider." + key)));
+                    versionListSourcePane.setRight(cboVersionListSource);
+                    FXUtils.setLimitWidth(cboVersionListSource, 420);
+
+                    cboVersionListSource.getItems().setAll(DownloadProviders.providersById.keySet());
+                    selectedItemPropertyFor(cboVersionListSource).bindBidirectional(config().versionListSourceProperty());
+                }
+
                 BorderPane downloadSourcePane = new BorderPane();
+                downloadSourcePane.setPadding(new Insets(0, 0, 8, 30));
+                downloadSourcePane.disableProperty().bind(chkAutoChooseDownloadSource.selectedProperty());
                 {
                     Label label = new Label(i18n("settings.launcher.download_source"));
                     BorderPane.setAlignment(label, Pos.CENTER_LEFT);
                     downloadSourcePane.setLeft(label);
-                }
 
-                {
                     JFXComboBox<String> cboDownloadSource = new JFXComboBox<>();
                     cboDownloadSource.setConverter(stringConverter(key -> i18n("download.provider." + key)));
                     downloadSourcePane.setRight(cboDownloadSource);
+                    FXUtils.setLimitWidth(cboDownloadSource, 420);
 
-                    cboDownloadSource.getItems().setAll(DownloadProviders.providersById.keySet());
+                    cboDownloadSource.getItems().setAll(DownloadProviders.rawProviders.keySet());
                     selectedItemPropertyFor(cboDownloadSource).bindBidirectional(config().downloadTypeProperty());
                 }
-                downloadSource.getContent().add(downloadSourcePane);
+
+                pane.getChildren().setAll(chooseWrapper, versionListSourcePane, downloadSourcePane);
+                downloadSource.getContent().add(pane);
             }
 
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.download_source")), downloadSource);
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.version_list_source")), downloadSource);
         }
 
         {

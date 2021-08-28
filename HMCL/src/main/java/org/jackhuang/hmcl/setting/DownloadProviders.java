@@ -17,14 +17,10 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import org.jackhuang.hmcl.download.AdaptedDownloadProvider;
-import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
-import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.MojangDownloadProvider;
+import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,31 +31,66 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 public final class DownloadProviders {
     private DownloadProviders() {}
 
-    private static final AdaptedDownloadProvider DOWNLOAD_PROVIDER = new AdaptedDownloadProvider();
+    private static DownloadProvider currentDownloadProvider;
 
     public static final Map<String, DownloadProvider> providersById;
+    public static final Map<String, DownloadProvider> rawProviders;
+    private static final AdaptedDownloadProvider fileDownloadProvider = new AdaptedDownloadProvider();
 
-    public static final String DEFAULT_PROVIDER_ID = "mcbbs";
+    private static final MojangDownloadProvider MOJANG;
+    private static final BMCLAPIDownloadProvider BMCLAPI;
+    private static final BMCLAPIDownloadProvider MCBBS;
+
+    public static final String DEFAULT_PROVIDER_ID = "balanced";
+    public static final String DEFAULT_RAW_PROVIDER_ID = "mcbbs";
 
     static {
         String bmclapiRoot = "https://bmclapi2.bangbang93.com";
         String bmclapiRootOverride = System.getProperty("hmcl.bmclapi.override");
         if (bmclapiRootOverride != null) bmclapiRoot = bmclapiRootOverride;
 
+        MOJANG = new MojangDownloadProvider();
+        BMCLAPI = new BMCLAPIDownloadProvider(bmclapiRoot);
+        MCBBS = new BMCLAPIDownloadProvider("https://download.mcbbs.net");
+        rawProviders = mapOf(
+                pair("mojang", MOJANG),
+                pair("bmclapi", BMCLAPI),
+                pair("mcbbs", MCBBS)
+        );
+
+        AdaptedDownloadProvider fileProvider = new AdaptedDownloadProvider();
+        fileProvider.setDownloadProviderCandidates(Arrays.asList(MCBBS, BMCLAPI, MOJANG));
+//        BalancedDownloadProvider balanced = new BalancedDownloadProvider();
+
         providersById = mapOf(
-                pair("mojang", new MojangDownloadProvider()),
-                pair("bmclapi", new BMCLAPIDownloadProvider(bmclapiRoot)),
-                pair("mcbbs", new BMCLAPIDownloadProvider("https://download.mcbbs.net")));
+                pair("official", new AutoDownloadProvider(MOJANG, fileProvider)),
+                pair("balanced", new AutoDownloadProvider(MCBBS, fileProvider)),
+                pair("mirror", new AutoDownloadProvider(MCBBS, fileProvider)));
     }
 
     static void init() {
-        FXUtils.onChangeAndOperate(config().downloadTypeProperty(), downloadType -> {
-            DownloadProvider primary = Optional.ofNullable(providersById.get(config().getDownloadType()))
+        FXUtils.onChangeAndOperate(config().versionListSourceProperty(), versionListSource -> {
+            if (!providersById.containsKey(versionListSource)) {
+                config().setVersionListSource(DEFAULT_PROVIDER_ID);
+                return;
+            }
+
+            currentDownloadProvider = Optional.ofNullable(providersById.get(versionListSource))
                     .orElse(providersById.get(DEFAULT_PROVIDER_ID));
-            DOWNLOAD_PROVIDER.setDownloadProviderCandidates(
+        });
+
+        FXUtils.onChangeAndOperate(config().downloadTypeProperty(), downloadType -> {
+            if (!rawProviders.containsKey(downloadType)) {
+                config().setDownloadType(DEFAULT_RAW_PROVIDER_ID);
+                return;
+            }
+
+            DownloadProvider primary = Optional.ofNullable(rawProviders.get(downloadType))
+                    .orElse(rawProviders.get(DEFAULT_RAW_PROVIDER_ID));
+            fileDownloadProvider.setDownloadProviderCandidates(
                     Stream.concat(
                             Stream.of(primary),
-                            providersById.values().stream().filter(x -> x != primary)
+                            rawProviders.values().stream().filter(x -> x != primary)
                     ).collect(Collectors.toList())
             );
         });
@@ -73,23 +104,15 @@ public final class DownloadProviders {
             return DEFAULT_PROVIDER_ID;
     }
 
-    public static AdaptedDownloadProvider getDownloadProviderByPrimaryId(String primaryId) {
-        AdaptedDownloadProvider adaptedDownloadProvider = new AdaptedDownloadProvider();
-        DownloadProvider primary = Optional.ofNullable(providersById.get(primaryId))
+    public static DownloadProvider getDownloadProviderByPrimaryId(String primaryId) {
+        return Optional.ofNullable(providersById.get(primaryId))
                 .orElse(providersById.get(DEFAULT_PROVIDER_ID));
-        adaptedDownloadProvider.setDownloadProviderCandidates(
-                Stream.concat(
-                        Stream.of(primary),
-                        providersById.values().stream().filter(x -> x != primary)
-                ).collect(Collectors.toList())
-        );
-        return adaptedDownloadProvider;
     }
 
     /**
      * Get current primary preferred download provider
      */
-    public static AdaptedDownloadProvider getDownloadProvider() {
-        return DOWNLOAD_PROVIDER;
+    public static DownloadProvider getDownloadProvider() {
+        return config().isAutoChooseDownloadType() ? currentDownloadProvider : fileDownloadProvider;
     }
 }
