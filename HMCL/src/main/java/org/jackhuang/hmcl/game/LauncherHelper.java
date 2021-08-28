@@ -61,11 +61,18 @@ import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -616,7 +623,7 @@ public final class LauncherHelper {
             if (showLogs)
                 Platform.runLater(() -> {
                     logWindow = new LogWindow();
-                    logWindow.show();
+                    logWindow.showNormal();
                     logWindowLatch.countDown();
                 });
         }
@@ -703,21 +710,37 @@ public final class LauncherHelper {
                     if (logWindow == null) {
                         logWindow = new LogWindow();
 
-                        switch (exitType) {
-                            case JVM_ERROR:
-                                logWindow.setTitle(i18n("launch.failed.cannot_create_jvm"));
-                                break;
-                            case APPLICATION_ERROR:
-                                logWindow.setTitle(i18n("launch.failed.exited_abnormally"));
-                                break;
-                        }
-
                         logWindow.logLine("Command: " + new CommandBuilder().addAll(process.getCommands()).toString(), Log4jLevel.INFO);
                         for (Map.Entry<String, Log4jLevel> entry : logs)
                             logWindow.logLine(entry.getKey(), entry.getValue());
                     }
 
-                    logWindow.showGameCrashReport();
+                    switch (exitType) {
+                        case JVM_ERROR:
+                            logWindow.setTitle(i18n("launch.failed.cannot_create_jvm"));
+                            break;
+                        case APPLICATION_ERROR:
+                            logWindow.setTitle(i18n("launch.failed.exited_abnormally"));
+                            break;
+                    }
+
+                    logWindow.showGameCrashReport(logs -> {
+                        Path logFile = Paths.get("minecraft-exported-crash-info-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip").toAbsolutePath();
+                        LogExporter.exportLogs(logFile, repository, version, logs, new CommandBuilder().addAll(process.getCommands()).toString())
+                                .thenRunAsync(() -> {
+                                    JOptionPane.showMessageDialog(null, i18n("settings.launcher.launcher_log.export.success", logFile), i18n("settings.launcher.launcher_log.export"), JOptionPane.INFORMATION_MESSAGE);
+                                    if (Desktop.isDesktopSupported()) {
+                                        try {
+                                            Desktop.getDesktop().open(logFile.toFile());
+                                        } catch (IOException | IllegalArgumentException ignored) {
+                                        }
+                                    }
+                                }, Schedulers.javafx())
+                                .exceptionally(e -> {
+                                    LOG.log(Level.WARNING, "Failed to export game crash info", e);
+                                    return null;
+                                });
+                    });
                 });
             }
 
