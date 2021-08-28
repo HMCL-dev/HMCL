@@ -17,12 +17,7 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import javax.management.JMException;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
 import java.io.File;
-import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -108,7 +103,8 @@ public enum OperatingSystem {
         else
             CURRENT_OS = UNKNOWN;
 
-        TOTAL_MEMORY = getTotalPhysicalMemorySize()
+        TOTAL_MEMORY = getPhysicalMemoryStatus()
+                .map(PhysicalMemoryStatus::getTotal)
                 .map(bytes -> (int) (bytes / 1024 / 1024))
                 .orElse(1024);
 
@@ -133,15 +129,22 @@ public enum OperatingSystem {
         }
     }
 
-    private static Optional<Long> getTotalPhysicalMemorySize() {
-        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-        try {
-            Object attribute = mBeanServer.getAttribute(new ObjectName("java.lang", "type", "OperatingSystem"), "TotalPhysicalMemorySize");
-            if (attribute instanceof Long) {
-                return Optional.of((Long) attribute);
+    public static Optional<PhysicalMemoryStatus> getPhysicalMemoryStatus() {
+        java.lang.management.OperatingSystemMXBean bean =  java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+        if (bean instanceof com.sun.management.OperatingSystemMXBean) {
+            com.sun.management.OperatingSystemMXBean sunBean =
+                    (com.sun.management.OperatingSystemMXBean)
+                            java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+
+            if (CURRENT_OS == LINUX) {
+                // On Linux, real amount of memory that is free for using is "available" size of memory,
+                // which also includes size of memory for caching that can be make use of.
+                // But available size of memory cannot be obtained by OperatingSystemMXBean interface.
+                // So we simply disable reporting free physical memory size on Linux.
+                return Optional.of(new PhysicalMemoryStatus(sunBean.getTotalPhysicalMemorySize(), -1));
             }
-        } catch (JMException e) {
-            return Optional.empty();
+
+            return Optional.of(new PhysicalMemoryStatus(sunBean.getTotalPhysicalMemorySize(), sunBean.getFreePhysicalMemorySize()));
         }
         return Optional.empty();
     }
@@ -202,5 +205,49 @@ public enum OperatingSystem {
         }
 
         return true;
+    }
+
+    public static class PhysicalMemoryStatus {
+        private final long total;
+        private final long available;
+
+        public PhysicalMemoryStatus(long total, long available) {
+            this.total = total;
+            this.available = available;
+        }
+
+        public long getTotal() {
+            return total;
+        }
+
+        public double getTotalGB() {
+            return toGigaBytes(total);
+        }
+
+        public long getUsed() {
+            return hasAvailable() ? total - available : 0;
+        }
+
+        public double getUsedGB() {
+            return toGigaBytes(getUsed());
+        }
+
+        public long getAvailable() {
+            return available;
+        }
+
+        public double getAvailableGB() {
+            return toGigaBytes(available);
+        }
+
+        public boolean hasAvailable() {
+            return available >= 0;
+        }
+
+        public static double toGigaBytes(long bytes) {
+            return bytes / 1024. / 1024. / 1024.;
+        }
+
+        public static final PhysicalMemoryStatus INVALID = new PhysicalMemoryStatus(0, -1);
     }
 }

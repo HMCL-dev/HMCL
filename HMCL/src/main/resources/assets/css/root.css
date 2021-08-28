@@ -42,6 +42,22 @@
     -fx-text-fill: rgba(0, 0, 0, 0.5);
 }
 
+.memory-label {
+    -fx-font-size: 14px;
+}
+
+.memory-used {
+    -fx-background-color: -fx-base-darker-color;
+}
+
+.memory-allocate {
+    -fx-background-color: -fx-base-check-color;
+}
+
+.memory-total {
+    -fx-background-color: -fx-base-rippler-color;
+}
+
 .update-label {
     -fx-text-fill: red;
 }
@@ -530,23 +546,12 @@
 *                          							   *
 *******************************************************/
 
-.jfx-slider-style {
+.jfx-slider {
     -jfx-indicator-position: right;
 }
 
-.jfx-slider-style > .thumb {
-    -fx-background-color: #03a9f4;
-}
-
-.jfx-slider-style .track {
-    -fx-background-color: #ff5252;
-    -fx-pref-height: 5px;
-    -fx-pref-width: 5px;
-}
-
-.jfx-slider-style .sliderValue {
-    -fx-stroke: WHITE;
-    -fx-font-size: 10.0;
+.jfx-slider .thumb {
+    -fx-background-color: -fx-base-color;
 }
 
 /*******************************************************************************

@@ -237,6 +237,20 @@ public final class VersionSetting implements Cloneable {
         minMemoryProperty.set(minMemory);
     }
 
+    private final BooleanProperty autoMemory = new SimpleBooleanProperty(this, "autoMemory", true);
+
+    public boolean isAutoMemory() {
+        return autoMemory.get();
+    }
+
+    public BooleanProperty autoMemoryProperty() {
+        return autoMemory;
+    }
+
+    public void setAutoMemory(boolean autoMemory) {
+        this.autoMemory.set(autoMemory);
+    }
+
     private final StringProperty preLaunchCommandProperty = new SimpleStringProperty(this, "precalledCommand", "");
 
     public StringProperty preLaunchCommandProperty() {
@@ -558,6 +572,7 @@ public final class VersionSetting implements Cloneable {
         permSizeProperty.addListener(listener);
         maxMemoryProperty.addListener(listener);
         minMemoryProperty.addListener(listener);
+        autoMemory.addListener(listener);
         preLaunchCommandProperty.addListener(listener);
         javaArgsProperty.addListener(listener);
         minecraftArgsProperty.addListener(listener);
@@ -589,6 +604,7 @@ public final class VersionSetting implements Cloneable {
         versionSetting.setPermSize(getPermSize());
         versionSetting.setMaxMemory(getMaxMemory());
         versionSetting.setMinMemory(getMinMemory());
+        versionSetting.setAutoMemory(isAutoMemory());
         versionSetting.setPreLaunchCommand(getPreLaunchCommand());
         versionSetting.setJavaArgs(getJavaArgs());
         versionSetting.setMinecraftArgs(getMinecraftArgs());
@@ -619,6 +635,7 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("minecraftArgs", src.getMinecraftArgs());
             obj.addProperty("maxMemory", src.getMaxMemory() <= 0 ? OperatingSystem.SUGGESTED_MEMORY : src.getMaxMemory());
             obj.addProperty("minMemory", src.getMinMemory());
+            obj.addProperty("autoMemory", src.isAutoMemory());
             obj.addProperty("permSize", src.getPermSize());
             obj.addProperty("width", src.getWidth());
             obj.addProperty("height", src.getHeight());
@@ -659,6 +676,7 @@ public final class VersionSetting implements Cloneable {
             vs.setMinecraftArgs(Optional.ofNullable(obj.get("minecraftArgs")).map(JsonElement::getAsString).orElse(""));
             vs.setMaxMemory(maxMemoryN);
             vs.setMinMemory(Optional.ofNullable(obj.get("minMemory")).map(JsonElement::getAsInt).orElse(null));
+            vs.setAutoMemory(Optional.ofNullable(obj.get("autoMemory")).map(JsonElement::getAsBoolean).orElse(true));
             vs.setPermSize(Optional.ofNullable(obj.get("permSize")).map(JsonElement::getAsString).orElse(""));
             vs.setWidth(Optional.ofNullable(obj.get("width")).map(JsonElement::getAsJsonPrimitive).map(this::parseJsonPrimitive).orElse(0));
             vs.setHeight(Optional.ofNullable(obj.get("height")).map(JsonElement::getAsJsonPrimitive).map(this::parseJsonPrimitive).orElse(0));

@@ -296,7 +296,11 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setProfileName(Metadata.TITLE)
                 .setGameArguments(StringUtils.tokenize(vs.getMinecraftArgs()))
                 .setJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
-                .setMaxMemory(vs.getMaxMemory())
+                .setMaxMemory((int)(getAllocatedMemory(
+                        vs.getMaxMemory(),
+                        OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID).getAvailable(),
+                        vs.isAutoMemory()
+                ) / 1024 / 1024))
                 .setMinMemory(vs.getMinMemory())
                 .setMetaspace(Lang.toIntOrNull(vs.getPermSize()))
                 .setWidth(vs.getWidth())
@@ -399,5 +403,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
         } else {
             return versions.containsKey(id);
         }
+    }
+
+    public static long getAllocatedMemory(long minimum, long available, boolean auto) {
+        return auto ? Math.max(minimum, (long) (available * 0.8)) : minimum;
     }
 }
