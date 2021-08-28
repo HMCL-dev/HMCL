@@ -101,6 +101,10 @@ public enum Log4jLevel {
                             break;
                     }
             }
+
+            if (line.contains("STDERR]")) {
+                level = ERROR;
+            }
         } else {
             if (line.contains("[INFO]") || line.contains("[CONFIG]") || line.contains("[FINE]")
                     || line.contains("[FINER]") || line.contains("[FINEST]"))
