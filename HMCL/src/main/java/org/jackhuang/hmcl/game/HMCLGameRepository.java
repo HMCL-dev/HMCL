@@ -291,7 +291,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
                 .setGameDir(gameDir)
                 .setJava(javaVersion)
-                .setVersionName(Metadata.TITLE)
                 .setVersionType(Metadata.TITLE)
                 .setProfileName(Metadata.TITLE)
                 .setGameArguments(StringUtils.tokenize(vs.getMinecraftArgs()))
