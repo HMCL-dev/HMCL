@@ -138,6 +138,11 @@ public class MicrosoftService {
                                         pair("RpsTicket", "d=" + liveAccessToken))),
                         pair("RelyingParty", "http://auth.xboxlive.com"), pair("TokenType", "JWT")))
                 .accept("application/json").getJson(XBoxLiveAuthenticationResponse.class);
+
+        if (xboxResponse.errorCode != 0) {
+            throw new XboxAuthorizationException(xboxResponse.errorCode);
+        }
+
         String uhs = (String) xboxResponse.displayClaims.xui.get(0).get("uhs");
 
         // Authenticate Minecraft with XSTS
@@ -149,6 +154,11 @@ public class MicrosoftService {
                                         pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
                         pair("RelyingParty", "rp://api.minecraftservices.com/"), pair("TokenType", "JWT")))
                 .getJson(XBoxLiveAuthenticationResponse.class);
+
+        if (xboxResponse.errorCode != 0) {
+            throw new XboxAuthorizationException(xboxResponse.errorCode);
+        }
+
         String minecraftXstsUhs = (String) minecraftXstsResponse.displayClaims.xui.get(0).get("uhs");
         if (!Objects.equals(uhs, minecraftXstsUhs)) {
             throw new ServerResponseMalformedException("uhs mismatched");
@@ -163,6 +173,11 @@ public class MicrosoftService {
                                         pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
                         pair("RelyingParty", "http://xboxlive.com"), pair("TokenType", "JWT")))
                 .getJson(XBoxLiveAuthenticationResponse.class);
+
+        if (xboxXstsResponse.errorCode != 0) {
+            throw new XboxAuthorizationException(xboxXstsResponse.errorCode);
+        }
+
         String xboxXstsUhs = (String) xboxXstsResponse.displayClaims.xui.get(0).get("uhs");
         if (!Objects.equals(uhs, xboxXstsUhs)) {
             throw new ServerResponseMalformedException("uhs mismatched");
@@ -260,6 +275,21 @@ public class MicrosoftService {
         return JsonUtils.fromNonNullJson(result, MinecraftProfileResponse.class);
     }
 
+    public static class XboxAuthorizationException extends AuthenticationException {
+        private final long errorCode;
+
+        public XboxAuthorizationException(long errorCode) {
+            this.errorCode = errorCode;
+        }
+
+        public long getErrorCode() {
+            return errorCode;
+        }
+
+        public static final long MISSING_XBOX_ACCOUNT = 2148916233L;
+        public static final long ADD_FAMILY = 2148916238L;
+    }
+
     /**
      * Error response: {"error":"invalid_grant","error_description":"The provided
      * value for the 'redirect_uri' is not valid. The value must exactly match the
@@ -304,6 +334,17 @@ public class MicrosoftService {
         List<Map<Object, Object>> xui;
     }
 
+    private static class MicrosoftErrorResponse {
+        @SerializedName("XErr")
+        long errorCode;
+
+        @SerializedName("Message")
+        String message;
+
+        @SerializedName("Redirect")
+        String redirectUrl;
+    }
+
     /**
      *
      * Success Response: { "IssueInstant":"2020-12-07T19:52:08.4463796Z",
@@ -316,7 +357,7 @@ public class MicrosoftService {
      * XErr Candidates: 2148916233 = missing XBox account 2148916238 = child account
      * not linked to a family
      */
-    private static class XBoxLiveAuthenticationResponse {
+    private static class XBoxLiveAuthenticationResponse extends MicrosoftErrorResponse {
         @SerializedName("IssueInstant")
         String issueInstant;
 

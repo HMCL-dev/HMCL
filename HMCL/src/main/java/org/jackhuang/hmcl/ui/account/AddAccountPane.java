@@ -37,6 +37,7 @@ import javafx.scene.layout.*;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
@@ -385,6 +386,15 @@ public class AddAccountPane extends StackPane {
             return i18n("account.failed.character_deleted");
         } else if (exception instanceof InvalidSkinException) {
             return i18n("account.skin.invalid_skin");
+        } else if (exception instanceof MicrosoftService.XboxAuthorizationException) {
+            long errorCode = ((MicrosoftService.XboxAuthorizationException) exception).getErrorCode();
+            if (errorCode == MicrosoftService.XboxAuthorizationException.ADD_FAMILY) {
+                return i18n("account.methods.microsoft.error.add_family");
+            } else if (errorCode == MicrosoftService.XboxAuthorizationException.MISSING_XBOX_ACCOUNT) {
+                return i18n("account.methods.microsoft.error.missing_xbox_account");
+            } else {
+                return i18n("account.methods.microsoft.error.unknown", errorCode);
+            }
         } else if (exception.getClass() == AuthenticationException.class) {
             return exception.getLocalizedMessage();
         } else {
