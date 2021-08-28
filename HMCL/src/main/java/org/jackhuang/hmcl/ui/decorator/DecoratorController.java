@@ -57,6 +57,7 @@ import static java.util.logging.Level.WARNING;
 import static java.util.stream.Collectors.toList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.io.FileUtils.getExtension;
 
@@ -86,33 +87,39 @@ public class DecoratorController {
 
         setupAuthlibInjectorDnD();
 
-        // pass key events to current dialog
+        // pass key events to current dialog / current page
         decorator.addEventFilter(KeyEvent.ANY, e -> {
-            if (dialogPane == null || !dialogPane.peek().isPresent()) {
-                return;
-            }
-            Node currentDialog = dialogPane.peek().get();
-
             if (!(e.getTarget() instanceof Node)) {
-                return;
+                return; // event source can't be determined
             }
 
-            boolean targetInDialog = false;
+            Node newTarget;
+            if (dialogPane != null && dialogPane.peek().isPresent()) {
+                newTarget = dialogPane.peek().get(); // current dialog
+            } else {
+                newTarget = navigator.getCurrentPage(); // current page
+            }
+
+            boolean needsRedirect = true;
             Node t = (Node) e.getTarget();
             while (t != null) {
-                if (t == currentDialog) {
-                    targetInDialog = true;
+                if (t == newTarget) {
+                    // current event target is in newTarget
+                    needsRedirect = false;
                     break;
                 }
                 t = t.getParent();
             }
-            if (targetInDialog) {
+            if (!needsRedirect) {
                 return;
             }
 
             e.consume();
-            currentDialog.fireEvent(e.copyFor(e.getSource(), currentDialog));
+            newTarget.fireEvent(e.copyFor(e.getSource(), newTarget));
         });
+
+        // press ESC to go back
+        onEscPressed(navigator, this::back);
     }
 
     public Decorator getDecorator() {
@@ -229,10 +236,15 @@ public class DecoratorController {
         if (navigator.getCurrentPage() instanceof DecoratorPage) {
             DecoratorPage page = (DecoratorPage) navigator.getCurrentPage();
 
-            if (page.back())
-                navigator.close();
+            if (page.back()) {
+                if (navigator.canGoBack()) {
+                    navigator.close();
+                }
+            }
         } else {
-            navigator.close();
+            if (navigator.canGoBack()) {
+                navigator.close();
+            }
         }
     }
 

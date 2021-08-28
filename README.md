@@ -53,3 +53,4 @@ Make sure you have Java installed with JavaFX 8 at least. Liberica full JDK 8~16
 |`-Dhmcl.version.override=<version>`|Override the version number.|
 |`-Dhmcl.update_source.override=<url>`|Override the update source.|
 |`-Dhmcl.authlibinjector.location=<path>`|Use specified authlib-injector (instead of downloading one).|
+|`-Dhmcl.openjfx.repo=<maven repository url>`|Download OpenJFX from specified Maven repository. Default value is `https://maven.aliyun.com/repository/central/`.|

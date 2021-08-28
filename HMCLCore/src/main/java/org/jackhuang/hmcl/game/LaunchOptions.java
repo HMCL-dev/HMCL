@@ -55,7 +55,7 @@ public class LaunchOptions implements Serializable {
     private String preLaunchCommand;
     private NativesDirectoryType nativesDirType;
     private String nativesDir;
-    private ProcessPriority processPriority;
+    private ProcessPriority processPriority = ProcessPriority.NORMAL;
 
     /**
      * The game directory
@@ -497,7 +497,7 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setProcessPriority(ProcessPriority processPriority) {
+        public Builder setProcessPriority(@NotNull ProcessPriority processPriority) {
             options.processPriority = processPriority;
             return this;
         }

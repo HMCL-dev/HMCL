@@ -88,7 +88,7 @@ public final class SelfDependencyPatcher {
 
     static class DependencyDescriptor {
 
-        private static final String REPOSITORY_URL = "https://maven.aliyun.com/repository/central/";
+        private static final String REPOSITORY_URL = System.getProperty("hmcl.openjfx.repo", "https://maven.aliyun.com/repository/central/");
         private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies");
 
         private static String currentArchClassifier() {

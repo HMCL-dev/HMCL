@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.account;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Tooltip;
@@ -27,14 +28,19 @@ import javafx.scene.image.ImageView;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
+import static javafx.beans.binding.Bindings.createStringBinding;
+import static org.jackhuang.hmcl.setting.Accounts.getAccountFactory;
+import static org.jackhuang.hmcl.setting.Accounts.getLocalizedLoginTypeName;
+import static org.jackhuang.hmcl.ui.FXUtils.toFXImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AccountAdvancedListItem extends AdvancedListItem {
@@ -48,16 +54,18 @@ public class AccountAdvancedListItem extends AdvancedListItem {
             Account account = get();
             if (account == null) {
                 titleProperty().unbind();
+                subtitleProperty().unbind();
+                imageView.imageProperty().unbind();
+                tooltip.textProperty().unbind();
                 setTitle(i18n("account.missing"));
                 setSubtitle(i18n("account.missing.add"));
-                imageView.imageProperty().unbind();
-                imageView.setImage(newImage("/assets/img/steve.png"));
-                tooltip.setText("");
+                imageView.setImage(toFXImage(TexturesLoader.toAvatar(TexturesLoader.getDefaultSkin(TextureModel.STEVE).getImage(), 32)));
+                tooltip.setText(i18n("account.create"));
             } else {
-                titleProperty().bind(Bindings.createStringBinding(account::getCharacter, account));
-                setSubtitle(accountSubtitle(account));
+                titleProperty().bind(BindingMapping.of(account, Account::getCharacter));
+                subtitleProperty().bind(accountSubtitle(account));
                 imageView.imageProperty().bind(TexturesLoader.fxAvatarBinding(account, 32));
-                tooltip.setText(account.getCharacter() + " " + accountTooltip(account));
+                tooltip.textProperty().bind(accountTooltip(account));
             }
         }
     };
@@ -88,23 +96,27 @@ public class AccountAdvancedListItem extends AdvancedListItem {
         return account;
     }
 
-    private static String accountSubtitle(Account account) {
-        String loginTypeName = Accounts.getLocalizedLoginTypeName(Accounts.getAccountFactory(account));
+    private static ObservableValue<String> accountSubtitle(Account account) {
         if (account instanceof AuthlibInjectorAccount) {
-            return ((AuthlibInjectorAccount) account).getServer().getName();
+            return BindingMapping.of(((AuthlibInjectorAccount) account).getServer(), AuthlibInjectorServer::getName);
         } else {
-            return loginTypeName;
+            return createStringBinding(() -> getLocalizedLoginTypeName(getAccountFactory(account)));
         }
     }
 
-    private static String accountTooltip(Account account) {
+    private static ObservableValue<String> accountTooltip(Account account) {
         if (account instanceof AuthlibInjectorAccount) {
             AuthlibInjectorServer server = ((AuthlibInjectorAccount) account).getServer();
-            return account.getUsername() + ", " + i18n("account.injector.server") + ": " + server.getName();
+            return Bindings.format("%s (%s) (%s)",
+                    BindingMapping.of(account, Account::getCharacter),
+                    account.getUsername(),
+                    BindingMapping.of(server, AuthlibInjectorServer::getName));
         } else if (account instanceof YggdrasilAccount) {
-            return account.getUsername();
+            return Bindings.format("%s (%s)",
+                    BindingMapping.of(account, Account::getCharacter),
+                    account.getUsername());
         } else {
-            return "";
+            return BindingMapping.of(account, Account::getCharacter);
         }
     }
 

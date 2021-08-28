@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,14 +20,13 @@ package org.jackhuang.hmcl.game;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.scene.image.Image;
-import javafx.scene.image.PixelWriter;
-import javafx.scene.image.WritableImage;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
@@ -231,34 +230,18 @@ public final class TexturesLoader {
     public static ObjectBinding<Image> fxAvatarBinding(YggdrasilService service, UUID uuid, int size) {
         return BindingMapping.of(skinBinding(service, uuid))
                 .map(it -> toAvatar(it.image, size))
-                .map(TexturesLoader::toFXImage);
+                .map(FXUtils::toFXImage);
     }
 
     public static ObjectBinding<Image> fxAvatarBinding(Account account, int size) {
         if (account instanceof YggdrasilAccount || account instanceof MicrosoftAccount) {
             return BindingMapping.of(skinBinding(account))
                     .map(it -> toAvatar(it.image, size))
-                    .map(TexturesLoader::toFXImage);
+                    .map(FXUtils::toFXImage);
         } else {
             return Bindings.createObjectBinding(
-                    () -> toFXImage(toAvatar(getDefaultSkin(TextureModel.detectUUID(account.getUUID())).image, size)));
+                    () -> FXUtils.toFXImage(toAvatar(getDefaultSkin(TextureModel.detectUUID(account.getUUID())).image, size)));
         }
     }
     // ====
-
-    // Based on https://stackoverflow.com/a/57552025
-    // Fix #874: Use it instead of SwingFXUtils.toFXImage
-    private static WritableImage toFXImage(BufferedImage image) {
-        WritableImage wr = new WritableImage(image.getWidth(), image.getHeight());
-        PixelWriter pw = wr.getPixelWriter();
-
-        final int iw = image.getWidth();
-        final int ih = image.getHeight();
-        for (int x = 0; x < iw; x++) {
-            for (int y = 0; y < ih; y++) {
-                pw.setArgb(x, y, image.getRGB(x, y));
-            }
-        }
-        return wr;
-    }
 }

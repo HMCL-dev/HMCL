@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,7 +66,8 @@ public class RootPage extends DecoratorTabPage {
     public RootPage() {
         setLeftPaneWidth(200);
 
-        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).register(event -> onRefreshedVersions((HMCLGameRepository) event.getSource()));
+        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class)
+                .register(event -> onRefreshedVersions((HMCLGameRepository) event.getSource()));
 
         Profile profile = Profiles.getSelectedProfile();
         if (profile != null && profile.getRepository().isLoaded())
@@ -78,7 +79,8 @@ public class RootPage extends DecoratorTabPage {
 
     @Override
     public boolean back() {
-        if (mainTab.isSelected()) return true;
+        if (mainTab.isSelected())
+            return true;
         else {
             getSelectionModel().select(mainTab);
             return false;
@@ -102,20 +104,23 @@ public class RootPage extends DecoratorTabPage {
             MainPage mainPage = new MainPage();
             FXUtils.applyDragListener(mainPage, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
                 File modpack = modpacks.get(0);
-                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
+                Controllers.getDecorator().startWizard(
+                        new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack),
+                        i18n("install.modpack"));
             });
 
             FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), mainPage::setCurrentGame);
             mainPage.showUpdateProperty().bind(UpdateChecker.outdatedProperty());
-            mainPage.latestVersionProperty().bind(
-                    BindingMapping.of(UpdateChecker.latestVersionProperty())
-                            .map(version -> version == null ? "" : i18n("update.bubble.title", version.getVersion())));
+            mainPage.latestVersionProperty().bind(BindingMapping.of(UpdateChecker.latestVersionProperty())
+                    .map(version -> version == null ? "" : i18n("update.bubble.title", version.getVersion())));
 
             Profiles.registerVersionsListener(profile -> {
                 HMCLGameRepository repository = profile.getRepository();
                 List<Version> children = repository.getVersions().parallelStream()
                         .filter(version -> !version.isHidden())
-                        .sorted(Comparator.comparing((Version version) -> version.getReleaseTime() == null ? new Date(0L) : version.getReleaseTime())
+                        .sorted(Comparator
+                                .comparing((Version version) -> version.getReleaseTime() == null ? new Date(0L)
+                                        : version.getReleaseTime())
                                 .thenComparing(a -> VersionNumber.asVersion(a.getId())))
                         .collect(Collectors.toList());
                 runInFX(() -> {
@@ -135,7 +140,13 @@ public class RootPage extends DecoratorTabPage {
 
             // first item in left sidebar
             AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
-            accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
+            accountListItem.setOnAction(e -> {
+                Controllers.navigate(Controllers.getAccountListPage());
+
+                if (Accounts.getAccounts().isEmpty()) {
+                    Controllers.dialog(new AddAccountPane());
+                }
+            });
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
             // second item in left sidebar
@@ -158,20 +169,16 @@ public class RootPage extends DecoratorTabPage {
 
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
-            launcherSettingsItem.setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/command.png")).getKey());
+            launcherSettingsItem
+                    .setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/command.png")).getKey());
             launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings.launcher"));
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
 
             // the left sidebar
-            AdvancedListBox sideBar = new AdvancedListBox()
-                    .startCategory(i18n("account").toUpperCase())
-                    .add(accountListItem)
-                    .startCategory(i18n("version").toUpperCase())
-                    .add(gameListItem)
-                    .add(gameItem)
-                    .startCategory(i18n("launcher").toUpperCase())
-                    .add(launcherSettingsItem);
+            AdvancedListBox sideBar = new AdvancedListBox().startCategory(i18n("account").toUpperCase())
+                    .add(accountListItem).startCategory(i18n("version").toUpperCase()).add(gameListItem).add(gameItem)
+                    .startCategory(i18n("launcher").toUpperCase()).add(launcherSettingsItem);
 
             // the root page, with the sidebar in left, navigator in center.
             BorderPane root = new BorderPane();
@@ -195,7 +202,8 @@ public class RootPage extends DecoratorTabPage {
     private boolean checkedAccont = false;
 
     public void checkAccount() {
-        if (checkedAccont) return;
+        if (checkedAccont)
+            return;
         checkedAccont = true;
         if (Accounts.getAccounts().isEmpty())
             Platform.runLater(this::addNewAccount);
@@ -217,8 +225,11 @@ public class RootPage extends DecoratorTabPage {
                     File modpackFile = new File("modpack.zip").getAbsoluteFile();
                     if (modpackFile.exists()) {
                         Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile.toPath()))
-                                .thenApplyAsync(encoding -> ModpackHelper.readModpackManifest(modpackFile.toPath(), encoding))
-                                .thenApplyAsync(modpack -> ModpackHelper.getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack)
+                                .thenApplyAsync(
+                                        encoding -> ModpackHelper.readModpackManifest(modpackFile.toPath(), encoding))
+                                .thenApplyAsync(modpack -> ModpackHelper
+                                        .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(),
+                                                modpack)
                                         .withRunAsync(Schedulers.javafx(), this::checkAccount).executor())
                                 .thenAcceptAsync(Schedulers.javafx(), executor -> {
                                     Controllers.taskDialog(executor, i18n("modpack.installing"));
