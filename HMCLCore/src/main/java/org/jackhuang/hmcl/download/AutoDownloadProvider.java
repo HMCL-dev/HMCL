@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.download;
 
+import java.net.URL;
+import java.util.List;
+
 /**
  * Official Download Provider fetches version list from Mojang and
  * download files from mcbbs.
@@ -45,6 +48,21 @@ public class AutoDownloadProvider implements DownloadProvider {
     @Override
     public String injectURL(String baseURL) {
         return fileProvider.injectURL(baseURL);
+    }
+
+    @Override
+    public List<URL> getAssetObjectCandidates(String assetObjectLocation) {
+        return fileProvider.getAssetObjectCandidates(assetObjectLocation);
+    }
+
+    @Override
+    public List<URL> injectURLWithCandidates(String baseURL) {
+        return fileProvider.injectURLWithCandidates(baseURL);
+    }
+
+    @Override
+    public List<URL> injectURLsWithCandidates(List<String> urls) {
+        return fileProvider.injectURLsWithCandidates(urls);
     }
 
     @Override
