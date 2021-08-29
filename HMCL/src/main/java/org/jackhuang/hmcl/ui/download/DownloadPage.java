@@ -55,15 +55,19 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
     private final TabHeader.Tab<ModDownloadListPage> modTab = new TabHeader.Tab<>("modTab");
     private final TabHeader.Tab<ModDownloadListPage> modpackTab = new TabHeader.Tab<>("modpackTab");
     private final TabHeader.Tab<ModDownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
+    private final TabHeader.Tab<ModDownloadListPage> customizationTab = new TabHeader.Tab<>("customizationTab");
+    private final TabHeader.Tab<ModDownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
     private final TransitionPane transitionPane = new TransitionPane();
 
     private WeakListenerHolder listenerHolder;
 
     public DownloadPage() {
-        modTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_MODPACK, Versions::downloadModpackImpl));
-        modpackTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_MOD, this::download));
-        resourcePackTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_MOD, this::download));
-        tab = new TabHeader(modTab, modpackTab, resourcePackTab);
+        modpackTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_MODPACK, Versions::downloadModpackImpl));
+        modTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_MOD, (profile, version, file) -> download(profile, version, file, "mods")));
+        resourcePackTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_RESOURCE_PACK, (profile, version, file) -> download(profile, version, file, "resourcepacks")));
+//        customizationTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_CUSTOMIZATION, this::download));
+        worldTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_WORLD));
+        tab = new TabHeader(modpackTab, modTab, resourcePackTab, worldTab);
 
         Profiles.registerVersionsListener(this::loadVersions);
 
@@ -71,7 +75,7 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
         FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
             if (newValue.initializeIfNeeded()) {
                 if (newValue.getNode() instanceof VersionPage.VersionLoadable) {
-                    ((VersionPage.VersionLoadable) newValue.getNode()).loadVersion(Profiles.getSelectedProfile(), Profiles.getSelectedVersion());
+                    ((VersionPage.VersionLoadable) newValue.getNode()).loadVersion(Profiles.getSelectedProfile(), null);
                 }
             }
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE.getAnimationProducer());
@@ -79,6 +83,12 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
 
         {
             AdvancedListBox sideBar = new AdvancedListBox()
+                    .addNavigationDrawerItem(item -> {
+                        item.setTitle(i18n("install.new_game"));
+                        item.setLeftGraphic(wrap(SVG.gamepad(null, 20, 20)));
+                        item.setOnAction(e -> Versions.addNewGame());
+                    })
+                    .startCategory(i18n("download"))
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("mods"));
                         item.setLeftGraphic(wrap(SVG.puzzle(null, 20, 20)));
@@ -97,10 +107,17 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(resourcePackTab));
                         item.setOnAction(e -> tab.getSelectionModel().select(resourcePackTab));
                     })
+//                    .addNavigationDrawerItem(item -> {
+//                        item.setTitle(i18n("download.curseforge.customization"));
+//                        item.setLeftGraphic(wrap(SVG.script(null, 20, 20)));
+//                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(customizationTab));
+//                        item.setOnAction(e -> tab.getSelectionModel().select(customizationTab));
+//                    })
                     .addNavigationDrawerItem(item -> {
-                        item.setTitle(i18n("install.new_game"));
-                        item.setLeftGraphic(wrap(SVG.gamepad(null, 20, 20)));
-                        item.setOnAction(e -> Versions.addNewGame());
+                        item.setTitle(i18n("world"));
+                        item.setLeftGraphic(wrap(SVG.earth(null, 20, 20)));
+                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(worldTab));
+                        item.setOnAction(e -> tab.getSelectionModel().select(worldTab));
                     });
             FXUtils.setLimitWidth(sideBar, 200);
             setLeft(sideBar);
@@ -109,12 +126,11 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
         setCenter(transitionPane);
     }
 
-    private void download(Profile profile, @Nullable String version, CurseAddon.LatestFile file) {
-        if (version == null) {
-            throw new InternalError();
-        }
+    private void download(Profile profile, @Nullable String version, CurseAddon.LatestFile file, String subdirectoryName) {
+        if (version == null) version = profile.getSelectedVersion();
 
-        Path dest = profile.getRepository().getRunDirectory(version).toPath().resolve("mods").resolve(file.getFileName());
+        Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version).toPath() : profile.getRepository().getBaseDirectory().toPath();
+        Path dest = runDirectory.resolve(subdirectoryName).resolve(file.getFileName());
 
         TaskExecutorDialogPane downloadingPane = new TaskExecutorDialogPane(it -> {
         });
@@ -134,19 +150,21 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
         WeakListenerHolder listenerHolder = new WeakListenerHolder();
         runInFX(() -> {
             if (profile == Profiles.getSelectedProfile()) {
-                profile.selectedVersionProperty().addListener(listenerHolder.weak((a, b, newValue) -> {
-                    FXUtils.checkFxUserThread();
-
-                    if (modTab.isInitialized()) {
-                        modTab.getNode().loadVersion(profile, newValue);
-                    }
-                    if (modpackTab.isInitialized()) {
-                        modpackTab.getNode().loadVersion(profile, newValue);
-                    }
-                    if (resourcePackTab.isInitialized()) {
-                        resourcePackTab.getNode().loadVersion(profile, newValue);
-                    }
-                }));
+                if (modTab.isInitialized()) {
+                    modTab.getNode().loadVersion(profile, null);
+                }
+                if (modpackTab.isInitialized()) {
+                    modpackTab.getNode().loadVersion(profile, null);
+                }
+                if (resourcePackTab.isInitialized()) {
+                    resourcePackTab.getNode().loadVersion(profile, null);
+                }
+                if (customizationTab.isInitialized()) {
+                    customizationTab.getNode().loadVersion(profile, null);
+                }
+                if (worldTab.isInitialized()) {
+                    worldTab.getNode().loadVersion(profile, null);
+                }
             }
         });
     }

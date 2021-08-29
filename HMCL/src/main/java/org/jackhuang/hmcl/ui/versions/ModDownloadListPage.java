@@ -56,12 +56,17 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
     private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
     private final ListProperty<CurseAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
     private final ModDownloadPage.DownloadCallback callback;
+    private boolean searchInitialized = false;
 
     /**
      * @see org.jackhuang.hmcl.mod.curse.CurseModManager#SECTION_MODPACK
      * @see org.jackhuang.hmcl.mod.curse.CurseModManager#SECTION_MOD
      */
     private final int section;
+
+    public ModDownloadListPage(int section) {
+        this(section, null);
+    }
 
     public ModDownloadListPage(int section, ModDownloadPage.DownloadCallback callback) {
         this.section = section;
@@ -74,6 +79,11 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
 
         setLoading(false);
         setFailed(false);
+
+        if (!searchInitialized) {
+            searchInitialized = true;
+            search("", 0, 0, "", 0);
+        }
     }
 
     public boolean isFailed() {

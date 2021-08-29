@@ -207,6 +207,10 @@
     -fx-font-size: 12px;
 }
 
+.two-line-list-item > HBox > HBox {
+    -fx-spacing: 8;
+}
+
 .two-line-list-item > HBox > HBox > .tag {
     -fx-text-fill: -fx-base-color;
     -fx-background-color: -fx-base-rippler-color;

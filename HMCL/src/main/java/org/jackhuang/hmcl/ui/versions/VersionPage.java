@@ -275,8 +275,8 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
 
                 AdvancedListItem worldListItem = new AdvancedListItem();
                 worldListItem.getStyleClass().add("navigation-drawer-item");
-                worldListItem.setTitle(i18n("world"));
-                worldListItem.setLeftGraphic(wrap(SVG.gamepad(null, 20, 20)));
+                worldListItem.setTitle(i18n("world.manage"));
+                worldListItem.setLeftGraphic(wrap(SVG.earth(null, 20, 20)));
                 worldListItem.setActionButtonVisible(false);
                 worldListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.worldListTab));
                 worldListItem.setOnAction(e -> control.tab.getSelectionModel().select(control.worldListTab));
@@ -298,7 +298,7 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
                         new IconedMenuItem(FXUtils.limitingSize(SVG.gearOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.config"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("config"), browsePopup)),
                         new IconedMenuItem(FXUtils.limitingSize(SVG.texture(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.resourcepacks"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("resourcepacks"), browsePopup)),
                         new IconedMenuItem(FXUtils.limitingSize(SVG.monitorScreenshot(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.screenshots"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("screenshots"), browsePopup)),
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.gamepad(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.saves"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("saves"), browsePopup))
+                        new IconedMenuItem(FXUtils.limitingSize(SVG.earth(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.saves"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("saves"), browsePopup))
                 );
 
                 PopupMenu managementList = new PopupMenu();

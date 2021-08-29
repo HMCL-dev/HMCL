@@ -29,13 +29,19 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.mod.curse.CurseAddon;
 import org.jackhuang.hmcl.mod.curse.CurseModManager;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.FloatListCell;
@@ -43,6 +49,7 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -66,7 +73,7 @@ public class ModDownloadPage extends Control implements DecoratorPage {
     private final Profile.ProfileVersion version;
     private final DownloadCallback callback;
 
-    public ModDownloadPage(CurseAddon addon, Profile.ProfileVersion version, DownloadCallback callback) {
+    public ModDownloadPage(CurseAddon addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
         this.addon = addon;
         this.version = version;
         this.callback = callback;
@@ -91,7 +98,7 @@ public class ModDownloadPage extends Control implements DecoratorPage {
             items.setAll(files);
         }).start();
 
-        this.state.set(State.fromTitle(i18n("mods.download.title", addon.getName())));
+        this.state.set(State.fromTitle(addon.getName()));
     }
 
     public CurseAddon getAddon() {
@@ -127,7 +134,29 @@ public class ModDownloadPage extends Control implements DecoratorPage {
     }
 
     public void download(CurseAddon.LatestFile file) {
-        this.callback.download(version.getProfile(), version.getVersion(), file);
+        if (this.callback == null) {
+            saveAs(file);
+        } else {
+            this.callback.download(version.getProfile(), version.getVersion(), file);
+        }
+    }
+
+    public void saveAs(CurseAddon.LatestFile file) {
+        String extension = StringUtils.substringAfterLast(file.getFileName(), '.');
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(i18n("button.save_as"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("file"), "*." + extension));
+        fileChooser.setInitialFileName(file.getFileName());
+        File dest = fileChooser.showSaveDialog(Controllers.getStage());
+        if (dest == null) {
+            return;
+        }
+
+        Controllers.taskDialog(
+                new FileDownloadTask(NetworkUtils.toURL(file.getDownloadUrl()), dest).executor(true),
+                i18n("message.downloading")
+        );
     }
 
     @Override
@@ -194,12 +223,18 @@ public class ModDownloadPage extends Control implements DecoratorPage {
                 listView.setCellFactory(x -> new FloatListCell<CurseAddon.LatestFile>(listView) {
                     TwoLineListItem content = new TwoLineListItem();
                     StackPane graphicPane = new StackPane();
+                    JFXButton saveAsButton = new JFXButton();
 
                     {
                         HBox container = new HBox(8);
                         container.setAlignment(Pos.CENTER_LEFT);
                         pane.getChildren().add(container);
-                        container.getChildren().setAll(graphicPane, content);
+
+                        saveAsButton.getStyleClass().add("toggle-icon4");
+                        saveAsButton.setGraphic(SVG.contentSaveMoveOutline(Theme.blackFillBinding(), -1, -1));
+
+                        HBox.setHgrow(content, Priority.ALWAYS);
+                        container.getChildren().setAll(graphicPane, content, saveAsButton);
                     }
 
                     @Override
@@ -208,6 +243,7 @@ public class ModDownloadPage extends Control implements DecoratorPage {
                         content.setTitle(dataItem.getDisplayName());
                         content.setSubtitle(FORMATTER.format(dataItem.getParsedFileDate()));
                         content.getTags().setAll(dataItem.getGameVersion());
+                        saveAsButton.setOnMouseClicked(e -> getSkinnable().saveAs(dataItem));
 
                         switch (dataItem.getReleaseType()) {
                             case 1: // release

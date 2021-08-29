@@ -65,10 +65,13 @@ public final class CurseModManager {
         return result;
     }
 
-    public static final int SECTION_MODPACK = 4471;
+    public static final int SECTION_BUKKIT_PLUGIN = 5;
     public static final int SECTION_MOD = 6;
+    public static final int SECTION_RESOURCE_PACK = 12;
+    public static final int SECTION_WORLD = 17;
+    public static final int SECTION_MODPACK = 4471;
     public static final int SECTION_CUSTOMIZATION = 4546;
-    public static final int SECTION_ADDONS = 4559;
+    public static final int SECTION_ADDONS = 4559; // For Pocket Edition
     public static final int SECTION_UNKNOWN1 = 4944;
     public static final int SECTION_UNKNOWN2 = 4979;
     public static final int SECTION_UNKNOWN3 = 4984;
