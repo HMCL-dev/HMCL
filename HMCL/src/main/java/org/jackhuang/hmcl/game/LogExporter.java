@@ -28,6 +28,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -41,7 +42,10 @@ public final class LogExporter {
         List<String> versions = new ArrayList<>();
 
         String currentVersionId = versionId;
+        HashSet<String> resolvedSoFar = new HashSet<>();
         while (true) {
+            if (resolvedSoFar.contains(currentVersionId)) break;
+            resolvedSoFar.add(currentVersionId);
             Version currentVersion = gameRepository.getVersion(currentVersionId);
             versions.add(currentVersionId);
 
