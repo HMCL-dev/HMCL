@@ -182,7 +182,7 @@ public final class LauncherHelper {
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     return new HMCLGameLauncher(
                             repository,
-                            version.getPatches().isEmpty() ? repository.getResolvedVersion(selectedVersion) : version,
+                            version,
                             authInfo,
                             repository.getLaunchOptions(selectedVersion, profile.getGameDir(), !setting.isNotCheckJVM()),
                             launcherVisibility == LauncherVisibility.CLOSE
