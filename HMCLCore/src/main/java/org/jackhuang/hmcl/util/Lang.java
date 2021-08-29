@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,17 +17,12 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
-import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
+import org.jackhuang.hmcl.util.function.*;
 
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BinaryOperator;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.*;
 
 /**
  *
@@ -254,6 +249,70 @@ public final class Lang {
     public static <T> T apply(T t, Consumer<T> consumer) {
         consumer.accept(t);
         return t;
+    }
+
+    public static void rethrow(Throwable e) {
+        if (e == null)
+            return;
+        if (e instanceof ExecutionException || e instanceof CompletionException) { // including UncheckedException and UncheckedThrowable
+            rethrow(e.getCause());
+        } else if (e instanceof RuntimeException) {
+            throw (RuntimeException) e;
+        } else {
+            throw new CompletionException(e);
+        }
+    }
+
+    public static Runnable wrap(ExceptionalRunnable<?> runnable) {
+        return () -> {
+            try {
+                runnable.run();
+            } catch (Exception e) {
+                rethrow(e);
+            }
+        };
+    }
+
+    public static <T> Supplier<T> wrap(ExceptionalSupplier<T, ?> supplier) {
+        return () -> {
+            try {
+                return supplier.get();
+            } catch (Exception e) {
+                rethrow(e);
+                throw new InternalError("Unreachable code");
+            }
+        };
+    }
+
+    public static <T, R> Function<T, R> wrap(ExceptionalFunction<T, R, ?> fn) {
+        return t -> {
+            try {
+                return fn.apply(t);
+            } catch (Exception e) {
+                rethrow(e);
+                throw new InternalError("Unreachable code");
+            }
+        };
+    }
+
+    public static <T> Consumer<T> wrapConsumer(ExceptionalConsumer<T, ?> fn) {
+        return t -> {
+            try {
+                fn.accept(t);
+            } catch (Exception e) {
+                rethrow(e);
+            }
+        };
+    }
+
+    public static <T, E> BiConsumer<T, E> wrap(ExceptionalBiConsumer<T, E, ?> fn) {
+        return (t, e) -> {
+            try {
+                fn.accept(t, e);
+            } catch (Exception ex) {
+                rethrow(ex);
+            }
+        };
     }
 
     /**

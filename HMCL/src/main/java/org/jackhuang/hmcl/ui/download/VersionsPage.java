@@ -37,7 +37,6 @@ import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
-import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -47,9 +46,12 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.Locales;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -86,7 +88,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     private StackPane center;
 
     private VersionList<?> versionList;
-    private TaskExecutor executor;
+    private CompletableFuture<?> executor;
 
     public VersionsPage(WizardController controller, String title, String gameVersion, DownloadProvider downloadProvider, String libraryId, Runnable callback) {
         this.title = title;
@@ -129,35 +131,55 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                 setGraphic(pane);
 
                 content.setTitle(remoteVersion.getSelfVersion());
-                content.setSubtitle(remoteVersion.getGameVersion());
+                if (remoteVersion.getReleaseDate() != null) {
+                    content.setSubtitle(Locales.DATE_TIME_FORMATTER.get().format(remoteVersion.getReleaseDate()));
+                } else {
+                    content.setSubtitle("");
+                }
 
                 if (remoteVersion instanceof GameRemoteVersion) {
                     switch (remoteVersion.getVersionType()) {
                         case RELEASE:
-                            content.setSubtitle(i18n("version.game.release"));
+                            content.getTags().setAll(i18n("version.game.release"));
                             content.setImage(new Image("/assets/img/grass.png", 32, 32, false, true));
                             break;
                         case SNAPSHOT:
-                            content.setSubtitle(i18n("version.game.snapshot"));
+                            content.getTags().setAll(i18n("version.game.snapshot"));
                             content.setImage(new Image("/assets/img/command.png", 32, 32, false, true));
                             break;
                         default:
-                            content.setSubtitle(i18n("version.game.old"));
+                            content.getTags().setAll(i18n("version.game.old"));
                             content.setImage(new Image("/assets/img/craft_table.png", 32, 32, false, true));
                             break;
                     }
                 } else if (remoteVersion instanceof LiteLoaderRemoteVersion) {
                     content.setImage(new Image("/assets/img/chicken.png", 32, 32, false, true));
-                    content.setSubtitle(remoteVersion.getGameVersion());
+                    if (StringUtils.isNotBlank(content.getSubtitle())) {
+                        content.getTags().setAll(remoteVersion.getGameVersion());
+                    } else {
+                        content.setSubtitle(remoteVersion.getGameVersion());
+                    }
                 } else if (remoteVersion instanceof OptiFineRemoteVersion) {
                     content.setImage(new Image("/assets/img/command.png", 32, 32, false, true));
-                    content.setSubtitle(remoteVersion.getGameVersion());
+                    if (StringUtils.isNotBlank(content.getSubtitle())) {
+                        content.getTags().setAll(remoteVersion.getGameVersion());
+                    } else {
+                        content.setSubtitle(remoteVersion.getGameVersion());
+                    }
                 } else if (remoteVersion instanceof ForgeRemoteVersion) {
                     content.setImage(new Image("/assets/img/forge.png", 32, 32, false, true));
-                    content.setSubtitle(remoteVersion.getGameVersion());
+                    if (StringUtils.isNotBlank(content.getSubtitle())) {
+                        content.getTags().setAll(remoteVersion.getGameVersion());
+                    } else {
+                        content.setSubtitle(remoteVersion.getGameVersion());
+                    }
                 } else if (remoteVersion instanceof FabricRemoteVersion) {
                     content.setImage(new Image("/assets/img/fabric.png", 32, 32, false, true));
-                    content.setSubtitle(remoteVersion.getGameVersion());
+                    if (StringUtils.isNotBlank(content.getSubtitle())) {
+                        content.getTags().setAll(remoteVersion.getGameVersion());
+                    } else {
+                        content.setSubtitle(remoteVersion.getGameVersion());
+                    }
                 }
             }
         });
@@ -193,7 +215,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     public void refresh() {
         VersionList<?> currentVersionList = versionList;
         root.setContent(spinner, ContainerAnimations.FADE.getAnimationProducer());
-        executor = currentVersionList.refreshAsync(gameVersion).whenComplete(exception -> {
+        executor = currentVersionList.refreshAsync(gameVersion).whenComplete((result, exception) -> {
             if (exception == null) {
                 List<RemoteVersion> items = loadVersions();
 
@@ -222,7 +244,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
             // https://github.com/huanghongxun/HMCL/issues/938
             System.gc();
-        }).executor().start();
+        });
     }
 
     @Override
@@ -234,7 +256,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     public void cleanup(Map<String, Object> settings) {
         settings.remove(libraryId);
         if (executor != null)
-            executor.cancel();
+            executor.cancel(true);
     }
 
     @FXML

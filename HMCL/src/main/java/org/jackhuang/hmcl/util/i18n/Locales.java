@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,11 +21,17 @@ import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Lazy;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Locales {
     private Locales() {
@@ -129,4 +135,7 @@ public final class Locales {
             }
         }
     }
+
+    public static final Lazy<SimpleDateFormat> SIMPLE_DATE_FORMAT = new Lazy<>(() -> new SimpleDateFormat(i18n("world.time")));
+    public static final Lazy<DateTimeFormatter> DATE_TIME_FORMATTER = new Lazy<>(() -> DateTimeFormatter.ofPattern(i18n("world.time")).withZone(ZoneId.systemDefault()));
 }

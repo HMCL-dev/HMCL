@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -919,6 +920,15 @@ public abstract class Task<T> {
             task = task.thenComposeAsync(tasks[i]);
         }
         return task;
+    }
+
+    public static <T> Task<T> fromCompletableFuture(CompletableFuture<T> future) {
+        return new CompletableFutureTask<T>() {
+            @Override
+            public CompletableFuture<T> getFuture(TaskCompletableFuture executor) {
+                return future;
+            }
+        };
     }
 
     public enum TaskSignificance {

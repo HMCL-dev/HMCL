@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,6 +36,7 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
     private final String libraryId;
     private final String gameVersion;
     private final String selfVersion;
+    private final Instant releaseDate;
     private final List<String> urls;
     private final Type type;
 
@@ -45,8 +47,8 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
      * @param selfVersion the version string of the remote version.
      * @param urls        the installer or universal jar original URL.
      */
-    public RemoteVersion(String libraryId, String gameVersion, String selfVersion, List<String> urls) {
-        this(libraryId, gameVersion, selfVersion, Type.UNCATEGORIZED, urls);
+    public RemoteVersion(String libraryId, String gameVersion, String selfVersion, Instant releaseDate, List<String> urls) {
+        this(libraryId, gameVersion, selfVersion, releaseDate, Type.UNCATEGORIZED, urls);
     }
 
     /**
@@ -56,10 +58,11 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
      * @param selfVersion the version string of the remote version.
      * @param urls        the installer or universal jar URL.
      */
-    public RemoteVersion(String libraryId, String gameVersion, String selfVersion, Type type, List<String> urls) {
+    public RemoteVersion(String libraryId, String gameVersion, String selfVersion, Instant releaseDate, Type type, List<String> urls) {
         this.libraryId = Objects.requireNonNull(libraryId);
         this.gameVersion = Objects.requireNonNull(gameVersion);
         this.selfVersion = Objects.requireNonNull(selfVersion);
+        this.releaseDate = releaseDate;
         this.urls = Objects.requireNonNull(urls);
         this.type = Objects.requireNonNull(type);
     }
@@ -74,6 +77,10 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
 
     public String getSelfVersion() {
         return selfVersion;
+    }
+
+    public Instant getReleaseDate() {
+        return releaseDate;
     }
 
     public List<String> getUrls() {

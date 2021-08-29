@@ -1,16 +1,25 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.task;
-
-import org.jackhuang.hmcl.util.function.ExceptionalBiConsumer;
-import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
-import org.jackhuang.hmcl.util.function.ExceptionalFunction;
-import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public abstract class CompletableFutureTask<T> extends Task<T> {
 
@@ -19,59 +28,6 @@ public abstract class CompletableFutureTask<T> extends Task<T> {
     }
 
     public abstract CompletableFuture<T> getFuture(TaskCompletableFuture executor);
-
-    protected static Runnable wrap(ExceptionalRunnable<?> runnable) {
-        return () -> {
-            try {
-                runnable.run();
-            } catch (Exception e) {
-                rethrow(e);
-            }
-        };
-    }
-
-    protected static <T, R> Function<T, R> wrap(ExceptionalFunction<T, R, ?> fn) {
-        return t -> {
-            try {
-                return fn.apply(t);
-            } catch (Exception e) {
-                rethrow(e);
-                throw new InternalError("Unreachable code");
-            }
-        };
-    }
-
-    protected static <T> Consumer<T> wrap(ExceptionalConsumer<T, ?> fn) {
-        return t -> {
-            try {
-                fn.accept(t);
-            } catch (Exception e) {
-                rethrow(e);
-            }
-        };
-    }
-
-    protected static <T, E> BiConsumer<T, E> wrap(ExceptionalBiConsumer<T, E, ?> fn) {
-        return (t, e) -> {
-            try {
-                fn.accept(t, e);
-            } catch (Exception ex) {
-                rethrow(ex);
-            }
-        };
-    }
-
-    protected static void rethrow(Throwable e) {
-        if (e == null)
-            return;
-        if (e instanceof ExecutionException || e instanceof CompletionException) { // including UncheckedException and UncheckedThrowable
-            rethrow(e.getCause());
-        } else if (e instanceof RuntimeException) {
-            throw (RuntimeException) e;
-        } else {
-            throw new CompletionException(e);
-        }
-    }
 
     protected static Throwable resolveException(Throwable e) {
         if (e instanceof ExecutionException || e instanceof CompletionException)

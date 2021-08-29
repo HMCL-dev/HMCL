@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,10 +19,7 @@ package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.task.GetTask;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -30,9 +27,9 @@ import org.w3c.dom.Node;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  *
@@ -51,63 +48,54 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
         return false;
     }
 
-    @Override
-    public Task<?> refreshAsync() {
-        GetTask task = new GetTask(NetworkUtils.toURL(downloadProvider.injectURL(LITELOADER_LIST)));
-        return new Task<Void>() {
-            @Override
-            public Collection<Task<?>> getDependents() {
-                return Collections.singleton(task);
-            }
+    private void doBranch(String key, String gameVersion, LiteLoaderRepository repository, LiteLoaderBranch branch, boolean snapshot) {
+        if (branch == null || repository == null)
+            return;
 
-            @Override
-            public void execute() {
-                lock.writeLock().lock();
+        for (Map.Entry<String, LiteLoaderVersion> entry : branch.getLiteLoader().entrySet()) {
+            String branchName = entry.getKey();
+            LiteLoaderVersion v = entry.getValue();
+            if ("latest".equals(branchName))
+                continue;
 
+            String version = v.getVersion();
+            String url = repository.getUrl() + "com/mumfrey/liteloader/" + gameVersion + "/" + v.getFile();
+            if (snapshot) {
                 try {
-                    LiteLoaderVersionsRoot root = JsonUtils.GSON.fromJson(task.getResult(), LiteLoaderVersionsRoot.class);
-                    versions.clear();
-
-                    for (Map.Entry<String, LiteLoaderGameVersions> entry : root.getVersions().entrySet()) {
-                        String gameVersion = entry.getKey();
-                        LiteLoaderGameVersions liteLoader = entry.getValue();
-
-                        String gg = VersionNumber.normalize(gameVersion);
-                        doBranch(gg, gameVersion, liteLoader.getRepoitory(), liteLoader.getArtifacts(), false);
-                        doBranch(gg, gameVersion, liteLoader.getRepoitory(), liteLoader.getSnapshots(), true);
-                    }
-                } finally {
-                    lock.writeLock().unlock();
+                    version = version.replace("SNAPSHOT", getLatestSnapshotVersion(repository.getUrl() + "com/mumfrey/liteloader/" + v.getVersion() + "/"));
+                    url = repository.getUrl() + "com/mumfrey/liteloader/" + v.getVersion() + "/liteloader-" + version + "-release.jar";
+                } catch (Exception ignore) {
                 }
             }
 
-            private void doBranch(String key, String gameVersion, LiteLoaderRepository repository, LiteLoaderBranch branch, boolean snapshot) {
-                if (branch == null || repository == null)
-                    return;
+            versions.put(key, new LiteLoaderRemoteVersion(gameVersion,
+                    version, Collections.singletonList(url),
+                    v.getTweakClass(), v.getLibraries()
+            ));
+        }
+    }
 
-                for (Map.Entry<String, LiteLoaderVersion> entry : branch.getLiteLoader().entrySet()) {
-                    String branchName = entry.getKey();
-                    LiteLoaderVersion v = entry.getValue();
-                    if ("latest".equals(branchName))
-                        continue;
+    @Override
+    public CompletableFuture<?> refreshAsync() {
+        return HttpRequest.GET(downloadProvider.injectURL(LITELOADER_LIST)).getJsonAsync(LiteLoaderVersionsRoot.class)
+                .thenAcceptAsync(root -> {
+                    lock.writeLock().lock();
 
-                    String version = v.getVersion();
-                    String url = repository.getUrl() + "com/mumfrey/liteloader/" + gameVersion + "/" + v.getFile();
-                    if (snapshot) {
-                        try {
-                            version = version.replace("SNAPSHOT", getLatestSnapshotVersion(repository.getUrl() + "com/mumfrey/liteloader/" + v.getVersion() + "/"));
-                            url = repository.getUrl() + "com/mumfrey/liteloader/" + v.getVersion() + "/liteloader-" + version + "-release.jar";
-                        } catch (Exception ignore) {
+                    try {
+                        versions.clear();
+
+                        for (Map.Entry<String, LiteLoaderGameVersions> entry : root.getVersions().entrySet()) {
+                            String gameVersion = entry.getKey();
+                            LiteLoaderGameVersions liteLoader = entry.getValue();
+
+                            String gg = VersionNumber.normalize(gameVersion);
+                            doBranch(gg, gameVersion, liteLoader.getRepoitory(), liteLoader.getArtifacts(), false);
+                            doBranch(gg, gameVersion, liteLoader.getRepoitory(), liteLoader.getSnapshots(), true);
                         }
+                    } finally {
+                        lock.writeLock().unlock();
                     }
-
-                    versions.put(key, new LiteLoaderRemoteVersion(gameVersion,
-                            version, Collections.singletonList(url),
-                            v.getTweakClass(), v.getLibraries()
-                    ));
-                }
-            }
-        };
+                });
     }
 
     public static final String LITELOADER_LIST = "http://dl.liteloader.com/versions/versions.json";

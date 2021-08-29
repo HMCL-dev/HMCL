@@ -204,7 +204,7 @@ public class MicrosoftService {
     public Optional<MinecraftProfileResponse> getCompleteProfile(String authorization) throws AuthenticationException {
         try {
             return Optional.ofNullable(
-                    HttpRequest.GET(NetworkUtils.toURL("https://api.minecraftservices.com/minecraft/profile"))
+                    HttpRequest.GET("https://api.minecraftservices.com/minecraft/profile")
                             .authorization(authorization).getJson(MinecraftProfileResponse.class));
         } catch (IOException e) {
             throw new ServerDisconnectException(e);

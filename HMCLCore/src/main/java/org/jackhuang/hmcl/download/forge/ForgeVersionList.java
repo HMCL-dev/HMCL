@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,16 +19,13 @@ package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.task.GetTask;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  *
@@ -47,53 +44,42 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
     }
 
     @Override
-    public Task<?> refreshAsync() {
-        final GetTask task = new GetTask(NetworkUtils.toURL(downloadProvider.injectURL(FORGE_LIST)));
-        return new Task<Void>() {
+    public CompletableFuture<?> refreshAsync() {
+        return HttpRequest.GET(downloadProvider.injectURL(FORGE_LIST)).getJsonAsync(ForgeVersionRoot.class)
+                .thenAcceptAsync(root -> {
+                    lock.writeLock().lock();
 
-            @Override
-            public Collection<Task<?>> getDependents() {
-                return Collections.singleton(task);
-            }
+                    try {
+                        if (root == null)
+                            return;
+                        versions.clear();
 
-            @Override
-            public void execute() {
-                lock.writeLock().lock();
+                        for (Map.Entry<String, int[]> entry : root.getGameVersions().entrySet()) {
+                            String gameVersion = VersionNumber.normalize(entry.getKey());
+                            for (int v : entry.getValue()) {
+                                ForgeVersion version = root.getNumber().get(v);
+                                if (version == null)
+                                    continue;
+                                String jar = null;
+                                for (String[] file : version.getFiles())
+                                    if (file.length > 1 && "installer".equals(file[1])) {
+                                        String classifier = version.getGameVersion() + "-" + version.getVersion()
+                                                + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
+                                        String fileName = root.getArtifact() + "-" + classifier + "-" + file[1] + "." + file[0];
+                                        jar = root.getWebPath() + classifier + "/" + fileName;
+                                    }
 
-                try {
-                    ForgeVersionRoot root = JsonUtils.GSON.fromJson(task.getResult(), ForgeVersionRoot.class);
-                    if (root == null)
-                        return;
-                    versions.clear();
-
-                    for (Map.Entry<String, int[]> entry : root.getGameVersions().entrySet()) {
-                        String gameVersion = VersionNumber.normalize(entry.getKey());
-                        for (int v : entry.getValue()) {
-                            ForgeVersion version = root.getNumber().get(v);
-                            if (version == null)
-                                continue;
-                            String jar = null;
-                            for (String[] file : version.getFiles())
-                                if (file.length > 1 && "installer".equals(file[1])) {
-                                    String classifier = version.getGameVersion() + "-" + version.getVersion()
-                                            + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
-                                    String fileName = root.getArtifact() + "-" + classifier + "-" + file[1] + "." + file[0];
-                                    jar = root.getWebPath() + classifier + "/" + fileName;
-                                }
-
-                            if (jar == null)
-                                continue;
-                            versions.put(gameVersion, new ForgeRemoteVersion(
-                                    version.getGameVersion(), version.getVersion(), Collections.singletonList(jar)
-                            ));
+                                if (jar == null)
+                                    continue;
+                                versions.put(gameVersion, new ForgeRemoteVersion(
+                                        version.getGameVersion(), version.getVersion(), null, Collections.singletonList(jar)
+                                ));
+                            }
                         }
+                    } finally {
+                        lock.writeLock().unlock();
                     }
-                } finally {
-                    lock.writeLock().unlock();
-                }
-            }
-
-        };
+                });
     }
 
     public static final String FORGE_LIST = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/json";

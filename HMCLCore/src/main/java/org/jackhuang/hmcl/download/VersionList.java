@@ -17,10 +17,10 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -61,42 +61,44 @@ public abstract class VersionList<T extends RemoteVersion> {
     /**
      * @return the task to reload the remote version list.
      */
-    public abstract Task<?> refreshAsync();
+    public abstract CompletableFuture<?> refreshAsync();
 
     /**
      * @param gameVersion the remote version depends on
      * @return the task to reload the remote version list.
      */
-    public Task<?> refreshAsync(String gameVersion) {
+    public CompletableFuture<?> refreshAsync(String gameVersion) {
         return refreshAsync();
     }
 
-    public Task<?> loadAsync() {
-        return Task.composeAsync(() -> {
-            lock.readLock().lock();
-            boolean loaded;
+    public CompletableFuture<?> loadAsync() {
+        return CompletableFuture.completedFuture(null)
+                .thenComposeAsync(unused -> {
+                    lock.readLock().lock();
+                    boolean loaded;
 
-            try {
-                loaded = isLoaded();
-            } finally {
-                lock.readLock().unlock();
-            }
-            return loaded ? null : refreshAsync();
-        });
+                    try {
+                        loaded = isLoaded();
+                    } finally {
+                        lock.readLock().unlock();
+                    }
+                    return loaded ? CompletableFuture.completedFuture(null) : refreshAsync();
+                });
     }
 
-    public Task<?> loadAsync(String gameVersion) {
-        return Task.composeAsync(() -> {
-            lock.readLock().lock();
-            boolean loaded;
+    public CompletableFuture<?> loadAsync(String gameVersion) {
+        return CompletableFuture.completedFuture(null)
+                .thenComposeAsync(unused -> {
+                    lock.readLock().lock();
+                    boolean loaded;
 
-            try {
-                loaded = isLoaded(gameVersion);
-            } finally {
-                lock.readLock().unlock();
-            }
-            return loaded ? null : refreshAsync(gameVersion);
-        });
+                    try {
+                        loaded = isLoaded(gameVersion);
+                    } finally {
+                        lock.readLock().unlock();
+                    }
+                    return loaded ? CompletableFuture.completedFuture(null) : refreshAsync(gameVersion);
+                });
     }
 
     protected Collection<T> getVersionsImpl(String gameVersion) {

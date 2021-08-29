@@ -19,14 +19,15 @@ package org.jackhuang.hmcl.download.optifine;
 
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.task.GetTask;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  *
@@ -48,42 +49,33 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
     }
 
     @Override
-    public Task<?> refreshAsync() {
-        GetTask task = new GetTask(NetworkUtils.toURL(apiRoot + "/optifine/versionlist"));
-        return new Task<Void>() {
-            @Override
-            public Collection<Task<?>> getDependents() {
-                return Collections.singleton(task);
-            }
+    public CompletableFuture<?> refreshAsync() {
+        return HttpRequest.GET(apiRoot + "/optifine/versionlist").<List<OptiFineVersion>>getJsonAsync(new TypeToken<List<OptiFineVersion>>() {
+        }.getType())
+                .thenAcceptAsync(root -> {
+                    lock.writeLock().lock();
 
-            @Override
-            public void execute() {
-                lock.writeLock().lock();
+                    try {
+                        versions.clear();
+                        Set<String> duplicates = new HashSet<>();
+                        for (OptiFineVersion element : root) {
+                            String version = element.getType() + "_" + element.getPatch();
+                            String mirror = "https://bmclapi2.bangbang93.com/optifine/" + element.getGameVersion() + "/" + element.getType() + "/" + element.getPatch();
+                            if (!duplicates.add(mirror))
+                                continue;
 
-                try {
-                    versions.clear();
-                    Set<String> duplicates = new HashSet<>();
-                    List<OptiFineVersion> root = JsonUtils.GSON.fromJson(task.getResult(), new TypeToken<List<OptiFineVersion>>() {
-                    }.getType());
-                    for (OptiFineVersion element : root) {
-                        String version = element.getType() + "_" + element.getPatch();
-                        String mirror = "https://bmclapi2.bangbang93.com/optifine/" + element.getGameVersion() + "/" + element.getType() + "/" + element.getPatch();
-                        if (!duplicates.add(mirror))
-                            continue;
+                            boolean isPre = element.getPatch() != null && (element.getPatch().startsWith("pre") || element.getPatch().startsWith("alpha"));
 
-                        boolean isPre = element.getPatch() != null && (element.getPatch().startsWith("pre") || element.getPatch().startsWith("alpha"));
+                            if (StringUtils.isBlank(element.getGameVersion()))
+                                continue;
 
-                        if (StringUtils.isBlank(element.getGameVersion()))
-                            continue;
-
-                        String gameVersion = VersionNumber.normalize(element.getGameVersion());
-                        versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, Collections.singletonList(mirror), isPre));
+                            String gameVersion = VersionNumber.normalize(element.getGameVersion());
+                            versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, Collections.singletonList(mirror), isPre));
+                        }
+                    } finally {
+                        lock.writeLock().unlock();
                     }
-                } finally {
-                    lock.writeLock().unlock();
-                }
-            }
-        };
+                });
     }
 
 }

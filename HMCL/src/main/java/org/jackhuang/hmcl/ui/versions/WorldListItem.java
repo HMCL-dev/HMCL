@@ -29,10 +29,10 @@ import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
+import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
@@ -43,14 +43,13 @@ public class WorldListItem extends Control {
     private final StringProperty subtitle = new SimpleStringProperty();
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
     private final World world;
-    private final SimpleDateFormat simpleDateFormat;
 
     public WorldListItem(World world) {
         this.world = world;
-        this.simpleDateFormat = new SimpleDateFormat(i18n("world.time"));
 
         title.set(parseColorEscapes(world.getWorldName()));
-        subtitle.set(i18n("world.description", world.getFileName(), simpleDateFormat.format(new Date(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
+
+        subtitle.set(i18n("world.description", world.getFileName(), Locales.SIMPLE_DATE_FORMAT.get().format(new Date(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
     }
 
     @Override

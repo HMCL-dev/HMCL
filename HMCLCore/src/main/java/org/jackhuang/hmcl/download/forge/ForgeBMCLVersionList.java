@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,19 +20,26 @@ package org.jackhuang.hmcl.download.forge;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.task.GetTask;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
+import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Lang.wrap;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> {
@@ -51,64 +58,66 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
     }
 
     @Override
-    public Task<?> loadAsync() {
+    public CompletableFuture<?> loadAsync() {
         throw new UnsupportedOperationException("ForgeBMCLVersionList does not support loading the entire Forge remote version list.");
     }
 
     @Override
-    public Task<?> refreshAsync() {
+    public CompletableFuture<?> refreshAsync() {
         throw new UnsupportedOperationException("ForgeBMCLVersionList does not support loading the entire Forge remote version list.");
     }
 
     @Override
-    public Task<?> refreshAsync(String gameVersion) {
-        final GetTask task = new GetTask(NetworkUtils.toURL(apiRoot + "/forge/minecraft/" + gameVersion));
-        return new Task<Void>() {
-            @Override
-            public Collection<Task<?>> getDependents() {
-                return Collections.singleton(task);
-            }
+    public CompletableFuture<?> refreshAsync(String gameVersion) {
+        return CompletableFuture.completedFuture(null)
+                .thenApplyAsync(wrap(unused -> HttpRequest.GET(apiRoot + "/forge/minecraft/" + gameVersion).<List<ForgeVersion>>getJson(new TypeToken<List<ForgeVersion>>() {
+                }.getType())))
+                .thenAcceptAsync(forgeVersions -> {
+                    lock.writeLock().lock();
 
-            @Override
-            public void execute() {
-                lock.writeLock().lock();
+                    try {
+                        versions.clear(gameVersion);
+                        if (forgeVersions == null) return;
+                        for (ForgeVersion version : forgeVersions) {
+                            if (version == null)
+                                continue;
+                            List<String> urls = new ArrayList<>();
+                            for (ForgeVersion.File file : version.getFiles())
+                                if ("installer".equals(file.getCategory()) && "jar".equals(file.getFormat())) {
+                                    String classifier = gameVersion + "-" + version.getVersion()
+                                            + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
+                                    String fileName1 = "forge-" + classifier + "-" + file.getCategory() + "." + file.getFormat();
+                                    String fileName2 = "forge-" + classifier + "-" + gameVersion + "-" + file.getCategory() + "." + file.getFormat();
+                                    urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "/" + fileName1);
+                                    urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "-" + gameVersion + "/" + fileName2);
+                                    urls.add(NetworkUtils.withQuery("https://bmclapi2.bangbang93.com/forge/download", mapOf(
+                                            pair("mcversion", version.getGameVersion()),
+                                            pair("version", version.getVersion()),
+                                            pair("branch", version.getBranch()),
+                                            pair("category", file.getCategory()),
+                                            pair("format", file.getFormat())
+                                    )));
+                                }
 
-                try {
-                    List<ForgeVersion> forgeVersions = JsonUtils.GSON.fromJson(task.getResult(), new TypeToken<List<ForgeVersion>>() {
-                    }.getType());
-                    versions.clear(gameVersion);
-                    if (forgeVersions == null) return;
-                    for (ForgeVersion version : forgeVersions) {
-                        if (version == null)
-                            continue;
-                        List<String> urls = new ArrayList<>();
-                        for (ForgeVersion.File file : version.getFiles())
-                            if ("installer".equals(file.getCategory()) && "jar".equals(file.getFormat())) {
-                                String classifier = gameVersion + "-" + version.getVersion()
-                                        + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
-                                String fileName1 = "forge-" + classifier + "-" + file.getCategory() + "." + file.getFormat();
-                                String fileName2 = "forge-" + classifier + "-" + gameVersion + "-" + file.getCategory() + "." + file.getFormat();
-                                urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "/" + fileName1);
-                                urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "-" + gameVersion + "/" + fileName2);
-                                urls.add(NetworkUtils.withQuery("https://bmclapi2.bangbang93.com/forge/download", mapOf(
-                                        pair("mcversion", version.getGameVersion()),
-                                        pair("version", version.getVersion()),
-                                        pair("branch", version.getBranch()),
-                                        pair("category", file.getCategory()),
-                                        pair("format", file.getFormat())
-                                )));
+                            if (urls.isEmpty())
+                                continue;
+
+                            Instant releaseDate = null;
+                            if (version.getModified() != null) {
+                                try {
+                                    releaseDate = Instant.parse(version.getModified());
+                                } catch (DateTimeParseException e) {
+                                    LOG.log(Level.WARNING, "Failed to parse instant " + version.getModified(), e);
+                                }
                             }
 
-                        if (urls.isEmpty())
-                            continue;
-                        versions.put(gameVersion, new ForgeRemoteVersion(
-                                version.getGameVersion(), version.getVersion(), urls));
+                            versions.put(gameVersion, new ForgeRemoteVersion(
+                                    version.getGameVersion(), version.getVersion(), releaseDate, urls));
+                        }
+                    } finally {
+                        lock.writeLock().unlock();
                     }
-                } finally {
-                    lock.writeLock().unlock();
-                }
-            }
-        };
+                });
     }
 
     @Override
@@ -121,7 +130,9 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
     public static final class ForgeVersion implements Validation {
 
         private final String branch;
+        private final int build;
         private final String mcversion;
+        private final String modified;
         private final String version;
         private final List<File> files;
 
@@ -130,12 +141,14 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
          */
         @SuppressWarnings("unused")
         public ForgeVersion() {
-            this(null, null, null, null);
+            this(null, 0, "", null, "", Collections.emptyList());
         }
 
-        public ForgeVersion(String branch, String mcversion, String version, List<File> files) {
+        public ForgeVersion(String branch, int build, String mcversion, String modified, String version, List<File> files) {
             this.branch = branch;
+            this.build = build;
             this.mcversion = mcversion;
+            this.modified = modified;
             this.version = version;
             this.files = files;
         }
@@ -145,9 +158,18 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
             return branch;
         }
 
+        public int getBuild() {
+            return build;
+        }
+
         @NotNull
         public String getGameVersion() {
             return mcversion;
+        }
+
+        @Nullable
+        public String getModified() {
+            return modified;
         }
 
         @NotNull

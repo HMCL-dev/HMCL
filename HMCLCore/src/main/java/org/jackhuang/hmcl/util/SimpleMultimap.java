@@ -70,6 +70,11 @@ public final class SimpleMultimap<K, V> {
         set.add(value);
     }
 
+    public void putAll(K key, Collection<? extends V> value) {
+        Collection<V> set = get(key);
+        set.addAll(value);
+    }
+
     public Collection<V> removeKey(K key) {
         return map.remove(key);
     }

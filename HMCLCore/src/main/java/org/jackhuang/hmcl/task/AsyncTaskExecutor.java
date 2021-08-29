@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,15 +20,14 @@ package org.jackhuang.hmcl.task;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 
-import java.util.*;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.concurrent.*;
 import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.util.Lang.rethrow;
+import static org.jackhuang.hmcl.util.Lang.wrap;
 
 /**
  *
@@ -324,28 +323,6 @@ public final class AsyncTaskExecutor extends TaskExecutor {
             return resolveException(e.getCause());
         else
             return e;
-    }
-
-    private static void rethrow(Throwable e) {
-        if (e == null)
-            return;
-        if (e instanceof ExecutionException || e instanceof CompletionException) { // including UncheckedException and UncheckedThrowable
-            rethrow(e.getCause());
-        } else if (e instanceof RuntimeException) {
-            throw (RuntimeException) e;
-        } else {
-            throw new CompletionException(e);
-        }
-    }
-
-    private static Runnable wrap(ExceptionalRunnable<?> runnable) {
-        return () -> {
-            try {
-                runnable.run();
-            } catch (Exception e) {
-                rethrow(e);
-            }
-        };
     }
 
     private void checkCancellation() {

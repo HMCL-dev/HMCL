@@ -19,14 +19,11 @@ package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.task.GetTask;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.util.Collection;
 import java.util.Collections;
-
-import static org.jackhuang.hmcl.util.gson.JsonUtils.GSON;
+import java.util.concurrent.CompletableFuture;
 
 /**
  *
@@ -50,11 +47,9 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
     }
 
     @Override
-    public Task<?> refreshAsync() {
-        return new GetTask(NetworkUtils.toURL(downloadProvider.getVersionListURL()))
-                .thenAcceptAsync(json -> {
-                    GameRemoteVersions root = GSON.fromJson(json, GameRemoteVersions.class);
-
+    public CompletableFuture<?> refreshAsync() {
+        return HttpRequest.GET(downloadProvider.getVersionListURL()).getJsonAsync(GameRemoteVersions.class)
+                .thenAcceptAsync(root -> {
                     lock.writeLock().lock();
                     try {
                         versions.clear();
@@ -64,7 +59,7 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
                                     remoteVersion.getGameVersion(),
                                     remoteVersion.getGameVersion(),
                                     Collections.singletonList(remoteVersion.getUrl()),
-                                    remoteVersion.getType(), remoteVersion.getReleaseTime()));
+                                    remoteVersion.getType(), remoteVersion.getReleaseTime().toInstant()));
                         }
                     } finally {
                         lock.writeLock().unlock();

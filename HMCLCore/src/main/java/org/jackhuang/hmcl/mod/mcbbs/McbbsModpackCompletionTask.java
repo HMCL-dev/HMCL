@@ -51,6 +51,8 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
 import static org.jackhuang.hmcl.util.Hex.encodeHex;
+import static org.jackhuang.hmcl.util.Lang.wrap;
+import static org.jackhuang.hmcl.util.Lang.wrapConsumer;
 
 public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
 
@@ -173,7 +175,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
 
                 manifest = remoteManifest.setFiles(newFiles);
                 return executor.all(tasks.stream().filter(Objects::nonNull).collect(Collectors.toList()));
-            })).thenAcceptAsync(wrap(unused1 -> {
+            })).thenAcceptAsync(wrapConsumer(unused1 -> {
                 File manifestFile = repository.getModpackConfiguration(version);
                 FileUtils.writeText(manifestFile, JsonUtils.GSON.toJson(
                         new ModpackConfiguration<>(manifest, this.configuration.getType(), this.manifest.getName(), this.manifest.getVersion(),

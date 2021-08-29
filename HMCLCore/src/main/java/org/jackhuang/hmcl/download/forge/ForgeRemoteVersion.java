@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 
+import java.time.Instant;
 import java.util.List;
 
 public class ForgeRemoteVersion extends RemoteVersion {
@@ -33,8 +34,8 @@ public class ForgeRemoteVersion extends RemoteVersion {
      * @param selfVersion the version string of the remote version.
      * @param url         the installer or universal jar original URL.
      */
-    public ForgeRemoteVersion(String gameVersion, String selfVersion, List<String> url) {
-        super(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), gameVersion, selfVersion, url);
+    public ForgeRemoteVersion(String gameVersion, String selfVersion, Instant instant, List<String> url) {
+        super(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), gameVersion, selfVersion, instant, url);
     }
 
     @Override

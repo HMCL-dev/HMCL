@@ -44,7 +44,7 @@ public final class VersionJsonDownloadTask extends Task<String> {
         this.dependencyManager = dependencyManager;
         this.gameVersionList = dependencyManager.getVersionList("game");
 
-        dependents.add(gameVersionList.loadAsync());
+        dependents.add(Task.fromCompletableFuture(gameVersionList.loadAsync()));
 
         setSignificance(TaskSignificance.MODERATE);
     }

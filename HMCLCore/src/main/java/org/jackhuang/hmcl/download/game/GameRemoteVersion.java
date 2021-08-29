@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -36,16 +36,10 @@ import java.util.List;
 public final class GameRemoteVersion extends RemoteVersion {
 
     private final ReleaseType type;
-    private final Date time;
 
-    public GameRemoteVersion(String gameVersion, String selfVersion, List<String> url, ReleaseType type, Date time) {
-        super(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion, selfVersion, getReleaseType(type), url);
+    public GameRemoteVersion(String gameVersion, String selfVersion, List<String> url, ReleaseType type, Instant releaseDate) {
+        super(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion, selfVersion, releaseDate, getReleaseType(type), url);
         this.type = type;
-        this.time = time;
-    }
-
-    public Date getTime() {
-        return time;
     }
 
     public ReleaseType getType() {
@@ -62,7 +56,7 @@ public final class GameRemoteVersion extends RemoteVersion {
         if (!(o instanceof GameRemoteVersion))
             return 0;
 
-        return ((GameRemoteVersion) o).getTime().compareTo(getTime());
+        return o.getReleaseDate().compareTo(getReleaseDate());
     }
 
     private static Type getReleaseType(ReleaseType type) {

@@ -28,7 +28,7 @@ import java.util.List;
 public class OptiFineRemoteVersion extends RemoteVersion {
 
     public OptiFineRemoteVersion(String gameVersion, String selfVersion, List<String> urls, boolean snapshot) {
-        super(LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId(), gameVersion, selfVersion, snapshot ? Type.SNAPSHOT : Type.RELEASE, urls);
+        super(LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId(), gameVersion, selfVersion, null, snapshot ? Type.SNAPSHOT : Type.RELEASE, urls);
     }
 
     @Override

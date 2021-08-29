@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ public class LiteLoaderRemoteVersion extends RemoteVersion {
      * @param urls        the installer or universal jar original URL.
      */
     LiteLoaderRemoteVersion(String gameVersion, String selfVersion, List<String> urls, String tweakClass, Collection<Library> libraries) {
-        super(LibraryAnalyzer.LibraryType.LITELOADER.getPatchId(), gameVersion, selfVersion, urls);
+        super(LibraryAnalyzer.LibraryType.LITELOADER.getPatchId(), gameVersion, selfVersion, null, urls);
 
         this.tweakClass = tweakClass;
         this.libraries = libraries;

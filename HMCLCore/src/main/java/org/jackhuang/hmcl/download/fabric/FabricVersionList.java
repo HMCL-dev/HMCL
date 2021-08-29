@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.download.fabric;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +28,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.Lang.wrap;
 
 public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
     private final DownloadProvider downloadProvider;
@@ -44,25 +46,22 @@ public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
     }
 
     @Override
-    public Task<?> refreshAsync() {
-        return new Task<Void>() {
-            @Override
-            public void execute() throws IOException {
-                List<String> gameVersions = getGameVersions(GAME_META_URL);
-                List<String> loaderVersions = getGameVersions(LOADER_META_URL);
+    public CompletableFuture<?> refreshAsync() {
+        return CompletableFuture.runAsync(wrap(() -> {
+            List<String> gameVersions = getGameVersions(GAME_META_URL);
+            List<String> loaderVersions = getGameVersions(LOADER_META_URL);
 
-                lock.writeLock().lock();
+            lock.writeLock().lock();
 
-                try {
-                    for (String gameVersion : gameVersions)
-                        for (String loaderVersion : loaderVersions)
-                            versions.put(gameVersion, new FabricRemoteVersion(gameVersion, loaderVersion,
-                                    Collections.singletonList(getLaunchMetaUrl(gameVersion, loaderVersion))));
-                } finally {
-                    lock.writeLock().unlock();
-                }
+            try {
+                for (String gameVersion : gameVersions)
+                    for (String loaderVersion : loaderVersions)
+                        versions.put(gameVersion, new FabricRemoteVersion(gameVersion, loaderVersion,
+                                Collections.singletonList(getLaunchMetaUrl(gameVersion, loaderVersion))));
+            } finally {
+                lock.writeLock().unlock();
             }
-        };
+        }));
     }
 
     private static final String LOADER_META_URL = "https://meta.fabricmc.net/v2/versions/loader";
