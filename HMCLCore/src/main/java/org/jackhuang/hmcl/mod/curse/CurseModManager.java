@@ -67,6 +67,11 @@ public final class CurseModManager {
 
     public static final int SECTION_MODPACK = 4471;
     public static final int SECTION_MOD = 6;
+    public static final int SECTION_CUSTOMIZATION = 4546;
+    public static final int SECTION_ADDONS = 4559;
+    public static final int SECTION_UNKNOWN1 = 4944;
+    public static final int SECTION_UNKNOWN2 = 4979;
+    public static final int SECTION_UNKNOWN3 = 4984;
 
     public static class Category {
         private final int id;
