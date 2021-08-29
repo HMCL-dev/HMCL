@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -314,11 +314,31 @@ public class DefaultGameRepository implements GameRepository {
                 }
 
                 if (!id.equals(version.getId())) {
-                    version = version.setId(id);
                     try {
-                        FileUtils.writeText(json, JsonUtils.GSON.toJson(version));
-                    } catch (Exception e) {
-                        LOG.log(Level.WARNING, "Ignoring version " + id + " because wrong id " + version.getId() + " is set and cannot correct it.", e);
+                        String from = id;
+                        String to = version.getId();
+                        Path fromDir = getVersionRoot(from).toPath();
+                        Path toDir = getVersionRoot(to).toPath();
+                        Files.move(fromDir, toDir);
+
+                        Path fromJson = toDir.resolve(from + ".json");
+                        Path fromJar = toDir.resolve(from + ".jar");
+                        Path toJson = toDir.resolve(to + ".json");
+                        Path toJar = toDir.resolve(to + ".jar");
+
+                        try {
+                            Files.move(fromJson, toJson);
+                            if (Files.exists(fromJar))
+                                Files.move(fromJar, toJar);
+                        } catch (IOException e) {
+                            // recovery
+                            Lang.ignoringException(() -> Files.move(toJson, fromJson));
+                            Lang.ignoringException(() -> Files.move(toJar, fromJar));
+                            Lang.ignoringException(() -> Files.move(toDir, fromDir));
+                            throw e;
+                        }
+                    } catch (IOException e) {
+                        LOG.log(Level.WARNING, "Ignoring version " + version.getId() + " because version id does not match folder name " + id + ", and we cannot correct it.", e);
                         return Stream.empty();
                     }
                 }
