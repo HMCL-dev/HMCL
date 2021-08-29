@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.download;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * Official Download Provider fetches version list from Mojang and
  * download files from mcbbs.
@@ -24,29 +27,70 @@ package org.jackhuang.hmcl.download;
  * @author huangyuhui
  */
 public class BalancedDownloadProvider implements DownloadProvider {
+    List<DownloadProvider> candidates;
+
+    VersionList<?> game, fabric, forge, liteLoader, optifine;
+
+    public BalancedDownloadProvider(List<DownloadProvider> candidates) {
+        this.candidates = candidates;
+
+        this.game = new MultipleSourceVersionList(
+                candidates.stream()
+                        .map(downloadProvider -> downloadProvider.getVersionListById("game"))
+                        .collect(Collectors.toList()));
+        this.fabric = new MultipleSourceVersionList(
+                candidates.stream()
+                        .map(downloadProvider -> downloadProvider.getVersionListById("fabric"))
+                        .collect(Collectors.toList()));
+        this.forge = new MultipleSourceVersionList(
+                candidates.stream()
+                        .map(downloadProvider -> downloadProvider.getVersionListById("forge"))
+                        .collect(Collectors.toList()));
+        this.liteLoader = new MultipleSourceVersionList(
+                candidates.stream()
+                        .map(downloadProvider -> downloadProvider.getVersionListById("liteloader"))
+                        .collect(Collectors.toList()));
+        this.optifine = new MultipleSourceVersionList(
+                candidates.stream()
+                        .map(downloadProvider -> downloadProvider.getVersionListById("optifine"))
+                        .collect(Collectors.toList()));
+    }
 
     @Override
     public String getVersionListURL() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public String getAssetBaseURL() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public String injectURL(String baseURL) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public VersionList<?> getVersionListById(String id) {
-        return null;
+        switch (id) {
+            case "game":
+                return game;
+            case "fabric":
+                return fabric;
+            case "forge":
+                return forge;
+            case "liteloader":
+                return liteLoader;
+            case "optifine":
+                return optifine;
+            default:
+                throw new IllegalArgumentException("Unrecognized version list id: " + id);
+        }
     }
 
     @Override
     public int getConcurrency() {
-        return 0;
+        throw new UnsupportedOperationException();
     }
 }
