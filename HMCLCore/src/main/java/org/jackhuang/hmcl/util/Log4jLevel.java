@@ -102,7 +102,7 @@ public enum Log4jLevel {
                     }
             }
 
-            if (line.contains("STDERR]")) {
+            if (line.contains("STDERR]") || line.contains("[STDERR/]")) {
                 level = ERROR;
             }
         } else {
