@@ -50,7 +50,7 @@ import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends BorderPane implements DecoratorPage {
-    private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), 200));
+    private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
     private final TabHeader tab;
     private final TabHeader.Tab<ModDownloadListPage> modTab = new TabHeader.Tab<>("modTab");
     private final TabHeader.Tab<ModDownloadListPage> modpackTab = new TabHeader.Tab<>("modpackTab");

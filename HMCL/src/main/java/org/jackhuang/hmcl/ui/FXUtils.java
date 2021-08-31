@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
-import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
+import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -324,16 +321,19 @@ public final class FXUtils {
         node.getProperties().put(animationKey, timeline);
     }
 
-    public static <T> void playAnimation(Node node, String animationKey, Duration duration, WritableValue<T> property, T from, T to, Interpolator interpolator) {
+    public static <T> Animation playAnimation(Node node, String animationKey, Duration duration, WritableValue<T> property, T from, T to, Interpolator interpolator) {
         if (from == null) from = property.getValue();
         if (duration == null || Objects.equals(duration, Duration.ZERO) || Objects.equals(from, to)) {
             playAnimation(node, animationKey, null);
             property.setValue(to);
+            return null;
         } else {
-            playAnimation(node, animationKey, new Timeline(
+            Timeline timeline = new Timeline(
                     new KeyFrame(Duration.ZERO, new KeyValue(property, from, interpolator)),
                     new KeyFrame(duration, new KeyValue(property, to, interpolator))
-            ));
+            );
+            playAnimation(node, animationKey, timeline);
+            return timeline;
         }
     }
 

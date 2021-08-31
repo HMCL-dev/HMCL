@@ -54,7 +54,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
 
 public class GameListPage extends ListPageBase<GameListItem> implements DecoratorPage {
-    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("version.manage")));
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("version.manage"), -1));
     private final ListProperty<Profile> profiles = new SimpleListProperty<>(FXCollections.observableArrayList());
     @SuppressWarnings("FieldCanBeLocal")
     private final ObservableList<ProfileListItem> profileListItems;
@@ -243,8 +243,6 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
 
             public GameListSkin() {
                 super(GameList.this);
-
-                state.set(State.fromTitle(i18n("version.manage"), 200));
             }
 
             @Override
