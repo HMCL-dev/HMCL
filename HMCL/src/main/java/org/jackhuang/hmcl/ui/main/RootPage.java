@@ -218,6 +218,10 @@ public class RootPage extends DecoratorTabPage {
         if (checkedAccont)
             return;
         checkedAccont = true;
+        checkAccountForcibly();
+    }
+
+    public void checkAccountForcibly() {
         if (Accounts.getAccounts().isEmpty())
             Platform.runLater(this::addNewAccount);
     }
