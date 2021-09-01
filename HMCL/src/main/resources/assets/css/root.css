@@ -23,7 +23,7 @@
 }
 
 .scroll-bar .thumb {
-    -fx-fill: -fx-rippler-color;
+    -fx-fill: -theme-thumb;
     -fx-arc-width: 0;
     -fx-arc-height: 0;
 }

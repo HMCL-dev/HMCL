@@ -87,6 +87,9 @@ public class Theme {
             File temp = File.createTempFile("hmcl", ".css");
             FileUtils.writeText(temp, IOUtils.readFullyAsString(ResourceNotFoundError.getResourceAsStream("/assets/css/custom.css"))
                     .replace("%base-color%", color)
+                    .replace("%base-red%", Integer.toString((int)Math.ceil(paint.getRed() * 256)))
+                    .replace("%base-green%", Integer.toString((int)Math.ceil(paint.getGreen() * 256)))
+                    .replace("%base-blue%", Integer.toString((int)Math.ceil(paint.getBlue() * 256)))
                     .replace("%base-rippler-color%", String.format("rgba(%d, %d, %d, 0.3)", (int) Math.ceil(paint.getRed() * 256), (int) Math.ceil(paint.getGreen() * 256), (int) Math.ceil(paint.getBlue() * 256)))
                     .replace("%disabled-font-color%", String.format("rgba(%d, %d, %d, 0.7)", (int) Math.ceil(textFill.getRed() * 256), (int) Math.ceil(textFill.getGreen() * 256), (int) Math.ceil(textFill.getBlue() * 256)))
                     .replace("%font-color%", getColorDisplayName(getForegroundColor()))
