@@ -22,6 +22,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.platform.JavaVersion;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -107,7 +108,12 @@ public final class Locales {
         SupportedLocale(Locale locale, String name) {
             this.locale = locale;
             this.name = name;
-            resourceBundle = ResourceBundle.getBundle("assets.lang.I18N", locale, UTF8Control.INSTANCE);
+            if (JavaVersion.CURRENT_JAVA.getParsedVersion() == JavaVersion.JAVA_8) {
+                resourceBundle = ResourceBundle.getBundle("assets.lang.I18N", locale, UTF8Control.INSTANCE);
+            } else {
+                // UTF-8 is supported in Java 9+
+                resourceBundle = ResourceBundle.getBundle("assets.lang.I18N", locale);
+            }
         }
 
         public Locale getLocale() {
