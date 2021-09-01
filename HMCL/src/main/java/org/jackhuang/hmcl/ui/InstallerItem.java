@@ -50,6 +50,7 @@ public class InstallerItem extends Control {
     private final String imageUrl;
     public final StringProperty libraryVersion = new SimpleStringProperty();
     public final StringProperty incompatibleLibraryName = new SimpleStringProperty();
+    public final StringProperty dependencyName = new SimpleStringProperty();
     public final BooleanProperty incompatibleWithGame = new SimpleBooleanProperty();
     public final BooleanProperty removable = new SimpleBooleanProperty();
     public final BooleanProperty upgradable = new SimpleBooleanProperty(false);
@@ -69,6 +70,7 @@ public class InstallerItem extends Control {
                 imageUrl = "/assets/img/grass.png";
                 break;
             case "fabric":
+            case "fabric-api":
                 imageUrl = "/assets/img/fabric.png";
                 break;
             case "forge":
@@ -104,6 +106,7 @@ public class InstallerItem extends Control {
     public static class InstallerItemGroup {
         public final InstallerItem game = new InstallerItem(MINECRAFT);
         public final InstallerItem fabric = new InstallerItem(FABRIC);
+        public final InstallerItem fabricApi = new InstallerItem(FABRIC_API);
         public final InstallerItem forge = new InstallerItem(FORGE);
         public final InstallerItem liteLoader = new InstallerItem(LITELOADER);
         public final InstallerItem optiFine = new InstallerItem(OPTIFINE);
@@ -124,16 +127,23 @@ public class InstallerItem extends Control {
                 return null;
             }, fabric.libraryVersion));
 
-            fabric.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
-                if (liteLoader.libraryVersion.get() != null) return LITELOADER.getPatchId();
-                if (optiFine.libraryVersion.get() != null) return OPTIFINE.getPatchId();
-                if (forge.libraryVersion.get() != null) return FORGE.getPatchId();
-                return null;
-            }, optiFine.libraryVersion, forge.libraryVersion));
+            for (InstallerItem fabric : new InstallerItem[]{fabric, fabricApi}) {
+                fabric.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
+                    if (liteLoader.libraryVersion.get() != null) return LITELOADER.getPatchId();
+                    if (optiFine.libraryVersion.get() != null) return OPTIFINE.getPatchId();
+                    if (forge.libraryVersion.get() != null) return FORGE.getPatchId();
+                    return null;
+                }, optiFine.libraryVersion, forge.libraryVersion));
+            }
+
+            fabricApi.dependencyName.bind(Bindings.createStringBinding(() -> {
+                if (fabric.libraryVersion.get() == null) return FABRIC.getPatchId();
+                else return null;
+            }, fabric.libraryVersion));
         }
 
         public InstallerItem[] getLibraries() {
-            return new InstallerItem[]{game, fabric, forge, liteLoader, optiFine};
+            return new InstallerItem[]{game, forge, liteLoader, optiFine, fabric, fabricApi};
         }
     }
 

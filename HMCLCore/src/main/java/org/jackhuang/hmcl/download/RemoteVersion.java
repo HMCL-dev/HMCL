@@ -79,6 +79,10 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
         return selfVersion;
     }
 
+    public String getFullVersion() {
+        return getSelfVersion();
+    }
+
     public Instant getReleaseDate() {
         return releaseDate;
     }

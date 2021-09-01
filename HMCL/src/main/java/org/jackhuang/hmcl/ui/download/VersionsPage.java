@@ -32,6 +32,7 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.fabric.FabricAPIRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
@@ -174,6 +175,13 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         content.setSubtitle(remoteVersion.getGameVersion());
                     }
                 } else if (remoteVersion instanceof FabricRemoteVersion) {
+                    content.setImage(new Image("/assets/img/fabric.png", 32, 32, false, true));
+                    if (StringUtils.isNotBlank(content.getSubtitle())) {
+                        content.getTags().setAll(remoteVersion.getGameVersion());
+                    } else {
+                        content.setSubtitle(remoteVersion.getGameVersion());
+                    }
+                } else if (remoteVersion instanceof FabricAPIRemoteVersion) {
                     content.setImage(new Image("/assets/img/fabric.png", 32, 32, false, true));
                     if (StringUtils.isNotBlank(content.getSubtitle())) {
                         content.getTags().setAll(remoteVersion.getGameVersion());

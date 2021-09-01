@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.download;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -29,31 +31,10 @@ import java.util.stream.Collectors;
 public class BalancedDownloadProvider implements DownloadProvider {
     List<DownloadProvider> candidates;
 
-    VersionList<?> game, fabric, forge, liteLoader, optifine;
+    Map<String, VersionList<?>> versionLists = new HashMap<>();
 
     public BalancedDownloadProvider(List<DownloadProvider> candidates) {
         this.candidates = candidates;
-
-        this.game = new MultipleSourceVersionList(
-                candidates.stream()
-                        .map(downloadProvider -> downloadProvider.getVersionListById("game"))
-                        .collect(Collectors.toList()));
-        this.fabric = new MultipleSourceVersionList(
-                candidates.stream()
-                        .map(downloadProvider -> downloadProvider.getVersionListById("fabric"))
-                        .collect(Collectors.toList()));
-        this.forge = new MultipleSourceVersionList(
-                candidates.stream()
-                        .map(downloadProvider -> downloadProvider.getVersionListById("forge"))
-                        .collect(Collectors.toList()));
-        this.liteLoader = new MultipleSourceVersionList(
-                candidates.stream()
-                        .map(downloadProvider -> downloadProvider.getVersionListById("liteloader"))
-                        .collect(Collectors.toList()));
-        this.optifine = new MultipleSourceVersionList(
-                candidates.stream()
-                        .map(downloadProvider -> downloadProvider.getVersionListById("optifine"))
-                        .collect(Collectors.toList()));
     }
 
     @Override
@@ -73,20 +54,13 @@ public class BalancedDownloadProvider implements DownloadProvider {
 
     @Override
     public VersionList<?> getVersionListById(String id) {
-        switch (id) {
-            case "game":
-                return game;
-            case "fabric":
-                return fabric;
-            case "forge":
-                return forge;
-            case "liteloader":
-                return liteLoader;
-            case "optifine":
-                return optifine;
-            default:
-                throw new IllegalArgumentException("Unrecognized version list id: " + id);
+        if (!versionLists.containsKey(id)) {
+            versionLists.put(id, new MultipleSourceVersionList(
+                    candidates.stream()
+                            .map(downloadProvider -> downloadProvider.getVersionListById(id))
+                            .collect(Collectors.toList())));
         }
+        return versionLists.get(id);
     }
 
     @Override

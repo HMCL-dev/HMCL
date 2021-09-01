@@ -28,6 +28,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.download.fabric.FabricAPIInstallTask;
 import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeOldInstallTask;
@@ -119,6 +120,8 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("install.installer.install", i18n("install.installer.optifine")));
                 } else if (task instanceof FabricInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.fabric")));
+                } else if (task instanceof FabricAPIInstallTask) {
+                    task.setName(i18n("install.installer.install", i18n("install.installer.fabric-api")));
                 } else if (task instanceof CurseCompletionTask) {
                     task.setName(i18n("modpack.type.curse.completion"));
                 } else if (task instanceof ModpackInstallTask) {
@@ -212,6 +215,7 @@ public final class TaskListPane extends StackPane {
                 case "hmcl.install.liteloader": message = i18n("install.installer.install", i18n("install.installer.liteloader") + " " + stageValue); break;
                 case "hmcl.install.optifine": message = i18n("install.installer.install", i18n("install.installer.optifine") + " " + stageValue); break;
                 case "hmcl.install.fabric": message = i18n("install.installer.install", i18n("install.installer.fabric") + " " + stageValue); break;
+                case "hmcl.install.fabric-api": message = i18n("install.installer.install", i18n("install.installer.fabric-api") + " " + stageValue); break;
                 default: message = i18n(stageKey); break;
             }
             // @formatter:on
