@@ -178,8 +178,8 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                     navBarPane.getChildren().setAll(node);
                 }
 
+                leftPane.prefWidthProperty().unbind();
                 if (s.getLeftPaneWidth() >= 0) {
-                    leftPane.prefWidthProperty().unbind();
                     FXUtils.playAnimation(leftPane, "animation",
                             s.isAnimate() ? Duration.millis(160) : null, leftPane.prefWidthProperty(), null, s.getLeftPaneWidth(), FXUtils.SINE);
                 } else {
