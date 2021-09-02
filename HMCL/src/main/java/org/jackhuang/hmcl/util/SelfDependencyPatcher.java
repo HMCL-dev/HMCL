@@ -60,18 +60,9 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
+import javax.swing.*;
 
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
@@ -88,7 +79,7 @@ public final class SelfDependencyPatcher {
 
     static class DependencyDescriptor {
 
-        private static final String REPOSITORY_URL = System.getProperty("hmcl.openjfx.repo", "https://maven.aliyun.com/repository/central/");
+        // private static final String REPOSITORY_URL = System.getProperty("hmcl.openjfx.repo", "https://maven.aliyun.com/repository/central/");
         private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies");
 
         private static String currentArchClassifier() {
@@ -116,12 +107,51 @@ public final class SelfDependencyPatcher {
             return sha1.get(currentArchClassifier());
         }
 
-        public String url() {
-            return REPOSITORY_URL + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/" + filename();
-        }
-
         public Path localPath() {
             return DEPENDENCIES_DIR_PATH.resolve(filename());
+        }
+    }
+
+    static final class Repository {
+        public static final List<Repository> REPOSITORIES;
+
+        public static final Repository CUSTOM;
+        public static final Repository MAVEN_CENTRAL = new Repository(i18n("repositories.maven_central"), "https://repo1.maven.org/maven2");
+        public static final Repository ALIYUN_MIRROR = new Repository(i18n("repositories.aliyun_mirror"), "https://maven.aliyun.com/repository/central");
+
+        public static final Repository DEFAULT;
+
+        static {
+            final String customUrl = System.getProperty("hmcl.openjfx.repo");
+            if (customUrl == null) {
+                CUSTOM = null;
+                if (System.getProperty("user.country", "").equalsIgnoreCase("CN")) {
+                    DEFAULT = Repository.ALIYUN_MIRROR;
+                } else {
+                    DEFAULT = Repository.MAVEN_CENTRAL;
+                }
+                REPOSITORIES = Collections.unmodifiableList(Arrays.asList(MAVEN_CENTRAL, ALIYUN_MIRROR));
+            } else {
+                CUSTOM = new Repository(String.format(i18n("repositories.custom"), customUrl), customUrl);
+                DEFAULT = CUSTOM;
+                REPOSITORIES = Collections.unmodifiableList(Arrays.asList(MAVEN_CENTRAL, ALIYUN_MIRROR, CUSTOM));
+            }
+        }
+
+        private final String name;
+        private final String url;
+
+        Repository(String name, String url) {
+            this.name = name;
+            this.url = url;
+        }
+
+        public String resolveDependencyURL(DependencyDescriptor descriptor) {
+            return String.format("%s/%s/%s/%s/%s",
+                    url,
+                    descriptor.groupId.replace('.', '/'),
+                    descriptor.artifactId, descriptor.version,
+                    descriptor.filename());
         }
     }
 
@@ -174,8 +204,10 @@ public final class SelfDependencyPatcher {
         // Download missing dependencies
         List<DependencyDescriptor> missingDependencies = checkMissingDependencies();
         if (!missingDependencies.isEmpty()) {
+            final Repository repository = showChooseRepositoryDialog();
+
             try {
-                fetchDependencies(missingDependencies);
+                fetchDependencies(repository, missingDependencies);
             } catch (IOException e) {
                 throw new PatchException("Failed to download dependencies", e);
             }
@@ -192,6 +224,43 @@ public final class SelfDependencyPatcher {
         LOG.info(" - Done!");
     }
 
+    private static Repository showChooseRepositoryDialog() {
+        final JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        for (String line : i18n("repositories.chooser").split("\n")) {
+            panel.add(new JLabel(line));
+        }
+
+        final ButtonGroup buttonGroup = new ButtonGroup();
+
+        for (Repository repository : Repository.REPOSITORIES) {
+            final JRadioButton button = new JRadioButton(repository.name);
+            button.putClientProperty("repository", repository);
+            buttonGroup.add(button);
+            panel.add(button);
+            if (repository == Repository.DEFAULT) {
+                button.setSelected(true);
+            }
+        }
+
+        int res = JOptionPane.showConfirmDialog(null, panel, i18n("repositories.chooser.title"), JOptionPane.YES_NO_OPTION);
+
+        if (res == JOptionPane.YES_OPTION) {
+            final Enumeration<AbstractButton> buttons = buttonGroup.getElements();
+            while (buttons.hasMoreElements()) {
+                final AbstractButton button = buttons.nextElement();
+                if (button.isSelected()) {
+                    return (Repository) button.getClientProperty("repository");
+                }
+            }
+        } else {
+            LOG.info("User choose not to download JavaFX");
+            System.exit(0);
+        }
+        throw new AssertionError();
+    }
+
     /**
      * Inject them into the current classpath.
      *
@@ -206,7 +275,7 @@ public final class SelfDependencyPatcher {
                 .collect(toSet());
 
         Path[] jars = JFX_DEPENDENCIES.stream()
-                .map(it -> it.localPath())
+                .map(DependencyDescriptor::localPath)
                 .toArray(Path[]::new);
 
         JavaFXPatcher.patch(modules, jars);
@@ -217,26 +286,30 @@ public final class SelfDependencyPatcher {
      *
      * @throws IOException When the files cannot be fetched or saved.
      */
-    private static void fetchDependencies(List<DependencyDescriptor> dependencies) throws IOException {
+    private static void fetchDependencies(Repository repository, List<DependencyDescriptor> dependencies) throws IOException {
         ProgressFrame dialog = new ProgressFrame(i18n("download.javafx"));
         dialog.setVisible(true);
 
         int progress = 0;
         for (DependencyDescriptor dependency : dependencies) {
             int currentProgress = ++progress;
+            final String url = repository.resolveDependencyURL(dependency);
             SwingUtilities.invokeLater(() -> {
-                dialog.setStatus(dependency.url());
+                dialog.setStatus(url);
                 dialog.setProgress(currentProgress, dependencies.size());
             });
 
-            LOG.info("Downloading " + dependency.url());
+            LOG.info("Downloading " + url);
             Files.createDirectories(dependency.localPath().getParent());
-            Files.copy(new URL(dependency.url()).openStream(), dependency.localPath(), StandardCopyOption.REPLACE_EXISTING);
+            try (InputStream is = new URL(url).openStream()) {
+                Files.copy(is, dependency.localPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
             verifyChecksum(dependency);
         }
 
         dialog.dispose();
     }
+
 
     private static List<DependencyDescriptor> checkMissingDependencies() {
         List<DependencyDescriptor> missing = new ArrayList<>();
@@ -295,10 +368,10 @@ public final class SelfDependencyPatcher {
             setLocationRelativeTo(null);
 
             GridBagLayout gridBagLayout = new GridBagLayout();
-            gridBagLayout.columnWidths = new int[] { 600, 0 };
-            gridBagLayout.rowHeights = new int[] { 0, 0, 0, 200 };
-            gridBagLayout.columnWeights = new double[] { 1.0, Double.MIN_VALUE };
-            gridBagLayout.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0 };
+            gridBagLayout.columnWidths = new int[]{600, 0};
+            gridBagLayout.rowHeights = new int[]{0, 0, 0, 200};
+            gridBagLayout.columnWeights = new double[]{1.0, Double.MIN_VALUE};
+            gridBagLayout.rowWeights = new double[]{0.0, 0.0, 0.0, 1.0};
             panel.setLayout(gridBagLayout);
 
             progressText = new JLabel("");
