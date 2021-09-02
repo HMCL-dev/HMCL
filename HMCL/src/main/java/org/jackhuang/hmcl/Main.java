@@ -50,6 +50,11 @@ public final class Main {
         System.setProperty("java.net.useSystemProxies", "true");
         System.setProperty("http.agent", "HMCL/" + Metadata.VERSION);
         System.setProperty("javafx.autoproxy.disable", "true");
+        // Fix title bar not displaying in GTK systems
+        System.setProperty("jdk.gtk.version", "2");
+
+        // Use System look and feel
+        initLookAndFeel();
 
         checkDirectoryPath();
 
@@ -63,10 +68,17 @@ public final class Main {
 
         checkJavaFX();
 
-        // Fix title bar not displaying in GTK systems
-        System.setProperty("jdk.gtk.version", "2");
 
         Launcher.main(args);
+    }
+
+    private static void initLookAndFeel() {
+        if (System.getProperty("swing.defaultlaf") == null) {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Throwable ignored) {
+            }
+        }
     }
 
     private static void checkDirectoryPath() {
