@@ -665,13 +665,14 @@
 *******************************************************************************/
 
 .jfx-text-field, .jfx-password-field, .jfx-text-area {
-    -fx-background-color: transparent;
+    -fx-background-color: #f1f3f4;
     -fx-font-weight: BOLD;
     -fx-prompt-text-fill: #808080;
     -fx-alignment: top-left;
     -fx-pref-width: 300.0;
     -jfx-focus-color: -fx-base-check-color;
-    -jfx-unfocus-color: #4d4d4d;
+    -fx-padding: 8;
+    -jfx-unfocus-color: transparent;
 }
 
 .jfx-text-area .viewport {
@@ -1123,7 +1124,10 @@
 *******************************************************************************/
 
 .jfx-combo-box {
-   -jfx-focus-color: -fx-base-check-color;
+    -jfx-focus-color: transparent;
+    -jfx-unfocus-color: transparent;
+    -fx-background-color: #f1f3f4;
+    -fx-padding: 4;
 }
 
 .jfx-combo-box-warning {

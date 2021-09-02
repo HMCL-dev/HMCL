@@ -176,7 +176,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 chkAutoAllocate = new JFXCheckBox(i18n("settings.memory.auto_allocate"));
                 VBox.setMargin(chkAutoAllocate, new Insets(0, 0, 8, 5));
 
-                HBox lowerBoundPane = new HBox();
+                HBox lowerBoundPane = new HBox(8);
                 lowerBoundPane.setAlignment(Pos.CENTER);
                 VBox.setMargin(lowerBoundPane, new Insets(0, 0, 0, 16));
                 {
@@ -190,7 +190,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     }, chkAutoAllocate.selectedProperty()));
 
                     JFXSlider slider = new JFXSlider(0, 1, 0);
-                    HBox.setMargin(slider, new Insets(0, 16, 0, 16));
+                    HBox.setMargin(slider, new Insets(0, 0, 0, 8));
                     HBox.setHgrow(slider, Priority.ALWAYS);
                     slider.setValueFactory(self -> Bindings.createStringBinding(() -> (int)(self.getValue() * 100) + "%", self.valueProperty()));
                     AtomicBoolean changedByTextField = new AtomicBoolean(false);
