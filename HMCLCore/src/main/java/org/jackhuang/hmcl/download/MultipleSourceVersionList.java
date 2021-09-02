@@ -27,13 +27,13 @@ public class MultipleSourceVersionList extends VersionList<RemoteVersion> {
     MultipleSourceVersionList(List<VersionList<?>> backends) {
         this.backends = backends;
 
-        assert(backends.size() >= 1);
+        assert (backends.size() >= 1);
     }
 
     @Override
     public boolean hasType() {
         boolean hasType = backends.get(0).hasType();
-        assert(backends.stream().allMatch(versionList -> versionList.hasType() == hasType));
+        assert (backends.stream().allMatch(versionList -> versionList.hasType() == hasType));
         return hasType;
     }
 
