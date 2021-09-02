@@ -1241,6 +1241,7 @@
     -fx-background-color: null;
     -fx-background-insets: 0;
     -fx-padding: 0;
+    -fx-snap-to-pixel: false;
 }
 
 .scroll-pane:focused {
