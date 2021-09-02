@@ -17,14 +17,19 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import javafx.beans.InvalidationListener;
 import org.jackhuang.hmcl.download.*;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.task.FetchTask.DEFAULT_CONCURRENCY;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
@@ -43,6 +48,8 @@ public final class DownloadProviders {
 
     public static final String DEFAULT_PROVIDER_ID = "balanced";
     public static final String DEFAULT_RAW_PROVIDER_ID = "mcbbs";
+
+    private static final InvalidationListener observer;
 
     static {
         String bmclapiRoot = "https://bmclapi2.bangbang93.com";
@@ -66,6 +73,11 @@ public final class DownloadProviders {
                 pair("official", new AutoDownloadProvider(MOJANG, fileProvider)),
                 pair("balanced", new AutoDownloadProvider(balanced, fileProvider)),
                 pair("mirror", new AutoDownloadProvider(MCBBS, fileProvider)));
+
+        observer = FXUtils.observeWeak(() -> {
+            FetchTask.setDownloadExecutorConcurrency(
+                    config().getAutoDownloadThreads() ? DEFAULT_CONCURRENCY : config().getDownloadThreads());
+        }, config().autoDownloadThreadsProperty(), config().downloadThreadsProperty());
     }
 
     static void init() {

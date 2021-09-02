@@ -22,17 +22,18 @@ import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.NumberValidator;
-import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.net.Proxy;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
@@ -101,6 +102,68 @@ public class DownloadSettingsPage extends StackPane {
             }
 
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.version_list_source")), downloadSource);
+        }
+
+        {
+            ComponentList downloadThreads = new ComponentList();
+
+            {
+                VBox pane = new VBox(16);
+                pane.setPadding(new Insets(8, 0, 8, 0));
+
+                {
+                    JFXCheckBox chkAutoDownloadThreads = new JFXCheckBox(i18n("settings.launcher.download.threads.auto"));
+                    chkAutoDownloadThreads.selectedProperty().bindBidirectional(config().autoDownloadThreadsProperty());
+                    pane.getChildren().add(chkAutoDownloadThreads);
+
+                    chkAutoDownloadThreads.selectedProperty().addListener((a, b, newValue) -> {
+                        if (newValue) {
+                            config().downloadThreadsProperty().set(FetchTask.DEFAULT_CONCURRENCY);
+                        }
+                    });
+                }
+
+                {
+                    HBox hbox = new HBox(8);
+                    hbox.setAlignment(Pos.CENTER);
+                    hbox.setPadding(new Insets(0, 0, 0, 30));
+                    hbox.disableProperty().bind(config().autoDownloadThreadsProperty());
+                    Label label = new Label(i18n("settings.launcher.download.threads"));
+
+                    JFXSlider slider = new JFXSlider(1, 256, 64);
+                    HBox.setHgrow(slider, Priority.ALWAYS);
+
+                    JFXTextField threadsField = new JFXTextField();
+                    FXUtils.setLimitWidth(threadsField, 60);
+                    threadsField.textProperty().bindBidirectional(config().downloadThreadsProperty(), SafeStringConverter.fromInteger());
+
+                    AtomicBoolean changedByTextField = new AtomicBoolean(false);
+                    FXUtils.onChangeAndOperate(config().downloadThreadsProperty(), value -> {
+                        changedByTextField.set(true);
+                        slider.setValue(value.intValue());
+                        changedByTextField.set(false);
+                    });
+                    slider.valueProperty().addListener((value, oldVal, newVal) -> {
+                        if (changedByTextField.get()) return;
+                        config().downloadThreadsProperty().set(value.getValue().intValue());
+                    });
+
+                    hbox.getChildren().setAll(label, slider, threadsField);
+                    pane.getChildren().add(hbox);
+                }
+
+                {
+                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+                    VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
+                    hintPane.disableProperty().bind(config().autoDownloadThreadsProperty());
+                    hintPane.setText(i18n("settings.launcher.download.threads.hint"));
+                    pane.getChildren().add(hintPane);
+                }
+
+                downloadThreads.getContent().add(pane);
+            }
+
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadThreads);
         }
 
         {

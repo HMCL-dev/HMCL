@@ -67,14 +67,14 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
         {
             AdvancedListBox sideBar = new AdvancedListBox()
                     .addNavigationDrawerItem(settingsItem -> {
-                        settingsItem.setTitle(i18n("settings.type.global.manage"));
+                        settingsItem.setTitle(i18n("settings.game.current"));
                         settingsItem.setLeftGraphic(wrap(SVG.gamepad(null, 20, 20)));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(gameTab));
                         settingsItem.setOnAction(e -> tab.getSelectionModel().select(gameTab));
                     })
-                    .startCategory(i18n("settings.launcher"))
+                    .startCategory(i18n("launcher"))
                     .addNavigationDrawerItem(settingsItem -> {
-                        settingsItem.setTitle(i18n("settings.launcher"));
+                        settingsItem.setTitle(i18n("settings.launcher.general"));
                         settingsItem.setLeftGraphic(wrap(SVG.applicationOutline(null, 20, 20)));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(settingsTab));
                         settingsItem.setOnAction(e -> tab.getSelectionModel().select(settingsTab));
@@ -91,6 +91,7 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
                         downloadItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(downloadTab));
                         downloadItem.setOnAction(e -> tab.getSelectionModel().select(downloadTab));
                     })
+                    .startCategory(i18n("help"))
                     .addNavigationDrawerItem(helpItem -> {
                         helpItem.setTitle(i18n("help"));
                         helpItem.setLeftGraphic(wrap(SVG.helpCircleOutline(null, 20, 20)));

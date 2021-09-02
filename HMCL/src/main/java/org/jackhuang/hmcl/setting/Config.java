@@ -122,6 +122,12 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("localization")
     private ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
 
+    @SerializedName("autoDownloadThreads")
+    private BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(false);
+
+    @SerializedName("downloadThreads")
+    private IntegerProperty downloadThreads = new SimpleIntegerProperty(64);
+
     @SerializedName("downloadType")
     private StringProperty downloadType = new SimpleStringProperty("mcbbs");
 
@@ -387,6 +393,30 @@ public final class Config implements Cloneable, Observable {
 
     public ObjectProperty<SupportedLocale> localizationProperty() {
         return localization;
+    }
+
+    public boolean getAutoDownloadThreads() {
+        return autoDownloadThreads.get();
+    }
+
+    public BooleanProperty autoDownloadThreadsProperty() {
+        return autoDownloadThreads;
+    }
+
+    public void setAutoDownloadThreads(boolean autoDownloadThreads) {
+        this.autoDownloadThreads.set(autoDownloadThreads);
+    }
+
+    public int getDownloadThreads() {
+        return downloadThreads.get();
+    }
+
+    public IntegerProperty downloadThreadsProperty() {
+        return downloadThreads;
+    }
+
+    public void setDownloadThreads(int downloadThreads) {
+        this.downloadThreads.set(downloadThreads);
     }
 
     public String getDownloadType() {

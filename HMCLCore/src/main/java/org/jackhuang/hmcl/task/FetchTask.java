@@ -268,8 +268,9 @@ public abstract class FetchTask<T> extends Task<T> {
 
     }
 
-    private static int downloadExecutorConcurrency = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
-    private static volatile ExecutorService DOWNLOAD_EXECUTOR;
+    public static int DEFAULT_CONCURRENCY = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
+    private static int downloadExecutorConcurrency = DEFAULT_CONCURRENCY;
+    private static volatile ThreadPoolExecutor DOWNLOAD_EXECUTOR;
 
     /**
      * Get singleton instance of the thread pool for file downloading.
@@ -292,8 +293,8 @@ public abstract class FetchTask<T> extends Task<T> {
         synchronized (Schedulers.class) {
             downloadExecutorConcurrency = concurrency;
             if (DOWNLOAD_EXECUTOR != null) {
-                DOWNLOAD_EXECUTOR.shutdownNow();
-                DOWNLOAD_EXECUTOR = null;
+                DOWNLOAD_EXECUTOR.setCorePoolSize(concurrency);
+                DOWNLOAD_EXECUTOR.setMaximumPoolSize(concurrency);
             }
         }
     }
