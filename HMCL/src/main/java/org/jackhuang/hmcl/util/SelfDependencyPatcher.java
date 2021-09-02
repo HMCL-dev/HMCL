@@ -310,7 +310,6 @@ public final class SelfDependencyPatcher {
         dialog.dispose();
     }
 
-
     private static List<DependencyDescriptor> checkMissingDependencies() {
         List<DependencyDescriptor> missing = new ArrayList<>();
 
