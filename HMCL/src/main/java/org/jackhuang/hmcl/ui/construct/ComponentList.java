@@ -168,7 +168,6 @@ public class ComponentList extends Control {
         node.setPadding(new Insets(8, 0, 0, 0));
         {
             Label advanced = new Label(title);
-            advanced.setStyle("-fx-text-fill: #616161");
             node.getChildren().setAll(advanced);
         }
         return node;

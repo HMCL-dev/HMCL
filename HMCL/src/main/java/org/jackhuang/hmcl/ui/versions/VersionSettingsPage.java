@@ -22,9 +22,9 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
@@ -82,7 +82,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final JFXTextField txtWrapper;
     private final JFXTextField txtPrecallingCommand;
     private final JFXTextField txtServerIP;
-    private final ComponentList advancedSettingsPane;
     private final ComponentList componentList;
     private final ComponentList iconPickerItemWrapper;
     private final JFXComboBox<LauncherVisibility> cboLauncherVisibility;
@@ -192,7 +191,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     JFXSlider slider = new JFXSlider(0, 1, 0);
                     HBox.setMargin(slider, new Insets(0, 0, 0, 8));
                     HBox.setHgrow(slider, Priority.ALWAYS);
-                    slider.setValueFactory(self -> Bindings.createStringBinding(() -> (int)(self.getValue() * 100) + "%", self.valueProperty()));
+                    slider.setValueFactory(self -> Bindings.createStringBinding(() -> (int) (self.getValue() * 100) + "%", self.valueProperty()));
                     AtomicBoolean changedByTextField = new AtomicBoolean(false);
                     FXUtils.onChangeAndOperate(maxMemoryProperty, maxMemory -> {
                         changedByTextField.set(true);
@@ -201,7 +200,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     });
                     slider.valueProperty().addListener((value, oldVal, newVal) -> {
                         if (changedByTextField.get()) return;
-                        maxMemoryProperty.set((int)(value.getValue().doubleValue() * OperatingSystem.TOTAL_MEMORY));
+                        maxMemoryProperty.set((int) (value.getValue().doubleValue() * OperatingSystem.TOTAL_MEMORY));
                     });
 
                     JFXTextField txtMaxMemory = new JFXTextField();
@@ -231,7 +230,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     allocateMemory.maxWidthProperty().bind(Bindings.createDoubleBinding(() ->
                                     progressBarPane.getWidth() *
                                             Math.min(1.0,
-                                                    (double)(HMCLGameRepository.getAllocatedMemory(maxMemoryProperty.get() * 1024L * 1024L, memoryStatusProperty.get().getAvailable(), chkAutoAllocate.isSelected())
+                                                    (double) (HMCLGameRepository.getAllocatedMemory(maxMemoryProperty.get() * 1024L * 1024L, memoryStatusProperty.get().getAvailable(), chkAutoAllocate.isSelected())
                                                             + memoryStatusProperty.get().getUsed()) / memoryStatusProperty.get().getTotal()), progressBarPane.widthProperty(),
                             maxMemoryProperty, memoryStatusProperty, chkAutoAllocate.selectedProperty()));
 
@@ -331,14 +330,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 FXUtils.setLimitHeight(chkShowLogs, 20);
             }
 
-            componentList.getContent().setAll(javaItem, gameDirItem, maxMemoryPane, launcherVisibilityPane, dimensionPane, showLogsPane);
-        }
-
-        Node advancedHintPane = ComponentList.createComponentListTitle(i18n("settings.advanced"));
-
-        advancedSettingsPane = new ComponentList();
-        advancedSettingsPane.setDepth(1);
-        {
             BorderPane processPriorityPane = new BorderPane();
             {
                 Label label = new Label(i18n("settings.advanced.process_priority"));
@@ -351,44 +342,99 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 FXUtils.setLimitWidth(cboProcessPriority, 300);
             }
 
-            txtJVMArgs = new JFXTextField();
-            txtJVMArgs.setLabelFloat(true);
-            txtJVMArgs.setPromptText(i18n("settings.advanced.jvm_args"));
-            txtJVMArgs.getStyleClass().add("fit-width");
-            StackPane.setMargin(txtJVMArgs, new Insets(0, 0, 8, 0));
+            GridPane serverPane = new GridPane();
+            {
+                ColumnConstraints title = new ColumnConstraints();
+                ColumnConstraints value = new ColumnConstraints();
+                value.setFillWidth(true);
+                value.setHgrow(Priority.ALWAYS);
+                value.setHalignment(HPos.RIGHT);
+                serverPane.setHgap(16);
+                serverPane.setVgap(8);
+                serverPane.getColumnConstraints().setAll(title, value);
+
+                txtServerIP = new JFXTextField();
+                txtServerIP.setLabelFloat(true);
+                txtServerIP.setPromptText(i18n("settings.advanced.server_ip.prompt"));
+                txtServerIP.getStyleClass().add("fit-width");
+                FXUtils.setLimitWidth(txtServerIP, 300);
+                serverPane.addRow(0, new Label(i18n("settings.advanced.server_ip")), txtServerIP);
+            }
+
+            componentList.getContent().setAll(javaItem, gameDirItem, maxMemoryPane, launcherVisibilityPane, dimensionPane, showLogsPane, processPriorityPane, serverPane);
+        }
+
+        HBox advancedHintPane = new HBox();
+        advancedHintPane.setAlignment(Pos.CENTER);
+        advancedHintPane.setPadding(new Insets(16, 0, 8, 0));
+        {
+            Label advanced = new Label(i18n("settings.advanced"));
+            advanced.setStyle("-fx-font-size: 12px;");
+            advancedHintPane.getChildren().setAll(advanced);
+        }
+
+        ComponentList customCommandsPane = new ComponentList();
+        customCommandsPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
+        {
+            GridPane pane = new GridPane();
+            ColumnConstraints title = new ColumnConstraints();
+            ColumnConstraints value = new ColumnConstraints();
+            value.setFillWidth(true);
+            value.setHgrow(Priority.ALWAYS);
+            pane.setHgap(16);
+            pane.setVgap(8);
+            pane.getColumnConstraints().setAll(title, value);
 
             txtGameArgs = new JFXTextField();
             txtGameArgs.setLabelFloat(true);
-            txtGameArgs.setPromptText(i18n("settings.advanced.minecraft_arguments"));
+            txtGameArgs.setPromptText(i18n("settings.advanced.minecraft_arguments.prompt"));
             txtGameArgs.getStyleClass().add("fit-width");
-            StackPane.setMargin(txtGameArgs, new Insets(0, 0, 8, 0));
-
-            txtMetaspace = new JFXTextField();
-            txtMetaspace.setLabelFloat(true);
-            txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space"));
-            txtMetaspace.getStyleClass().add("fit-width");
-            StackPane.setMargin(txtMetaspace, new Insets(0, 0, 8, 0));
-            FXUtils.setValidateWhileTextChanged(txtMetaspace, true);
-            txtMetaspace.setValidators(new NumberValidator(i18n("input.number"), true));
-
-            txtWrapper = new JFXTextField();
-            txtWrapper.setLabelFloat(true);
-            txtWrapper.setPromptText(i18n("settings.advanced.wrapper_launcher"));
-            txtWrapper.getStyleClass().add("fit-width");
-            StackPane.setMargin(txtWrapper, new Insets(0, 0, 8, 0));
+            pane.addRow(0, new Label(i18n("settings.advanced.minecraft_arguments")), txtGameArgs);
 
             txtPrecallingCommand = new JFXTextField();
-            txtPrecallingCommand.setLabelFloat(true);
-            txtPrecallingCommand.setPromptText(i18n("settings.advanced.precall_command"));
+            txtPrecallingCommand.setPromptText(i18n("settings.advanced.precall_command.prompt"));
             txtPrecallingCommand.getStyleClass().add("fit-width");
-            StackPane.setMargin(txtPrecallingCommand, new Insets(0, 0, 8, 0));
+            pane.addRow(1, new Label(i18n("settings.advanced.precall_command")), txtPrecallingCommand);
 
-            txtServerIP = new JFXTextField();
-            txtServerIP.setLabelFloat(true);
-            txtServerIP.setPromptText(i18n("settings.advanced.server_ip"));
-            txtServerIP.getStyleClass().add("fit-width");
-            StackPane.setMargin(txtServerIP, new Insets(0, 0, 8, 0));
+            txtWrapper = new JFXTextField();
+            txtWrapper.setPromptText(i18n("settings.advanced.wrapper_launcher.prompt"));
+            txtWrapper.getStyleClass().add("fit-width");
+            pane.addRow(2, new Label(i18n("settings.advanced.wrapper_launcher")), txtWrapper);
 
+            customCommandsPane.getContent().setAll(pane);
+        }
+
+        ComponentList jvmPane = new ComponentList();
+        jvmPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
+        {
+            GridPane pane = new GridPane();
+            ColumnConstraints title = new ColumnConstraints();
+            ColumnConstraints value = new ColumnConstraints();
+            value.setFillWidth(true);
+            value.setHgrow(Priority.ALWAYS);
+            pane.setHgap(16);
+            pane.setVgap(8);
+            pane.getColumnConstraints().setAll(title, value);
+
+            txtJVMArgs = new JFXTextField();
+            txtJVMArgs.setLabelFloat(true);
+            txtJVMArgs.setPromptText(i18n("settings.advanced.jvm_args.prompt"));
+            txtJVMArgs.getStyleClass().add("fit-width");
+            pane.addRow(0, new Label(i18n("settings.advanced.jvm_args")), txtJVMArgs);
+
+            txtMetaspace = new JFXTextField();
+            txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
+            txtMetaspace.getStyleClass().add("fit-width");
+            FXUtils.setValidateWhileTextChanged(txtMetaspace, true);
+            txtMetaspace.setValidators(new NumberValidator(i18n("input.number"), true));
+            pane.addRow(1, new Label(i18n("settings.advanced.java_permanent_generation_space")), txtMetaspace);
+
+            jvmPane.getContent().setAll(pane);
+        }
+
+        ComponentList workaroundPane = new ComponentList();
+        workaroundPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
+        {
             nativesDirItem = new MultiFileItem<>(true);
             nativesDirItem.setTitle(i18n("settings.advanced.natives_directory"));
             nativesDirItem.setChooserTitle(i18n("settings.advanced.natives_directory.choose"));
@@ -456,10 +502,14 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 FXUtils.setLimitHeight(chkUseNativeOpenAL, 20);
             }
 
-            advancedSettingsPane.getContent().setAll(processPriorityPane, txtJVMArgs, txtGameArgs, txtMetaspace, txtWrapper, txtPrecallingCommand, txtServerIP, nativesDirItem, noJVMArgsPane, noGameCheckPane, noJVMCheckPane, useNativeGLFWPane, useNativeOpenALPane);
+            workaroundPane.getContent().setAll(nativesDirItem, noJVMArgsPane, noGameCheckPane, noJVMCheckPane, useNativeGLFWPane, useNativeOpenALPane);
         }
 
-        rootPane.getChildren().setAll(iconPickerItemWrapper, settingsTypePane, componentList, advancedHintPane, advancedSettingsPane);
+        rootPane.getChildren().setAll(iconPickerItemWrapper, settingsTypePane, componentList,
+                advancedHintPane,
+                ComponentList.createComponentListTitle(i18n("settings.advanced.custom_commands")), customCommandsPane,
+                ComponentList.createComponentListTitle(i18n("settings.advanced.jvm")), jvmPane,
+                ComponentList.createComponentListTitle(i18n("settings.advanced.workaround")), workaroundPane);
 
         initialize();
 
@@ -519,7 +569,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         });
 
         componentList.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
-        advancedSettingsPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
     }
 
     @Override
