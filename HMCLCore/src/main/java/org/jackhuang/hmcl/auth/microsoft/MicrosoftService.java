@@ -17,15 +17,16 @@
  */
 package org.jackhuang.hmcl.auth.microsoft;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.gson.TolerableValidationException;
-import org.jackhuang.hmcl.util.gson.Validation;
+import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
@@ -60,17 +61,17 @@ public class MicrosoftService {
 
     private final OAuthCallback callback;
 
-    private final ObservableOptionalCache<String, MinecraftProfileResponse, AuthenticationException> profileRepository;
+    private final ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository;
 
     public MicrosoftService(OAuthCallback callback) {
         this.callback = requireNonNull(callback);
-        this.profileRepository = new ObservableOptionalCache<>(authorization -> {
-            LOG.info("Fetching properties");
-            return getCompleteProfile(authorization);
+        this.profileRepository = new ObservableOptionalCache<>(uuid -> {
+            LOG.info("Fetching properties of " + uuid);
+            return getCompleteGameProfile(uuid);
         }, (uuid, e) -> LOG.log(Level.WARNING, "Failed to fetch properties of " + uuid, e), POOL);
     }
 
-    public ObservableOptionalCache<String, MinecraftProfileResponse, AuthenticationException> getProfileRepository() {
+    public ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> getProfileRepository() {
         return profileRepository;
     }
 
@@ -213,9 +214,13 @@ public class MicrosoftService {
         }
     }
 
-    public boolean validate(String tokenType, String accessToken) throws AuthenticationException {
+    public boolean validate(long notAfter, String tokenType, String accessToken) throws AuthenticationException {
         requireNonNull(tokenType);
         requireNonNull(accessToken);
+
+        if (System.currentTimeMillis() > notAfter) {
+            return false;
+        }
 
         try {
             getMinecraftProfile(tokenType, accessToken);
@@ -273,6 +278,31 @@ public class MicrosoftService {
 
         String result = NetworkUtils.readData(conn);
         return JsonUtils.fromNonNullJson(result, MinecraftProfileResponse.class);
+    }
+
+    public Optional<CompleteGameProfile> getCompleteGameProfile(UUID uuid) throws AuthenticationException {
+        Objects.requireNonNull(uuid);
+
+        return Optional.ofNullable(GSON.fromJson(request(NetworkUtils.toURL("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid)), null), CompleteGameProfile.class));
+    }
+
+    private static String request(URL url, Object payload) throws AuthenticationException {
+        try {
+            if (payload == null)
+                return NetworkUtils.doGet(url);
+            else
+                return NetworkUtils.doPost(url, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
+        } catch (IOException e) {
+            throw new ServerDisconnectException(e);
+        }
+    }
+
+    private static <T> T fromJson(String text, Class<T> typeOfT) throws ServerResponseMalformedException {
+        try {
+            return GSON.fromJson(text, typeOfT);
+        } catch (JsonParseException e) {
+            throw new ServerResponseMalformedException(text, e);
+        }
     }
 
     public static class XboxAuthorizationException extends AuthenticationException {
@@ -486,5 +516,10 @@ public class MicrosoftService {
          */
         String waitFor() throws InterruptedException, ExecutionException;
     }
+
+    private static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
+            .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
+            .create();
 
 }
