@@ -25,6 +25,7 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -74,7 +75,7 @@ public class AccountLoginPane extends StackPane {
                     if (e instanceof NoSelectedCharacterException) {
                         fireEvent(new DialogCloseEvent());
                     } else {
-                        lblCreationWarning.setText(AddAccountPane.accountException(e));
+                        lblCreationWarning.setText(Accounts.localizeErrorMessage(e));
                     }
                     progressBar.setVisible(false);
                 }).start();

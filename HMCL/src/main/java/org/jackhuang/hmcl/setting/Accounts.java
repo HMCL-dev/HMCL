@@ -27,16 +27,22 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AuthenticationException;
+import org.jackhuang.hmcl.auth.CharacterDeletedException;
+import org.jackhuang.hmcl.auth.NoCharacterException;
+import org.jackhuang.hmcl.auth.ServerDisconnectException;
+import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.auth.authlibinjector.*;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccountFactory;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
+import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.game.MicrosoftAuthenticationServer;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -322,4 +328,47 @@ public final class Accounts {
                 .orElseThrow(() -> new IllegalArgumentException("Unrecognized account factory")));
     }
     // ====
+
+    public static String localizeErrorMessage(Exception exception) {
+        if (exception instanceof NoCharacterException) {
+            return i18n("account.failed.no_character");
+        } else if (exception instanceof ServerDisconnectException) {
+            return i18n("account.failed.connect_authentication_server");
+        } else if (exception instanceof ServerResponseMalformedException) {
+            return i18n("account.failed.server_response_malformed");
+        } else if (exception instanceof RemoteAuthenticationException) {
+            RemoteAuthenticationException remoteException = (RemoteAuthenticationException) exception;
+            String remoteMessage = remoteException.getRemoteMessage();
+            if ("ForbiddenOperationException".equals(remoteException.getRemoteName()) && remoteMessage != null) {
+                if (remoteMessage.contains("Invalid credentials"))
+                    return i18n("account.failed.invalid_credentials");
+                else if (remoteMessage.contains("Invalid token"))
+                    return i18n("account.failed.invalid_token");
+                else if (remoteMessage.contains("Invalid username or password"))
+                    return i18n("account.failed.invalid_password");
+                else
+                    return remoteMessage;
+            }
+            return exception.getMessage();
+        } else if (exception instanceof AuthlibInjectorDownloadException) {
+            return i18n("account.failed.injector_download_failure");
+        } else if (exception instanceof CharacterDeletedException) {
+            return i18n("account.failed.character_deleted");
+        } else if (exception instanceof InvalidSkinException) {
+            return i18n("account.skin.invalid_skin");
+        } else if (exception instanceof MicrosoftService.XboxAuthorizationException) {
+            long errorCode = ((MicrosoftService.XboxAuthorizationException) exception).getErrorCode();
+            if (errorCode == MicrosoftService.XboxAuthorizationException.ADD_FAMILY) {
+                return i18n("account.methods.microsoft.error.add_family");
+            } else if (errorCode == MicrosoftService.XboxAuthorizationException.MISSING_XBOX_ACCOUNT) {
+                return i18n("account.methods.microsoft.error.missing_xbox_account");
+            } else {
+                return i18n("account.methods.microsoft.error.unknown", errorCode);
+            }
+        } else if (exception.getClass() == AuthenticationException.class) {
+            return exception.getLocalizedMessage();
+        } else {
+            return exception.getClass().getName() + ": " + exception.getLocalizedMessage();
+        }
+    }
 }

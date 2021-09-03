@@ -34,7 +34,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
-import org.jackhuang.hmcl.ui.account.AddAccountPane;
+import org.jackhuang.hmcl.ui.account.CreateAccountPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
@@ -144,7 +144,7 @@ public class RootPage extends DecoratorTabPage {
                 Controllers.navigate(Controllers.getAccountListPage());
 
                 if (Accounts.getAccounts().isEmpty()) {
-                    Controllers.dialog(new AddAccountPane());
+                    Controllers.dialog(new CreateAccountPane());
                 }
             });
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
@@ -227,7 +227,7 @@ public class RootPage extends DecoratorTabPage {
     }
 
     private void addNewAccount() {
-        Controllers.dialog(new AddAccountPane());
+        Controllers.dialog(new CreateAccountPane());
     }
     // ====
 

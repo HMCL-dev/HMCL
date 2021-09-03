@@ -27,10 +27,8 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.ListPageBase;
-import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -75,10 +73,31 @@ public class AccountListPage extends ListPageBase<AccountListItem> implements De
 
             {
                 AdvancedListBox sideBar = new AdvancedListBox()
+                        .startCategory(i18n("account.create"))
+                        .addNavigationDrawerItem(settingsItem -> {
+                            settingsItem.setTitle(i18n("account.methods.offline"));
+                            settingsItem.setLeftGraphic(wrap(SVG.account(null, 20, 20)));
+                            settingsItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
+                        })
+                        .addNavigationDrawerItem(settingsItem -> {
+                            settingsItem.setTitle(i18n("account.methods.yggdrasil"));
+                            settingsItem.setLeftGraphic(wrap(SVG.mojang(null, 20, 20)));
+                            settingsItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MOJANG)));
+                        })
+                        .addNavigationDrawerItem(settingsItem -> {
+                            settingsItem.setTitle(i18n("account.methods.microsoft"));
+                            settingsItem.setLeftGraphic(wrap(SVG.microsoft(null, 20, 20)));
+                            settingsItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MICROSOFT)));
+                        })
+                        .addNavigationDrawerItem(settingsItem -> {
+                            settingsItem.setTitle(i18n("account.methods.authlib_injector"));
+                            settingsItem.setLeftGraphic(wrap(SVG.gear(null, 20, 20)));
+                            settingsItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_AUTHLIB_INJECTOR)));
+                        })
                         .addNavigationDrawerItem(settingsItem -> {
                             settingsItem.setTitle(i18n("account.create"));
-                            settingsItem.setLeftGraphic(wrap(SVG.plusCircleOutline(null, 20, 20)));
-                            settingsItem.setOnAction(e -> Controllers.dialog(new AddAccountPane()));
+                            settingsItem.setLeftGraphic(wrap(SVG.plus(null, 20, 20)));
+                            settingsItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane()));
                         });
                 FXUtils.setLimitWidth(sideBar, 200);
                 root.setLeft(sideBar);
