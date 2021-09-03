@@ -67,7 +67,7 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
         {
             AdvancedListBox sideBar = new AdvancedListBox()
                     .addNavigationDrawerItem(settingsItem -> {
-                        settingsItem.setTitle(i18n("settings.game.current"));
+                        settingsItem.setTitle(i18n("settings.type.global.manag"));
                         settingsItem.setLeftGraphic(wrap(SVG.gamepad(null, 20, 20)));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(gameTab));
                         settingsItem.setOnAction(e -> tab.getSelectionModel().select(gameTab));

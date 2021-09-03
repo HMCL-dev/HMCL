@@ -28,9 +28,13 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
@@ -91,6 +95,9 @@ public class AccountListPage extends ListPageBase<AccountListItem> implements De
                         })
                         .addNavigationDrawerItem(settingsItem -> {
                             settingsItem.setTitle(i18n("account.methods.authlib_injector"));
+                            if (I18n.hasKey("account.methods.authlib_injector.subtitle")) {
+                                settingsItem.setSubtitle(i18n("account.methods.authlib_injector.subtitle"));
+                            }
                             settingsItem.setLeftGraphic(wrap(SVG.gear(null, 20, 20)));
                             settingsItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_AUTHLIB_INJECTOR)));
                         })
