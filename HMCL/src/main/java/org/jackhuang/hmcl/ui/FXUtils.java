@@ -55,10 +55,7 @@ import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -366,16 +363,39 @@ public final class FXUtils {
         }
     }
 
+    private static final String[] linuxBrowsers = {
+            "xdg-open",
+            "google-chrome",
+            "firefox",
+            "microsoft-edge",
+            "opera",
+            "konqueror",
+            "mozilla"
+    };
+
     /**
-     * Open URL by java.awt.Desktop
+     * Open URL in browser
      *
      * @param link null is allowed but will be ignored
      */
     public static void openLink(String link) {
         if (link == null)
             return;
-        thread(() -> {
-            if (java.awt.Desktop.isDesktopSupported()) {
+
+        if (java.awt.Desktop.isDesktopSupported()) {
+            thread(() -> {
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+                    for (String browser : linuxBrowsers) {
+                        try (final InputStream is = Runtime.getRuntime().exec(new String[]{"which", browser}).getInputStream()) {
+                            if (is.read() != -1) {
+                                Runtime.getRuntime().exec(new String[]{browser, link});
+                                return;
+                            }
+                        } catch (Throwable ignored) {
+                        }
+                        Logging.LOG.log(Level.WARNING, "No known browser found");
+                    }
+                }
                 try {
                     java.awt.Desktop.getDesktop().browse(new URI(link));
                 } catch (Throwable e) {
@@ -387,8 +407,9 @@ public final class FXUtils {
                         }
                     Logging.LOG.log(Level.WARNING, "Failed to open link: " + link, e);
                 }
-            }
-        });
+            });
+
+        }
     }
 
     public static void bindInt(JFXTextField textField, Property<Number> property) {
@@ -426,6 +447,7 @@ public final class FXUtils {
     /**
      * Bind combo box selection with given enum property bidirectionally.
      * You should <b>only and always</b> use {@code bindEnum} as well as {@code unbindEnum} at the same time.
+     *
      * @param comboBox the combo box being bound with {@code property}.
      * @param property the property being bound with {@code combo box}.
      * @see #unbindEnum(JFXComboBox)
@@ -435,6 +457,7 @@ public final class FXUtils {
     @Deprecated
     public static void bindEnum(JFXComboBox<?> comboBox, Property<? extends Enum<?>> property) {
         unbindEnum(comboBox);
+        @SuppressWarnings("rawtypes")
         ChangeListener<Number> listener = (a, b, newValue) ->
                 ((Property) property).setValue(property.getValue().getClass().getEnumConstants()[newValue.intValue()]);
         comboBox.getSelectionModel().select(property.getValue().ordinal());
@@ -445,6 +468,7 @@ public final class FXUtils {
     /**
      * Unbind combo box selection with given enum property bidirectionally.
      * You should <b>only and always</b> use {@code bindEnum} as well as {@code unbindEnum} at the same time.
+     *
      * @param comboBox the combo box being bound with the property which can be inferred by {@code bindEnum}.
      * @see #bindEnum(JFXComboBox, Property)
      * @deprecated Use {@link ExtendedProperties#selectedItemPropertyFor(ComboBox)}
@@ -452,6 +476,7 @@ public final class FXUtils {
     @SuppressWarnings("unchecked")
     @Deprecated
     public static void unbindEnum(JFXComboBox<?> comboBox) {
+        @SuppressWarnings("rawtypes")
         ChangeListener listener = tryCast(comboBox.getProperties().get("FXUtils.bindEnum.listener"), ChangeListener.class).orElse(null);
         if (listener == null) return;
         comboBox.getSelectionModel().selectedIndexProperty().removeListener(listener);
@@ -459,6 +484,7 @@ public final class FXUtils {
 
     /**
      * Suppress IllegalArgumentException since the url is supposed to be correct definitely.
+     *
      * @param url the url of image. The image resource should be a file within the jar.
      * @return the image resource within the jar.
      * @see org.jackhuang.hmcl.util.CrashReporter
