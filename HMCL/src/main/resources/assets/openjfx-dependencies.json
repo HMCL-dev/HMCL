@@ -3,66 +3,84 @@
     "module": "javafx.base",
     "groupId": "org.openjfx",
     "artifactId": "javafx-base",
-    "version": "16",
+    "version": "17-ea+17",
     "sha1": {
-      "linux": "7d6b85ec89e99ea40c2a63bb1f23d43e05cd2557",
-      "mac": "ea97d8a5ab95d070df86de1215f29f08378c98c8",
-      "win": "e0564fea3f27dd3a10fa62e5005612333fc244bc"
+      "linux": "70b3908f548c6031e1dd221124e91ea3891f5f3f",
+      "linux-aarch64": "a55742f01e9e220b8c5143fa018a072e16ad5a8e",
+      "mac": "79d57e0c2984dd2a006bc32a5615e71dac23386c",
+      "mac-aarch64": "a395b2f11af9c4e90fd3297dd529fdaf258c1569",
+      "win": "215d14c2a6281487c3c2f3d6a5159f3126731473",
+      "win-x86": "19aa1a1575d187e0aa64e06daf392a3ac8083afb"
     }
   },
   {
     "module": "javafx.controls",
     "groupId": "org.openjfx",
     "artifactId": "javafx-controls",
-    "version": "16",
+    "version": "17-ea+17",
     "sha1": {
-      "linux": "116b127e512d23ddb84c62017c256e7f67f5b9eb",
-      "mac": "8df933b095bdd8203dc937e39e3a9f199654e47e",
-      "win": "65cdeae29c67d25932dcc66ca4f7d269923631ba"
+      "linux": "3a46f7cdb81c3e8d6f2c8b01bd0f373be30117f5",
+      "linux-aarch64": "fd0a4e2f57ac740c4832f204a9b10093d02dec3b",
+      "mac": "20c2c350a034c8bcf999e97e4e57c782fc3ebea3",
+      "mac-aarch64": "88bafecc908d8e75b1a8496cda8217aa6d9f76fc",
+      "win": "acb49a74d373de98b9bb01fed698e3d8be7f439b",
+      "win-x86": "086b1cff015846da0e26780dfeb2a62846508891"
     }
   },
   {
     "module": "javafx.fxml",
     "groupId": "org.openjfx",
     "artifactId": "javafx-fxml",
-    "version": "16",
+    "version": "17-ea+17",
     "sha1": {
-      "linux": "c7147c450773c3d4fd038ac9d1a6fdebbc3c11e0",
-      "mac": "7e4f07a331991485560673a398d6988cc805b67f",
-      "win": "369f646fc29d2223cc98cfc3c059f2409b3e8fcb"
+      "linux": "412ae5755e94fb46dd1c8c0890af570f9dad2985",
+      "linux-aarch64": "4e2a7938a24f23e86ab22f55c762e10277d52c5c",
+      "mac": "5ff616acca97e7a51e35478f20eb292a4a14fa0f",
+      "mac-aarch64": "4fade5a687f03c17b4d9c2219e7390f2599baf77",
+      "win": "1a695125cb6298b991b8cb2bdbc634232c5066b0",
+      "win-x86": "d9437a12c9441f806429509603a757b8f86503f8"
     }
   },
   {
     "module": "javafx.graphics",
     "groupId": "org.openjfx",
     "artifactId": "javafx-graphics",
-    "version": "16",
+    "version": "17-ea+17",
     "sha1": {
-      "linux": "01bf2fd9f083daa2f492c4c58c4f7d5acb6f4b7d",
-      "mac": "a45de3d40e217f7ba22cecf54abc281d13a172f6",
-      "win": "0cd18f8477818b40cfdbcfec7e2fc15f632f0a2f"
+      "linux": "b11547378c13e2ff404a161460c8f3f68802af44",
+      "linux-aarch64": "bff9c9502737b580cd4b40d5e296f4a446c148ba",
+      "mac": "6abbd5c3a87f2d50f63f2c2bbf3e27ff753e06f2",
+      "mac-aarch64": "6d583ff9e01c9e3e0999615aebc4e875db5e368b",
+      "win": "1dd878d1ac91bfe796a414e667d9c9972ff9bc96",
+      "win-x86": "49f7f59730f4ec53a84b3c689f92c8c20c1b1a23"
     }
   },
   {
     "module": "javafx.media",
     "groupId": "org.openjfx",
     "artifactId": "javafx-media",
-    "version": "16",
+    "version": "17-ea+17",
     "sha1": {
-      "linux": "10edb5fd8eb64b3312b31225c396e1850b9d178b",
-      "mac": "9e0248083267cdc22b2b698f0b0b62b7399ad32d",
-      "win": "6d776658906fc25051734bc6b03f214cc72c808e"
+      "linux": "0d6e841e4c02b566f1f587ddee32ef0cc0ce38e1",
+      "linux-aarch64": "3c380afd3c1c9c346f8b78826333c56102f4315c",
+      "mac": "ace33a63e65ec7da79ecbce9b6fc439af1815d2d",
+      "mac-aarch64": "72f944f25ce4f8e6b0e31215692a743abc56efef",
+      "win": "46a29a35d0d11e75c5e76065ae9e16043165fe99",
+      "win-x86": "93834d0db720c4054fbc412045f1dfc4557ace19"
     }
   },
   {
     "module": "javafx.web",
     "groupId": "org.openjfx",
     "artifactId": "javafx-web",
-    "version": "16",
+    "version": "17-ea+17",
     "sha1": {
-      "linux": "522f626e1798a7d589d9b187ca5c74c5c2f8a0ee",
-      "mac": "32b0e13b649ea828e7d185187f178680cc04e564",
-      "win": "d2f80089a4ae1629a5ec14637abf4f6d70b96dab"
+      "linux": "a502ea2af96bec4ccf8d1e4ff6d4bb03a691b6a9",
+      "linux-aarch64": "af4b8952521a3552b74624d31e967fc17669101c",
+      "mac": "268c305b2d3041578cd8aa3dffb744553459d1ac",
+      "mac-aarch64": "dd6cff3d0c6880b4249f5a286a5bcb4a135344ab",
+      "win": "c4ab5ee95133a7b52e3674e61a76fc6300809587",
+      "win-x86": "6c894b0cda6e7f2ed825eb66aba9413b88fcc2f2"
     }
   }
 ]

@@ -2,8 +2,8 @@
 set -e
 
 modules=(base controls fxml graphics media web)
-arches=(linux mac win)
-version=16
+arches=(linux linux-aarch64 mac mac-aarch64 win win-x86)
+version=17-ea+17
 
 echo '['
 for module in ${modules[@]}; do
