@@ -47,7 +47,7 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
     }
 
     @Override
-    public OfflineAccount create(CharacterSelector selector, String username, String password, Object additionalData) {
+    public OfflineAccount create(CharacterSelector selector, String username, String password, ProgressCallback progressCallback, Object additionalData) {
         return new OfflineAccount(username, getUUIDFromUserName(username));
     }
 

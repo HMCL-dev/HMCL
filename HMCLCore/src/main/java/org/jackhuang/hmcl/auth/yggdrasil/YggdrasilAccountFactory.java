@@ -48,7 +48,7 @@ public class YggdrasilAccountFactory extends AccountFactory<YggdrasilAccount> {
     }
 
     @Override
-    public YggdrasilAccount create(CharacterSelector selector, String username, String password, Object additionalData) throws AuthenticationException {
+    public YggdrasilAccount create(CharacterSelector selector, String username, String password, ProgressCallback progressCallback, Object additionalData) throws AuthenticationException {
         Objects.requireNonNull(selector);
         Objects.requireNonNull(username);
         Objects.requireNonNull(password);
