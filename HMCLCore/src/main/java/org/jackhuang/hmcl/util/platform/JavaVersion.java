@@ -165,7 +165,7 @@ public final class JavaVersion {
         CURRENT_JAVA = new JavaVersion(
                 currentExecutable,
                 System.getProperty("java.version"),
-                Platform.PLATFORM);
+                Platform.getPlatform());
     }
 
     private static Collection<JavaVersion> JAVAS;
