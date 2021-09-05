@@ -89,6 +89,7 @@ public class ModDownloadPage extends Control implements DecoratorPage {
                     List<CurseAddon.LatestFile> files = CurseModManager.getFiles(addon);
                     items.setAll(files.stream()
                             .filter(file -> file.getGameVersion().contains(gameVersion.get()))
+                            .sorted(Comparator.comparing(CurseAddon.LatestFile::getParsedFileDate).reversed())
                             .collect(Collectors.toList()));
                     return;
                 }
@@ -275,6 +276,18 @@ public class ModDownloadPage extends Control implements DecoratorPage {
     }
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault());
+
+    public interface Project {
+
+    }
+
+    public interface ProjectVersion {
+
+    }
+
+    public interface DownloadSource {
+
+    }
 
     public interface DownloadCallback {
         void download(Profile profile, @Nullable String version, CurseAddon.LatestFile file);
