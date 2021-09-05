@@ -69,6 +69,7 @@ public abstract class SettingsView extends StackPane {
                         StackPane sponsorPane = new StackPane();
                         sponsorPane.setCursor(Cursor.HAND);
                         sponsorPane.setOnMouseClicked(e -> onSponsor());
+                        sponsorPane.setPadding(new Insets(8, 0, 8, 0));
 
                         GridPane gridPane = new GridPane();
 
