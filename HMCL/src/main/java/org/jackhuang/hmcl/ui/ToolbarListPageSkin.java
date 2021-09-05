@@ -107,6 +107,7 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         ret.setOnMouseClicked(e -> onClick.run());
         return ret;
     }
+
     public static JFXButton createDecoratorButton(String tooltip, SVG.SVGIcon creator, Runnable onClick) {
         JFXButton ret = new JFXButton();
         ret.getStyleClass().add("jfx-decorator-button");

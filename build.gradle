@@ -28,6 +28,10 @@ subprojects {
         sourceSets = []
     }
 
+    tasks.withType(Checkstyle) {
+        exclude 'de/javawi/jstun'
+    }
+
     sourceCompatibility = 1.8
     compileJava.options.encoding = "UTF-8"
     compileTestJava.options.encoding = "UTF-8"
