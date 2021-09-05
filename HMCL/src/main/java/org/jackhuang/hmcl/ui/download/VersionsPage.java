@@ -105,6 +105,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         } else {
             centrePane.getContent().setAll(list);
         }
+        list.getProperties().put("vgrow", true);
 
         InvalidationListener listener = o -> list.getItems().setAll(loadVersions());
         chkRelease.selectedProperty().addListener(listener);
