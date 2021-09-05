@@ -99,6 +99,14 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         return ret;
     }
 
+    public static JFXButton createToolbarButton2(String text, SVG.SVGIcon creator, Runnable onClick) {
+        JFXButton ret = new JFXButton();
+        ret.getStyleClass().add("jfx-tool-bar-button");
+        ret.setGraphic(wrap(creator.createIcon(Theme.blackFillBinding(), -1, -1)));
+        ret.setText(text);
+        ret.setOnMouseClicked(e -> onClick.run());
+        return ret;
+    }
     public static JFXButton createDecoratorButton(String tooltip, SVG.SVGIcon creator, Runnable onClick) {
         JFXButton ret = new JFXButton();
         ret.getStyleClass().add("jfx-decorator-button");

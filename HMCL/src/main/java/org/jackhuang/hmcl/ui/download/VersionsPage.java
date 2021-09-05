@@ -28,6 +28,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
@@ -105,7 +106,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         } else {
             centrePane.getContent().setAll(list);
         }
-        list.getProperties().put("vgrow", true);
+        ComponentList.setVgrow(list, Priority.ALWAYS);
 
         InvalidationListener listener = o -> list.getItems().setAll(loadVersions());
         chkRelease.selectedProperty().addListener(listener);

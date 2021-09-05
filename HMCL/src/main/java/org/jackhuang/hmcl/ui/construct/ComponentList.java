@@ -133,8 +133,8 @@ public class ComponentList extends Control {
             list = MappedObservableList.create(control.getContent(), node -> {
                 ComponentListCell cell = new ComponentListCell(node);
                 cell.getStyleClass().add("options-list-item");
-                if (node.getProperties().containsKey("vgrow")) {
-                    VBox.setVgrow(cell, Priority.ALWAYS);
+                if (node.getProperties().containsKey("ComponentList.vgrow")) {
+                    VBox.setVgrow(cell, (Priority) node.getProperties().get("ComponentList.vgrow"));
                 }
                 return cell;
             });
@@ -175,5 +175,9 @@ public class ComponentList extends Control {
             node.getChildren().setAll(advanced);
         }
         return node;
+    }
+
+    public static void setVgrow(Node node, Priority priority) {
+        node.getProperties().put("ComponentList.vgrow", priority);
     }
 }

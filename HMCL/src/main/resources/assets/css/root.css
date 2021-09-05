@@ -793,6 +793,10 @@
     -fx-border-width: 0 0 1 0;
 }
 
+.md-list-cell:selected {
+    -fx-background-color: derive(-fx-base-color, 60%);
+}
+
 .options-sublist {
     -fx-background-color: white;
 }
