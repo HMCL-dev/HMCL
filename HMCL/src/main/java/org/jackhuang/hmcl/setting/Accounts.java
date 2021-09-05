@@ -365,6 +365,8 @@ public final class Accounts {
             } else {
                 return i18n("account.methods.microsoft.error.unknown", errorCode);
             }
+        } else if (exception instanceof MicrosoftService.NoMinecraftJavaEditionProfileException) {
+            return i18n("account.methods.microsoft.error.no_character");
         } else if (exception.getClass() == AuthenticationException.class) {
             return exception.getLocalizedMessage();
         } else {
