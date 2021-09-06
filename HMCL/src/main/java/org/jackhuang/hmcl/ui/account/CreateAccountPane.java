@@ -282,7 +282,7 @@ public class CreateAccountPane extends JFXDialogLayout {
         public AccountDetailsInputPane(AccountFactory<?> factory, Runnable onAction) {
             this.factory = factory;
 
-            setVgap(15);
+            setVgap(22);
             setHgap(15);
             setAlignment(Pos.CENTER);
 
