@@ -62,7 +62,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.classPropertyFor;
 
-public class CreateAccountPane extends JFXDialogLayout {
+public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
     private boolean showMethodSwitcher;
     private AccountFactory<?> factory;
@@ -424,6 +424,12 @@ public class CreateAccountPane extends JFXDialogLayout {
         public void selectAuthServer(AuthlibInjectorServer authserver) {
             cboServers.getSelectionModel().select(authserver);
         }
+
+        public void focus() {
+            if (txtUsername != null) {
+                txtUsername.requestFocus();
+            }
+        }
     }
 
     private static class DialogCharacterSelector extends BorderPane implements CharacterSelector {
@@ -484,6 +490,13 @@ public class CreateAccountPane extends JFXDialogLayout {
             } finally {
                 Platform.runLater(() -> fireEvent(new DialogCloseEvent()));
             }
+        }
+    }
+
+    @Override
+    public void onDialogShown() {
+        if (detailsPane instanceof AccountDetailsInputPane) {
+            ((AccountDetailsInputPane) detailsPane).focus();
         }
     }
 }

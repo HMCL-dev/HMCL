@@ -132,7 +132,7 @@ public class AddAuthlibInjectorServerPane extends StackPane implements DialogAwa
     @FXML
     private void onAddFinish() {
         if (!config().getAuthlibInjectorServers().contains(serverBeingAdded)) {
-            config().getAuthlibInjectorServers().add(0, serverBeingAdded);
+            config().getAuthlibInjectorServers().add(serverBeingAdded);
         }
         fireEvent(new DialogCloseEvent());
     }
