@@ -78,7 +78,7 @@ public class CreateAccountPane extends JFXDialogLayout {
     private TaskExecutor loginTask;
 
     public CreateAccountPane() {
-        this(null);
+        this((AccountFactory<?>) null);
     }
 
     public CreateAccountPane(AccountFactory<?> factory) {
@@ -168,6 +168,11 @@ public class CreateAccountPane extends JFXDialogLayout {
         initDetailsPane();
 
         setPrefWidth(560);
+    }
+
+    public CreateAccountPane(AuthlibInjectorServer authserver) {
+        this(Accounts.FACTORY_AUTHLIB_INJECTOR);
+        ((AccountDetailsInputPane) detailsPane).selectAuthServer(authserver);
     }
 
     private void onAccept() {
@@ -322,15 +327,7 @@ public class CreateAccountPane extends JFXDialogLayout {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());
                 });
 
-                JFXButton btnManageServers = new JFXButton();
-                btnManageServers.setGraphic(SVG.gear(null, 20, 20));
-                btnManageServers.getStyleClass().add("toggle-icon4");
-                btnManageServers.setOnAction(e -> {
-                    fireEvent(new DialogCloseEvent());
-                    Controllers.navigate(Controllers.getServersPage());
-                });
-
-                HBox boxServers = new HBox(cboServers, linksContainer, btnAddServer, btnManageServers);
+                HBox boxServers = new HBox(cboServers, linksContainer, btnAddServer);
                 add(boxServers, 1, rowIndex);
 
                 rowIndex++;
@@ -421,6 +418,10 @@ public class CreateAccountPane extends JFXDialogLayout {
 
         public BooleanBinding validProperty() {
             return valid;
+        }
+
+        public void selectAuthServer(AuthlibInjectorServer authserver) {
+            cboServers.getSelectionModel().select(authserver);
         }
     }
 

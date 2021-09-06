@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
-import org.jackhuang.hmcl.ui.account.AuthlibInjectorServersPage;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -85,7 +84,6 @@ public final class Controllers {
         });
         return gameListPage;
     });
-    private static AuthlibInjectorServersPage serversPage = null;
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     private static DecoratorController decorator;
     private static Lazy<ModDownloadListPage> modDownloadListPage = new Lazy<>(() -> {
@@ -100,6 +98,7 @@ public final class Controllers {
         AccountListPage accountListPage = new AccountListPage();
         accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
         accountListPage.accountsProperty().bindContent(Accounts.accountsProperty());
+        accountListPage.authServersProperty().bindContentBidirectional(config().getAuthlibInjectorServers());
         return accountListPage;
     });
     private static Lazy<MultiplayerPage> multiplayerPage = new Lazy<>(MultiplayerPage::new);
@@ -129,13 +128,6 @@ public final class Controllers {
     // FXThread
     public static RootPage getRootPage() {
         return rootPage.get();
-    }
-
-    // FXThread
-    public static AuthlibInjectorServersPage getServersPage() {
-        if (serversPage == null)
-            serversPage = new AuthlibInjectorServersPage();
-        return serversPage;
     }
 
     // FXThread
@@ -287,7 +279,6 @@ public final class Controllers {
     public static void shutdown() {
         rootPage = null;
         versionPage = null;
-        serversPage = null;
         gameListPage = null;
         settingsPage = null;
         modDownloadListPage = null;

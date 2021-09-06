@@ -62,7 +62,6 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER);
-        right.setMouseTransparent(true);
         right.getStyleClass().add("toggle-icon4");
         FXUtils.setLimitWidth(right, 40);
         FXUtils.onChangeAndOperate(skinnable.rightGraphicProperty(),
