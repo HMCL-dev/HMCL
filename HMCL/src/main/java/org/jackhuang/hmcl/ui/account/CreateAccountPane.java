@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -312,16 +313,16 @@ public class CreateAccountPane extends JFXDialogLayout {
                 classPropertyFor(cboServers, "jfx-combo-box-warning").bind(noServers);
                 classPropertyFor(cboServers, "jfx-combo-box").bind(noServers.not());
                 HBox.setHgrow(cboServers, Priority.ALWAYS);
+                HBox.setMargin(cboServers, new Insets(0, 10, 0, 0));
                 cboServers.setMaxWidth(Double.MAX_VALUE);
 
                 HBox linksContainer = new HBox();
                 linksContainer.setAlignment(Pos.CENTER);
-                linksContainer.setPadding(new Insets(0, 5, 0, 15));
                 onChangeAndOperate(cboServers.valueProperty(), server -> linksContainer.getChildren().setAll(createHyperlinks(server)));
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
                 JFXButton btnAddServer = new JFXButton();
-                btnAddServer.setGraphic(SVG.plus(null, 20, 20));
+                btnAddServer.setGraphic(SVG.plus(Theme.blackFillBinding(), 20, 20));
                 btnAddServer.getStyleClass().add("toggle-icon4");
                 btnAddServer.setOnAction(e -> {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());

@@ -130,11 +130,14 @@ public class AccountListPage extends ListPageBase<AccountListItem> implements De
                     authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
                         AdvancedListItem item = new AdvancedListItem();
                         item.getStyleClass().add("navigation-drawer-item");
-                        item.setLeftGraphic(SVG.server(null, 20, 20));
+                        item.setLeftGraphic(SVG.server(Theme.blackFillBinding(), 24, 24));
                         item.setOnAction(e -> Controllers.dialog(new CreateAccountPane(server)));
 
                         JFXButton btnRemove = new JFXButton();
-                        btnRemove.setOnAction(e -> skinnable.authServersProperty().remove(server));
+                        btnRemove.setOnAction(e -> {
+                            skinnable.authServersProperty().remove(server);
+                            e.consume();
+                        });
                         btnRemove.getStyleClass().add("toggle-icon4");
                         btnRemove.setGraphic(SVG.close(Theme.blackFillBinding(), 14, 14));
                         item.setRightGraphic(btnRemove);
