@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
-import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
@@ -34,7 +33,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
-import org.jackhuang.hmcl.ui.account.CreateAccountPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
@@ -140,13 +138,7 @@ public class RootPage extends DecoratorTabPage {
 
             // first item in left sidebar
             AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
-            accountListItem.setOnAction(e -> {
-                Controllers.navigate(Controllers.getAccountListPage());
-
-                if (Accounts.getAccounts().isEmpty()) {
-                    Controllers.dialog(new CreateAccountPane());
-                }
-            });
+            accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
             // second item in left sidebar
@@ -220,27 +212,6 @@ public class RootPage extends DecoratorTabPage {
 
     }
 
-    // ==== Accounts ====
-
-    private boolean checkedAccont = false;
-
-    public void checkAccount() {
-        if (checkedAccont)
-            return;
-        checkedAccont = true;
-        checkAccountForcibly();
-    }
-
-    public void checkAccountForcibly() {
-        if (Accounts.getAccounts().isEmpty())
-            Platform.runLater(this::addNewAccount);
-    }
-
-    private void addNewAccount() {
-        Controllers.dialog(new CreateAccountPane());
-    }
-    // ====
-
     private boolean checkedModpack = false;
 
     private void onRefreshedVersions(HMCLGameRepository repository) {
@@ -257,7 +228,7 @@ public class RootPage extends DecoratorTabPage {
                                 .thenApplyAsync(modpack -> ModpackHelper
                                         .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(),
                                                 modpack)
-                                        .withRunAsync(Schedulers.javafx(), this::checkAccount).executor())
+                                        .executor())
                                 .thenAcceptAsync(Schedulers.javafx(), executor -> {
                                     Controllers.taskDialog(executor, i18n("modpack.installing"));
                                     executor.start();
@@ -265,8 +236,6 @@ public class RootPage extends DecoratorTabPage {
                     }
                 }
             }
-
-            checkAccount();
         });
     }
 }
