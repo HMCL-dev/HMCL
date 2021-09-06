@@ -22,6 +22,7 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -68,45 +69,45 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
             AdvancedListBox sideBar = new AdvancedListBox()
                     .addNavigationDrawerItem(settingsItem -> {
                         settingsItem.setTitle(i18n("settings.type.global.manage"));
-                        settingsItem.setLeftGraphic(wrap(SVG.gamepad(null, 20, 20)));
+                        settingsItem.setLeftGraphic(wrap(SVG.gamepad(Theme.blackFillBinding(), 24, 24)));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(gameTab));
                         settingsItem.setOnAction(e -> tab.getSelectionModel().select(gameTab));
                     })
                     .startCategory(i18n("launcher"))
                     .addNavigationDrawerItem(settingsItem -> {
                         settingsItem.setTitle(i18n("settings.launcher.general"));
-                        settingsItem.setLeftGraphic(wrap(SVG.applicationOutline(null, 20, 20)));
+                        settingsItem.setLeftGraphic(wrap(SVG.applicationOutline(Theme.blackFillBinding(), 24, 24)));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(settingsTab));
                         settingsItem.setOnAction(e -> tab.getSelectionModel().select(settingsTab));
                     })
                     .addNavigationDrawerItem(personalizationItem -> {
                         personalizationItem.setTitle(i18n("settings.launcher.appearance"));
-                        personalizationItem.setLeftGraphic(wrap(SVG.styleOutline(null, 20, 20)));
+                        personalizationItem.setLeftGraphic(wrap(SVG.styleOutline(Theme.blackFillBinding(), 24, 24)));
                         personalizationItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(personalizationTab));
                         personalizationItem.setOnAction(e -> tab.getSelectionModel().select(personalizationTab));
                     })
                     .addNavigationDrawerItem(downloadItem -> {
                         downloadItem.setTitle(i18n("download"));
-                        downloadItem.setLeftGraphic(wrap(SVG.downloadOutline(null, 20, 20)));
+                        downloadItem.setLeftGraphic(wrap(SVG.downloadOutline(Theme.blackFillBinding(), 24, 24)));
                         downloadItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(downloadTab));
                         downloadItem.setOnAction(e -> tab.getSelectionModel().select(downloadTab));
                     })
                     .startCategory(i18n("help"))
                     .addNavigationDrawerItem(helpItem -> {
                         helpItem.setTitle(i18n("help"));
-                        helpItem.setLeftGraphic(wrap(SVG.helpCircleOutline(null, 20, 20)));
+                        helpItem.setLeftGraphic(wrap(SVG.helpCircleOutline(Theme.blackFillBinding(), 24, 24)));
                         helpItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(helpTab));
                         helpItem.setOnAction(e -> tab.getSelectionModel().select(helpTab));
                     })
                     .addNavigationDrawerItem(sponsorItem -> {
                         sponsorItem.setTitle(i18n("sponsor"));
-                        sponsorItem.setLeftGraphic(wrap(SVG.handHearOutline(null, 20, 20)));
+                        sponsorItem.setLeftGraphic(wrap(SVG.handHearOutline(Theme.blackFillBinding(), 24, 24)));
                         sponsorItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(sponsorTab));
                         sponsorItem.setOnAction(e -> tab.getSelectionModel().select(sponsorTab));
                     })
                     .addNavigationDrawerItem(aboutItem -> {
                         aboutItem.setTitle(i18n("about"));
-                        aboutItem.setLeftGraphic(wrap(SVG.informationOutline(null, 20, 20)));
+                        aboutItem.setLeftGraphic(wrap(SVG.informationOutline(Theme.blackFillBinding(), 24, 24)));
                         aboutItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(aboutTab));
                         aboutItem.setOnAction(e -> tab.getSelectionModel().select(aboutTab));
                     });
