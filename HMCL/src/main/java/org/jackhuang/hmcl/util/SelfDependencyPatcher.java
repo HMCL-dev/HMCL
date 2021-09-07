@@ -334,7 +334,7 @@ public final class SelfDependencyPatcher {
             final String url = repository.resolveDependencyURL(dependency);
             SwingUtilities.invokeLater(() -> {
                 dialog.setStatus(url);
-                dialog.setProgress(currentProgress, dependencies.size());
+                dialog.setProgress(currentProgress, dependencies.size() + 1);
             });
 
             LOG.info("Downloading " + url);
