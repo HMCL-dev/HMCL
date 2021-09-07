@@ -1,7 +1,12 @@
+import com.google.gson.*
+
 buildscript {
     repositories {
         mavenCentral()
         maven { url 'https://plugins.gradle.org/m2/' }
+    }
+    dependencies {
+        classpath group: 'com.google.code.gson', name: 'gson', version: '2.8.1'
     }
 }
 
@@ -49,3 +54,37 @@ subprojects {
 }
 
 defaultTasks 'clean', 'build'
+
+var jfxModules = ['base', 'controls', 'fxml', 'graphics', 'media', 'web']
+var jfxArches = ['linux', /*'linux-arm32-monocle',*/ 'linux-aarch64', 'mac', 'mac-aarch64', 'win', 'win-x86']
+var jfxVersion = "17-ea+17"
+
+task 'generateOpenJFXDependencies' {
+    doLast {
+        var jfxDependencies = new JsonArray()
+
+        jfxModules.forEach { module ->
+            JsonObject m = new JsonObject()
+            m.addProperty("module", "javafx.$module")
+            m.addProperty("groupId", "org.openjfx")
+            m.addProperty("artifactId", "javafx-$module")
+            m.addProperty("version", jfxVersion)
+
+            var sha1 = new JsonObject()
+            jfxArches.forEach { arch ->
+                if (!(module == 'web' && arch.endsWith('linux-arm32-monocle'))) {
+                    sha1.addProperty(
+                            arch,
+                            new URL("https://repo1.maven.org/maven2/org/openjfx/javafx-$module/$jfxVersion/javafx-$module-$jfxVersion-${arch}.jar.sha1").getText("UTF-8")
+                    )
+                }
+            }
+            m.add("sha1", sha1)
+
+            jfxDependencies.add(m)
+        }
+
+        file('HMCL/src/main/resources/assets/openjfx-dependencies.json').text =
+                new GsonBuilder().setPrettyPrinting().create().toJson(jfxDependencies)
+    }
+}
