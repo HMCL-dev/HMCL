@@ -87,6 +87,8 @@ public final class SelfDependencyPatcher {
                 switch (Architecture.CURRENT) {
                     case X86_64:
                         return "linux";
+                    case ARM:
+                        return "linux-arm32-monocle";
                     case ARM64:
                         return "linux-aarch64";
                 }
@@ -133,6 +135,10 @@ public final class SelfDependencyPatcher {
                 return null;
             }
             return DEPENDENCIES_DIR_PATH.resolve(filename());
+        }
+
+        public boolean isSupported() {
+            return CURRENT_ARCH_CLASSIFIER != null && sha1.containsKey(CURRENT_ARCH_CLASSIFIER);
         }
     }
 
@@ -251,7 +257,14 @@ public final class SelfDependencyPatcher {
         final JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        for (String line : i18n("repositories.chooser").split("\n")) {
+        final String chooserText;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.CURRENT == Architecture.ARM) {
+            chooserText = i18n("repositories.chooser.linux_arm32");
+        } else {
+            chooserText = i18n("repositories.chooser");
+        }
+
+        for (String line : chooserText.split("\n")) {
             panel.add(new JLabel(line));
         }
 
@@ -294,10 +307,12 @@ public final class SelfDependencyPatcher {
         LOG.info(" - Loading dependencies...");
 
         Set<String> modules = JFX_DEPENDENCIES.stream()
+                .filter(DependencyDescriptor::isSupported)
                 .map(it -> it.module)
                 .collect(toSet());
 
         Path[] jars = JFX_DEPENDENCIES.stream()
+                .filter(DependencyDescriptor::isSupported)
                 .map(DependencyDescriptor::localPath)
                 .toArray(Path[]::new);
 
@@ -337,6 +352,9 @@ public final class SelfDependencyPatcher {
         List<DependencyDescriptor> missing = new ArrayList<>();
 
         for (DependencyDescriptor dependency : JFX_DEPENDENCIES) {
+            if (!dependency.isSupported()) {
+                continue;
+            }
             if (!Files.exists(dependency.localPath())) {
                 missing.add(dependency);
                 continue;
@@ -390,10 +408,10 @@ public final class SelfDependencyPatcher {
             setLocationRelativeTo(null);
 
             GridBagLayout gridBagLayout = new GridBagLayout();
-            gridBagLayout.columnWidths = new int[] { 600, 0 };
-            gridBagLayout.rowHeights = new int[] { 0, 0, 0, 200 };
-            gridBagLayout.columnWeights = new double[] { 1.0, Double.MIN_VALUE };
-            gridBagLayout.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0 };
+            gridBagLayout.columnWidths = new int[]{600, 0};
+            gridBagLayout.rowHeights = new int[]{0, 0, 0, 200};
+            gridBagLayout.columnWeights = new double[]{1.0, Double.MIN_VALUE};
+            gridBagLayout.rowWeights = new double[]{0.0, 0.0, 0.0, 1.0};
             panel.setLayout(gridBagLayout);
 
             progressText = new JLabel("");

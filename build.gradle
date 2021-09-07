@@ -56,7 +56,7 @@ subprojects {
 defaultTasks 'clean', 'build'
 
 var jfxModules = ['base', 'controls', 'fxml', 'graphics', 'media', 'web']
-var jfxArches = ['linux', /*'linux-arm32-monocle',*/ 'linux-aarch64', 'mac', 'mac-aarch64', 'win', 'win-x86']
+var jfxArches = ['linux', 'linux-arm32-monocle', 'linux-aarch64', 'mac', 'mac-aarch64', 'win', 'win-x86']
 var jfxVersion = "17-ea+17"
 
 task 'generateOpenJFXDependencies' {

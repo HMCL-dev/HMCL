@@ -6,6 +6,7 @@
     "version": "17-ea+17",
     "sha1": {
       "linux": "70b3908f548c6031e1dd221124e91ea3891f5f3f",
+      "linux-arm32-monocle": "256bd3daf1cb8d52f3aed20a8bd400de91f82744",
       "linux-aarch64": "a55742f01e9e220b8c5143fa018a072e16ad5a8e",
       "mac": "79d57e0c2984dd2a006bc32a5615e71dac23386c",
       "mac-aarch64": "a395b2f11af9c4e90fd3297dd529fdaf258c1569",
@@ -20,6 +21,7 @@
     "version": "17-ea+17",
     "sha1": {
       "linux": "3a46f7cdb81c3e8d6f2c8b01bd0f373be30117f5",
+      "linux-arm32-monocle": "0ae5a384b402b34faaccce3c5a0d37362638ffa1",
       "linux-aarch64": "fd0a4e2f57ac740c4832f204a9b10093d02dec3b",
       "mac": "20c2c350a034c8bcf999e97e4e57c782fc3ebea3",
       "mac-aarch64": "88bafecc908d8e75b1a8496cda8217aa6d9f76fc",
@@ -34,6 +36,7 @@
     "version": "17-ea+17",
     "sha1": {
       "linux": "412ae5755e94fb46dd1c8c0890af570f9dad2985",
+      "linux-arm32-monocle": "e910781f8518604a144dea01eba168ab252cf46d",
       "linux-aarch64": "4e2a7938a24f23e86ab22f55c762e10277d52c5c",
       "mac": "5ff616acca97e7a51e35478f20eb292a4a14fa0f",
       "mac-aarch64": "4fade5a687f03c17b4d9c2219e7390f2599baf77",
@@ -48,6 +51,7 @@
     "version": "17-ea+17",
     "sha1": {
       "linux": "b11547378c13e2ff404a161460c8f3f68802af44",
+      "linux-arm32-monocle": "29963f4c3b69fc44a4b63576c655f793d3c87b82",
       "linux-aarch64": "bff9c9502737b580cd4b40d5e296f4a446c148ba",
       "mac": "6abbd5c3a87f2d50f63f2c2bbf3e27ff753e06f2",
       "mac-aarch64": "6d583ff9e01c9e3e0999615aebc4e875db5e368b",
@@ -62,6 +66,7 @@
     "version": "17-ea+17",
     "sha1": {
       "linux": "0d6e841e4c02b566f1f587ddee32ef0cc0ce38e1",
+      "linux-arm32-monocle": "eca17e33ccb8005ec546f1a44b8a99072b0aefa0",
       "linux-aarch64": "3c380afd3c1c9c346f8b78826333c56102f4315c",
       "mac": "ace33a63e65ec7da79ecbce9b6fc439af1815d2d",
       "mac-aarch64": "72f944f25ce4f8e6b0e31215692a743abc56efef",
