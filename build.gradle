@@ -1,5 +1,3 @@
-import com.google.gson.*
-
 buildscript {
     repositories {
         mavenCentral()
@@ -58,6 +56,10 @@ defaultTasks 'clean', 'build'
 var jfxModules = ['base', 'controls', 'fxml', 'graphics', 'media', 'web']
 var jfxArches = ['linux', 'linux-arm32-monocle', 'linux-aarch64', 'mac', 'mac-aarch64', 'win', 'win-x86']
 var jfxVersion = "17-ea+17"
+var jfxRepos = ['https://repo1.maven.org/maven2', 'https://maven.aliyun.com/repository/central']
+var jfxDependenciesFile = file('HMCL/src/main/resources/assets/openjfx-dependencies.json')
+
+import com.google.gson.*
 
 task 'generateOpenJFXDependencies' {
     doLast {
@@ -72,19 +74,44 @@ task 'generateOpenJFXDependencies' {
 
             var sha1 = new JsonObject()
             jfxArches.forEach { arch ->
-                if (!(module == 'web' && arch.endsWith('linux-arm32-monocle'))) {
-                    sha1.addProperty(
-                            arch,
-                            new URL("https://repo1.maven.org/maven2/org/openjfx/javafx-$module/$jfxVersion/javafx-$module-$jfxVersion-${arch}.jar.sha1").getText("UTF-8")
-                    )
+                if (module == 'web' && arch.endsWith('linux-arm32-monocle')) {
+                    return
                 }
+                sha1.addProperty(
+                        arch,
+                        new URL("${jfxRepos[0]}/org/openjfx/javafx-$module/$jfxVersion/javafx-$module-$jfxVersion-${arch}.jar.sha1").getText("UTF-8")
+                )
             }
             m.add("sha1", sha1)
 
             jfxDependencies.add(m)
         }
 
-        file('HMCL/src/main/resources/assets/openjfx-dependencies.json').text =
-                new GsonBuilder().setPrettyPrinting().create().toJson(jfxDependencies)
+        jfxDependenciesFile.text = new GsonBuilder().setPrettyPrinting().create().toJson(jfxDependencies)
+    }
+}
+
+// Ensure that the mirror repository caches files
+task 'preTouchOpenJFXDependencies' {
+    doLast {
+        jfxRepos.forEach { repo ->
+            jfxModules.forEach { module ->
+                jfxArches.forEach { arch ->
+                    if (module == 'web' && arch.endsWith('linux-arm32-monocle')) {
+                        return
+                    }
+                    var jarUrl = "$repo/org/openjfx/javafx-$module/$jfxVersion/javafx-$module-$jfxVersion-${arch}.jar"
+
+                    [jarUrl, jarUrl + ".sha1"].forEach { url ->
+                        try {
+                            new URL(url).getBytes()
+                            System.out.println(url)
+                        } catch (Throwable ignored) {
+                            ignored.printStackTrace()
+                        }
+                    }
+                }
+            }
+        }
     }
 }
