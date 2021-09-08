@@ -53,9 +53,9 @@ subprojects {
 
 defaultTasks 'clean', 'build'
 
-var jfxModules = ['base', 'controls', 'fxml', 'graphics', 'media', 'web']
+var jfxModules = ['base', 'graphics', 'controls', 'fxml', 'media', 'web']
 var jfxArches = ['linux', 'linux-arm32-monocle', 'linux-aarch64', 'mac', 'mac-aarch64', 'win', 'win-x86']
-var jfxVersion = "17-ea+17"
+var jfxVersion = "17"
 var jfxRepos = ['https://repo1.maven.org/maven2', 'https://maven.aliyun.com/repository/central']
 var jfxDependenciesFile = file('HMCL/src/main/resources/assets/openjfx-dependencies.json')
 
