@@ -59,6 +59,7 @@ import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
@@ -360,6 +361,21 @@ public final class FXUtils {
                         }
                     }
                 });
+        }
+    }
+
+    public static void showFileInExplorer(Path file) {
+        switch (OperatingSystem.CURRENT_OS) {
+            case WINDOWS:
+                try {
+                    Runtime.getRuntime().exec(new String[]{"explorer.exe", "/select,", file.toAbsolutePath().toString()});
+                } catch (IOException e) {
+                    Logging.LOG.log(Level.SEVERE, "Unable to open " + file + " by executing explorer /select", e);
+                }
+                break;
+            default:
+                // Currently unsupported.
+                break;
         }
     }
 

@@ -162,7 +162,7 @@
 }
 
 .advanced-list-box-content {
-    -fx-padding: 12 0 12 0;
+    -fx-padding: 12 0 0 0;
     -fx-spacing: 0;
 }
 
@@ -791,6 +791,10 @@
 .md-list-cell {
     -fx-border-color: #e0e0e0;
     -fx-border-width: 0 0 1 0;
+}
+
+.md-list-cell:selected {
+    -fx-background-color: derive(-fx-base-color, 60%);
 }
 
 .options-sublist {

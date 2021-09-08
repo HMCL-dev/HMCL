@@ -90,6 +90,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
 
         JFXButton btnRefresh = new JFXButton();
         SpinnerPane spinnerRefresh = new SpinnerPane();
+        spinnerRefresh.getStyleClass().setAll("small-spinner-pane");
         btnRefresh.setOnMouseClicked(e -> {
             spinnerRefresh.showSpinner();
             skinnable.refreshAsync()

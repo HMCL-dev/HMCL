@@ -36,6 +36,10 @@ public class SpinnerPane extends Control {
     private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading");
     private final StringProperty failedReason = new SimpleStringProperty(this, "failedReason");
 
+    public SpinnerPane() {
+        getStyleClass().add("spinner-pane");
+    }
+
     public void showSpinner() {
         setLoading(true);
     }
@@ -99,7 +103,6 @@ public class SpinnerPane extends Control {
         protected Skin(SpinnerPane control) {
             super(control);
 
-            root.getStyleClass().add("spinner-pane");
             topPane.getChildren().setAll(spinner);
             topPane.getStyleClass().add("notice-pane");
             failedPane.getChildren().setAll(failedReasonLabel);

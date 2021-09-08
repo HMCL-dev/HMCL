@@ -50,25 +50,33 @@ public abstract class AccountFactory<T extends Account> {
         }
     }
 
+    public interface ProgressCallback {
+        void onProgressChanged(String stageName);
+    }
+
     /**
      * Informs how this account factory verifies user's credential.
+     *
      * @see AccountLoginType
      */
     public abstract AccountLoginType getLoginType();
 
     /**
      * Create a new(to be verified via network) account, and log in.
-     * @param selector for character selection if multiple characters belong to single account. Pick out which character to act as.
-     * @param username username of the account if needed.
-     * @param password password of the account if needed.
-     * @param additionalData extra data for specific account factory.
+     *
+     * @param selector         for character selection if multiple characters belong to single account. Pick out which character to act as.
+     * @param username         username of the account if needed.
+     * @param password         password of the account if needed.
+     * @param progressCallback notify login progress.
+     * @param additionalData   extra data for specific account factory.
      * @return logged-in account.
      * @throws AuthenticationException if an error occurs when logging in.
      */
-    public abstract T create(CharacterSelector selector, String username, String password, Object additionalData) throws AuthenticationException;
+    public abstract T create(CharacterSelector selector, String username, String password, ProgressCallback progressCallback, Object additionalData) throws AuthenticationException;
 
     /**
      * Create a existing(stored in local files) account.
+     *
      * @param storage serialized account data.
      * @return account stored in local storage. Credentials may expired, and you should refresh account state later.
      */

@@ -22,16 +22,15 @@ import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
-import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -42,10 +41,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.FloatListCell;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -59,7 +55,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton;
+import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.StringUtils.isNotBlank;
@@ -71,42 +67,44 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         super(skinnable);
 
         StackPane pane = new StackPane();
+        pane.setPadding(new Insets(10));
         pane.getStyleClass().addAll("notice-pane");
 
-        BorderPane root = new BorderPane();
+        ComponentList root = new ComponentList();
+        root.getStyleClass().add("no-padding");
         JFXListView<ModInfoObject> listView = new JFXListView<>();
 
         {
             HBox toolbar = new HBox();
-            toolbar.getStyleClass().add("jfx-tool-bar-second");
-            JFXDepthManager.setDepth(toolbar, 1);
-            toolbar.setPickOnBounds(false);
-
-            toolbar.getChildren().add(createToolbarButton(i18n("button.refresh"), SVG::refresh, skinnable::refresh));
-            toolbar.getChildren().add(createToolbarButton(i18n("mods.add"), SVG::plus, skinnable::add));
-            toolbar.getChildren().add(createToolbarButton(i18n("button.remove"), SVG::delete, () -> {
-                Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                    skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
-                }, null);
-            }));
-            toolbar.getChildren().add(createToolbarButton(i18n("mods.enable"), SVG::check, () ->
-                    skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())));
-            toolbar.getChildren().add(createToolbarButton(i18n("mods.disable"), SVG::close, () ->
-                    skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())));
-            root.setTop(toolbar);
+            toolbar.getChildren().setAll(
+                    createToolbarButton2(i18n("button.refresh"), SVG::refresh, skinnable::refresh),
+                    createToolbarButton2(i18n("mods.add"), SVG::plus, skinnable::add),
+                    createToolbarButton2(i18n("button.remove"), SVG::delete, () -> {
+                        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
+                            skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
+                        }, null);
+                    }),
+                    createToolbarButton2(i18n("mods.enable"), SVG::check, () ->
+                            skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
+                    createToolbarButton2(i18n("mods.disable"), SVG::close, () ->
+                            skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
+                    createToolbarButton2(i18n("folder.mod"), SVG::folderOpen, () ->
+                            skinnable.openModFolder()));
+            root.getContent().add(toolbar);
         }
 
         {
             SpinnerPane center = new SpinnerPane();
+            ComponentList.setVgrow(center, Priority.ALWAYS);
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            listView.setCellFactory(x -> new ModInfoListCell(listView));
+            listView.setCellFactory(x -> new ModInfoListCell());
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
 
             center.setContent(listView);
-            root.setCenter(center);
+            root.getContent().add(center);
         }
 
         Label label = new Label(i18n("mods.not_modded"));
@@ -231,23 +229,31 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    static class ModInfoListCell extends FloatListCell<ModInfoObject> {
+    static class ModInfoListCell extends MDListCell<ModInfoObject> {
         JFXCheckBox checkBox = new JFXCheckBox();
         TwoLineListItem content = new TwoLineListItem();
         JFXButton infoButton = new JFXButton();
+        JFXButton revealButton = new JFXButton();
         BooleanProperty booleanProperty;
 
-        ModInfoListCell(JFXListView<ModInfoObject> listView) {
-            super(listView);
+        ModInfoListCell() {
             HBox container = new HBox(8);
+            container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
-            pane.getChildren().add(container);
             HBox.setHgrow(content, Priority.ALWAYS);
+            content.setMouseTransparent(true);
+            setSelectable();
+
+            revealButton.getStyleClass().add("toggle-icon4");
+            revealButton.setGraphic(FXUtils.limitingSize(SVG.folderOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
 
             infoButton.getStyleClass().add("toggle-icon4");
             infoButton.setGraphic(FXUtils.limitingSize(SVG.informationOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
 
-            container.getChildren().setAll(checkBox, content, infoButton);
+            container.getChildren().setAll(checkBox, content, revealButton, infoButton);
+
+            StackPane.setMargin(container, new Insets(10, 16, 10, 16));
+            getContainer().getChildren().setAll(container);
         }
 
         @Override
@@ -259,6 +265,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
+            revealButton.setOnMouseClicked(e -> {
+                FXUtils.showFileInExplorer(dataItem.getModInfo().getFile());
+            });
             infoButton.setOnMouseClicked(e -> {
                 Controllers.dialog(new ModInfoDialog(dataItem));
             });

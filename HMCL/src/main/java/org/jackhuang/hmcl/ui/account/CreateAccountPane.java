@@ -17,26 +17,17 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.unmodifiableList;
-import static javafx.beans.binding.Bindings.bindContent;
-import static javafx.beans.binding.Bindings.createBooleanBinding;
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.jfxListCellFactory;
-import static org.jackhuang.hmcl.ui.FXUtils.onChange;
-import static org.jackhuang.hmcl.ui.FXUtils.onChangeAndOperate;
-import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
-import static org.jackhuang.hmcl.ui.FXUtils.setValidateWhileTextChanged;
-import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.classPropertyFor;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-
+import com.jfoenix.controls.*;
+import javafx.application.Platform;
+import javafx.beans.binding.BooleanBinding;
+import javafx.geometry.HPos;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.Hyperlink;
+import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
@@ -47,48 +38,31 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.IconedItem;
-import org.jackhuang.hmcl.ui.construct.RequiredValidator;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TabControl;
-import org.jackhuang.hmcl.ui.construct.TabHeader;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jetbrains.annotations.Nullable;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXPasswordField;
-import com.jfoenix.controls.JFXTextField;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
-import javafx.application.Platform;
-import javafx.beans.binding.BooleanBinding;
-import javafx.geometry.HPos;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.control.Hyperlink;
-import javafx.scene.control.Label;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.unmodifiableList;
+import static javafx.beans.binding.Bindings.bindContent;
+import static javafx.beans.binding.Bindings.createBooleanBinding;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.ui.FXUtils.*;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.classPropertyFor;
 
-public class CreateAccountPane extends JFXDialogLayout {
+public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
     private boolean showMethodSwitcher;
     private AccountFactory<?> factory;
@@ -105,7 +79,7 @@ public class CreateAccountPane extends JFXDialogLayout {
     private TaskExecutor loginTask;
 
     public CreateAccountPane() {
-        this(null);
+        this((AccountFactory<?>) null);
     }
 
     public CreateAccountPane(AccountFactory<?> factory) {
@@ -197,6 +171,11 @@ public class CreateAccountPane extends JFXDialogLayout {
         setPrefWidth(560);
     }
 
+    public CreateAccountPane(AuthlibInjectorServer authserver) {
+        this(Accounts.FACTORY_AUTHLIB_INJECTOR);
+        ((AccountDetailsInputPane) detailsPane).selectAuthServer(authserver);
+    }
+
     private void onAccept() {
         spinner.showSpinner();
         lblErrorMessage.setText("");
@@ -216,7 +195,7 @@ public class CreateAccountPane extends JFXDialogLayout {
             additionalData = null;
         }
 
-        loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, additionalData))
+        loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
                 .whenComplete(Schedulers.javafx(), account -> {
                     int oldIndex = Accounts.getAccounts().indexOf(account);
                     if (oldIndex == -1) {
@@ -303,7 +282,7 @@ public class CreateAccountPane extends JFXDialogLayout {
         public AccountDetailsInputPane(AccountFactory<?> factory, Runnable onAction) {
             this.factory = factory;
 
-            setVgap(15);
+            setVgap(22);
             setHgap(15);
             setAlignment(Pos.CENTER);
 
@@ -334,30 +313,22 @@ public class CreateAccountPane extends JFXDialogLayout {
                 classPropertyFor(cboServers, "jfx-combo-box-warning").bind(noServers);
                 classPropertyFor(cboServers, "jfx-combo-box").bind(noServers.not());
                 HBox.setHgrow(cboServers, Priority.ALWAYS);
+                HBox.setMargin(cboServers, new Insets(0, 10, 0, 0));
                 cboServers.setMaxWidth(Double.MAX_VALUE);
 
                 HBox linksContainer = new HBox();
                 linksContainer.setAlignment(Pos.CENTER);
-                linksContainer.setPadding(new Insets(0, 5, 0, 15));
                 onChangeAndOperate(cboServers.valueProperty(), server -> linksContainer.getChildren().setAll(createHyperlinks(server)));
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
                 JFXButton btnAddServer = new JFXButton();
-                btnAddServer.setGraphic(SVG.plus(null, 20, 20));
+                btnAddServer.setGraphic(SVG.plus(Theme.blackFillBinding(), 20, 20));
                 btnAddServer.getStyleClass().add("toggle-icon4");
                 btnAddServer.setOnAction(e -> {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());
                 });
 
-                JFXButton btnManageServers = new JFXButton();
-                btnManageServers.setGraphic(SVG.gear(null, 20, 20));
-                btnManageServers.getStyleClass().add("toggle-icon4");
-                btnManageServers.setOnAction(e -> {
-                    fireEvent(new DialogCloseEvent());
-                    Controllers.navigate(Controllers.getServersPage());
-                });
-
-                HBox boxServers = new HBox(cboServers, linksContainer, btnAddServer, btnManageServers);
+                HBox boxServers = new HBox(cboServers, linksContainer, btnAddServer);
                 add(boxServers, 1, rowIndex);
 
                 rowIndex++;
@@ -449,6 +420,16 @@ public class CreateAccountPane extends JFXDialogLayout {
         public BooleanBinding validProperty() {
             return valid;
         }
+
+        public void selectAuthServer(AuthlibInjectorServer authserver) {
+            cboServers.getSelectionModel().select(authserver);
+        }
+
+        public void focus() {
+            if (txtUsername != null) {
+                txtUsername.requestFocus();
+            }
+        }
     }
 
     private static class DialogCharacterSelector extends BorderPane implements CharacterSelector {
@@ -509,6 +490,13 @@ public class CreateAccountPane extends JFXDialogLayout {
             } finally {
                 Platform.runLater(() -> fireEvent(new DialogCloseEvent()));
             }
+        }
+    }
+
+    @Override
+    public void onDialogShown() {
+        if (detailsPane instanceof AccountDetailsInputPane) {
+            ((AccountDetailsInputPane) detailsPane).focus();
         }
     }
 }

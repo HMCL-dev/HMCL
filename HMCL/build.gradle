@@ -44,6 +44,7 @@ mainClassName = 'org.jackhuang.hmcl.Main'
 
 dependencies {
     implementation project(":HMCLCore")
+    implementation project(":JSTUN")
     implementation rootProject.files("lib/JFoenix.jar")
 }
 

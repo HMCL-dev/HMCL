@@ -34,6 +34,7 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
@@ -132,6 +133,9 @@ public class ComponentList extends Control {
             list = MappedObservableList.create(control.getContent(), node -> {
                 ComponentListCell cell = new ComponentListCell(node);
                 cell.getStyleClass().add("options-list-item");
+                if (node.getProperties().containsKey("ComponentList.vgrow")) {
+                    VBox.setVgrow(cell, (Priority) node.getProperties().get("ComponentList.vgrow"));
+                }
                 return cell;
             });
 
@@ -171,5 +175,9 @@ public class ComponentList extends Control {
             node.getChildren().setAll(advanced);
         }
         return node;
+    }
+
+    public static void setVgrow(Node node, Priority priority) {
+        node.getProperties().put("ComponentList.vgrow", priority);
     }
 }

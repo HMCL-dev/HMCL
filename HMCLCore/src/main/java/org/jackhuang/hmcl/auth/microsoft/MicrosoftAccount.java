@@ -21,14 +21,17 @@ import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class MicrosoftAccount extends Account {
 
@@ -77,7 +80,7 @@ public class MicrosoftAccount extends Account {
     @Override
     public AuthInfo logIn() throws AuthenticationException {
         if (!authenticated) {
-            if (service.validate(session.getTokenType(), session.getAccessToken())) {
+            if (service.validate(session.getNotAfter(), session.getTokenType(), session.getAccessToken())) {
                 authenticated = true;
             } else {
                 MicrosoftSession acquiredSession = service.refresh(session);
@@ -116,9 +119,15 @@ public class MicrosoftAccount extends Account {
 
     @Override
     public ObjectBinding<Optional<Map<TextureType, Texture>>> getTextures() {
-        return BindingMapping.of(service.getProfileRepository().binding(session.getAuthorization()))
-                .map(profile -> profile.flatMap(MicrosoftService::getTextures));
-
+        return BindingMapping.of(service.getProfileRepository().binding(getUUID()))
+                .map(profile -> profile.flatMap(it -> {
+                    try {
+                        return YggdrasilService.getTextures(it);
+                    } catch (ServerResponseMalformedException e) {
+                        LOG.log(Level.WARNING, "Failed to parse texture payload", e);
+                        return Optional.empty();
+                    }
+                }));
     }
 
     @Override
