@@ -44,6 +44,7 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
     private final TabHeader.Tab<DownloadSettingsPage> downloadTab = new TabHeader.Tab<>("downloadSettingsPage");
     private final TabHeader.Tab<HelpPage> helpTab = new TabHeader.Tab<>("helpPage");
     private final TabHeader.Tab<AboutPage> aboutTab = new TabHeader.Tab<>("aboutPage");
+    private final TabHeader.Tab<FeedbackPage> feedbackTab = new TabHeader.Tab<>("feedbackPage");
     private final TabHeader.Tab<SponsorPage> sponsorTab = new TabHeader.Tab<>("sponsorPage");
     private final TransitionPane transitionPane = new TransitionPane();
 
@@ -53,9 +54,10 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
         personalizationTab.setNodeSupplier(PersonalizationPage::new);
         downloadTab.setNodeSupplier(DownloadSettingsPage::new);
         helpTab.setNodeSupplier(HelpPage::new);
+        feedbackTab.setNodeSupplier(FeedbackPage::new);
         sponsorTab.setNodeSupplier(SponsorPage::new);
         aboutTab.setNodeSupplier(AboutPage::new);
-        tab = new TabHeader(gameTab, settingsTab, personalizationTab, downloadTab, helpTab, sponsorTab, aboutTab);
+        tab = new TabHeader(gameTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, sponsorTab, aboutTab);
 
         tab.getSelectionModel().select(gameTab);
         gameTab.initializeIfNeeded();
@@ -98,6 +100,12 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
                         helpItem.setLeftGraphic(wrap(SVG.helpCircleOutline(Theme.blackFillBinding(), 24, 24)));
                         helpItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(helpTab));
                         helpItem.setOnAction(e -> tab.getSelectionModel().select(helpTab));
+                    })
+                    .addNavigationDrawerItem(feedbackItem -> {
+                        feedbackItem.setTitle(i18n("feedback"));
+                        feedbackItem.setLeftGraphic(wrap(SVG.messageAlertOutline(Theme.blackFillBinding(), 24, 24)));
+                        feedbackItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(feedbackTab));
+                        feedbackItem.setOnAction(e -> tab.getSelectionModel().select(feedbackTab));
                     })
                     .addNavigationDrawerItem(sponsorItem -> {
                         sponsorItem.setTitle(i18n("sponsor"));

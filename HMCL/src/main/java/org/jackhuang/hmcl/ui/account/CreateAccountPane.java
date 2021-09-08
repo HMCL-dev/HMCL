@@ -67,14 +67,13 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private boolean showMethodSwitcher;
     private AccountFactory<?> factory;
 
-    private Label lblErrorMessage;
-    private JFXButton btnAccept;
-    private SpinnerPane spinner;
-    private JFXButton btnCancel;
-    private Node body;
+    private final Label lblErrorMessage;
+    private final JFXButton btnAccept;
+    private final SpinnerPane spinner;
+    private final Node body;
 
     private Node detailsPane; // AccountDetailsInputPane for Offline / Mojang / authlib-injector, Label for Microsoft
-    private Pane detailsContainer;
+    private final Pane detailsContainer;
 
     private TaskExecutor loginTask;
 
@@ -109,7 +108,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         {
             lblErrorMessage = new Label();
 
-            btnAccept = new JFXButton(i18n("button.ok"));
+            btnAccept = new JFXButton(i18n("account.login"));
             btnAccept.getStyleClass().add("dialog-accept");
             btnAccept.setOnAction(e -> onAccept());
 
@@ -117,7 +116,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             spinner.getStyleClass().add("small-spinner-pane");
             spinner.setContent(btnAccept);
 
-            btnCancel = new JFXButton(i18n("button.cancel"));
+            JFXButton btnCancel = new JFXButton(i18n("button.cancel"));
             btnCancel.getStyleClass().add("dialog-cancel");
             btnCancel.setOnAction(e -> onCancel());
             onEscPressed(this, btnCancel::fire);
