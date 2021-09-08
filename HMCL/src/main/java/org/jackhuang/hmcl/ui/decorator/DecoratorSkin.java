@@ -187,7 +187,9 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                             s.isAnimate() ? Duration.millis(160) : null, leftPane.prefWidthProperty(), null, container.getWidth(), FXUtils.SINE);
                     if (animation != null) {
                         animation.setOnFinished(action -> {
-                            leftPane.prefWidthProperty().bind(container.widthProperty());
+                            if (animation.getStatus() != Animation.Status.STOPPED) {
+                                leftPane.prefWidthProperty().bind(container.widthProperty());
+                            }
                         });
                     }
                 }
