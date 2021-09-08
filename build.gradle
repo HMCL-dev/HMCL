@@ -79,7 +79,7 @@ task 'generateOpenJFXDependencies' {
                 }
                 sha1.addProperty(
                         arch,
-                        new URL("${jfxRepos[0]}/org/openjfx/javafx-$module/$jfxVersion/javafx-$module-$jfxVersion-${arch}.jar.sha1").getText("UTF-8")
+                        new URL("${jfxRepos.head()}/org/openjfx/javafx-$module/$jfxVersion/javafx-$module-$jfxVersion-${arch}.jar.sha1").getText("UTF-8")
                 )
             }
             m.add("sha1", sha1)
@@ -94,7 +94,7 @@ task 'generateOpenJFXDependencies' {
 // Ensure that the mirror repository caches files
 task 'preTouchOpenJFXDependencies' {
     doLast {
-        jfxRepos.forEach { repo ->
+        jfxRepos.tail().forEach { repo ->
             jfxModules.forEach { module ->
                 jfxArches.forEach { arch ->
                     if (module == 'web' && arch.endsWith('linux-arm32-monocle')) {
