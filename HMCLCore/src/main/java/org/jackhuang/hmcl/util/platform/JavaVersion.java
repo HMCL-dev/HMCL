@@ -230,7 +230,7 @@ public final class JavaVersion {
 
             case WINDOWS:
                 Path programFiles = Paths.get(Optional.ofNullable(System.getenv("ProgramFiles")).orElse("C:\\Program Files"));
-                Path programFiles_x86 = Paths.get(Optional.ofNullable(System.getenv("ProgramFiles(x86)")).orElse("C:\\Program Files (x86)"));
+                Path programFilesX86 = Paths.get(Optional.ofNullable(System.getenv("ProgramFiles(x86)")).orElse("C:\\Program Files (x86)"));
 
                 javaExecutables.add(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\").stream().map(JavaVersion::getExecutable));
                 javaExecutables.add(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\").stream().map(JavaVersion::getExecutable));
@@ -241,11 +241,11 @@ public final class JavaVersion {
                 javaExecutables.add(listDirectory(programFiles.resolve("AdoptOpenJDK")).map(JavaVersion::getExecutable));
                 javaExecutables.add(listDirectory(programFiles.resolve("Zulu")).map(JavaVersion::getExecutable));
                 javaExecutables.add(listDirectory(programFiles.resolve("Microsoft")).map(JavaVersion::getExecutable));
-                javaExecutables.add(listDirectory(programFiles_x86.resolve("Java")).map(JavaVersion::getExecutable));
-                javaExecutables.add(listDirectory(programFiles_x86.resolve("BellSoft")).map(JavaVersion::getExecutable));
-                javaExecutables.add(listDirectory(programFiles_x86.resolve("AdoptOpenJDK")).map(JavaVersion::getExecutable));
-                javaExecutables.add(listDirectory(programFiles_x86.resolve("Zulu")).map(JavaVersion::getExecutable));
-                javaExecutables.add(listDirectory(programFiles_x86.resolve("Microsoft")).map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(programFilesX86.resolve("Java")).map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(programFilesX86.resolve("BellSoft")).map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(programFilesX86.resolve("AdoptOpenJDK")).map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(programFilesX86.resolve("Zulu")).map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(programFilesX86.resolve("Microsoft")).map(JavaVersion::getExecutable));
                 if (System.getenv("PATH") != null) {
                     javaExecutables.add(Arrays.stream(System.getenv("PATH").split(";")).map(path -> Paths.get(path, "java.exe")));
                 }
