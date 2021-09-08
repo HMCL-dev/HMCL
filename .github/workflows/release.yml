@@ -1,0 +1,44 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check and set HMCL version
+        run: |
+          export HMCL_VERSION=`echo ${{ github.ref }} | awk '{print substr($0,12)}'`
+          echo "HMCL_VERSION=$HMCL_VERSION" >> $GITHUB_ENV
+
+          if [ -z `echo $HMCL_VERSION | grep "^[0-9]\.[0-9]\.[0-9]\{3\}\$"` ]; then
+            exit 1
+          fi
+
+          echo "HMCL_BUILD_NUMBER=`echo $HMCL_VERSION | awk '{print substr($0,5)}'`" >> $GITHUB_ENV
+      - name: Download artifacts
+        run: |
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.exe"
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.exe.sha1"
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar"
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar.sha1"
+        env:
+          DOWNLOAD_BASE_URL: https://ci.huangyuhui.net/job/HMCL/${{ env.HMCL_BUILD_NUMBER }}/artifact/HMCL/build/libs
+      - name: Generate release note
+        run: |
+          echo "HMCL v$HMCL_VERSION" >> RELEASE_NOTE
+          echo "" >> RELEASE_NOTE
+          echo "The full changelogs can be found on the website: https://hmcl.huangyuhui.net/changelog/dev.html" >> RELEASE_NOTE
+          echo "Notice: changelogs are written in Chinese." >> RELEASE_NOTE
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: RELEASE_NOTE
+          files: |
+            HMCL-${{ env.HMCL_VERSION }}.exe
+            HMCL-${{ env.HMCL_VERSION }}.exe.sha1
+            HMCL-${{ env.HMCL_VERSION }}.jar
+            HMCL-${{ env.HMCL_VERSION }}.jar.sha1
