@@ -39,12 +39,12 @@ public class MultipleSourceVersionList extends VersionList<RemoteVersion> {
 
     @Override
     public CompletableFuture<?> loadAsync() {
-        throw new UnsupportedOperationException("ForgeBMCLVersionList does not support loading the entire Forge remote version list.");
+        throw new UnsupportedOperationException("MultipleSourceVersionList does not support loading the entire remote version list.");
     }
 
     @Override
     public CompletableFuture<?> refreshAsync() {
-        throw new UnsupportedOperationException("ForgeBMCLVersionList does not support loading the entire Forge remote version list.");
+        throw new UnsupportedOperationException("MultipleSourceVersionList does not support loading the entire remote version list.");
     }
 
     @Override
