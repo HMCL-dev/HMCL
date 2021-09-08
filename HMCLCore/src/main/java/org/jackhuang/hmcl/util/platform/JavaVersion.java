@@ -24,10 +24,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -294,7 +291,13 @@ public final class JavaVersion {
 
     private static Stream<Path> listDirectory(Path directory) throws IOException {
         if (Files.isDirectory(directory)) {
-            return Files.list(directory);
+            try (final DirectoryStream<Path> subDirs = Files.newDirectoryStream(directory)) {
+                final ArrayList<Path> paths = new ArrayList<>();
+                for (Path subDir : subDirs) {
+                    paths.add(subDir);
+                }
+                return paths.stream();
+            }
         } else {
             return Stream.empty();
         }
