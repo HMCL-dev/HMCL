@@ -450,7 +450,7 @@ public final class LauncherHelper {
 
             // First find if same java version but whose platform is 64-bit installed.
             Optional<JavaVersion> java64 = JavaVersion.getJavas().stream()
-                    .filter(javaVersion -> javaVersion.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.PLATFORM)
+                    .filter(javaVersion -> javaVersion.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.getPlatform())
                     .filter(javaVersion -> javaVersion.getParsedVersion() == java32.getParsedVersion())
                     .max(Comparator.comparing(JavaVersion::getVersionNumber));
 
@@ -459,7 +459,7 @@ public final class LauncherHelper {
 
                 // Then find if other java version which satisfies requirements installed.
                 java64 = JavaVersion.getJavas().stream()
-                        .filter(javaVersion -> javaVersion.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.PLATFORM)
+                        .filter(javaVersion -> javaVersion.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.getPlatform())
                         .filter(javaVersion -> {
                             if (java8requiredFinal) return javaVersion.getParsedVersion() == JavaVersion.JAVA_8;
                             if (newJavaRequiredFinal) return javaVersion.getParsedVersion() >= JavaVersion.JAVA_8;

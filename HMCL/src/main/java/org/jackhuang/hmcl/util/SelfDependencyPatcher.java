@@ -79,18 +79,35 @@ public final class SelfDependencyPatcher {
 
     static class DependencyDescriptor {
 
-        // private static final String REPOSITORY_URL = System.getProperty("hmcl.openjfx.repo", "https://maven.aliyun.com/repository/central/");
         private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies");
+        public static final String CURRENT_ARCH_CLASSIFIER = currentArchClassifier();
 
         private static String currentArchClassifier() {
-            switch (OperatingSystem.CURRENT_OS) {
-                case LINUX:
-                    return "linux";
-                case OSX:
-                    return "mac";
-                default:
-                    return "win";
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+                switch (Architecture.CURRENT) {
+                    case X86_64:
+                        return "linux";
+                    case ARM:
+                        return "linux-arm32-monocle";
+                    case ARM64:
+                        return "linux-aarch64";
+                }
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                switch (Architecture.CURRENT) {
+                    case X86_64:
+                        return "mac";
+                    case ARM64:
+                        return "mac-aarch64";
+                }
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                switch (Architecture.CURRENT) {
+                    case X86_64:
+                        return "win";
+                    case X86:
+                        return "win-x86";
+                }
             }
+            return null;
         }
 
         public String module;
@@ -100,15 +117,28 @@ public final class SelfDependencyPatcher {
         public Map<String, String> sha1;
 
         public String filename() {
-            return artifactId + "-" + version + "-" + currentArchClassifier() + ".jar";
+            if (CURRENT_ARCH_CLASSIFIER == null) {
+                return null;
+            }
+            return artifactId + "-" + version + "-" + CURRENT_ARCH_CLASSIFIER + ".jar";
         }
 
         public String sha1() {
-            return sha1.get(currentArchClassifier());
+            if (CURRENT_ARCH_CLASSIFIER == null) {
+                return null;
+            }
+            return sha1.get(CURRENT_ARCH_CLASSIFIER);
         }
 
         public Path localPath() {
+            if (CURRENT_ARCH_CLASSIFIER == null) {
+                return null;
+            }
             return DEPENDENCIES_DIR_PATH.resolve(filename());
+        }
+
+        public boolean isSupported() {
+            return CURRENT_ARCH_CLASSIFIER != null && sha1.containsKey(CURRENT_ARCH_CLASSIFIER);
         }
     }
 
@@ -192,9 +222,8 @@ public final class SelfDependencyPatcher {
             throw new IncompatibleVersionException();
         }
 
-        // We can only self-patch JavaFX on x86-64 platform.
-        // For ARM support, user's manual patch is required.
-        if (Architecture.CURRENT != Architecture.X86_64) {
+        // We can only self-patch JavaFX on specific platform.
+        if (DependencyDescriptor.CURRENT_ARCH_CLASSIFIER == null) {
             throw new IncompatibleVersionException();
         }
 
@@ -228,7 +257,14 @@ public final class SelfDependencyPatcher {
         final JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        for (String line : i18n("repositories.chooser").split("\n")) {
+        final String chooserText;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.CURRENT == Architecture.ARM) {
+            chooserText = i18n("repositories.chooser.linux_arm32");
+        } else {
+            chooserText = i18n("repositories.chooser");
+        }
+
+        for (String line : chooserText.split("\n")) {
             panel.add(new JLabel(line));
         }
 
@@ -271,10 +307,12 @@ public final class SelfDependencyPatcher {
         LOG.info(" - Loading dependencies...");
 
         Set<String> modules = JFX_DEPENDENCIES.stream()
+                .filter(DependencyDescriptor::isSupported)
                 .map(it -> it.module)
                 .collect(toSet());
 
         Path[] jars = JFX_DEPENDENCIES.stream()
+                .filter(DependencyDescriptor::isSupported)
                 .map(DependencyDescriptor::localPath)
                 .toArray(Path[]::new);
 
@@ -296,7 +334,7 @@ public final class SelfDependencyPatcher {
             final String url = repository.resolveDependencyURL(dependency);
             SwingUtilities.invokeLater(() -> {
                 dialog.setStatus(url);
-                dialog.setProgress(currentProgress, dependencies.size());
+                dialog.setProgress(currentProgress, dependencies.size() + 1);
             });
 
             LOG.info("Downloading " + url);
@@ -314,6 +352,9 @@ public final class SelfDependencyPatcher {
         List<DependencyDescriptor> missing = new ArrayList<>();
 
         for (DependencyDescriptor dependency : JFX_DEPENDENCIES) {
+            if (!dependency.isSupported()) {
+                continue;
+            }
             if (!Files.exists(dependency.localPath())) {
                 missing.add(dependency);
                 continue;
@@ -367,10 +408,10 @@ public final class SelfDependencyPatcher {
             setLocationRelativeTo(null);
 
             GridBagLayout gridBagLayout = new GridBagLayout();
-            gridBagLayout.columnWidths = new int[] { 600, 0 };
-            gridBagLayout.rowHeights = new int[] { 0, 0, 0, 200 };
-            gridBagLayout.columnWeights = new double[] { 1.0, Double.MIN_VALUE };
-            gridBagLayout.rowWeights = new double[] { 0.0, 0.0, 0.0, 1.0 };
+            gridBagLayout.columnWidths = new int[]{600, 0};
+            gridBagLayout.rowHeights = new int[]{0, 0, 0, 200};
+            gridBagLayout.columnWeights = new double[]{1.0, Double.MIN_VALUE};
+            gridBagLayout.rowWeights = new double[]{0.0, 0.0, 0.0, 1.0};
             panel.setLayout(gridBagLayout);
 
             progressText = new JLabel("");
