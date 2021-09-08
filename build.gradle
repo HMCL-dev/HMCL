@@ -58,6 +58,9 @@ var jfxArches = ['linux', 'linux-arm32-monocle', 'linux-aarch64', 'mac', 'mac-aa
 var jfxVersion = "17"
 var jfxRepos = ['https://repo1.maven.org/maven2', 'https://maven.aliyun.com/repository/central']
 var jfxDependenciesFile = file('HMCL/src/main/resources/assets/openjfx-dependencies.json')
+var jfxUnsupported = [
+        'linux-arm32-monocle': ['media', 'web']
+]
 
 import com.google.gson.*
 
@@ -74,9 +77,10 @@ task 'generateOpenJFXDependencies' {
 
             var sha1 = new JsonObject()
             jfxArches.forEach { arch ->
-                if (module == 'web' && arch.endsWith('linux-arm32-monocle')) {
+                if (jfxUnsupported.getOrDefault(arch, []).contains(module)) {
                     return
                 }
+
                 sha1.addProperty(
                         arch,
                         new URL("${jfxRepos.head()}/org/openjfx/javafx-$module/$jfxVersion/javafx-$module-$jfxVersion-${arch}.jar.sha1").getText("UTF-8")
@@ -97,7 +101,7 @@ task 'preTouchOpenJFXDependencies' {
         jfxRepos.tail().forEach { repo ->
             jfxModules.forEach { module ->
                 jfxArches.forEach { arch ->
-                    if (module == 'web' && arch.endsWith('linux-arm32-monocle')) {
+                    if (jfxUnsupported.getOrDefault(arch, []).contains(module)) {
                         return
                     }
                     var jarUrl = "$repo/org/openjfx/javafx-$module/$jfxVersion/javafx-$module-$jfxVersion-${arch}.jar"

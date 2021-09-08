@@ -66,7 +66,6 @@
     "version": "17",
     "sha1": {
       "linux": "e3bb829ce1447a37a8b0b669a446e0414e54e5c7",
-      "linux-arm32-monocle": "c978573b3e71191848f44c96d2c10e631b2cf9e9",
       "linux-aarch64": "7e7a50e66e44b902c624680601d5336d7fd16614",
       "mac": "ef463caf627c4c97b8e5c6a5ae16050c56aed966",
       "mac-aarch64": "970178b32e17650591698bae9f23bf5ce1295bb6",
