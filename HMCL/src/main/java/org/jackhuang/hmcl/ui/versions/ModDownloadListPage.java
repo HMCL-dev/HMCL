@@ -19,10 +19,12 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -42,6 +44,7 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.io.File;
 import java.util.*;
@@ -53,6 +56,7 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
+    private final boolean versionSelection;
     private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
     private final ListProperty<CurseAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
     private final ModDownloadPage.DownloadCallback callback;
@@ -69,8 +73,13 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
     }
 
     public ModDownloadListPage(int section, ModDownloadPage.DownloadCallback callback) {
+        this(section, callback, false);
+    }
+
+    public ModDownloadListPage(int section, ModDownloadPage.DownloadCallback callback, boolean versionSelection) {
         this.section = section;
         this.callback = callback;
+        this.versionSelection = versionSelection;
     }
 
     @Override
@@ -157,32 +166,47 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
             searchPane.getStyleClass().addAll("card");
             BorderPane.setMargin(searchPane, new Insets(10, 10, 0, 10));
 
+            ColumnConstraints nameColumn = new ColumnConstraints();
+            nameColumn.setMinWidth(USE_PREF_SIZE);
             ColumnConstraints column1 = new ColumnConstraints();
-            column1.setPercentWidth(50);
             column1.setHgrow(Priority.ALWAYS);
             ColumnConstraints column2 = new ColumnConstraints();
             column2.setHgrow(Priority.ALWAYS);
-            column2.setPercentWidth(50);
-            searchPane.getColumnConstraints().setAll(column1, column2);
+            searchPane.getColumnConstraints().setAll(nameColumn, column1, nameColumn, column2);
 
             searchPane.setHgap(16);
             searchPane.setVgap(10);
 
             {
+                int rowIndex = 0;
+
+                if (control.versionSelection) {
+                    JFXComboBox<String> versionsComboBox = new JFXComboBox<>();
+                    GridPane.setColumnSpan(versionsComboBox, 3);
+                    versionsComboBox.setMaxWidth(Double.MAX_VALUE);
+
+                    searchPane.addRow(rowIndex++, new Label(i18n("version")), versionsComboBox);
+                }
+
                 JFXTextField nameField = new JFXTextField();
                 nameField.setPromptText(i18n("mods.name"));
-                searchPane.add(nameField, 0, 0);
 
                 JFXTextField gameVersionField = new JFXTextField();
+                Label lblGameVersion = new Label(i18n("world.game_version"));
                 gameVersionField.setPromptText(i18n("world.game_version"));
-                searchPane.add(gameVersionField, 1, 0);
+                searchPane.addRow(rowIndex++, new Label(i18n("mods.name")), nameField, lblGameVersion, gameVersionField);
+
+                ObjectBinding<Boolean> hasVersion = BindingMapping.of(getSkinnable().version)
+                        .map(version -> version.getVersion() == null);
+                lblGameVersion.managedProperty().bind(hasVersion);
+                lblGameVersion.visibleProperty().bind(hasVersion);
+                gameVersionField.managedProperty().bind(hasVersion);
+                gameVersionField.visibleProperty().bind(hasVersion);
 
                 FXUtils.onChangeAndOperate(getSkinnable().version, version -> {
-                    searchPane.getChildren().remove(gameVersionField);
                     if (StringUtils.isNotBlank(version.getVersion())) {
-                        GridPane.setColumnSpan(nameField, 2);
+                        GridPane.setColumnSpan(nameField, 3);
                     } else {
-                        searchPane.add(gameVersionField, 1, 0);
                         GridPane.setColumnSpan(nameField, 1);
                     }
                 });
@@ -204,7 +228,6 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
                             }
                             categoryComboBox.getItems().setAll(result);
                         }).start();
-                searchPane.add(categoryStackPane, 0, 1);
 
                 StackPane sortStackPane = new StackPane();
                 JFXComboBox<String> sortComboBox = new JFXComboBox<>();
@@ -220,16 +243,12 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
                         i18n("curse.sort.author"),
                         i18n("curse.sort.total_downloads"));
                 sortComboBox.getSelectionModel().select(0);
-                searchPane.add(sortStackPane, 1, 1);
-
-                VBox vbox = new VBox();
-                vbox.setAlignment(Pos.CENTER_RIGHT);
-                searchPane.add(vbox, 0, 2, 2, 1);
+                searchPane.addRow(rowIndex++, new Label(i18n("mods.category")), categoryStackPane, new Label(i18n("search.sort")), sortStackPane);
 
                 JFXButton searchButton = new JFXButton();
                 searchButton.setText(i18n("search"));
-                searchPane.add(searchButton, 0, 2);
-                vbox.getChildren().setAll(searchButton);
+                GridPane.setHalignment(searchButton, HPos.LEFT);
+                searchPane.addRow(rowIndex++, searchButton);
 
                 EventHandler<ActionEvent> searchAction = e -> getSkinnable()
                         .search(gameVersionField.getText(),

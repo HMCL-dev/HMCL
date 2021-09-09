@@ -64,7 +64,7 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
 
     public DownloadPage() {
         modpackTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_MODPACK, Versions::downloadModpackImpl));
-        modTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_MOD, (profile, version, file) -> download(profile, version, file, "mods")));
+        modTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_MOD, (profile, version, file) -> download(profile, version, file, "mods"), true));
         resourcePackTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_RESOURCE_PACK, (profile, version, file) -> download(profile, version, file, "resourcepacks")));
 //        customizationTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_CUSTOMIZATION, this::download));
         worldTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_WORLD));
