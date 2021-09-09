@@ -19,14 +19,13 @@ package org.jackhuang.hmcl.ui.multiplayer;
 
 import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -39,6 +38,7 @@ public class MultiplayerPage extends Control implements DecoratorPage {
 
     public MultiplayerPage() {
         testNAT();
+        downloadCatoIfNecessary();
     }
 
     @Override
@@ -66,7 +66,7 @@ public class MultiplayerPage extends Control implements DecoratorPage {
         return natState.getReadOnlyProperty();
     }
 
-    public void testNAT() {
+    private void testNAT() {
         Task.supplyAsync(() -> {
             DiscoveryTest tester = new DiscoveryTest(null, 0, "stun.qq.com", 3478);
             return tester.test();
@@ -77,6 +77,19 @@ public class MultiplayerPage extends Control implements DecoratorPage {
                 natState.set(null);
             }
         }).start();
+    }
+
+    private void downloadCatoIfNecessary() {
+        if (!MultiplayerManager.getCatoExecutable().toFile().exists()) {
+            setDisabled(true);
+            TaskExecutor executor = MultiplayerManager.downloadCato()
+                    .thenRunAsync(Schedulers.javafx(), () -> {
+                        setDisabled(false);
+                    }).executor(false);
+            Controllers.taskDialog(executor, i18n("multiplayer.download"));
+        } else {
+            setDisabled(false);
+        }
     }
 
     @Override
