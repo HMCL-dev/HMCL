@@ -29,8 +29,8 @@
             <StackPane fx:id="center" style="-fx-padding: 10;">
                 <ComponentList fx:id="centrePane" styleClass="no-padding">
                     <HBox fx:id="checkPane" spacing="10" style="-fx-padding: 10;">
-                        <JFXCheckBox fx:id="chkRelease" text="%version.game.release" selected="true" />
-                        <JFXCheckBox fx:id="chkSnapshot" text="%version.game.snapshot" />
+                        <JFXCheckBox fx:id="chkRelease" text="%version.game.releases" selected="true" />
+                        <JFXCheckBox fx:id="chkSnapshot" text="%version.game.snapshots" />
                         <JFXCheckBox fx:id="chkOld" text="%version.game.old" />
                     </HBox>
                     <JFXListView fx:id="list" styleClass="jfx-list-view-float" VBox.vgrow="ALWAYS">
