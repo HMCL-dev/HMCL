@@ -129,6 +129,25 @@ public class MicrosoftService {
         }
     }
 
+    private String getUhs(XBoxLiveAuthenticationResponse response, String existingUhs) throws AuthenticationException {
+        if (response.errorCode != 0) {
+            throw new XboxAuthorizationException(response.errorCode, response.redirectUrl);
+        }
+
+        if (response.displayClaims == null || response.displayClaims.xui == null || response.displayClaims.xui.size() == 0 || !response.displayClaims.xui.get(0).containsKey("uhs")) {
+            LOG.log(Level.WARNING, "Unrecognized xbox authorization response " + GSON.toJson(response));
+            throw new ServerResponseMalformedException();
+        }
+
+        String uhs = (String) response.displayClaims.xui.get(0).get("uhs");
+        if (existingUhs != null) {
+            if (!Objects.equals(uhs, existingUhs)) {
+                throw new ServerResponseMalformedException("uhs mismatched");
+            }
+        }
+        return uhs;
+    }
+
     private MicrosoftSession authenticateViaLiveAccessToken(String liveAccessToken, String liveRefreshToken) throws IOException, JsonParseException, AuthenticationException {
         // Authenticate with XBox Live
         XBoxLiveAuthenticationResponse xboxResponse = HttpRequest
@@ -140,11 +159,7 @@ public class MicrosoftService {
                         pair("RelyingParty", "http://auth.xboxlive.com"), pair("TokenType", "JWT")))
                 .accept("application/json").getJson(XBoxLiveAuthenticationResponse.class);
 
-        if (xboxResponse.errorCode != 0) {
-            throw new XboxAuthorizationException(xboxResponse.errorCode);
-        }
-
-        String uhs = (String) xboxResponse.displayClaims.xui.get(0).get("uhs");
+        String uhs = getUhs(xboxResponse, null);
 
         // Authenticate Minecraft with XSTS
         XBoxLiveAuthenticationResponse minecraftXstsResponse = HttpRequest
@@ -156,14 +171,7 @@ public class MicrosoftService {
                         pair("RelyingParty", "rp://api.minecraftservices.com/"), pair("TokenType", "JWT")))
                 .getJson(XBoxLiveAuthenticationResponse.class);
 
-        if (xboxResponse.errorCode != 0) {
-            throw new XboxAuthorizationException(xboxResponse.errorCode);
-        }
-
-        String minecraftXstsUhs = (String) minecraftXstsResponse.displayClaims.xui.get(0).get("uhs");
-        if (!Objects.equals(uhs, minecraftXstsUhs)) {
-            throw new ServerResponseMalformedException("uhs mismatched");
-        }
+        getUhs(minecraftXstsResponse, uhs);
 
         // Authenticate XBox with XSTS
         XBoxLiveAuthenticationResponse xboxXstsResponse = HttpRequest
@@ -175,14 +183,7 @@ public class MicrosoftService {
                         pair("RelyingParty", "http://xboxlive.com"), pair("TokenType", "JWT")))
                 .getJson(XBoxLiveAuthenticationResponse.class);
 
-        if (xboxXstsResponse.errorCode != 0) {
-            throw new XboxAuthorizationException(xboxXstsResponse.errorCode);
-        }
-
-        String xboxXstsUhs = (String) xboxXstsResponse.displayClaims.xui.get(0).get("uhs");
-        if (!Objects.equals(uhs, xboxXstsUhs)) {
-            throw new ServerResponseMalformedException("uhs mismatched");
-        }
+        getUhs(xboxXstsResponse, uhs);
 
         getXBoxProfile(uhs, xboxXstsResponse.token);
 
@@ -307,16 +308,23 @@ public class MicrosoftService {
 
     public static class XboxAuthorizationException extends AuthenticationException {
         private final long errorCode;
+        private final String redirect;
 
-        public XboxAuthorizationException(long errorCode) {
+        public XboxAuthorizationException(long errorCode, String redirect) {
             this.errorCode = errorCode;
+            this.redirect = redirect;
         }
 
         public long getErrorCode() {
             return errorCode;
         }
 
+        public String getRedirect() {
+            return redirect;
+        }
+
         public static final long MISSING_XBOX_ACCOUNT = 2148916233L;
+        public static final long COUNTRY_UNAVAILABLE = 2148916235L;
         public static final long ADD_FAMILY = 2148916238L;
     }
 

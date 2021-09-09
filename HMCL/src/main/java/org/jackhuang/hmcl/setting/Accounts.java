@@ -360,6 +360,8 @@ public final class Accounts {
             long errorCode = ((MicrosoftService.XboxAuthorizationException) exception).getErrorCode();
             if (errorCode == MicrosoftService.XboxAuthorizationException.ADD_FAMILY) {
                 return i18n("account.methods.microsoft.error.add_family");
+            } else if (errorCode == MicrosoftService.XboxAuthorizationException.COUNTRY_UNAVAILABLE) {
+                return i18n("account.methods.microsoft.error.country_unavailable");
             } else if (errorCode == MicrosoftService.XboxAuthorizationException.MISSING_XBOX_ACCOUNT) {
                 return i18n("account.methods.microsoft.error.missing_xbox_account");
             } else {
