@@ -33,7 +33,6 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
-
 public class MenuUpDownButton extends Control {
 
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected");

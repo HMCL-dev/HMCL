@@ -41,6 +41,8 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
     private final int port;
     private final CompletableFuture<String> future = new CompletableFuture<>();
 
+    public static String lastlyOpenedURL;
+
     private MicrosoftAuthenticationServer(int port) {
         super(port);
 
@@ -107,7 +109,7 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
 
         @Override
         public void openBrowser(String url) throws IOException {
-            // TODO: error!
+            lastlyOpenedURL = url;
             FXUtils.openLink(url);
         }
 

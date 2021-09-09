@@ -21,9 +21,6 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
@@ -33,15 +30,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
 /**
  * Cato Management.
  */
-public class MultiplayerManager {
+public final class MultiplayerManager {
     private static final String CATO_DOWNLOAD_URL = "https://hmcl.huangyuhui.net/maven/";
     private static final String CATO_VERSION = "2021-09-01";
     private static final Artifact CATO_ARTIFACT = new Artifact("cato", "cato", CATO_VERSION);
+
+    private MultiplayerManager() {
+    }
 
     public static void fetchIdAndToken() {
         // TODO

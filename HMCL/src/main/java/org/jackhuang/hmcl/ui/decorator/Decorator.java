@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.decorator;
 
+import com.jfoenix.controls.JFXSnackbar;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -54,6 +55,7 @@ public class Decorator extends Control {
     private final Stage primaryStage;
     private Navigation.NavigationDirection navigationDirection = Navigation.NavigationDirection.START;
     private StackPane drawerWrapper;
+    private final JFXSnackbar snackbar = new JFXSnackbar();
 
     private final ReadOnlyBooleanWrapper allowMove = new ReadOnlyBooleanWrapper();
     private final ReadOnlyBooleanWrapper dragging = new ReadOnlyBooleanWrapper();
@@ -212,6 +214,10 @@ public class Decorator extends Control {
 
     public ObjectProperty<EventHandler<ActionEvent>> onRefreshNavButtonActionProperty() {
         return onRefreshNavButtonAction;
+    }
+
+    public JFXSnackbar getSnackbar() {
+        return snackbar;
     }
 
     @Override

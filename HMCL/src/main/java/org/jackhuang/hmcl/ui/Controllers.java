@@ -272,6 +272,10 @@ public final class Controllers {
         decorator.getNavigator().navigate(node, ContainerAnimations.FADE.getAnimationProducer());
     }
 
+    public static void showToast(String content) {
+        decorator.showToast(content);
+    }
+
     public static boolean isStopped() {
         return decorator == null;
     }

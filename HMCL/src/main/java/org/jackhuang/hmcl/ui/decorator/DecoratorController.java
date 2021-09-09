@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXDialog;
+import com.jfoenix.controls.JFXSnackbar;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
@@ -361,6 +362,12 @@ public class DecoratorController {
                 navigator.setDisable(false);
             }
         }
+    }
+
+    // ==== Toast ====
+
+    public void showToast(String content) {
+        decorator.getSnackbar().fireEvent(new JFXSnackbar.SnackbarEvent(content, null, 2000L, false, null));
     }
 
     // ==== Wizard ====

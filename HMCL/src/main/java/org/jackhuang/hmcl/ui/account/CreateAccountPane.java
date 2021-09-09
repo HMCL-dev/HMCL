@@ -22,6 +22,8 @@ import com.jfoenix.validation.base.ValidatorBase;
 import javafx.application.Platform;
 import javafx.beans.NamedArg;
 import javafx.beans.binding.BooleanBinding;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -36,10 +38,12 @@ import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccountFactory;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccountFactory;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.game.MicrosoftAuthenticationServer;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Theme;
@@ -81,6 +85,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
     private Node detailsPane; // AccountDetailsInputPane for Offline / Mojang / authlib-injector, Label for Microsoft
     private final Pane detailsContainer;
+
+    private final BooleanProperty logging = new SimpleBooleanProperty();
 
     private TaskExecutor loginTask;
 
@@ -185,7 +191,10 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private void onAccept() {
         spinner.showSpinner();
         lblErrorMessage.setText("");
-        body.setDisable(true);
+
+        if (!(factory instanceof MicrosoftAccountFactory)) {
+            body.setDisable(true);
+        }
 
         String username;
         String password;
@@ -200,6 +209,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             password = null;
             additionalData = null;
         }
+
+        logging.set(true);
 
         loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
                 .whenComplete(Schedulers.javafx(), account -> {
@@ -243,9 +254,17 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             lblErrorMessage.setText("");
         }
         if (factory == Accounts.FACTORY_MICROSOFT) {
-            Label lblTip = new Label(i18n("account.methods.microsoft.manual")); // TODO
-            lblTip.setWrapText(true);
-            detailsPane = lblTip;
+            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+            hintPane.textProperty().bind(BindingMapping.of(logging).map(logging ->
+                    logging
+                            ? i18n("account.methods.microsoft.manual")
+                            : i18n("account.methods.microsoft.hint")));
+            hintPane.setOnMouseClicked(e -> {
+                if (logging.get() && MicrosoftAuthenticationServer.lastlyOpenedURL != null) {
+                    FXUtils.copyText(MicrosoftAuthenticationServer.lastlyOpenedURL);
+                }
+            });
+            detailsPane = hintPane;
             btnAccept.setDisable(false);
         } else {
             detailsPane = new AccountDetailsInputPane(factory, btnAccept::fire);
