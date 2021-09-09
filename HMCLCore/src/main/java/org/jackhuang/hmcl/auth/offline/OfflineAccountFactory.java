@@ -48,7 +48,13 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
 
     @Override
     public OfflineAccount create(CharacterSelector selector, String username, String password, ProgressCallback progressCallback, Object additionalData) {
-        return new OfflineAccount(username, getUUIDFromUserName(username));
+        UUID uuid;
+        if (additionalData != null) {
+            uuid = (UUID) additionalData;
+        } else {
+            uuid = getUUIDFromUserName(username);
+        }
+        return new OfflineAccount(username, uuid);
     }
 
     @Override
@@ -62,7 +68,7 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
         return new OfflineAccount(username, uuid);
     }
 
-    private static UUID getUUIDFromUserName(String username) {
+    public static UUID getUUIDFromUserName(String username) {
         return UUID.nameUUIDFromBytes(("OfflinePlayer:" + username).getBytes(UTF_8));
     }
 

@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.*;
+import com.jfoenix.validation.base.ValidatorBase;
 import javafx.application.Platform;
+import javafx.beans.NamedArg;
 import javafx.beans.binding.BooleanBinding;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
@@ -26,6 +28,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextInputControl;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.auth.AccountFactory;
@@ -33,6 +36,7 @@ import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccountFactory;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
@@ -46,6 +50,9 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -187,7 +194,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             AccountDetailsInputPane details = (AccountDetailsInputPane) detailsPane;
             username = details.getUsername();
             password = details.getPassword();
-            additionalData = details.getAuthServer();
+            additionalData = details.getAdditionalData();
         } else {
             username = null;
             password = null;
@@ -276,6 +283,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         private @Nullable JFXComboBox<AuthlibInjectorServer> cboServers;
         private @Nullable JFXTextField txtUsername;
         private @Nullable JFXPasswordField txtPassword;
+        private @Nullable JFXTextField txtUUID;
         private BooleanBinding valid;
 
         public AccountDetailsInputPane(AccountFactory<?> factory, Runnable onAction) {
@@ -369,6 +377,42 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 rowIndex++;
             }
 
+            if (factory instanceof OfflineAccountFactory) {
+                HBox box = new HBox();
+                MenuUpDownButton advancedButton = new MenuUpDownButton();
+                box.getChildren().setAll(advancedButton);
+                advancedButton.setText(i18n("settings.advanced"));
+                GridPane.setColumnSpan(box, 2);
+                add(box, 0, rowIndex);
+
+                rowIndex++;
+
+                Label lblUUID = new Label(i18n("account.methods.offline.uuid"));
+                lblUUID.managedProperty().bind(advancedButton.selectedProperty());
+                lblUUID.visibleProperty().bind(advancedButton.selectedProperty());
+                setHalignment(lblUUID, HPos.LEFT);
+                add(lblUUID, 0, rowIndex);
+
+                txtUUID = new JFXTextField();
+                txtUUID.managedProperty().bind(advancedButton.selectedProperty());
+                txtUUID.visibleProperty().bind(advancedButton.selectedProperty());
+                txtUUID.setValidators(new UUIDValidator());
+                txtUUID.promptTextProperty().bind(BindingMapping.of(txtUsername.textProperty()).map(name -> OfflineAccountFactory.getUUIDFromUserName(name).toString()));
+                txtUUID.setOnAction(e -> onAction.run());
+                add(txtUUID, 1, rowIndex);
+
+                rowIndex++;
+
+                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+                hintPane.managedProperty().bind(advancedButton.selectedProperty());
+                hintPane.visibleProperty().bind(advancedButton.selectedProperty());
+                hintPane.setText(i18n("account.methods.offline.uuid.hint"));
+                GridPane.setColumnSpan(hintPane, 2);
+                add(hintPane, 0, rowIndex);
+
+                rowIndex++;
+            }
+
             valid = new BooleanBinding() {
                 {
                     if (cboServers != null)
@@ -377,6 +421,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         bind(txtUsername.textProperty());
                     if (txtPassword != null)
                         bind(txtPassword.textProperty());
+                    if (txtUUID != null)
+                        bind(txtUUID.textProperty());
                 }
 
                 @Override
@@ -386,6 +432,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     if (txtUsername != null && !txtUsername.validate())
                         return false;
                     if (txtPassword != null && !txtPassword.validate())
+                        return false;
+                    if (txtUUID != null && !txtUUID.validate())
                         return false;
                     return true;
                 }
@@ -402,6 +450,16 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 }
             }
             return false;
+        }
+
+        public Object getAdditionalData() {
+            if (factory instanceof AuthlibInjectorAccountFactory) {
+                return getAuthServer();
+            } else if (factory instanceof OfflineAccountFactory) {
+                return txtUUID == null ? null : StringUtils.isBlank(txtUUID.getText()) ? null : UUIDTypeAdapter.fromString(txtUUID.getText());
+            } else {
+                return null;
+            }
         }
 
         public @Nullable AuthlibInjectorServer getAuthServer() {
@@ -496,6 +554,39 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     public void onDialogShown() {
         if (detailsPane instanceof AccountDetailsInputPane) {
             ((AccountDetailsInputPane) detailsPane).focus();
+        }
+    }
+
+    private static class UUIDValidator extends ValidatorBase {
+
+        public UUIDValidator() {
+            this(i18n("account.methods.offline.uuid.malformed"));
+        }
+
+        public UUIDValidator(@NamedArg("message") String message) {
+            super(message);
+        }
+
+        @Override
+        protected void eval() {
+            if (srcControl.get() instanceof TextInputControl) {
+                evalTextInputField();
+            }
+        }
+
+        private void evalTextInputField() {
+            TextInputControl textField = ((TextInputControl) srcControl.get());
+            if (StringUtils.isBlank(textField.getText())) {
+                hasErrors.set(false);
+                return;
+            }
+
+            try {
+                UUIDTypeAdapter.fromString(textField.getText());
+                hasErrors.set(false);
+            } catch (IllegalArgumentException ignored) {
+                hasErrors.set(true);
+            }
         }
     }
 }
