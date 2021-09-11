@@ -123,3 +123,36 @@ task 'preTouchOpenJFXDependencies' {
         }
     }
 }
+
+task 'checkTranslations' {
+    group 'verification'
+    doLast {
+        var en = new Properties()
+        var zh = new Properties()
+        var zh_CN = new Properties()
+
+        file("HMCL/src/main/resources/assets/lang/I18N.properties").withInputStream { en.load(it) }
+        file("HMCL/src/main/resources/assets/lang/I18N_zh.properties").withInputStream { zh.load(it) }
+        file("HMCL/src/main/resources/assets/lang/I18N_zh_CN.properties").withInputStream { zh_CN.load(it) }
+
+        boolean success = true
+
+        zh_CN.forEach { k, v ->
+            if (!en.containsKey(k)) {
+                project.logger.log(LogLevel.WARN, "I18N.properties missing key '$k'")
+                success = false
+            }
+        }
+
+        zh_CN.forEach { k, v ->
+            if (!zh.containsKey(k)) {
+                project.logger.log(LogLevel.WARN, "I18N_zh.properties missing key '$k'")
+                success = false
+            }
+        }
+
+        if (!success) {
+            throw new GradleException("Part of the translation is missing")
+        }
+    }
+}
