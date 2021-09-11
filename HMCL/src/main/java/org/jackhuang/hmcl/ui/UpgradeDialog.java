@@ -54,7 +54,7 @@ public class UpgradeDialog extends JFXDialogLayout {
                     }
                 });
             } catch (NoClassDefFoundError | UnsatisfiedLinkError e) {
-                LOG.log(Level.WARNING, "WebView missing or initialization failed", e);
+                LOG.log(Level.WARNING, "WebView is missing or initialization failed", e);
                 FXUtils.openLink(url);
             }
             setBody(webView);

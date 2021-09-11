@@ -443,7 +443,7 @@ public final class FXUtils {
             stage.setTitle(title);
             stage.showAndWait();
         } catch (NoClassDefFoundError | UnsatisfiedLinkError e) {
-            LOG.log(Level.WARNING, "WebView missing or initialization failed, use JEditorPane replaced", e);
+            LOG.log(Level.WARNING, "WebView is missing or initialization failed, use JEditorPane replaced", e);
 
             SwingUtilities.invokeLater(() -> {
                 final JFrame frame = new JFrame(title);
