@@ -26,6 +26,8 @@ import java.util.List;
 public class ModDownloadListPage extends DownloadListPage {
     public ModDownloadListPage(int section, DownloadPage.DownloadCallback callback, boolean versionSelection) {
         super(section, callback, versionSelection);
+
+        supportChinese.set(true);
     }
 
     @Override

@@ -17,17 +17,22 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.Control;
+import javafx.scene.control.Label;
+import javafx.scene.control.Skin;
+import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -47,7 +52,9 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -61,6 +68,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private final ListProperty<CurseAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
     private final DownloadPage.DownloadCallback callback;
     private boolean searchInitialized = false;
+    protected final BooleanProperty supportChinese = new SimpleBooleanProperty();
 
     /**
      * @see org.jackhuang.hmcl.mod.curse.CurseModManager#SECTION_MODPACK
@@ -121,6 +129,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     public void search(String userGameVersion, int category, int pageOffset, String searchFilter, int sort) {
         setLoading(true);
+        setFailed(false);
         File versionJar = StringUtils.isNotBlank(version.get().getVersion())
                 ? version.get().getProfile().getRepository().getVersionJar(version.get().getVersion())
                 : null;
@@ -194,11 +203,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 }
 
                 JFXTextField nameField = new JFXTextField();
-                nameField.setPromptText(i18n("mods.name"));
+                nameField.setPromptText(getSkinnable().supportChinese.get() ? i18n("search.hint.chinese") : i18n("search.hint.english"));
 
                 JFXTextField gameVersionField = new JFXTextField();
                 Label lblGameVersion = new Label(i18n("world.game_version"));
-                gameVersionField.setPromptText(i18n("world.game_version"));
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.name")), nameField, lblGameVersion, gameVersionField);
 
                 ObjectBinding<Boolean> hasVersion = BindingMapping.of(getSkinnable().version)
@@ -239,7 +247,6 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 sortStackPane.getChildren().setAll(sortComboBox);
                 sortComboBox.prefWidthProperty().bind(sortStackPane.widthProperty());
                 sortComboBox.getStyleClass().add("fit-width");
-                sortComboBox.setPromptText(i18n("search.sort"));
                 sortComboBox.getItems().setAll(
                         i18n("curse.sort.date_created"),
                         i18n("curse.sort.popularity"),
@@ -252,8 +259,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                 JFXButton searchButton = new JFXButton();
                 searchButton.setText(i18n("search"));
-                GridPane.setHalignment(searchButton, HPos.LEFT);
-                searchPane.addRow(rowIndex++, searchButton);
+                searchButton.getStyleClass().add("jfx-button-raised");
+                searchButton.setButtonType(JFXButton.ButtonType.RAISED);
+                HBox searchBox = new HBox(searchButton);
+                GridPane.setColumnSpan(searchBox, 4);
+                searchBox.setAlignment(Pos.CENTER_RIGHT);
+                searchPane.addRow(rowIndex++, searchBox);
 
                 EventHandler<ActionEvent> searchAction = e -> getSkinnable()
                         .search(gameVersionField.getText(),

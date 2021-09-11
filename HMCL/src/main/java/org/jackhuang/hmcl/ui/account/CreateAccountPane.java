@@ -272,9 +272,9 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             });
 
             HBox box = new HBox(8);
-            Hyperlink birthLink = new Hyperlink(i18n("account.methods.microsoft.birth"));
+            JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
             birthLink.setOnAction(e -> FXUtils.openLink("https://support.microsoft.com/zh-cn/account-billing/如何更改-microsoft-帐户上的出生日期-837badbc-999e-54d2-2617-d19206b9540a"));
-            Hyperlink profileLink = new Hyperlink(i18n("account.methods.microsoft.profile"));
+            JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
             profileLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/editprof.aspx"));
             box.getChildren().setAll(profileLink, birthLink);
             GridPane.setColumnSpan(box, 2);
@@ -415,7 +415,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             if (factory instanceof YggdrasilAccountFactory) {
                 HBox box = new HBox();
-                Hyperlink migrationLink = new Hyperlink(i18n("account.methods.yggdrasil.migration"));
+                JFXHyperlink migrationLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration"));
                 migrationLink.setOnAction(e -> FXUtils.openLink("https://help.minecraft.net/hc/en-us/articles/360050865492-JAVA-Account-Migration-FAQ"));
                 GridPane.setColumnSpan(box, 2);
                 box.getChildren().setAll(migrationLink);

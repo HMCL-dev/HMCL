@@ -192,5 +192,13 @@ public final class ModManager {
         return getModsDirectory().resolve(fileName);
     }
 
+    public static String getMcmodUrl(String mcmodId) {
+        return String.format("https://www.mcmod.cn/class/%s.html", mcmodId);
+    }
+
+    public static String getMcbbsUrl(String mcbbsId) {
+        return String.format("https://www.mcbbs.net/thread-%s-1-1.html", mcbbsId);
+    }
+
     public static final String DISABLED_EXTENSION = ".disabled";
 }

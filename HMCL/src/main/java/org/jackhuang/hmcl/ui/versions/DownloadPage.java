@@ -35,6 +35,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameVersion;
+import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.curse.CurseAddon;
 import org.jackhuang.hmcl.mod.curse.CurseModManager;
 import org.jackhuang.hmcl.setting.Profile;
@@ -45,6 +46,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.FloatListCell;
+import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -70,11 +72,13 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final CurseAddon addon;
+    private final ModTranslations.Mod mod;
     private final Profile.ProfileVersion version;
     private final DownloadCallback callback;
 
     public DownloadPage(CurseAddon addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
         this.addon = addon;
+        this.mod = ModTranslations.getModByCurseForgeId(addon.getSlug());
         this.version = version;
         this.callback = callback;
 
@@ -183,6 +187,14 @@ public class DownloadPage extends Control implements DecoratorPage {
             descriptionPane.getStyleClass().add("card");
             BorderPane.setMargin(descriptionPane, new Insets(11, 11, 0, 11));
 
+            ImageView imageView = new ImageView();
+            for (CurseAddon.Attachment attachment : getSkinnable().addon.getAttachments()) {
+                if (attachment.isDefault()) {
+                    imageView.setImage(new Image(attachment.getThumbnailUrl(), 40, 40, true, true, true));
+                }
+            }
+            descriptionPane.getChildren().add(FXUtils.limitingSize(imageView, 40, 40));
+
             TwoLineListItem content = new TwoLineListItem();
             HBox.setHgrow(content, Priority.ALWAYS);
             ModTranslations.Mod mod = ModTranslations.getModByCurseForgeId(getSkinnable().addon.getSlug());
@@ -191,20 +203,23 @@ public class DownloadPage extends Control implements DecoratorPage {
             content.getTags().setAll(getSkinnable().addon.getCategories().stream()
                     .map(category -> i18n("curse.category." + category.getCategoryId()))
                     .collect(Collectors.toList()));
+            descriptionPane.getChildren().add(content);
 
-            ImageView imageView = new ImageView();
-            for (CurseAddon.Attachment attachment : getSkinnable().addon.getAttachments()) {
-                if (attachment.isDefault()) {
-                    imageView.setImage(new Image(attachment.getThumbnailUrl(), 40, 40, true, true, true));
+            if (getSkinnable().mod != null) {
+                JFXHyperlink openMcmodButton = new JFXHyperlink(i18n("mods.mcmod"));
+                openMcmodButton.setOnAction(e -> FXUtils.openLink(ModManager.getMcmodUrl(getSkinnable().mod.getMcmod())));
+                descriptionPane.getChildren().add(openMcmodButton);
+
+                if (StringUtils.isNotBlank(getSkinnable().mod.getMcbbs())) {
+                    JFXHyperlink openMcbbsButton = new JFXHyperlink(i18n("mods.mcbbs"));
+                    openMcbbsButton.setOnAction(e -> FXUtils.openLink(ModManager.getMcbbsUrl(getSkinnable().mod.getMcbbs())));
+                    descriptionPane.getChildren().add(openMcbbsButton);
                 }
             }
 
-            JFXButton openUrlButton = new JFXButton();
-            openUrlButton.getStyleClass().add("toggle-icon4");
-            openUrlButton.setGraphic(SVG.launchOutline(Theme.blackFillBinding(), -1, -1));
+            JFXHyperlink openUrlButton = new JFXHyperlink(i18n("mods.curseforge"));
             openUrlButton.setOnAction(e -> FXUtils.openLink(getSkinnable().addon.getWebsiteUrl()));
-
-            descriptionPane.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content, openUrlButton);
+            descriptionPane.getChildren().add(openUrlButton);
 
 
             SpinnerPane spinnerPane = new SpinnerPane();

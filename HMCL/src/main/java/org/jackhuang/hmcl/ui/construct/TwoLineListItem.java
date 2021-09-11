@@ -22,10 +22,14 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.AggregatedObservableList;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 public class TwoLineListItem extends VBox {
@@ -35,7 +39,8 @@ public class TwoLineListItem extends VBox {
     private final ObservableList<String> tags = FXCollections.observableArrayList();
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
 
-    private final ObservableList<Label> tagLabels;
+    private final ObservableList<Node> tagLabels;
+    private final AggregatedObservableList<Node> firstLineChildren;
 
     public TwoLineListItem(String titleString, String subtitleString) {
         this();
@@ -47,23 +52,24 @@ public class TwoLineListItem extends VBox {
     public TwoLineListItem() {
         setMouseTransparent(true);
 
-        HBox firstLine = new HBox();
+        FlowPane firstLine = new FlowPane();
+        firstLine.setMaxWidth(Double.MAX_VALUE);
 
         Label lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
         lblTitle.textProperty().bind(title);
 
-        HBox tagContainer = new HBox();
-
         tagLabels = MappedObservableList.create(tags, tag -> {
             Label tagLabel = new Label();
             tagLabel.getStyleClass().add("tag");
             tagLabel.setText(tag);
+            FlowPane.setMargin(tagLabel, new Insets(0, 8, 0, 0));
             return tagLabel;
         });
-        Bindings.bindContent(tagContainer.getChildren(), tagLabels);
-
-        firstLine.getChildren().addAll(lblTitle, tagContainer);
+        firstLineChildren = new AggregatedObservableList<>();
+        firstLineChildren.appendList(FXCollections.singletonObservableList(lblTitle));
+        firstLineChildren.appendList(tagLabels);
+        Bindings.bindContent(firstLine.getChildren(), firstLineChildren.getAggregatedList());
 
         Label lblSubtitle = new Label();
         lblSubtitle.getStyleClass().add("subtitle");
