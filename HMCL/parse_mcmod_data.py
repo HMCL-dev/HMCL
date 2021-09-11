@@ -85,6 +85,7 @@ if __name__ == '__main__':
         for mod in data:
             chinese_name = mod['name']['main']
             sub_name = mod['name']['sub']
+            abbr = mod['name']['abbr']
 
             if S in chinese_name:
                 print('Error! ' + chinese_name)
@@ -132,6 +133,6 @@ if __name__ == '__main__':
             mod_ids = MOD_SEPARATOR.join([str(id) for id in mod_id])
 
             outfile.write(
-                f'{curseforge_id}{S}{mcmod_id}{S}{mcbbs_id}{S}{mod_ids}{S}{chinese_name}{S}{sub_name}\n')
+                f'{curseforge_id}{S}{mcmod_id}{S}{mcbbs_id}{S}{mod_ids}{S}{chinese_name}{S}{sub_name}{S}{abbr}\n')
 
     print('Success!')

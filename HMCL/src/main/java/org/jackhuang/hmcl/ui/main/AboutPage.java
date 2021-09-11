@@ -74,6 +74,12 @@ public class AboutPage extends StackPane {
             mcbbs.setSubtitle(i18n("about.thanks_to.mcbbs.statement"));
             mcbbs.setExternalLink("https://www.mcbbs.net/");
 
+            IconedTwoLineListItem mcmod = new IconedTwoLineListItem();
+            mcmod.setImage(new Image("/assets/img/mcmod.png", 32, 32, false, true));
+            mcmod.setTitle(i18n("about.thanks_to.mcmod"));
+            mcmod.setSubtitle(i18n("about.thanks_to.mcmod.statement"));
+            mcmod.setExternalLink("https://www.mcmod.cn/");
+
             IconedTwoLineListItem contributors = new IconedTwoLineListItem();
             contributors.setImage(new Image("/assets/img/github.png", 32, 32, false, true));
             contributors.setTitle(i18n("about.thanks_to.contributors"));
@@ -86,7 +92,7 @@ public class AboutPage extends StackPane {
             users.setSubtitle(i18n("about.thanks_to.users.statement"));
             users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, mcbbs, redLnn, users, contributors);
+            thanks.getContent().setAll(yushijinhun, bangbang93, mcbbs, mcmod, redLnn, users, contributors);
         }
 
         ComponentList dep = new ComponentList();
