@@ -18,12 +18,15 @@
 package org.jackhuang.hmcl.util.platform;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -92,6 +95,8 @@ public enum OperatingSystem {
     private static final String[] INVALID_RESOURCE_BASENAMES;
     private static final String[] INVALID_RESOURCE_FULLNAMES;
 
+    private static final Pattern MEMINFO_PATTERN = Pattern.compile("^(?<key>.*?):\\s+(?<value>\\d+) kB?$");
+    
     static {
         String name = System.getProperty("os.name").toLowerCase(Locale.US);
         if (name.contains("win"))
@@ -130,6 +135,33 @@ public enum OperatingSystem {
     }
 
     public static Optional<PhysicalMemoryStatus> getPhysicalMemoryStatus() {
+        if (CURRENT_OS == LINUX) {
+            try {
+                long free = 0, available = 0, total = 0;
+                for (String line : Files.readAllLines(Paths.get("/proc/meminfo"))) {
+                    Matcher matcher = MEMINFO_PATTERN.matcher(line);
+                    if (matcher.find()) {
+                        String key = matcher.group("key");
+                        String value = matcher.group("value");
+                        if ("MemAvailable".equals(key)) {
+                            available = Long.parseLong(value) * 1024;
+                        }
+                        if ("MemFree".equals(key)) {
+                            free = Long.parseLong(value) * 1024;
+                        }
+                        if ("MemTotal".equals(key)) {
+                            total = Long.parseLong(value) * 1024;
+                        }
+                    }
+                }
+                if (total > 0) {
+                    return Optional.of(new PhysicalMemoryStatus(total, available > 0 ? available : free));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         java.lang.management.OperatingSystemMXBean bean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
         if (bean instanceof com.sun.management.OperatingSystemMXBean) {
             com.sun.management.OperatingSystemMXBean sunBean =
