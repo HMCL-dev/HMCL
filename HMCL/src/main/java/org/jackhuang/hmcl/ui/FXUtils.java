@@ -55,6 +55,7 @@ import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -461,6 +462,11 @@ public final class FXUtils {
                 Schedulers.defaultScheduler().execute(() -> {
                     final JEditorPane pane = new JEditorPane("text/html", content);
                     pane.setEditable(false);
+                    pane.addHyperlinkListener(event -> {
+                        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                            openLink(event.getURL().toExternalForm());
+                        }
+                    });
                     SwingUtilities.invokeLater(() -> {
                         progressBar.setVisible(false);
                         frame.add(new JScrollPane(pane), BorderLayout.CENTER);
