@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.WebStage;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
@@ -130,10 +129,7 @@ public class RemoteModpackPage extends StackPane implements WizardPage {
 
     @FXML
     private void onDescribe() {
-        WebStage stage = new WebStage();
-        stage.getWebView().getEngine().loadContent(manifest.getDescription());
-        stage.setTitle(i18n("modpack.description"));
-        stage.showAndWait();
+        FXUtils.showWebDialog(i18n("modpack.description"), manifest.getDescription());
     }
 
     @Override

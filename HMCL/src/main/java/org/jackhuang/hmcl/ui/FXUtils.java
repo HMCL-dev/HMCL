@@ -33,6 +33,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
@@ -44,6 +45,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -52,6 +54,9 @@ import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
+import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.Constructor;
@@ -68,6 +73,7 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class FXUtils {
@@ -424,6 +430,52 @@ public final class FXUtils {
                 }
             });
 
+        }
+    }
+
+    public static void showWebDialog(String title, String content) {
+        showWebDialog(title, content, 800, 480);
+    }
+
+    public static void showWebDialog(String title, String content, int width, int height) {
+        try {
+            WebStage stage = new WebStage(width, height);
+            stage.getWebView().getEngine().loadContent(content);
+            stage.setTitle(title);
+            stage.showAndWait();
+        } catch (NoClassDefFoundError | UnsatisfiedLinkError e) {
+            LOG.log(Level.WARNING, "WebView is missing or initialization failed, use JEditorPane replaced", e);
+
+            SwingUtilities.invokeLater(() -> {
+                final JFrame frame = new JFrame(title);
+                frame.setSize(width, height);
+                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                frame.setLocationByPlatform(true);
+                //noinspection ConstantConditions
+                frame.setIconImage(new ImageIcon(FXUtils.class.getResource("/assets/img/icon.png")).getImage());
+                frame.setLayout(new BorderLayout());
+
+                final JProgressBar progressBar = new JProgressBar();
+                progressBar.setIndeterminate(true);
+                frame.add(progressBar, BorderLayout.PAGE_START);
+
+                Schedulers.defaultScheduler().execute(() -> {
+                    final JEditorPane pane = new JEditorPane("text/html", content);
+                    pane.setEditable(false);
+                    pane.addHyperlinkListener(event -> {
+                        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                            openLink(event.getURL().toExternalForm());
+                        }
+                    });
+                    SwingUtilities.invokeLater(() -> {
+                        progressBar.setVisible(false);
+                        frame.add(new JScrollPane(pane), BorderLayout.CENTER);
+                    });
+                });
+
+                frame.setVisible(true);
+                frame.toFront();
+            });
         }
     }
 

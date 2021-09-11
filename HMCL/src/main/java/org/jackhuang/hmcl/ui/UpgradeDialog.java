@@ -25,9 +25,12 @@ import javafx.scene.web.WebView;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 
+import java.util.logging.Level;
+
 import static org.jackhuang.hmcl.Metadata.CHANGELOG_URL;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class UpgradeDialog extends JFXDialogLayout {
@@ -37,17 +40,23 @@ public class UpgradeDialog extends JFXDialogLayout {
         }
 
         {
+            String url = CHANGELOG_URL + config().getUpdateChannel().channelName + ".html";
             WebView webView = new WebView();
             webView.getEngine().setUserDataDirectory(Metadata.HMCL_DIRECTORY.toFile());
-            WebEngine engine = webView.getEngine();
-            engine.load(CHANGELOG_URL + config().getUpdateChannel().channelName);
-            engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
-                String url = engine.getLoadWorker().getMessage().trim();
-                if (!url.startsWith(CHANGELOG_URL)) {
-                    engine.getLoadWorker().cancel();
-                    FXUtils.openLink(url);
-                }
-            });
+            try {
+                WebEngine engine = webView.getEngine();
+                engine.load(CHANGELOG_URL + config().getUpdateChannel().channelName);
+                engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
+                    String viewURL = engine.getLoadWorker().getMessage().trim();
+                    if (!viewURL.startsWith(CHANGELOG_URL)) {
+                        engine.getLoadWorker().cancel();
+                        FXUtils.openLink(viewURL);
+                    }
+                });
+            } catch (NoClassDefFoundError | UnsatisfiedLinkError e) {
+                LOG.log(Level.WARNING, "WebView is missing or initialization failed", e);
+                FXUtils.openLink(url);
+            }
             setBody(webView);
         }
 
