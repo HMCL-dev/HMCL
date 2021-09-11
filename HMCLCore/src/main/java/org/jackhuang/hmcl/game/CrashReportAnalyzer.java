@@ -30,7 +30,7 @@ public class CrashReportAnalyzer {
 
         // Maybe software rendering? Suggest user for using a graphics card.
         OPENGL_NOT_SUPPORTED(Pattern.compile("The driver does not appear to support OpenGL")),
-        PIXEL_FORMAT_NOT_ACCELERATED(Pattern.compile("Pixel format not accelerated")),
+        GRAPHICS_DRIVER(Pattern.compile("Pixel format not accelerated")),
         // Out of memory
         OUT_OF_MEMORY(Pattern.compile("java\\.lang\\.OutOfMemoryError")),
         // game can only run on Java 8. Version of uesr's JVM is too high.
