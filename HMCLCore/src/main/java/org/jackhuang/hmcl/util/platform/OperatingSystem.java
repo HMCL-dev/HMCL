@@ -95,6 +95,8 @@ public enum OperatingSystem {
     private static final String[] INVALID_RESOURCE_BASENAMES;
     private static final String[] INVALID_RESOURCE_FULLNAMES;
 
+    private static final Pattern MEMINFO_PATTERN = Pattern.compile("^(?<key>.*?):\\s+(?<value>\\d+) kB?$");
+    
     static {
         String name = System.getProperty("os.name").toLowerCase(Locale.US);
         if (name.contains("win"))
@@ -131,8 +133,6 @@ public enum OperatingSystem {
             INVALID_RESOURCE_FULLNAMES = null;
         }
     }
-
-    private static final Pattern MEMINFO_PATTERN = Pattern.compile("^(?<key>.*?):\\s+(?<value>\\d+) kB?$");
 
     public static Optional<PhysicalMemoryStatus> getPhysicalMemoryStatus() {
         if (CURRENT_OS == LINUX) {
