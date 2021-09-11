@@ -19,13 +19,18 @@ package org.jackhuang.hmcl.ui.download;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
+import org.jackhuang.hmcl.download.*;
+import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.mod.curse.CurseAddon;
 import org.jackhuang.hmcl.mod.curse.CurseModManager;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -42,10 +47,15 @@ import org.jackhuang.hmcl.ui.versions.DownloadListPage;
 import org.jackhuang.hmcl.ui.versions.ModDownloadListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.ui.wizard.Navigation;
+import org.jackhuang.hmcl.ui.wizard.WizardController;
+import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
@@ -54,26 +64,30 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class DownloadPage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
     private final TabHeader tab;
+    private final TabHeader.Tab<VersionsPage> newGameTab = new TabHeader.Tab<>("newGameTab");
     private final TabHeader.Tab<DownloadListPage> modTab = new TabHeader.Tab<>("modTab");
     private final TabHeader.Tab<DownloadListPage> modpackTab = new TabHeader.Tab<>("modpackTab");
     private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TabHeader.Tab<DownloadListPage> customizationTab = new TabHeader.Tab<>("customizationTab");
     private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
     private final TransitionPane transitionPane = new TransitionPane();
+    private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
 
     private WeakListenerHolder listenerHolder;
 
     public DownloadPage() {
+        newGameTab.setNodeSupplier(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
+                "game", versionPageNavigator::onGameSelected));
         modpackTab.setNodeSupplier(() -> new DownloadListPage(CurseModManager.SECTION_MODPACK, Versions::downloadModpackImpl));
         modTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_MOD, (profile, version, file) -> download(profile, version, file, "mods"), true));
         resourcePackTab.setNodeSupplier(() -> new DownloadListPage(CurseModManager.SECTION_RESOURCE_PACK, (profile, version, file) -> download(profile, version, file, "resourcepacks")));
 //        customizationTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_CUSTOMIZATION, this::download));
         worldTab.setNodeSupplier(() -> new DownloadListPage(CurseModManager.SECTION_WORLD));
-        tab = new TabHeader(modpackTab, modTab, resourcePackTab, worldTab);
+        tab = new TabHeader(newGameTab, modpackTab, modTab, resourcePackTab, worldTab);
 
         Profiles.registerVersionsListener(this::loadVersions);
 
-        tab.getSelectionModel().select(modTab);
+        tab.getSelectionModel().select(newGameTab);
         FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
             if (newValue.initializeIfNeeded()) {
                 if (newValue.getNode() instanceof VersionPage.VersionLoadable) {
@@ -86,9 +100,10 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
         {
             AdvancedListBox sideBar = new AdvancedListBox()
                     .addNavigationDrawerItem(item -> {
-                        item.setTitle(i18n("install.new_game"));
+                        item.setTitle(i18n("game"));
                         item.setLeftGraphic(wrap(SVG.gamepad(Theme.blackFillBinding(), 24, 24)));
-                        item.setOnAction(e -> Versions.addNewGame());
+                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(newGameTab));
+                        item.setOnAction(e -> tab.getSelectionModel().select(newGameTab));
                     })
                     .startCategory(i18n("download"))
                     .addNavigationDrawerItem(item -> {
@@ -174,5 +189,117 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state.getReadOnlyProperty();
+    }
+
+    private class DownloadNavigator implements Navigation {
+        private final Map<String, Object> settings = new HashMap<>();
+
+        @Override
+        public void onStart() {
+
+        }
+
+        @Override
+        public void onNext() {
+
+        }
+
+        @Override
+        public void onPrev(boolean cleanUp) {
+        }
+
+        @Override
+        public boolean canPrev() {
+            return false;
+        }
+
+        @Override
+        public void onFinish() {
+
+        }
+
+        @Override
+        public void onEnd() {
+
+        }
+
+        @Override
+        public void onCancel() {
+
+        }
+
+        @Override
+        public Map<String, Object> getSettings() {
+            return settings;
+        }
+
+        public void onGameSelected() {
+            Profile profile = Profiles.getSelectedProfile();
+            if (profile.getRepository().isLoaded()) {
+                Controllers.getDecorator().startWizard(new VanillaInstallWizardProvider(profile, (GameRemoteVersion) settings.get("game")), i18n("install.new_game"));
+            }
+        }
+
+    }
+
+    private static class VanillaInstallWizardProvider implements WizardProvider {
+        private final Profile profile;
+        private final DefaultDependencyManager dependencyManager;
+        private final DownloadProvider downloadProvider;
+        private final GameRemoteVersion gameVersion;
+
+        public VanillaInstallWizardProvider(Profile profile, GameRemoteVersion gameVersion) {
+            this.profile = profile;
+            this.gameVersion = gameVersion;
+            this.downloadProvider = DownloadProviders.getDownloadProvider();
+            this.dependencyManager = profile.getDependency(downloadProvider);
+        }
+
+        @Override
+        public void start(Map<String, Object> settings) {
+            settings.put(PROFILE, profile);
+            settings.put(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion);
+        }
+
+        private Task<Void> finishVersionDownloadingAsync(Map<String, Object> settings) {
+            GameBuilder builder = dependencyManager.gameBuilder();
+
+            String name = (String) settings.get("name");
+            builder.name(name);
+            builder.gameVersion(((RemoteVersion) settings.get(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())).getGameVersion());
+
+            for (Map.Entry<String, Object> entry : settings.entrySet())
+                if (!LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(entry.getKey()) && entry.getValue() instanceof RemoteVersion)
+                    builder.version((RemoteVersion) entry.getValue());
+
+            return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
+                    .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
+        }
+
+        @Override
+        public Object finish(Map<String, Object> settings) {
+            settings.put("title", i18n("install.new_game"));
+            settings.put("success_message", i18n("install.success"));
+            settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
+
+            return finishVersionDownloadingAsync(settings);
+        }
+
+        @Override
+        public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
+            switch (step) {
+                case 0:
+                    return new InstallersPage(controller, profile.getRepository(), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);
+                default:
+                    throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
+            }
+        }
+
+        @Override
+        public boolean cancel() {
+            return true;
+        }
+
+        public static final String PROFILE = "PROFILE";
     }
 }

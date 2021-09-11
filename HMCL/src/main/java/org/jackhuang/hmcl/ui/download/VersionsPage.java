@@ -45,8 +45,8 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
-import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.Locales;
@@ -64,7 +64,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     private final String gameVersion;
     private final String libraryId;
     private final String title;
-    private final WizardController controller;
+    private final Navigation navigation;
 
     @FXML
     private JFXListView<RemoteVersion> list;
@@ -92,11 +92,11 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     private VersionList<?> versionList;
     private CompletableFuture<?> executor;
 
-    public VersionsPage(WizardController controller, String title, String gameVersion, DownloadProvider downloadProvider, String libraryId, Runnable callback) {
+    public VersionsPage(Navigation navigation, String title, String gameVersion, DownloadProvider downloadProvider, String libraryId, Runnable callback) {
         this.title = title;
         this.gameVersion = gameVersion;
         this.libraryId = libraryId;
-        this.controller = controller;
+        this.navigation = navigation;
 
         FXUtils.loadFXML(this, "/assets/fxml/download/versions.fxml");
 
@@ -197,7 +197,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         list.setOnMouseClicked(e -> {
             if (list.getSelectionModel().getSelectedIndex() < 0)
                 return;
-            controller.getSettings().put(libraryId, list.getSelectionModel().getSelectedItem());
+            navigation.getSettings().put(libraryId, list.getSelectionModel().getSelectedItem());
             callback.run();
         });
 
@@ -275,7 +275,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     }
 
     @FXML
-    private void onBack() { controller.onPrev(true); }
+    private void onBack() { navigation.onPrev(true); }
 
     @FXML
     private void onSponsor() {

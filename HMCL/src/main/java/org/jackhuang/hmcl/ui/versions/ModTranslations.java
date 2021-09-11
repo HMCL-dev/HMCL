@@ -190,7 +190,7 @@ public final class ModTranslations {
         public String getDisplayName() {
             StringBuilder builder = new StringBuilder();
             if (StringUtils.isNotBlank(abbr)) {
-                builder.append("[").append(abbr).append("] ");
+                builder.append("[").append(abbr.trim()).append("] ");
             }
             builder.append(name);
             if (StringUtils.isNotBlank(subname)) {

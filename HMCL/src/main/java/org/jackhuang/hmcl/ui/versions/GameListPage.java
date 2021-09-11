@@ -138,26 +138,12 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
                 }
 
                 {
-                    AdvancedListItem installNewGameItem = new AdvancedListItem();
-                    installNewGameItem.getStyleClass().add("navigation-drawer-item");
-                    installNewGameItem.setTitle(i18n("install.new_game"));
-                    installNewGameItem.setActionButtonVisible(false);
-                    installNewGameItem.setLeftGraphic(VersionPage.wrap(SVG.plusCircleOutline(Theme.blackFillBinding(), 24, 24)));
-                    installNewGameItem.setOnAction(e -> Versions.addNewGame());
-
                     AdvancedListItem installModpackItem = new AdvancedListItem();
                     installModpackItem.getStyleClass().add("navigation-drawer-item");
                     installModpackItem.setTitle(i18n("install.modpack"));
                     installModpackItem.setActionButtonVisible(false);
                     installModpackItem.setLeftGraphic(VersionPage.wrap(SVG.pack(Theme.blackFillBinding(), 24, 24)));
                     installModpackItem.setOnAction(e -> Versions.importModpack());
-
-                    AdvancedListItem downloadModpackItem = new AdvancedListItem();
-                    downloadModpackItem.getStyleClass().add("navigation-drawer-item");
-                    downloadModpackItem.setTitle(i18n("modpack.download"));
-                    downloadModpackItem.setActionButtonVisible(false);
-                    downloadModpackItem.setLeftGraphic(VersionPage.wrap(SVG.fire(Theme.blackFillBinding(), 24, 24)));
-                    downloadModpackItem.setOnAction(e -> Versions.downloadModpack());
 
                     AdvancedListItem refreshItem = new AdvancedListItem();
                     refreshItem.getStyleClass().add("navigation-drawer-item");
@@ -174,12 +160,10 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
                     globalManageItem.setOnAction(e -> modifyGlobalGameSettings());
 
                     AdvancedListBox bottomLeftCornerList = new AdvancedListBox()
-                            .add(installNewGameItem)
                             .add(installModpackItem)
-                            .add(downloadModpackItem)
                             .add(refreshItem)
                             .add(globalManageItem);
-                    FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 5 + 12 * 2);
+                    FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 3 + 12 * 2);
                     left.setBottom(bottomLeftCornerList);
                 }
             }

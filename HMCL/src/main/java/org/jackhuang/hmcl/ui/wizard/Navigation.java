@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.wizard;
 
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 
+import java.util.Map;
+
 public interface Navigation {
 
     void onStart();
@@ -34,6 +36,8 @@ public interface Navigation {
     void onEnd();
 
     void onCancel();
+
+    Map<String, Object> getSettings();
 
     enum NavigationDirection {
         START(ContainerAnimations.NONE),

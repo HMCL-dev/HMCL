@@ -354,7 +354,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 serverPane.getColumnConstraints().setAll(title, value);
 
                 txtServerIP = new JFXTextField();
-                txtServerIP.setLabelFloat(true);
                 txtServerIP.setPromptText(i18n("settings.advanced.server_ip.prompt"));
                 txtServerIP.getStyleClass().add("fit-width");
                 FXUtils.setLimitWidth(txtServerIP, 300);
@@ -386,7 +385,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             pane.getColumnConstraints().setAll(title, value);
 
             txtGameArgs = new JFXTextField();
-            txtGameArgs.setLabelFloat(true);
             txtGameArgs.setPromptText(i18n("settings.advanced.minecraft_arguments.prompt"));
             txtGameArgs.getStyleClass().add("fit-width");
             pane.addRow(0, new Label(i18n("settings.advanced.minecraft_arguments")), txtGameArgs);
@@ -417,7 +415,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             pane.getColumnConstraints().setAll(title, value);
 
             txtJVMArgs = new JFXTextField();
-            txtJVMArgs.setLabelFloat(true);
             txtJVMArgs.setPromptText(i18n("settings.advanced.jvm_args.prompt"));
             txtJVMArgs.getStyleClass().add("fit-width");
             pane.addRow(0, new Label(i18n("settings.advanced.jvm_args")), txtJVMArgs);

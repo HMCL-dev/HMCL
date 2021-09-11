@@ -34,6 +34,7 @@ public class WizardController implements Navigation {
         this.displayer = displayer;
     }
 
+    @Override
     public Map<String, Object> getSettings() {
         return settings;
     }
