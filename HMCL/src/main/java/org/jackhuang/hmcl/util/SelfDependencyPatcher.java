@@ -257,14 +257,7 @@ public final class SelfDependencyPatcher {
         final JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        final String chooserText;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.CURRENT == Architecture.ARM) {
-            chooserText = i18n("repositories.chooser.linux_arm32");
-        } else {
-            chooserText = i18n("repositories.chooser");
-        }
-
-        for (String line : chooserText.split("\n")) {
+        for (String line : i18n("repositories.chooser").split("\n")) {
             panel.add(new JLabel(line));
         }
 
