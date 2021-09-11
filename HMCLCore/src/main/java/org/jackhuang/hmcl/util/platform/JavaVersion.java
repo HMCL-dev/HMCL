@@ -250,7 +250,7 @@ public final class JavaVersion {
                     javaExecutables.add(Arrays.stream(System.getenv("PATH").split(";")).map(path -> Paths.get(path, "java.exe")));
                 }
                 if (System.getenv("HMCL_JRES") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(";")).map(path -> Paths.get(path, "java.exe")));
+                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(";")).map(path -> Paths.get(path, "bin", "java.exe")));
                 }
                 break;
 
@@ -262,7 +262,7 @@ public final class JavaVersion {
                     javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).map(path -> Paths.get(path, "java")));
                 }
                 if (System.getenv("HMCL_JRES") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).map(path -> Paths.get(path, "java")));
+                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).map(path -> Paths.get(path, "bin", "java")));
                 }
                 break;
 
@@ -279,7 +279,7 @@ public final class JavaVersion {
                     javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).map(path -> Paths.get(path, "java")));
                 }
                 if (System.getenv("HMCL_JRES") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).map(path -> Paths.get(path, "java")));
+                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).map(path -> Paths.get(path, "bin", "java")));
                 }
                 break;
 
