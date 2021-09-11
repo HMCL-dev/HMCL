@@ -38,7 +38,7 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.ModDownloadListPage;
+import org.jackhuang.hmcl.ui.versions.DownloadListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -53,21 +53,21 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class DownloadPage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
     private final TabHeader tab;
-    private final TabHeader.Tab<ModDownloadListPage> modTab = new TabHeader.Tab<>("modTab");
-    private final TabHeader.Tab<ModDownloadListPage> modpackTab = new TabHeader.Tab<>("modpackTab");
-    private final TabHeader.Tab<ModDownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
-    private final TabHeader.Tab<ModDownloadListPage> customizationTab = new TabHeader.Tab<>("customizationTab");
-    private final TabHeader.Tab<ModDownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
+    private final TabHeader.Tab<DownloadListPage> modTab = new TabHeader.Tab<>("modTab");
+    private final TabHeader.Tab<DownloadListPage> modpackTab = new TabHeader.Tab<>("modpackTab");
+    private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
+    private final TabHeader.Tab<DownloadListPage> customizationTab = new TabHeader.Tab<>("customizationTab");
+    private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
     private final TransitionPane transitionPane = new TransitionPane();
 
     private WeakListenerHolder listenerHolder;
 
     public DownloadPage() {
-        modpackTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_MODPACK, Versions::downloadModpackImpl));
-        modTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_MOD, (profile, version, file) -> download(profile, version, file, "mods"), true));
-        resourcePackTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_RESOURCE_PACK, (profile, version, file) -> download(profile, version, file, "resourcepacks")));
+        modpackTab.setNodeSupplier(() -> new DownloadListPage(CurseModManager.SECTION_MODPACK, Versions::downloadModpackImpl));
+        modTab.setNodeSupplier(() -> new DownloadListPage(CurseModManager.SECTION_MOD, (profile, version, file) -> download(profile, version, file, "mods"), true));
+        resourcePackTab.setNodeSupplier(() -> new DownloadListPage(CurseModManager.SECTION_RESOURCE_PACK, (profile, version, file) -> download(profile, version, file, "resourcepacks")));
 //        customizationTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_CUSTOMIZATION, this::download));
-        worldTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_WORLD));
+        worldTab.setNodeSupplier(() -> new DownloadListPage(CurseModManager.SECTION_WORLD));
         tab = new TabHeader(modpackTab, modTab, resourcePackTab, worldTab);
 
         Profiles.registerVersionsListener(this::loadVersions);

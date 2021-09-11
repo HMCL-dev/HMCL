@@ -51,13 +51,13 @@ import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class VersionPage extends Control implements DecoratorPage, ModDownloadPage.DownloadCallback {
+public class VersionPage extends Control implements DecoratorPage, DownloadPage.DownloadCallback {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty();
     private final TabHeader tab;
     private final TabHeader.Tab<VersionSettingsPage> versionSettingsTab = new TabHeader.Tab<>("versionSettingsTab");
     private final TabHeader.Tab<ModListPage> modListTab = new TabHeader.Tab<>("modListTab");
-    private final TabHeader.Tab<ModDownloadListPage> curseModListTab = new TabHeader.Tab<>("modListTab");
+    private final TabHeader.Tab<DownloadListPage> curseModListTab = new TabHeader.Tab<>("modListTab");
     private final TabHeader.Tab<InstallerListPage> installerListTab = new TabHeader.Tab<>("installerListTab");
     private final TabHeader.Tab<WorldListPage> worldListTab = new TabHeader.Tab<>("worldList");
     private final TransitionPane transitionPane = new TransitionPane();
@@ -69,7 +69,7 @@ public class VersionPage extends Control implements DecoratorPage, ModDownloadPa
     {
         versionSettingsTab.setNodeSupplier(VersionSettingsPage::new);
         modListTab.setNodeSupplier(ModListPage::new);
-        curseModListTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_MOD, this));
+        curseModListTab.setNodeSupplier(() -> new DownloadListPage(CurseModManager.SECTION_MOD, this));
         installerListTab.setNodeSupplier(InstallerListPage::new);
         worldListTab.setNodeSupplier(WorldListPage::new);
 

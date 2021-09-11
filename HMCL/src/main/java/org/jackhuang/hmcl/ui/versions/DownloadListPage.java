@@ -52,14 +52,14 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ModDownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
+public class DownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final boolean versionSelection;
     private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
     private final ListProperty<CurseAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
-    private final ModDownloadPage.DownloadCallback callback;
+    private final DownloadPage.DownloadCallback callback;
     private boolean searchInitialized = false;
 
     /**
@@ -68,15 +68,15 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
      */
     private final int section;
 
-    public ModDownloadListPage(int section) {
+    public DownloadListPage(int section) {
         this(section, null);
     }
 
-    public ModDownloadListPage(int section, ModDownloadPage.DownloadCallback callback) {
+    public DownloadListPage(int section, DownloadPage.DownloadCallback callback) {
         this(section, callback, false);
     }
 
-    public ModDownloadListPage(int section, ModDownloadPage.DownloadCallback callback, boolean versionSelection) {
+    public DownloadListPage(int section, DownloadPage.DownloadCallback callback, boolean versionSelection) {
         this.section = section;
         this.callback = callback;
         this.versionSelection = versionSelection;
@@ -133,7 +133,7 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
             }
             return gameVersion;
         }).thenApplyAsync(gameVersion -> {
-            return CurseModManager.searchPaginated(gameVersion, category, section, pageOffset, searchFilter, sort);
+            return searchImpl(gameVersion, category, section, pageOffset, searchFilter, sort);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             setLoading(false);
             if (exception == null) {
@@ -143,6 +143,10 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
                 failed.set(true);
             }
         }).start();
+    }
+
+    protected List<CurseAddon> searchImpl(String gameVersion, int category, int section, int pageOffset, String searchFilter, int sort) throws Exception {
+        return CurseModManager.searchPaginated(gameVersion, category, section, pageOffset, searchFilter, sort);
     }
 
     @Override
@@ -155,9 +159,9 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
         return new ModDownloadListPageSkin(this);
     }
 
-    private static class ModDownloadListPageSkin extends SkinBase<ModDownloadListPage> {
+    private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
 
-        protected ModDownloadListPageSkin(ModDownloadListPage control) {
+        protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
 
             BorderPane pane = new BorderPane();
@@ -285,7 +289,7 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
                     if (listView.getSelectionModel().getSelectedIndex() < 0)
                         return;
                     CurseAddon selectedItem = listView.getSelectionModel().getSelectedItem();
-                    Controllers.navigate(new ModDownloadPage(selectedItem, getSkinnable().version.get(), getSkinnable().callback));
+                    Controllers.navigate(new DownloadPage(selectedItem, getSkinnable().version.get(), getSkinnable().callback));
                 });
                 listView.setCellFactory(x -> new FloatListCell<CurseAddon>(listView) {
                     TwoLineListItem content = new TwoLineListItem();

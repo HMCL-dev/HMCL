@@ -49,7 +49,7 @@ import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
 import org.jackhuang.hmcl.ui.multiplayer.MultiplayerPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
-import org.jackhuang.hmcl.ui.versions.ModDownloadListPage;
+import org.jackhuang.hmcl.ui.versions.DownloadListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.FutureCallback;
@@ -86,8 +86,8 @@ public final class Controllers {
     });
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     private static DecoratorController decorator;
-    private static Lazy<ModDownloadListPage> modDownloadListPage = new Lazy<>(() -> {
-        return new ModDownloadListPage(CurseModManager.SECTION_MODPACK, Versions::downloadModpackImpl) {
+    private static Lazy<DownloadListPage> modDownloadListPage = new Lazy<>(() -> {
+        return new DownloadListPage(CurseModManager.SECTION_MODPACK, Versions::downloadModpackImpl) {
             {
                 state.set(State.fromTitle(i18n("modpack.download")));
             }
@@ -131,7 +131,7 @@ public final class Controllers {
     }
 
     // FXThread
-    public static ModDownloadListPage getModpackDownloadListPage() {
+    public static DownloadListPage getModpackDownloadListPage() {
         return modDownloadListPage.get();
     }
 

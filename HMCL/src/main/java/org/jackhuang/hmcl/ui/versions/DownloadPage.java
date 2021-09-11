@@ -64,7 +64,7 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ModDownloadPage extends Control implements DecoratorPage {
+public class DownloadPage extends Control implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final ListProperty<CurseAddon.LatestFile> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
@@ -73,7 +73,7 @@ public class ModDownloadPage extends Control implements DecoratorPage {
     private final Profile.ProfileVersion version;
     private final DownloadCallback callback;
 
-    public ModDownloadPage(CurseAddon addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
+    public DownloadPage(CurseAddon addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
         this.addon = addon;
         this.version = version;
         this.callback = callback;
@@ -170,9 +170,9 @@ public class ModDownloadPage extends Control implements DecoratorPage {
         return new ModDownloadPageSkin(this);
     }
 
-    private static class ModDownloadPageSkin extends SkinBase<ModDownloadPage> {
+    private static class ModDownloadPageSkin extends SkinBase<DownloadPage> {
 
-        protected ModDownloadPageSkin(ModDownloadPage control) {
+        protected ModDownloadPageSkin(DownloadPage control) {
             super(control);
 
             BorderPane pane = new BorderPane();
