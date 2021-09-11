@@ -413,6 +413,18 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 rowIndex++;
             }
 
+            if (factory instanceof YggdrasilAccountFactory) {
+                HBox box = new HBox();
+                Hyperlink migrationLink = new Hyperlink(i18n("account.methods.yggdrasil.migration"));
+                migrationLink.setOnAction(e -> FXUtils.openLink("https://help.minecraft.net/hc/en-us/articles/360050865492-JAVA-Account-Migration-FAQ"));
+                GridPane.setColumnSpan(box, 2);
+                box.getChildren().setAll(migrationLink);
+
+                add(box, 0, rowIndex);
+
+                rowIndex++;
+            }
+
             if (factory instanceof OfflineAccountFactory) {
                 HBox box = new HBox();
                 MenuUpDownButton advancedButton = new MenuUpDownButton();
