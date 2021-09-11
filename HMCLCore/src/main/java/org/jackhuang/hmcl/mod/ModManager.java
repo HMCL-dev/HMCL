@@ -99,7 +99,7 @@ public final class ModManager {
             default:
                 throw new IllegalArgumentException("File " + modFile + " is not a mod file.");
         }
-        return new ModInfo(this, modFile, FileUtils.getNameWithoutExtension(modFile), new ModInfo.Description(description));
+        return new ModInfo(this, modFile, null, FileUtils.getNameWithoutExtension(modFile), new ModInfo.Description(description));
     }
 
     public void refreshMods() throws IOException {

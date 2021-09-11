@@ -1,3 +1,10 @@
+#
+# Hello Minecraft! Launcher
+# Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+#
+# This file is licensed under CC BY-NC-SA 3.0.
+# Thanks to mcmod.cn and all contributors.
+#
 industrial-craft;2;515771;IC2,ic2;工业时代2;Industrial Craft 2
 ;3;;RedPowerCore,RedPowerBase;红石力量2;RedPower2
 BuildCraft;4;884720;BuildCraft|Core,buildcraftlib,buildcraftcore,buildcraftbuilders,buildcrafttransport,buildcraftsilicon,buildcraftfactory,buildcraftrobotics,buildcraftenergy,BuildMod,kamenridercraft4th,BuildCraft|Energy,BuildCraft|Transport,BuildCraft|Factory,BuildCraft|Silicon,BuildCraft|Builders,BuildCraft|Robotics;建筑;BuildCraft

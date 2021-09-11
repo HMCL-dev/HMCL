@@ -116,7 +116,7 @@ public final class LiteModMetadata {
             LiteModMetadata metadata = JsonUtils.GSON.fromJson(IOUtils.readFullyAsString(zipFile.getInputStream(entry)), LiteModMetadata.class);
             if (metadata == null)
                 throw new IOException("Mod " + modFile + " `litemod.json` is malformed.");
-            return new ModInfo(modManager, modFile, metadata.getName(), new ModInfo.Description(metadata.getDescription()), metadata.getAuthor(),
+            return new ModInfo(modManager, modFile, null, metadata.getName(), new ModInfo.Description(metadata.getDescription()), metadata.getAuthor(),
                     metadata.getVersion(), metadata.getGameVersion(), metadata.getUpdateURI(), "");
         }
     }

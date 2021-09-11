@@ -38,6 +38,7 @@ import java.util.logging.Level;
 public final class ModInfo implements Comparable<ModInfo> {
 
     private Path file;
+    private final String id;
     private final String name;
     private final Description description;
     private final String authors;
@@ -48,12 +49,13 @@ public final class ModInfo implements Comparable<ModInfo> {
     private final String logoPath;
     private final BooleanProperty activeProperty;
 
-    public ModInfo(ModManager modManager, File file, String name, Description description) {
-        this(modManager, file, name, description, "", "", "", "", "");
+    public ModInfo(ModManager modManager, File file, String id, String name, Description description) {
+        this(modManager, file, id, name, description, "", "", "", "", "");
     }
 
-    public ModInfo(ModManager modManager, File file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
+    public ModInfo(ModManager modManager, File file, String id, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
         this.file = file.toPath();
+        this.id = id;
         this.name = name;
         this.description = description;
         this.authors = authors;
@@ -83,6 +85,10 @@ public final class ModInfo implements Comparable<ModInfo> {
 
     public Path getFile() {
         return file;
+    }
+
+    public String getId() {
+        return id;
     }
 
     public String getName() {

@@ -138,6 +138,7 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
             setLoading(false);
             if (exception == null) {
                 items.setAll(result);
+                failed.set(false);
             } else {
                 failed.set(true);
             }
@@ -301,7 +302,8 @@ public class ModDownloadListPage extends Control implements DecoratorPage, Versi
                     @Override
                     protected void updateControl(CurseAddon dataItem, boolean empty) {
                         if (empty) return;
-                        content.setTitle(dataItem.getName());
+                        ModTranslations.Mod mod = ModTranslations.getModByCurseForgeId(dataItem.getSlug());
+                        content.setTitle(mod != null ? mod.getDisplayName() : dataItem.getName());
                         content.setSubtitle(dataItem.getSummary());
                         content.getTags().setAll(dataItem.getCategories().stream()
                                 .map(category -> i18n("curse.category." + category.getCategoryId()))

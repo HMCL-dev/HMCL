@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 
 @Immutable
 public final class FabricModMetadata {
+    private final String id;
     private final String name;
     private final String version;
     private final String description;
@@ -50,10 +51,11 @@ public final class FabricModMetadata {
     private final Map<String, String> contact;
 
     public FabricModMetadata() {
-        this("", "", "", "", Collections.emptyList(), Collections.emptyMap());
+        this("", "", "", "", "", Collections.emptyList(), Collections.emptyMap());
     }
 
-    public FabricModMetadata(String name, String version, String icon, String description, List<FabricModAuthor> authors, Map<String, String> contact) {
+    public FabricModMetadata(String id, String name, String version, String icon, String description, List<FabricModAuthor> authors, Map<String, String> contact) {
+        this.id = id;
         this.name = name;
         this.version = version;
         this.icon = icon;
@@ -69,7 +71,7 @@ public final class FabricModMetadata {
                 throw new IOException("File " + modFile + " is not a Fabric mod.");
             FabricModMetadata metadata = JsonUtils.fromNonNullJson(FileUtils.readText(mcmod), FabricModMetadata.class);
             String authors = metadata.authors == null ? "" : metadata.authors.stream().map(author -> author.name).collect(Collectors.joining(", "));
-            return new ModInfo(modManager, modFile, metadata.name, new ModInfo.Description(metadata.description),
+            return new ModInfo(modManager, modFile, metadata.id, metadata.name, new ModInfo.Description(metadata.description),
                     authors, metadata.version, "", metadata.contact != null ? metadata.contact.getOrDefault("homepage", "") : "", metadata.icon);
         }
     }

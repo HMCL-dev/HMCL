@@ -185,7 +185,8 @@ public class ModDownloadPage extends Control implements DecoratorPage {
 
             TwoLineListItem content = new TwoLineListItem();
             HBox.setHgrow(content, Priority.ALWAYS);
-            content.setTitle(getSkinnable().addon.getName());
+            ModTranslations.Mod mod = ModTranslations.getModByCurseForgeId(getSkinnable().addon.getSlug());
+            content.setTitle(mod != null ? mod.getDisplayName() : getSkinnable().addon.getName());
             content.setSubtitle(getSkinnable().addon.getSummary());
             content.getTags().setAll(getSkinnable().addon.getCategories().stream()
                     .map(category -> i18n("curse.category." + category.getCategoryId()))

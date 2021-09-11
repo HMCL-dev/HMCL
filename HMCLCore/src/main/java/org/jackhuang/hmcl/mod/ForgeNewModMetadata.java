@@ -135,7 +135,7 @@ public final class ForgeNewModMetadata {
                     LOG.log(Level.WARNING, "Failed to parse MANIFEST.MF in file " + modFile.getPath());
                 }
             }
-            return new ModInfo(modManager, modFile, mod.getDisplayName(), new ModInfo.Description(mod.getDescription()),
+            return new ModInfo(modManager, modFile, mod.getModId(), mod.getDisplayName(), new ModInfo.Description(mod.getDescription()),
                     mod.getAuthors(), mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                     mod.getDisplayURL(),
                     metadata.getLogoFile());
