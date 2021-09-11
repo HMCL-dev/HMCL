@@ -60,9 +60,20 @@ public class CrashReportAnalyzer {
         TWILIGHT_FOREST(Pattern.compile("at twilightforest\\.")),
         OPTIFINE(Pattern.compile("at net\\.optifine\\."));
 
+        private final Pattern pattern;
+        private final String[] groupNames;
 
         StacktraceRules(Pattern pattern, String... groupNames) {
+            this.pattern = pattern;
+            this.groupNames = groupNames;
+        }
 
+        public Pattern getPattern() {
+            return pattern;
+        }
+
+        public String[] getGroupNames() {
+            return groupNames;
         }
     }
 }
