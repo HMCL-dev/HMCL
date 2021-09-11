@@ -130,10 +130,7 @@ public class RemoteModpackPage extends StackPane implements WizardPage {
 
     @FXML
     private void onDescribe() {
-        WebStage stage = new WebStage();
-        stage.getWebView().getEngine().loadContent(manifest.getDescription());
-        stage.setTitle(i18n("modpack.description"));
-        stage.showAndWait();
+        FXUtils.showWebDialog(i18n("modpack.description"), manifest.getDescription());
     }
 
     @Override

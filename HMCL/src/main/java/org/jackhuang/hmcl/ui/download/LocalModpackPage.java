@@ -43,12 +43,15 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.util.Map;
 import java.util.Optional;
 
 import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class LocalModpackPage extends StackPane implements WizardPage {
@@ -156,10 +159,7 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
     @FXML
     private void onDescribe() {
         if (manifest != null) {
-            WebStage stage = new WebStage();
-            stage.getWebView().getEngine().loadContent(manifest.getDescription());
-            stage.setTitle(i18n("modpack.description"));
-            stage.showAndWait();
+            FXUtils.showWebDialog(i18n("modpack.description"), manifest.getDescription());
         }
     }
 
