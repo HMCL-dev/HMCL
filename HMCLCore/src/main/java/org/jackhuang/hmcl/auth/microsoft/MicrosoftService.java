@@ -136,7 +136,7 @@ public class MicrosoftService {
 
         if (response.displayClaims == null || response.displayClaims.xui == null || response.displayClaims.xui.size() == 0 || !response.displayClaims.xui.get(0).containsKey("uhs")) {
             LOG.log(Level.WARNING, "Unrecognized xbox authorization response " + GSON.toJson(response));
-            throw new ServerResponseMalformedException();
+            throw new NoXuiException();
         }
 
         String uhs = (String) response.displayClaims.xui.get(0).get("uhs");
@@ -169,6 +169,7 @@ public class MicrosoftService {
                                 mapOf(pair("SandboxId", "RETAIL"),
                                         pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
                         pair("RelyingParty", "rp://api.minecraftservices.com/"), pair("TokenType", "JWT")))
+                .ignoreHttpErrorCode(401)
                 .getJson(XBoxLiveAuthenticationResponse.class);
 
         getUhs(minecraftXstsResponse, uhs);
@@ -329,6 +330,9 @@ public class MicrosoftService {
     }
 
     public static class NoMinecraftJavaEditionProfileException extends AuthenticationException {
+    }
+
+    public static class NoXuiException extends AuthenticationException {
     }
 
     /**

@@ -120,6 +120,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
         {
             lblErrorMessage = new Label();
+            lblErrorMessage.setWrapText(true);
+            lblErrorMessage.setMaxWidth(400);
 
             btnAccept = new JFXButton(i18n("account.login"));
             btnAccept.getStyleClass().add("dialog-accept");
@@ -134,7 +136,10 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             btnCancel.setOnAction(e -> onCancel());
             onEscPressed(this, btnCancel::fire);
 
-            setActions(lblErrorMessage, new HBox(spinner, btnCancel));
+            HBox hbox = new HBox(spinner, btnCancel);
+            hbox.setAlignment(Pos.CENTER_RIGHT);
+
+            setActions(lblErrorMessage, hbox);
         }
 
         if (showMethodSwitcher) {
@@ -254,6 +259,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             lblErrorMessage.setText("");
         }
         if (factory == Accounts.FACTORY_MICROSOFT) {
+            VBox vbox = new VBox(8);
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFORMATION);
             hintPane.textProperty().bind(BindingMapping.of(logging).map(logging ->
                     logging
@@ -264,7 +270,18 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     FXUtils.copyText(MicrosoftAuthenticationServer.lastlyOpenedURL);
                 }
             });
-            detailsPane = hintPane;
+
+            HBox box = new HBox(8);
+            Hyperlink birthLink = new Hyperlink(i18n("account.methods.microsoft.birth"));
+            birthLink.setOnAction(e -> FXUtils.openLink("https://support.microsoft.com/zh-cn/account-billing/如何更改-microsoft-帐户上的出生日期-837badbc-999e-54d2-2617-d19206b9540a"));
+            Hyperlink profileLink = new Hyperlink(i18n("account.methods.microsoft.profile"));
+            profileLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/editprof.aspx"));
+            box.getChildren().setAll(profileLink, birthLink);
+            GridPane.setColumnSpan(box, 2);
+
+            vbox.getChildren().setAll(hintPane, box);
+
+            detailsPane = vbox;
             btnAccept.setDisable(false);
         } else {
             detailsPane = new AccountDetailsInputPane(factory, btnAccept::fire);
@@ -608,4 +625,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             }
         }
     }
+
+    private static final String MICROSOFT_ACCOUNT_EDIT_PROFILE_URL = "https://support.microsoft.com/zh-cn/account-billing/%E5%A6%82%E4%BD%95%E6%9B%B4%E6%94%B9-microsoft-%E5%B8%90%E6%88%B7%E4%B8%8A%E7%9A%84%E5%87%BA%E7%94%9F%E6%97%A5%E6%9C%9F-837badbc-999e-54d2-2617-d19206b9540a";
 }

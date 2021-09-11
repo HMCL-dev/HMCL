@@ -31,7 +31,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -46,6 +48,7 @@ public abstract class HttpRequest {
     protected final String method;
     protected final Map<String, String> headers = new HashMap<>();
     protected ExceptionalBiConsumer<URL, Integer, IOException> responseCodeTester;
+    protected final Set<Integer> toleratedHttpCodes = new HashSet<>();
 
     private HttpRequest(String url, String method) {
         this.url = url;
@@ -89,6 +92,11 @@ public abstract class HttpRequest {
 
     public HttpRequest filter(ExceptionalBiConsumer<URL, Integer, IOException> responseCodeTester) {
         this.responseCodeTester = responseCodeTester;
+        return this;
+    }
+
+    public HttpRequest ignoreHttpErrorCode(int code) {
+        toleratedHttpCodes.add(code);
         return this;
     }
 
@@ -157,7 +165,10 @@ public abstract class HttpRequest {
                 responseCodeTester.accept(new URL(url), con.getResponseCode());
             } else {
                 if (con.getResponseCode() / 100 != 2) {
-                    throw new ResponseCodeException(new URL(url), con.getResponseCode());
+                    if (!toleratedHttpCodes.contains(con.getResponseCode())) {
+                        String data = NetworkUtils.readData(con);
+                        throw new ResponseCodeException(new URL(url), con.getResponseCode(), data);
+                    }
                 }
             }
 

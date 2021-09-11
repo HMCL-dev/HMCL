@@ -369,6 +369,8 @@ public final class Accounts {
             }
         } else if (exception instanceof MicrosoftService.NoMinecraftJavaEditionProfileException) {
             return i18n("account.methods.microsoft.error.no_character");
+        } else if (exception instanceof MicrosoftService.NoXuiException) {
+            return i18n("account.methods.microsoft.error.add_family_probably");
         } else if (exception.getClass() == AuthenticationException.class) {
             return exception.getLocalizedMessage();
         } else {

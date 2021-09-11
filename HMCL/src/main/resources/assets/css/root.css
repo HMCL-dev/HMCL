@@ -344,6 +344,7 @@
 }
 
 .jfx-layout-actions {
+    -fx-pref-width: 400;
     -fx-padding: 10.0px 0.0 0.0 0.0;
     -fx-alignment: center-right;
 }
