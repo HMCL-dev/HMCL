@@ -35,6 +35,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.mod.ModInfo;
+import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -202,15 +203,29 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             Label description = new Label(modInfo.getModInfo().getDescription().toString());
             setBody(description);
 
-            JFXButton okButton = new JFXButton();
-            okButton.getStyleClass().add("dialog-accept");
-            okButton.setText(i18n("button.ok"));
-            okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getUrl())) {
+                JFXHyperlink officialPageButton = new JFXHyperlink();
+                officialPageButton.setText(i18n("mods.url"));
+                officialPageButton.setOnAction(e -> {
+                    fireEvent(new DialogCloseEvent());
+                    FXUtils.openLink(modInfo.getModInfo().getUrl());
+                });
 
-            JFXButton searchButton = new JFXButton();
-            searchButton.getStyleClass().add("dialog-cancel");
+                getActions().add(officialPageButton);
+            }
+
+            if (modInfo.getMod() != null && StringUtils.isNotBlank(modInfo.getMod().getMcbbs())) {
+                JFXHyperlink mcbbsButton = new JFXHyperlink();
+                mcbbsButton.setText(i18n("mods.mcbbs"));
+                mcbbsButton.setOnAction(e -> {
+                    fireEvent(new DialogCloseEvent());
+                    FXUtils.openLink(ModManager.getMcbbsUrl(modInfo.getMod().getMcbbs()));
+                });
+                getActions().add(mcbbsButton);
+            }
 
             if (modInfo.getMod() == null || StringUtils.isBlank(modInfo.getMod().getMcmod())) {
+                JFXHyperlink searchButton = new JFXHyperlink();
                 searchButton.setText(i18n("mods.mcmod.search"));
                 searchButton.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
@@ -220,27 +235,22 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                             pair("filter", "0")
                     )));
                 });
+                getActions().add(searchButton);
             } else {
-                searchButton.setText(i18n("mods.mcmod.page"));
-                searchButton.setOnAction(e -> {
+                JFXHyperlink mcmodButton = new JFXHyperlink();
+                mcmodButton.setText(i18n("mods.mcmod.page"));
+                mcmodButton.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
-                    FXUtils.openLink("https://www.mcmod.cn/class/" + modInfo.getMod().getMcmod() + ".html");
+                    FXUtils.openLink(ModManager.getMcmodUrl(modInfo.getMod().getMcmod()));
                 });
+                getActions().add(mcmodButton);
             }
 
-            if (StringUtils.isNotBlank(modInfo.getModInfo().getUrl())) {
-                JFXButton officialPageButton = new JFXButton();
-                officialPageButton.getStyleClass().add("dialog-cancel");
-                officialPageButton.setText(i18n("mods.url"));
-                officialPageButton.setOnAction(e -> {
-                    fireEvent(new DialogCloseEvent());
-                    FXUtils.openLink(modInfo.getModInfo().getUrl());
-                });
-
-                setActions(okButton, officialPageButton, searchButton);
-            } else {
-                setActions(okButton, searchButton);
-            }
+            JFXButton okButton = new JFXButton();
+            okButton.getStyleClass().add("dialog-accept");
+            okButton.setText(i18n("button.ok"));
+            okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+            getActions().add(okButton);
 
             onEscPressed(this, okButton::fire);
         }

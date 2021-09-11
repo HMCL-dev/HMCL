@@ -22,6 +22,13 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.SVG;
 
 public class JFXHyperlink extends Hyperlink {
+
+    public JFXHyperlink() {
+        super();
+
+        setGraphic(SVG.launchOutline(Theme.blackFillBinding(), 16, 16));
+    }
+
     public JFXHyperlink(String text) {
         super(text);
 
