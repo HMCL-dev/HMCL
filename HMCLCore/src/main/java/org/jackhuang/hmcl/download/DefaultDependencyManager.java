@@ -137,7 +137,13 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                     removedLibraryVersion.set(version);
                     return libraryVersion.getInstallTask(this, version);
                 })
-                .thenApplyAsync(patch -> removedLibraryVersion.get().addPatch(patch))
+                .thenApplyAsync(patch -> {
+                    if (patch == null) {
+                        return removedLibraryVersion.get();
+                    } else {
+                        return removedLibraryVersion.get().addPatch(patch);
+                    }
+                })
                 .withStage(String.format("hmcl.install.%s:%s", libraryVersion.getLibraryId(), libraryVersion.getSelfVersion()));
     }
 
