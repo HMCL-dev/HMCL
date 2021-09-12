@@ -43,6 +43,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
@@ -397,7 +398,10 @@ public class DefaultLauncher extends Launcher {
             }
             String appdata = options.getGameDir().getAbsoluteFile().getParent();
             if (appdata != null) builder.environment().put("APPDATA", appdata);
-            if (classpath != null) builder.environment().put("CLASSPATH", classpath);
+            if (classpath != null) {
+                builder.environment().put("CLASSPATH", classpath);
+                LOG.info("Pass classpath using the environment variable CLASSPATH: " + classpath);
+            }
             process = builder.start();
         } catch (IOException e) {
             throw new ProcessCreationException(e);
