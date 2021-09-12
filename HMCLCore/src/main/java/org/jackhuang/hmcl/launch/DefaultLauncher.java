@@ -18,13 +18,7 @@
 package org.jackhuang.hmcl.launch;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.game.Argument;
-import org.jackhuang.hmcl.game.Arguments;
-import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.LaunchOptions;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.NativesDirectoryType;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -353,7 +347,7 @@ public class DefaultLauncher extends Launcher {
 
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        File nativeFolder = null;
+        File nativeFolder;
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
             nativeFolder = repository.getNativeDirectory(version.getId());
         } else {
@@ -361,7 +355,16 @@ public class DefaultLauncher extends Launcher {
         }
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
-        List<String> rawCommandLine = generateCommandLine(nativeFolder).asList();
+        List<String> rawCommandLine = generateCommandLine(nativeFolder).asMutableList();
+
+        String classpath = null;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && options.getProcessPriority() != ProcessPriority.NORMAL) {
+            final int cpIndex = rawCommandLine.indexOf("-cp");
+            if (cpIndex >= 0 && cpIndex < rawCommandLine.size() - 1) {
+                rawCommandLine.remove(cpIndex); // remove "-cp"
+                classpath = rawCommandLine.remove(cpIndex);
+            }
+        }
 
         if (rawCommandLine.stream().anyMatch(StringUtils::isBlank)) {
             throw new IllegalStateException("Illegal command line " + rawCommandLine);
@@ -394,6 +397,7 @@ public class DefaultLauncher extends Launcher {
             }
             String appdata = options.getGameDir().getAbsoluteFile().getParent();
             if (appdata != null) builder.environment().put("APPDATA", appdata);
+            if (classpath != null) builder.environment().put("CLASSPATH", classpath);
             process = builder.start();
         } catch (IOException e) {
             throw new ProcessCreationException(e);
