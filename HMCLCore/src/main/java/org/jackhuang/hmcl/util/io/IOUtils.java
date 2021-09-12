@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.io;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 
 /**
  * This utility class consists of some util methods operating on InputStream/OutputStream.
@@ -31,6 +32,21 @@ public final class IOUtils {
     }
 
     public static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
+
+    public static final Charset NATIVE_CHARSET;
+
+    static {
+        final String encoding = System.getProperty("native.encoding");
+        Charset charset = Charset.defaultCharset();
+        try {
+            if (encoding != null) {
+                charset = Charset.forName(encoding);
+            }
+        } catch (UnsupportedCharsetException e) {
+            e.printStackTrace();
+        }
+        NATIVE_CHARSET = charset;
+    }
 
     /**
      * Read all bytes to a buffer from given input stream. The stream will not be closed.
