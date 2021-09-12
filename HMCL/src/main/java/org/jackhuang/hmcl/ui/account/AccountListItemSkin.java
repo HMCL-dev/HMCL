@@ -30,9 +30,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
@@ -94,7 +96,13 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         btnRefresh.setOnMouseClicked(e -> {
             spinnerRefresh.showSpinner();
             skinnable.refreshAsync()
-                    .whenComplete(Schedulers.javafx(), ex -> spinnerRefresh.hideSpinner())
+                    .whenComplete(Schedulers.javafx(), ex -> {
+                        spinnerRefresh.hideSpinner();
+
+                        if (ex != null) {
+                            Controllers.showToast(Accounts.localizeErrorMessage(ex));
+                        }
+                    })
                     .start();
         });
         btnRefresh.getStyleClass().add("toggle-icon4");
