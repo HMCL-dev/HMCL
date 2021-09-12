@@ -468,10 +468,12 @@ public class DefaultLauncher extends Launcher {
 
         try {
             if (usePowerShell) {
-                writer.write("$Env:APPDATA = '");
-                writer.write(options.getGameDir().getAbsoluteFile().getParent().replace("'", "''"));
-                writer.write('\'');
-                writer.newLine();
+                if (isWindows) {
+                    writer.write("$Env:APPDATA = '");
+                    writer.write(options.getGameDir().getAbsoluteFile().getParent().replace("'", "''"));
+                    writer.write('\'');
+                    writer.newLine();
+                }
                 writer.write("Set-Location -Path '");
                 writer.write(repository.getRunDirectory(version.getId()).getAbsolutePath().replace("'", "''"));
                 writer.write('\'');
