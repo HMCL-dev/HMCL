@@ -437,6 +437,15 @@ public class DefaultLauncher extends Launcher {
             throw new IOException("Script file: " + scriptFile + " cannot be created.");
 
 
+        final CommandBuilder commandLine = generateCommandLine(nativeFolder);
+        final String command = usePowerShell ? null : commandLine.toString();
+
+        if (!usePowerShell && isWindows) {
+            if (command.length() > 8192) { // maximum length of the command in cmd
+                throw new CommandTooLongException();
+            }
+        }
+
         BufferedWriter writer;
         OutputStream outputStream = new FileOutputStream(scriptFile);
         if (usePowerShell) {
@@ -469,7 +478,7 @@ public class DefaultLauncher extends Launcher {
                 writer.newLine();
 
                 writer.write('&');
-                for (String rawCommand : generateCommandLine(nativeFolder).asList()) {
+                for (String rawCommand : commandLine.asList()) {
                     writer.write(' ');
                     writer.write('\'');
                     writer.write(rawCommand.replace("'", "''"));
@@ -493,7 +502,7 @@ public class DefaultLauncher extends Launcher {
                     writer.write(options.getPreLaunchCommand());
                     writer.newLine();
                 }
-                writer.write(generateCommandLine(nativeFolder).toString());
+                writer.write(command);
             }
 
         } finally {

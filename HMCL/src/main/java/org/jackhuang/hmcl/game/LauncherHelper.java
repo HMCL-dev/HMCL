@@ -30,10 +30,7 @@ import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.download.java.JavaRepository;
-import org.jackhuang.hmcl.launch.NotDecompressingNativesException;
-import org.jackhuang.hmcl.launch.PermissionException;
-import org.jackhuang.hmcl.launch.ProcessCreationException;
-import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.curse.CurseCompletionException;
 import org.jackhuang.hmcl.mod.curse.CurseCompletionTask;
@@ -288,6 +285,8 @@ public final class LauncherHelper {
                                         message = i18n("download.code.404", url);
                                     else
                                         message = i18n("download.failed", url, responseCode);
+                                } else if (ex instanceof CommandTooLongException) {
+                                    message = i18n("launch.failed.command_too_long");
                                 } else {
                                     message = StringUtils.getStackTrace(ex);
                                 }
