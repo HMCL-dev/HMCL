@@ -436,7 +436,6 @@ public class DefaultLauncher extends Launcher {
         if (!FileUtils.makeFile(scriptFile))
             throw new IOException("Script file: " + scriptFile + " cannot be created.");
 
-
         final CommandBuilder commandLine = generateCommandLine(nativeFolder);
         final String command = usePowerShell ? null : commandLine.toString();
 
