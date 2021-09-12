@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.launch;
 
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -49,7 +50,7 @@ final class StreamPump implements Runnable {
 
     @Override
     public void run() {
-        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, Charset.defaultCharset()))) {
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, IOUtils.NATIVE_CHARSET))) {
             String line;
             while ((line = bufferedReader.readLine()) != null) {
                 if (Thread.currentThread().isInterrupted()) {

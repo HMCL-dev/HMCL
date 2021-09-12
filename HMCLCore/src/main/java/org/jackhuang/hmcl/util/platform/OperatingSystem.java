@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.util.io.IOUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -84,7 +86,7 @@ public enum OperatingSystem {
     /**
      * The system default encoding.
      */
-    public static final String ENCODING = System.getProperty("sun.jnu.encoding", Charset.defaultCharset().name());
+    public static final String ENCODING = IOUtils.NATIVE_CHARSET.name();
 
     /**
      * The version of current operating system.

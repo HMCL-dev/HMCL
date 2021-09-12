@@ -36,7 +36,7 @@ public final class IOUtils {
     public static final Charset NATIVE_CHARSET;
 
     static {
-        final String encoding = System.getProperty("native.encoding");
+        final String encoding = System.getProperty("native.encoding", System.getProperty("sun.jnu.encoding"));
         Charset charset = Charset.defaultCharset();
         try {
             if (encoding != null) {

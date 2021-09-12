@@ -89,7 +89,8 @@ public final class CompressingUtils {
 
     public static Charset findSuitableEncoding(Path zipFile, Collection<Charset> candidates) throws IOException {
         if (testEncoding(zipFile, StandardCharsets.UTF_8)) return StandardCharsets.UTF_8;
-        if (testEncoding(zipFile, Charset.defaultCharset())) return Charset.defaultCharset();
+        if (IOUtils.NATIVE_CHARSET != StandardCharsets.UTF_8 && testEncoding(zipFile, IOUtils.NATIVE_CHARSET))
+            return IOUtils.NATIVE_CHARSET;
 
         for (Charset charset : candidates)
             if (charset != null && testEncoding(zipFile, charset))
