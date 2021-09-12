@@ -19,9 +19,15 @@ package org.jackhuang.hmcl.setting;
 
 import javafx.beans.InvalidationListener;
 import org.jackhuang.hmcl.download.*;
+import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.ResponseCodeException;
 
+import java.net.SocketTimeoutException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +38,7 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.task.FetchTask.DEFAULT_CONCURRENCY;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class DownloadProviders {
     private DownloadProviders() {}
@@ -126,5 +133,24 @@ public final class DownloadProviders {
      */
     public static DownloadProvider getDownloadProvider() {
         return config().isAutoChooseDownloadType() ? currentDownloadProvider : fileDownloadProvider;
+    }
+
+    public static String localizeErrorMessage(Exception exception) {
+        if (exception instanceof DownloadException) {
+            URL url = ((DownloadException) exception).getUrl();
+            if (exception.getCause() instanceof SocketTimeoutException) {
+                return i18n("install.failed.downloading.timeout", url);
+            } else if (exception.getCause() instanceof ResponseCodeException) {
+                ResponseCodeException responseCodeException = (ResponseCodeException) exception.getCause();
+                if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
+                    return i18n("download.code." + responseCodeException.getResponseCode(), url);
+                } else {
+                    return i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause());
+                }
+            } else {
+                return i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause());
+            }
+        }
+        return StringUtils.getStackTrace(exception);
     }
 }

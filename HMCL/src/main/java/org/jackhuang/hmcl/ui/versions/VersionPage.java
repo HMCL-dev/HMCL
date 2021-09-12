@@ -27,7 +27,7 @@ import javafx.scene.control.Control;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.mod.curse.CurseAddon;
+import org.jackhuang.hmcl.mod.DownloadManager;
 import org.jackhuang.hmcl.mod.curse.CurseModManager;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
@@ -199,19 +199,19 @@ public class VersionPage extends Control implements DecoratorPage, DownloadPage.
     }
 
     @Override
-    public void download(Profile profile, @Nullable String version, CurseAddon.LatestFile file) {
+    public void download(Profile profile, @Nullable String version, DownloadManager.Version file) {
         if (version == null) {
             throw new InternalError();
         }
 
-        Path dest = profile.getRepository().getRunDirectory(version).toPath().resolve("mods").resolve(file.getFileName());
+        Path dest = profile.getRepository().getRunDirectory(version).toPath().resolve("mods").resolve(file.getFile().getFilename());
 
         TaskExecutorDialogPane downloadingPane = new TaskExecutorDialogPane(it -> {
         });
 
         TaskExecutor executor = Task.composeAsync(() -> {
-            FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(file.getDownloadUrl()), dest.toFile());
-            task.setName(file.getDisplayName());
+            FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(file.getFile().getUrl()), dest.toFile());
+            task.setName(file.getName());
             return task;
         }).executor(false);
 

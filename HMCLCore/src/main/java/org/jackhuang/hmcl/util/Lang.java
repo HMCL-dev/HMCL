@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
+import java.util.stream.Stream;
 
 /**
  *
@@ -313,6 +314,10 @@ public final class Lang {
                 rethrow(ex);
             }
         };
+    }
+
+    public static <T> Stream<T> toStream(Optional<T> optional) {
+        return optional.map(Stream::of).orElseGet(Stream::empty);
     }
 
     /**

@@ -35,12 +35,12 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameVersion;
+import org.jackhuang.hmcl.mod.DownloadManager;
 import org.jackhuang.hmcl.mod.ModManager;
-import org.jackhuang.hmcl.mod.curse.CurseAddon;
-import org.jackhuang.hmcl.mod.curse.CurseModManager;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -59,7 +59,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -68,15 +67,17 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends Control implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
-    private final ListProperty<CurseAddon.LatestFile> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
+    private final ListProperty<DownloadManager.Version> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
-    private final CurseAddon addon;
+    private final DownloadManager.Mod addon;
     private final ModTranslations.Mod mod;
     private final Profile.ProfileVersion version;
     private final DownloadCallback callback;
+    private final DownloadListPage page;
 
-    public DownloadPage(CurseAddon addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
+    public DownloadPage(DownloadListPage page, DownloadManager.Mod addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
+        this.page = page;
         this.addon = addon;
         this.mod = ModTranslations.getModByCurseForgeId(addon.getSlug());
         this.version = version;
@@ -86,27 +87,33 @@ public class DownloadPage extends Control implements DecoratorPage {
                 ? version.getProfile().getRepository().getVersionJar(version.getVersion())
                 : null;
 
-        Task.runAsync(() -> {
+        setLoading(true);
+        setFailed(false);
+        Task.supplyAsync(() -> {
             if (StringUtils.isNotBlank(version.getVersion())) {
                 Optional<String> gameVersion = GameVersion.minecraftVersion(versionJar);
                 if (gameVersion.isPresent()) {
-                    List<CurseAddon.LatestFile> files = CurseModManager.getFiles(addon);
-                    items.setAll(files.stream()
-                            .filter(file -> file.getGameVersion().contains(gameVersion.get()))
-                            .sorted(Comparator.comparing(CurseAddon.LatestFile::getParsedFileDate).reversed())
-                            .collect(Collectors.toList()));
-                    return;
+                    return addon.getData().loadVersions()
+                            .filter(file -> file.getGameVersions().contains(gameVersion.get()));
                 }
             }
-            List<CurseAddon.LatestFile> files = CurseModManager.getFiles(addon);
-            files.sort(Comparator.comparing(CurseAddon.LatestFile::getParsedFileDate).reversed());
-            items.setAll(files);
+            return addon.getData().loadVersions();
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (exception == null) {
+                items.setAll(result
+                        .sorted(Comparator.comparing(DownloadManager.Version::getDatePublished).reversed())
+                        .collect(Collectors.toList()));
+                setFailed(false);
+            } else {
+                setFailed(true);
+            }
+            setLoading(false);
         }).start();
 
-        this.state.set(State.fromTitle(addon.getName()));
+        this.state.set(State.fromTitle(addon.getTitle()));
     }
 
-    public CurseAddon getAddon() {
+    public DownloadManager.Mod getAddon() {
         return addon;
     }
 
@@ -138,7 +145,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.failed.set(failed);
     }
 
-    public void download(CurseAddon.LatestFile file) {
+    public void download(DownloadManager.Version file) {
         if (this.callback == null) {
             saveAs(file);
         } else {
@@ -146,20 +153,20 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
-    public void saveAs(CurseAddon.LatestFile file) {
-        String extension = StringUtils.substringAfterLast(file.getFileName(), '.');
+    public void saveAs(DownloadManager.Version file) {
+        String extension = StringUtils.substringAfterLast(file.getFile().getFilename(), '.');
 
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("button.save_as"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("file"), "*." + extension));
-        fileChooser.setInitialFileName(file.getFileName());
+        fileChooser.setInitialFileName(file.getFile().getFilename());
         File dest = fileChooser.showSaveDialog(Controllers.getStage());
         if (dest == null) {
             return;
         }
 
         Controllers.taskDialog(
-                new FileDownloadTask(NetworkUtils.toURL(file.getDownloadUrl()), dest).executor(true),
+                new FileDownloadTask(NetworkUtils.toURL(file.getFile().getUrl()), dest).executor(true),
                 i18n("message.downloading")
         );
     }
@@ -188,20 +195,18 @@ public class DownloadPage extends Control implements DecoratorPage {
             BorderPane.setMargin(descriptionPane, new Insets(11, 11, 0, 11));
 
             ImageView imageView = new ImageView();
-            for (CurseAddon.Attachment attachment : getSkinnable().addon.getAttachments()) {
-                if (attachment.isDefault()) {
-                    imageView.setImage(new Image(attachment.getThumbnailUrl(), 40, 40, true, true, true));
-                }
+            if (StringUtils.isNotBlank(getSkinnable().addon.getIconUrl())) {
+                imageView.setImage(new Image(getSkinnable().addon.getIconUrl(), 40, 40, true, true, true));
             }
             descriptionPane.getChildren().add(FXUtils.limitingSize(imageView, 40, 40));
 
             TwoLineListItem content = new TwoLineListItem();
             HBox.setHgrow(content, Priority.ALWAYS);
             ModTranslations.Mod mod = ModTranslations.getModByCurseForgeId(getSkinnable().addon.getSlug());
-            content.setTitle(mod != null ? mod.getDisplayName() : getSkinnable().addon.getName());
-            content.setSubtitle(getSkinnable().addon.getSummary());
+            content.setTitle(mod != null ? mod.getDisplayName() : getSkinnable().addon.getTitle());
+            content.setSubtitle(getSkinnable().addon.getDescription());
             content.getTags().setAll(getSkinnable().addon.getCategories().stream()
-                    .map(category -> i18n("curse.category." + category.getCategoryId()))
+                    .map(category -> getSkinnable().page.getLocalizedCategory(category))
                     .collect(Collectors.toList()));
             descriptionPane.getChildren().add(content);
 
@@ -217,8 +222,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                 }
             }
 
-            JFXHyperlink openUrlButton = new JFXHyperlink(i18n("mods.curseforge"));
-            openUrlButton.setOnAction(e -> FXUtils.openLink(getSkinnable().addon.getWebsiteUrl()));
+            JFXHyperlink openUrlButton = new JFXHyperlink(control.page.getLocalizedOfficialPage());
+            openUrlButton.setOnAction(e -> FXUtils.openLink(getSkinnable().addon.getPageUrl()));
             descriptionPane.getChildren().add(openUrlButton);
 
 
@@ -234,10 +239,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
                 }, getSkinnable().failedProperty()));
 
-                JFXListView<CurseAddon.LatestFile> listView = new JFXListView<>();
+                JFXListView<DownloadManager.Version> listView = new JFXListView<>();
                 spinnerPane.setContent(listView);
                 Bindings.bindContent(listView.getItems(), getSkinnable().items);
-                listView.setCellFactory(x -> new FloatListCell<CurseAddon.LatestFile>(listView) {
+                listView.setCellFactory(x -> new FloatListCell<DownloadManager.Version>(listView) {
                     TwoLineListItem content = new TwoLineListItem();
                     StackPane graphicPane = new StackPane();
                     JFXButton saveAsButton = new JFXButton();
@@ -255,23 +260,23 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     @Override
-                    protected void updateControl(CurseAddon.LatestFile dataItem, boolean empty) {
+                    protected void updateControl(DownloadManager.Version dataItem, boolean empty) {
                         if (empty) return;
-                        content.setTitle(dataItem.getDisplayName());
-                        content.setSubtitle(FORMATTER.format(dataItem.getParsedFileDate()));
-                        content.getTags().setAll(dataItem.getGameVersion());
+                        content.setTitle(dataItem.getName());
+                        content.setSubtitle(FORMATTER.format(dataItem.getDatePublished()));
+                        content.getTags().setAll(dataItem.getGameVersions());
                         saveAsButton.setOnMouseClicked(e -> getSkinnable().saveAs(dataItem));
 
-                        switch (dataItem.getReleaseType()) {
-                            case 1: // release
+                        switch (dataItem.getVersionType()) {
+                            case Release:
                                 graphicPane.getChildren().setAll(SVG.releaseCircleOutline(Theme.blackFillBinding(), 24, 24));
                                 content.getTags().add(i18n("version.game.release"));
                                 break;
-                            case 2: // beta
+                            case Beta:
                                 graphicPane.getChildren().setAll(SVG.betaCircleOutline(Theme.blackFillBinding(), 24, 24));
                                 content.getTags().add(i18n("version.game.snapshot"));
                                 break;
-                            case 3: // alpha
+                            case Alpha:
                                 graphicPane.getChildren().setAll(SVG.alphaCircleOutline(Theme.blackFillBinding(), 24, 24));
                                 content.getTags().add(i18n("version.game.snapshot"));
                                 break;
@@ -282,7 +287,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 listView.setOnMouseClicked(e -> {
                     if (listView.getSelectionModel().getSelectedIndex() < 0)
                         return;
-                    CurseAddon.LatestFile selectedItem = listView.getSelectionModel().getSelectedItem();
+                    DownloadManager.Version selectedItem = listView.getSelectionModel().getSelectedItem();
                     getSkinnable().download(selectedItem);
                 });
             }
@@ -293,19 +298,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault());
 
-    public interface Project {
-
-    }
-
-    public interface ProjectVersion {
-
-    }
-
-    public interface DownloadSource {
-
-    }
-
     public interface DownloadCallback {
-        void download(Profile profile, @Nullable String version, CurseAddon.LatestFile file);
+        void download(Profile profile, @Nullable String version, DownloadManager.Version file);
     }
 }

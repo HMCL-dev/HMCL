@@ -23,7 +23,7 @@ import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
-import org.jackhuang.hmcl.mod.curse.CurseAddon;
+import org.jackhuang.hmcl.mod.DownloadManager;
 import org.jackhuang.hmcl.mod.curse.CurseModManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -143,19 +144,25 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
         setCenter(transitionPane);
     }
 
-    private void download(Profile profile, @Nullable String version, CurseAddon.LatestFile file, String subdirectoryName) {
+    private void download(Profile profile, @Nullable String version, DownloadManager.Version file, String subdirectoryName) {
         if (version == null) version = profile.getSelectedVersion();
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version).toPath() : profile.getRepository().getBaseDirectory().toPath();
-        Path dest = runDirectory.resolve(subdirectoryName).resolve(file.getFileName());
+        Path dest = runDirectory.resolve(subdirectoryName).resolve(file.getFile().getFilename());
 
         TaskExecutorDialogPane downloadingPane = new TaskExecutorDialogPane(it -> {
         });
 
         TaskExecutor executor = Task.composeAsync(() -> {
-            FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(file.getDownloadUrl()), dest.toFile());
-            task.setName(file.getDisplayName());
+            FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(file.getFile().getUrl()), dest.toFile());
+            task.setName(file.getName());
             return task;
+        }).whenComplete(exception -> {
+            if (exception != null) {
+                Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+            } else {
+                Controllers.showToast(i18n("install.success"));
+            }
         }).executor(false);
 
         downloadingPane.setExecutor(executor, true);
