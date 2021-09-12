@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
@@ -27,7 +28,6 @@ import java.util.Date;
 import java.util.logging.*;
 
 /**
- *
  * @author huangyuhui
  */
 public final class Logging {
@@ -63,6 +63,11 @@ public final class Logging {
                 flush();
             }
         };
+        try {
+            streamHandler.setEncoding("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
         streamHandler.setLevel(Level.ALL);
         LOG.addHandler(streamHandler);
     }
