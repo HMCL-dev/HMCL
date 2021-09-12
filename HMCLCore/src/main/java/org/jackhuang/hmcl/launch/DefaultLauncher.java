@@ -31,13 +31,10 @@ import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Supplier;
@@ -428,31 +425,78 @@ public class DefaultLauncher extends Launcher {
             decompressNatives(nativeFolder);
         }
 
-        if (isWindows && !FileUtils.getExtension(scriptFile).equals("bat"))
-            throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' in Windows");
-        else if (!isWindows && !FileUtils.getExtension(scriptFile).equals("sh"))
-            throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh' in macOS/Linux");
+        String scriptExtension = FileUtils.getExtension(scriptFile);
+        boolean usePowerShell = "ps1".equals(scriptExtension);
+
+        if (isWindows && !usePowerShell && !"bat".equals(scriptExtension))
+            throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' or 'ps1' in Windows");
+        else if (!isWindows && !usePowerShell && !"sh".equals(scriptExtension))
+            throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh' or 'ps1' in macOS/Linux");
 
         if (!FileUtils.makeFile(scriptFile))
             throw new IOException("Script file: " + scriptFile + " cannot be created.");
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(scriptFile)))) {
-            if (isWindows) {
-                writer.write("@echo off");
-                writer.newLine();
-                writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
-                writer.newLine();
-                writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
-                writer.newLine();
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX || OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                writer.write("#!/usr/bin/env bash");
-                writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
-                writer.newLine();
+
+
+        BufferedWriter writer;
+        OutputStream outputStream = new FileOutputStream(scriptFile);
+        if (usePowerShell) {
+            try {
+                // Write UTF-8 BOM
+                outputStream.write(0xEF);
+                outputStream.write(0xBB);
+                outputStream.write(0xBF);
+            } catch (IOException e) {
+                outputStream.close();
+                throw e;
             }
-            if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-                writer.write(options.getPreLaunchCommand());
+
+            writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+        } else if (isWindows) {
+            writer = new BufferedWriter(new OutputStreamWriter(outputStream));
+        } else {
+            writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+        }
+
+        try {
+            if (usePowerShell) {
+                writer.write("$Env:APPDATA = '");
+                writer.write(options.getGameDir().getAbsoluteFile().getParent().replace("'", "''"));
+                writer.write('\'');
                 writer.newLine();
+                writer.write("Set-Location -Path '");
+                writer.write(repository.getRunDirectory(version.getId()).getAbsolutePath().replace("'", "''"));
+                writer.write('\'');
+                writer.newLine();
+
+                writer.write('&');
+                for (String rawCommand : generateCommandLine(nativeFolder).asList()) {
+                    writer.write(' ');
+                    writer.write('\'');
+                    writer.write(rawCommand.replace("'", "''"));
+                    writer.write('\'');
+                }
+            } else {
+                if (isWindows) {
+                    writer.write("@echo off");
+                    writer.newLine();
+                    writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
+                    writer.newLine();
+                    writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
+                    writer.newLine();
+                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX || OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+                    writer.write("#!/usr/bin/env bash");
+                    writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
+                    writer.newLine();
+                }
+                if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
+                    writer.write(options.getPreLaunchCommand());
+                    writer.newLine();
+                }
+                writer.write(generateCommandLine(nativeFolder).toString());
             }
-            writer.write(generateCommandLine(nativeFolder).toString());
+
+        } finally {
+            writer.close();
         }
         if (!scriptFile.setExecutable(true))
             throw new PermissionException();
