@@ -437,6 +437,7 @@ public class DefaultLauncher extends Launcher {
                 writer.newLine();
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX || OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
                 writer.write("#!/usr/bin/env bash");
+                writer.newLine();
                 writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
                 writer.newLine();
             }
