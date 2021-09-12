@@ -24,8 +24,7 @@ public final class Hex {
     private static final char[] DIGITS_LOWER = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
     public static byte[] decodeHex(String str) throws IOException {
-        char[] data = str.toCharArray();
-        int len = data.length;
+        int len = str.length();
 
         if ((len & 0x1) != 0)
             throw new IOException("Odd number of characters.");
@@ -34,9 +33,9 @@ public final class Hex {
 
         int i = 0;
         for (int j = 0; j < len; i++) {
-            int f = toDigit(data[j], j) << 4;
+            int f = toDigit(str.charAt(j), j) << 4;
             j++;
-            f |= toDigit(data[j], j);
+            f |= toDigit(str.charAt(j), j);
             j++;
             out[i] = (byte) (f & 0xFF);
         }

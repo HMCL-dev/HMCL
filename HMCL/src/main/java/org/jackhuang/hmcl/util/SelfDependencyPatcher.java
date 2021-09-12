@@ -41,7 +41,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import static java.lang.Class.forName;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
 import static org.jackhuang.hmcl.Metadata.HMCL_DIRECTORY;
@@ -60,6 +59,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
 import java.util.*;
 
 import javax.swing.*;
@@ -81,6 +81,20 @@ public final class SelfDependencyPatcher {
 
         private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies");
         public static final String CURRENT_ARCH_CLASSIFIER = currentArchClassifier();
+
+        private static final String DEPENDENCIES_LIST_FILE = "/assets/openjfx-dependencies.json";
+
+        private static List<DependencyDescriptor> readDependencies() {
+            String content;
+            try (InputStream in = SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE)) {
+                content = IOUtils.readFullyAsString(in, UTF_8);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            return new Gson().fromJson(content, TypeToken.getParameterized(List.class, DependencyDescriptor.class).getType());
+        }
+
+        static final List<DependencyDescriptor> JFX_DEPENDENCIES = readDependencies();
 
         private static String currentArchClassifier() {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
@@ -185,20 +199,6 @@ public final class SelfDependencyPatcher {
         }
     }
 
-    private static final String DEPENDENCIES_LIST_FILE = "/assets/openjfx-dependencies.json";
-
-    private static List<DependencyDescriptor> readDependencies() {
-        String content;
-        try (InputStream in = SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE)) {
-            content = IOUtils.readFullyAsString(in, UTF_8);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        return new Gson().fromJson(content, TypeToken.getParameterized(List.class, DependencyDescriptor.class).getType());
-    }
-
-    private static final List<DependencyDescriptor> JFX_DEPENDENCIES = readDependencies();
-
     /**
      * Patch in any missing dependencies, if any.
      */
@@ -206,7 +206,7 @@ public final class SelfDependencyPatcher {
         // Do nothing if JavaFX is detected
         try {
             try {
-                forName("javafx.application.Application");
+                Class.forName("javafx.application.Application");
                 return;
             } catch (Exception ignored) {
             }
@@ -299,12 +299,12 @@ public final class SelfDependencyPatcher {
     private static void loadFromCache() throws IOException, ReflectiveOperationException {
         LOG.info(" - Loading dependencies...");
 
-        Set<String> modules = JFX_DEPENDENCIES.stream()
+        Set<String> modules = DependencyDescriptor.JFX_DEPENDENCIES.stream()
                 .filter(DependencyDescriptor::isSupported)
                 .map(it -> it.module)
                 .collect(toSet());
 
-        Path[] jars = JFX_DEPENDENCIES.stream()
+        Path[] jars = DependencyDescriptor.JFX_DEPENDENCIES.stream()
                 .filter(DependencyDescriptor::isSupported)
                 .map(DependencyDescriptor::localPath)
                 .toArray(Path[]::new);
@@ -321,7 +321,9 @@ public final class SelfDependencyPatcher {
         ProgressFrame dialog = new ProgressFrame(i18n("download.javafx"));
         dialog.setVisible(true);
 
+        MessageDigest digest = DigestUtils.getDigest("SHA-1");
         int progress = 0;
+        Files.createDirectories(DependencyDescriptor.DEPENDENCIES_DIR_PATH);
         for (DependencyDescriptor dependency : dependencies) {
             int currentProgress = ++progress;
             final String url = repository.resolveDependencyURL(dependency);
@@ -331,11 +333,11 @@ public final class SelfDependencyPatcher {
             });
 
             LOG.info("Downloading " + url);
-            Files.createDirectories(dependency.localPath().getParent());
             try (InputStream is = new URL(url).openStream()) {
                 Files.copy(is, dependency.localPath(), StandardCopyOption.REPLACE_EXISTING);
             }
-            verifyChecksum(dependency);
+            digest.reset();
+            verifyChecksum(digest, dependency);
         }
 
         dialog.dispose();
@@ -344,7 +346,8 @@ public final class SelfDependencyPatcher {
     private static List<DependencyDescriptor> checkMissingDependencies() {
         List<DependencyDescriptor> missing = new ArrayList<>();
 
-        for (DependencyDescriptor dependency : JFX_DEPENDENCIES) {
+        MessageDigest digest = DigestUtils.getDigest("SHA-1");
+        for (DependencyDescriptor dependency : DependencyDescriptor.JFX_DEPENDENCIES) {
             if (!dependency.isSupported()) {
                 continue;
             }
@@ -354,7 +357,8 @@ public final class SelfDependencyPatcher {
             }
 
             try {
-                verifyChecksum(dependency);
+                digest.reset();
+                verifyChecksum(digest, dependency);
             } catch (ChecksumMismatchException e) {
                 LOG.warning("Corrupted dependency " + dependency.filename() + ": " + e.getMessage());
                 missing.add(dependency);
@@ -366,9 +370,9 @@ public final class SelfDependencyPatcher {
         return missing;
     }
 
-    private static void verifyChecksum(DependencyDescriptor dependency) throws IOException, ChecksumMismatchException {
+    private static void verifyChecksum(MessageDigest digest, DependencyDescriptor dependency) throws IOException, ChecksumMismatchException {
         String expectedHash = dependency.sha1();
-        String actualHash = Hex.encodeHex(DigestUtils.digest("SHA-1", dependency.localPath()));
+        String actualHash = Hex.encodeHex(DigestUtils.digest(digest, dependency.localPath()));
         if (!expectedHash.equalsIgnoreCase(actualHash)) {
             throw new ChecksumMismatchException("SHA-1", expectedHash, actualHash);
         }

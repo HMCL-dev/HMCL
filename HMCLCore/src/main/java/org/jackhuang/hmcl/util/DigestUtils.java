@@ -63,6 +63,12 @@ public final class DigestUtils {
         return digest(getDigest(algorithm), data);
     }
 
+    public static byte[] digest(MessageDigest digest, Path path) throws IOException {
+        try (InputStream is = Files.newInputStream(path)) {
+            return digest(digest, is);
+        }
+    }
+
     public static byte[] digest(MessageDigest digest, InputStream data) throws IOException {
         return updateDigest(digest, data).digest();
     }
