@@ -30,6 +30,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
@@ -53,6 +54,7 @@ import org.jackhuang.hmcl.ui.construct.FloatListCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.AggregatedObservableList;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
@@ -79,6 +81,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private final DownloadPage.DownloadCallback callback;
     private boolean searchInitialized = false;
     protected final BooleanProperty supportChinese = new SimpleBooleanProperty();
+    private final ObservableList<Node> actions = FXCollections.observableArrayList();
     protected final ListProperty<String> downloadSources = new SimpleListProperty<>(this, "downloadSources", FXCollections.observableArrayList());
     protected final StringProperty downloadSource = new SimpleStringProperty();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
@@ -102,6 +105,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         this.section = section;
         this.callback = callback;
         this.versionSelection = versionSelection;
+    }
+
+    public ObservableList<Node> getActions() {
+        return actions;
     }
 
     @Override
@@ -213,6 +220,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
+        private final AggregatedObservableList<Node> actions = new AggregatedObservableList<>();
 
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
@@ -315,7 +323,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 searchButton.setText(i18n("search"));
                 searchButton.getStyleClass().add("jfx-button-raised");
                 searchButton.setButtonType(JFXButton.ButtonType.RAISED);
-                HBox searchBox = new HBox(searchButton);
+                ObservableList<Node> last = FXCollections.observableArrayList(searchButton);
+                HBox searchBox = new HBox(8);
+                actions.appendList(control.actions);
+                actions.appendList(last);
+                Bindings.bindContent(searchBox.getChildren(), actions.getAggregatedList());
                 GridPane.setColumnSpan(searchBox, 4);
                 searchBox.setAlignment(Pos.CENTER_RIGHT);
                 searchPane.addRow(rowIndex++, searchBox);

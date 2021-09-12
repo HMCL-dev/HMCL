@@ -38,7 +38,7 @@ public final class CurseModManager {
                 pair("gameId", "432"),
                 pair("gameVersion", gameVersion),
                 pair("index", Integer.toString(pageOffset)),
-                pair("pageSize", "25"),
+                pair("pageSize", "50"),
                 pair("searchFilter", searchFilter),
                 pair("sectionId", Integer.toString(section)),
                 pair("sort", Integer.toString(sort))

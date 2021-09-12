@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.download;
 
+import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.Node;
@@ -79,7 +80,17 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
     public DownloadPage() {
         newGameTab.setNodeSupplier(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
                 "game", versionPageNavigator::onGameSelected));
-        modpackTab.setNodeSupplier(() -> new DownloadListPage(CurseModManager.SECTION_MODPACK, Versions::downloadModpackImpl));
+        modpackTab.setNodeSupplier(() -> {
+            DownloadListPage page = new DownloadListPage(CurseModManager.SECTION_MODPACK, Versions::downloadModpackImpl);
+
+            JFXButton installLocalModpackButton = new JFXButton(i18n("install.modpack"));
+            installLocalModpackButton.setButtonType(JFXButton.ButtonType.RAISED);
+            installLocalModpackButton.getStyleClass().add("jfx-button-raised");
+            installLocalModpackButton.setOnAction(e -> Versions.importModpack());
+
+            page.getActions().add(installLocalModpackButton);
+            return page;
+        });
         modTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_MOD, (profile, version, file) -> download(profile, version, file, "mods"), true));
         resourcePackTab.setNodeSupplier(() -> new DownloadListPage(CurseModManager.SECTION_RESOURCE_PACK, (profile, version, file) -> download(profile, version, file, "resourcepacks")));
 //        customizationTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_CUSTOMIZATION, this::download));

@@ -102,7 +102,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            listView.setCellFactory(x -> new ModInfoListCell());
+            listView.setCellFactory(x -> new ModInfoListCell(listView));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
 
@@ -263,7 +263,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton revealButton = new JFXButton();
         BooleanProperty booleanProperty;
 
-        ModInfoListCell() {
+        ModInfoListCell(JFXListView<ModInfoObject> listView) {
+            super(listView);
+
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);

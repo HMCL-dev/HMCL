@@ -17,8 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import com.jfoenix.controls.JFXListView;
 import javafx.css.PseudoClass;
 import javafx.scene.control.ListCell;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 
@@ -28,13 +30,21 @@ public abstract class MDListCell<T> extends ListCell<T> {
     private final StackPane container = new StackPane();
     private final StackPane root = new StackPane();
 
-    public MDListCell() {
+    public MDListCell(JFXListView<T> listView) {
         setText(null);
         setGraphic(null);
 
         root.getStyleClass().add("md-list-cell");
         RipplerContainer ripplerContainer = new RipplerContainer(container);
         root.getChildren().setAll(ripplerContainer);
+
+        Region clippedContainer = (Region) listView.lookup(".clipped-container");
+        setPrefWidth(0);
+        if (clippedContainer != null) {
+            maxWidthProperty().bind(clippedContainer.widthProperty());
+            prefWidthProperty().bind(clippedContainer.widthProperty());
+            minWidthProperty().bind(clippedContainer.widthProperty());
+        }
     }
 
     @Override

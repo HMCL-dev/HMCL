@@ -41,7 +41,7 @@ public final class Modrinth {
         Map<String, String> query = mapOf(
                 pair("query", searchFilter),
                 pair("offset", Integer.toString(pageOffset)),
-                pair("limit", "25")
+                pair("limit", "50")
         );
         if (StringUtils.isNotBlank(gameVersion)) {
             query.put("version", "versions=" + gameVersion);

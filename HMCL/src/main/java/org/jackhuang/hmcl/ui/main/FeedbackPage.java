@@ -101,7 +101,7 @@ public class FeedbackPage extends VBox {
             JFXListView<FeedbackResponse> listView = new JFXListView<>();
             spinnerPane.setContent(listView);
             Bindings.bindContent(listView.getItems(), feedbacks);
-            listView.setCellFactory(x -> new MDListCell<FeedbackResponse>() {
+            listView.setCellFactory(x -> new MDListCell<FeedbackResponse>(listView) {
                 private final TwoLineListItem content = new TwoLineListItem();
                 private final JFXButton likeButton = new JFXButton();
                 private final JFXButton unlikeButton = new JFXButton();
