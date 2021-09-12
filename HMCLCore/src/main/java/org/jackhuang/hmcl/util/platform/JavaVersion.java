@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.BufferedReader;
@@ -118,7 +119,7 @@ public final class JavaVersion {
         String version = null;
 
         Process process = new ProcessBuilder(executable.toString(), "-version").start();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream(), IOUtils.NATIVE_CHARSET))) {
             for (String line; (line = reader.readLine()) != null;) {
                 Matcher m = REGEX.matcher(line);
                 if (m.find())
@@ -325,7 +326,7 @@ public final class JavaVersion {
         List<String> res = new ArrayList<>();
 
         Process process = Runtime.getRuntime().exec(new String[] { "cmd", "/c", "reg", "query", location });
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), IOUtils.NATIVE_CHARSET))) {
             for (String line; (line = reader.readLine()) != null;) {
                 if (line.startsWith(location) && !line.equals(location)) {
                     res.add(line);
@@ -339,7 +340,7 @@ public final class JavaVersion {
         boolean last = false;
         Process process = Runtime.getRuntime().exec(new String[] { "cmd", "/c", "reg", "query", location, "/v", name });
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), IOUtils.NATIVE_CHARSET))) {
             for (String line; (line = reader.readLine()) != null;) {
                 if (StringUtils.isNotBlank(line)) {
                     if (last && line.trim().startsWith(name)) {

@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -113,7 +114,8 @@ public final class LiteModMetadata {
             ZipEntry entry = zipFile.getEntry("litemod.json");
             if (entry == null)
                 throw new IOException("File " + modFile + "is not a LiteLoader mod.");
-            LiteModMetadata metadata = JsonUtils.GSON.fromJson(IOUtils.readFullyAsString(zipFile.getInputStream(entry)), LiteModMetadata.class);
+            LiteModMetadata metadata =
+                    JsonUtils.GSON.fromJson(IOUtils.readFullyAsString(zipFile.getInputStream(entry), StandardCharsets.UTF_8), LiteModMetadata.class);
             if (metadata == null)
                 throw new IOException("Mod " + modFile + " `litemod.json` is malformed.");
             return new ModInfo(modManager, modFile, null, metadata.getName(), new ModInfo.Description(metadata.getDescription()), metadata.getAuthor(),

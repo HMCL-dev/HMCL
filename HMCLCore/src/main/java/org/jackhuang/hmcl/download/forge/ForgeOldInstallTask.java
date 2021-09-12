@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
@@ -68,7 +69,7 @@ public class ForgeOldInstallTask extends Task<Version> {
             InputStream stream = zipFile.getInputStream(zipFile.getEntry("install_profile.json"));
             if (stream == null)
                 throw new ArtifactMalformedException("Malformed forge installer file, install_profile.json does not exist.");
-            String json = IOUtils.readFullyAsString(stream);
+            String json = IOUtils.readFullyAsString(stream, StandardCharsets.UTF_8);
             ForgeInstallProfile installProfile = JsonUtils.fromNonNullJson(json, ForgeInstallProfile.class);
 
             // unpack the universal jar in the installer file.

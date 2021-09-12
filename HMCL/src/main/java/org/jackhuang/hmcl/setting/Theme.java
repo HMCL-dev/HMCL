@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.logging.Level;
 
@@ -85,7 +86,7 @@ public class Theme {
         String css;
         try {
             File temp = File.createTempFile("hmcl", ".css");
-            FileUtils.writeText(temp, IOUtils.readFullyAsString(ResourceNotFoundError.getResourceAsStream("/assets/css/custom.css"))
+            FileUtils.writeText(temp, IOUtils.readFullyAsString(ResourceNotFoundError.getResourceAsStream("/assets/css/custom.css"), StandardCharsets.UTF_8)
                     .replace("%base-color%", color)
                     .replace("%base-red%", Integer.toString((int)Math.ceil(paint.getRed() * 256)))
                     .replace("%base-green%", Integer.toString((int)Math.ceil(paint.getGreen() * 256)))
