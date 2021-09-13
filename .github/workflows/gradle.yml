@@ -24,7 +24,3 @@ jobs:
       with:
         name: HMCL
         path: HMCL/build/libs
-    - name: Check style main
-      run: ./gradlew checkstyleMain
-    - name: Check style test
-      run: ./gradlew checkstyleTest
