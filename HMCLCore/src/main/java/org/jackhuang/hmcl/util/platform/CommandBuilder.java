@@ -211,6 +211,6 @@ public final class CommandBuilder {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) { // TODO: NATIVE_ENCODING
             res = reader.readLine();
         }
-        return res != null && "restricted".equals(res.toLowerCase(Locale.ROOT));
+        return res != null && "restricted".equals(res.toLowerCase(Locale.ROOT).trim());
     }
 }
