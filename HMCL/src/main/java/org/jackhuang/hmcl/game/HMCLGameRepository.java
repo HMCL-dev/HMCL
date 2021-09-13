@@ -296,7 +296,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setGameArguments(StringUtils.tokenize(vs.getMinecraftArgs()))
                 .setJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
                 .setMaxMemory((int)(getAllocatedMemory(
-                        vs.getMaxMemory(),
+                        vs.getMaxMemory() * 1024L * 1024L,
                         OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID).getAvailable(),
                         vs.isAutoMemory()
                 ) / 1024 / 1024))

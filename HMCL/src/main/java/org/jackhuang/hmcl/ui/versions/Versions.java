@@ -18,16 +18,14 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
-
 import javafx.application.Platform;
 import javafx.stage.FileChooser;
-
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.mod.curse.CurseAddon;
+import org.jackhuang.hmcl.mod.DownloadManager;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -87,15 +85,15 @@ public final class Versions {
         }
     }
 
-    public static void downloadModpackImpl(Profile profile, String version, CurseAddon.LatestFile file) {
+    public static void downloadModpackImpl(Profile profile, String version, DownloadManager.Version file) {
         Path modpack;
         URL downloadURL;
         try {
             modpack = Files.createTempFile("modpack", ".zip");
-            downloadURL = new URL(file.getDownloadUrl());
+            downloadURL = new URL(file.getFile().getUrl());
         } catch (IOException e) {
             Controllers.dialog(
-                    i18n("install.failed.downloading.detail", file.getDownloadUrl()) + "\n" + StringUtils.getStackTrace(e),
+                    i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
                     i18n("download.failed"), MessageDialogPane.MessageType.ERROR);
             return;
         }
@@ -106,7 +104,7 @@ public final class Versions {
                                 Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack.toFile()));
                             } else {
                                 Controllers.dialog(
-                                        i18n("install.failed.downloading.detail", file.getDownloadUrl()) + "\n" + StringUtils.getStackTrace(e),
+                                        i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
                                         i18n("download.failed"), MessageDialogPane.MessageType.ERROR);
                             }
                         }).executor(true),

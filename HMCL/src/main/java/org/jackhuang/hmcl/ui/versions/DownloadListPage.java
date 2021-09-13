@@ -25,10 +25,12 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
@@ -37,27 +39,35 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.game.GameVersion;
+import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.mod.DownloadManager;
 import org.jackhuang.hmcl.mod.curse.CurseAddon;
 import org.jackhuang.hmcl.mod.curse.CurseModManager;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.FloatListCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.AggregatedObservableList;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 
 public class DownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
@@ -65,10 +75,17 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final boolean versionSelection;
     private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
-    private final ListProperty<CurseAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
+    private final ListProperty<DownloadManager.Mod> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
+    private final ObservableList<String> versions = FXCollections.observableArrayList();
+    private final StringProperty selectedVersion = new SimpleStringProperty();
     private final DownloadPage.DownloadCallback callback;
     private boolean searchInitialized = false;
     protected final BooleanProperty supportChinese = new SimpleBooleanProperty();
+    private final ObservableList<Node> actions = FXCollections.observableArrayList();
+    protected final ListProperty<String> downloadSources = new SimpleListProperty<>(this, "downloadSources", FXCollections.observableArrayList());
+    protected final StringProperty downloadSource = new SimpleStringProperty();
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
+    private TaskExecutor executor;
 
     /**
      * @see org.jackhuang.hmcl.mod.curse.CurseModManager#SECTION_MODPACK
@@ -90,6 +107,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         this.versionSelection = versionSelection;
     }
 
+    public ObservableList<Node> getActions() {
+        return actions;
+    }
+
     @Override
     public void loadVersion(Profile profile, String version) {
         this.version.set(new Profile.ProfileVersion(profile, version));
@@ -100,6 +121,16 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         if (!searchInitialized) {
             searchInitialized = true;
             search("", 0, 0, "", 0);
+        }
+
+        if (versionSelection) {
+            versions.setAll(profile.getRepository().getVersions().stream()
+                    .filter(v -> !v.isHidden())
+                    .sorted(Comparator.comparing((Version v) -> v.getReleaseTime() == null ? new Date(0L) : v.getReleaseTime())
+                            .thenComparing(v -> VersionNumber.asVersion(v.getId())))
+                    .map(Version::getId)
+                    .collect(Collectors.toList()));
+            selectedVersion.set(profile.getSelectedVersion());
         }
     }
 
@@ -133,7 +164,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         File versionJar = StringUtils.isNotBlank(version.get().getVersion())
                 ? version.get().getProfile().getRepository().getVersionJar(version.get().getVersion())
                 : null;
-        Task.supplyAsync(() -> {
+        if (executor != null && !executor.isCancelled()) {
+            executor.cancel();
+        }
+
+        executor = Task.supplyAsync(() -> {
             String gameVersion;
             if (StringUtils.isBlank(version.get().getVersion())) {
                 gameVersion = userGameVersion;
@@ -146,16 +181,32 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             setLoading(false);
             if (exception == null) {
-                items.setAll(result);
+                items.setAll(result.collect(Collectors.toList()));
                 failed.set(false);
             } else {
                 failed.set(true);
             }
-        }).start();
+        }).executor(true);
     }
 
-    protected List<CurseAddon> searchImpl(String gameVersion, int category, int section, int pageOffset, String searchFilter, int sort) throws Exception {
-        return CurseModManager.searchPaginated(gameVersion, category, section, pageOffset, searchFilter, sort);
+    protected Stream<DownloadManager.Mod> searchImpl(String gameVersion, int category, int section, int pageOffset, String searchFilter, int sort) throws Exception {
+        return CurseModManager.searchPaginated(gameVersion, category, section, pageOffset, searchFilter, sort).stream().map(CurseAddon::toMod);
+    }
+
+    protected String getLocalizedCategory(String category) {
+        return i18n("curse.category." + category);
+    }
+
+    protected String getLocalizedOfficialPage() {
+        return i18n("mods.curseforge");
+    }
+
+    protected Profile.ProfileVersion getProfileVersion() {
+        if (versionSelection) {
+            return new Profile.ProfileVersion(version.get().getProfile(), selectedVersion.get());
+        } else {
+            return version.get();
+        }
     }
 
     @Override
@@ -169,6 +220,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
+        private final AggregatedObservableList<Node> actions = new AggregatedObservableList<>();
 
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
@@ -194,18 +246,28 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             {
                 int rowIndex = 0;
 
-                if (control.versionSelection) {
+                if (control.versionSelection && control.downloadSources.getSize() > 1) {
                     JFXComboBox<String> versionsComboBox = new JFXComboBox<>();
-                    GridPane.setColumnSpan(versionsComboBox, 3);
                     versionsComboBox.setMaxWidth(Double.MAX_VALUE);
+                    Bindings.bindContent(versionsComboBox.getItems(), control.versions);
+                    selectedItemPropertyFor(versionsComboBox).bindBidirectional(control.selectedVersion);
 
-                    searchPane.addRow(rowIndex++, new Label(i18n("version")), versionsComboBox);
+                    JFXComboBox<String> downloadSourceComboBox = new JFXComboBox<>();
+                    downloadSourceComboBox.setMaxWidth(Double.MAX_VALUE);
+                    downloadSourceComboBox.getItems().setAll(control.downloadSources.get());
+                    downloadSourceComboBox.setConverter(stringConverter(I18n::i18n));
+                    selectedItemPropertyFor(downloadSourceComboBox).bindBidirectional(control.downloadSource);
+
+                    searchPane.addRow(rowIndex++, new Label(i18n("version")), versionsComboBox, new Label(i18n("settings.launcher.download_source")), downloadSourceComboBox);
                 }
 
                 JFXTextField nameField = new JFXTextField();
                 nameField.setPromptText(getSkinnable().supportChinese.get() ? i18n("search.hint.chinese") : i18n("search.hint.english"));
 
-                JFXTextField gameVersionField = new JFXTextField();
+                JFXComboBox<String> gameVersionField = new JFXComboBox<>();
+                gameVersionField.setMaxWidth(Double.MAX_VALUE);
+                gameVersionField.setEditable(true);
+                gameVersionField.getItems().setAll(DownloadManager.DEFAULT_GAME_VERSIONS);
                 Label lblGameVersion = new Label(i18n("world.game_version"));
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.name")), nameField, lblGameVersion, gameVersionField);
 
@@ -261,13 +323,17 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 searchButton.setText(i18n("search"));
                 searchButton.getStyleClass().add("jfx-button-raised");
                 searchButton.setButtonType(JFXButton.ButtonType.RAISED);
-                HBox searchBox = new HBox(searchButton);
+                ObservableList<Node> last = FXCollections.observableArrayList(searchButton);
+                HBox searchBox = new HBox(8);
+                actions.appendList(control.actions);
+                actions.appendList(last);
+                Bindings.bindContent(searchBox.getChildren(), actions.getAggregatedList());
                 GridPane.setColumnSpan(searchBox, 4);
                 searchBox.setAlignment(Pos.CENTER_RIGHT);
                 searchPane.addRow(rowIndex++, searchBox);
 
                 EventHandler<ActionEvent> searchAction = e -> getSkinnable()
-                        .search(gameVersionField.getText(),
+                        .search(gameVersionField.getSelectionModel().getSelectedItem(),
                                 Optional.ofNullable(categoryComboBox.getSelectionModel().getSelectedItem())
                                         .map(CategoryIndented::getCategoryId)
                                         .orElse(0),
@@ -293,16 +359,16 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     }
                 }, getSkinnable().failedProperty()));
 
-                JFXListView<CurseAddon> listView = new JFXListView<>();
+                JFXListView<DownloadManager.Mod> listView = new JFXListView<>();
                 spinnerPane.setContent(listView);
                 Bindings.bindContent(listView.getItems(), getSkinnable().items);
                 listView.setOnMouseClicked(e -> {
                     if (listView.getSelectionModel().getSelectedIndex() < 0)
                         return;
-                    CurseAddon selectedItem = listView.getSelectionModel().getSelectedItem();
-                    Controllers.navigate(new DownloadPage(selectedItem, getSkinnable().version.get(), getSkinnable().callback));
+                    DownloadManager.Mod selectedItem = listView.getSelectionModel().getSelectedItem();
+                    Controllers.navigate(new DownloadPage(getSkinnable(), selectedItem, getSkinnable().getProfileVersion(), getSkinnable().callback));
                 });
-                listView.setCellFactory(x -> new FloatListCell<CurseAddon>(listView) {
+                listView.setCellFactory(x -> new FloatListCell<DownloadManager.Mod>(listView) {
                     TwoLineListItem content = new TwoLineListItem();
                     ImageView imageView = new ImageView();
 
@@ -315,19 +381,17 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     }
 
                     @Override
-                    protected void updateControl(CurseAddon dataItem, boolean empty) {
+                    protected void updateControl(DownloadManager.Mod dataItem, boolean empty) {
                         if (empty) return;
                         ModTranslations.Mod mod = ModTranslations.getModByCurseForgeId(dataItem.getSlug());
-                        content.setTitle(mod != null ? mod.getDisplayName() : dataItem.getName());
-                        content.setSubtitle(dataItem.getSummary());
+                        content.setTitle(mod != null ? mod.getDisplayName() : dataItem.getTitle());
+                        content.setSubtitle(dataItem.getDescription());
                         content.getTags().setAll(dataItem.getCategories().stream()
-                                .map(category -> i18n("curse.category." + category.getCategoryId()))
+                                .map(category -> getSkinnable().getLocalizedCategory(category))
                                 .collect(Collectors.toList()));
 
-                        for (CurseAddon.Attachment attachment : dataItem.getAttachments()) {
-                            if (attachment.isDefault()) {
-                                imageView.setImage(new Image(attachment.getThumbnailUrl(), 40, 40, true, true, true));
-                            }
+                        if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
+                            imageView.setImage(new Image(dataItem.getIconUrl(), 40, 40, true, true, true));
                         }
                     }
                 });

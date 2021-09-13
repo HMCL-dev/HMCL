@@ -57,7 +57,7 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
         feedbackTab.setNodeSupplier(FeedbackPage::new);
         sponsorTab.setNodeSupplier(SponsorPage::new);
         aboutTab.setNodeSupplier(AboutPage::new);
-        tab = new TabHeader(gameTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, sponsorTab, aboutTab);
+        tab = new TabHeader(gameTab, settingsTab, personalizationTab, downloadTab, helpTab, sponsorTab, aboutTab);
 
         tab.getSelectionModel().select(gameTab);
         gameTab.initializeIfNeeded();

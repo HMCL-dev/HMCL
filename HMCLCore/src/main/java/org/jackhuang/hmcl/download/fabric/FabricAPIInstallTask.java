@@ -18,11 +18,12 @@
 package org.jackhuang.hmcl.download.fabric;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -56,14 +57,9 @@ public final class FabricAPIInstallTask extends Task<Version> {
     }
 
     @Override
-    public void execute() {
-        List<Library> libraries = new ArrayList<>();
-        libraries.add(new Library(new Artifact("net", "fabricmc", "fabric-api"), null,
-                new LibrariesDownloadInfo(new LibraryDownloadInfo(
-                        "net/fabricmc/fabric-api/" + remote.getFullVersion() + "/fabric-api-" + remote.getFullVersion() + ".jar",
-                        remote.getUrls().get(0)))));
-
-        setResult(new Version(LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId(), remote.getSelfVersion(), 31000, new Arguments(), null, libraries));
-        dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
+    public void execute() throws IOException {
+        dependencies.add(new FileDownloadTask(
+                new URL(remote.getUrls().get(0)),
+                dependencyManager.getGameRepository().getRunDirectory(version.getId()).toPath().resolve("mods").resolve("fabric-api-" + remote.getFullVersion() + ".jar").toFile()));
     }
 }

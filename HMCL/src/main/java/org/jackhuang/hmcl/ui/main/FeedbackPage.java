@@ -26,6 +26,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.setting.Theme;
@@ -60,9 +61,11 @@ public class FeedbackPage extends VBox {
 
         {
             HBox loginPane = new HBox(16);
+            loginPane.setAlignment(Pos.CENTER_LEFT);
             loginPane.getStyleClass().add("card");
 
             TwoLineListItem accountInfo = new TwoLineListItem();
+            HBox.setHgrow(accountInfo, Priority.ALWAYS);
             accountInfo.titleProperty().bind(BindingMapping.of(account).map(account -> account == null ? i18n("account.not_logged_in") : account.getNickname()));
             accountInfo.subtitleProperty().bind(BindingMapping.of(account).map(account -> account == null ? i18n("account.not_logged_in") : account.getEmail()));
 
@@ -98,6 +101,48 @@ public class FeedbackPage extends VBox {
             JFXListView<FeedbackResponse> listView = new JFXListView<>();
             spinnerPane.setContent(listView);
             Bindings.bindContent(listView.getItems(), feedbacks);
+            listView.setCellFactory(x -> new MDListCell<FeedbackResponse>(listView) {
+                private final TwoLineListItem content = new TwoLineListItem();
+                private final JFXButton likeButton = new JFXButton();
+                private final JFXButton unlikeButton = new JFXButton();
+
+                {
+                    HBox container = new HBox(8);
+                    container.setPickOnBounds(false);
+                    container.setAlignment(Pos.CENTER_LEFT);
+                    HBox.setHgrow(content, Priority.ALWAYS);
+                    content.setMouseTransparent(true);
+                    setSelectable();
+
+                    likeButton.getStyleClass().add("toggle-icon4");
+                    likeButton.setGraphic(FXUtils.limitingSize(SVG.folderOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
+
+                    unlikeButton.getStyleClass().add("toggle-icon4");
+                    unlikeButton.setGraphic(FXUtils.limitingSize(SVG.informationOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
+
+                    container.getChildren().setAll(content, likeButton, unlikeButton);
+
+                    StackPane.setMargin(container, new Insets(10, 16, 10, 16));
+                    getContainer().getChildren().setAll(container);
+                }
+
+                @Override
+                protected void updateControl(FeedbackResponse feedback, boolean empty) {
+                    content.setTitle(feedback.getTitle());
+                    content.setSubtitle(feedback.getContent());
+                    content.getTags().add("#" + feedback.getId());
+                    content.getTags().add(feedback.getAuthor());
+                    content.getTags().add(feedback.getLauncherVersion());
+                    content.getTags().add(i18n("feedback.type." + feedback.getType().name().toLowerCase()));
+                }
+            });
+            listView.setOnMouseClicked(e -> {
+                if (listView.getSelectionModel().getSelectedIndex() < 0)
+                    return;
+                FeedbackResponse selectedItem = listView.getSelectionModel().getSelectedItem();
+                Controllers.dialog(new ViewFeedbackDialog(selectedItem));
+            });
+
             getChildren().add(spinnerPane);
         }
     }
@@ -322,7 +367,33 @@ public class FeedbackPage extends VBox {
         }
 
         private void addFeedback(String title, FeedbackType feedbackType, String content) {
+            fireEvent(new DialogCloseEvent());
             // TODO
+        }
+    }
+
+    private static class ViewFeedbackDialog extends JFXDialogLayout {
+
+        public ViewFeedbackDialog(FeedbackResponse feedback) {
+            BorderPane heading = new BorderPane();
+            TwoLineListItem left = new TwoLineListItem();
+            left.setTitle(feedback.getTitle());
+            left.setSubtitle(feedback.getAuthor());
+            left.getTags().add("#" + feedback.getId());
+            left.getTags().add(feedback.getLauncherVersion());
+            left.getTags().add(i18n("feedback.type." + feedback.getType().name().toLowerCase()));
+
+            setHeading(heading);
+
+            Label content = new Label(feedback.getContent());
+            content.setWrapText(true);
+            setBody(content);
+
+            JFXButton okButton = new JFXButton();
+            okButton.setText(i18n("button.ok"));
+            okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+            setActions(okButton);
         }
     }
 
@@ -330,14 +401,16 @@ public class FeedbackPage extends VBox {
         private final int id;
         private final String title;
         private final String content;
+        private final String author;
         private final String launcherVersion;
         private final String gameVersion;
         private final FeedbackType type;
 
-        public FeedbackResponse(int id, String title, String content, String launcherVersion, String gameVersion, FeedbackType type) {
+        public FeedbackResponse(int id, String title, String content, String author, String launcherVersion, String gameVersion, FeedbackType type) {
             this.id = id;
             this.title = title;
             this.content = content;
+            this.author = author;
             this.launcherVersion = launcherVersion;
             this.gameVersion = gameVersion;
             this.type = type;
@@ -353,6 +426,10 @@ public class FeedbackPage extends VBox {
 
         public String getContent() {
             return content;
+        }
+
+        public String getAuthor() {
+            return author;
         }
 
         public String getLauncherVersion() {
