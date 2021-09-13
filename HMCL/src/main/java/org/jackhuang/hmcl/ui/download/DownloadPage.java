@@ -117,7 +117,6 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(newGameTab));
                         item.setOnAction(e -> tab.getSelectionModel().select(newGameTab));
                     })
-                    .startCategory(i18n("download"))
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("mods"));
                         item.setLeftGraphic(wrap(SVG.puzzle(Theme.blackFillBinding(), 24, 24)));
