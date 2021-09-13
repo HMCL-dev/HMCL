@@ -511,6 +511,8 @@ public class DefaultLauncher extends Launcher {
         }
         if (!scriptFile.setExecutable(true))
             throw new PermissionException();
+        if (!CommandBuilder.hasExecutionPolicy())
+            throw new ExecutionPolicyLimitException();
     }
 
     private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon) {

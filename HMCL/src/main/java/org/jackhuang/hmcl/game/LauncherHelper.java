@@ -102,7 +102,8 @@ public final class LauncherHelper {
         this.launchingStepsPane.setTitle(i18n("version.launch"));
     }
 
-    private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(it -> {});
+    private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(it -> {
+    });
 
     public void setTestMode() {
         launcherVisibility = LauncherVisibility.KEEP;
@@ -287,6 +288,8 @@ public final class LauncherHelper {
                                         message = i18n("download.failed", url, responseCode);
                                 } else if (ex instanceof CommandTooLongException) {
                                     message = i18n("launch.failed.command_too_long");
+                                } else if (ex instanceof ExecutionPolicyLimitException) {
+                                    message = i18n("launch.failed.execution_policy");
                                 } else {
                                     message = StringUtils.getStackTrace(ex);
                                 }
@@ -747,6 +750,7 @@ public final class LauncherHelper {
     }
 
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
+
     public static void stopManagedProcesses() {
         while (!PROCESSES.isEmpty())
             Optional.ofNullable(PROCESSES.poll()).ifPresent(ManagedProcess::stop);

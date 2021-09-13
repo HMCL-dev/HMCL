@@ -19,7 +19,11 @@ package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.StringUtils;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -188,5 +192,25 @@ public final class CommandBuilder {
             return '"' + s + '"';
         } else
             return s;
+    }
+
+    public static boolean hasExecutionPolicy() throws IOException {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+            return true;
+        }
+
+        final Process process = Runtime.getRuntime().exec("powershell -Command 'Get-ExecutionPolicy'");
+        try {
+            if (!process.waitFor(5, TimeUnit.SECONDS)) {
+                return false;
+            }
+        } catch (InterruptedException e) {
+            return false;
+        }
+        final String res;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) { // TODO: NATIVE_ENCODING
+            res = reader.readLine();
+        }
+        return res != null && "restricted".equals(res.toLowerCase(Locale.ROOT));
     }
 }
