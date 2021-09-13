@@ -59,7 +59,7 @@
 }
 
 .memory-allocate {
-    -fx-background-color: -fx-base-check-color;
+    -fx-background-color: derive(-fx-base-color, 100%);
 }
 
 .memory-total {
