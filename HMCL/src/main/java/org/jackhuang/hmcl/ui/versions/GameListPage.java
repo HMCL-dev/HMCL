@@ -128,9 +128,11 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
                     addProfileItem.setOnAction(e -> Controllers.navigate(new ProfilePage(null)));
 
                     ScrollPane pane = new ScrollPane();
+                    pane.setFitToWidth(true);
                     VBox wrapper = new VBox();
                     wrapper.getStyleClass().add("advanced-list-box-content");
                     VBox box = new VBox();
+                    box.setFillWidth(true);
                     Bindings.bindContent(box.getChildren(), profileListItems);
                     wrapper.getChildren().setAll(box, addProfileItem);
                     pane.setContent(wrapper);
