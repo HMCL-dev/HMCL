@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,7 +29,6 @@ import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
 /**
- *
  * @author huangyuhui
  */
 public final class StringUtils {
@@ -38,8 +38,12 @@ public final class StringUtils {
 
     public static String getStackTrace(Throwable throwable) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        throwable.printStackTrace(new PrintStream(stream));
-        return stream.toString();
+        try {
+            throwable.printStackTrace(new PrintStream(stream, false, "UTF-8"));
+            return stream.toString("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new InternalError(e);
+        }
     }
 
     public static String getStackTrace(StackTraceElement[] elements) {
