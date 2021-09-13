@@ -199,7 +199,7 @@ public final class CommandBuilder {
             return true;
         }
 
-        final Process process = Runtime.getRuntime().exec("powershell -Command 'Get-ExecutionPolicy'");
+        final Process process = Runtime.getRuntime().exec("powershell -Command Get-ExecutionPolicy");
         try {
             if (!process.waitFor(5, TimeUnit.SECONDS)) {
                 return false;
