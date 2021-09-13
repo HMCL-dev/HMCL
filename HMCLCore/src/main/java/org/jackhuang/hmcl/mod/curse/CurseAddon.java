@@ -1,12 +1,34 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.mod.curse;
 
+import org.jackhuang.hmcl.mod.DownloadManager;
 import org.jackhuang.hmcl.util.Immutable;
 
+import java.io.IOException;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Immutable
-public class CurseAddon {
+public class CurseAddon implements DownloadManager.IMod {
     private final int id;
     private final String name;
     private final List<Author> authors;
@@ -135,6 +157,32 @@ public class CurseAddon {
 
     public boolean isExperimental() {
         return isExperimental;
+    }
+
+    @Override
+    public Stream<DownloadManager.Version> loadVersions() throws IOException {
+        return CurseModManager.getFiles(this).stream()
+                .map(CurseAddon.LatestFile::toVersion);
+    }
+
+    public DownloadManager.Mod toMod() {
+        String iconUrl = null;
+        for (CurseAddon.Attachment attachment : attachments) {
+            if (attachment.isDefault()) {
+                iconUrl = attachment.getThumbnailUrl();
+            }
+        }
+
+        return new DownloadManager.Mod(
+                slug,
+                "",
+                name,
+                summary,
+                categories.stream().map(category -> Integer.toString(category.getCategoryId())).collect(Collectors.toList()),
+                websiteUrl,
+                iconUrl,
+                this
+        );
     }
 
     @Immutable
@@ -409,6 +457,37 @@ public class CurseAddon {
                 fileDataInstant = Instant.parse(fileDate);
             }
             return fileDataInstant;
+        }
+
+        public DownloadManager.Version toVersion() {
+            DownloadManager.VersionType versionType;
+            switch (getReleaseType()) {
+                case 1:
+                    versionType = DownloadManager.VersionType.Release;
+                    break;
+                case 2:
+                    versionType = DownloadManager.VersionType.Beta;
+                    break;
+                case 3:
+                    versionType = DownloadManager.VersionType.Alpha;
+                    break;
+                default:
+                    versionType = DownloadManager.VersionType.Release;
+                    break;
+            }
+
+            return new DownloadManager.Version(
+                    this,
+                    getDisplayName(),
+                    null,
+                    null,
+                    getParsedFileDate(),
+                    versionType,
+                    new DownloadManager.File(Collections.emptyMap(), getDownloadUrl(), getFileName()),
+                    Collections.emptyList(),
+                    gameVersion,
+                    Collections.emptyList()
+            );
         }
     }
 

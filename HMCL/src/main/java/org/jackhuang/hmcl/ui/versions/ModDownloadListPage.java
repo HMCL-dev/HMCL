@@ -17,21 +17,29 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import org.jackhuang.hmcl.mod.DownloadManager;
 import org.jackhuang.hmcl.mod.curse.CurseAddon;
+import org.jackhuang.hmcl.mod.curse.CurseModManager;
+import org.jackhuang.hmcl.mod.modrinth.Modrinth;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class ModDownloadListPage extends DownloadListPage {
     public ModDownloadListPage(int section, DownloadPage.DownloadCallback callback, boolean versionSelection) {
         super(section, callback, versionSelection);
 
         supportChinese.set(true);
+        downloadSources.get().setAll("mods.curseforge", "mods.modrinth");
+        downloadSource.set("mods.curseforge");
     }
 
     @Override
-    protected List<CurseAddon> searchImpl(String gameVersion, int category, int section, int pageOffset, String searchFilter, int sort) throws Exception {
+    protected Stream<DownloadManager.Mod> searchImpl(String gameVersion, int category, int section, int pageOffset, String searchFilter, int sort) throws Exception {
         if (StringUtils.CHINESE_PATTERN.matcher(searchFilter).find()) {
             List<ModTranslations.Mod> mods = ModTranslations.searchMod(searchFilter);
             List<String> searchFilters = new ArrayList<>();
@@ -47,9 +55,35 @@ public class ModDownloadListPage extends DownloadListPage {
                 count++;
                 if (count >= 3) break;
             }
-            return super.searchImpl(gameVersion, category, section, pageOffset, String.join(" ", searchFilters), sort);
+            return search(gameVersion, category, section, pageOffset, String.join(" ", searchFilters), sort);
         } else {
-            return super.searchImpl(gameVersion, category, section, pageOffset, searchFilter, sort);
+            return search(gameVersion, category, section, pageOffset, searchFilter, sort);
+        }
+    }
+
+    private Stream<DownloadManager.Mod> search(String gameVersion, int category, int section, int pageOffset, String searchFilter, int sort) throws Exception {
+        if ("mods.modrinth".equals(downloadSource.get())) {
+            return Modrinth.searchPaginated(gameVersion, pageOffset, searchFilter).stream().map(Modrinth.ModResult::toMod);
+        } else {
+            return CurseModManager.searchPaginated(gameVersion, category, section, pageOffset, searchFilter, sort).stream().map(CurseAddon::toMod);
+        }
+    }
+
+    @Override
+    protected String getLocalizedCategory(String category) {
+        if ("mods.modrinth".equals(downloadSource.get())) {
+            return i18n("modrinth.category." + category);
+        } else {
+            return i18n("curse.category." + category);
+        }
+    }
+
+    @Override
+    protected String getLocalizedOfficialPage() {
+        if ("mods.modrinth".equals(downloadSource.get())) {
+            return i18n("mods.modrinth");
+        } else {
+            return i18n("mods.curseforge");
         }
     }
 }
