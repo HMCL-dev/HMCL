@@ -29,15 +29,13 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 import static java.util.Collections.newSetFromMap;
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
@@ -45,31 +43,35 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  */
 public class CrashReporter implements Thread.UncaughtExceptionHandler {
 
-    private static final Map<String, String> SOURCE = new HashMap<String, String>() {
-        {
-            put("javafx.fxml.LoadException", i18n("crash.NoClassDefFound"));
-            put("Location is not set", i18n("crash.NoClassDefFound"));
-            put("UnsatisfiedLinkError", i18n("crash.user_fault"));
-            put("java.lang.NoClassDefFoundError", i18n("crash.NoClassDefFound"));
-            put("org.jackhuang.hmcl.util.ResourceNotFoundError", i18n("crash.NoClassDefFound"));
-            put("java.lang.VerifyError", i18n("crash.NoClassDefFound"));
-            put("java.lang.NoSuchMethodError", i18n("crash.NoClassDefFound"));
-            put("java.lang.NoSuchFieldError", i18n("crash.NoClassDefFound"));
-            put("javax.imageio.IIOException", i18n("crash.NoClassDefFound"));
-            put("netscape.javascript.JSException", i18n("crash.NoClassDefFound"));
-            put("java.lang.IncompatibleClassChangeError", i18n("crash.NoClassDefFound"));
-            put("java.lang.ClassFormatError", i18n("crash.NoClassDefFound"));
-            put("com.sun.javafx.css.StyleManager.findMatchingStyles", i18n("launcher.update_java"));
-            put("NoSuchAlgorithmException", "Has your operating system been installed completely or is a ghost system?");
-        }
-    };
+    // Lazy initialization resources
+    private static final class Hole {
+        @SuppressWarnings("unchecked")
+        static final Pair<String, String>[] SOURCE = (Pair<String, String>[]) new Pair<?, ?>[]{
+                pair("javafx.fxml.LoadException", i18n("crash.NoClassDefFound")),
+                pair("Location is not set", i18n("crash.NoClassDefFound")),
+                pair("UnsatisfiedLinkError", i18n("crash.user_fault")),
+                pair("java.lang.NoClassDefFoundError", i18n("crash.NoClassDefFound")),
+                pair("org.jackhuang.hmcl.util.ResourceNotFoundError", i18n("crash.NoClassDefFound")),
+                pair("java.lang.VerifyError", i18n("crash.NoClassDefFound")),
+                pair("java.lang.NoSuchMethodError", i18n("crash.NoClassDefFound")),
+                pair("java.lang.NoSuchFieldError", i18n("crash.NoClassDefFound")),
+                pair("javax.imageio.IIOException", i18n("crash.NoClassDefFound")),
+                pair("netscape.javascript.JSException", i18n("crash.NoClassDefFound")),
+                pair("java.lang.IncompatibleClassChangeError", i18n("crash.NoClassDefFound")),
+                pair("java.lang.ClassFormatError", i18n("crash.NoClassDefFound")),
+                pair("com.sun.javafx.css.StyleManager.findMatchingStyles", i18n("launcher.update_java")),
+                pair("NoSuchAlgorithmException", "Has your operating system been installed completely or is a ghost system?"),
+        };
+
+        static final Set<String> CAUGHT_EXCEPTIONS = newSetFromMap(new ConcurrentHashMap<>());
+    }
 
     private boolean checkThrowable(Throwable e) {
         String s = StringUtils.getStackTrace(e);
-        for (HashMap.Entry<String, String> entry : SOURCE.entrySet())
+        for (Pair<String, String> entry : Hole.SOURCE)
             if (s.contains(entry.getKey())) {
-                if (StringUtils.isNotBlank(entry.getValue())) {
-                    String info = entry.getValue();
+                final String info;
+                if (StringUtils.isNotBlank(info = entry.getValue())) {
                     LOG.severe(info);
                     try {
                         Alert alert = new Alert(AlertType.INFORMATION, info);
@@ -84,8 +86,6 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             }
         return true;
     }
-
-    private static Set<String> CAUGHT_EXCEPTIONS = newSetFromMap(new ConcurrentHashMap<>());
 
     private final boolean showCrashWindow;
 
@@ -102,14 +102,14 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             if (!stackTrace.contains("org.jackhuang"))
                 return;
 
-            if (CAUGHT_EXCEPTIONS.contains(stackTrace))
+            if (Hole.CAUGHT_EXCEPTIONS.contains(stackTrace))
                 return;
-            CAUGHT_EXCEPTIONS.add(stackTrace);
+            Hole.CAUGHT_EXCEPTIONS.add(stackTrace);
 
             String text = "---- Hello Minecraft! Crash Report ----\n" +
                     "  Version: " + Metadata.VERSION + "\n" +
                     "  Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\n" +
-                    "  Thread: " + t.toString() + "\n" +
+                    "  Thread: " + t + "\n" +
                     "\n  Content: \n    " +
                     stackTrace + "\n\n" +
                     "-- System Details --\n" +
