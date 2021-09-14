@@ -43,13 +43,13 @@ public final class JarUtils {
         }
 
         URL url = codeSource.getLocation();
-        if (url == null || "jrt".equals(url.getProtocol())) {
+        if (url == null || !"file".equals(url.getProtocol())) {
             return null;
         }
 
         Path path;
         try {
-            path = Paths.get(url.toURI());
+            path = Paths.get(url.toURI()).toAbsolutePath();
         } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException e) {
             return null;
         }

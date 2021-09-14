@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.export;
 
 import javafx.scene.Node;
-import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
@@ -33,10 +32,12 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -70,7 +71,7 @@ public final class ExportWizardProvider implements WizardProvider {
     }
 
     private Task<?> exportWithLauncher(String modpackType, ModpackExportInfo exportInfo, File modpackFile) {
-        List<File> launcherJar = Launcher.getCurrentJarFiles();
+        Path launcherJar = JarUtils.THIS_JAR;
         boolean packWithLauncher = exportInfo.isPackWithLauncher() && launcherJar != null;
         return new Task<Object>() {
             File tempModpack;
@@ -139,8 +140,7 @@ public final class ExportWizardProvider implements WizardProvider {
                     if (background_jpg.isFile())
                         zip.putFile(background_jpg, "background.jpg");
 
-                    for (File jar : launcherJar)
-                        zip.putFile(jar, jar.getName());
+                    zip.putFile(launcherJar, launcherJar.getFileName().toString());
                 }
             }
         };
