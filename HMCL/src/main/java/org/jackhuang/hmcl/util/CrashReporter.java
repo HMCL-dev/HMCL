@@ -70,8 +70,8 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         String s = StringUtils.getStackTrace(e);
         for (Pair<String, String> entry : Hole.SOURCE)
             if (s.contains(entry.getKey())) {
-                final String info;
-                if (StringUtils.isNotBlank(info = entry.getValue())) {
+                final String info = entry.getValue();
+                if (StringUtils.isNotBlank(info)) {
                     LOG.severe(info);
                     try {
                         Alert alert = new Alert(AlertType.INFORMATION, info);
