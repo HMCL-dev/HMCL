@@ -34,29 +34,35 @@ public final class JarUtils {
     private JarUtils() {
     }
 
-    public static Optional<Path> thisJar() {
+    public static final Path THIS_JAR = locationThisJar();
+
+    private static Path locationThisJar() {
         CodeSource codeSource = JarUtils.class.getProtectionDomain().getCodeSource();
         if (codeSource == null) {
-            return Optional.empty();
+            return null;
         }
 
         URL url = codeSource.getLocation();
-        if (url == null) {
-            return Optional.empty();
+        if (url == null || "jrt".equals(url.getProtocol())) {
+            return null;
         }
 
         Path path;
         try {
             path = Paths.get(url.toURI());
         } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException e) {
-            return Optional.empty();
+            return null;
         }
 
         if (!Files.isRegularFile(path)) {
-            return Optional.empty();
+            return null;
         }
 
-        return Optional.of(path);
+        return path;
+    }
+
+    public static Optional<Path> thisJar() {
+        return Optional.ofNullable(THIS_JAR);
     }
 
     public static Optional<Manifest> getManifest(Path jar) {
