@@ -63,6 +63,7 @@ public final class JavaVersion {
         return longVersion;
     }
 
+    @Deprecated
     public Platform getPlatform() {
         return platform;
     }

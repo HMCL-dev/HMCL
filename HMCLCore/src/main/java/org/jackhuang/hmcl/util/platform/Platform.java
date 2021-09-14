@@ -29,6 +29,7 @@ import java.lang.reflect.Type;
  * @author huangyuhui
  */
 @JsonAdapter(Platform.Serializer.class)
+@Deprecated
 public enum Platform {
     BIT_32("32"),
     BIT_64("64"),
