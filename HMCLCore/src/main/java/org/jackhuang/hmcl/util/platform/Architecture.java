@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.platform;
 
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.platform.Bits.BIT_32;
 import static org.jackhuang.hmcl.util.platform.Bits.BIT_64;
@@ -57,78 +58,82 @@ public enum Architecture {
     public static final String SYSTEM_ARCHITECTURE;
     public static final Architecture CURRENT;
 
-    private static Architecture normalizeArch(String value) {
-        value = normalize(value);
-        if (value.matches("^(x8664|amd64|ia32e|em64t|x64)$")) {
-            return X86_64;
-        }
-        if (value.matches("^(x8632|x86|i[3-6]86|ia32|x32)$")) {
-            return X86;
-        }
-        if (value.matches("^(ia64w?|itanium64)$")) {
-            return IA64;
-        }
-        if ("ia64n".equals(value)) {
-            return IA32;
-        }
-        if (value.matches("^(sparc|sparc32)$")) {
-            return SPARC32;
-        }
-        if (value.matches("^(sparcv9|sparc64)$")) {
-            return SPARC64;
-        }
-        if (value.matches("^(arm|arm32)$")) {
-            return ARM;
-        }
-        if ("aarch64".equals(value)) {
-            return ARM64;
-        }
-        if (value.matches("^(mips|mips32)$")) {
-            return MIPS;
-        }
-        if (value.matches("^(mipsel|mips32el)$")) {
-            return MIPSEL32;
-        }
-        if ("mips64".equals(value)) {
-            return MIPS64;
-        }
-        if ("mips64el".equals(value)) {
-            return MIPSEL64;
-        }
-        if (value.matches("^(ppc|ppc32)$")) {
-            return PPC;
-        }
-        if (value.matches("^(ppcle|ppc32le)$")) {
-            return PPCLE;
-        }
-        if ("ppc64".equals(value)) {
-            return PPC64;
-        }
-        if ("ppc64le".equals(value)) {
-            return PPCLE64;
-        }
-        if ("s390".equals(value)) {
-            return S390;
-        }
-        if ("s390x".equals(value)) {
-            return S390X;
-        }
-        if ("riscv".equals(value)) {
-            return RISCV;
-        }
-        return UNKNOWN;
-    }
 
-    private static String normalize(String value) {
+    private static final Pattern NORMALIZER = Pattern.compile("[^a-z0-9]+");
+
+    public static Architecture parseArch(String value) {
         if (value == null) {
-            return "";
+            return UNKNOWN;
         }
-        return value.toLowerCase(Locale.US).replaceAll("[^a-z0-9]+", "");
+        value = NORMALIZER.matcher(value.toLowerCase(Locale.ROOT)).replaceAll("");
+
+        switch (value) {
+            case "x8664":
+            case "amd64":
+            case "ia32e":
+            case "em64t":
+            case "x64":
+                return X86_64;
+            case "x8632":
+            case "x86":
+            case "i386":
+            case "i486":
+            case "i586":
+            case "i686":
+            case "ia32":
+            case "x32":
+                return X86;
+            case "aarch64":
+                return ARM64;
+            case "arm":
+            case "arm32":
+                return ARM;
+            case "mips64":
+                return MIPS64;
+            case "mips64el":
+                return MIPSEL64;
+            case "mips":
+            case "mips32":
+                return MIPS;
+            case "mipsel":
+            case "mips32el":
+                return MIPSEL32;
+            case "riscv":
+                return RISCV;
+            case "ia64":
+            case "ia64w":
+            case "itanium64":
+                return IA64;
+            case "ia64n":
+                return IA32;
+            case "sparcv9":
+            case "sparc64":
+                return SPARC64;
+            case "sparc":
+            case "sparc32":
+                return SPARC32;
+            case "ppc64":
+                return PPC64;
+            case "ppc64le":
+                return PPCLE64;
+            case "ppc":
+            case "ppc32":
+                return PPC;
+            case "ppcle":
+            case "ppc32le":
+                return PPCLE;
+            case "s390":
+                return S390;
+            case "s390x":
+                return S390X;
+            default:
+                return UNKNOWN;
+        }
     }
 
     static {
         SYSTEM_ARCHITECTURE = System.getProperty("os.arch");
 
-        CURRENT = normalizeArch(SYSTEM_ARCHITECTURE);
+        CURRENT = parseArch(SYSTEM_ARCHITECTURE);
     }
 }
