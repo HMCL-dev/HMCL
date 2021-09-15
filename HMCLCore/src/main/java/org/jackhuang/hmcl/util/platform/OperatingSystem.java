@@ -96,17 +96,9 @@ public enum OperatingSystem {
     private static final String[] INVALID_RESOURCE_FULLNAMES;
 
     private static final Pattern MEMINFO_PATTERN = Pattern.compile("^(?<key>.*?):\\s+(?<value>\\d+) kB?$");
-    
+
     static {
-        String name = System.getProperty("os.name").toLowerCase(Locale.US);
-        if (name.contains("win"))
-            CURRENT_OS = WINDOWS;
-        else if (name.contains("mac"))
-            CURRENT_OS = OSX;
-        else if (name.contains("solaris") || name.contains("linux") || name.contains("unix") || name.contains("sunos"))
-            CURRENT_OS = LINUX;
-        else
-            CURRENT_OS = UNKNOWN;
+        CURRENT_OS = parseOS(System.getProperty("os.name"));
 
         TOTAL_MEMORY = getPhysicalMemoryStatus()
                 .map(PhysicalMemoryStatus::getTotal)
@@ -132,6 +124,23 @@ public enum OperatingSystem {
             INVALID_RESOURCE_BASENAMES = null;
             INVALID_RESOURCE_FULLNAMES = null;
         }
+    }
+
+    public static OperatingSystem parseOS(String name) {
+        if (name == null) {
+            return UNKNOWN;
+        }
+
+        name = name.trim().toLowerCase(Locale.ROOT);
+
+        if (name.contains("win"))
+            return WINDOWS;
+        else if (name.contains("mac"))
+            return OSX;
+        else if (name.contains("solaris") || name.contains("linux") || name.contains("unix") || name.contains("sunos"))
+            return LINUX;
+        else
+            return UNKNOWN;
     }
 
     public static Optional<PhysicalMemoryStatus> getPhysicalMemoryStatus() {

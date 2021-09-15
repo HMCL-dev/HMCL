@@ -45,13 +45,13 @@ public final class JavaVersion {
 
     private final Path binary;
     private final String longVersion;
-    private final Bits bits;
     private final int version;
+    private final Platform platform;
 
-    public JavaVersion(Path binary, String longVersion, Bits bits) {
+    public JavaVersion(Path binary, String longVersion, Platform platform) {
         this.binary = binary;
         this.longVersion = longVersion;
-        this.bits = bits;
+        this.platform = platform;
         version = parseVersion(longVersion);
     }
 
@@ -64,7 +64,7 @@ public final class JavaVersion {
     }
 
     public Bits getBits() {
-        return bits;
+        return platform.getBits();
     }
 
     public VersionNumber getVersionNumber() {
@@ -85,6 +85,10 @@ public final class JavaVersion {
 
     private static final Pattern REGEX = Pattern.compile("version \"(?<version>(.*?))\"");
     private static final Pattern VERSION = Pattern.compile("^(?<version>[0-9]+)");
+
+    private static final Pattern OS_NAME = Pattern.compile("os\\.name = (?<name>.*)");
+    private static final Pattern OS_ARCH = Pattern.compile("os\\.arch = (?<arch>.*)");
+    private static final Pattern JAVA_VERSION = Pattern.compile("java\\.version = (?<version>.*)");
 
     public static final int UNKNOWN = -1;
     public static final int JAVA_7 = 7;
@@ -114,26 +118,75 @@ public final class JavaVersion {
         if (cachedJavaVersion != null)
             return cachedJavaVersion;
 
-        Bits bits = Bits.BIT_32;
+        String osName = null;
+        String osArch = null;
         String version = null;
 
-        Process process = new ProcessBuilder(executable.toString(), "-version").start();
+        Platform platform = null;
+
+        Process process = new ProcessBuilder(executable.toString(), "-XshowSettings:properties", "-version").start();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-            for (String line; (line = reader.readLine()) != null;) {
-                Matcher m = REGEX.matcher(line);
-                if (m.find())
+            for (String line; (line = reader.readLine()) != null; ) {
+                Matcher m;
+
+                m = OS_NAME.matcher(line);
+                if (m.find()) {
+                    osName = m.group("name");
+                    if (osArch != null && version != null) {
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+
+                m = OS_ARCH.matcher(line);
+                if (m.find()) {
+                    osArch = m.group("arch");
+                    if (osName != null && version != null) {
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+
+                m = JAVA_VERSION.matcher(line);
+                if (m.find()) {
                     version = m.group("version");
-                if (line.contains("64-Bit"))
-                    bits = Bits.BIT_64;
+                    if (osName != null && osArch != null) {
+                        break;
+                    } else {
+                        //noinspection UnnecessaryContinue
+                        continue;
+                    }
+                }
             }
         }
 
-        if (version == null)
-            throw new IOException("No Java version is matched");
+        if (osName != null && osArch != null) {
+            platform = Platform.getPlatform(OperatingSystem.parseOS(osName), Architecture.parseArch(osArch));
+        }
 
-        if (parseVersion(version) == UNKNOWN)
+        if (version == null) {
+            boolean is64Bit = false;
+            process = new ProcessBuilder(executable.toString(), "-version").start();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                for (String line; (line = reader.readLine()) != null; ) {
+                    Matcher m = REGEX.matcher(line);
+                    if (m.find())
+                        version = m.group("version");
+                    if (line.contains("64-Bit"))
+                        is64Bit = true;
+                }
+            }
+
+            if (platform == null) {
+                platform = Platform.getPlatform(OperatingSystem.CURRENT_OS, is64Bit ? Architecture.X86_64 : Architecture.X86);
+            }
+        }
+
+        JavaVersion javaVersion = new JavaVersion(executable, version, platform);
+        if (javaVersion.getParsedVersion() == UNKNOWN)
             throw new IOException("Unrecognized Java version " + version);
-        JavaVersion javaVersion = new JavaVersion(executable, version, bits);
         fromExecutableCache.put(executable, javaVersion);
         return javaVersion;
     }
@@ -162,7 +215,7 @@ public final class JavaVersion {
         CURRENT_JAVA = new JavaVersion(
                 currentExecutable,
                 System.getProperty("java.version"),
-                Bits.getBits());
+                Platform.CURRENT);
     }
 
     private static Collection<JavaVersion> JAVAS;
@@ -324,9 +377,9 @@ public final class JavaVersion {
     private static List<String> querySubFolders(String location) throws IOException {
         List<String> res = new ArrayList<>();
 
-        Process process = Runtime.getRuntime().exec(new String[] { "cmd", "/c", "reg", "query", location });
+        Process process = Runtime.getRuntime().exec(new String[]{"cmd", "/c", "reg", "query", location});
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            for (String line; (line = reader.readLine()) != null;) {
+            for (String line; (line = reader.readLine()) != null; ) {
                 if (line.startsWith(location) && !line.equals(location)) {
                     res.add(line);
                 }
@@ -337,10 +390,10 @@ public final class JavaVersion {
 
     private static String queryRegisterValue(String location, String name) throws IOException {
         boolean last = false;
-        Process process = Runtime.getRuntime().exec(new String[] { "cmd", "/c", "reg", "query", location, "/v", name });
+        Process process = Runtime.getRuntime().exec(new String[]{"cmd", "/c", "reg", "query", location, "/v", name});
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            for (String line; (line = reader.readLine()) != null;) {
+            for (String line; (line = reader.readLine()) != null; ) {
                 if (StringUtils.isNotBlank(line)) {
                     if (last && line.trim().startsWith(name)) {
                         int begins = line.indexOf(name);

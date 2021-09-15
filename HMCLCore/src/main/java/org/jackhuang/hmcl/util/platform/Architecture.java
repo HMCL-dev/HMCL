@@ -43,6 +43,8 @@ public enum Architecture {
     S390(BIT_32),
     S390X(BIT_64),
     RISCV(BIT_64),
+    UNKNOWN32(BIT_32),
+    UNKNOWN64(BIT_64),
     UNKNOWN(Bits.UNKNOWN);
 
     private final Bits bits;
@@ -58,14 +60,13 @@ public enum Architecture {
     public static final String SYSTEM_ARCHITECTURE;
     public static final Architecture CURRENT;
 
-
     private static final Pattern NORMALIZER = Pattern.compile("[^a-z0-9]+");
 
     public static Architecture parseArch(String value) {
         if (value == null) {
             return UNKNOWN;
         }
-        value = NORMALIZER.matcher(value.toLowerCase(Locale.ROOT)).replaceAll("");
+        value = NORMALIZER.matcher(value.toLowerCase(Locale.ROOT).trim()).replaceAll("");
 
         switch (value) {
             case "x8664":
