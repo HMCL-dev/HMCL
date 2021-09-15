@@ -195,7 +195,6 @@ public final class JavaVersion {
         if (javaVersion.getParsedVersion() == UNKNOWN)
             throw new IOException("Unrecognized Java version " + version);
         fromExecutableCache.put(executable, javaVersion);
-        System.out.printf("===>>> Add Java: %s, %s, %s%n", javaVersion.binary, javaVersion.platform, javaVersion.longVersion); // TODO Just for Test
         return javaVersion;
     }
 
