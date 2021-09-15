@@ -91,6 +91,7 @@ public final class JavaVersion {
     private static final Pattern JAVA_VERSION = Pattern.compile("java\\.version = (?<version>.*)");
 
     public static final int UNKNOWN = -1;
+    public static final int JAVA_6 = 6;
     public static final int JAVA_7 = 7;
     public static final int JAVA_8 = 8;
     public static final int JAVA_9 = 9;
@@ -106,6 +107,8 @@ public final class JavaVersion {
             return JAVA_8;
         else if (version.contains("1.7"))
             return JAVA_7;
+        else if (version.contains("1.6"))
+            return JAVA_6;
         else
             return UNKNOWN;
     }
@@ -188,6 +191,7 @@ public final class JavaVersion {
         if (javaVersion.getParsedVersion() == UNKNOWN)
             throw new IOException("Unrecognized Java version " + version);
         fromExecutableCache.put(executable, javaVersion);
+        System.out.printf("===>>> Add Java: %s, %s, %s%n", javaVersion.binary, javaVersion.platform, javaVersion.longVersion);
         return javaVersion;
     }
 
