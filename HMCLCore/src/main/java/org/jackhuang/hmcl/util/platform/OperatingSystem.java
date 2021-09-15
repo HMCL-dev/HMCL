@@ -38,34 +38,28 @@ public enum OperatingSystem {
     /**
      * Microsoft Windows.
      */
-    WINDOWS("windows", "Windows"),
+    WINDOWS("windows"),
     /**
      * Linux and Unix like OS, including Solaris.
      */
-    LINUX("linux", "Linux"),
+    LINUX("linux"),
     /**
      * Mac OS X.
      */
-    OSX("osx", "Mac OS"),
+    OSX("osx"),
     /**
      * Unknown operating system.
      */
-    UNKNOWN("universal", "Unknown");
+    UNKNOWN("universal");
 
     private final String checkedName;
-    private final String displayName;
 
-    OperatingSystem(String checkedName, String displayName) {
+    OperatingSystem(String checkedName) {
         this.checkedName = checkedName;
-        this.displayName = displayName;
     }
 
     public String getCheckedName() {
         return checkedName;
-    }
-
-    public String getDisplayName() {
-        return displayName;
     }
 
     /**
@@ -217,7 +211,7 @@ public enum OperatingSystem {
         if (name.isEmpty())
             return false;
         // . and .. have special meaning on all platforms
-        if (name.isEmpty() || name.equals("."))
+        if (name.equals("."))
             return false;
         // \0 and / are forbidden on all platforms
         if (name.indexOf('/') != -1 || name.indexOf('\0') != -1)
