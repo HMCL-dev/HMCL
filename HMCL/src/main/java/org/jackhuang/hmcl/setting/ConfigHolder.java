@@ -74,7 +74,7 @@ public final class ConfigHolder {
             saveConfigSync();
 
             // hide the config file on windows
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            if (OperatingSystem.CURRENT == OperatingSystem.WINDOWS) {
                 try {
                     Files.setAttribute(configLocation, "dos:hidden", true);
                 } catch (IOException e) {
@@ -120,7 +120,7 @@ public final class ConfigHolder {
             return dotConfig;
 
         // create new
-        return exePath.resolve(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? CONFIG_FILENAME : CONFIG_FILENAME_LINUX);
+        return exePath.resolve(OperatingSystem.CURRENT == OperatingSystem.WINDOWS ? CONFIG_FILENAME : CONFIG_FILENAME_LINUX);
     }
 
     private static Config loadConfig() throws IOException {

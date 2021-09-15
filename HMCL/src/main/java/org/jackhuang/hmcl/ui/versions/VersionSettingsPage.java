@@ -564,7 +564,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         javaItem.setSelectedData(null);
         javaItem.setFallbackData(JavaVersion.fromCurrentEnvironment());
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+        if (OperatingSystem.CURRENT == OperatingSystem.WINDOWS)
             javaItem.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe", "javaw.exe"));
 
         gameDirItem.setCustomUserData(GameDirectoryType.CUSTOM);

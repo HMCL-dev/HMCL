@@ -65,7 +65,7 @@ public enum OperatingSystem {
     /**
      * The current operating system.
      */
-    public static final OperatingSystem CURRENT_OS;
+    public static final OperatingSystem CURRENT;
 
     /**
      * The total memory/MB this computer have.
@@ -98,7 +98,7 @@ public enum OperatingSystem {
     private static final Pattern MEMINFO_PATTERN = Pattern.compile("^(?<key>.*?):\\s+(?<value>\\d+) kB?$");
 
     static {
-        CURRENT_OS = parseOS(System.getProperty("os.name"));
+        CURRENT = parseOS(System.getProperty("os.name"));
 
         TOTAL_MEMORY = getPhysicalMemoryStatus()
                 .map(PhysicalMemoryStatus::getTotal)
@@ -108,7 +108,7 @@ public enum OperatingSystem {
         SUGGESTED_MEMORY = (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);
 
         // setup the invalid names
-        if (CURRENT_OS == WINDOWS) {
+        if (CURRENT == WINDOWS) {
             // valid names and characters taken from http://msdn.microsoft.com/library/default.asp?url=/library/en-us/fileio/fs/naming_a_file.asp
             INVALID_RESOURCE_CHARACTERS = Pattern.compile("[/\"<>|?*:\\\\]");
             INVALID_RESOURCE_BASENAMES = new String[]{"aux", "com1", "com2", "com3", "com4",
@@ -144,7 +144,7 @@ public enum OperatingSystem {
     }
 
     public static Optional<PhysicalMemoryStatus> getPhysicalMemoryStatus() {
-        if (CURRENT_OS == LINUX) {
+        if (CURRENT == LINUX) {
             try {
                 long free = 0, available = 0, total = 0;
                 for (String line : Files.readAllLines(Paths.get("/proc/meminfo"))) {
@@ -189,7 +189,7 @@ public enum OperatingSystem {
 
     public static Path getWorkingDirectory(String folder) {
         String home = System.getProperty("user.home", ".");
-        switch (OperatingSystem.CURRENT_OS) {
+        switch (OperatingSystem.CURRENT) {
             case LINUX:
                 return Paths.get(home, "." + folder);
             case WINDOWS:
@@ -217,7 +217,7 @@ public enum OperatingSystem {
         if (name.indexOf('/') != -1 || name.indexOf('\0') != -1)
             return false;
 
-        if (CURRENT_OS == WINDOWS) { // Windows only
+        if (CURRENT == WINDOWS) { // Windows only
             char lastChar = name.charAt(name.length() - 1);
             // filenames ending in dot are not valid
             if (lastChar == '.')

@@ -35,7 +35,7 @@ public final class CommandBuilder {
     private final List<Item> raw = new LinkedList<>();
 
     public CommandBuilder() {
-        this(OperatingSystem.CURRENT_OS);
+        this(OperatingSystem.CURRENT);
     }
 
     public CommandBuilder(OperatingSystem os) {
@@ -157,7 +157,7 @@ public final class CommandBuilder {
 
         @Override
         public String toString() {
-            return parse ? (OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS ? parseBatch(arg) : parseShell(arg)) : arg;
+            return parse ? (OperatingSystem.WINDOWS == OperatingSystem.CURRENT ? parseBatch(arg) : parseShell(arg)) : arg;
         }
     }
 

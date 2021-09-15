@@ -47,7 +47,7 @@ public final class Metadata {
 
     private static Path getHMCLDirectory() {
         String home = System.getProperty("user.home", ".");
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+        if (OperatingSystem.CURRENT == OperatingSystem.LINUX) {
             // to fulfill XDG standard.
             return Paths.get(home, ".cache", "hmcl");
         }
