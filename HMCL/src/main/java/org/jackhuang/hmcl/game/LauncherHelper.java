@@ -105,7 +105,8 @@ public final class LauncherHelper {
         this.launchingStepsPane.setTitle(i18n("version.launch"));
     }
 
-    private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(it -> {});
+    private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(it -> {
+    });
 
     public void setTestMode() {
         launcherVisibility = LauncherVisibility.KEEP;
@@ -444,13 +445,13 @@ public final class LauncherHelper {
             }
         }
 
-        if (!flag && java.getBits() == Bits.BIT_32 &&
-                Architecture.CURRENT.getBits() == Bits.BIT_64) {
+        if (!flag && java.getPlatform().getArchitecture() == Architecture.X86 &&
+                Architecture.CURRENT == Architecture.X86_64) {
             final JavaVersion java32 = java;
 
             // First find if same java version but whose platform is 64-bit installed.
             Optional<JavaVersion> java64 = JavaVersion.getJavas().stream()
-                    .filter(javaVersion -> javaVersion.getBits() == Bits.getBits())
+                    .filter(javaVersion -> javaVersion.getPlatform().getArchitecture() == Architecture.X86_64)
                     .filter(javaVersion -> javaVersion.getParsedVersion() == java32.getParsedVersion())
                     .max(Comparator.comparing(JavaVersion::getVersionNumber));
 
@@ -459,7 +460,7 @@ public final class LauncherHelper {
 
                 // Then find if other java version which satisfies requirements installed.
                 java64 = JavaVersion.getJavas().stream()
-                        .filter(javaVersion -> javaVersion.getBits() == Bits.getBits())
+                        .filter(javaVersion -> javaVersion.getPlatform().getArchitecture() == Architecture.X86_64)
                         .filter(javaVersion -> {
                             if (java8requiredFinal) return javaVersion.getParsedVersion() == JavaVersion.JAVA_8;
                             if (newJavaRequiredFinal) return javaVersion.getParsedVersion() >= JavaVersion.JAVA_8;
@@ -748,6 +749,7 @@ public final class LauncherHelper {
     }
 
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
+
     public static void stopManagedProcesses() {
         while (!PROCESSES.isEmpty())
             Optional.ofNullable(PROCESSES.poll()).ifPresent(ManagedProcess::stop);
