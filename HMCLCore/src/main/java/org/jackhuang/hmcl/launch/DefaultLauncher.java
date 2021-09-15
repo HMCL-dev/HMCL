@@ -35,7 +35,7 @@ import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.Bits;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -159,7 +159,7 @@ public class DefaultLauncher extends Launcher {
 
             // As 32-bit JVM allocate 320KB for stack by default rather than 64-bit version allocating 1MB,
             // causing Minecraft 1.13 crashed accounting for java.lang.StackOverflowError.
-            if (options.getJava().getPlatform() == Platform.BIT_32) {
+            if (options.getJava().getBits() == Bits.BIT_32) {
                 res.addDefault("-Xss", "1m");
             }
 

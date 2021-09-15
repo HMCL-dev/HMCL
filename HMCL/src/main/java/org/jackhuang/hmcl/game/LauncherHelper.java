@@ -444,13 +444,13 @@ public final class LauncherHelper {
             }
         }
 
-        if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.BIT_32 &&
-                Architecture.CURRENT.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.BIT_64) {
+        if (!flag && java.getBits() == Bits.BIT_32 &&
+                Architecture.CURRENT.getPlatform() == Bits.BIT_64) {
             final JavaVersion java32 = java;
 
             // First find if same java version but whose platform is 64-bit installed.
             Optional<JavaVersion> java64 = JavaVersion.getJavas().stream()
-                    .filter(javaVersion -> javaVersion.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.getPlatform())
+                    .filter(javaVersion -> javaVersion.getBits() == Bits.getBits())
                     .filter(javaVersion -> javaVersion.getParsedVersion() == java32.getParsedVersion())
                     .max(Comparator.comparing(JavaVersion::getVersionNumber));
 
@@ -459,7 +459,7 @@ public final class LauncherHelper {
 
                 // Then find if other java version which satisfies requirements installed.
                 java64 = JavaVersion.getJavas().stream()
-                        .filter(javaVersion -> javaVersion.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.getPlatform())
+                        .filter(javaVersion -> javaVersion.getBits() == Bits.getBits())
                         .filter(javaVersion -> {
                             if (java8requiredFinal) return javaVersion.getParsedVersion() == JavaVersion.JAVA_8;
                             if (newJavaRequiredFinal) return javaVersion.getParsedVersion() >= JavaVersion.JAVA_8;
@@ -477,7 +477,7 @@ public final class LauncherHelper {
         }
 
         // 32-bit JVM cannot make use of too much memory.
-        if (!flag && java.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.BIT_32 &&
+        if (!flag && java.getBits() == Bits.BIT_32 &&
                 setting.getMaxMemory() > 1.5 * 1024) {
             // 1.5 * 1024 is an inaccurate number.
             // Actual memory limit depends on operating system and memory.

@@ -28,16 +28,15 @@ import java.lang.reflect.Type;
  *
  * @author huangyuhui
  */
-@JsonAdapter(Platform.Serializer.class)
-@Deprecated
-public enum Platform {
+@JsonAdapter(Bits.Serializer.class)
+public enum Bits {
     BIT_32("32"),
     BIT_64("64"),
     UNKNOWN("unknown");
 
     private final String bit;
 
-    Platform(String bit) {
+    Bits(String bit) {
         this.bit = bit;
     }
 
@@ -48,16 +47,16 @@ public enum Platform {
     /**
      * The platform of current Java Environment.
      */
-    public static Platform getPlatform() {
+    public static Bits getBits() {
         return Architecture.CURRENT.getPlatform();
     }
 
     /**
-     * The json serializer to {@link Platform}.
+     * The json serializer to {@link Bits}.
      */
-    public static class Serializer implements JsonSerializer<Platform>, JsonDeserializer<Platform> {
+    public static class Serializer implements JsonSerializer<Bits>, JsonDeserializer<Bits> {
         @Override
-        public JsonElement serialize(Platform t, Type type, JsonSerializationContext jsc) {
+        public JsonElement serialize(Bits t, Type type, JsonSerializationContext jsc) {
             if (t == null)
                 return null;
             else
@@ -72,7 +71,7 @@ public enum Platform {
         }
 
         @Override
-        public Platform deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {
+        public Bits deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {
             if (je == null)
                 return null;
             else

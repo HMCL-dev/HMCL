@@ -45,13 +45,13 @@ public final class JavaVersion {
 
     private final Path binary;
     private final String longVersion;
-    private final Platform platform;
+    private final Bits bits;
     private final int version;
 
-    public JavaVersion(Path binary, String longVersion, Platform platform) {
+    public JavaVersion(Path binary, String longVersion, Bits bits) {
         this.binary = binary;
         this.longVersion = longVersion;
-        this.platform = platform;
+        this.bits = bits;
         version = parseVersion(longVersion);
     }
 
@@ -63,9 +63,8 @@ public final class JavaVersion {
         return longVersion;
     }
 
-    @Deprecated
-    public Platform getPlatform() {
-        return platform;
+    public Bits getBits() {
+        return bits;
     }
 
     public VersionNumber getVersionNumber() {
@@ -115,7 +114,7 @@ public final class JavaVersion {
         if (cachedJavaVersion != null)
             return cachedJavaVersion;
 
-        Platform platform = Platform.BIT_32;
+        Bits bits = Bits.BIT_32;
         String version = null;
 
         Process process = new ProcessBuilder(executable.toString(), "-version").start();
@@ -125,7 +124,7 @@ public final class JavaVersion {
                 if (m.find())
                     version = m.group("version");
                 if (line.contains("64-Bit"))
-                    platform = Platform.BIT_64;
+                    bits = Bits.BIT_64;
             }
         }
 
@@ -134,7 +133,7 @@ public final class JavaVersion {
 
         if (parseVersion(version) == UNKNOWN)
             throw new IOException("Unrecognized Java version " + version);
-        JavaVersion javaVersion = new JavaVersion(executable, version, platform);
+        JavaVersion javaVersion = new JavaVersion(executable, version, bits);
         fromExecutableCache.put(executable, javaVersion);
         return javaVersion;
     }
@@ -163,7 +162,7 @@ public final class JavaVersion {
         CURRENT_JAVA = new JavaVersion(
                 currentExecutable,
                 System.getProperty("java.version"),
-                Platform.getPlatform());
+                Bits.getBits());
     }
 
     private static Collection<JavaVersion> JAVAS;

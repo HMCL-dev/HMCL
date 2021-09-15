@@ -19,8 +19,8 @@ package org.jackhuang.hmcl.util.platform;
 
 import java.util.Locale;
 
-import static org.jackhuang.hmcl.util.platform.Platform.BIT_32;
-import static org.jackhuang.hmcl.util.platform.Platform.BIT_64;
+import static org.jackhuang.hmcl.util.platform.Bits.BIT_32;
+import static org.jackhuang.hmcl.util.platform.Bits.BIT_64;
 
 public enum Architecture {
     X86(BIT_32),
@@ -42,16 +42,16 @@ public enum Architecture {
     S390(BIT_32),
     S390X(BIT_64),
     RISCV(BIT_64),
-    UNKNOWN(Platform.UNKNOWN);
+    UNKNOWN(Bits.UNKNOWN);
 
-    private final Platform platform;
+    private final Bits bits;
 
-    Architecture(Platform platform) {
-        this.platform = platform;
+    Architecture(Bits bits) {
+        this.bits = bits;
     }
 
-    public Platform getPlatform() {
-        return platform;
+    public Bits getPlatform() {
+        return bits;
     }
 
     public static final String SYSTEM_ARCHITECTURE;

@@ -529,7 +529,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         Task.supplyAsync(JavaVersion::getJavas).thenAcceptAsync(Schedulers.javafx(), list -> {
             javaItem.loadChildren(list.stream()
                     .map(javaVersion -> javaItem.createChildren(javaVersion.getVersion() + i18n("settings.game.java_directory.bit",
-                            javaVersion.getPlatform().getBit()), javaVersion.getBinary().toString(), javaVersion))
+                            javaVersion.getBits().getBit()), javaVersion.getBinary().toString(), javaVersion))
                     .collect(Collectors.toList()));
             javaItemsLoaded = true;
             initializeSelectedJava();
