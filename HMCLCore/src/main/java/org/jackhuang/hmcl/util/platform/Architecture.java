@@ -50,7 +50,7 @@ public enum Architecture {
         this.bits = bits;
     }
 
-    public Bits getPlatform() {
+    public Bits getBits() {
         return bits;
     }
 

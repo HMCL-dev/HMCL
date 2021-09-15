@@ -48,7 +48,7 @@ public enum Bits {
      * The platform of current Java Environment.
      */
     public static Bits getBits() {
-        return Architecture.CURRENT.getPlatform();
+        return Architecture.CURRENT.getBits();
     }
 
     /**

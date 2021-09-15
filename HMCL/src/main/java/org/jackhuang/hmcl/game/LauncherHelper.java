@@ -445,7 +445,7 @@ public final class LauncherHelper {
         }
 
         if (!flag && java.getBits() == Bits.BIT_32 &&
-                Architecture.CURRENT.getPlatform() == Bits.BIT_64) {
+                Architecture.CURRENT.getBits() == Bits.BIT_64) {
             final JavaVersion java32 = java;
 
             // First find if same java version but whose platform is 64-bit installed.
