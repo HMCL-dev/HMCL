@@ -537,26 +537,11 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             // boolean showSystem = list.stream().anyMatch(java -> java.getPlatform().getOperatingSystem() != OperatingSystem.CURRENT_OS);
 
             javaItem.loadChildren(list.stream()
-                    .map(javaVersion -> {
-                        final StringBuilder builder = new StringBuilder();
-                        builder.append(javaVersion.getVersion());
-                        builder.append(i18n("settings.game.java_directory.separator"));
-
-                        /*
-                        if (showSystem) {
-                            builder.append(javaVersion.getPlatform().getOperatingSystem().getDisplayName());
-                            builder.append(' ');
-                        }
-                        */
-
-                        if (isX86) {
-                            builder.append(i18n("settings.game.java_directory.bit", javaVersion.getBits().getBit()));
-                        } else {
-                            builder.append(javaVersion.getPlatform().getArchitecture().getDisplayName());
-                        }
-
-                        return javaItem.createChildren(builder.toString(), javaVersion.getBinary().toString(), javaVersion);
-                    })
+                    .map(javaVersion -> javaItem.createChildren(
+                            i18n("settings.game.java_directory.template", javaVersion.getVersion(),
+                                    isX86 ? i18n("settings.game.java_directory.bit", javaVersion.getBits().getBit())
+                                            : javaVersion.getPlatform().getArchitecture().getDisplayName()),
+                            javaVersion.getBinary().toString(), javaVersion))
                     .collect(Collectors.toList()));
             javaItemsLoaded = true;
             initializeSelectedJava();
