@@ -48,6 +48,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
+import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -56,6 +57,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
@@ -527,9 +529,34 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         memoryStatusProperty.set(OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID));
 
         Task.supplyAsync(JavaVersion::getJavas).thenAcceptAsync(Schedulers.javafx(), list -> {
+            boolean isX86 = (Architecture.CURRENT == Architecture.X86 || Architecture.CURRENT == Architecture.X86_64)
+                    && list.stream()
+                    .map(java -> java.getPlatform().getArchitecture())
+                    .allMatch(arch -> arch == Architecture.X86 || arch == Architecture.X86_64);
+
+            // boolean showSystem = list.stream().anyMatch(java -> java.getPlatform().getOperatingSystem() != OperatingSystem.CURRENT_OS);
+
             javaItem.loadChildren(list.stream()
-                    .map(javaVersion -> javaItem.createChildren(javaVersion.getVersion() + i18n("settings.game.java_directory.bit",
-                            javaVersion.getBits().getBit()), javaVersion.getBinary().toString(), javaVersion))
+                    .map(javaVersion -> {
+                        final StringBuilder builder = new StringBuilder();
+                        builder.append(javaVersion.getVersion());
+                        builder.append(i18n("settings.game.java_directory.separator"));
+
+                        /*
+                        if (showSystem) {
+                            builder.append(javaVersion.getPlatform().getOperatingSystem().getDisplayName());
+                            builder.append(' ');
+                        }
+                        */
+
+                        if (isX86) {
+                            builder.append(i18n("settings.game.java_directory.bit", javaVersion.getBits().getBit()));
+                        } else {
+                            builder.append(javaVersion.getPlatform().getArchitecture().getDisplayName());
+                        }
+
+                        return javaItem.createChildren(builder.toString(), javaVersion.getBinary().toString(), javaVersion);
+                    })
                     .collect(Collectors.toList()));
             javaItemsLoaded = true;
             initializeSelectedJava();
@@ -547,7 +574,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         ));
 
         nativesDirItem.setCustomUserData(NativesDirectoryType.CUSTOM);
-        nativesDirItem.loadChildren(Arrays.asList(
+        nativesDirItem.loadChildren(Collections.singletonList(
                 nativesDirItem.createChildren(i18n("settings.advanced.natives_directory.default"), NativesDirectoryType.VERSION_FOLDER)
         ));
 
@@ -666,7 +693,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         gameDirItem.selectedDataProperty().bindBidirectional(versionSetting.gameDirTypeProperty());
         gameDirItem.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath()).normalize().toString(),
                 versionSetting.gameDirProperty(), versionSetting.gameDirTypeProperty()));
-        
+
         nativesDirItem.selectedDataProperty().bindBidirectional(versionSetting.nativesDirTypeProperty());
         nativesDirItem.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath() + "/natives").normalize().toString(),
                 versionSetting.nativesDirProperty(), versionSetting.nativesDirTypeProperty()));

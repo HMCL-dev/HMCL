@@ -87,7 +87,7 @@ public final class SelfDependencyPatcher {
                 switch (Architecture.CURRENT) {
                     case X86_64:
                         return "linux";
-                    case ARM:
+                    case ARM32:
                         return "linux-arm32-monocle";
                     case ARM64:
                         return "linux-aarch64";

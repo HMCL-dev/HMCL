@@ -24,37 +24,46 @@ import static org.jackhuang.hmcl.util.platform.Bits.BIT_32;
 import static org.jackhuang.hmcl.util.platform.Bits.BIT_64;
 
 public enum Architecture {
-    X86(BIT_32),
-    X86_64(BIT_64),
-    IA32(BIT_32),
-    IA64(BIT_64),
-    SPARC32(BIT_32),
-    SPARC64(BIT_64),
-    ARM(BIT_32),
+    X86("x86", BIT_32),
+    X86_64("x86-64", BIT_64),
+    IA32("IA-32", BIT_32),
+    IA64("IA-64", BIT_64),
+    SPARC(BIT_32),
+    SPARCV9("SPARC V9", BIT_64),
+    ARM32(BIT_32),
     ARM64(BIT_64),
     MIPS(BIT_32),
     MIPS64(BIT_64),
-    MIPSEL32(BIT_32),
-    MIPSEL64(BIT_64),
-    PPC(BIT_32),
-    PPC64(BIT_64),
-    PPCLE(BIT_32),
-    PPCLE64(BIT_64),
+    MIPSEL("MIPSel", BIT_32),
+    MIPS64EL("MIPS64el", BIT_64),
+    PPC("PowerPC", BIT_32),
+    PPC64("PowerPC-64", BIT_64),
+    PPCLE("PowerPC (Little-Endian)", BIT_32),
+    PPC64LE("PowerPC-64 (Little-Endian)", BIT_64),
     S390(BIT_32),
-    S390X(BIT_64),
-    RISCV(BIT_64),
-    UNKNOWN32(BIT_32),
-    UNKNOWN64(BIT_64),
+    S390X("S390x", BIT_64),
+    RISCV("RISC-V", BIT_64),
     UNKNOWN(Bits.UNKNOWN);
 
+    private final String displayName;
     private final Bits bits;
 
     Architecture(Bits bits) {
+        this.displayName = this.toString();
+        this.bits = bits;
+    }
+
+    Architecture(String displayName, Bits bits) {
+        this.displayName = displayName;
         this.bits = bits;
     }
 
     public Bits getBits() {
         return bits;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 
     public static final String SYSTEM_ARCHITECTURE;
@@ -88,17 +97,17 @@ public enum Architecture {
                 return ARM64;
             case "arm":
             case "arm32":
-                return ARM;
+                return ARM32;
             case "mips64":
                 return MIPS64;
             case "mips64el":
-                return MIPSEL64;
+                return MIPS64EL;
             case "mips":
             case "mips32":
                 return MIPS;
             case "mipsel":
             case "mips32el":
-                return MIPSEL32;
+                return MIPSEL;
             case "riscv":
                 return RISCV;
             case "ia64":
@@ -109,14 +118,14 @@ public enum Architecture {
                 return IA32;
             case "sparcv9":
             case "sparc64":
-                return SPARC64;
+                return SPARCV9;
             case "sparc":
             case "sparc32":
-                return SPARC32;
+                return SPARC;
             case "ppc64":
                 return PPC64;
             case "ppc64le":
-                return PPCLE64;
+                return PPC64LE;
             case "ppc":
             case "ppc32":
                 return PPC;
