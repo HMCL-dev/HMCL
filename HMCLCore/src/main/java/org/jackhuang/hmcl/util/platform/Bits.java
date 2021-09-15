@@ -46,6 +46,8 @@ public enum Bits {
 
     /**
      * The bits of current Java Environment.
+     *
+     * @deprecated
      */
     @Deprecated
     public static Bits getBits() {
