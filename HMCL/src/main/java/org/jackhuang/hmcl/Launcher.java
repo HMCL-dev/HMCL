@@ -148,34 +148,5 @@ public final class Launcher extends Application {
         });
     }
 
-    public static List<File> getCurrentJarFiles() {
-        List<File> result = new LinkedList<>();
-        if (Launcher.class.getClassLoader() instanceof URLClassLoader) {
-            URL[] urls = ((URLClassLoader) Launcher.class.getClassLoader()).getURLs();
-            for (URL u : urls)
-                try {
-                    File f = new File(u.toURI());
-                    if (f.isFile() && (f.getName().endsWith(".exe") || f.getName().endsWith(".jar")))
-                        result.add(f);
-                } catch (URISyntaxException e) {
-                    return null;
-                }
-        } else {
-            try {
-                File jarFile = new File(URLDecoder.decode(Launcher.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8"));
-                String ext = FileUtils.getExtension(jarFile);
-                if ("jar".equals(ext) || "exe".equals(ext))
-                    result.add(jarFile);
-            } catch (UnsupportedEncodingException e) {
-                LOG.log(Level.WARNING, "Failed to decode jar path", e);
-                return null;
-            }
-        }
-        if (result.isEmpty())
-            return null;
-        else
-            return result;
-    }
-
     public static final CrashReporter CRASH_REPORTER = new CrashReporter(true);
 }
