@@ -366,8 +366,6 @@ public final class FileUtils {
             throw new IOException("Source '" + srcFile + "' exists but is a directory");
         Path parentFile = destFile.getParent();
         Files.createDirectories(parentFile);
-        if (Files.exists(destFile) && !Files.isWritable(destFile))
-            throw new IOException("Destination '" + destFile + "' exists but is read-only");
 
         Files.copy(srcFile, destFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
     }

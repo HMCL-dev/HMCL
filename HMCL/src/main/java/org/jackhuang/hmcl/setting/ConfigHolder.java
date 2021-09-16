@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,7 +37,8 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class ConfigHolder {
 
-    private ConfigHolder() {}
+    private ConfigHolder() {
+    }
 
     public static final String CONFIG_FILENAME = "hmcl.json";
     public static final String CONFIG_FILENAME_LINUX = ".hmcl.json";
@@ -84,9 +86,11 @@ public final class ConfigHolder {
         }
 
         if (!Files.isWritable(configLocation)) {
-            // the config cannot be saved
-            // throw up the error now to prevent further data loss
-            throw new IOException("Config at " + configLocation + " is not writable");
+            if (configLocation.getFileSystem() != FileSystems.getDefault() || !configLocation.toFile().setExecutable(true)) {
+                // the config cannot be saved
+                // throw up the error now to prevent further data loss
+                throw new IOException("Config at " + configLocation + " is not writable");
+            }
         }
     }
 
