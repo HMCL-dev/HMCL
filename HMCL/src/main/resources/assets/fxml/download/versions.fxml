@@ -5,22 +5,19 @@
 <?import javafx.scene.layout.*?>
 <?import org.jackhuang.hmcl.ui.animation.TransitionPane?>
 <?import org.jackhuang.hmcl.ui.construct.ComponentList?>
-<?import java.lang.String?>
+<?import org.jackhuang.hmcl.ui.construct.HintPane?>
+<?import javafx.geometry.Insets?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="BorderPane"
          prefHeight="400.0" prefWidth="600.0">
     <top>
         <VBox>
-            <StackPane style="-fx-padding: 10 10 0 10;">
-                <StackPane onMouseClicked="#onSponsor">
-                    <styleClass>
-                        <String fx:value="card-non-transparent" />
-                        <String fx:value="sponsor-pane" />
-                    </styleClass>
-                    <Label text="%sponsor.bmclapi" />
-                </StackPane>
-            </StackPane>
+            <HintPane style="-fx-padding: 10 10 0 10;" onMouseClicked="#onSponsor" text="%sponsor.bmclapi" styleClass="sponsor-pane">
+                <VBox.margin>
+                    <Insets top="10" right="10" left="10" />
+                </VBox.margin>
+            </HintPane>
         </VBox>
     </top>
     <center>

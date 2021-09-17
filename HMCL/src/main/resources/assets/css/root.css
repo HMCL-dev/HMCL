@@ -237,12 +237,7 @@
 }
 
 .sponsor-pane {
-    -fx-padding: 16;
     -fx-cursor: hand;
-}
-
-.sponsor-pane > .label {
-    -fx-wrap-text: true;
 }
 
 /*******************************************************************************
