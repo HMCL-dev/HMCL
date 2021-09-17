@@ -21,6 +21,7 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.setting.SambaException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.ui.AwtUtils;
@@ -61,6 +62,8 @@ public final class Launcher extends Application {
         try {
             try {
                 ConfigHolder.init();
+            } catch (SambaException ignored) {
+                Main.showWarningAndContinue(i18n("fatal.samba"));
             } catch (IOException e) {
                 LOG.log(Level.SEVERE, "Failed to load config", e);
                 Main.showErrorAndExit(i18n("fatal.config_loading_failure", Paths.get("").toAbsolutePath().normalize()));
