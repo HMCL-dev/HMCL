@@ -57,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
@@ -166,9 +167,13 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
             FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(file.getFile().getUrl()), dest.toFile());
             task.setName(file.getName());
             return task;
-        }).whenComplete(exception -> {
+        }).whenComplete(Schedulers.javafx(), exception -> {
             if (exception != null) {
-                Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                if (exception instanceof CancellationException) {
+                    Controllers.showToast(i18n("message.cancelled"));
+                } else {
+                    Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                }
             } else {
                 Controllers.showToast(i18n("install.success"));
             }
