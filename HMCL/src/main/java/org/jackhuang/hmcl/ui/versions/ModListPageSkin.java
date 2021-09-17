@@ -288,11 +288,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         @Override
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             if (empty) return;
+            content.setTitle(dataItem.getTitle());
             if (dataItem.getMod() != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA) {
-                content.setTitle(dataItem.getMod().getDisplayName());
-                content.getTags().setAll(dataItem.getTitle());
-            } else {
-                content.setTitle(dataItem.getTitle());
+                content.getTags().setAll(dataItem.getMod().getDisplayName());
             }
             content.setSubtitle(dataItem.getSubtitle());
             if (booleanProperty != null) {
