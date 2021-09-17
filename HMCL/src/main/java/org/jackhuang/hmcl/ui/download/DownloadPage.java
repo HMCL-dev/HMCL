@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.mod.curse.CurseModManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -113,37 +112,37 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
             AdvancedListBox sideBar = new AdvancedListBox()
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("game"));
-                        item.setLeftGraphic(wrap(SVG.gamepad(Theme.blackFillBinding(), 24, 24)));
+                        item.setLeftGraphic(wrap(SVG::gamepad));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(newGameTab));
                         item.setOnAction(e -> tab.getSelectionModel().select(newGameTab));
                     })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("mods"));
-                        item.setLeftGraphic(wrap(SVG.puzzle(Theme.blackFillBinding(), 24, 24)));
+                        item.setLeftGraphic(wrap(SVG::puzzle));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modTab));
                         item.setOnAction(e -> tab.getSelectionModel().select(modTab));
                     })
                     .addNavigationDrawerItem(settingsItem -> {
                         settingsItem.setTitle(i18n("modpack"));
-                        settingsItem.setLeftGraphic(wrap(SVG.pack(Theme.blackFillBinding(), 24, 24)));
+                        settingsItem.setLeftGraphic(wrap(SVG::pack));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modpackTab));
                         settingsItem.setOnAction(e -> tab.getSelectionModel().select(modpackTab));
                     })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("resourcepack"));
-                        item.setLeftGraphic(wrap(SVG.textureBox(Theme.blackFillBinding(), 24, 24)));
+                        item.setLeftGraphic(wrap(SVG::textureBox));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(resourcePackTab));
                         item.setOnAction(e -> tab.getSelectionModel().select(resourcePackTab));
                     })
 //                    .addNavigationDrawerItem(item -> {
 //                        item.setTitle(i18n("download.curseforge.customization"));
-//                        item.setLeftGraphic(wrap(SVG.script(Theme.blackFillBinding(), 24, 24)));
+//                        item.setLeftGraphic(wrap(SVG::script));
 //                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(customizationTab));
 //                        item.setOnAction(e -> tab.getSelectionModel().select(customizationTab));
 //                    })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("world"));
-                        item.setLeftGraphic(wrap(SVG.earth(Theme.blackFillBinding(), 24, 24)));
+                        item.setLeftGraphic(wrap(SVG::earth));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(worldTab));
                         item.setOnAction(e -> tab.getSelectionModel().select(worldTab));
                     });

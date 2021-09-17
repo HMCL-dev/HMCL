@@ -209,7 +209,7 @@ public class VersionPage extends Control implements DecoratorPage {
                 AdvancedListItem versionSettingsItem = new AdvancedListItem();
                 versionSettingsItem.getStyleClass().add("navigation-drawer-item");
                 versionSettingsItem.setTitle(i18n("settings.game"));
-                versionSettingsItem.setLeftGraphic(wrap(SVG.gearOutline(Theme.blackFillBinding(), 24, 24)));
+                versionSettingsItem.setLeftGraphic(wrap(SVG::gearOutline));
                 versionSettingsItem.setActionButtonVisible(false);
                 versionSettingsItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.versionSettingsTab));
                 versionSettingsItem.setOnAction(e -> control.tab.getSelectionModel().select(control.versionSettingsTab));
@@ -217,7 +217,7 @@ public class VersionPage extends Control implements DecoratorPage {
                 AdvancedListItem modListItem = new AdvancedListItem();
                 modListItem.getStyleClass().add("navigation-drawer-item");
                 modListItem.setTitle(i18n("mods.manage"));
-                modListItem.setLeftGraphic(wrap(SVG.puzzle(Theme.blackFillBinding(), 24, 24)));
+                modListItem.setLeftGraphic(wrap(SVG::puzzle));
                 modListItem.setActionButtonVisible(false);
                 modListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.modListTab));
                 modListItem.setOnAction(e -> control.tab.getSelectionModel().select(control.modListTab));
@@ -225,7 +225,7 @@ public class VersionPage extends Control implements DecoratorPage {
                 AdvancedListItem installerListItem = new AdvancedListItem();
                 installerListItem.getStyleClass().add("navigation-drawer-item");
                 installerListItem.setTitle(i18n("settings.tabs.installers"));
-                installerListItem.setLeftGraphic(wrap(SVG.cube(Theme.blackFillBinding(), 24, 24)));
+                installerListItem.setLeftGraphic(wrap(SVG::cube));
                 installerListItem.setActionButtonVisible(false);
                 installerListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.installerListTab));
                 installerListItem.setOnAction(e -> control.tab.getSelectionModel().select(control.installerListTab));
@@ -233,7 +233,7 @@ public class VersionPage extends Control implements DecoratorPage {
                 AdvancedListItem worldListItem = new AdvancedListItem();
                 worldListItem.getStyleClass().add("navigation-drawer-item");
                 worldListItem.setTitle(i18n("world.manage"));
-                worldListItem.setLeftGraphic(wrap(SVG.earth(Theme.blackFillBinding(), 24, 24)));
+                worldListItem.setLeftGraphic(wrap(SVG::earth));
                 worldListItem.setActionButtonVisible(false);
                 worldListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.worldListTab));
                 worldListItem.setOnAction(e -> control.tab.getSelectionModel().select(control.worldListTab));
@@ -273,41 +273,28 @@ public class VersionPage extends Control implements DecoratorPage {
                         new IconedMenuItem(null, i18n("version.manage.clean"), FXUtils.withJFXPopupClosing(control::clearJunkFiles, managementPopup)).addTooltip(i18n("version.manage.clean.tooltip"))
                 );
 
-                AdvancedListItem upgradeItem = new AdvancedListItem();
-                upgradeItem.getStyleClass().add("navigation-drawer-item");
-                upgradeItem.setTitle(i18n("version.update"));
-                upgradeItem.setLeftGraphic(wrap(SVG.update(Theme.blackFillBinding(), 24, 24)));
-                upgradeItem.setActionButtonVisible(false);
-                upgradeItem.visibleProperty().bind(control.currentVersionUpgradable);
-                upgradeItem.setOnAction(e -> control.updateGame());
-
-                AdvancedListItem testGameItem = new AdvancedListItem();
-                testGameItem.getStyleClass().add("navigation-drawer-item");
-                testGameItem.setTitle(i18n("version.launch.test"));
-                testGameItem.setLeftGraphic(wrap(SVG.rocketLaunchOutline(Theme.blackFillBinding(), 24, 24)));
-                testGameItem.setActionButtonVisible(false);
-                testGameItem.setOnAction(e -> control.testGame());
-
-                AdvancedListItem browseMenuItem = new AdvancedListItem();
-                browseMenuItem.getStyleClass().add("navigation-drawer-item");
-                browseMenuItem.setTitle(i18n("settings.game.exploration"));
-                browseMenuItem.setLeftGraphic(wrap(SVG.folderOutline(Theme.blackFillBinding(), 24, 24)));
-                browseMenuItem.setActionButtonVisible(false);
-                browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0));
-
-                AdvancedListItem managementItem = new AdvancedListItem();
-                managementItem.getStyleClass().add("navigation-drawer-item");
-                managementItem.setTitle(i18n("settings.game.management"));
-                managementItem.setLeftGraphic(wrap(SVG.wrenchOutline(Theme.blackFillBinding(), 24, 24)));
-                managementItem.setActionButtonVisible(false);
-                managementItem.setOnAction(e -> managementPopup.show(managementItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managementItem.getWidth(), 0));
-
-
                 AdvancedListBox toolbar = new AdvancedListBox()
-                        .add(upgradeItem)
-                        .add(testGameItem)
-                        .add(browseMenuItem)
-                        .add(managementItem);
+                        .addNavigationDrawerItem(upgradeItem -> {
+                            upgradeItem.setTitle(i18n("version.update"));
+                            upgradeItem.setLeftGraphic(wrap(SVG::update));
+                            upgradeItem.visibleProperty().bind(control.currentVersionUpgradable);
+                            upgradeItem.setOnAction(e -> control.updateGame());
+                        })
+                        .addNavigationDrawerItem(testGameItem -> {
+                            testGameItem.setTitle(i18n("version.launch.test"));
+                            testGameItem.setLeftGraphic(wrap(SVG::rocketLaunchOutline));
+                            testGameItem.setOnAction(e -> control.testGame());
+                        })
+                        .addNavigationDrawerItem(browseMenuItem -> {
+                            browseMenuItem.setTitle(i18n("settings.game.exploration"));
+                            browseMenuItem.setLeftGraphic(wrap(SVG::folderOutline));
+                            browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0));
+                        })
+                        .addNavigationDrawerItem(managementItem -> {
+                            managementItem.setTitle(i18n("settings.game.management"));
+                            managementItem.setLeftGraphic(wrap(SVG::wrenchOutline));
+                            managementItem.setOnAction(e -> managementPopup.show(managementItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managementItem.getWidth(), 0));
+                        });
                 toolbar.getStyleClass().add("advanced-list-box-clear-padding");
                 FXUtils.setLimitHeight(toolbar, 40 * 4 + 12 * 2);
                 left.setBottom(toolbar);
@@ -334,6 +321,10 @@ public class VersionPage extends Control implements DecoratorPage {
         stackPane.setPadding(new Insets(0, 10, 0, 0));
         stackPane.getChildren().setAll(node);
         return stackPane;
+    }
+
+    public static Node wrap(SVG.SVGIcon svg) {
+        return wrap(svg.createIcon(null, 20, 20));
     }
 
     public interface VersionLoadable {

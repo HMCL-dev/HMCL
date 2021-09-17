@@ -49,27 +49,27 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
             {
                 AdvancedListItem createRoomItem = new AdvancedListItem();
                 createRoomItem.setTitle(i18n("multiplayer.room.create"));
-                createRoomItem.setLeftGraphic(wrap(SVG.plusCircleOutline(null, 24, 24)));
+                createRoomItem.setLeftGraphic(wrap(SVG::plusCircleOutline));
                 createRoomItem.setOnAction(e -> FXUtils.openLink(""));
 
                 AdvancedListItem joinRoomItem = new AdvancedListItem();
                 joinRoomItem.setTitle(i18n("multiplayer.room.join"));
-                joinRoomItem.setLeftGraphic(wrap(SVG.accountArrowRightOutline(null, 24, 24)));
+                joinRoomItem.setLeftGraphic(wrap(SVG::accountArrowRightOutline));
                 joinRoomItem.setOnAction(e -> FXUtils.openLink(""));
 
                 AdvancedListItem copyLinkItem = new AdvancedListItem();
                 copyLinkItem.setTitle(i18n("multiplayer.room.copy_room_code"));
-                copyLinkItem.setLeftGraphic(wrap(SVG.accountArrowRightOutline(null, 24, 24)));
+                copyLinkItem.setLeftGraphic(wrap(SVG::accountArrowRightOutline));
                 copyLinkItem.setOnAction(e -> FXUtils.openLink(""));
 
                 AdvancedListItem quitItem = new AdvancedListItem();
                 quitItem.setTitle(i18n("multiplayer.room.quit"));
-                quitItem.setLeftGraphic(wrap(SVG.closeCircle(null, 24, 24)));
+                quitItem.setLeftGraphic(wrap(SVG::closeCircle));
                 quitItem.setOnAction(e -> FXUtils.openLink(""));
 
                 AdvancedListItem closeRoomItem = new AdvancedListItem();
                 closeRoomItem.setTitle(i18n("multiplayer.room.quit"));
-                closeRoomItem.setLeftGraphic(wrap(SVG.closeCircle(null, 24, 24)));
+                closeRoomItem.setLeftGraphic(wrap(SVG::closeCircle));
                 closeRoomItem.setOnAction(e -> FXUtils.openLink(""));
 
                 FXUtils.onChangeAndOperate(getSkinnable().multiplayerStateProperty(), state -> {
