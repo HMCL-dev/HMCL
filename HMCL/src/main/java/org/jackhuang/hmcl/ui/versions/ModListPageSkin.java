@@ -114,6 +114,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         label.prefWidthProperty().bind(pane.widthProperty().add(-100));
 
         FXUtils.onChangeAndOperate(skinnable.moddedProperty(), modded -> {
+
             if (modded) pane.getChildren().setAll(root);
             else pane.getChildren().setAll(label);
         });
@@ -281,7 +282,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
             container.getChildren().setAll(checkBox, content, revealButton, infoButton);
 
-            StackPane.setMargin(container, new Insets(10, 16, 10, 16));
+            StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
         }
 
