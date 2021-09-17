@@ -77,7 +77,7 @@
 }
 
 .rippler-container {
-    -jfx-rippler-fill: derive(-fx-base-color, 100%);
+    -jfx-rippler-fill: #a2a2a2;
 }
 
 .rippler-container:selected .label {
