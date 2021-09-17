@@ -175,7 +175,7 @@ processResources {
             def bssFile = new File(this.projectDir, "build/compiled-resources/" + resource[0..-4] + "bss")
             bssFile.parentFile.mkdirs()
             javaexec {
-                main = "com.sun.javafx.css.parser.Css2Bin"
+                mainClass = "com.sun.javafx.css.parser.Css2Bin"
                 args = [cssFile, bssFile]
             }
         }
