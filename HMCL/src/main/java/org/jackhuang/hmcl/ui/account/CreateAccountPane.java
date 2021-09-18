@@ -276,7 +276,9 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             birthLink.setOnAction(e -> FXUtils.openLink("https://support.microsoft.com/zh-cn/account-billing/如何更改-microsoft-帐户上的出生日期-837badbc-999e-54d2-2617-d19206b9540a"));
             JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
             profileLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/editprof.aspx"));
-            box.getChildren().setAll(profileLink, birthLink);
+            JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
+            purchaseLink.setOnAction(e -> FXUtils.openLink("https://www.minecraft.net/zh-hans/store/minecraft-java-edition"));
+            box.getChildren().setAll(profileLink, birthLink, purchaseLink);
             GridPane.setColumnSpan(box, 2);
 
             vbox.getChildren().setAll(hintPane, box);
@@ -415,17 +417,28 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             if (factory instanceof YggdrasilAccountFactory) {
                 HBox box = new HBox();
+                GridPane.setColumnSpan(box, 2);
                 JFXHyperlink migrationLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration"));
                 migrationLink.setOnAction(e -> FXUtils.openLink("https://help.minecraft.net/hc/en-us/articles/360050865492-JAVA-Account-Migration-FAQ"));
-                GridPane.setColumnSpan(box, 2);
-                box.getChildren().setAll(migrationLink);
 
+                JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
+                purchaseLink.setOnAction(e -> FXUtils.openLink("https://www.minecraft.net/zh-hans/store/minecraft-java-edition"));
+
+                box.getChildren().setAll(migrationLink, purchaseLink);
                 add(box, 0, rowIndex);
 
                 rowIndex++;
             }
 
             if (factory instanceof OfflineAccountFactory) {
+                JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
+                purchaseLink.setOnAction(e -> FXUtils.openLink("https://www.minecraft.net/zh-hans/store/minecraft-java-edition"));
+                HBox linkPane = new HBox(purchaseLink);
+                GridPane.setColumnSpan(linkPane, 2);
+                add(linkPane, 0, rowIndex);
+
+                rowIndex++;
+
                 HBox box = new HBox();
                 MenuUpDownButton advancedButton = new MenuUpDownButton();
                 box.getChildren().setAll(advancedButton);
