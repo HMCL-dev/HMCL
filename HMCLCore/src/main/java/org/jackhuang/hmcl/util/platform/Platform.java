@@ -1,7 +1,5 @@
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.util.ToStringBuilder;
-
 import java.util.Objects;
 
 public final class Platform {
