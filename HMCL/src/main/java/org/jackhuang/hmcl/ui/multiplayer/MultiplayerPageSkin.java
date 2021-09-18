@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.multiplayer;
 
 import de.javawi.jstun.test.DiscoveryInfo;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -25,6 +26,8 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
@@ -48,29 +51,29 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
             VBox roomPane = new VBox();
             {
                 AdvancedListItem createRoomItem = new AdvancedListItem();
-                createRoomItem.setTitle(i18n("multiplayer.room.create"));
+                createRoomItem.setTitle(i18n("multiplayer.session.create"));
                 createRoomItem.setLeftGraphic(wrap(SVG::plusCircleOutline));
-                createRoomItem.setOnAction(e -> FXUtils.openLink(""));
+                createRoomItem.setOnAction(e -> control.createRoom());
 
                 AdvancedListItem joinRoomItem = new AdvancedListItem();
-                joinRoomItem.setTitle(i18n("multiplayer.room.join"));
+                joinRoomItem.setTitle(i18n("multiplayer.session.join"));
                 joinRoomItem.setLeftGraphic(wrap(SVG::accountArrowRightOutline));
-                joinRoomItem.setOnAction(e -> FXUtils.openLink(""));
+                joinRoomItem.setOnAction(e -> control.joinRoom());
 
                 AdvancedListItem copyLinkItem = new AdvancedListItem();
-                copyLinkItem.setTitle(i18n("multiplayer.room.copy_room_code"));
+                copyLinkItem.setTitle(i18n("multiplayer.session.copy_room_code"));
                 copyLinkItem.setLeftGraphic(wrap(SVG::accountArrowRightOutline));
-                copyLinkItem.setOnAction(e -> FXUtils.openLink(""));
+                copyLinkItem.setOnAction(e -> control.copyInvitationCode());
 
                 AdvancedListItem quitItem = new AdvancedListItem();
-                quitItem.setTitle(i18n("multiplayer.room.quit"));
+                quitItem.setTitle(i18n("multiplayer.session.quit"));
                 quitItem.setLeftGraphic(wrap(SVG::closeCircle));
-                quitItem.setOnAction(e -> FXUtils.openLink(""));
+                quitItem.setOnAction(e -> control.quitRoom());
 
                 AdvancedListItem closeRoomItem = new AdvancedListItem();
-                closeRoomItem.setTitle(i18n("multiplayer.room.quit"));
+                closeRoomItem.setTitle(i18n("multiplayer.session.close"));
                 closeRoomItem.setLeftGraphic(wrap(SVG::closeCircle));
-                closeRoomItem.setOnAction(e -> FXUtils.openLink(""));
+                closeRoomItem.setOnAction(e -> control.closeRoom());
 
                 FXUtils.onChangeAndOperate(getSkinnable().multiplayerStateProperty(), state -> {
                     if (state == MultiplayerManager.State.DISCONNECTED) {
@@ -86,13 +89,13 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
             }
 
             AdvancedListBox sideBar = new AdvancedListBox()
-                    .startCategory("multiplayer.room")
+                    .startCategory("multiplayer.session")
                     .add(roomPane)
                     .startCategory("help")
                     .addNavigationDrawerItem(settingsItem -> {
                         settingsItem.setTitle(i18n("help"));
-                        settingsItem.setLeftGraphic(wrap(SVG.gamepad(null, 20, 20)));
-                        settingsItem.setOnAction(e -> FXUtils.openLink(""));
+                        settingsItem.setLeftGraphic(wrap(SVG::gamepad));
+                        settingsItem.setOnAction(e -> FXUtils.openLink("https://hmcl.huangyuhui.net/help/launcher/multiplayer.html"));
                     });
             FXUtils.setLimitWidth(sideBar, 200);
             root.setLeft(sideBar);
@@ -108,8 +111,45 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
 
             ComponentList roomPane = new ComponentList();
             {
-                VBox pane = new VBox();
+                TransitionPane transitionPane = new TransitionPane();
 
+                VBox disconnectedPane = new VBox(8);
+                {
+                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+                    hintPane.setText(i18n("multiplayer.state.disconnected.hint"));
+
+                    Label label = new Label(i18n("multiplayer.state.disconnected"));
+
+                    disconnectedPane.getChildren().setAll(hintPane, label);
+                }
+
+                VBox masterPane = new VBox();
+                {
+                    Label label = new Label(i18n("multiplayer.state.master"));
+                    label.textProperty().bind(Bindings.createStringBinding(() ->
+                            i18n("multiplayer.state.master", control.getSession().getName(), control.getPort()),
+                            control.portProperty(), control.sessionProperty()));
+                    masterPane.getChildren().setAll(label);
+                }
+
+                StackPane slavePane = new StackPane();
+                {
+                    Label label = new Label();
+                    label.textProperty().bind(Bindings.createStringBinding(() ->
+                            i18n("multiplayer.state.slave", control.getSession().getName()),
+                            control.sessionProperty()));
+                    slavePane.getChildren().setAll(label);
+                }
+
+                FXUtils.onChangeAndOperate(getSkinnable().multiplayerStateProperty(), state -> {
+                    if (state == MultiplayerManager.State.DISCONNECTED) {
+                        transitionPane.setContent(disconnectedPane, ContainerAnimations.NONE.getAnimationProducer());
+                    } else if (state == MultiplayerManager.State.MASTER) {
+                        transitionPane.setContent(masterPane, ContainerAnimations.NONE.getAnimationProducer());
+                    } else if (state == MultiplayerManager.State.SLAVE) {
+                        transitionPane.setContent(slavePane, ContainerAnimations.NONE.getAnimationProducer());
+                    }
+                });
             }
 
             ComponentList natDetectionPane = new ComponentList();

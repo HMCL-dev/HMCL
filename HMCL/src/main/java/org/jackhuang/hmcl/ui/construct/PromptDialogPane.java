@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,10 +65,14 @@ public class PromptDialogPane extends StackPane {
         List<BooleanBinding> bindings = new ArrayList<>();
         for (Builder.Question<?> question : builder.questions) {
             if (question instanceof Builder.StringQuestion) {
+                Builder.StringQuestion stringQuestion = (Builder.StringQuestion) question;
                 JFXTextField textField = new JFXTextField();
-                textField.textProperty().addListener((a, b, newValue) -> ((Builder.StringQuestion) question).value = textField.getText());
-                textField.setText(((Builder.StringQuestion) question).value);
+                textField.textProperty().addListener((a, b, newValue) -> stringQuestion.value = textField.getText());
+                textField.setText(stringQuestion.value);
                 textField.setValidators(((Builder.StringQuestion) question).validators.toArray(new ValidatorBase[0]));
+                if (stringQuestion.promptText != null) {
+                    textField.setPromptText(stringQuestion.promptText);
+                }
                 bindings.add(Bindings.createBooleanBinding(textField::validate, textField.textProperty()));
 
                 if (StringUtils.isNotBlank(question.question)) {
@@ -96,6 +101,10 @@ public class PromptDialogPane extends StackPane {
                     vbox.getChildren().add(new Label(question.question));
                 }
                 vbox.getChildren().add(hBox);
+            } else if (question instanceof Builder.HintQuestion) {
+                HintPane pane = new HintPane();
+                pane.setText(question.question);
+                vbox.getChildren().add(pane);
             }
         }
 
@@ -109,12 +118,16 @@ public class PromptDialogPane extends StackPane {
             acceptPane.showSpinner();
 
             builder.callback.call(builder.questions, () -> {
-                acceptPane.hideSpinner();
                 future.complete(builder.questions);
-                fireEvent(new DialogCloseEvent());
+                runInFX(() -> {
+                    acceptPane.hideSpinner();
+                    fireEvent(new DialogCloseEvent());
+                });
             }, msg -> {
-                acceptPane.hideSpinner();
-                lblCreationWarning.setText(msg);
+                runInFX(() -> {
+                    acceptPane.hideSpinner();
+                    lblCreationWarning.setText(msg);
+                });
             });
         });
 
@@ -153,13 +166,25 @@ public class PromptDialogPane extends StackPane {
             }
         }
 
+        public static class HintQuestion extends Question<Void> {
+            public HintQuestion(String hint) {
+                super(hint);
+            }
+        }
+
         public static class StringQuestion extends Question<String> {
             protected final List<ValidatorBase> validators;
+            protected String promptText;
 
             public StringQuestion(String question, String defaultValue, ValidatorBase... validators) {
                 super(question);
                 this.value = defaultValue;
                 this.validators = Arrays.asList(validators);
+            }
+
+            public StringQuestion setPromptText(String promptText) {
+                this.promptText = promptText;
+                return this;
             }
         }
 
