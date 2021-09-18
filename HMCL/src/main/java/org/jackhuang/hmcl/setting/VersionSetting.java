@@ -269,6 +269,24 @@ public final class VersionSetting implements Cloneable {
         preLaunchCommandProperty.set(preLaunchCommand);
     }
 
+    private final StringProperty postExitCommand = new SimpleStringProperty(this, "postExitCommand", "");
+
+    public StringProperty postExitCommandProperty() {
+        return postExitCommand;
+    }
+
+    /**
+     * The command that will be executed after game exits.
+     * Operating system relevant.
+     */
+    public String getPostExitCommand() {
+        return postExitCommand.get();
+    }
+
+    public void setPostExitCommand(String postExitCommand) {
+        this.postExitCommand.set(postExitCommand);
+    }
+
     // options
 
     private final StringProperty javaArgsProperty = new SimpleStringProperty(this, "javaArgs", "");
@@ -602,6 +620,7 @@ public final class VersionSetting implements Cloneable {
         minMemoryProperty.addListener(listener);
         autoMemory.addListener(listener);
         preLaunchCommandProperty.addListener(listener);
+        postExitCommand.addListener(listener);
         javaArgsProperty.addListener(listener);
         minecraftArgsProperty.addListener(listener);
         noJVMArgsProperty.addListener(listener);
@@ -636,6 +655,7 @@ public final class VersionSetting implements Cloneable {
         versionSetting.setMinMemory(getMinMemory());
         versionSetting.setAutoMemory(isAutoMemory());
         versionSetting.setPreLaunchCommand(getPreLaunchCommand());
+        versionSetting.setPostExitCommand(getPostExitCommand());
         versionSetting.setJavaArgs(getJavaArgs());
         versionSetting.setMinecraftArgs(getMinecraftArgs());
         versionSetting.setNoJVMArgs(isNoJVMArgs());
@@ -673,6 +693,7 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("height", src.getHeight());
             obj.addProperty("javaDir", src.getJavaDir());
             obj.addProperty("precalledCommand", src.getPreLaunchCommand());
+            obj.addProperty("postExitCommand", src.getPostExitCommand());
             obj.addProperty("serverIp", src.getServerIp());
             obj.addProperty("java", src.getJava());
             obj.addProperty("wrapper", src.getWrapper());

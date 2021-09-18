@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.launch;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.Argument;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.GameRepository;
@@ -374,16 +375,9 @@ public class DefaultLauncher extends Launcher {
         File runDirectory = repository.getRunDirectory(version.getId());
 
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-            String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
-            String preLaunchCommand = options.getPreLaunchCommand()
-                    .replace("$INST_NAME", versionName)
-                    .replace("$INST_ID", versionName)
-                    .replace("$INST_DIR", repository.getVersionRoot(version.getId()).getAbsolutePath())
-                    .replace("$INST_MC_DIR", repository.getRunDirectory(version.getId()).getAbsolutePath())
-                    .replace("$INST_JAVA", options.getJava().getBinary().toString());
-
-            new ProcessBuilder(StringUtils.tokenize(preLaunchCommand))
-                    .directory(runDirectory).start().waitFor();
+            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand())).directory(runDirectory);
+            builder.environment().putAll(getEnvVars());
+            builder.start().waitFor();
         }
 
         Process process;
@@ -394,6 +388,7 @@ public class DefaultLauncher extends Launcher {
             }
             String appdata = options.getGameDir().getAbsoluteFile().getParent();
             if (appdata != null) builder.environment().put("APPDATA", appdata);
+            builder.environment().putAll(getEnvVars());
             process = builder.start();
         } catch (IOException e) {
             throw new ProcessCreationException(e);
@@ -403,6 +398,31 @@ public class DefaultLauncher extends Launcher {
         if (listener != null)
             startMonitors(p, listener, daemon);
         return p;
+    }
+
+    private Map<String, String> getEnvVars() {
+        String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
+        Map<String, String> env = new HashMap<>();
+        env.put("INST_NAME", versionName);
+        env.put("INST_ID", versionName);
+        env.put("INST_DIR", repository.getVersionRoot(version.getId()).getAbsolutePath());
+        env.put("INST_MC_DIR",  repository.getRunDirectory(version.getId()).getAbsolutePath());
+        env.put("INST_JAVA", options.getJava().getBinary().toString());
+
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
+        if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
+            env.put("INST_FORGE", "1");
+        }
+        if (analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER)) {
+            env.put("INST_LITELOADER", "1");
+        }
+        if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC)) {
+            env.put("INST_FABRIC", "1");
+        }
+        if (analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE)) {
+            env.put("INST_OPTIFINE", "1");
+        }
+        return env;
     }
 
     @Override
@@ -432,12 +452,20 @@ public class DefaultLauncher extends Launcher {
                 writer.write("@echo off");
                 writer.newLine();
                 writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
+                for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
+                    writer.write("set " + entry.getKey() + "=" + entry.getValue());
+                    writer.newLine();
+                }
                 writer.newLine();
                 writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
                 writer.newLine();
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX || OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
                 writer.write("#!/usr/bin/env bash");
                 writer.newLine();
+                for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
+                    writer.write("export " + entry.getKey() + "=" + entry.getValue());
+                    writer.newLine();
+                }
                 writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
                 writer.newLine();
             }
@@ -446,6 +474,16 @@ public class DefaultLauncher extends Launcher {
                 writer.newLine();
             }
             writer.write(generateCommandLine(nativeFolder).toString());
+            writer.newLine();
+            if (StringUtils.isNotBlank(options.getPostExitCommand())) {
+                writer.write(options.getPostExitCommand());
+                writer.newLine();
+            }
+
+            if (isWindows) {
+                writer.write("pause");
+                writer.newLine();
+            }
         }
         if (!scriptFile.setExecutable(true))
             throw new PermissionException();
