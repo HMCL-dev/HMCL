@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import com.jfoenix.controls.JFXScrollPane;
 import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
@@ -169,9 +170,9 @@ public class AboutPage extends StackPane {
         );
 
 
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setContent(content);
+        ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
+        JFXScrollPane.smoothScrolling(scrollPane);
         getChildren().setAll(scrollPane);
     }
 }
