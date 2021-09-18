@@ -28,7 +28,10 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -36,19 +39,22 @@ import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 /**
  * Cato Management.
  */
 public final class MultiplayerManager {
-    private static final String CATO_DOWNLOAD_URL = "https://hmcl.huangyuhui.net/maven/";
+    private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/";
     private static final String CATO_VERSION = "2021-09-01";
-    private static final Artifact CATO_ARTIFACT = new Artifact("cato", "cato", CATO_VERSION);
+    private static final Artifact CATO_ARTIFACT = new Artifact("cato", "cato", CATO_VERSION,
+            OperatingSystem.CURRENT_OS.getCheckedName() + "-" + Architecture.CURRENT.name().toLowerCase(Locale.ROOT),
+            OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "exe" : null);
 
     private MultiplayerManager() {
     }
@@ -57,11 +63,17 @@ public final class MultiplayerManager {
         return new FileDownloadTask(
                 NetworkUtils.toURL(CATO_DOWNLOAD_URL + CATO_ARTIFACT.getPath()),
                 getCatoExecutable().toFile()
-        );
+        ).thenRunAsync(() -> {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                Set<PosixFilePermission> perm = Files.getPosixFilePermissions(getCatoExecutable());
+                perm.add(PosixFilePermission.OWNER_EXECUTE);
+                Files.setPosixFilePermissions(getCatoExecutable(), perm);
+            }
+        });
     }
 
     public static Path getCatoExecutable() {
-        return CATO_ARTIFACT.getPath(Metadata.HMCL_DIRECTORY);
+        return CATO_ARTIFACT.getPath(Metadata.HMCL_DIRECTORY.resolve("libraries"));
     }
 
     public static CatoSession joinSession(String sessionName, String peer, int remotePort, int localPort) throws IOException {
@@ -69,14 +81,12 @@ public final class MultiplayerManager {
         if (!Files.isRegularFile(exe)) {
             throw new IllegalStateException("Cato file not found");
         }
-        String[] commands = new String[]{exe.toString(), "--token", "new", "--id", peer, "--from", String.format("127.0.0.1:%d", remotePort), "--to", String.format("127.0.0.1:%d", localPort)};
+        String[] commands = new String[]{exe.toString(), "--token", "new", "--peer", peer, "--from", String.format("127.0.0.1:%d", localPort), "--to", String.format("127.0.0.1:%d", remotePort)};
         Process process = new ProcessBuilder()
                 .command(commands)
-                .inheritIO()
                 .start();
-        CatoSession catoSession = new CatoSession(sessionName, process, Arrays.asList(commands));
 
-        return catoSession;
+        return new CatoSession(sessionName, process, Arrays.asList(commands));
     }
 
     public static CatoSession createSession(String sessionName) throws IOException {
@@ -87,11 +97,9 @@ public final class MultiplayerManager {
         String[] commands = new String[]{exe.toString(), "--token", "new"};
         Process process = new ProcessBuilder()
                 .command(commands)
-                .inheritIO()
                 .start();
-        CatoSession catoSession = new CatoSession(sessionName, process, Arrays.asList(commands));
 
-        return catoSession;
+        return new CatoSession(sessionName, process, Arrays.asList(commands));
     }
 
     public static Invitation parseInvitationCode(String invitationCode) throws JsonParseException {
@@ -115,13 +123,16 @@ public final class MultiplayerManager {
         CatoSession(String name, Process process, List<String> commands) {
             super(process, commands);
 
+            LOG.info("Started cato with command: " + new CommandBuilder().addAll(commands).toString());
+
             this.name = name;
             addRelatedThread(Lang.thread(this::waitFor, "CatoExitWaiter", true));
-            addRelatedThread(Lang.thread(new StreamPump(process.getInputStream(), it -> {
+            addRelatedThread(Lang.thread(new StreamPump(process.getErrorStream(), it -> {
                 if (id == null) {
+                    LOG.info("Cato: " + it);
                     Matcher matcher = TEMP_TOKEN_PATTERN.matcher(it);
                     if (matcher.find()) {
-                        id = matcher.group("id");
+                        id = "mix" + matcher.group("id");
                         onIdGenerated.fireEvent(new CatoIdEvent(this, id));
                     }
                 }

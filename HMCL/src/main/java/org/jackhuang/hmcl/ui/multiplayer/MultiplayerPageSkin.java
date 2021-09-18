@@ -45,7 +45,6 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
         super(control);
 
         BorderPane root = new BorderPane();
-        root.setPadding(new Insets(10));
         getChildren().setAll(root);
         {
             VBox roomPane = new VBox();
@@ -79,19 +78,17 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                     if (state == MultiplayerManager.State.DISCONNECTED) {
                         roomPane.getChildren().setAll(createRoomItem, joinRoomItem);
                     } else if (state == MultiplayerManager.State.MASTER) {
-                        roomPane.getChildren().setAll(copyLinkItem);
-                        roomPane.getChildren().setAll(closeRoomItem);
+                        roomPane.getChildren().setAll(copyLinkItem, closeRoomItem);
                     } else if (state == MultiplayerManager.State.SLAVE) {
-                        roomPane.getChildren().setAll(copyLinkItem);
-                        roomPane.getChildren().setAll(quitItem);
+                        roomPane.getChildren().setAll(copyLinkItem, quitItem);
                     }
                 });
             }
 
             AdvancedListBox sideBar = new AdvancedListBox()
-                    .startCategory("multiplayer.session")
+                    .startCategory(i18n("multiplayer.session"))
                     .add(roomPane)
-                    .startCategory("help")
+                    .startCategory(i18n("help"))
                     .addNavigationDrawerItem(settingsItem -> {
                         settingsItem.setTitle(i18n("help"));
                         settingsItem.setLeftGraphic(wrap(SVG::gamepad));
@@ -103,6 +100,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
 
         {
             VBox content = new VBox(16);
+            content.setPadding(new Insets(10));
             content.setFillWidth(true);
             ScrollPane scrollPane = new ScrollPane(content);
             scrollPane.setFitToWidth(true);
@@ -127,7 +125,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                 {
                     Label label = new Label(i18n("multiplayer.state.master"));
                     label.textProperty().bind(Bindings.createStringBinding(() ->
-                            i18n("multiplayer.state.master", control.getSession().getName(), control.getPort()),
+                            i18n("multiplayer.state.master", control.getSession() == null ? "" : control.getSession().getName(), control.getPort()),
                             control.portProperty(), control.sessionProperty()));
                     masterPane.getChildren().setAll(label);
                 }
@@ -136,7 +134,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                 {
                     Label label = new Label();
                     label.textProperty().bind(Bindings.createStringBinding(() ->
-                            i18n("multiplayer.state.slave", control.getSession().getName()),
+                            i18n("multiplayer.state.slave", control.getSession() == null ? "" : control.getSession().getName()),
                             control.sessionProperty()));
                     slavePane.getChildren().setAll(label);
                 }
@@ -182,7 +180,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
             }
 
             content.getChildren().setAll(
-                    ComponentList.createComponentListTitle(i18n("multiplayer.room")),
+                    ComponentList.createComponentListTitle(i18n("multiplayer.session")),
                     roomPane,
                     ComponentList.createComponentListTitle(i18n("multiplayer.nat")),
                     natDetectionPane

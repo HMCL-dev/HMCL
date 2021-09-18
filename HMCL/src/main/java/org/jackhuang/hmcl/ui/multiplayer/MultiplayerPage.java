@@ -22,6 +22,7 @@ import de.javawi.jstun.test.DiscoveryTest;
 import javafx.beans.property.*;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -33,15 +34,18 @@ import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 
+import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class MultiplayerPage extends Control implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("multiplayer"), -1));
 
-    private final ObjectProperty<MultiplayerManager.State> multiplayerState = new SimpleObjectProperty<>();
+    private final ObjectProperty<MultiplayerManager.State> multiplayerState = new SimpleObjectProperty<>(MultiplayerManager.State.DISCONNECTED);
     private final ReadOnlyObjectWrapper<DiscoveryInfo> natState = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyIntegerWrapper port = new ReadOnlyIntegerWrapper(-1);
     private final ReadOnlyObjectWrapper<MultiplayerManager.CatoSession> session = new ReadOnlyObjectWrapper<>();
@@ -111,10 +115,20 @@ public class MultiplayerPage extends Control implements DecoratorPage {
         if (!MultiplayerManager.getCatoExecutable().toFile().exists()) {
             setDisabled(true);
             TaskExecutor executor = MultiplayerManager.downloadCato()
-                    .thenRunAsync(Schedulers.javafx(), () -> {
+                    .whenComplete(Schedulers.javafx(), exception -> {
                         setDisabled(false);
-                    }).executor(false);
+                        if (exception != null) {
+                            if (exception instanceof CancellationException) {
+                                Controllers.showToast(i18n("message.cancelled"));
+                            } else {
+                                Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                            }
+                        } else {
+                            Controllers.showToast(i18n("multiplayer.download.success"));
+                        }
+                    }).executor();
             Controllers.taskDialog(executor, i18n("multiplayer.download"));
+            executor.start();
         } else {
             setDisabled(false);
         }
@@ -137,6 +151,7 @@ public class MultiplayerPage extends Control implements DecoratorPage {
             try {
                 initCatoSession(MultiplayerManager.createSession(((PromptDialogPane.Builder.StringQuestion) result.get(1)).getValue()));
             } catch (Exception e) {
+                LOG.log(Level.WARNING, "Failed to create session", e);
                 reject.accept(i18n("multiplayer.session.create.error"));
                 return;
             }
@@ -161,6 +176,7 @@ public class MultiplayerPage extends Control implements DecoratorPage {
             try {
                 invitation = MultiplayerManager.parseInvitationCode(invitationCode);
             } catch (Exception e) {
+                LOG.log(Level.WARNING, "Failed to join session", e);
                 reject.accept(i18n("multiplayer.session.join.invitation_code.error"));
                 return;
             }
