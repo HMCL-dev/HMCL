@@ -22,6 +22,7 @@ import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.control.Control;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SkinBase;
 import javafx.scene.control.ToggleGroup;
@@ -179,9 +180,13 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
             super();
 
             Profiles.registerVersionsListener(this::loadVersions);
+
+            setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
         }
 
         private void loadVersions(Profile profile) {
+            setLoading(true);
+            setFailedReason(null);
             HMCLGameRepository repository = profile.getRepository();
             toggleGroup = new ToggleGroup();
             WeakListenerHolder listenerHolder = new WeakListenerHolder();
@@ -197,6 +202,10 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
                     setLoading(false);
                     itemsProperty().setAll(children);
                     children.forEach(GameListItem::checkSelection);
+
+                    if (children.isEmpty()) {
+                        setFailedReason(i18n("version.empty.hint"));
+                    }
 
                     profile.selectedVersionProperty().addListener(listenerHolder.weak((a, b, newValue) -> {
                         FXUtils.checkFxUserThread();

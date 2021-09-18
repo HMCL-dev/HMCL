@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.ui;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.control.Control;
 
 public class ListPageBase<T> extends Control {
@@ -62,4 +64,24 @@ public class ListPageBase<T> extends Control {
     public void setFailedReason(String failedReason) {
         this.failedReason.set(failedReason);
     }
+
+    public final ObjectProperty<EventHandler<ActionEvent>> onActionProperty() {
+        return onAction;
+    }
+
+    public final void setOnAction(EventHandler<ActionEvent> value) {
+        onActionProperty().set(value);
+    }
+
+    public final EventHandler<ActionEvent> getOnAction() {
+        return onActionProperty().get();
+    }
+
+    private ObjectProperty<EventHandler<ActionEvent>> onAction = new SimpleObjectProperty<EventHandler<ActionEvent>>(this, "onAction") {
+        @Override
+        protected void invalidated() {
+            setEventHandler(ActionEvent.ACTION, get());
+        }
+    };
+
 }

@@ -228,7 +228,7 @@ public final class Versions {
     private static boolean checkVersionForLaunching(Profile profile, String id) {
         if (id == null || !profile.getRepository().isLoaded() || !profile.getRepository().hasVersion(id)) {
             Controllers.dialog(i18n("version.empty.launch"), i18n("launch.failed"), MessageDialogPane.MessageType.ERROR, () -> {
-                Controllers.navigate(Controllers.getGameListPage());
+                Controllers.navigate(Controllers.getDownloadPage());
             });
             return false;
         } else {
