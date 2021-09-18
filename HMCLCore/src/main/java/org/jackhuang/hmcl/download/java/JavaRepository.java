@@ -61,17 +61,17 @@ public final class JavaRepository {
     }
 
     public static Optional<String> getCurrentJavaPlatform() {
-        if (OperatingSystem.CURRENT == OperatingSystem.LINUX) {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
             if (Architecture.CURRENT == Architecture.X86) {
                 return Optional.of("linux-i386");
             } else if (Architecture.CURRENT == Architecture.X86_64) {
                 return Optional.of("linux");
             }
-        } else if (OperatingSystem.CURRENT == OperatingSystem.OSX) {
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
             if (Architecture.CURRENT == Architecture.X86_64) {
                 return Optional.of("mac-os");
             }
-        } else if (OperatingSystem.CURRENT == OperatingSystem.WINDOWS) {
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             if (Architecture.CURRENT == Architecture.X86) {
                 return Optional.of("windows-x86");
             } else if (Architecture.CURRENT == Architecture.X86_64) {

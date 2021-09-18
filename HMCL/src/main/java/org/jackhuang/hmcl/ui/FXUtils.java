@@ -348,7 +348,7 @@ public final class FXUtils {
 
         String path = file.getAbsolutePath();
 
-        switch (OperatingSystem.CURRENT) {
+        switch (OperatingSystem.CURRENT_OS) {
             case OSX:
                 try {
                     Runtime.getRuntime().exec(new String[]{"/usr/bin/open", path});
@@ -370,7 +370,7 @@ public final class FXUtils {
     }
 
     public static void showFileInExplorer(Path file) {
-        switch (OperatingSystem.CURRENT) {
+        switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
                 try {
                     Runtime.getRuntime().exec(new String[]{"explorer.exe", "/select,", file.toAbsolutePath().toString()});
@@ -405,7 +405,7 @@ public final class FXUtils {
 
         if (java.awt.Desktop.isDesktopSupported()) {
             thread(() -> {
-                if (OperatingSystem.CURRENT == OperatingSystem.LINUX) {
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
                     for (String browser : linuxBrowsers) {
                         try (final InputStream is = Runtime.getRuntime().exec(new String[]{"which", browser}).getInputStream()) {
                             if (is.read() != -1) {
@@ -420,7 +420,7 @@ public final class FXUtils {
                 try {
                     java.awt.Desktop.getDesktop().browse(new URI(link));
                 } catch (Throwable e) {
-                    if (OperatingSystem.CURRENT == OperatingSystem.OSX)
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
                         try {
                             Runtime.getRuntime().exec(new String[]{"/usr/bin/open", link});
                         } catch (IOException ex) {

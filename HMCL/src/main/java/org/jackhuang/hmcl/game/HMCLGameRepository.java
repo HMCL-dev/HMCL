@@ -382,7 +382,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (FORBIDDEN_VERSION_IDS.contains(id))
             return false;
 
-        if (OperatingSystem.CURRENT == OperatingSystem.WINDOWS &&
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS &&
                 FORBIDDEN_VERSION_IDS.contains(id.toLowerCase()))
             return false;
 
@@ -393,7 +393,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
      * Returns true if the given version id conflicts with an existing version.
      */
     public boolean versionIdConflicts(String id) {
-        if (OperatingSystem.CURRENT == OperatingSystem.WINDOWS) {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             // on Windows, filenames are case-insensitive
             for (String existingId : versions.keySet()) {
                 if (existingId.equalsIgnoreCase(id)) {

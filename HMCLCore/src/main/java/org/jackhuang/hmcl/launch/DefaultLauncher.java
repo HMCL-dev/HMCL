@@ -73,16 +73,16 @@ public class DefaultLauncher extends Launcher {
 
         switch (options.getProcessPriority()) {
             case HIGH:
-                if (OperatingSystem.CURRENT == OperatingSystem.WINDOWS) {
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     res.add("cmd", "/C", "start", "unused title", "/B", "/high");
-                } else if (OperatingSystem.CURRENT == OperatingSystem.LINUX || OperatingSystem.CURRENT == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "-5");
                 }
                 break;
             case ABOVE_NORMAL:
-                if (OperatingSystem.CURRENT == OperatingSystem.WINDOWS) {
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     res.add("cmd", "/C", "start", "unused title", "/B", "/abovenormal");
-                } else if (OperatingSystem.CURRENT == OperatingSystem.LINUX || OperatingSystem.CURRENT == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "-1");
                 }
                 break;
@@ -90,16 +90,16 @@ public class DefaultLauncher extends Launcher {
                 // do nothing
                 break;
             case BELOW_NORMAL:
-                if (OperatingSystem.CURRENT == OperatingSystem.WINDOWS) {
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     res.add("cmd", "/C", "start", "unused title", "/B", "/belownormal");
-                } else if (OperatingSystem.CURRENT == OperatingSystem.LINUX || OperatingSystem.CURRENT == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "1");
                 }
                 break;
             case LOW:
-                if (OperatingSystem.CURRENT == OperatingSystem.WINDOWS) {
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     res.add("cmd", "/C", "start", "unused title", "/B", "/low");
-                } else if (OperatingSystem.CURRENT == OperatingSystem.LINUX || OperatingSystem.CURRENT == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "5");
                 }
                 break;
@@ -119,12 +119,12 @@ public class DefaultLauncher extends Launcher {
 
             res.addDefault("-Dminecraft.client.jar=", repository.getVersionJar(version).toString());
 
-            if (OperatingSystem.CURRENT == OperatingSystem.OSX) {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                 res.addDefault("-Xdock:name=", "Minecraft " + version.getId());
                 res.addDefault("-Xdock:icon=", repository.getAssetObject(version.getId(), version.getAssetIndex().getId(), "icons/minecraft.icns").getAbsolutePath());
             }
 
-            if (OperatingSystem.CURRENT != OperatingSystem.WINDOWS)
+            if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
                 res.addDefault("-Duser.home=", options.getGameDir().getParent());
 
             // Using G1GC with its settings by default
@@ -407,7 +407,7 @@ public class DefaultLauncher extends Launcher {
 
     @Override
     public void makeLaunchScript(File scriptFile) throws IOException {
-        boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT;
+        boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
 
         File nativeFolder;
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
@@ -435,7 +435,7 @@ public class DefaultLauncher extends Launcher {
                 writer.newLine();
                 writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
                 writer.newLine();
-            } else if (OperatingSystem.CURRENT == OperatingSystem.OSX || OperatingSystem.CURRENT == OperatingSystem.LINUX) {
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX || OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
                 writer.write("#!/usr/bin/env bash");
                 writer.newLine();
                 writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());

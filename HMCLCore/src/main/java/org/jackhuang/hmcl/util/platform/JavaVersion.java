@@ -187,7 +187,7 @@ public final class JavaVersion {
             }
 
             if (platform == null) {
-                platform = Platform.getPlatform(OperatingSystem.CURRENT, is64Bit ? Architecture.X86_64 : Architecture.X86);
+                platform = Platform.getPlatform(OperatingSystem.CURRENT_OS, is64Bit ? Architecture.X86_64 : Architecture.X86);
             }
         }
 
@@ -199,7 +199,7 @@ public final class JavaVersion {
     }
 
     public static Path getExecutable(Path javaHome) {
-        if (OperatingSystem.CURRENT == OperatingSystem.WINDOWS) {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             return javaHome.resolve("bin").resolve("java.exe");
         } else {
             return javaHome.resolve("bin").resolve("java");
@@ -286,7 +286,7 @@ public final class JavaVersion {
 
     private static Stream<Path> searchPotentialJavaExecutables() throws IOException {
         List<Stream<Path>> javaExecutables = new ArrayList<>();
-        switch (OperatingSystem.CURRENT) {
+        switch (OperatingSystem.CURRENT_OS) {
 
             case WINDOWS:
                 javaExecutables.add(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\").stream().map(JavaVersion::getExecutable));

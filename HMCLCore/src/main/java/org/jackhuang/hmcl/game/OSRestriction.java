@@ -64,7 +64,7 @@ public final class OSRestriction {
     }
 
     public boolean allow() {
-        if (name != OperatingSystem.UNKNOWN && name != OperatingSystem.CURRENT)
+        if (name != OperatingSystem.UNKNOWN && name != OperatingSystem.CURRENT_OS)
             return false;
 
         if (version != null)

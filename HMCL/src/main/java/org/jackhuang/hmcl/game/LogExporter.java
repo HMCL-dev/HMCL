@@ -66,7 +66,7 @@ public final class LogExporter {
                 }
                 zipper.putTextFile(Logging.getLogs(), "hmcl.log");
                 zipper.putTextFile(logs, "minecraft.log");
-                zipper.putTextFile(launchScript, OperatingSystem.CURRENT == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
+                zipper.putTextFile(launchScript, OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
 
                 for (String id : versions) {
                     Path versionJson = baseDirectory.resolve("versions").resolve(id).resolve(id + ".json");

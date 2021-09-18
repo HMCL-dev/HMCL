@@ -4,7 +4,7 @@ import java.util.Objects;
 
 public final class Platform {
     public static final Platform UNKNOWN = new Platform(OperatingSystem.UNKNOWN, Architecture.UNKNOWN);
-    public static final Platform CURRENT = new Platform(OperatingSystem.CURRENT, Architecture.CURRENT);
+    public static final Platform CURRENT = new Platform(OperatingSystem.CURRENT_OS, Architecture.CURRENT);
 
     public static final Platform WINDOWS_X86_64 = new Platform(OperatingSystem.WINDOWS, Architecture.X86_64);
     public static final Platform OSX_X86_64 = new Platform(OperatingSystem.OSX, Architecture.X86_64);
