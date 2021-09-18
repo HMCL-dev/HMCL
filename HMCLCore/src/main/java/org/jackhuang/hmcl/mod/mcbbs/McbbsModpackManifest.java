@@ -434,7 +434,7 @@ public class McbbsModpackManifest implements Validation {
     }
 
     /**
-     * @param zip the CurseForge modpack file.
+     * @param zip the MCBBS modpack file.
      * @param encoding the modpack zip file encoding.
      * @throws IOException if the file is not a valid zip file.
      * @throws JsonParseException if the server-manifest.json is missing or malformed.
@@ -450,7 +450,7 @@ public class McbbsModpackManifest implements Validation {
             if (Files.exists(manifestJson)) {
                 return fromManifestFile(manifestJson, encoding);
             }
-            throw new IOException("`mcbbs.packmeta` or `manifest.json` cannot be found, " + zip + " is not a valid MCBBS modpack");
+            throw new IOException("`mcbbs.packmeta` or `manifest.json` cannot be found");
         }
     }
 }

@@ -55,7 +55,6 @@ public final class ModpackHelper {
         try {
             return McbbsModpackManifest.readManifest(file, charset);
         } catch (Exception ignored) {
-            ignored.printStackTrace();
             // ignore it, not a valid MCBBS modpack.
         }
 
