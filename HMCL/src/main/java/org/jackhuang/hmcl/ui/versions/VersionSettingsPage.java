@@ -80,7 +80,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final JFXTextField txtGameArgs;
     private final JFXTextField txtMetaspace;
     private final JFXTextField txtWrapper;
-    private final JFXTextField txtPrecallingCommand;
+    private final JFXTextField txtPreLaunchCommand;
+    private final JFXTextField txtPostExitCommand;
     private final JFXTextField txtServerIP;
     private final ComponentList componentList;
     private final ComponentList iconPickerItemWrapper;
@@ -385,15 +386,25 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             txtGameArgs.getStyleClass().add("fit-width");
             pane.addRow(0, new Label(i18n("settings.advanced.minecraft_arguments")), txtGameArgs);
 
-            txtPrecallingCommand = new JFXTextField();
-            txtPrecallingCommand.setPromptText(i18n("settings.advanced.precall_command.prompt"));
-            txtPrecallingCommand.getStyleClass().add("fit-width");
-            pane.addRow(1, new Label(i18n("settings.advanced.precall_command")), txtPrecallingCommand);
+            txtPreLaunchCommand = new JFXTextField();
+            txtPreLaunchCommand.setPromptText(i18n("settings.advanced.precall_command.prompt"));
+            txtPreLaunchCommand.getStyleClass().add("fit-width");
+            pane.addRow(1, new Label(i18n("settings.advanced.precall_command")), txtPreLaunchCommand);
 
             txtWrapper = new JFXTextField();
             txtWrapper.setPromptText(i18n("settings.advanced.wrapper_launcher.prompt"));
             txtWrapper.getStyleClass().add("fit-width");
             pane.addRow(2, new Label(i18n("settings.advanced.wrapper_launcher")), txtWrapper);
+
+            txtPostExitCommand = new JFXTextField();
+            txtPostExitCommand.setPromptText(i18n("settings.advanced.post_exit_command.prompt"));
+            txtPostExitCommand.getStyleClass().add("fit-width");
+            pane.addRow(3, new Label(i18n("settings.advanced.post_exit_command")), txtPostExitCommand);
+
+            HintPane hintPane = new HintPane();
+            hintPane.setText(i18n("settings.advanced.custom_commands.hint"));
+            GridPane.setColumnSpan(hintPane, 2);
+            pane.addRow(4, hintPane);
 
             customCommandsPane.getContent().setAll(pane);
         }
@@ -593,7 +604,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbindString(txtGameArgs, lastVersionSetting.minecraftArgsProperty());
             FXUtils.unbindString(txtMetaspace, lastVersionSetting.permSizeProperty());
             FXUtils.unbindString(txtWrapper, lastVersionSetting.wrapperProperty());
-            FXUtils.unbindString(txtPrecallingCommand, lastVersionSetting.preLaunchCommandProperty());
+            FXUtils.unbindString(txtPreLaunchCommand, lastVersionSetting.preLaunchCommandProperty());
+            FXUtils.unbindString(txtPostExitCommand, lastVersionSetting.postExitCommandProperty());
             FXUtils.unbindString(txtServerIP, lastVersionSetting.serverIpProperty());
             FXUtils.unbindBoolean(chkAutoAllocate, lastVersionSetting.autoMemoryProperty());
             FXUtils.unbindBoolean(chkFullscreen, lastVersionSetting.fullscreenProperty());
@@ -631,7 +643,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         FXUtils.bindString(txtGameArgs, versionSetting.minecraftArgsProperty());
         FXUtils.bindString(txtMetaspace, versionSetting.permSizeProperty());
         FXUtils.bindString(txtWrapper, versionSetting.wrapperProperty());
-        FXUtils.bindString(txtPrecallingCommand, versionSetting.preLaunchCommandProperty());
+        FXUtils.bindString(txtPreLaunchCommand, versionSetting.preLaunchCommandProperty());
         FXUtils.bindString(txtServerIP, versionSetting.serverIpProperty());
         FXUtils.bindBoolean(chkAutoAllocate, versionSetting.autoMemoryProperty());
         FXUtils.bindBoolean(chkFullscreen, versionSetting.fullscreenProperty());
