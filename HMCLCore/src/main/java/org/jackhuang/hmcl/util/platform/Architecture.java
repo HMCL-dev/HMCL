@@ -24,42 +24,55 @@ import static org.jackhuang.hmcl.util.platform.Bits.BIT_32;
 import static org.jackhuang.hmcl.util.platform.Bits.BIT_64;
 
 public enum Architecture {
-    X86("x86", BIT_32),
-    X86_64("x86-64", BIT_64),
-    IA32("IA-32", BIT_32),
-    IA64("IA-64", BIT_64),
+    X86(BIT_32, "x86"),
+    X86_64(BIT_64, "x86-64"),
+    IA32(BIT_32, "IA-32"),
+    IA64(BIT_64, "IA-64"),
     SPARC(BIT_32),
-    SPARCV9("SPARC V9", BIT_64),
+    SPARCV9(BIT_64, "SPARC V9"),
     ARM32(BIT_32),
     ARM64(BIT_64),
     MIPS(BIT_32),
     MIPS64(BIT_64),
-    MIPSEL("MIPSel", BIT_32),
-    MIPS64EL("MIPS64el", BIT_64),
-    PPC("PowerPC", BIT_32),
-    PPC64("PowerPC-64", BIT_64),
-    PPCLE("PowerPC (Little-Endian)", BIT_32),
-    PPC64LE("PowerPC-64 (Little-Endian)", BIT_64),
+    MIPSEL(BIT_32, "MIPSel"),
+    MIPS64EL(BIT_64, "MIPS64el"),
+    PPC(BIT_32, "PowerPC"),
+    PPC64(BIT_64, "PowerPC-64"),
+    PPCLE(BIT_32, "PowerPC (Little-Endian)"),
+    PPC64LE(BIT_64, "PowerPC-64 (Little-Endian)"),
     S390(BIT_32),
-    S390X("S390x", BIT_64),
-    RISCV("RISC-V", BIT_64),
-    UNKNOWN(Bits.UNKNOWN);
+    S390X(BIT_64, "S390x"),
+    RISCV(BIT_64, "RISC-V"),
+    UNKNOWN(Bits.UNKNOWN, "Unknown");
 
+    private final String checkedName;
     private final String displayName;
     private final Bits bits;
 
     Architecture(Bits bits) {
+        this.checkedName = this.toString().toLowerCase(Locale.ROOT);
         this.displayName = this.toString();
         this.bits = bits;
     }
 
-    Architecture(String displayName, Bits bits) {
+    Architecture(Bits bits, String displayName) {
+        this.checkedName = this.toString().toLowerCase(Locale.ROOT);
+        this.displayName = displayName;
+        this.bits = bits;
+    }
+
+    Architecture(Bits bits, String displayName, String identifier) {
+        this.checkedName = identifier;
         this.displayName = displayName;
         this.bits = bits;
     }
 
     public Bits getBits() {
         return bits;
+    }
+
+    public String getCheckedName() {
+        return checkedName;
     }
 
     public String getDisplayName() {

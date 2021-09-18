@@ -70,6 +70,6 @@ public final class Platform {
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this).append("os", os).append("arch", arch).toString();
+        return os.getCheckedName() + "-" + arch.getCheckedName();
     }
 }
