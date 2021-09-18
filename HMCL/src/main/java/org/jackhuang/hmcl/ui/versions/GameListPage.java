@@ -33,7 +33,6 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
@@ -124,13 +123,15 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
                     addProfileItem.getStyleClass().add("navigation-drawer-item");
                     addProfileItem.setTitle(i18n("profile.new"));
                     addProfileItem.setActionButtonVisible(false);
-                    addProfileItem.setLeftGraphic(VersionPage.wrap(SVG.plusCircleOutline(Theme.blackFillBinding(), 24, 24)));
+                    addProfileItem.setLeftGraphic(VersionPage.wrap(SVG::plusCircleOutline));
                     addProfileItem.setOnAction(e -> Controllers.navigate(new ProfilePage(null)));
 
                     ScrollPane pane = new ScrollPane();
+                    pane.setFitToWidth(true);
                     VBox wrapper = new VBox();
                     wrapper.getStyleClass().add("advanced-list-box-content");
                     VBox box = new VBox();
+                    box.setFillWidth(true);
                     Bindings.bindContent(box.getChildren(), profileListItems);
                     wrapper.getChildren().setAll(box, addProfileItem);
                     pane.setContent(wrapper);
@@ -142,21 +143,21 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
                     installModpackItem.getStyleClass().add("navigation-drawer-item");
                     installModpackItem.setTitle(i18n("install.modpack"));
                     installModpackItem.setActionButtonVisible(false);
-                    installModpackItem.setLeftGraphic(VersionPage.wrap(SVG.pack(Theme.blackFillBinding(), 24, 24)));
+                    installModpackItem.setLeftGraphic(VersionPage.wrap(SVG::pack));
                     installModpackItem.setOnAction(e -> Versions.importModpack());
 
                     AdvancedListItem refreshItem = new AdvancedListItem();
                     refreshItem.getStyleClass().add("navigation-drawer-item");
                     refreshItem.setTitle(i18n("button.refresh"));
                     refreshItem.setActionButtonVisible(false);
-                    refreshItem.setLeftGraphic(VersionPage.wrap(SVG.refresh(Theme.blackFillBinding(), 24, 24)));
+                    refreshItem.setLeftGraphic(VersionPage.wrap(SVG::refresh));
                     refreshItem.setOnAction(e -> gameList.refreshList());
 
                     AdvancedListItem globalManageItem = new AdvancedListItem();
                     globalManageItem.getStyleClass().add("navigation-drawer-item");
                     globalManageItem.setTitle(i18n("settings.type.global.manage"));
                     globalManageItem.setActionButtonVisible(false);
-                    globalManageItem.setLeftGraphic(VersionPage.wrap(SVG.gearOutline(Theme.blackFillBinding(), 24, 24)));
+                    globalManageItem.setLeftGraphic(VersionPage.wrap(SVG::gearOutline));
                     globalManageItem.setOnAction(e -> modifyGlobalGameSettings());
 
                     AdvancedListBox bottomLeftCornerList = new AdvancedListBox()

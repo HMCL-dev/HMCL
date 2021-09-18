@@ -1,4 +1,4 @@
-name: Check Translations
+name: Check Style
 
 on: [push, pull_request]
 

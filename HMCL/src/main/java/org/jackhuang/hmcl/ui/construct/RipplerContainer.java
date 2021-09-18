@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXRippler;
+import javafx.animation.Interpolator;
+import javafx.animation.Transition;
 import javafx.beans.DefaultProperty;
 import javafx.beans.InvalidationListener;
 import javafx.beans.NamedArg;
@@ -26,12 +28,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.css.CssMetaData;
-import javafx.css.PseudoClass;
-import javafx.css.SimpleStyleableObjectProperty;
-import javafx.css.Styleable;
-import javafx.css.StyleableObjectProperty;
-import javafx.css.StyleablePropertyFactory;
+import javafx.css.*;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.layout.Background;
@@ -41,6 +38,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.util.List;
@@ -104,6 +102,40 @@ public class RipplerContainer extends StackPane {
             rectangle.widthProperty().bind(widthProperty());
             rectangle.heightProperty().bind(heightProperty());
         }));
+
+        setOnMouseEntered(e -> {
+            new Transition() {
+                {
+                    setCycleCount(1);
+                    setCycleDuration(Duration.millis(200));
+                    setInterpolator(Interpolator.EASE_IN);
+                }
+
+                @Override
+                protected void interpolate(double frac) {
+                    interpolateBackground(frac);
+                }
+            }.play();
+        });
+
+        setOnMouseExited(e -> {
+            new Transition() {
+                {
+                    setCycleCount(1);
+                    setCycleDuration(Duration.millis(200));
+                    setInterpolator(Interpolator.EASE_OUT);
+                }
+
+                @Override
+                protected void interpolate(double frac) {
+                    interpolateBackground(1 - frac);
+                }
+            }.play();
+        });
+    }
+
+    private void interpolateBackground(double frac) {
+        setBackground(new Background(new BackgroundFill(Color.rgb(0, 0, 0, frac * 0.04), CornerRadii.EMPTY, Insets.EMPTY)));
     }
 
     protected void updateChildren() {

@@ -37,6 +37,10 @@ public class HintPane extends VBox {
     private final Text label = new Text();
     private final StringProperty text = new SimpleStringProperty(this, "text");
 
+    public HintPane() {
+        this(MessageDialogPane.MessageType.INFORMATION);
+    }
+
     public HintPane(MessageDialogPane.MessageType type) {
         setFillWidth(true);
         getStyleClass().add("hint");

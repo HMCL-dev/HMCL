@@ -17,10 +17,12 @@
  */
 package org.jackhuang.hmcl.ui.multiplayer;
 
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
@@ -29,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Base64;
 
 /**
  * Cato Management.
@@ -71,24 +74,66 @@ public final class MultiplayerManager {
         return managedProcess;
     }
 
-    public static ManagedProcess createRoom(String token, String peer, String localAddress) throws IOException {
+    public static ManagedProcess createRoom() throws IOException {
         Path exe = getCatoExecutable();
         if (!Files.isRegularFile(exe)) {
             throw new IllegalStateException("Cato file not found");
         }
-        String[] commands = new String[]{exe.toString(), "--peer", peer, "--from", localAddress};
+        String[] commands = new String[]{exe.toString(), "--token", "new"};
         Process process = new ProcessBuilder()
                 .command(commands)
                 .inheritIO()
                 .start();
         ManagedProcess managedProcess = new ManagedProcess(process, Arrays.asList(commands));
-        managedProcess.getProcess().getOutputStream().write(token.getBytes(StandardCharsets.UTF_8));
+//
+//        Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream()), it -> {
+//
+//        });
+//
+//        Thread exitWaiter = Lang.thread(() -> {
+//            int exitCode = process.waitFor();
+//            if (exitCode != 0) {
+//
+//            }
+//        })
+
+//        managedProcess.addRelatedThread(stdout);
+//        managedProcess.addRelatedThread(exitWaiter);
+
         return managedProcess;
+    }
+
+    public static String generateInvitationCode(String id, int port) {
+        String json = JsonUtils.GSON.toJson(new Invitation(id, port));
+        return new String(Base64.getEncoder().encode(json.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+    }
+
+    public static Invitation parseInvitationCode(String invitationCode) throws JsonParseException {
+        String json = new String(Base64.getDecoder().decode(invitationCode.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+        return JsonUtils.fromNonNullJson(json, Invitation.class);
     }
 
     enum State {
         DISCONNECTED,
         MASTER,
         SLAVE
+    }
+
+    public static class Invitation {
+        private final String id;
+        private final int port;
+
+        public Invitation(String id, int port) {
+            this.id = id;
+            this.port = port;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public int getPort() {
+            return port;
+        }
     }
 }

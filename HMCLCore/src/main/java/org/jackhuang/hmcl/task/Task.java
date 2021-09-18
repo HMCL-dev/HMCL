@@ -665,14 +665,14 @@ public abstract class Task<T> {
             @Override
             public void execute() throws Exception {
                 if (isDependentsSucceeded() != (Task.this.getException() == null))
-                    throw new AssertionError("When dependents succeeded, Task.exception must be nonnull.");
+                    throw new AssertionError("When whenComplete succeeded, Task.exception must be null.");
 
                 action.execute(Task.this.getException());
 
                 if (!isDependentsSucceeded()) {
                     setSignificance(TaskSignificance.MINOR);
                     if (Task.this.getException() == null)
-                        throw new CancellationException();
+                        throw new AssertionError("When failed, exception cannot be null");
                     else
                         throw Task.this.getException();
                 }

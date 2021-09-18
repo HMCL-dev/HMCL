@@ -18,13 +18,13 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
@@ -37,6 +37,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
@@ -153,24 +154,29 @@ public class InstallerItem extends Control {
             super(control);
 
             HBox hbox = new HBox();
-            getChildren().setAll(hbox);
-            JFXDepthManager.setDepth(hbox, 1);
-
-            hbox.getStyleClass().add("card");
+            hbox.getStyleClass().add("md-list-cell");
+            hbox.setPadding(new Insets(8));
+            RipplerContainer container = new RipplerContainer(hbox);
+            getChildren().setAll(container);
 
             hbox.setAlignment(Pos.CENTER_LEFT);
 
             if (control.imageUrl != null) {
-                hbox.getChildren().add(FXUtils.limitingSize(new ImageView(new Image(control.imageUrl, 32, 32, true, true)), 32, 32));
+                ImageView view = new ImageView(new Image(control.imageUrl, 32, 32, true, true));
+                Node node = FXUtils.limitingSize(view, 32, 32);
+                node.setMouseTransparent(true);
+                hbox.getChildren().add(node);
             }
 
             Label nameLabel = new Label();
+            nameLabel.setMouseTransparent(true);
             hbox.getChildren().add(nameLabel);
             nameLabel.setPrefWidth(80);
             nameLabel.textProperty().set(I18n.hasKey("install.installer." + control.id) ? i18n("install.installer." + control.id) : control.id);
             HBox.setMargin(nameLabel, new Insets(0, 4, 0, 4));
 
             Label label = new Label();
+            label.setMouseTransparent(true);
             hbox.getChildren().add(label);
             label.setMaxWidth(Double.MAX_VALUE);
             HBox.setHgrow(label, Priority.ALWAYS);
@@ -213,11 +219,11 @@ public class InstallerItem extends Control {
 
             FXUtils.onChangeAndOperate(arrowButton.visibleProperty(), clickable -> {
                 if (clickable) {
-                    hbox.onMouseClickedProperty().bind(control.action);
+                    container.onMouseClickedProperty().bind(control.action);
                     hbox.setCursor(Cursor.HAND);
                 } else {
-                    hbox.onMouseClickedProperty().unbind();
-                    hbox.onMouseClickedProperty().set(null);
+                    container.onMouseClickedProperty().unbind();
+                    container.onMouseClickedProperty().set(null);
                     hbox.setCursor(Cursor.DEFAULT);
                 }
             });

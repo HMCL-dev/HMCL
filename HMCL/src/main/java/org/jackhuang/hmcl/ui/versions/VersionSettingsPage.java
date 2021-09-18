@@ -376,13 +376,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         customCommandsPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
         {
             GridPane pane = new GridPane();
-            ColumnConstraints title = new ColumnConstraints();
-            ColumnConstraints value = new ColumnConstraints();
-            value.setFillWidth(true);
-            value.setHgrow(Priority.ALWAYS);
             pane.setHgap(16);
             pane.setVgap(8);
-            pane.getColumnConstraints().setAll(title, value);
+            pane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
 
             txtGameArgs = new JFXTextField();
             txtGameArgs.setPromptText(i18n("settings.advanced.minecraft_arguments.prompt"));

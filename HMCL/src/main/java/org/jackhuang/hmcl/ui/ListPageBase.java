@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ListProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Control;
@@ -28,6 +25,7 @@ import javafx.scene.control.Control;
 public class ListPageBase<T> extends Control {
     private final ListProperty<T> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
     private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading", false);
+    private final StringProperty failedReason = new SimpleStringProperty(this, "failed");
 
     public ObservableList<T> getItems() {
         return items.get();
@@ -51,5 +49,17 @@ public class ListPageBase<T> extends Control {
 
     public BooleanProperty loadingProperty() {
         return loading;
+    }
+
+    public String getFailedReason() {
+        return failedReason.get();
+    }
+
+    public StringProperty failedReasonProperty() {
+        return failedReason;
+    }
+
+    public void setFailedReason(String failedReason) {
+        this.failedReason.set(failedReason);
     }
 }

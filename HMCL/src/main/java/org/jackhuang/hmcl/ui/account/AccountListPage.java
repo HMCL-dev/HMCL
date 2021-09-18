@@ -45,11 +45,11 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
+import java.net.URI;
+
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
-
-import java.net.URI;
 
 public class AccountListPage extends ListPageBase<AccountListItem> implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("account.manage"), -1));
@@ -111,7 +111,7 @@ public class AccountListPage extends ListPageBase<AccountListItem> implements De
                         offlineItem.getStyleClass().add("navigation-drawer-item");
                         offlineItem.setActionButtonVisible(false);
                         offlineItem.setTitle(i18n("account.methods.offline"));
-                        offlineItem.setLeftGraphic(wrap(SVG.account(Theme.blackFillBinding(), 24, 24)));
+                        offlineItem.setLeftGraphic(wrap(SVG::account));
                         offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
                         boxMethods.getChildren().add(offlineItem);
 
@@ -119,7 +119,7 @@ public class AccountListPage extends ListPageBase<AccountListItem> implements De
                         mojangItem.getStyleClass().add("navigation-drawer-item");
                         mojangItem.setActionButtonVisible(false);
                         mojangItem.setTitle(i18n("account.methods.yggdrasil"));
-                        mojangItem.setLeftGraphic(wrap(SVG.mojang(Theme.blackFillBinding(), 24, 24)));
+                        mojangItem.setLeftGraphic(wrap(SVG::mojang));
                         mojangItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MOJANG)));
                         boxMethods.getChildren().add(mojangItem);
 
@@ -127,7 +127,7 @@ public class AccountListPage extends ListPageBase<AccountListItem> implements De
                         microsoftItem.getStyleClass().add("navigation-drawer-item");
                         microsoftItem.setActionButtonVisible(false);
                         microsoftItem.setTitle(i18n("account.methods.microsoft"));
-                        microsoftItem.setLeftGraphic(wrap(SVG.microsoft(Theme.blackFillBinding(), 24, 24)));
+                        microsoftItem.setLeftGraphic(wrap(SVG::microsoft));
                         microsoftItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MICROSOFT)));
                         boxMethods.getChildren().add(microsoftItem);
 
@@ -135,7 +135,7 @@ public class AccountListPage extends ListPageBase<AccountListItem> implements De
                         authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
                             AdvancedListItem item = new AdvancedListItem();
                             item.getStyleClass().add("navigation-drawer-item");
-                            item.setLeftGraphic(wrap(SVG.server(Theme.blackFillBinding(), 24, 24)));
+                            item.setLeftGraphic(wrap(SVG::server));
                             item.setOnAction(e -> Controllers.dialog(new CreateAccountPane(server)));
 
                             JFXButton btnRemove = new JFXButton();
@@ -171,7 +171,7 @@ public class AccountListPage extends ListPageBase<AccountListItem> implements De
                     addAuthServerItem.setTitle(i18n("account.injector.add"));
                     addAuthServerItem.setSubtitle(i18n("account.methods.authlib_injector"));
                     addAuthServerItem.setActionButtonVisible(false);
-                    addAuthServerItem.setLeftGraphic(wrap(SVG.plusCircleOutline(Theme.blackFillBinding(), 24, 24)));
+                    addAuthServerItem.setLeftGraphic(wrap(SVG::plusCircleOutline));
                     addAuthServerItem.setOnAction(e -> Controllers.dialog(new AddAuthlibInjectorServerPane()));
                     BorderPane.setMargin(addAuthServerItem, new Insets(0, 0, 12, 0));
                     left.setBottom(addAuthServerItem);
