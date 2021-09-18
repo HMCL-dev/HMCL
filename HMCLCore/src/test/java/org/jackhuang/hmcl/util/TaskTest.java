@@ -117,11 +117,10 @@ public class TaskTest {
                 Assume.assumeNoException(e);
             }
         });
-        System.out.println("Start");
         Assert.assertFalse("Task should fail because we have cancelled it", executor.test());
         Thread.sleep(3000);
-        Assert.assertNull("CancellationException should not be recorded.", executor.getException());
-        Assert.assertNull("CancellationException should not be recorded.", task.getException());
+        Assert.assertTrue("CancellationException should not be recorded.", executor.getException() instanceof CancellationException);
+        Assert.assertTrue("CancellationException should not be recorded.", task.getException() instanceof CancellationException);
         Assert.assertTrue("Thread.sleep cannot be interrupted", flag.get());
     }
 
