@@ -353,9 +353,9 @@ public class DefaultLauncher extends Launcher {
 
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        File nativeFolder = null;
+        File nativeFolder;
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            nativeFolder = repository.getNativeDirectory(version.getId());
+            nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
         } else {
             nativeFolder = new File(options.getNativesDir());
         }
@@ -409,9 +409,9 @@ public class DefaultLauncher extends Launcher {
     public void makeLaunchScript(File scriptFile) throws IOException {
         boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT;
 
-        File nativeFolder = null;
+        File nativeFolder;
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            nativeFolder = repository.getNativeDirectory(version.getId());
+            nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
         } else {
             nativeFolder = new File(options.getNativesDir());
         }

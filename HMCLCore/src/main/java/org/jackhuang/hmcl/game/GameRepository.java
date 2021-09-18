@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.io.File;
 import java.io.IOException;
@@ -115,6 +116,21 @@ public interface GameRepository extends VersionProvider {
     File getLibraryFile(Version version, Library lib);
 
     /**
+     * Get the directory that native libraries will be unzipped to by current platform.
+     *
+     * You'd better return a unique directory.
+     * Or if it returns a temporary directory, {@link org.jackhuang.hmcl.launch.Launcher#makeLaunchScript} will fail.
+     * If you do want to return a temporary directory, make {@link org.jackhuang.hmcl.launch.Launcher#makeLaunchScript}
+     * always fail({@code UnsupportedOperationException}) and not to use it.
+     *
+     * @param id version id
+     * @return the native directory
+     */
+    default File getNativeDirectory(String id) {
+        return getNativeDirectory(id, Platform.CURRENT);
+    }
+
+    /**
      * Get the directory that native libraries will be unzipped to.
      *
      * You'd better return a unique directory.
@@ -125,7 +141,7 @@ public interface GameRepository extends VersionProvider {
      * @param id version id
      * @return the native directory
      */
-    File getNativeDirectory(String id);
+    File getNativeDirectory(String id, Platform platform);
 
     /**
      * Get minecraft jar
