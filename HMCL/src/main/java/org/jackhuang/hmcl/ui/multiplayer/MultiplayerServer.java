@@ -29,7 +29,6 @@ import java.net.Socket;
 
 public class MultiplayerServer {
     private ServerSocket socket;
-    private Thread thread;
     private final int gamePort;
 
     public MultiplayerServer(int gamePort) {
@@ -59,8 +58,7 @@ public class MultiplayerServer {
                 Socket clientSocket = socket.accept();
                 Lang.thread(() -> handleClient(clientSocket), "MultiplayerServerClientThread", true);
             }
-        } catch (IOException e) {
-
+        } catch (IOException ignored) {
         }
     }
 
@@ -73,8 +71,7 @@ public class MultiplayerServer {
                 Request request = JsonUtils.fromNonNullJson(line, Request.class);
                 request.process(this, writer);
             }
-        } catch (IOException | JsonParseException e) {
-
+        } catch (IOException | JsonParseException ignored) {
         }
     }
 
