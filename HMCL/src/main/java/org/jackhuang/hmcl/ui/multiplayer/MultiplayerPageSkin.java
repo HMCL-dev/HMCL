@@ -80,7 +80,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                     } else if (state == MultiplayerManager.State.MASTER) {
                         roomPane.getChildren().setAll(copyLinkItem, closeRoomItem);
                     } else if (state == MultiplayerManager.State.SLAVE) {
-                        roomPane.getChildren().setAll(copyLinkItem, quitItem);
+                        roomPane.getChildren().setAll(quitItem);
                     }
                 });
             }
@@ -107,9 +107,13 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
             scrollPane.setFitToHeight(true);
             root.setCenter(scrollPane);
 
+            HintPane hint = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+            hint.setText(i18n("multiplayer.hint"));
+
             ComponentList roomPane = new ComponentList();
             {
                 TransitionPane transitionPane = new TransitionPane();
+                roomPane.getContent().setAll(transitionPane);
 
                 VBox disconnectedPane = new VBox(8);
                 {
@@ -121,7 +125,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                     disconnectedPane.getChildren().setAll(hintPane, label);
                 }
 
-                VBox masterPane = new VBox();
+                VBox masterPane = new VBox(8);
                 {
                     Label label = new Label(i18n("multiplayer.state.master"));
                     label.textProperty().bind(Bindings.createStringBinding(() ->
@@ -130,13 +134,16 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                     masterPane.getChildren().setAll(label);
                 }
 
-                StackPane slavePane = new StackPane();
+                VBox slavePane = new VBox(8);
                 {
+                    HintPane slaveHintPane = new HintPane();
+                    slaveHintPane.setText(i18n("multiplayer.state.slave.hint"));
+
                     Label label = new Label();
                     label.textProperty().bind(Bindings.createStringBinding(() ->
-                            i18n("multiplayer.state.slave", control.getSession() == null ? "" : control.getSession().getName()),
-                            control.sessionProperty()));
-                    slavePane.getChildren().setAll(label);
+                            i18n("multiplayer.state.slave", control.getSession() == null ? "" : control.getSession().getName(), control.getPort()),
+                            control.sessionProperty(), control.portProperty()));
+                    slavePane.getChildren().setAll(slaveHintPane, label);
                 }
 
                 FXUtils.onChangeAndOperate(getSkinnable().multiplayerStateProperty(), state -> {
@@ -180,6 +187,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
             }
 
             content.getChildren().setAll(
+                    hint,
                     ComponentList.createComponentListTitle(i18n("multiplayer.session")),
                     roomPane,
                     ComponentList.createComponentListTitle(i18n("multiplayer.nat")),

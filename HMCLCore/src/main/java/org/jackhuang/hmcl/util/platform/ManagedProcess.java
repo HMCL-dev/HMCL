@@ -101,9 +101,9 @@ public class ManagedProcess {
     public boolean isRunning() {
         try {
             process.exitValue();
-            return true;
-        } catch (IllegalThreadStateException e) {
             return false;
+        } catch (IllegalThreadStateException e) {
+            return true;
         }
     }
 

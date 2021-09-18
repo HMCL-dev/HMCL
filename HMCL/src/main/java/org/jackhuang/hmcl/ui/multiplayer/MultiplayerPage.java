@@ -196,6 +196,7 @@ public class MultiplayerPage extends Control implements DecoratorPage {
                 return;
             }
 
+            port.set(localPort);
             setMultiplayerState(MultiplayerManager.State.SLAVE);
             resolve.run();
         })

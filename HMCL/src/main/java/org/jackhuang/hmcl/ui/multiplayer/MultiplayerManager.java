@@ -86,7 +86,9 @@ public final class MultiplayerManager {
                 .command(commands)
                 .start();
 
-        return new CatoSession(sessionName, process, Arrays.asList(commands));
+        CatoSession session = new CatoSession(sessionName, process, Arrays.asList(commands));
+        session.addRelatedThread(Lang.thread(new LocalServerBroadcaster(localPort, session), "LocalServerBroadcaster", true));
+        return session;
     }
 
     public static CatoSession createSession(String sessionName) throws IOException {
