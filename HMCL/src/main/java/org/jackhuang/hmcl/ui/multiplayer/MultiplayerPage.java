@@ -148,15 +148,16 @@ public class MultiplayerPage extends Control implements DecoratorPage {
         }
 
         Controllers.prompt(new PromptDialogPane.Builder(i18n("multiplayer.session.create"), (result, resolve, reject) -> {
+            int port = Integer.parseInt(((PromptDialogPane.Builder.StringQuestion) result.get(2)).getValue());
             try {
-                initCatoSession(MultiplayerManager.createSession(((PromptDialogPane.Builder.StringQuestion) result.get(1)).getValue()));
+                initCatoSession(MultiplayerManager.createSession(((PromptDialogPane.Builder.StringQuestion) result.get(1)).getValue(), port));
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "Failed to create session", e);
                 reject.accept(i18n("multiplayer.session.create.error"));
                 return;
             }
 
-            port.set(Integer.parseInt(((PromptDialogPane.Builder.StringQuestion) result.get(2)).getValue()));
+            this.port.set(port);
             setMultiplayerState(MultiplayerManager.State.MASTER);
             resolve.run();
         })
