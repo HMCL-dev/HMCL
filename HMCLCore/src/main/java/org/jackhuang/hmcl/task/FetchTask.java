@@ -297,6 +297,7 @@ public abstract class FetchTask<T> extends Task<T> {
     }
 
     public static void setDownloadExecutorConcurrency(int concurrency) {
+        concurrency = Math.max(concurrency, 1);
         synchronized (Schedulers.class) {
             downloadExecutorConcurrency = concurrency;
             if (DOWNLOAD_EXECUTOR != null) {
