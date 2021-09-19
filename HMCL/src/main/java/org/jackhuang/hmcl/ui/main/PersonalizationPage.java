@@ -41,7 +41,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
-import java.util.Collections;
+import java.util.Arrays;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -86,17 +86,19 @@ public class PersonalizationPage extends StackPane {
         {
             StackPane componentList = new StackPane();
 
-            MultiFileItem<EnumBackgroundImage> backgroundItem = new MultiFileItem<>(true);
+            MultiFileItem<EnumBackgroundImage> backgroundItem = new MultiFileItem<>();
             backgroundItem.setTitle(i18n("launcher.background"));
-            backgroundItem.setChooserTitle(i18n("launcher.background.choose"));
             backgroundItem.setHasSubtitle(true);
-            backgroundItem.setCustomText(i18n("settings.custom"));
-            backgroundItem.setStyle("-fx-padding: 8 0 0 0");
 
-            backgroundItem.loadChildren(Collections.singletonList(
-                    backgroundItem.createChildren(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
-            ), EnumBackgroundImage.CUSTOM);
-            backgroundItem.customTextProperty().bindBidirectional(config().backgroundImageProperty());
+            backgroundItem.loadChildren(Arrays.asList(
+                    new MultiFileItem.Option<>(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT),
+                    new MultiFileItem.Option<>(i18n("launcher.background.classic"), EnumBackgroundImage.CLASSIC),
+                    new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumBackgroundImage.CUSTOM)
+                            .setChooserTitle(i18n("launcher.background.choose"))
+                            .bindBidirectional(config().backgroundImageProperty()),
+                    new MultiFileItem.StringOption<>(i18n("launcher.background.network"), EnumBackgroundImage.NETWORK)
+                            .bindBidirectional(config().backgroundImageUrlProperty())
+            ));
             backgroundItem.selectedDataProperty().bindBidirectional(config().backgroundImageTypeProperty());
             backgroundItem.subtitleProperty().bind(
                     new When(backgroundItem.selectedDataProperty().isEqualTo(EnumBackgroundImage.DEFAULT))
@@ -181,18 +183,9 @@ public class PersonalizationPage extends StackPane {
                         hBox.setSpacing(3);
 
                         FontComboBox cboFont = new FontComboBox(12);
-                        cboFont.valueProperty().bindBidirectional(config().fontFamilyProperty());
+                        cboFont.valueProperty().bindBidirectional(config().launcherFontFamilyProperty());
 
-                        JFXTextField txtFontSize = new JFXTextField();
-                        FXUtils.setLimitWidth(txtFontSize, 50);
-                        txtFontSize.textProperty().bindBidirectional(config().fontSizeProperty(),
-                                SafeStringConverter.fromFiniteDouble()
-                                        .restrict(it -> it > 0)
-                                        .fallbackTo(12.0)
-                                        .asPredicate(Validator.addTo(txtFontSize)));
-
-
-                        hBox.getChildren().setAll(cboFont, txtFontSize);
+                        hBox.getChildren().setAll(cboFont);
 
                         borderPane.setRight(hBox);
                     }
@@ -200,8 +193,8 @@ public class PersonalizationPage extends StackPane {
 
                 Label lblFontDisplay = new Label("Hello Minecraft! Launcher");
                 lblFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
-                        () -> Font.font(config().getFontFamily(), config().getFontSize()),
-                        config().fontFamilyProperty(), config().fontSizeProperty()));
+                        () -> Font.font(config().getLauncherFontFamily(), 12),
+                        config().launcherFontFamilyProperty()));
 
                 vbox.getChildren().add(lblFontDisplay);
 

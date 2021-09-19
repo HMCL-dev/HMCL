@@ -38,6 +38,8 @@ import org.jackhuang.hmcl.ui.construct.ComponentSublist;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
+import java.util.Arrays;
+
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -143,12 +145,16 @@ public abstract class SettingsView extends StackPane {
                 }
 
                 {
-                    fileCommonLocation = new MultiFileItem<>(true);
+                    fileCommonLocation = new MultiFileItem<>();
                     fileCommonLocation.setTitle(i18n("launcher.cache_directory"));
-                    fileCommonLocation.setDirectory(true);
-                    fileCommonLocation.setChooserTitle(i18n("launcher.cache_directory.choose"));
                     fileCommonLocation.setHasSubtitle(true);
-                    fileCommonLocation.setCustomText("settings.custom");
+                    fileCommonLocation.loadChildren(Arrays.asList(
+                            new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
+                            new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM)
+                                    .setChooserTitle(i18n("launcher.cache_directory.choose"))
+                                    .setDirectory(true)
+                                    .bindBidirectional(config().commonDirectoryProperty())
+                    ));
 
                     {
                         JFXButton cleanButton = new JFXButton(i18n("launcher.cache_directory.clean"));

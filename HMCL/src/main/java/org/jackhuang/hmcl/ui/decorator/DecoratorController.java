@@ -138,6 +138,9 @@ public class DecoratorController {
                                 image = tryLoadImage(Paths.get(config().getBackgroundImage()))
                                         .orElse(null);
                             }
+                            if (config().getBackgroundImageType() == EnumBackgroundImage.NETWORK) {
+
+                            }
                             if (image == null) {
                                 image = loadDefaultBackgroundImage();
                             }

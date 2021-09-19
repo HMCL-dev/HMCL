@@ -83,6 +83,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("bgpath")
     private StringProperty backgroundImage = new SimpleStringProperty();
 
+    @SerializedName("bgurl")
+    private StringProperty backgroundImageUrl = new SimpleStringProperty();
+
     @SerializedName("commonDirType")
     private ObjectProperty<EnumCommonDirectory> commonDirType = new SimpleObjectProperty<>(EnumCommonDirectory.DEFAULT);
 
@@ -148,6 +151,9 @@ public final class Config implements Cloneable, Observable {
 
     @SerializedName("fontSize")
     private DoubleProperty fontSize = new SimpleDoubleProperty(12);
+
+    @SerializedName("launcherFontFamily")
+    private StringProperty launcherFontFamily = new SimpleStringProperty();
 
     @SerializedName("logLines")
     private IntegerProperty logLines = new SimpleIntegerProperty(100);
@@ -237,6 +243,18 @@ public final class Config implements Cloneable, Observable {
 
     public StringProperty backgroundImageProperty() {
         return backgroundImage;
+    }
+
+    public String getBackgroundImageUrl() {
+        return backgroundImageUrl.get();
+    }
+
+    public StringProperty backgroundImageUrlProperty() {
+        return backgroundImageUrl;
+    }
+
+    public void setBackgroundImageUrl(String backgroundImageUrl) {
+        this.backgroundImageUrl.set(backgroundImageUrl);
     }
 
     public EnumCommonDirectory getCommonDirType() {
@@ -485,6 +503,18 @@ public final class Config implements Cloneable, Observable {
 
     public DoubleProperty fontSizeProperty() {
         return fontSize;
+    }
+
+    public String getLauncherFontFamily() {
+        return launcherFontFamily.get();
+    }
+
+    public StringProperty launcherFontFamilyProperty() {
+        return launcherFontFamily;
+    }
+
+    public void setLauncherFontFamily(String launcherFontFamily) {
+        this.launcherFontFamily.set(launcherFontFamily);
     }
 
     public int getLogLines() {

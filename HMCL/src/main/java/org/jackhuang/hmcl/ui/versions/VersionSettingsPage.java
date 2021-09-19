@@ -56,6 +56,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
@@ -94,8 +95,11 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final JFXToggleButton chkUseNativeGLFW;
     private final JFXToggleButton chkUseNativeOpenAL;
     private final MultiFileItem<JavaVersion> javaItem;
+    private final MultiFileItem.FileOption<JavaVersion> javaCustomOption;
     private final MultiFileItem<GameDirectoryType> gameDirItem;
+    private final MultiFileItem.FileOption<GameDirectoryType> gameDirCustomOption;
     private final MultiFileItem<NativesDirectoryType> nativesDirItem;
+    private final MultiFileItem.FileOption<NativesDirectoryType> nativesDirCustomOption;
     private final JFXComboBox<ProcessPriority> cboProcessPriority;
     private final JFXToggleButton chkShowLogs;
     private final ImagePickerItem iconPickerItem;
@@ -154,19 +158,24 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             componentList = new ComponentList();
             componentList.setDepth(1);
 
-            javaItem = new MultiFileItem<>(true);
+            javaItem = new MultiFileItem<>();
             javaItem.setTitle(i18n("settings.game.java_directory"));
-            javaItem.setChooserTitle(i18n("settings.game.java_directory.choose"));
             javaItem.setHasSubtitle(true);
-            javaItem.setCustomText(i18n("settings.custom"));
-            javaItem.setDirectory(false);
+            javaCustomOption = new MultiFileItem.FileOption<JavaVersion>(i18n("settings.custom"), null)
+                    .setChooserTitle(i18n("settings.game.java_directory.choose"));
 
-            gameDirItem = new MultiFileItem<>(true);
+            gameDirItem = new MultiFileItem<>();
             gameDirItem.setTitle(i18n("settings.game.working_directory"));
-            gameDirItem.setChooserTitle(i18n("settings.game.working_directory.choose"));
             gameDirItem.setHasSubtitle(true);
-            gameDirItem.setCustomText(i18n("settings.custom"));
-            gameDirItem.setDirectory(true);
+            gameDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.custom"), GameDirectoryType.CUSTOM)
+                            .setChooserTitle(i18n("settings.game.working_directory.choose"))
+                            .setDirectory(true);
+
+            gameDirItem.loadChildren(Arrays.asList(
+                    new MultiFileItem.Option<>(i18n("settings.advanced.game_dir.default"), GameDirectoryType.ROOT_FOLDER),
+                    new MultiFileItem.Option<>(i18n("settings.advanced.game_dir.independent"), GameDirectoryType.VERSION_FOLDER),
+                    gameDirCustomOption
+            ));
 
             VBox maxMemoryPane = new VBox(8);
             {
@@ -439,12 +448,16 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         ComponentList workaroundPane = new ComponentList();
         workaroundPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
         {
-            nativesDirItem = new MultiFileItem<>(true);
+            nativesDirItem = new MultiFileItem<>();
             nativesDirItem.setTitle(i18n("settings.advanced.natives_directory"));
-            nativesDirItem.setChooserTitle(i18n("settings.advanced.natives_directory.choose"));
             nativesDirItem.setHasSubtitle(true);
-            nativesDirItem.setCustomText(i18n("settings.custom"));
-            nativesDirItem.setDirectory(true);
+            nativesDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.custom"), NativesDirectoryType.CUSTOM)
+                    .setChooserTitle(i18n("settings.advanced.natives_directory.choose"))
+                    .setDirectory(true);
+            nativesDirItem.loadChildren(Arrays.asList(
+                    new MultiFileItem.Option<>(i18n("settings.advanced.natives_directory.default"), NativesDirectoryType.VERSION_FOLDER),
+                    nativesDirCustomOption
+            ));
 
             BorderPane noJVMArgsPane = new BorderPane();
             {
@@ -534,10 +547,13 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         memoryStatusProperty.set(OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID));
 
         Task.supplyAsync(JavaVersion::getJavas).thenAcceptAsync(Schedulers.javafx(), list -> {
-            javaItem.loadChildren(list.stream()
-                    .map(javaVersion -> javaItem.createChildren(javaVersion.getVersion() + i18n("settings.game.java_directory.bit",
-                            javaVersion.getPlatform().getBit()), javaVersion.getBinary().toString(), javaVersion))
-                    .collect(Collectors.toList()));
+            List<MultiFileItem.Option<JavaVersion>> options = list.stream()
+                    .map(javaVersion -> new MultiFileItem.Option<>(javaVersion.getVersion() + i18n("settings.game.java_directory.bit",
+                            javaVersion.getPlatform().getBit()), javaVersion)
+                            .setSubtitle(javaVersion.getBinary().toString()))
+                    .collect(Collectors.toList());
+            options.add(javaCustomOption);
+            javaItem.loadChildren(options);
             javaItemsLoaded = true;
             initializeSelectedJava();
         }).start();
@@ -545,18 +561,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         javaItem.setSelectedData(null);
         javaItem.setFallbackData(JavaVersion.fromCurrentEnvironment());
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-            javaItem.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe", "javaw.exe"));
-
-        gameDirItem.setCustomUserData(GameDirectoryType.CUSTOM);
-        gameDirItem.loadChildren(Arrays.asList(
-                gameDirItem.createChildren(i18n("settings.advanced.game_dir.default"), GameDirectoryType.ROOT_FOLDER),
-                gameDirItem.createChildren(i18n("settings.advanced.game_dir.independent"), GameDirectoryType.VERSION_FOLDER)
-        ));
-
-        nativesDirItem.setCustomUserData(NativesDirectoryType.CUSTOM);
-        nativesDirItem.loadChildren(Arrays.asList(
-                nativesDirItem.createChildren(i18n("settings.advanced.natives_directory.default"), NativesDirectoryType.VERSION_FOLDER)
-        ));
+            javaCustomOption.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe", "javaw.exe"));
 
         chkEnableSpecificSettings.selectedProperty().addListener((a, b, newValue) -> {
             if (versionId == null) return;
@@ -597,9 +602,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbindInt(txtWidth, lastVersionSetting.widthProperty());
             FXUtils.unbindInt(txtHeight, lastVersionSetting.heightProperty());
             maxMemoryProperty.unbindBidirectional(lastVersionSetting.maxMemoryProperty());
-            FXUtils.unbindString(javaItem.getTxtCustom(), lastVersionSetting.javaDirProperty());
-            FXUtils.unbindString(gameDirItem.getTxtCustom(), lastVersionSetting.gameDirProperty());
-            FXUtils.unbindString(nativesDirItem.getTxtCustom(), lastVersionSetting.nativesDirProperty());
+            javaCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.javaDirProperty());
+            gameDirCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.gameDirProperty());
+            nativesDirCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.nativesDirProperty());
             FXUtils.unbindString(txtJVMArgs, lastVersionSetting.javaArgsProperty());
             FXUtils.unbindString(txtGameArgs, lastVersionSetting.minecraftArgsProperty());
             FXUtils.unbindString(txtMetaspace, lastVersionSetting.permSizeProperty());
@@ -636,9 +641,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         FXUtils.bindInt(txtWidth, versionSetting.widthProperty());
         FXUtils.bindInt(txtHeight, versionSetting.heightProperty());
         maxMemoryProperty.bindBidirectional(versionSetting.maxMemoryProperty());
-        FXUtils.bindString(javaItem.getTxtCustom(), versionSetting.javaDirProperty());
-        FXUtils.bindString(gameDirItem.getTxtCustom(), versionSetting.gameDirProperty());
-        FXUtils.bindString(nativesDirItem.getTxtCustom(), versionSetting.nativesDirProperty());
+
+        javaCustomOption.bindBidirectional(versionSetting.javaDirProperty());
+        gameDirCustomOption.bindBidirectional(versionSetting.gameDirProperty());
+        nativesDirCustomOption.bindBidirectional(versionSetting.nativesDirProperty());
         FXUtils.bindString(txtJVMArgs, versionSetting.javaArgsProperty());
         FXUtils.bindString(txtGameArgs, versionSetting.minecraftArgsProperty());
         FXUtils.bindString(txtMetaspace, versionSetting.permSizeProperty());
@@ -661,7 +667,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             chkEnableSpecificSettings.setSelected(!versionSetting.isUsesGlobal());
 
         javaItem.setToggleSelectedListener(newValue -> {
-            if (javaItem.isCustomToggle(newValue)) {
+            if (newValue.getUserData() == null) {
                 versionSetting.setUsesCustomJavaDir();
             } else {
                 versionSetting.setJavaVersion((JavaVersion) newValue.getUserData());
@@ -695,7 +701,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         if (lastVersionSetting.isUsesCustomJavaDir()) {
             javaItem.getGroup().getToggles().stream()
-                    .filter(javaItem::isCustomToggle)
+                    .filter(java -> java.getUserData() == null)
                     .findFirst().get()
                     .setSelected(true);
         } else {
