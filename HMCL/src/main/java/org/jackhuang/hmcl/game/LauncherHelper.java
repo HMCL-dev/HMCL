@@ -46,10 +46,7 @@ import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.*;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.DialogController;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.LogWindow;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
@@ -60,18 +57,11 @@ import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -180,14 +170,15 @@ public final class LauncherHelper {
                     }
                 }).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
+                    LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, profile.getGameDir(), !setting.isNotCheckJVM());
                     return new HMCLGameLauncher(
                             repository,
                             version,
                             authInfo,
-                            repository.getLaunchOptions(selectedVersion, profile.getGameDir(), !setting.isNotCheckJVM()),
+                            launchOptions,
                             launcherVisibility == LauncherVisibility.CLOSE
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(repository, selectedVersion, authInfo, launchingLatch, gameVersion.isPresent())
+                                    : new HMCLProcessListener(repository, selectedVersion, authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
@@ -584,6 +575,7 @@ public final class LauncherHelper {
         private final HMCLGameRepository repository;
         private final String version;
         private final Map<String, String> forbiddenTokens;
+        private final LaunchOptions launchOptions;
         private ManagedProcess process;
         private boolean lwjgl;
         private LogWindow logWindow;
@@ -592,9 +584,10 @@ public final class LauncherHelper {
         private final CountDownLatch logWindowLatch = new CountDownLatch(1);
         private final CountDownLatch launchingLatch;
 
-        public HMCLProcessListener(HMCLGameRepository repository, String version, AuthInfo authInfo, CountDownLatch launchingLatch, boolean detectWindow) {
+        public HMCLProcessListener(HMCLGameRepository repository, String version, AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
             this.repository = repository;
             this.version = version;
+            this.launchOptions = launchOptions;
             this.launchingLatch = launchingLatch;
             this.detectWindow = detectWindow;
 
@@ -704,42 +697,7 @@ public final class LauncherHelper {
 
             if (exitType != ExitType.NORMAL) {
                 repository.markVersionLaunchedAbnormally(version);
-                Platform.runLater(() -> {
-                    if (logWindow == null) {
-                        logWindow = new LogWindow();
-
-                        logWindow.logLine("Command: " + new CommandBuilder().addAll(process.getCommands()).toString(), Log4jLevel.INFO);
-                        for (Map.Entry<String, Log4jLevel> entry : logs)
-                            logWindow.logLine(entry.getKey(), entry.getValue());
-                    }
-
-                    switch (exitType) {
-                        case JVM_ERROR:
-                            logWindow.setTitle(i18n("launch.failed.cannot_create_jvm"));
-                            break;
-                        case APPLICATION_ERROR:
-                            logWindow.setTitle(i18n("launch.failed.exited_abnormally"));
-                            break;
-                    }
-
-                    logWindow.showGameCrashReport(logs -> {
-                        Path logFile = Paths.get("minecraft-exported-crash-info-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip").toAbsolutePath();
-                        LogExporter.exportLogs(logFile, repository, version, logs, new CommandBuilder().addAll(process.getCommands()).toString())
-                                .thenRunAsync(() -> {
-                                    JOptionPane.showMessageDialog(null, i18n("settings.launcher.launcher_log.export.success", logFile), i18n("settings.launcher.launcher_log.export"), JOptionPane.INFORMATION_MESSAGE);
-                                    if (Desktop.isDesktopSupported()) {
-                                        try {
-                                            Desktop.getDesktop().open(logFile.toFile());
-                                        } catch (IOException | IllegalArgumentException ignored) {
-                                        }
-                                    }
-                                }, Schedulers.javafx())
-                                .exceptionally(e -> {
-                                    LOG.log(Level.WARNING, "Failed to export game crash info", e);
-                                    return null;
-                                });
-                    });
-                });
+                Platform.runLater(() -> new GameCrashWindow(process, exitType, repository, launchOptions, logs).show());
             }
 
             checkExit();

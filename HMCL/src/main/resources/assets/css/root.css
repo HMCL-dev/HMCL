@@ -225,6 +225,21 @@
     -fx-font-size: 12px;
 }
 
+.two-line-item-second-large {
+
+}
+
+.two-line-item-second-large > FlowPane > .title {
+    -fx-text-fill: rgba(0, 0, 0, 0.5);
+    -fx-font-weight: normal;
+    -fx-font-size: 12px;
+}
+
+.two-line-item-second-large > HBox > .subtitle {
+    -fx-text-fill: #292929;
+    -fx-font-size: 15px;
+}
+
 .bubble {
     -fx-background-color: rgba(0, 0, 0, 0.5);
     -fx-background-radius: 2px;
@@ -464,6 +479,12 @@
     -fx-background-color: -fx-base-check-color;
     -fx-alignment: CENTER-LEFT;
     -fx-spacing: 8;
+}
+
+.jfx-tool-bar-second .label {
+    -fx-text-fill: -fx-base-text-fill;
+    -fx-font-size: 16;
+    -fx-font-weight: bold;
 }
 
 .jfx-tool-bar-second .jfx-rippler {
@@ -754,6 +775,10 @@
 
 .depth-5 {
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 30, 0.3, 0, 10);
+}
+
+.padding-8 {
+    -fx-padding: 8px;
 }
 
 .card {

@@ -292,6 +292,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setGameDir(gameDir)
                 .setJava(javaVersion)
                 .setVersionType(Metadata.TITLE)
+                .setVersionName(version)
                 .setProfileName(Metadata.TITLE)
                 .setGameArguments(StringUtils.tokenize(vs.getMinecraftArgs()))
                 .setJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
