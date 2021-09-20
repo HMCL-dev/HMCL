@@ -116,7 +116,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         getChildren().setAll(container);
 
         root.setCursor(Cursor.HAND);
-        root.setOnMouseClicked(e -> {
+        container.setOnMouseClicked(e -> {
             if (e.getButton() == MouseButton.PRIMARY) {
                 if (e.getClickCount() == 1) {
                     skinnable.modifyGameSettings();
