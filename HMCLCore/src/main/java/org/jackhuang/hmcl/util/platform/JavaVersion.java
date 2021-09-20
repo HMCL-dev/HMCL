@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.BufferedReader;
@@ -234,23 +235,25 @@ public final class JavaVersion {
                 javaExecutables.add(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JRE\\").stream().map(JavaVersion::getExecutable));
                 javaExecutables.add(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JDK\\").stream().map(JavaVersion::getExecutable));
 
-                for (Path programFiles : Arrays.asList(
-                        Paths.get(Optional.ofNullable(System.getenv("ProgramFiles")).orElse("C:\\Program Files")),
-                        Paths.get(Optional.ofNullable(System.getenv("ProgramFiles(x86)")).orElse("C:\\Program Files (x86)")),
-                        Paths.get(Optional.ofNullable(System.getenv("ProgramFiles(ARM)")).orElse("C:\\Program Files (ARM)"))
+                for (Optional<Path> programFiles : Arrays.asList(
+                        FileUtils.tryGetPath(Optional.ofNullable(System.getenv("ProgramFiles")).orElse("C:\\Program Files")),
+                        FileUtils.tryGetPath(Optional.ofNullable(System.getenv("ProgramFiles(x86)")).orElse("C:\\Program Files (x86)")),
+                        FileUtils.tryGetPath(Optional.ofNullable(System.getenv("ProgramFiles(ARM)")).orElse("C:\\Program Files (ARM)"))
                 )) {
-                    javaExecutables.add(listDirectory(programFiles.resolve("Java")).map(JavaVersion::getExecutable));
-                    javaExecutables.add(listDirectory(programFiles.resolve("BellSoft")).map(JavaVersion::getExecutable));
-                    javaExecutables.add(listDirectory(programFiles.resolve("AdoptOpenJDK")).map(JavaVersion::getExecutable));
-                    javaExecutables.add(listDirectory(programFiles.resolve("Zulu")).map(JavaVersion::getExecutable));
-                    javaExecutables.add(listDirectory(programFiles.resolve("Microsoft")).map(JavaVersion::getExecutable));
+                    if (programFiles.isPresent()) {
+                        javaExecutables.add(listDirectory(programFiles.get().resolve("Java")).map(JavaVersion::getExecutable));
+                        javaExecutables.add(listDirectory(programFiles.get().resolve("BellSoft")).map(JavaVersion::getExecutable));
+                        javaExecutables.add(listDirectory(programFiles.get().resolve("AdoptOpenJDK")).map(JavaVersion::getExecutable));
+                        javaExecutables.add(listDirectory(programFiles.get().resolve("Zulu")).map(JavaVersion::getExecutable));
+                        javaExecutables.add(listDirectory(programFiles.get().resolve("Microsoft")).map(JavaVersion::getExecutable));
+                    }
                 }
 
                 if (System.getenv("PATH") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("PATH").split(";")).map(path -> Paths.get(path, "java.exe")));
+                    javaExecutables.add(Arrays.stream(System.getenv("PATH").split(";")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "java.exe"))));
                 }
                 if (System.getenv("HMCL_JRES") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(";")).map(path -> Paths.get(path, "bin", "java.exe")));
+                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(";")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "bin", "java.exe"))));
                 }
                 break;
 
@@ -259,10 +262,10 @@ public final class JavaVersion {
                 javaExecutables.add(listDirectory(Paths.get("/usr/lib/jvm")).map(JavaVersion::getExecutable)); // General locations
                 javaExecutables.add(listDirectory(Paths.get("/usr/lib32/jvm")).map(JavaVersion::getExecutable)); // General locations
                 if (System.getenv("PATH") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).map(path -> Paths.get(path, "java")));
+                    javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "java"))));
                 }
                 if (System.getenv("HMCL_JRES") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).map(path -> Paths.get(path, "bin", "java")));
+                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "bin", "java"))));
                 }
                 break;
 
@@ -276,10 +279,10 @@ public final class JavaVersion {
                 javaExecutables.add(Stream.of(Paths.get("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin/java")));
                 javaExecutables.add(Stream.of(Paths.get("/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/MacOS/itms/java/bin/java")));
                 if (System.getenv("PATH") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).map(path -> Paths.get(path, "java")));
+                    javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "java"))));
                 }
                 if (System.getenv("HMCL_JRES") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).map(path -> Paths.get(path, "bin", "java")));
+                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "bin", "java"))));
                 }
                 break;
 
