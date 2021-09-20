@@ -1,0 +1,33 @@
+[20:04:06] [Client thread/INFO]: Setting user: dragondecimator
+[20:04:06] [Client thread/INFO]: (Session ID is token:f5c4b35f76f643488e5207346aabfbf5:31e215dcad9647e6afbef45d1687ae61)
+[20:04:09] [Client thread/INFO]: LWJGL Version: 2.9.1
+[20:04:09] [Client thread/INFO]: Reloading ResourceManager: Default
+[20:04:10] [Sound Library Loader/INFO]: Starting up SoundSystem...
+[20:04:10] [Client thread/WARN]: File minecraft:sounds/mob/ghast/fireball.ogg does not exist, cannot add it to event minecraft:item.fireCharge.use
+[20:04:10] [Thread-6/INFO]: Initializing LWJGL OpenAL
+[20:04:10] [Thread-6/INFO]: (The LWJGL binding of OpenAL.  For more information, see http://www.lwjgl.org)
+[20:04:10] [Thread-6/INFO]: OpenAL initialized.
+[20:04:11] [Sound Library Loader/INFO]: Sound engine started
+[20:04:13] [Client thread/INFO]: Created: 512x512 textures-atlas
+#
+# A fatal error has been detected by the Java Runtime Environment:
+#
+#  EXCEPTION_ACCESS_VIOLATION (0xc0000005) at pc=0x27583e88, pid=4092, tid=3656
+#
+# JRE version: Java(TM) SE Runtime Environment (8.0_25-b18) (build 1.8.0_25-b18)
+# Java VM: Java HotSpot(TM) Client VM (25.25-b02 mixed mode windows-x86 )
+# Problematic frame:
+# C  [ig4dev32.dll+0x3e88]
+#
+# Failed to write core dump. Minidumps are not enabled by default on client versions of Windows
+#
+# An error report file with more information is saved as:
+# C:\Users\Andrea\AppData\Roaming\.minecraft\hs_err_pid4092.log
+#
+# If you would like to submit a bug report, please visit:
+#   http://bugreport.sun.com/bugreport/crash.jsp
+# The crash happened outside the Java Virtual Machine in native code.
+# See problematic frame for where to report the bug.
+#
+AL lib: (EE) alc_cleanup: 1 device not closed
+Java HotSpot(TM) Client VM warning: Using incremental CMS is deprecated and will likely be removed in a future release

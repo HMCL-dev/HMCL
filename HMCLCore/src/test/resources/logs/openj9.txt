@@ -1,0 +1,6 @@
+You are attempting to run with an unsupported Java Virtual Machine : Eclipse OpenJ9
+Please visit https://adoptopenjdk.net and install the HotSpot variant.
+OpenJ9 is incompatible with several of the transformation behaviours that we rely on to work.
+Exception in thread "main" java.lang.IllegalStateException: Open J9 is not supported
+	at cpw.mods.modlauncher.ValidateLibraries.validate(ValidateLibraries.java:33)
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:63)

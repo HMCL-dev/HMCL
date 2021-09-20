@@ -1,0 +1,63 @@
+---- Minecraft Crash Report ----
+// You should try our sister game, Minceraft!
+
+Time: 6.9.2013 16:07
+Description: Manually triggered debug crash
+
+java.lang.Throwable
+	at awb.m(SourceFile:1282)
+	at awb.V(SourceFile:686)
+	at awb.e(SourceFile:642)
+	at net.minecraft.client.main.Main.main(SourceFile:103)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Stacktrace:
+	at bfi.a(SourceFile:285)
+
+-- Affected level --
+Details:
+	Level name: MpServer
+	All players: 1 total; [bfn['TheJonttuT'/304, l='MpServer', x=165,90, y=65,62, z=150,30]]
+	Chunk stats: MultiplayerChunkCache: 225, 225
+	Level seed: 0
+	Level generator: ID 00 - default, ver 1. Features enabled: false
+	Level generator options:
+	Level spawn location: World: (200,64,172), Chunk: (at 8,4,12 in 12,10; contains blocks 192,0,160 to 207,255,175), Region: (0,0; contains chunks 0,0 to 31,31, blocks 0,0,0 to 511,255,511)
+	Level time: 185537 game time, 277169 day time
+	Level dimension: 0
+	Level storage version: 0x00000 - Unknown?
+	Level weather: Rain time: 0 (now: false), thunder time: 0 (now: false)
+	Level game mode: Game mode: creative (ID 1). Hardcore: false. Cheats: false
+	Forced entities: 72 total; [sd['Lepakko'/137, l='MpServer', x=216,41, y=28,88, z=195,31], un['Zombi'/136, l='MpServer', x=206,49, y=18,08, z=168,41], sd['Lepakko'/139, l='MpServer', x=213,25, y=23,10, z=202,75], ui['Luuranko'/138, l='MpServer', x=223,50, y=26,00, z=199,50], un['Zombi'/141, l='MpServer', x=203,35, y=26,00, z=220,88], un['Zombi'/135, l='MpServer', x=227,22, y=39,00, z=173,31], ui['Luuranko'/134, l='MpServer', x=208,66, y=21,00, z=167,91], tw['Lurkki'/152, l='MpServer', x=236,50, y=52,00, z=171,50], tw['Lurkki'/153, l='MpServer', x=238,09, y=14,00, z=188,47], tw['Lurkki'/154, l='MpServer', x=239,06, y=14,00, z=187,47], un['Zombi'/155, l='MpServer', x=234,50, y=13,00, z=181,50], ui['Luuranko'/156, l='MpServer', x=218,30, y=33,00, z=190,70], uk['Hämähäkki'/157, l='MpServer', x=231,63, y=45,00, z=176,72], sd['Lepakko'/158, l='MpServer', x=232,09, y=48,20, z=205,34], un['Zombi'/159, l='MpServer', x=239,50, y=39,00, z=205,50], sd['Lepakko'/145, l='MpServer', x=214,41, y=47,10, z=225,75], sg['Lehmä'/31, l='MpServer', x=88,38, y=65,00, z=108,47], tw['Lurkki'/150, l='MpServer', x=229,50, y=44,00, z=155,50], sf['Kana'/151, l='MpServer', x=233,47, y=68,00, z=140,66], un['Zombi'/34, l='MpServer', x=93,03, y=41,00, z=139,63], bfn['TheJonttuT'/304, l='MpServer', x=165,90, y=65,62, z=150,30], un['Zombi'/33, l='MpServer', x=90,66, y=42,00, z=139,34], tw['Lurkki'/175, l='MpServer', x=242,50, y=42,00, z=184,50], tw['Lurkki'/172, l='MpServer', x=243,50, y=17,00, z=162,50], sg['Lehmä'/42, l='MpServer', x=109,16, y=72,00, z=175,66], so['Lammas'/161, l='MpServer', x=229,28, y=63,00, z=223,50], sg['Lehmä'/41, l='MpServer', x=109,66, y=71,00, z=160,25], sg['Lehmä'/51, l='MpServer', x=127,63, y=73,00, z=126,50], sg['Lehmä'/50, l='MpServer', x=127,50, y=73,00, z=97,50], tw['Lurkki'/54, l='MpServer', x=120,50, y=17,00, z=216,50], sd['Lepakko'/531, l='MpServer', x=229,47, y=47,57, z=224,56], sg['Lehmä'/53, l='MpServer', x=112,16, y=72,00, z=173,22], sg['Lehmä'/52, l='MpServer', x=119,69, y=72,00, z=171,25], uk['Hämähäkki'/179, l='MpServer', x=241,00, y=22,33, z=202,84], sg['Lehmä'/63, l='MpServer', x=146,50, y=73,00, z=89,38], sg['Lehmä'/62, l='MpServer', x=139,63, y=75,00, z=84,38], sg['Lehmä'/61, l='MpServer', x=131,22, y=73,00, z=93,31], un['Zombi'/68, l='MpServer', x=136,50, y=25,00, z=143,50], sd['Lepakko'/69, l='MpServer', x=137,28, y=24,51, z=137,84], ui['Luuranko'/70, l='MpServer', x=139,31, y=21,00, z=130,38], uk['Hämähäkki'/71, l='MpServer', x=140,50, y=21,00, z=129,59], tw['Lurkki'/64, l='MpServer', x=143,13, y=20,00, z=126,50], sd['Lepakko'/65, l='MpServer', x=145,47, y=20,00, z=124,31], sg['Lehmä'/66, l='MpServer', x=132,47, y=75,00, z=117,50], sg['Lehmä'/67, l='MpServer', x=130,50, y=75,00, z=117,50], un['Zombi'/85, l='MpServer', x=148,50, y=22,00, z=118,50], un['Zombi'/84, l='MpServer', x=150,56, y=22,00, z=122,25], ui['Luuranko'/87, l='MpServer', x=145,53, y=22,00, z=127,13], tw['Lurkki'/86, l='MpServer', x=159,50, y=22,00, z=123,50], sg['Lehmä'/83, l='MpServer', x=149,88, y=71,00, z=103,88], sh['Hevonen'/89, l='MpServer', x=163,91, y=64,00, z=140,16], sd['Lepakko'/88, l='MpServer', x=144,75, y=19,82, z=125,34], tw['Lurkki'/90, l='MpServer', x=152,50, y=14,00, z=172,50], sd['Lepakko'/102, l='MpServer', x=159,56, y=51,00, z=195,47], sr['Kalmari'/100, l='MpServer', x=172,53, y=59,41, z=175,53], sr['Kalmari'/101, l='MpServer', x=167,72, y=62,25, z=184,50], sr['Kalmari'/98, l='MpServer', x=168,47, y=59,00, z=164,47], sr['Kalmari'/99, l='MpServer', x=173,35, y=61,33, z=162,02], sg['Lehmä'/119, l='MpServer', x=196,38, y=67,00, z=172,56], ui['Luuranko'/118, l='MpServer', x=208,34, y=17,00, z=168,25], sr['Kalmari'/117, l='MpServer', x=204,50, y=58,38, z=146,84], sg['Lehmä'/116, l='MpServer', x=201,78, y=63,00, z=159,72], sg['Lehmä'/115, l='MpServer', x=193,94, y=66,00, z=99,06], sg['Lehmä'/114, l='MpServer', x=188,09, y=66,00, z=100,06], sg['Lehmä'/113, l='MpServer', x=201,66, y=64,00, z=96,28], sg['Lehmä'/112, l='MpServer', x=198,22, y=64,00, z=85,22], tw['Lurkki'/125, l='MpServer', x=193,63, y=22,00, z=225,66], ui['Luuranko'/124, l='MpServer', x=201,50, y=26,00, z=218,50], ui['Luuranko'/123, l='MpServer', x=199,56, y=26,00, z=216,94], sd['Lepakko'/122, l='MpServer', x=204,06, y=24,10, z=181,06], sg['Lehmä'/121, l='MpServer', x=197,47, y=66,00, z=166,69], sg['Lehmä'/120, l='MpServer', x=200,97, y=64,00, z=163,97]]
+	Retry entities: 0 total; []
+	Server brand: vanilla
+	Server type: Integrated singleplayer server
+Stacktrace:
+	at bfi.a(SourceFile:285)
+	at awb.b(SourceFile:1813)
+	at awb.e(SourceFile:651)
+	at net.minecraft.client.main.Main.main(SourceFile:103)
+
+-- System Details --
+Details:
+	Minecraft Version: 13w36b
+	Operating System: Windows 7 (x86) version 6.1
+	Java Version: 1.7.0_25, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) Client VM (mixed mode, sharing), Oracle Corporation
+	Memory: 103857920 bytes (99 MB) / 248131584 bytes (236 MB) up to 518979584 bytes (494 MB)
+	JVM Flags: 1 total; -Xmx512M
+	AABB Pool Size: 7721 (432376 bytes; 0 MB) allocated, 2 (112 bytes; 0 MB) used
+	IntCache: cache: 0, tcache: 0, allocated: 13, tallocated: 95
+	Launched Version: 13w36b
+	LWJGL: 2.9.0
+	OpenGL: GeForce 9400M G/PCI/SSE2 GL version 3.3.0, NVIDIA Corporation
+	Is Modded: Probably not. Jar signature remains and client brand is untouched.
+	Type: Client (map_client.txt)
+	Resource Packs: []
+	Current Language: suomi (FI)
+	Profiler Position: N/A (disabled)
+	Vec3 Pool Size: 3083 (172648 bytes; 0 MB) allocated, 12 (672 bytes; 0 MB) used

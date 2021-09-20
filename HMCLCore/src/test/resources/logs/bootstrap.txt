@@ -1,0 +1,557 @@
+[08:29:36] [main/INFO]: ModLauncher running: args [--username, schwabe22, --version, forge-28.0.75, --gameDir, C:\Users\alexa\Twitch\Minecraft\Instances\u, --assetsDir, C:\Users\alexa\Twitch\Minecraft\Install\assets, --assetIndex, 1.14, --uuid, dda7a75ded21403abffaf37a22658ae3, --accessToken, ????????, --userType, mojang, --versionType, release, --width, 1024, --height, 768, --launchTarget, fmlclient, --fml.forgeVersion, 28.0.75, --fml.mcVersion, 1.14.4, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20190829.143755]
+[08:29:36] [main/INFO]: ModLauncher 3.2.0+60+b86c1d4 starting: java version 1.8.0_221 by Oracle Corporation
+[08:29:41] [main/INFO]: OptiFineTransformationService.onLoad
+[08:29:41] [main/INFO]: OptiFine ZIP file: C:\Users\alexa\Twitch\Minecraft\Instances\u\mods\preview_OptiFine_1.14.4_HD_U_F4_pre3.jar
+[08:29:41] [main/INFO]: Added Lets Encrypt root certificates as additional trust
+[08:29:41] [main/INFO]: OptiFineTransformationService.initialize
+[08:29:42] [main/INFO]: OptiFineTransformationService.transformers
+[08:29:42] [main/INFO]: Targets: 238
+[08:29:42] [main/INFO]: additionalClassesLocator: [optifine., net.optifine.]
+[08:29:42] [main/INFO]: Launching target 'fmlclient' with arguments [--version, forge-28.0.75, --gameDir, C:\Users\alexa\Twitch\Minecraft\Instances\u, --assetsDir, C:\Users\alexa\Twitch\Minecraft\Install\assets, --username, schwabe22, --assetIndex, 1.14, --uuid, dda7a75ded21403abffaf37a22658ae3, --accessToken, ????????, --userType, mojang, --versionType, release, --width, 1024, --height, 768]
+[08:29:44] [Client thread/INFO]: [OptiFine] *** Reflector Forge ***
+[08:29:44] [Client thread/INFO]: [OptiFine] (Reflector) Class not present: mods.betterfoliage.client.BetterFoliageClient
+[08:29:45] [Client thread/INFO]: [OptiFine] (Reflector) Method not present: net.minecraftforge.client.model.IModel.getTextures
+[08:29:46] [Client thread/INFO]: [OptiFine] (Reflector) Class not present: net.minecraft.launchwrapper.Launch
+[08:29:46] [Client thread/INFO]: [OptiFine] (Reflector) Class not present: net.minecraftforge.fml.common.Loader
+[08:29:46] [Client thread/INFO]: [OptiFine] (Reflector) Class not present: net.minecraftforge.fml.client.SplashProgress
+[08:29:46] [Client thread/INFO]: [OptiFine] *** Reflector Vanilla ***
+[08:29:46] [Client thread/INFO]: Setting user: schwabe22
+[08:29:51] [Client thread/WARN]: Skipping bad option: lastServer:
+[08:29:51] [Client thread/INFO]: LWJGL Version: 3.2.2 build 10
+[08:29:52] [Client thread/INFO]: [OptiFine]
+[08:29:52] [Client thread/INFO]: [OptiFine] OptiFine_1.14.4_HD_U_F4_pre3
+[08:29:52] [Client thread/INFO]: [OptiFine] Build: 20190828-020229
+[08:29:52] [Client thread/INFO]: [OptiFine] OS: Windows 10 (amd64) version 10.0
+[08:29:52] [Client thread/INFO]: [OptiFine] Java: 1.8.0_221, Oracle Corporation
+[08:29:52] [Client thread/INFO]: [OptiFine] VM: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+[08:29:52] [Client thread/INFO]: [OptiFine] LWJGL: 3.3.0 Win32 WGL EGL OSMesa VisualC DLL
+[08:29:52] [Client thread/INFO]: [OptiFine] OpenGL: Radeon RX 580 Series, version 4.6.13570 Compatibility Profile Context 19.7.3 26.20.13001.18009, ATI Technologies Inc.
+[08:29:52] [Client thread/INFO]: [OptiFine] OpenGL Version: 4.6.13570
+[08:29:52] [Client thread/INFO]: [OptiFine] OpenGL Fancy fog: Not available (GL_NV_fog_distance)
+[08:29:52] [Client thread/INFO]: [OptiFine] Maximum texture size: 16384x16384
+[08:29:52] [VersionCheck/INFO]: [OptiFine] Checking for new version
+[08:29:52] [Client thread/INFO]: [Shaders] OpenGL Version: 4.6.13570 Compatibility Profile Context 19.7.3 26.20.13001.18009
+[08:29:52] [Client thread/INFO]: [Shaders] Vendor:  ATI Technologies Inc.
+[08:29:52] [Client thread/INFO]: [Shaders] Renderer: Radeon RX 580 Series
+[08:29:52] [Client thread/INFO]: [Shaders] Capabilities:  2.0  2.1  3.0  3.2  4.0
+[08:29:52] [Client thread/INFO]: [Shaders] GL_MAX_DRAW_BUFFERS: 8
+[08:29:52] [Client thread/INFO]: [Shaders] GL_MAX_COLOR_ATTACHMENTS_EXT: 8
+[08:29:52] [Client thread/INFO]: [Shaders] GL_MAX_TEXTURE_IMAGE_UNITS: 32
+[08:29:52] [Client thread/INFO]: [Shaders] Load shaders configuration.
+[08:29:52] [Client thread/INFO]: [Shaders] Loaded shaderpack: Sildurs Vibrant Shaders v1.22 High-Motionblur.zip
+[08:29:52] [Client thread/INFO]: [OptiFine] [Shaders] Worlds: -1, 1
+[08:29:52] [Client thread/WARN]: [OptiFine] Ambiguous shader option: SHADOW_MAP_BIAS
+[08:29:52] [Client thread/WARN]: [OptiFine]  - in shadow.vsh, shadow.fsh, gbuffers_textured.vsh, gbuffers_textured.fsh, gbuffers_skytextured.fsh, gbuffers_terrain.vsh, gbuffers_terrain.fsh, gbuffers_block.vsh, gbuffers_block.fsh, gbuffers_weather.vsh, gbuffers_water.vsh, gbuffers_water.fsh, composite.vsh, composite.fsh, composite1.vsh, composite1.fsh, composite2.fsh, composite3.vsh, composite3.fsh, final.vsh, final.fsh, world-1/shadow.vsh: 0.80
+[08:29:52] [Client thread/WARN]: [OptiFine]  - in world-1/gbuffers_textured.fsh: 0.8
+[08:29:52] [Client thread/WARN]: [OptiFine] Ambiguous shader option: SHADOW_MAP_BIAS
+[08:29:52] [Client thread/WARN]: [OptiFine]  - in shadow.vsh, shadow.fsh, gbuffers_textured.vsh, gbuffers_textured.fsh, gbuffers_skytextured.fsh, gbuffers_terrain.vsh, gbuffers_terrain.fsh, gbuffers_block.vsh, gbuffers_block.fsh, gbuffers_weather.vsh, gbuffers_water.vsh, gbuffers_water.fsh, composite.vsh, composite.fsh, composite1.vsh, composite1.fsh, composite2.fsh, composite3.vsh, composite3.fsh, final.vsh, final.fsh, world-1/shadow.vsh, world-1/gbuffers_textured.fsh, world-1/gbuffers_block.fsh: 0.80
+[08:29:52] [Client thread/WARN]: [OptiFine]  - in world-1/gbuffers_water.fsh: 0.8
+[08:29:52] [Client thread/INFO]: [OptiFine] [Shaders] Parsing block mappings: /shaders/block.properties
+[08:29:52] [Client thread/WARN]: [OptiFine] [Shaders] Invalid option: Nether_Fog, key: screen.FOG_SCREEN
+[08:29:52] [Client thread/WARN]: [OptiFine] [Shaders] Invalid option: nFogDensity, key: screen.FOG_SCREEN
+[08:29:52] [Client thread/WARN]: [OptiFine] [Shaders] Invalid option: Godrays_Quality, key: screen.SKY_SCREEN
+[08:29:52] [Client thread/INFO]: [Shaders] Custom uniform: inSwamp
+[08:29:52] [Client thread/INFO]: [Shaders] Custom uniform: BiomeTemp
+[08:29:52] [VersionCheck/INFO]: [OptiFine] Version found: F2
+[08:29:53] [Client thread/WARN]: No data fixer registered for entity clumps:xp_orb_big
+[08:29:53] [Client thread/INFO]: Potentially Dangerous alternative prefix `simplylight` for name `illuminant_block`, expected `minecraft`. This could be a intended override, but in most cases indicates a broken mod.
+[08:29:53] [Client thread/INFO]: Potentially Dangerous alternative prefix `simplylight` for name `illuminant_block_on`, expected `minecraft`. This could be a intended override, but in most cases indicates a broken mod.
+[08:29:53] [Client thread/INFO]: Potentially Dangerous alternative prefix `simplylight` for name `illuminant_slab`, expected `minecraft`. This could be a intended override, but in most cases indicates a broken mod.
+[08:29:53] [Client thread/INFO]: Potentially Dangerous alternative prefix `simplylight` for name `illuminant_panel`, expected `minecraft`. This could be a intended override, but in most cases indicates a broken mod.
+[08:29:53] [Client thread/INFO]: Potentially Dangerous alternative prefix `simplylight` for name `wall_lamp`, expected `minecraft`. This could be a intended override, but in most cases indicates a broken mod.
+[08:29:53] [Client thread/INFO]: Potentially Dangerous alternative prefix `simplylight` for name `lightbulb`, expected `minecraft`. This could be a intended override, but in most cases indicates a broken mod.
+[08:29:53] [Client thread/INFO]: Potentially Dangerous alternative prefix `simplylight` for name `rodlamp`, expected `minecraft`. This could be a intended override, but in most cases indicates a broken mod.
+[08:29:53] [Client thread/INFO]: Potentially Dangerous alternative prefix `yamda` for name `mining_dim`, expected `minecraft`. This could be a intended override, but in most cases indicates a broken mod.
+[08:29:53] [modloading-worker-7/INFO]: Forge mod loading, version 28.0.75, for MC 1.14.4 with MCP 20190829.143755
+[08:29:53] [modloading-worker-7/INFO]: MinecraftForge v28.0.75 Initialized
+[08:29:53] [modloading-worker-9/ERROR]: Failed to create mod instance. ModID: prefab, class com.wuest.prefab.Prefab
+java.lang.BootstrapMethodError: java.lang.IllegalAccessError: no such constructor: com.wuest.prefab.Proxy.ClientProxy.<init>()void/newInvokeSpecial
+	at com.wuest.prefab.Prefab.lambda$new$0(Prefab.java:79) ~[?:1.4.0.4]
+	at net.minecraftforge.fml.DistExecutor.runForDist(DistExecutor.java:63) ~[?:?]
+	at com.wuest.prefab.Prefab.<init>(Prefab.java:79) ~[?:1.4.0.4]
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:1.8.0_221]
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source) ~[?:1.8.0_221]
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source) ~[?:1.8.0_221]
+	at java.lang.reflect.Constructor.newInstance(Unknown Source) ~[?:1.8.0_221]
+	at java.lang.Class.newInstance(Unknown Source) ~[?:1.8.0_221]
+	at net.minecraftforge.fml.javafmlmod.FMLModContainer.constructMod(FMLModContainer.java:131) ~[?:28.0]
+	at java.util.function.Consumer.lambda$andThen$0(Unknown Source) ~[?:1.8.0_221]
+	at java.util.function.Consumer.lambda$andThen$0(Unknown Source) ~[?:1.8.0_221]
+	at net.minecraftforge.fml.ModContainer.transitionState(ModContainer.java:112) ~[?:?]
+	at net.minecraftforge.fml.ModList.lambda$null$10(ModList.java:133) ~[?:?]
+	at java.util.stream.ForEachOps$ForEachOp$OfRef.accept(Unknown Source) ~[?:1.8.0_221]
+	at java.util.ArrayList$ArrayListSpliterator.forEachRemaining(Unknown Source) ~[?:1.8.0_221]
+	at java.util.stream.AbstractPipeline.copyInto(Unknown Source) ~[?:1.8.0_221]
+	at java.util.stream.ForEachOps$ForEachTask.compute(Unknown Source) ~[?:1.8.0_221]
+	at java.util.concurrent.CountedCompleter.exec(Unknown Source) ~[?:1.8.0_221]
+	at java.util.concurrent.ForkJoinTask.doExec(Unknown Source) ~[?:1.8.0_221]
+	at java.util.concurrent.ForkJoinTask.doInvoke(Unknown Source) ~[?:1.8.0_221]
+	at java.util.concurrent.ForkJoinTask.invoke(Unknown Source) ~[?:1.8.0_221]
+	at java.util.stream.ForEachOps$ForEachOp.evaluateParallel(Unknown Source) ~[?:1.8.0_221]
+	at java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateParallel(Unknown Source) ~[?:1.8.0_221]
+	at java.util.stream.AbstractPipeline.evaluate(Unknown Source) ~[?:1.8.0_221]
+	at java.util.stream.ReferencePipeline.forEach(Unknown Source) ~[?:1.8.0_221]
+	at java.util.stream.ReferencePipeline$Head.forEach(Unknown Source) ~[?:1.8.0_221]
+	at net.minecraftforge.fml.ModList.lambda$dispatchParallelEvent$11(ModList.java:133) ~[?:?]
+	at java.util.concurrent.ForkJoinTask$AdaptedRunnableAction.exec(Unknown Source) [?:1.8.0_221]
+	at java.util.concurrent.ForkJoinTask.doExec(Unknown Source) [?:1.8.0_221]
+	at java.util.concurrent.ForkJoinPool$WorkQueue.runTask(Unknown Source) [?:1.8.0_221]
+	at java.util.concurrent.ForkJoinPool.runWorker(Unknown Source) [?:1.8.0_221]
+	at java.util.concurrent.ForkJoinWorkerThread.run(Unknown Source) [?:1.8.0_221]
+Caused by: java.lang.IllegalAccessError: no such constructor: com.wuest.prefab.Proxy.ClientProxy.<init>()void/newInvokeSpecial
+	at java.lang.invoke.MethodHandleNatives.linkMethodHandleConstant(Unknown Source) ~[?:1.8.0_221]
+	... 32 more
+Caused by: java.lang.NoClassDefFoundError: net/minecraftforge/common/crafting/IConditionSerializer
+	at java.lang.invoke.MethodHandleNatives.resolve(Native Method) ~[?:1.8.0_221]
+	at java.lang.invoke.MemberName$Factory.resolve(Unknown Source) ~[?:1.8.0_221]
+	at java.lang.invoke.MemberName$Factory.resolveOrFail(Unknown Source) ~[?:1.8.0_221]
+	at java.lang.invoke.MethodHandles$Lookup.resolveOrFail(Unknown Source) ~[?:1.8.0_221]
+	at java.lang.invoke.MethodHandles$Lookup.linkMethodHandleConstant(Unknown Source) ~[?:1.8.0_221]
+	at java.lang.invoke.MethodHandleNatives.linkMethodHandleConstant(Unknown Source) ~[?:1.8.0_221]
+	... 32 more
+Caused by: java.lang.ClassNotFoundException: net.minecraftforge.common.crafting.IConditionSerializer
+	at java.lang.ClassLoader.findClass(Unknown Source) ~[?:1.8.0_221]
+	at java.lang.ClassLoader.loadClass(Unknown Source) ~[?:1.8.0_221]
+	at cpw.mods.modlauncher.TransformingClassLoader.loadClass(TransformingClassLoader.java:102) ~[modlauncher-3.2.0.jar:?]
+	at java.lang.ClassLoader.loadClass(Unknown Source) ~[?:1.8.0_221]
+	at java.lang.invoke.MethodHandleNatives.resolve(Native Method) ~[?:1.8.0_221]
+	at java.lang.invoke.MemberName$Factory.resolve(Unknown Source) ~[?:1.8.0_221]
+	at java.lang.invoke.MemberName$Factory.resolveOrFail(Unknown Source) ~[?:1.8.0_221]
+	at java.lang.invoke.MethodHandles$Lookup.resolveOrFail(Unknown Source) ~[?:1.8.0_221]
+	at java.lang.invoke.MethodHandles$Lookup.linkMethodHandleConstant(Unknown Source) ~[?:1.8.0_221]
+	at java.lang.invoke.MethodHandleNatives.linkMethodHandleConstant(Unknown Source) ~[?:1.8.0_221]
+	... 32 more
+[08:29:53] [modloading-worker-3/WARN]: No data fixer registered for entity upgrade_aquatic:nautilus
+[08:29:53] [modloading-worker-3/WARN]: No data fixer registered for entity upgrade_aquatic:pike
+[08:29:53] [modloading-worker-2/INFO]: Loading config file C:\Users\alexa\Twitch\Minecraft\Instances\u\config\equipment-tooltips-client.toml
+[08:29:53] [modloading-worker-3/WARN]: No data fixer registered for entity upgrade_aquatic:lionfish
+[08:29:54] [modloading-worker-8/INFO]: Ruins instance built, events registered
+[08:29:55] [modloading-worker-9/WARN]: No data fixer registered for entity cfm:seat
+[08:29:55] [Client thread/FATAL]: Failed to complete lifecycle event CONSTRUCT, 1 errors found
+[08:29:55] [Client thread/FATAL]: EventBus 0 shutting down - future events will not be posted.
+java.lang.Exception: stacktrace
+	at net.minecraftforge.eventbus.EventBus.shutdown(EventBus.java:278) ~[eventbus-1.0.0-service.jar:?]
+	at net.minecraftforge.fml.client.ClientModLoader.lambda$createRunnableWithCatch$5(ClientModLoader.java:97) ~[?:?]
+	at net.minecraftforge.fml.client.ClientModLoader.begin(ClientModLoader.java:79) ~[?:?]
+	at net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:453) ~[?:?]
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:365) ~[?:?]
+	at net.minecraft.client.main.Main.main(SourceFile:155) ~[1.14.4.jar:?]
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_221]
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source) ~[?:1.8.0_221]
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source) ~[?:1.8.0_221]
+	at java.lang.reflect.Method.invoke(Unknown Source) ~[?:1.8.0_221]
+	at net.minecraftforge.fml.loading.FMLClientLaunchProvider.lambda$launchService$0(FMLClientLaunchProvider.java:56) ~[forge-1.14.4-28.0.75.jar:28.0]
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:37) [modlauncher-3.2.0.jar:?]
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:50) [modlauncher-3.2.0.jar:?]
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:68) [modlauncher-3.2.0.jar:?]
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:80) [modlauncher-3.2.0.jar:?]
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:65) [modlauncher-3.2.0.jar:?]
+[08:29:55] [Client thread/INFO]: [OptiFine] (Reflector) Method not present: net.minecraftforge.client.model.ModelLoader.onRegisterItems
+[08:29:56] [Client thread/INFO]: Narrator library for x64 successfully loaded
+[08:29:56] [Client thread/INFO]: [OptiFine] *** Reloading textures ***
+[08:29:56] [Client thread/INFO]: [OptiFine] Resource packs: angelring-1.14.4-1.0.1.jar, AppleSkin-mc1.14.4-forge-1.0.12.jar, BadMobs-1.14.4-3.0.1.jar, BetterAdvancements-1.14.4-0.1.0.87.jar, BiomesOPlenty-1.14.4-9.0.0.250-universal.jar, Bookshelf-1.14.4-4.2.40.jar, furniture-7.0.0-pre5-1.14.4.jar, ChanceCubes-1.14.4-4.0.0.298.jar, classicbar-2.0.0a.jar, clearwater-1.3.jar, Clumps-4.0.0.jar, Controlling-5.0.3.jar, craftingstation-2.0.2a.jar, CraftingTweaks_1.14.4-10.1.3.jar, CustomSelectionBox-1.14.2-1.4.8.jar, Cyclic-1.14.4-0.0.9.jar, DefaultSettings-1.14.x-1.3.5.jar, elevatorid-1.14.4-1.5.1.jar, EquipmentTooltips-1.14.4-1.3.2+10.jar, ferroustry-1.1.jar, FleshToLeather-1.14.3-1.1.0.jar, forge-1.14.4-28.0.75-universal.jar, FTBUtilitiesBackups-2.0.0.10.jar, gravestone-1.15.0.jar, inventorysorter-1.14.4-15.2.0.jar, ironchest-1.14.4-9.0.4.jar, jei-1.14.4-6.0.0.10.jar, KleeSlabs_1.14.4-7.4.7.jar, LightOverlay-3.4.jar, LinkedDestruction-1.14.4-0.6.0.jar, MCAdditions-1.2.0.jar, MCFurnace-1.14.4-DEV-1.2.1.jar, mcjtylib-1.14-3.5.6-alpha.jar, mining_dimension-1.14.4-1.0.5.jar, modnametooltip_1.14.3-1.12.1.jar, Neat 1.5-19.jar, Placebo-1.14.4-2.1.11.jar, practicaltools-1.14.4-1.4.jar, prefab-1.4.0.4.jar, quickhomes-1.14.4-1.2.4.1.jar, randompatches-1.14.4-1.18.1.1.jar, reap-1.10.1.jar, roadstuff-1.14.4-2.0.4.0.jar, ruins-1.14.4.1.jar, simplylight-0.8.7.jar, smooth-scrolling-everywhere-1.0.jar, speedyladders-1.14.4-1.0.2.jar, SimpleStorageNetwork-1.14.4-0.0.10.jar, tramplestopper-1.14.4-2.0.0.22-universal.jar, Upgrade Aquatic Wave Three v5 - Beta v1.0.7.jar, useful_backpacks-1.14.4-1.7.0.34.jar, u_team_core-1.14.4-2.7.0.129.jar, Hwyla-forge-1.10.5-B66_1.14.4.jar, worldedit-forge-mc1.14.4-7.1.0-SNAPSHOT-dist.jar, Xaeros_Minimap_1.17.8_Forge_1.14.4.jar, XaerosWorldMap_1.4.8_Forge_1.14.4.jar, XL-Food-Mod-1.14.4-2.1.0.jar, YAMDA-4.0.1.jar, PureBDcraft 256x MC114.zip, PureBDcraft CTM Transitions MC114.zip
+[08:29:56] [Thread-1/FATAL]: Forge config just got changed on the file system!
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multitexture: false
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/glass/frame/glass.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/glass/frame/glass_pane.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/brick/brick.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/brick/brick2.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/brick/brick3.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/sandstone/chiseled_sandstone/chiseled_sandstone.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/sandstone/cut_red_sandstone/cut_red_sandstone.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/sandstone/cut_sandstone/cut_sandstone.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/sandstone/red_sandstone/red_sandstone.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/sandstone/sandstone/sandstone.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/smooth_stone/smooth_stone.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/black/black_terracotta.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/blue/blue_terracotta.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/brown/brown_terracotta.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/cyan/cyan_terracotta.properties
+[08:29:56] [Server-Worker-6/WARN]: Configuration file C:\Users\alexa\Twitch\Minecraft\Instances\u\config\craftingtweaks-client.toml is not correct. Correcting
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/gray/gray_terracotta.properties
+[08:29:56] [Server-Worker-6/WARN]: Incorrect key client.addons was corrected from SimpleCommentedConfig:{minecraft=ENABLED} to null
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/green/green_terracotta.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/light_blue/light_blue_terracotta.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/light_gray/light_gray_terracotta.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/lime/lime_terracotta.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/magenta/magenta_terracotta.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/normal/terracotta.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/orange/orange_terracotta.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/pink/pink_terracotta.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/purple/purple_terracotta.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/red/red_terracotta.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/white/white_terracotta.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/yellow/yellow_terracotta.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/diamond/diamond_block.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/emerald/emerald_block.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/gold/gold_block.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/iron/iron_block.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/lapis/lapis_block.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/quartz/side/quartz_block_sides.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/quartz/top/quartz_block_ends.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/redstone/anim/redstone_block.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/redstone/static/redstone_block.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/mushroom/brown/brown_mushroom_block.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/mushroom/inside/mushroom_block_inside.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/mushroom/red/red_mushroom_block.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/sugar_cane/sugar_cane.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/transitions/0_clay/clay_overlay.properties
+[08:29:56] [Server-Worker-6/WARN]: Configuration file C:\Users\alexa\Twitch\Minecraft\Instances\u\config\gravestone-client.toml is not correct. Correcting
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/transitions/1_red_sand/red_sand_overlay.properties
+[08:29:56] [Server-Worker-6/WARN]: Incorrect key dimension_names was corrected from [minecraft:overworld=Overworld, minecraft:nether=Nether, minecraft:the_end=The End] to [minecraft:overworld=Overworld, minecraft:nether=Nether, minecraft:the_end=The End]
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/transitions/2_sand/clay_alt_overlay.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/transitions/2_sand/sand_overlay.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/transitions/3_gravel/gravel_overlay.properties
+[08:29:56] [Client thread/INFO]: [OptiFine] Loading optifine/color.properties
+[08:29:56] [Client thread/INFO]: [OptiFine] screen.loading = 1e1e1e
+[08:29:56] [Client thread/INFO]: [OptiFine] screen.loading.bar = ffffff
+[08:29:56] [Client thread/INFO]: [OptiFine] screen.loading.progress = b4c8ff
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/transitions/4_grass/grass_overlay.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/transitions/5_snow/snow_overlay.properties
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-6/INFO]: Loading blacklist from config file.
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-6/WARN]: Configuration file C:\Users\alexa\Twitch\Minecraft\Instances\u\config\craftingtweaks-common.toml is not correct. Correcting
+[08:29:56] [Server-Worker-6/WARN]: Incorrect key common.compressBlacklist was corrected from [minecraft:sandstone, minecraft:iron_trapdoor] to [minecraft:sandstone, minecraft:iron_trapdoor]
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-6/WARN]: Configuration file C:\Users\alexa\Twitch\Minecraft\Instances\u\config\kleeslabs-common.toml is not correct. Correcting
+[08:29:56] [Server-Worker-6/WARN]: Incorrect key common.disabledCompat was corrected from [] to []
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-6/ERROR]: Skipping lifecycle event SETUP, 1 errors found.
+[08:29:56] [Server-Worker-6/FATAL]: Failed to complete lifecycle event SETUP, 1 errors found
+[08:29:56] [Server-Worker-6/FATAL]: EventBus 0 shutting down - future events will not be posted.
+java.lang.Exception: stacktrace
+	at net.minecraftforge.eventbus.EventBus.shutdown(EventBus.java:278) ~[eventbus-1.0.0-service.jar:?]
+	at net.minecraftforge.fml.client.ClientModLoader.lambda$createRunnableWithCatch$5(ClientModLoader.java:97) ~[?:?]
+	at net.minecraftforge.fml.client.ClientModLoader.startModLoading(ClientModLoader.java:105) ~[?:?]
+	at net.minecraftforge.fml.client.ClientModLoader.lambda$onreload$3(ClientModLoader.java:87) ~[?:?]
+	at net.minecraftforge.fml.client.ClientModLoader.lambda$createRunnableWithCatch$5(ClientModLoader.java:95) ~[?:?]
+	at java.util.concurrent.CompletableFuture$AsyncRun.run(Unknown Source) [?:1.8.0_221]
+	at java.util.concurrent.CompletableFuture$AsyncRun.exec(Unknown Source) [?:1.8.0_221]
+	at java.util.concurrent.ForkJoinTask.doExec(Unknown Source) [?:1.8.0_221]
+	at java.util.concurrent.ForkJoinPool$WorkQueue.runTask(Unknown Source) [?:1.8.0_221]
+	at java.util.concurrent.ForkJoinPool.runWorker(Unknown Source) [?:1.8.0_221]
+	at java.util.concurrent.ForkJoinWorkerThread.run(Unknown Source) [?:1.8.0_221]
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:56] [Server-Worker-2/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:57] [Server-Worker-2/INFO]: [OptiFine] BetterGrass: Parsing default configuration optifine/bettergrass.properties
+[08:29:57] [Server-Worker-2/INFO]: [OptiFine] Scaled non power of 2: jei:gui/icons/recipe_transfer, 7 -> 14
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] CustomItems: optifine/cit/elytra/broken_elytra.properties
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multitexture: false
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/glass/frame/glass.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/glass/frame/glass_pane.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/brick/brick.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/brick/brick2.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/brick/brick3.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/sandstone/chiseled_sandstone/chiseled_sandstone.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/sandstone/cut_red_sandstone/cut_red_sandstone.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/sandstone/cut_sandstone/cut_sandstone.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/sandstone/red_sandstone/red_sandstone.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/sandstone/sandstone/sandstone.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/smooth_stone/smooth_stone.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/black/black_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/blue/blue_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/brown/brown_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/cyan/cyan_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/gray/gray_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/green/green_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/light_blue/light_blue_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/light_gray/light_gray_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/lime/lime_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/magenta/magenta_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/normal/terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/orange/orange_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/pink/pink_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/purple/purple_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/red/red_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/white/white_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/hard_materials/terracotta/yellow/yellow_terracotta.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/diamond/diamond_block.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/emerald/emerald_block.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/gold/gold_block.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/iron/iron_block.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/lapis/lapis_block.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/quartz/side/quartz_block_sides.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/quartz/top/quartz_block_ends.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/redstone/anim/redstone_block.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/minerals/redstone/static/redstone_block.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/mushroom/brown/brown_mushroom_block.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/mushroom/inside/mushroom_block_inside.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/mushroom/red/red_mushroom_block.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/sugar_cane/sugar_cane.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/transitions/0_clay/clay_overlay.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/transitions/1_red_sand/red_sand_overlay.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/transitions/2_sand/clay_alt_overlay.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/transitions/2_sand/sand_overlay.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/transitions/3_gravel/gravel_overlay.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/transitions/4_grass/grass_overlay.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/transitions/5_snow/snow_overlay.properties
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/WARN]: [OptiFine] Unknown resource pack file: dummy
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] Multipass connected textures: true
+[08:29:59] [Server-Worker-7/INFO]: [OptiFine] BetterGrass: Parsing default configuration optifine/bettergrass.properties
+[08:30:00] [Server-Worker-7/INFO]: [OptiFine] Sprite size: 256
+[08:30:00] [Server-Worker-7/INFO]: [OptiFine] Mipmap levels: 8
+[08:30:00] [Server-Worker-7/INFO]: [OptiFine] Scaled too small texture: minecraft:block/redstone_dust_overlay, 16 -> 256
+[08:30:00] [Server-Worker-7/INFO]: [OptiFine] Scaled too small texture: minecraft:optifine/ctm/default/empty, 16 -> 256
+[08:30:00] [Server-Worker-7/INFO]: [OptiFine] Scaled too small texture: minecraft:block/conduit, 16 -> 256
+[08:30:00] [Server-Worker-7/INFO]: [OptiFine] Scaled too small texture: minecraft:block/water_overlay, 32 -> 256
+[08:30:02] [Server-Worker-7/ERROR]: Skipping lifecycle event ENQUEUE_IMC, 1 errors found.
+[08:30:02] [Server-Worker-7/FATAL]: Failed to complete lifecycle event ENQUEUE_IMC, 1 errors found
+[08:30:02] [Server-Worker-7/FATAL]: EventBus 0 shutting down - future events will not be posted.
+java.lang.Exception: stacktrace
+	at net.minecraftforge.eventbus.EventBus.shutdown(EventBus.java:278) ~[eventbus-1.0.0-service.jar:?]
+	at net.minecraftforge.fml.client.ClientModLoader.lambda$createRunnableWithCatch$5(ClientModLoader.java:97) ~[?:?]
+	at net.minecraftforge.fml.client.ClientModLoader.finishModLoading(ClientModLoader.java:118) ~[?:?]
+	at net.minecraftforge.fml.client.ClientModLoader.lambda$onreload$4(ClientModLoader.java:89) ~[?:?]
+	at java.util.concurrent.CompletableFuture.uniRun(Unknown Source) [?:1.8.0_221]
+	at java.util.concurrent.CompletableFuture$UniRun.tryFire(Unknown Source) [?:1.8.0_221]
+	at java.util.concurrent.CompletableFuture$Completion.exec(Unknown Source) [?:1.8.0_221]
+	at java.util.concurrent.ForkJoinTask.doExec(Unknown Source) [?:1.8.0_221]
+	at java.util.concurrent.ForkJoinPool$WorkQueue.runTask(Unknown Source) [?:1.8.0_221]
+	at java.util.concurrent.ForkJoinPool.runWorker(Unknown Source) [?:1.8.0_221]
+	at java.util.concurrent.ForkJoinWorkerThread.run(Unknown Source) [?:1.8.0_221]
+[08:30:02] [Client thread/WARN]: Skipping bad option: lastServer:
+[08:30:02] [Client thread/INFO]: OpenAL initialized.
+[08:30:02] [Client thread/INFO]: Sound engine started
+[08:30:02] [Client thread/INFO]: Created: 8192x4096 textures-atlas
+[08:30:02] [Client thread/INFO]: [Shaders] Allocate texture map normal: 8192x4096, mipmaps: 0
+[08:30:02] [Client thread/INFO]: [Shaders] Allocate texture map specular: 8192x4096, mipmaps: 0
+[08:30:02] [Client thread/INFO]: [OptiFine] Animated sprites: 5
+[08:30:02] [Client thread/INFO]: Created: 16384x8192 textures-atlas
+[08:30:02] [Client thread/INFO]: [Shaders] Allocate texture map normal: 16384x8192, mipmaps: 8
+[08:30:02] [Client thread/INFO]: [Shaders] Allocate texture map specular: 16384x8192, mipmaps: 8
+[08:30:03] [Client thread/INFO]: [OptiFine] Animated sprites: 34
+[08:30:15] [Client thread/INFO]: Created: 4096x2048 textures/particle-atlas
+[08:30:15] [Client thread/INFO]: Created: 4096x4096 textures/painting-atlas
+[08:30:15] [Client thread/INFO]: Created: 512x512 textures/mob_effect-atlas

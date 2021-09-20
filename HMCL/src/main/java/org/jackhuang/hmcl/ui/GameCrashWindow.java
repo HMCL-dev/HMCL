@@ -52,6 +52,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
@@ -60,6 +61,7 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameCrashWindow extends Stage {
@@ -102,14 +104,28 @@ public class GameCrashWindow extends Stage {
     private void analyzeCrashReport() {
         loading.set(true);
         CompletableFuture.supplyAsync(() -> {
-            return CrashReportAnalyzer.anaylze(logs);
-        }).whenCompleteAsync((results, exception) -> {
+            String rawLog = logs.stream().map(Pair::getKey).collect(Collectors.joining("\n"));
+            Set<String> keywords = Collections.emptySet();
+            try {
+                String crashReport = CrashReportAnalyzer.findCrashReport(rawLog);
+                if (crashReport != null) {
+                    keywords = CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport);
+                }
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to read crash report", e);
+            }
+            return pair(
+                    CrashReportAnalyzer.anaylze(rawLog),
+                    keywords);
+        }).whenCompleteAsync((pair, exception) -> {
             loading.set(false);
 
             if (exception != null) {
                 LOG.log(Level.WARNING, "Failed to analyze crash report", exception);
                 reason.set(i18n("game.crash.reason.unknown"));
             } else {
+                List<CrashReportAnalyzer.Result> results = pair.getKey();
+                Set<String> keywords = pair.getValue();
                 StringBuilder reasonText = new StringBuilder();
                 for (CrashReportAnalyzer.Result result : results) {
                     switch (result.getRule()) {
@@ -120,13 +136,21 @@ public class GameCrashWindow extends Stage {
                             break;
                         default:
                             reasonText.append(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
-                                    Arrays.stream(result.getRule().getGroupNames()).map(groupName -> result.getMatcher().group("groupName"))
+                                    Arrays.stream(result.getRule().getGroupNames()).map(groupName -> result.getMatcher().group(groupName))
                                             .toArray()))
                                     .append("\n");
                             break;
                     }
                 }
-                reason.set(reasonText.toString());
+                if (results.isEmpty()) {
+                    if (!keywords.isEmpty()) {
+                        reason.set(i18n("game.crash.reason.stacktrace", String.join(", ", keywords)));
+                    } else {
+                        reason.set(i18n("game.crash.reason.unknown"));
+                    }
+                } else {
+                    reason.set(reasonText.toString());
+                }
             }
         }, Schedulers.javafx());
     }
@@ -168,6 +192,7 @@ public class GameCrashWindow extends Stage {
     private final class View extends VBox {
 
         View() {
+            setStyle("-fx-background-color: white");
 
             HBox titlePane = new HBox();
             {
@@ -237,7 +262,7 @@ public class GameCrashWindow extends Stage {
                 javaDir.setSubtitle(launchOptions.getJava().getBinary().toAbsolutePath().toString());
 
                 TwoLineListItem reason = new TwoLineListItem();
-                reason.getStyleClass().setAll("two-line-item-second-large");
+                reason.getStyleClass().setAll("two-line-item-second-large", "wrap-text");
                 reason.setTitle(i18n("game.crash.reason"));
                 reason.subtitleProperty().bind(GameCrashWindow.this.reason);
 
