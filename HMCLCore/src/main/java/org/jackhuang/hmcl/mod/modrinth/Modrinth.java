@@ -419,6 +419,11 @@ public final class Modrinth {
         }
 
         @Override
+        public List<DownloadManager.Mod> loadDependencies() throws IOException {
+            return Collections.emptyList();
+        }
+
+        @Override
         public Stream<DownloadManager.Version> loadVersions() throws IOException {
             return Modrinth.getFiles(this).stream()
                     .map(ModVersion::toVersion)

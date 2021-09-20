@@ -865,7 +865,7 @@ public abstract class Task<T> {
      * @param tasks the Tasks
      * @return a new Task that is completed when all of the given Tasks complete
      */
-    public static Task<Void> allOf(Task<?>... tasks) {
+    public static Task<List<Object>> allOf(Task<?>... tasks) {
         return allOf(Arrays.asList(tasks));
     }
 
@@ -880,14 +880,15 @@ public abstract class Task<T> {
      * @param tasks the Tasks
      * @return a new Task that is completed when all of the given Tasks complete
      */
-    public static Task<Void> allOf(Collection<Task<?>> tasks) {
-        return new Task<Void>() {
+    public static Task<List<Object>> allOf(Collection<Task<?>> tasks) {
+        return new Task<List<Object>>() {
             {
                 setSignificance(TaskSignificance.MINOR);
             }
 
             @Override
             public void execute() {
+                setResult(tasks.stream().map(Task::getResult).collect(Collectors.toList()));
             }
 
             @Override

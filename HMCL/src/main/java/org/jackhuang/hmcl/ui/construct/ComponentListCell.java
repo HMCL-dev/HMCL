@@ -22,6 +22,7 @@ import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
@@ -137,25 +138,31 @@ class ComponentListCell extends StackPane {
 
                 setExpanded(!isExpanded());
 
-                double newAnimatedHeight = content.prefHeight(-1) * (isExpanded() ? 1 : -1);
-                double newHeight = isExpanded() ? getHeight() + newAnimatedHeight : prefHeight(-1);
-                double contentHeight = isExpanded() ? newAnimatedHeight : 0;
-
                 if (isExpanded()) {
-                    updateClip(newHeight);
                     list.onExpand();
+                    list.layout();
                 }
 
-                expandAnimation = new Timeline(new KeyFrame(new Duration(320.0),
-                        new KeyValue(container.minHeightProperty(), contentHeight, FXUtils.SINE),
-                        new KeyValue(container.maxHeightProperty(), contentHeight, FXUtils.SINE)
-                ));
+                Platform.runLater(() -> {
+                    double newAnimatedHeight = content.prefHeight(-1) * (isExpanded() ? 1 : -1);
+                    double newHeight = isExpanded() ? getHeight() + newAnimatedHeight : prefHeight(-1);
+                    double contentHeight = isExpanded() ? newAnimatedHeight : 0;
 
-                if (!isExpanded()) {
-                    expandAnimation.setOnFinished(e2 -> updateClip(newHeight));
-                }
+                    if (isExpanded()) {
+                        updateClip(newHeight);
+                    }
 
-                expandAnimation.play();
+                    expandAnimation = new Timeline(new KeyFrame(new Duration(320.0),
+                            new KeyValue(container.minHeightProperty(), contentHeight, FXUtils.SINE),
+                            new KeyValue(container.maxHeightProperty(), contentHeight, FXUtils.SINE)
+                    ));
+
+                    if (!isExpanded()) {
+                        expandAnimation.setOnFinished(e2 -> updateClip(newHeight));
+                    }
+
+                    expandAnimation.play();
+                });
             });
 
             expandedProperty().addListener((a, b, newValue) ->

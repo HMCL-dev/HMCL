@@ -180,7 +180,7 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
 
             Profiles.registerVersionsListener(this::loadVersions);
 
-            setOnFailedAction(e ->  Controllers.navigate(Controllers.getDownloadPage()));
+            setOnFailedAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
         }
 
         private void loadVersions(Profile profile) {

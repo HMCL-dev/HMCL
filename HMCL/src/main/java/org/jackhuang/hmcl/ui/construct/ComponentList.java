@@ -109,6 +109,7 @@ public class ComponentList extends Control {
     public void onExpand() {
         if (!expanded && lazyInitializer != null) {
             lazyInitializer.accept(this);
+            setNeedsLayout(true);
         }
 
         expanded = true;

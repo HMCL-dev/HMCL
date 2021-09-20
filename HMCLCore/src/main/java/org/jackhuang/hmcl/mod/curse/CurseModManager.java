@@ -47,6 +47,11 @@ public final class CurseModManager {
         }.getType());
     }
 
+    public static CurseAddon getAddon(int id) throws IOException {
+        String response = NetworkUtils.doGet(NetworkUtils.toURL("https://addons-ecs.forgesvc.net/api/v2/addon/" + id));
+        return JsonUtils.fromNonNullJson(response, CurseAddon.class);
+    }
+
     public static List<CurseAddon.LatestFile> getFiles(CurseAddon addon) throws IOException {
         String response = NetworkUtils.doGet(NetworkUtils.toURL("https://addons-ecs.forgesvc.net/api/v2/addon/" + addon.getId() + "/files"));
         return JsonUtils.fromNonNullJson(response, new TypeToken<List<CurseAddon.LatestFile>>() {

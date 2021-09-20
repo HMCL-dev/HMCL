@@ -22,8 +22,10 @@ import org.jackhuang.hmcl.util.Immutable;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -157,6 +159,19 @@ public class CurseAddon implements DownloadManager.IMod {
 
     public boolean isExperimental() {
         return isExperimental;
+    }
+
+    @Override
+    public List<DownloadManager.Mod> loadDependencies() throws IOException {
+        Set<Integer> dependencies = latestFiles.stream()
+                .flatMap(latestFile -> latestFile.getDependencies().stream())
+                .map(Dependency::getAddonId)
+                .collect(Collectors.toSet());
+        List<DownloadManager.Mod> mods = new ArrayList<>();
+        for (int dependencyId : dependencies) {
+            mods.add(CurseModManager.getAddon(dependencyId).toMod());
+        }
+        return mods;
     }
 
     @Override
@@ -485,7 +500,7 @@ public class CurseAddon implements DownloadManager.IMod {
                     versionType,
                     new DownloadManager.File(Collections.emptyMap(), getDownloadUrl(), getFileName()),
                     Collections.emptyList(),
-                    gameVersion,
+                    gameVersion.stream().filter(ver -> ver.startsWith("1.") || ver.contains("w")).collect(Collectors.toList()),
                     Collections.emptyList()
             );
         }
