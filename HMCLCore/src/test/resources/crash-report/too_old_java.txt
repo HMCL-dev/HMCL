@@ -1,0 +1,130 @@
+---- Minecraft Crash Report ----
+// Everything's going to plan. No, really, that was supposed to happen.
+
+Time: 19-1-27 下午10:14
+Description: There was a severe problem during mod loading that has caused the game to fail
+
+cpw.mods.fml.common.LoaderException: java.lang.ClassNotFoundException: mods.flammpfeil.slashblade.SlashBlade
+	at cpw.mods.fml.common.LoadController.transition(LoadController.java:163)
+	at cpw.mods.fml.common.Loader.loadMods(Loader.java:544)
+	at cpw.mods.fml.client.FMLClientHandler.beginMinecraftLoading(FMLClientHandler.java:208)
+	at net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:482)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:877)
+	at net.minecraft.client.main.Main.main(SourceFile:148)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:146)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:25)
+Caused by: java.lang.ClassNotFoundException: mods.flammpfeil.slashblade.SlashBlade
+	at net.minecraft.launchwrapper.LaunchClassLoader.findClass(LaunchClassLoader.java:185)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at cpw.mods.fml.common.ModClassLoader.loadClass(ModClassLoader.java:58)
+	at java.lang.Class.forName0(Native Method)
+	at java.lang.Class.forName(Unknown Source)
+	at cpw.mods.fml.common.FMLModContainer.constructMod(FMLModContainer.java:440)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at com.google.common.eventbus.EventSubscriber.handleEvent(EventSubscriber.java:74)
+	at com.google.common.eventbus.SynchronizedEventSubscriber.handleEvent(SynchronizedEventSubscriber.java:47)
+	at com.google.common.eventbus.EventBus.dispatch(EventBus.java:322)
+	at com.google.common.eventbus.EventBus.dispatchQueuedEvents(EventBus.java:304)
+	at com.google.common.eventbus.EventBus.post(EventBus.java:275)
+	at cpw.mods.fml.common.LoadController.sendEventToModContainer(LoadController.java:212)
+	at cpw.mods.fml.common.LoadController.propogateStateMessage(LoadController.java:190)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at com.google.common.eventbus.EventSubscriber.handleEvent(EventSubscriber.java:74)
+	at com.google.common.eventbus.SynchronizedEventSubscriber.handleEvent(SynchronizedEventSubscriber.java:47)
+	at com.google.common.eventbus.EventBus.dispatch(EventBus.java:322)
+	at com.google.common.eventbus.EventBus.dispatchQueuedEvents(EventBus.java:304)
+	at com.google.common.eventbus.EventBus.post(EventBus.java:275)
+	at cpw.mods.fml.common.LoadController.distributeStateMessage(LoadController.java:119)
+	at cpw.mods.fml.common.Loader.loadMods(Loader.java:513)
+	... 10 more
+Caused by: java.lang.UnsupportedClassVersionError: mods/flammpfeil/slashblade/SlashBlade : Unsupported major.minor version 52.0
+	at java.lang.ClassLoader.defineClass1(Native Method)
+	at java.lang.ClassLoader.defineClass(Unknown Source)
+	at java.security.SecureClassLoader.defineClass(Unknown Source)
+	at net.minecraft.launchwrapper.LaunchClassLoader.findClass(LaunchClassLoader.java:176)
+	... 38 more
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- System Details --
+Details:
+	Minecraft Version: 1.7.10
+	Operating System: Windows 7 (x86) version 6.1
+	Java Version: 1.7.0_03, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) Client VM (mixed mode), Oracle Corporation
+	Memory: 186384328 bytes (177 MB) / 298643456 bytes (284 MB) up to 489947136 bytes (467 MB)
+	JVM Flags: 8 total; -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -Xmx480M -Xmn128M -XX:PermSize=64M -XX:MaxPermSize=128M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy
+	AABB Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+	FML: MCP v9.05 FML v7.10.99.99 Minecraft Forge 10.13.5.1558 Optifine OptiFine_1.7.10_HD_U_D8 46 mods loaded, 46 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+	UC	mcp{9.05} [Minecraft Coder Pack] (minecraft.jar)
+	UC	FML{7.10.99.99} [Forge Mod Loader] (forge-1.7.10-10.13.5.0-1.7.10.jar)
+	UC	Forge{10.13.5.1558} [Minecraft Forge] (forge-1.7.10-10.13.5.0-1.7.10.jar)
+	UC	InputFix{1.7.2-v5} [InputFix] (minecraft.jar)
+	UC	neteasecore{1.11.2} [NeteaseCore] (minecraft.jar)
+	UC	basemodneteasecore{1.8} [BaseModNeteaseCore] (minecraft.jar)
+	UC	skincoremod{1.7.10} [skincoremod] (minecraft.jar)
+	UC	Avaritia{1.11} [Avaritia] (4618426965794801296@3@17.jar)
+	UC	networkmod{1.0} [network rpc Mod] (4620273600878080373@3@0.jar)
+	UC	antimod{2.0} [anti addiction Mod] (4618827397391566952@3@0.jar)
+	UC	craftguide{1.7.1.0} [CraftGuide] (4619552507105661375@3@15.jar)
+	UC	filtermod{1.0} [filtermod] (4619774497122295185@3@0.jar)
+	UC	autopickup{2.1} [AutoPickup] (4619907964369297679@3@15.jar)
+	UC	friendplaymod{1.0} [Friendplay Mod] (4620273600817850558@3@0.jar)
+	UC	mcbasemod{1.0} [mcbasemod] (4620273600852623323@3@0.jar)
+	UE	flammpfeil.slashblade{mc1.7.10-r87} [SlashBlade] (4620440172958873521@3@38.jar)
+	UC	nomorerain{0.0.1} [No More Rain] (4620440333329871410@3@37.jar)
+	UC	updatecore{1.0} [updatecore] (4620608816195582481@3@0.jar)
+	UC	armourersWorkshop{1.7.10-0.47.1} [Armourer's Workshop] (4621122003232375079@3@36.jar)
+	UC	plushieWrapper{0.0.0} [Plushie Wrapper] (4621122003232375079@3@36.jar)
+	UC	ChunkAnimator{@VERSION@} [Chunk Animator] (4621704345334061216@3@15.jar)
+	UC	trashslot{1.0.31} [TrashSlot] (4621790239105874277@3@15.jar)
+	UC	Neat{GRADLE:VERSION-GRADLE:BUILD} [Neat] (4622916050975908350@3@15.jar)
+	UC	samsfooddetails{1.7.10-1.0.0} [Food Details] (4623024481607864927@3@15.jar)
+	UC	playermanager{1.0} [playermanager] (4623485520867757846@3@0.jar)
+	UC	worldedit{6.1.1} [WorldEdit] (4623662370617246414@3@15.jar)
+	UC	FpsReducer{1.7.10-1.10.1} [FPS Reducer] (4623801002337776029@3@15.jar)
+	UC	DragonMounts{r41-1.7.10} [Dragon Mounts] (4623997664137822297@3@15.jar)
+	UC	opencommand{1.0} [opencommand Mod] (4624103922546557562@3@0.jar)
+	UC	fullscreenpopup{1.7.10.38000} [Fullscreen Popup Mod] (4624103922583048306@3@0.jar)
+	UC	alluwant{2.1} [背包物品编辑器] (4624572238180731003@3@15.jar)
+	UC	cosmeticarmorreworked{1.7.10-v6b} [CosmeticArmorReworked] (4625343302731396781@3@15.jar)
+	UC	skinmod{1.0} [skinmod] (4626894487426574761@3@0.jar)
+	UC	MapWriter{2.1.8} [MapWriter] (4627714186354861036@3@15.jar)
+	UE	mrblade{1.0} [Technology Revolution and Fox Blade Extra] (4628673577301992828@3@15.jar)
+	UC	LIUtils{1.7.10.000} [LIUtils] (76010818897970176@3@16.jar)
+	UC	LambdaCraft{1.9} [LambdaCraft core] (76010818897970176@3@16.jar)
+	UC	LambdaCraft|World{1.9} [LambdaCraft World] (76010818897970176@3@16.jar)
+	UC	LambdaCraft|DeathMatch{1.9} [LambdaCraft DeathMatch] (76010818897970176@3@16.jar)
+	UC	LambdaCraft|Living{1.9} [LambdaCraft Living] (76010818897970176@3@16.jar)
+	UC	LambdaCraft|Terrain{1.9} [LambdaCraft Terrain] (76010818897970176@3@16.jar)
+	UC	LIUtils-Weapons{1.7.10.000} [LIUtils-MyWeaponry] (76010818897970176@3@16.jar)
+	UC	customnpcs{1.7.10d} [CustomNpcs] (76027706415776768@3@15.jar)
+	UC	chinacraft{0.4.208} [ChinaCraft] (76032743326090240@3@36.jar)
+	UC	FoodCraft{1.2.0} [FoodCraft(FoodCraft)] (76037269147878400@3@35.jar)
+	UC	chocolateQuest{1.0} [Chocolate Quest] (94829463832888320@3@16.jar)
+	OptiFine Version: OptiFine_1.7.10_HD_U_D8
+	Render Distance Chunks: 12
+	Mipmaps: 4
+	Anisotropic Filtering: 1
+	Antialiasing: 0
+	Multitexture: false
+	Shaders: null
+	OpenGlVersion: 4.1.10367 Compatibility Profile Context
+	OpenGlRenderer: AMD Radeon HD 6400M Series
+	OpenGlVendor: ATI Technologies Inc.
+	CpuCount: 4

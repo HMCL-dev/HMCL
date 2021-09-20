@@ -1,0 +1,88 @@
+---- Minecraft Crash Report ----
+// Hey, that tickles! Hehehe!
+
+Time: 3/10/19 8:14 PM
+Description: Exception in server tick loop
+
+java.lang.NullPointerException: Exception in server tick loop
+	at net.minecraft.world.chunk.storage.ExtendedBlockStorage.func_76657_c(ExtendedBlockStorage.java:145)
+	at net.minecraft.world.chunk.Chunk.func_76603_b(Chunk.java:332)
+	at net.minecraft.world.chunk.Chunk.func_150807_a(Chunk.java:682)
+	at net.minecraft.world.World.func_147465_d(World.java:812)
+	at net.minecraft.world.gen.feature.WorldGenerator.func_150516_a(SourceFile:35)
+	at twilightforest.world.TFTreeGenerator.setBlockAndMetadata(TFTreeGenerator.java:116)
+	at twilightforest.world.TFTreeGenerator.putLeafBlock(TFTreeGenerator.java:253)
+	at twilightforest.world.TFTreeGenerator.makeLeafCircle(TFTreeGenerator.java:167)
+	at twilightforest.world.TFGenCanopyTree.buildBranch(TFGenCanopyTree.java:139)
+	at twilightforest.world.TFGenCanopyTree.func_76484_a(TFGenCanopyTree.java:69)
+	at twilightforest.biomes.TFBiomeDecorator.func_150513_a(TFBiomeDecorator.java:173)
+	at net.minecraft.world.biome.BiomeDecorator.func_150512_a(BiomeDecorator.java:114)
+	at twilightforest.biomes.TFBiomeDecorator.func_150512_a(TFBiomeDecorator.java:139)
+	at net.minecraft.world.biome.BiomeGenBase.func_76728_a(BiomeGenBase.java:339)
+	at twilightforest.biomes.TFBiomeFireflyForest.func_76728_a(TFBiomeFireflyForest.java:93)
+	at twilightforest.world.ChunkProviderTwilightForest.func_73153_a(ChunkProviderTwilightForest.java:977)
+	at net.minecraft.world.gen.ChunkProviderServer.func_73153_a(ChunkProviderServer.java:419)
+	at net.minecraft.world.chunk.Chunk.func_76624_a(Chunk.java:1187)
+	at net.minecraft.world.gen.ChunkProviderServer.originalLoadChunk(ChunkProviderServer.java:303)
+	at kcauldron.ChunkGenerator.internalGenerate(ChunkGenerator.java:71)
+	at kcauldron.ChunkGenerator.chunkGeneratorCycle(ChunkGenerator.java:50)
+	at cpw.mods.fml.common.FMLCommonHandler.onPostServerTick(FMLCommonHandler.java:252)
+	at net.minecraft.server.MinecraftServer.func_71217_p(MinecraftServer.java:862)
+	at net.minecraft.server.MinecraftServer.run(MinecraftServer.java:669)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- System Details --
+Details:
+	Minecraft Version: 1.7.10
+	KCauldron Version: pw.prok:KCauldron:1.7.10-1614.201 Official
+	Plugins: Intensify3, ItemDurability, PlaceholderAPI, GroupManager, Block-That-Command, BetterLottery2, AsyncKeepAlive, WorldCommandBlock, Dantiao, ItemTime, GuoItemLoreCommand, NoInfiniteItem, BanItem, Yum, AT, LWCField, AntiCraft, TimeLock, FrogsPluginLib, CoreProtect, WorldEdit, ChunkFixer, Essentials, Promotion, AgarthaLib, CrackShot, LaggRemover, NoBonemealCheat, PoorChunkGenerator, NoSpawnChunks, AntiRedStone, AnitEnch, EssentialsChat, iConomy, CommandCode, TreeAssist, Anti-Xray, CustomJoinItems, Vault, Lores, PlotSquared, LWC, QuickShop, PlayerPoints, MultiWorld, EasyKitsRel, ChestCommands, EssentialsProtect, EssentialsAntiBuild, CustomArrow, RandomLocation, BossShop, EssentialsSpawn, Multiverse-Core, InfoBoardReborn, Residence, CrazyAuctions, AuthMe, Scavenger, SignShop, LockettePro, ProtocolLib, NeverLag, HolographicDisplays, RPG_Items, ColorMOTD, NameTags, SQLibrary
+	Disabled Plugins:
+	Operating System: Linux (amd64) version 2.6.32-754.el6.x86_64
+	Java Version: 1.8.0_202, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 4647461320 bytes (4432 MB) / 6141509632 bytes (5857 MB) up to 6141509632 bytes (5857 MB)
+	JVM Flags: 2 total; -Xmx6000M -Xms6000M
+	AABB Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	IntCache: cache: 0, tcache: 37, allocated: 0, tallocated: 0
+	FML: MCP v9.05 FML v7.10.99.99 Minecraft Forge 10.13.4.1614 29 mods loaded, 29 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+	UCHIJAAAA	mcp{9.05} [Minecraft Coder Pack] (minecraft.jar)
+	UCHIJAAAA	FML{7.10.99.99} [Forge Mod Loader] (KCauldron-1.7.10-1614.201.jar)
+	UCHIJAAAA	Forge{10.13.4.1614} [Minecraft Forge] (KCauldron-1.7.10-1614.201.jar)
+	UCHIJAAAA	kimagine{0.2} [KImagine] (minecraft.jar)
+	UCHIJAAAA	ercclasstransform{1.0} [ERCClassTransform] (minecraft.jar)
+	UCHIJAAAA	mod_ThreadedLighting{1.7.10-1.0} [Threaded Lighting] (minecraft.jar)
+	UCHIJAAAA	gilded-games-util{1.7.10-1.2} [Gilded Games Utility] ([前置]-games-util-1.7.10-1.9.jar)
+	UCHIJAAAA	swords{1.0} [Mo' Swords Mod] (1.7.10 更多剑2汉化.jar)
+	UCHIJAAAA	customnpcs{1.7.10d} [CustomNpcs] ([NPC]CustomNPCs_1.7.10d(19jun17).jar)
+	UCHIJAAAA	pozo{4.0.0} [pozo] ([RPG贴图版]pozo.jar)
+	UCHIJAAAA	aether{1.7.10-1.6} [Aether II] ([以太2]aether-1.7.10-1.6.jar)
+	UCHIJAAAA	Unsheathe{1.7.6} [Unsheathe] ([利刃出鞘]Sword+Unsheathe-1.7.10-1.7.2-v2.jar)
+	UCHIJAAAA	easc{2.0.0} [EPicSword] ([史诗的剑]EPicSword-2.0.0.jar)
+	UCHIJAAAA	TwilightForest{2.3.7} [The Twilight Forest] ([暮色]twilightforest-1.7.10-2.3.7.jar)
+	UCHIJAAAA	MoreBows2{1.2} [More Bows 2] ([更多弓2MOD]More Bows 2[1.7.10].jar)
+	UCHIJAAAA	MSM3{3.0.0a} [More Swords 3] ([更多的剑]MSM-SNAP-3.0.0b-For-MC-1.7.10.jar)
+	UCHIJAAAA	IronChest{6.0.62.742} [Iron Chest] ([更多箱子]ironchest-1.7.10-6.0.62.742-universal.jar)
+	UCHIJAAAA	brk{1.1} [Bedrocker] ([更多装备][1.7.10]VanillaLife-1.0.jar)
+	UCHIJAAAA	mod_ecru_MapleTree{1.1.33k} [MapleTree] ([枫树]1.7.10 MapleTree Forge v1.1.33k.jar)
+	UCHIJAAAA	abyssalcraft{1.9.1.3} [AbyssalCraft] ([深渊国度]AbyssalCraft-1.7.10-1.9.1.3-FINAL.jar)
+	UCHIJAAAA	DP_SimpleFlight{0.8} [Simple Flight] ([简单飞行]MoresFers.jar)
+	UCHIJAAAA	candycraftmod{Beta 1.3} [CandyCraft] ([糖果世界]CandyCraft-1.3.jar)
+	UCHIJAAAA	PTRModelLib{1.0.0} [PTRModelLib] ([装饰品MOD]Decocraft-2.3.6.1_1.7.10.jar)
+	UCHIJAAAA	props{2.3.6.1} [Decocraft] ([装饰品MOD]Decocraft-2.3.6.1_1.7.10.jar)
+	UCHIJAAAA	MovingWorld{1.7.10-1.8.1} [Moving World] ([达芬奇的船]movingworld-1.7.10-1.8.1.jar)
+	UCHIJAAAA	ArchimedesShipsPlus{1.7.10-1.8.1} [Archimedes' Ships Plus] ([达芬奇的船]archimedesshipsplus-1.7.10-1.8.1.jar)
+	UCHIJAAAA	erc{1.41} [Ex Roller Coaster] ([过山车]Ex-RollerCoaster_ver141-EN.jar)
+	UCHIJAAAA	Mantle{1.7.10-0.3.2.jenkins184} [Mantle] (匠魂手册Mantle-1.7.10-0.3.2.jar)
+	UCHIJAAAA	TConstruct{1.7.10-1.8.7.build979} [Tinkers' Construct] (匠魂本体TConstruct-1.7.10-1.8.7.jar)
+	Mantle Environment: DO NOT REPORT THIS CRASH! Unsupported mods in environment: bukkit
+	TConstruct Environment: Environment healthy.
+	Profiler Position: N/A (disabled)
+	Vec3 Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	Player Count: 4 / 60; [EntityPlayerMP['HeiDaDa123'/3159, l='DIM7', x=-891.70, y=72.18, z=87.28](HeiDaDa123 at -891.6952613619229,72.17500004804162,87.27907399088143), EntityPlayerMP['sqsqsq'/72, l='DIM7', x=-7522.10, y=35.75, z=-1582.04](sqsqsq at -7522.099572113595,35.7531999805212,-1582.0376475244655), EntityPlayerMP['ccwccw'/797, l='DIM7', x=-1479.99, y=31.00, z=1291.34](ccwccw at -1479.9931065943993,31.0,1291.3350309952402), EntityPlayerMP['xuanmoliluo'/1490, l='world', x=-2010.10, y=65.20, z=-1950.03](xuanmoliluo at -2010.1033977670575,65.20214707782915,-1950.0279298470477)]
+	Is Modded: Definitely; Server brand changed to 'kcauldron,cauldron,craftbukkit,mcpc,fml,forge'
+	Type: Dedicated Server (map_server.txt)

@@ -1,0 +1,145 @@
+---- Minecraft Crash Report ----
+
+*** ATTENTION: detected classes with unsupported format ***
+*** DO NOT SUBMIT THIS CRASH REPORT TO FORGE ***
+
+Contact authors of the following mods:
+  orangesimplemod
+
+
+WARNING: coremods are present:
+  NeteaseCore (4619774556351054392@3@0.jar)
+  ItemPatchingLoader ([1.8.9]物理掉落物品mod.jar)
+  FMLLoadingPlugin ([防砍动画修复模组]OldAnimationsModFix-3.1.jar)
+  SkinCore (4626894634154779079@3@0.jar)
+  BaseModNeteaseCore (4620273813196076442@3@0.jar)
+  InputFix (4618424574399199550@3@0.jar)
+  RandFTCore (4618421856281952104@2@33.jar)
+  Main ([防砍动画模组]OldAnimationsMod v2.4.2 FORGE MC1.8.9.jar)
+Contact their authors BEFORE contacting forge
+
+// On the bright side, I bought you a teddy bear!
+
+Time: 19-8-13 上午8:06
+Description: There was a severe problem during mod loading that has caused the game to fail
+
+net.minecraftforge.fml.common.LoaderException: java.lang.ClassNotFoundException: com.orangemarshall.simplemod.SimpleMod
+	at net.minecraftforge.fml.common.LoadController.transition(LoadController.java:162)
+	at net.minecraftforge.fml.common.Loader.loadMods(Loader.java:543)
+	at net.minecraftforge.fml.client.FMLClientHandler.beginMinecraftLoading(FMLClientHandler.java:208)
+	at net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:419)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:331)
+	at net.minecraft.client.main.Main.main(SourceFile:124)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:146)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:25)
+Caused by: java.lang.ClassNotFoundException: com.orangemarshall.simplemod.SimpleMod
+	at net.minecraft.launchwrapper.LaunchClassLoader.findClass(LaunchClassLoader.java:185)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at net.minecraftforge.fml.common.ModClassLoader.loadClass(ModClassLoader.java:65)
+	at java.lang.Class.forName0(Native Method)
+	at java.lang.Class.forName(Unknown Source)
+	at net.minecraftforge.fml.common.FMLModContainer.constructMod(FMLModContainer.java:468)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at com.google.common.eventbus.EventSubscriber.handleEvent(EventSubscriber.java:74)
+	at com.google.common.eventbus.SynchronizedEventSubscriber.handleEvent(SynchronizedEventSubscriber.java:47)
+	at com.google.common.eventbus.EventBus.dispatch(EventBus.java:322)
+	at com.google.common.eventbus.EventBus.dispatchQueuedEvents(EventBus.java:304)
+	at com.google.common.eventbus.EventBus.post(EventBus.java:275)
+	at net.minecraftforge.fml.common.LoadController.sendEventToModContainer(LoadController.java:211)
+	at net.minecraftforge.fml.common.LoadController.propogateStateMessage(LoadController.java:189)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at com.google.common.eventbus.EventSubscriber.handleEvent(EventSubscriber.java:74)
+	at com.google.common.eventbus.SynchronizedEventSubscriber.handleEvent(SynchronizedEventSubscriber.java:47)
+	at com.google.common.eventbus.EventBus.dispatch(EventBus.java:322)
+	at com.google.common.eventbus.EventBus.dispatchQueuedEvents(EventBus.java:304)
+	at com.google.common.eventbus.EventBus.post(EventBus.java:275)
+	at net.minecraftforge.fml.common.LoadController.distributeStateMessage(LoadController.java:118)
+	at net.minecraftforge.fml.common.Loader.loadMods(Loader.java:512)
+	... 10 more
+Caused by: java.lang.UnsupportedClassVersionError: com/orangemarshall/simplemod/SimpleMod : Unsupported major.minor version 52.0
+	at java.lang.ClassLoader.defineClass1(Native Method)
+	at java.lang.ClassLoader.defineClass(Unknown Source)
+	at java.security.SecureClassLoader.defineClass(Unknown Source)
+	at net.minecraft.launchwrapper.LaunchClassLoader.findClass(LaunchClassLoader.java:176)
+	... 38 more
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- System Details --
+Details:
+	Minecraft Version: 1.8.9
+	Operating System: Windows 7 (amd64) version 6.1
+	CPU: <unknown>
+	Java Version: 1.7.0, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 132157416 bytes (126 MB) / 284274688 bytes (271 MB) up to 1576271872 bytes (1503 MB)
+	JVM Flags: 8 total; -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -Xmx1516M -Xmn128M -XX:PermSize=64M -XX:MaxPermSize=128M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy
+	IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+	FML: MCP 9.19 Powered by Forge 11.15.1.0 Optifine OptiFine_1.8.9_HD_U_H8 25 mods loaded, 25 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+	UC	mcp{9.19} [Minecraft Coder Pack] (minecraft.jar)
+	UC	FML{8.0.99.99} [Forge Mod Loader] (forge-1.8.9-11.15.1.0.jar)
+	UC	Forge{11.15.1.0} [Minecraft Forge] (forge-1.8.9-11.15.1.0.jar)
+	UC	randftcoremod{1.8.9} [randftcoremod] (minecraft.jar)
+	UC	InputFix{1.8.x-v2} [InputFix] (minecraft.jar)
+	UC	skincoremod{1.8.9} [skincoremod] (minecraft.jar)
+	UC	itemphysic{1.3.0} [ItemPhysic] (minecraft.jar)
+	UC	oldanimations{2.4.2} [OldAnimationsMod] (minecraft.jar)
+	UC	oldanimationsmodfix{3.1} [OldAnimationsModFix] (minecraft.jar)
+	UC	neteasecore{1.11.2} [NeteaseCore] (minecraft.jar)
+	UC	basemodneteasecore{1.8.9} [BaseModNeteaseCore] (minecraft.jar)
+	UC	keystrokesmod{KMV5} [KeystrokesMod] (%5B1.8.9%5D+按键显示+Mod+V5 (1).jar)
+	UC	networkmod{1.0} [network rpc Mod] (4620273813222949778@3@0.jar)
+	UC	storemod{1.0} [storemod] (4618419806295460477@3@0.jar)
+	UC	antimod{2.0} [anti addiction Mod] (4618827437296985101@3@0.jar)
+	UC	filtermod{1.0} [filtermod] (4619774556351054392@3@0.jar)
+	UC	friendplaymod{1.0} [Friendplay Mod] (4620273813159696403@3@0.jar)
+	UC	mcbasemod{1.0} [mcbasemod] (4620273813196076442@3@0.jar)
+	UC	updatecore{1.0} [updatecore] (4620608833856825631@3@0.jar)
+	UC	playermanager{1.0} [playermanager] (4620702952524438419@3@0.jar)
+	UC	fullscreenpopup{1.8.9.38000} [Fullscreen Popup Mod] (4624103992226684617@3@0.jar)
+	UC	skinmod{1.8.8-15739} [skinmod] (4626894634154779079@3@0.jar)
+	UC	blockoverlay{1.2} [BlockOverlay] ([1.8.9] BlockOverlay - 2.0边缘彩色.jar)
+	UC	timechanger1.8{1.0} [TimeChanger 1.8] ([更改游戏时间] TimeChanger 1.8-1.8.9.jar)
+	UE	orangesimplemod{1.0} [orangesimplemod] (Orange's Simple Mods-1.2.jar)
+	Loaded coremods (and transformers):
+NeteaseCore (4619774556351054392@3@0.jar)
+  com.netease.mc.core.NeteaseCoreTransformer
+ItemPatchingLoader ([1.8.9]物理掉落物品mod.jar)
+  com.creativemd.itemphysic.ItemTransformer
+FMLLoadingPlugin ([防砍动画修复模组]OldAnimationsModFix-3.1.jar)
+  io.github.zekerzhayard.oamfix.ClassTransformer
+SkinCore (4626894634154779079@3@0.jar)
+  com.netease.mc.mod.skin.coremod.SkinCoreTransformer
+BaseModNeteaseCore (4620273813196076442@3@0.jar)
+  com.netease.mc.core.base.NeteaseCoreTransformer
+InputFix (4618424574399199550@3@0.jar)
+  lain.mods.inputfix.InputFixTransformer
+RandFTCore (4618421856281952104@2@33.jar)
+  com.netease.mc.mod.randomfont.RandFTCoreTransformer
+Main ([防砍动画模组]OldAnimationsMod v2.4.2 FORGE MC1.8.9.jar)
+  com.spiderfrog.main.ClassTransformer
+	OptiFine Version: OptiFine_1.8.9_HD_U_H8
+	Render Distance Chunks: 12
+	Mipmaps: 4
+	Anisotropic Filtering: 1
+	Antialiasing: 0
+	Multitexture: false
+	Shaders: null
+	OpenGlVersion: 4.6.0 NVIDIA 388.59
+	OpenGlRenderer: GeForce GT 620/PCIe/SSE2
+	OpenGlVendor: NVIDIA Corporation
+	CpuCount: 2

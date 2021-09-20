@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
@@ -30,6 +32,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.jackhuang.hmcl.game.CrashReportAnalyzer;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.game.LogExporter;
@@ -49,9 +52,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -67,6 +68,8 @@ public class GameCrashWindow extends Stage {
     private final StringProperty java = new SimpleStringProperty();
     private final StringProperty os = new SimpleStringProperty(System.getProperty("os.name"));
     private final StringProperty arch = new SimpleStringProperty(Architecture.SYSTEM_ARCHITECTURE);
+    private final StringProperty reason = new SimpleStringProperty(i18n("game.crash.reason.unknown"));
+    private final BooleanProperty loading = new SimpleBooleanProperty();
 
     private final ManagedProcess managedProcess;
     private final DefaultGameRepository repository;
@@ -92,6 +95,40 @@ public class GameCrashWindow extends Stage {
         version.set(launchOptions.getVersionName());
         memory.set(Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-"));
         java.set(launchOptions.getJava().getVersion());
+
+        analyzeCrashReport();
+    }
+
+    private void analyzeCrashReport() {
+        loading.set(true);
+        CompletableFuture.supplyAsync(() -> {
+            return CrashReportAnalyzer.anaylze(logs);
+        }).whenCompleteAsync((results, exception) -> {
+            loading.set(false);
+
+            if (exception != null) {
+                LOG.log(Level.WARNING, "Failed to analyze crash report", exception);
+                reason.set(i18n("game.crash.reason.unknown"));
+            } else {
+                StringBuilder reasonText = new StringBuilder();
+                for (CrashReportAnalyzer.Result result : results) {
+                    switch (result.getRule()) {
+                        case TOO_OLD_JAVA:
+                            reasonText.append(i18n("game.crash.reason.too_old_java",
+                                    CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.getMatcher().group("expected")))))
+                                    .append("\n");
+                            break;
+                        default:
+                            reasonText.append(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
+                                    Arrays.stream(result.getRule().getGroupNames()).map(groupName -> result.getMatcher().group("groupName"))
+                                            .toArray()))
+                                    .append("\n");
+                            break;
+                    }
+                }
+                reason.set(reasonText.toString());
+            }
+        }, Schedulers.javafx());
     }
 
     private void showLogWindow() {
@@ -202,7 +239,7 @@ public class GameCrashWindow extends Stage {
                 TwoLineListItem reason = new TwoLineListItem();
                 reason.getStyleClass().setAll("two-line-item-second-large");
                 reason.setTitle(i18n("game.crash.reason"));
-                reason.setSubtitle(i18n("game.crash.reason.unknown"));
+                reason.subtitleProperty().bind(GameCrashWindow.this.reason);
 
                 gameDirPane.setPadding(new Insets(8));
                 VBox.setVgrow(gameDirPane, Priority.ALWAYS);

@@ -1,0 +1,113 @@
+---- Minecraft Crash Report ----
+
+WARNING: coremods are present:
+  SkinCore (4626894634154779079@3@0.jar)
+  BaseModNeteaseCore (4620273813196076442@3@0.jar)
+  Main ([防砍动画]OldAnimationsMod v2.4.2 FORGE MC1.8.9.jar)
+  InputFix (4618424574399199550@3@0.jar)
+  FMLLoadingPlugin ([防砍动画未响应修复]OldAnimationsModUnresponsiveFix-1.0.jar)
+  NeteaseCore (4619774556351054392@3@0.jar)
+Contact their authors BEFORE contacting forge
+
+// But it works on my machine.
+
+Time: 19-1-26 下午2:11
+Description: Unexpected error
+
+java.lang.NullPointerException: Unexpected error
+	at com.netease.mc.mod.battergaming.iIIIiiIIIi.run(r:73)
+	at com.netease.mc.mod.battergaming.iiiiiiIIIi.ALLATORIxDEMO(j:271)
+	at com.netease.mc.mod.battergaming.iiiiiiIIIi.ALLATORIxDEMO(j:182)
+	at net.minecraftforge.fml.common.eventhandler.ASMEventHandler_83_iiiiiiIIIi_ALLATORIxDEMO_ClientTickEvent.invoke(.dynamic)
+	at net.minecraftforge.fml.common.eventhandler.ASMEventHandler.invoke(ASMEventHandler.java:55)
+	at net.minecraftforge.fml.common.eventhandler.EventBus.post(EventBus.java:140)
+	at net.minecraftforge.fml.common.FMLCommonHandler.onPreClientTick(FMLCommonHandler.java:331)
+	at net.minecraft.client.Minecraft.func_71407_l(Minecraft.java:1617)
+	at net.minecraft.client.Minecraft.func_71411_J(Minecraft.java:1017)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:351)
+	at net.minecraft.client.main.Main.main(SourceFile:124)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:146)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:25)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- System Details --
+Details:
+	Minecraft Version: 1.8.9
+	Operating System: Windows 7 (x86) version 6.1
+	CPU: <unknown>
+	Java Version: 1.8.0_101, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) Client VM (mixed mode), Oracle Corporation
+	Memory: 190658720 bytes (181 MB) / 443887616 bytes (423 MB) up to 747896832 bytes (713 MB)
+	JVM Flags: 8 total; -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -Xmx726M -Xmn128M -XX:PermSize=64M -XX:MaxPermSize=128M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy
+	IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+	FML: MCP 9.19 Powered by Forge 11.15.1.0 Optifine OptiFine_1.8.9_HD_U_I7 22 mods loaded, 22 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+	UCHIJA	mcp{9.19} [Minecraft Coder Pack] (minecraft.jar)
+	UCHIJA	FML{8.0.99.99} [Forge Mod Loader] (forge-1.8.9-11.15.1.0.jar)
+	UCHIJA	Forge{11.15.1.0} [Minecraft Forge] (forge-1.8.9-11.15.1.0.jar)
+	UCHIJA	InputFix{1.8.x-v2} [InputFix] (minecraft.jar)
+	UCHIJA	skincoremod{1.8.9} [skincoremod] (minecraft.jar)
+	UCHIJA	oldanimations{2.4.2} [OldAnimationsMod] (minecraft.jar)
+	UCHIJA	neteasecore{1.11.2} [NeteaseCore] (minecraft.jar)
+	UCHIJA	basemodneteasecore{1.8.9} [BaseModNeteaseCore] (minecraft.jar)
+	UCHIJA	networkmod{1.0} [network rpc Mod] (4620273813222949778@3@0.jar)
+	UCHIJA	storemod{1.0} [storemod] (4618419806295460477@3@0.jar)
+	UCHIJA	antimod{2.0} [anti addiction Mod] (4618827437296985101@3@0.jar)
+	UCHIJA	filtermod{1.0} [filtermod] (4619774556351054392@3@0.jar)
+	UCHIJA	friendplaymod{1.0} [Friendplay Mod] (4620273813159696403@3@0.jar)
+	UCHIJA	mcbasemod{1.0} [mcbasemod] (4620273813196076442@3@0.jar)
+	UCHIJA	updatecore{1.0} [updatecore] (4620608833856825631@3@0.jar)
+	UCHIJA	playermanager{1.0} [playermanager] (4620702952524438419@3@0.jar)
+	UCHIJA	fullscreenpopup{1.8.9.38000} [Fullscreen Popup Mod] (4624103992226684617@3@0.jar)
+	UCHIJA	skinmod{1.8.8-15739} [skinmod] (4626894634154779079@3@0.jar)
+	UCHIJA	battergaming{0.0.1} [battergaming] (4628181791522237000@2@8.jar)
+	UCHIJA	cosmeticwings{@VERSION@} [Cosmetic Wings] (4628181791563285768@2@8.jar)
+	UCHIJA	enhancements{7.7} [Vanilla Enhancements] ([1.8.9][原版增强] Vanilla Enhancements-7.7.jar)
+	UCHIJA	TcpNoDelayMod-2.0{1.0} [TcpNoDelayMod-2.0] (modid-1.0.jar)
+	Loaded coremods (and transformers):
+SkinCore (4626894634154779079@3@0.jar)
+  com.netease.mc.mod.skin.coremod.SkinCoreTransformer
+BaseModNeteaseCore (4620273813196076442@3@0.jar)
+  com.netease.mc.core.base.NeteaseCoreTransformer
+Main ([防砍动画]OldAnimationsMod v2.4.2 FORGE MC1.8.9.jar)
+  com.spiderfrog.main.ClassTransformer
+InputFix (4618424574399199550@3@0.jar)
+  lain.mods.inputfix.InputFixTransformer
+FMLLoadingPlugin ([防砍动画未响应修复]OldAnimationsModUnresponsiveFix-1.0.jar)
+  io.github.zekerzhayard.unresponsivefix.ClassTransformer
+NeteaseCore (4619774556351054392@3@0.jar)
+  com.netease.mc.core.NeteaseCoreTransformer
+	Launched Version: 1.8.9
+	LWJGL: 2.9.4
+	OpenGL: Intel(R) HD Graphics 3000 GL version 3.1.0 - Build 9.17.10.4229, Intel
+	GL Caps: Using GL 1.3 multitexturing.
+Using GL 1.3 texture combiners.
+Using framebuffer objects because OpenGL 3.0 is supported and separate blending is supported.
+Shaders are available because OpenGL 2.1 is supported.
+VBOs are available because OpenGL 1.5 is supported.
+
+	Using VBOs: No
+	Is Modded: Definitely; Client brand changed to 'fml,forge'
+	Type: Client (map_client.txt)
+	Resource Packs: !      锟斤拷bBlue Moon 锟斤拷432x.zip
+	Current Language: 简体中文 (中国)
+	Profiler Position: N/A (disabled)
+	CPU: <unknown>
+	OptiFine Version: OptiFine_1.8.9_HD_U_I7
+	Render Distance Chunks: 8
+	Mipmaps: 4
+	Anisotropic Filtering: 1
+	Antialiasing: 0
+	Multitexture: false
+	Shaders: null
+	OpenGlVersion: 3.1.0 - Build 9.17.10.4229
+	OpenGlRenderer: Intel(R) HD Graphics 3000
+	OpenGlVendor: Intel
+	CpuCount: 4

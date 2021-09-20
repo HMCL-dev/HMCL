@@ -1,0 +1,249 @@
+---- Minecraft Crash Report ----
+// Sorry :(
+
+Time: 19-1-24 下午8:06
+Description: Rendering screen
+
+java.lang.NullPointerException: Rendering screen
+	at codechicken.nei.LayoutManager.renderSlotOverlay(LayoutManager.java:719)
+	at codechicken.nei.guihook.GuiContainerManager.renderSlotOverlay(GuiContainerManager.java:432)
+	at net.minecraft.client.gui.inventory.GuiContainer.func_146977_a(GuiContainer.java:270)
+	at net.minecraft.client.gui.inventory.GuiContainer.func_73863_a(GuiContainer.java:99)
+	at net.minecraft.client.renderer.InventoryEffectRenderer.func_73863_a(InventoryEffectRenderer.java:38)
+	at net.minecraft.client.gui.inventory.GuiInventory.func_73863_a(SourceFile:47)
+	at net.minecraft.client.renderer.EntityRenderer.func_78480_b(EntityRenderer.java:1455)
+	at net.minecraft.client.Minecraft.func_71411_J(Minecraft.java:1001)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:898)
+	at net.minecraft.client.main.Main.main(SourceFile:148)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:135)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:28)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.jackhuang.hellominecraft.launcher.Launcher.main(Launcher.java:127)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Stacktrace:
+	at codechicken.nei.LayoutManager.renderSlotOverlay(LayoutManager.java:719)
+	at codechicken.nei.guihook.GuiContainerManager.renderSlotOverlay(GuiContainerManager.java:432)
+	at net.minecraft.client.gui.inventory.GuiContainer.func_146977_a(GuiContainer.java:270)
+	at net.minecraft.client.gui.inventory.GuiContainer.func_73863_a(GuiContainer.java:99)
+	at net.minecraft.client.renderer.InventoryEffectRenderer.func_73863_a(InventoryEffectRenderer.java:38)
+	at net.minecraft.client.gui.inventory.GuiInventory.func_73863_a(SourceFile:47)
+	at net.minecraft.client.renderer.EntityRenderer.func_78480_b(EntityRenderer.java:1455)
+
+-- Screen render details --
+Details:
+	Screen name: net.minecraft.client.gui.inventory.GuiInventory
+	Mouse location: Scaled: (341, 176). Absolute: (683, 353)
+	Screen size: Scaled: (683, 353). Absolute: (1366, 706). Scale factor of 2
+
+-- Affected level --
+Details:
+	Level name: MpServer
+	All players: 2 total; [EntityClientPlayerMP['2333'/204, l='MpServer', x=298.07, y=105.62, z=-304.37], EntityOtherPlayerMP['233'/61, l='MpServer', x=300.31, y=100.00, z=-295.31]]
+	Chunk stats: MultiplayerChunkCache: 49, 58
+	Level seed: 0
+	Level generator: ID 01 - flat, ver 0. Features enabled: false
+	Level generator options:
+	Level spawn location: World: (300,101,-300), Chunk: (at 12,6,4 in 18,-19; contains blocks 288,0,-304 to 303,255,-289), Region: (0,-1; contains chunks 0,-32 to 31,-1, blocks 0,0,-512 to 511,255,-1)
+	Level time: 427708 game time, 277031 day time
+	Level dimension: 0
+	Level storage version: 0x00000 - Unknown?
+	Level weather: Rain time: 0 (now: false), thunder time: 0 (now: false)
+	Level game mode: Game mode: survival (ID 0). Hardcore: false. Cheats: false
+	Forced entities: 32 total; [EntityItem['item.item.apple'/198, l='MpServer', x=295.63, y=100.13, z=-296.59], EntityFireworkRocket['entity.FireworksRocketEntity.name'/2055, l='MpServer', x=295.17, y=125.36, z=-302.73], EntityItem['item.item.apple'/200, l='MpServer', x=297.28, y=102.13, z=-300.69], EntityOtherPlayerMP['233'/61, l='MpServer', x=300.31, y=100.00, z=-295.31], EntityClientPlayerMP['2333'/204, l='MpServer', x=298.07, y=105.62, z=-304.37], EntityHat['未知'/145, l='MpServer', x=298.07, y=105.62, z=-304.37], EntityHat['未知'/146, l='MpServer', x=300.31, y=100.00, z=-295.31], EntityTrail['未知'/148, l='MpServer', x=298.07, y=105.62, z=-304.37], EntityTrail['未知'/149, l='MpServer', x=300.31, y=100.00, z=-295.31], EntityItem['item.item.string'/24, l='MpServer', x=300.22, y=96.88, z=-304.84], EntityItem['item.exnihilo.leaves.infested.spruce'/25, l='MpServer', x=300.96, y=96.88, z=-304.87], EntityItem['item.item.string'/26, l='MpServer', x=302.13, y=96.88, z=-304.87], EntityItem['item.tile.gravel'/27, l='MpServer', x=294.32, y=88.75, z=-289.18], EntityItem['item.tile.gravel'/28, l='MpServer', x=300.28, y=90.50, z=-288.32], EntityItem['item.tile.stoneSlab.cobble'/29, l='MpServer', x=295.13, y=87.69, z=-302.74], EntityFireworkRocket['entity.FireworksRocketEntity.name'/2909, l='MpServer', x=295.51, y=108.66, z=-300.50], EntityItem['item.exnihilo.stone'/30, l='MpServer', x=297.81, y=98.88, z=-288.87], EntityFireworkRocket['entity.FireworksRocketEntity.name'/2910, l='MpServer', x=302.50, y=109.66, z=-311.46], EntityItem['item.exnihilo.leaves.infested.oak'/31, l='MpServer', x=298.34, y=104.13, z=-299.94], EntityItem['item.item.apple'/32, l='MpServer', x=296.47, y=102.13, z=-300.38], EntityItem['item.item.apple'/33, l='MpServer', x=296.69, y=100.13, z=-298.19], EntityItem['item.item.apple'/34, l='MpServer', x=294.53, y=100.13, z=-300.19], EntityItem['item.item.apple'/35, l='MpServer', x=294.81, y=100.13, z=-297.03], EntityItem['item.item.apple'/36, l='MpServer', x=293.25, y=100.13, z=-297.41], EntityItem['item.item.apple'/37, l='MpServer', x=295.91, y=100.13, z=-299.69], EntityItem['item.item.apple'/38, l='MpServer', x=294.19, y=100.13, z=-298.25], EntityItem['item.tile.stonebrick'/39, l='MpServer', x=295.78, y=83.47, z=-284.28], EntityFireworkRocket['entity.FireworksRocketEntity.name'/2919, l='MpServer', x=293.51, y=108.97, z=-308.48], EntityItem['item.tile.gravel'/40, l='MpServer', x=300.35, y=91.00, z=-287.85], EntityFireworkRocket['entity.FireworksRocketEntity.name'/2925, l='MpServer', x=298.50, y=108.64, z=-304.50], EntityFireworkRocket['entity.FireworksRocketEntity.name'/2932, l='MpServer', x=298.51, y=108.55, z=-308.50], EntityOtherPlayerMP['233'/61, l='MpServer', x=300.31, y=100.00, z=-295.31]]
+	Retry entities: 0 total; []
+	Server brand: fml,forge
+	Server type: Non-integrated multiplayer server
+Stacktrace:
+	at net.minecraft.client.Minecraft.func_71396_d(Minecraft.java:2444)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:919)
+	at net.minecraft.client.main.Main.main(SourceFile:148)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:135)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:28)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.jackhuang.hellominecraft.launcher.Launcher.main(Launcher.java:127)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.7.10
+	Operating System: Windows 7 (amd64) version 6.1
+	Java Version: 1.8.0_161, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 489768504 bytes (467 MB) / 849276928 bytes (809 MB) up to 1035206656 bytes (987 MB)
+	JVM Flags: 7 total; -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -Xmn128m -Xmx1000m
+	AABB Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+	FML: MCP v9.05 FML v7.10.99.99 Minecraft Forge 10.13.4.1558 Optifine OptiFine_1.7.10_HD_U_E7 107 mods loaded, 107 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+	UCHIJA	mcp{9.05} [Minecraft Coder Pack] (minecraft.jar)
+	UCHIJA	FML{7.10.99.99} [Forge Mod Loader] (forge-1.7.10-10.13.4.1558-1.7.10.jar)
+	UCHIJA	Forge{10.13.4.1558} [Minecraft Forge] (forge-1.7.10-10.13.4.1558-1.7.10.jar)
+	UCHIJA	InputFix{1.7.x-v2} [InputFix] (minecraft.jar)
+	UCHIJA	appliedenergistics2-core{rv2-stable-1} [AppliedEnergistics2 Core] (minecraft.jar)
+	UCHIJA	bettersleepingcore{1.0} [Better Sleeping Core] (minecraft.jar)
+	UCHIJA	bambootransformer{1.0.0} [BambooTransformer] (minecraft.jar)
+	UCHIJA	CodeChickenCore{1.0.7.47} [CodeChicken Core] (minecraft.jar)
+	UCHIJA	OldModelLoader{1.0} [OldModelLoader] (minecraft.jar)
+	UCHIJA	NotEnoughItems{1.0.5.120} [Not Enough Items] (NotEnoughItems-1.7.10-1.0.5.120-universal.jar)
+	UCHIJA	itemphysic{0.8.3} [ItemPhysic] (minecraft.jar)
+	UCHIJA	OpenModsCore{0.9.1} [OpenModsCore] (minecraft.jar)
+	UCHIJA	<CoFH ASM>{000} [CoFH ASM] (minecraft.jar)
+	UCHIJA	FastCraft{1.25} [FastCraft] (【快速工艺】fastcraft-1.25.jar)
+	UCHIJA	stefinusguns{0.5.2} [New Stefinus Guns] ([3D枪械]Stefinus Guns-0.5.2.jar)
+	UCHIJA	gokiStats{1.0.0} [gokiStats] ([RPG被动战技]Core-gokiStats-1.0 cn_via_CI010.jar)
+	UCHIJA	inventorytweaks{1.59-dev-152-cf6e263} [Inventory Tweaks] ([R键整理]InventoryTweaks-1.59-dev-152.jar)
+	UCHIJA	punt{1.7.10-10.13.0-14.0} [Punt] ([一帮小船]Small Boats Mod.jar)
+	UCHIJA	whitehall{1.7.10-10.13.0-14.0} [Whitehall] ([一帮小船]Small Boats Mod.jar)
+	UCHIJA	hoy{1.7.10-10.13.0-14.0} [Hoy] ([一帮小船]Small Boats Mod.jar)
+	UCHIJA	smallboats{1.7.10-10.13.0-14.0} [SmallBoats (base)] ([一帮小船]Small Boats Mod.jar)
+	UCHIJA	HardcoreQuesting{4.4.4} [Hardcore Questing Mode] ([任务手册]HQM-The Journey-4.4.4.jar)
+	UCHIJA	cookingbook{1.0.140} [Cooking for Blockheads] ([傻瓜烹饪]cookingbook-mc1.7.10-1.0.140.jar)
+	UCHIJA	Mantle{1.7.10-0.3.2.jenkins191} [Mantle] ([匠魂手册]Mantle-1.7.10-0.3.2b.jar)
+	UCHIJA	CoFHCore{1.7.10R3.1.3} [CoFH Core] ([热力前置]CoFHCore-[1.7.10]3.1.3-327.jar)
+	UCHIJA	ThermalFoundation{1.7.10R1.2.5} [Thermal Foundation] ([热力本体]ThermalFoundation-[1.7.10]1.2.5-115.jar)
+	UCHIJA	ThermalExpansion{1.7.10R4.1.4} [Thermal Expansion] ([热力机器]ThermalExpansion-[1.7.10]4.1.4-247.jar)
+	UCHIJA	Waila{1.5.10} [Waila] (Waila-1.5.10_1.7.10.jar)
+	UCHIJA	TConstruct{1.7.10-1.8.8.build991} [Tinkers' Construct] ([匠魂本体]TConstruct-1.7.10-1.8.8.build991.jar)
+	UCHIJA	TiCTooltips{1.2.3} [TiC Tooltips] ([匠魂工具]TiCTooltips-mc1.7.10-1.2.3.jar)
+	UCHIJA	exnihilo{1.38-49} [Ex Nihilo] ([无中生有]Ex-Nihilo.jar)
+	UCHIJA	excompressum{1.1.143} [Ex Compressum] ([压缩工具]excompressum-mc1.7.10-1.1.143.jar)
+	UCHIJA	MTRM{1.0} [MineTweakerRecipeMaker] ([可视化魔改器]MineTweakerRecipeMaker-1.7.10-1.1.0.11[ZH_CN].jar)
+	UCHIJA	libsandstone{1.0.0} [libsandstone] (LibSandstone-1.0.0.jar)
+	UCHIJA	xreliquary{1.2} [Reliquary] ([圣遗物]Reliquary-1.2.257.jar)
+	UCHIJA	SolarFlux{1.7.10-0.3} [Solar Flux] ([太阳能板]SolarFlux-1.7.10-0.3.jar)
+	UCHIJA	yarr_cutemobmodels{1.0.8} [Cute Mob Models] ([娘化怪物]yarrcutemobmodels-1.0.8-1.7.10.jar)
+	UCHIJA	UnicodeFontFixer{1.1.12-mc1.7.10} [UnicodeFontFixer] ([字体修复]UnicodeFontFixer-1.1.12-mc1.7.10.jar)
+	UCHIJA	ExtraUtilities{1.2.9} [Extra Utilities] ([实用设备]extrautilities-1.2.9.jar)
+	UCHIJA	BiblioCraft{1.10.5} [BiblioCraft] ([展示架]BiblioCraft[v1.10.6][MC1.7.10].jar)
+	UCHIJA	iChunUtil{4.0.0} [iChunUtil] ([重要前置]iChunUtil-4.0.0.jar)
+	UCHIJA	Hats{4.0.0} [Hats] ([帽子]Hats-4.0.0.jar)
+	UCHIJA	HatStand{4.0.0} [HatStand] ([帽子架]HatStand-4.0.0.jar)
+	UCHIJA	appliedenergistics2{rv2-stable-1} [Applied Energistics 2] ([应用能源]appliedenergistics2-rv2-stable-1.jar)
+	UCHIJA	endercore{1.7.10-0.2.0.36_beta} [EnderCore] ([末影前置]EnderCore-1.7.10-0.2.0.36_beta.jar)
+	UCHIJA	EnderIO{1.7.10-2.3.0.428_beta} [Ender IO] ([末影接口]EnderIO-1.7.10-2.3.0.428_beta.jar)
+	UCHIJA	openmodularturrets{2.1.4-183} [Open Modular Turrets] ([开放炮塔]OpenModularTurrets-1.7.10-2.1.4-183.jar)
+	UCHIJA	OpenMods{0.9.1} [OpenMods] ([开源前置]OpenModsLib-1.7.10-0.9.1.jar)
+	UCHIJA	OpenBlocks{1.5.1} [OpenBlocks] ([开源方块]OpenBlocks-1.7.10-1.5.1.jar)
+	UCHIJA	mobends{0.20.1} [Mo' Bends] ([弯曲动作]MoBends-0.20.1 for MC 1.7.10.jar)
+	UCHIJA	SimpleAchievements{MC1.7.10-1.1.0-21} [Simple Achievements] ([成就指南]SimpleAchievements-MC1.7.10-1.1.0-21.jar)
+	UCHIJA	CalendarGui{1.0.1} [Calendar Gui] ([日历]Sub-CalendarGui-1.0.1.7.jar)
+	UCHIJA	exastrisrebirth{MC1.7.10-1.01-45} [Ex Astris Rebirth] ([星辉生万物]Ex-Astris-Rebirth-MC1.7.10-1.01-45.jar)
+	UCHIJA	IronChest{6.0.62.742} [Iron Chest] ([更多箱子]Iron-Chests-Mod-1.7.10.jar)
+	UCHIJA	BetterAchievements{0.1.0} [Better Achievements] ([更好成就]BetterAchievements-1.7.10-0.1.0.jar)
+	UCHIJA	JABBA{1.2.1} [JABBA] ([更好的桶]Jabba-1.2.1a_1.7.10.jar)
+	UCHIJA	bettersleeping{1.7.10-0.4.13} [Better Sleeping] ([更好睡眠]BetterSleeping-1.7.10-0.4-CN.jar)
+	UCHIJA	CarpentersBlocks{3.3.8} [Carpenter's Blocks] ([木匠方块]Carpenter's Blocks v3.3.8 - MC 1.7.10.jar)
+	UCHIJA	EnderZoo{1.7.10-1.0.15.32} [Ender Zoo] ([末影动物园]EnderZoo-1.7.10-1.0.15.32.jar)
+	UCHIJA	AgriCraft{1.7.10-1.5.0} [AgriCraft] ([杂交工艺]AgriCraft-1.7.10-1.5.0.jar)
+	UCHIJA	HardcoreDarkness{1.7} [Hardcore Darkness] ([深邃黑暗]HardcoreDarkness-MC1.7.10-1.7.jar)
+	UCHIJA	HopperDuctMod{1.3.2} [Hopper Ducts] ([漏斗管道]hopperductmod-1.7.10-1.3.2.jar)
+	UCHIJA	harvestcraft{1.7.10g} [Pam's HarvestCraft] ([潘马斯的丰收]Pam's HarvestCraft 1.7.10h.jar)
+	UCHIJA	ThermalDynamics{1.7.10R1.2.0} [Thermal Dynamics] ([热力管道]ThermalDynamics-[1.7.10]1.2.0-171.jar)
+	UCHIJA	AppleCore{1.1.0} [AppleCore] ([苹果核]Dep-AppleCore-1.1.0.jar)
+	UCHIJA	SpiceOfLife{1.2.3} [The Spice of Life] ([生活调味料]Core-SpiceOfLife-1.2.3.jar)
+	UCHIJA	CustomMainMenu{1.7} [Custom Main Menu] ([界面修改]CustomMainMenu-MC1.7.10-1.7.jar)
+	UCHIJA	RealisticTorches{1.6.0} [Realistic Torches] ([真实火把]RealisticTorches-1.7.10-1.6.0.jar)
+	UCHIJA	bspkrsCore{6.16} [bspkrsCore] ([1.7.10]bspkrsCore-universal-6.16.jar)
+	UCHIJA	Treecapitator{1.7.2} [Treecapitator] ([砍树]Treecapitator-universal-2.0.3.jar)
+	UCHIJA	BambooMod{Minecraft1.7.10 var2.6.8.3} [BambooMod] ([竹]Bamboo-2.6.8.3.jar)
+	UCHIJA	InfernalMobs{1.6.6} [Infernal Mobs] ([精英怪物]InfernalMobs-1.7.10.jar)
+	UCHIJA	torchLevers{1.4.2} [Torch Levers] ([红石机关]TorchLevers-V1.4.2-MC1.7.10.jar)
+	UCHIJA	treeGrowingSimulator{0.0.3} [Tree Growing Simulator 2014] ([蹲防生长]TreeGrowingSimulator2014-MC1.7.10-0.0.3-22.jar)
+	UCHIJA	redgear_core{2.2.2} [Red Gear Core] ([酿药前置]RedGearCore-1.7.10-2.2.2.jar)
+	UCHIJA	redgear_brewcraft{1.3.3} [Brewcraft] ([酿药修改]Brewcraft-1.7.10-1.3.3.jar)
+	UCHIJA	MineTweaker3{3.0.9B} [MineTweaker 3] ([魔改助手]MineTweaker3-1.7.10-3.0.9C.jar)
+	UCHIJA	modtweaker2{0.9.6} [Mod Tweaker 2] ([魔改基友]ModTweaker2-0.9.6.jar)
+	UCHIJA	magicalcrops{4.0.0_PUBLIC_BETA_4b} [Magical Crops: Core] ([魔法作物]magicalcrops-4.0.0_PUBLIC_BETA_5[ITERCN].jar)
+	UCHIJA	FTBL{1.0.18.2} [FTBLib] (FTBLib-1.7.10-1.0.18.3.jar)
+	UCHIJA	FTBU{1.0.18.2} [FTBUtilities] (FTBUtilities-1.7.10-1.0.18.3.jar)
+	UCHIJA	Growthcraft{1.7.10-2.3.1} [Growthcraft] (growthcraft-1.7.10-2.3.1-complete.jar)
+	UCHIJA	Growthcraft|Cellar{1.7.10-2.3.1} [Growthcraft Cellar] (growthcraft-1.7.10-2.3.1-complete.jar)
+	UCHIJA	Growthcraft|Apples{1.7.10-2.3.1} [Growthcraft Apples] (growthcraft-1.7.10-2.3.1-complete.jar)
+	UCHIJA	Growthcraft|Bamboo{1.7.10-2.3.1} [Growthcraft Bamboo] (growthcraft-1.7.10-2.3.1-complete.jar)
+	UCHIJA	Growthcraft|Bees{1.7.10-2.3.1} [Growthcraft Bees] (growthcraft-1.7.10-2.3.1-complete.jar)
+	UCHIJA	Growthcraft|Fishtrap{1.7.10-2.3.1} [Growthcraft Fishtrap] (growthcraft-1.7.10-2.3.1-complete.jar)
+	UCHIJA	Growthcraft|Grapes{1.7.10-2.3.1} [Growthcraft Grapes] (growthcraft-1.7.10-2.3.1-complete.jar)
+	UCHIJA	Growthcraft|Hops{1.7.10-2.3.1} [Growthcraft Hops] (growthcraft-1.7.10-2.3.1-complete.jar)
+	UCHIJA	Growthcraft|Rice{1.7.10-2.3.1} [Growthcraft Rice] (growthcraft-1.7.10-2.3.1-complete.jar)
+	UCHIJA	lmmx{1.0} [lmmx] (littleMaidMobX-1.7.x_0.1.1.jar)
+	UCHIJA	MMMLibX{1.7.x-srg-1} [MMMLibX] (littleMaidMobX-1.7.x_0.1.1.jar)
+	UCHIJA	zabuton{1.0} [zabuton] (littleMaidMobX-1.7.x_0.1.1.jar)
+	UCHIJA	NEIAddons{1.12.3.11} [NEI Addons] (neiaddons-mc1710-1.12.3.11.jar)
+	UCHIJA	NEIAddons|Botany{1.12.3.11} [NEI Addons: Botany] (neiaddons-mc1710-1.12.3.11.jar)
+	UCHIJA	NEIAddons|Forestry{1.12.3.11} [NEI Addons: Forestry] (neiaddons-mc1710-1.12.3.11.jar)
+	UCHIJA	NEIAddons|CraftingTables{1.12.3.11} [NEI Addons: Crafting Tables] (neiaddons-mc1710-1.12.3.11.jar)
+	UCHIJA	NEIAddons|ExNihilo{1.12.3.11} [NEI Addons: Ex Nihilo] (neiaddons-mc1710-1.12.3.11.jar)
+	UCHIJA	WailaHarvestability{1.1.0} [Waila Harvestability] (WailaHarvestability-mc1.7.x-1.1.0.jar)
+	UCHIJA	uncraftingTable{1.4.7} [Uncrafting Table] (【[分解工作台]UncraftingTable-1.4.7.jar)
+	UCHIJA	Torcherino{2.2s} [Torcherino] (【[加速火把]Torcherino-1.7.10-2.2s.jar)
+	UCHIJA	autopackager{1.5.7} [AutoPackager] (【[自动打包]autopackager-1.5.7.jar)
+	UCHIJA	craftguide{1.7.1.0} [CraftGuide] (【G键合成表】CraftGuide-1.7.1.0-forge[1.7.10].jar)
+	UCHIJA	lootbags{2.0.16} [Loot Bags] (【战利品】LootBags-1.7.10-2.0.16.jar)
+	UCHIJA	journeymap{5.1.4p2} [JourneyMap] (【旅行地图journeymap-1.7.10-5.1.4p2-unlimited.jar)
+	UCHIJA	betterbuilderswands{0.6.0} [Better Builder's Wands] (【更好的建筑魔杖】BetterBuildersWands-0.6.0-1.7.10(Chopper汉化).jar)
+	UCHIJA	IguanaTweaksTConstruct{1.7.10-2.1.5.140} [Iguana Tinker Tweaks] ([匠魂附属]IguanaTinkerTweaks-1.7.10-2.1.5.jar)
+	GL info: ' Vendor: 'Intel' Version: '3.1.0 - Build 9.17.10.4229' Renderer: 'Intel(R) HD Graphics 3000'
+	OpenModsLib class transformers: [stencil_patches:FINISHED],[movement_callback:FINISHED],[map_gen_fix:ENABLED],[gl_capabilities_hook:FINISHED],[player_render_hook:FINISHED]
+	Class transformer null safety: found misbehaving transformers: me.guichaguri.betterfps.transformers.MathTransformer(me.guichaguri.betterfps.transformers.MathTransformer@4ab2b9cb) returned non-null result: 0,me.guichaguri.betterfps.transformers.EventTransformer(me.guichaguri.betterfps.transformers.EventTransformer@2d223296) returned non-null result: 0
+	Mantle Environment: DO NOT REPORT THIS CRASH! Unsupported mods in environment: optifine
+	CoFHCore: -[1.7.10]3.1.3-327
+	ThermalFoundation: -[1.7.10]1.2.5-115
+	ThermalExpansion: -[1.7.10]4.1.4-247
+	TConstruct Environment: Environment healthy.
+	AE2 Version: stable rv2-stable-1 for Forge 10.13.2.1291
+	ThermalDynamics: -[1.7.10]1.2.0-171
+	EnderIO: Found the following problem(s) with your installation:
+                  * Optifine is installed. This is NOT supported.
+                  * The RF API that is being used (1.7.10R1.3.1 from <unknown>) differes from that that is reported as being loaded (1.7.10R1.0.13 from [末影接口]EnderIO-1.7.10-2.3.0.428_beta.jar).
+                    It is a supported version, but that difference may lead to problems.
+                  * Our API got loaded from [末影接口]EnderIO-1.7.10-2.3.0.428_beta.jar. That's unexpected.
+                  * Our API got loaded from [末影接口]EnderIO-1.7.10-2.3.0.428_beta.jar. That's unexpected.
+                  * Our API got loaded from [末影接口]EnderIO-1.7.10-2.3.0.428_beta.jar. That's unexpected.
+                  * Our API got loaded from [末影接口]EnderIO-1.7.10-2.3.0.428_beta.jar. That's unexpected.
+                 This may have caused the error. Try reproducing the crash WITHOUT this/these mod(s) before reporting it.
+	Stencil buffer state: Function set: GL30, pool: forge, bits: 8
+	AE2 Integration: IC2:OFF, RotaryCraft:OFF, RC:OFF, BC:OFF, RF:ON, RFItem:ON, MFR:OFF, DSU:ON, FZ:OFF, FMP:OFF, RB:OFF, CLApi:OFF, Waila:ON, InvTweaks:ON, NEI:ON, CraftGuide:ON, Mekanism:OFF, ImmibisMicroblocks:OFF, BetterStorage:OFF
+	Launched Version: HMCL 2.4.0.32
+	LWJGL: 2.9.1
+	OpenGL: Intel(R) HD Graphics 3000 GL version 3.1.0 - Build 9.17.10.4229, Intel
+	GL Caps: Using GL 1.3 multitexturing.
+Using framebuffer objects because OpenGL 3.0 is supported and separate blending is supported.
+Anisotropic filtering is supported and maximum anisotropy is 16.
+Shaders are available because OpenGL 2.1 is supported.
+
+	Is Modded: Definitely; Client brand changed to 'fml,forge'
+	Type: Client (map_client.txt)
+	Resource Packs: [Custom Sky - 2本.zip]
+	Current Language: 简体中文 (中国)
+	Profiler Position: N/A (disabled)
+	Vec3 Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	Anisotropic Filtering: Off (1)
+	OptiFine Version: OptiFine_1.7.10_HD_U_E7
+	Render Distance Chunks: 3
+	Mipmaps: 0
+	Anisotropic Filtering: 1
+	Antialiasing: 0
+	Multitexture: false
+	Shaders: null
+	OpenGlVersion: 3.1.0 - Build 9.17.10.4229
+	OpenGlRenderer: Intel(R) HD Graphics 3000
+	OpenGlVendor: Intel
+	CpuCount: 4

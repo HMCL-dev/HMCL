@@ -1,0 +1,202 @@
+---- Minecraft Crash Report ----
+
+WARNING: coremods are present:
+  SkinCore (4626894634154779079@3@0.jar)
+  BaseModNeteaseCore (4620273813196076442@3@0.jar)
+  ItemPatchingLoader (ItemPhysic-Mod-Lite-1.8.9.jar)
+  RandFTCore (4618421856281952104@2@33.jar)
+  Main ([防砍动画]OldAnimationsMod v2.4.2 FORGE MC1.8.9.jar)
+  InputFix (4618424574399199550@3@0.jar)
+  BetterFps ([1.8Fps提升]Ex-BetterFps-1.1.0[laozikaiG].jar)
+  FMLLoadingPlugin ([防砍动画未响应修复]OldAnimationsModUnresponsiveFix-1.0.jar)
+  FMLLoadingPlugin (【鼠标无延迟】1.8nodelay mouse.jar)
+  NeteaseCore (4619774556351054392@3@0.jar)
+Contact their authors BEFORE contacting forge
+
+// I bet Cylons wouldn't have this problem.
+
+Time: 19-1-25 下午7:38
+Description: Rendering entity in world
+
+java.lang.NoSuchMethodError: net.minecraft.client.renderer.entity.RenderEntityItem.shouldSpreadItems()Z
+	at com.creativemd.itemphysic.physics.ClientPhysic.doRender(ClientPhysic.java:208)
+	at net.minecraft.client.renderer.entity.RenderEntityItem.func_76986_a(RenderEntityItem.java)
+	at net.minecraft.client.renderer.entity.RenderEntityItem.func_76986_a(RenderEntityItem.java:17)
+	at net.minecraft.client.renderer.entity.RenderManager.func_147939_a(RenderManager.java:399)
+	at net.minecraft.client.renderer.entity.RenderManager.func_147940_a(RenderManager.java:379)
+	at net.minecraft.client.particle.EntityPickupFX.func_180434_a(SourceFile:53)
+	at net.minecraft.client.particle.EffectRenderer.func_78872_b(EffectRenderer.java:368)
+	at net.minecraft.client.renderer.EntityRenderer.func_175068_a(EntityRenderer.java:1825)
+	at net.minecraft.client.renderer.EntityRenderer.func_78471_a(EntityRenderer.java:1580)
+	at net.minecraft.client.renderer.EntityRenderer.func_181560_a(EntityRenderer.java:1370)
+	at net.minecraft.client.Minecraft.func_71411_J(Minecraft.java:1044)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:351)
+	at net.minecraft.client.main.Main.main(SourceFile:124)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:146)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:25)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Stacktrace:
+	at com.creativemd.itemphysic.physics.ClientPhysic.doRender(ClientPhysic.java:208)
+	at net.minecraft.client.renderer.entity.RenderEntityItem.func_76986_a(RenderEntityItem.java)
+	at net.minecraft.client.renderer.entity.RenderEntityItem.func_76986_a(RenderEntityItem.java:17)
+
+-- Entity being rendered --
+Details:
+	Entity Type: Item (net.minecraft.entity.item.EntityItem)
+	Entity ID: 1231
+	Entity Name: item.tile.whiteStone
+	Entity's Exact location: -96.06, 65.00, 32.03
+	Entity's Block location: -97.00,65.00,32.00 - World: (-97,65,32), Chunk: (at 15,4,0 in -7,2; contains blocks -112,0,32 to -97,255,47), Region: (-1,0; contains chunks -32,0 to -1,31, blocks -512,0,0 to -1,255,511)
+	Entity's Momentum: -0.00, -0.00, -0.00
+	Entity's Rider: ~~ERROR~~ NullPointerException: null
+	Entity's Vehicle: ~~ERROR~~ NullPointerException: null
+
+-- Renderer details --
+Details:
+	Assigned renderer: net.minecraft.client.renderer.entity.RenderEntityItem@d0f3c5a
+	Location: 3.44,0.81,63.70 - World: (3,0,63), Chunk: (at 3,0,15 in 0,3; contains blocks 0,0,48 to 15,255,63), Region: (0,0; contains chunks 0,0 to 31,31, blocks 0,0,0 to 511,255,511)
+	Rotation: -22.5
+	Delta: 0.3214321
+Stacktrace:
+	at net.minecraft.client.renderer.entity.RenderManager.func_147939_a(RenderManager.java:399)
+	at net.minecraft.client.renderer.entity.RenderManager.func_147940_a(RenderManager.java:379)
+	at net.minecraft.client.particle.EntityPickupFX.func_180434_a(SourceFile:53)
+	at net.minecraft.client.particle.EffectRenderer.func_78872_b(EffectRenderer.java:368)
+	at net.minecraft.client.renderer.EntityRenderer.func_175068_a(EntityRenderer.java:1825)
+	at net.minecraft.client.renderer.EntityRenderer.func_78471_a(EntityRenderer.java:1580)
+
+-- Affected level --
+Details:
+	Level name: MpServer
+	All players: 16 total; [EntityPlayerSP['MacAdamKaren'/1881652, l='MpServer', x=-99.13, y=64.50, z=-31.73], EntityOtherPlayerMP['闪电史蒂夫少年'/63, l='MpServer', x=-37.00, y=65.50, z=96.44], EntityOtherPlayerMP['马五德的高尚的画'/112, l='MpServer', x=-99.42, y=76.95, z=-31.57], EntityOtherPlayerMP['Zibey'/351, l='MpServer', x=32.58, y=65.91, z=-90.02], EntityOtherPlayerMP['包皮过长要割包皮'/376, l='MpServer', x=36.89, y=65.00, z=83.52], EntityOtherPlayerMP['方健皓'/383, l='MpServer', x=-94.31, y=66.05, z=32.55], EntityOtherPlayerMP['Bili丶Chara'/384, l='MpServer', x=-92.00, y=65.22, z=32.07], EntityOtherPlayerMP['Stay_岁月'/64, l='MpServer', x=-60.47, y=67.94, z=85.31], EntityOtherPlayerMP['龜薾嗭'/193, l='MpServer', x=32.20, y=64.41, z=-99.65], EntityOtherPlayerMP['情殇桥山丶哈克芬'/58, l='MpServer', x=12.11, y=74.60, z=-85.42], EntityOtherPlayerMP['MC小文文'/60, l='MpServer', x=-81.73, y=65.76, z=-31.64], EntityOtherPlayerMP['f159z039f3'/587, l='MpServer', x=-38.50, y=65.00, z=-95.00], EntityOtherPlayerMP['bij9i36g72'/613, l='MpServer', x=-95.00, y=65.00, z=-38.50], EntityOtherPlayerMP['9u9x011ex0'/660, l='MpServer', x=-25.50, y=65.00, z=-95.00], EntityOtherPlayerMP['Samakud'/374, l='MpServer', x=33.00, y=65.00, z=96.00], EntityOtherPlayerMP['Cs丶诗小仙'/59, l='MpServer', x=-32.00, y=66.00, z=-95.00]]
+	Chunk stats: MultiplayerChunkCache: 441, 441
+	Level seed: 0
+	Level generator: ID 01 - flat, ver 0. Features enabled: false
+	Level generator options:
+	Level spawn location: -82.00,4.00,-907.00 - World: (-82,4,-907), Chunk: (at 14,0,5 in -6,-57; contains blocks -96,0,-912 to -81,255,-897), Region: (-1,-2; contains chunks -32,-64 to -1,-33, blocks -512,0,-1024 to -1,255,-513)
+	Level time: 166821440 game time, 1 day time
+	Level dimension: 0
+	Level storage version: 0x00000 - Unknown?
+	Level weather: Rain time: 0 (now: false), thunder time: 0 (now: false)
+	Level game mode: Game mode: creative (ID 1). Hardcore: false. Cheats: false
+	Forced entities: 178 total; [EntityArmorStand['Armor Stand'/515, l='MpServer', x=0.50, y=81.01, z=33.50], EntityArmorStand['§e等级§cI'/516, l='MpServer', x=-32.50, y=81.88, z=0.50], EntityArmorStand['§2§l绿宝石'/517, l='MpServer', x=-32.50, y=81.50, z=0.50], EntityArmorStand['Armor Stand'/523, l='MpServer', x=-32.50, y=81.00, z=0.50], EntityItem['item.item.emerald'/1035, l='MpServer', x=0.50, y=79.00, z=33.50], EntityOtherPlayerMP['Samakud'/374, l='MpServer', x=33.00, y=65.00, z=96.00], EntityItem['item.item.emerald'/1036, l='MpServer', x=33.50, y=79.00, z=0.50], EntityArmorStand['§e等级§cI'/525, l='MpServer', x=0.50, y=81.88, z=-32.50], EntityArmorStand['§2§l绿宝石'/526, l='MpServer', x=0.50, y=81.50, z=-32.50], EntityArmorStand['§e将在§c25§e秒后产出'/527, l='MpServer', x=0.50, y=81.13, z=-32.50], EntityItem['item.item.emerald'/1041, l='MpServer', x=-32.50, y=79.00, z=0.50], EntityItem['item.item.emerald'/1043, l='MpServer', x=0.50, y=79.00, z=-32.50], EntityArmorStand['Armor Stand'/533, l='MpServer', x=0.50, y=81.00, z=-32.50], EntityArmorStand['§e等级§cI'/534, l='MpServer', x=33.50, y=81.88, z=0.50], EntityArmorStand['§2§l绿宝石'/535, l='MpServer', x=33.50, y=81.50, z=0.50], EntityItem['item.item.diamond'/1047, l='MpServer', x=-75.50, y=62.00, z=-74.50], EntityItem['item.item.diamond'/1049, l='MpServer', x=-74.50, y=62.00, z=76.50], EntityArmorStand['Armor Stand'/541, l='MpServer', x=33.50, y=81.00, z=0.50], EntityArmorStand['§e等级§cI'/542, l='MpServer', x=-75.50, y=64.88, z=-74.50], EntityArmorStand['§b§l钻石'/543, l='MpServer', x=-75.50, y=64.50, z=-74.50], EntityArmorStand['§e将在§c21§e秒后产出'/544, l='MpServer', x=-75.50, y=64.13, z=-74.50], EntityOtherPlayerMP['Zibey'/351, l='MpServer', x=32.58, y=65.91, z=-90.02], EntityArmorStand['Armor Stand'/550, l='MpServer', x=-75.50, y=64.00, z=-74.50], EntityArmorStand['§e等级§cI'/551, l='MpServer', x=-74.50, y=64.88, z=76.50], EntityArmorStand['§b§l钻石'/552, l='MpServer', x=-74.50, y=64.50, z=76.50], EntityArmorStand['Armor Stand'/558, l='MpServer', x=-74.50, y=64.00, z=76.50], EntityOtherPlayerMP['情殇桥山丶哈克芬'/58, l='MpServer', x=12.11, y=74.60, z=-85.42], EntityOtherPlayerMP['Cs丶诗小仙'/59, l='MpServer', x=-32.00, y=66.00, z=-95.00], EntityOtherPlayerMP['MC小文文'/60, l='MpServer', x=-81.73, y=65.76, z=-31.64], EntityOtherPlayerMP['闪电史蒂夫少年'/63, l='MpServer', x=-37.00, y=65.50, z=96.44], EntityOtherPlayerMP['Stay_岁月'/64, l='MpServer', x=-60.47, y=67.94, z=85.31], EntityArmorStand['§e将在§c24§e秒后产出'/580, l='MpServer', x=0.50, y=81.13, z=33.50], EntityOtherPlayerMP['六岁就很乖'/354, l='MpServer', x=-2.50, y=118.00, z=5.22], EntityOtherPlayerMP['f159z039f3'/587, l='MpServer', x=-38.50, y=65.00, z=-95.00], EntityOtherPlayerMP['f159z039f3'/587, l='MpServer', x=-38.50, y=65.00, z=-95.00], EntityBat['Bat'/589, l='MpServer', x=-38.50, y=66.35, z=-95.00], EntityArmorStand['§b组队模式'/590, l='MpServer', x=-38.50, y=65.44, z=-95.00], EntityOtherPlayerMP['1h5kukjp53'/593, l='MpServer', x=96.00, y=65.00, z=39.50], EntityArmorStand['§b升级'/591, l='MpServer', x=-38.50, y=65.16, z=-95.00], EntityArmorStand['§e§l右键点击'/592, l='MpServer', x=-38.50, y=64.91, z=-95.00], EntityOtherPlayerMP['53ij2115e2'/628, l='MpServer', x=96.00, y=65.00, z=-38.50], EntityOtherPlayerMP['a67r8nj697'/634, l='MpServer', x=96.00, y=65.00, z=-25.50], EntityArmorStand['§b组队模式'/600, l='MpServer', x=-25.50, y=65.44, z=96.00], EntityArmorStand['§b升级'/601, l='MpServer', x=-25.50, y=65.16, z=96.00], EntityArmorStand['§e§l右键点击'/602, l='MpServer', x=-25.50, y=64.91, z=96.00], EntityOtherPlayerMP['bij9i36g72'/613, l='MpServer', x=-95.00, y=65.00, z=-38.50], EntityArmorStand['§b道具商店'/605, l='MpServer', x=39.50, y=65.06, z=-95.00], EntityArmorStand['§e§l右键点击'/606, l='MpServer', x=39.50, y=64.81, z=-95.00], EntityArmorStand['§b组队模式'/610, l='MpServer', x=39.50, y=65.44, z=96.00], EntityArmorStand['§b升级'/611, l='MpServer', x=39.50, y=65.16, z=96.00], EntityArmorStand['§e§l右键点击'/612, l='MpServer', x=39.50, y=64.91, z=96.00], EntityOtherPlayerMP['bij9i36g72'/613, l='MpServer', x=-95.00, y=65.00, z=-38.50], EntityBat['Bat'/615, l='MpServer', x=-95.00, y=66.35, z=-38.50], EntityArmorStand['§b道具商店'/616, l='MpServer', x=-95.00, y=65.16, z=-38.50], EntityArmorStand['§e§l右键点击'/617, l='MpServer', x=-95.00, y=64.91, z=-38.50], EntityOtherPlayerMP['情殇桥山丶哈克芬'/58, l='MpServer', x=12.11, y=74.60, z=-85.42], EntityCreeper['Creeper'/619, l='MpServer', x=-95.00, y=65.00, z=26.50], EntityArmorStand['§b道具商店'/620, l='MpServer', x=-95.00, y=65.16, z=26.50], EntityOtherPlayerMP['Stay_岁月'/64, l='MpServer', x=-60.47, y=67.94, z=85.31], EntityArmorStand['§e§l右键点击'/621, l='MpServer', x=-95.00, y=64.91, z=26.50], EntityArmorStand['§e将在§c22§e秒后产出'/622, l='MpServer', x=-74.50, y=64.13, z=76.50], EntityOtherPlayerMP['15s3zxz7nm'/645, l='MpServer', x=96.00, y=65.00, z=26.50], EntityOtherPlayerMP['马五德的高尚的画'/112, l='MpServer', x=-99.42, y=76.95, z=-31.57], EntityOtherPlayerMP['MC小文文'/60, l='MpServer', x=-81.73, y=65.76, z=-31.64], EntityWitch['Witch'/624, l='MpServer', x=-95.00, y=65.00, z=-25.50], EntityArmorStand['§b组队模式'/625, l='MpServer', x=-95.00, y=65.84, z=-25.50], EntityArmorStand['§b升级'/626, l='MpServer', x=-95.00, y=65.56, z=-25.50], EntityArmorStand['§e§l右键点击'/627, l='MpServer', x=-95.00, y=65.31, z=-25.50], EntityItem['item.item.ingotGold'/1139, l='MpServer', x=-99.00, y=64.50, z=33.00], EntityOtherPlayerMP['9u9x011ex0'/660, l='MpServer', x=-25.50, y=65.00, z=-95.00], EntityItem['item.item.ingotIron'/1149, l='MpServer', x=-99.00, y=64.50, z=33.00], EntityArmorStand['§b组队模式'/642, l='MpServer', x=26.50, y=65.34, z=-95.00], EntityArmorStand['§b升级'/643, l='MpServer', x=26.50, y=65.06, z=-95.00], EntityArmorStand['§e§l右键点击'/644, l='MpServer', x=26.50, y=64.81, z=-95.00], EntityItem['item.item.ingotIron'/1159, l='MpServer', x=33.00, y=64.50, z=100.00], EntityOtherPlayerMP['Samakud'/374, l='MpServer', x=1.25, y=120.00, z=2.00], EntityOtherPlayerMP['天瞳煞'/304, l='MpServer', x=75.86, y=62.43, z=-75.04], EntityCreeper['Creeper'/652, l='MpServer', x=-95.00, y=65.00, z=39.50], EntityArmorStand['§b组队模式'/653, l='MpServer', x=-95.00, y=65.44, z=39.50], EntityArmorStand['§b升级'/654, l='MpServer', x=-95.00, y=65.16, z=39.50], EntityArmorStand['§e§l右键点击'/655, l='MpServer', x=-95.00, y=64.91, z=39.50], EntityItem['item.item.ingotIron'/1168, l='MpServer', x=-99.00, y=64.50, z=33.00], EntityArmorStand['§b道具商店'/658, l='MpServer', x=26.50, y=65.16, z=96.00], EntityArmorStand['§e§l右键点击'/659, l='MpServer', x=26.50, y=64.91, z=96.00], EntityOtherPlayerMP['9u9x011ex0'/660, l='MpServer', x=-25.50, y=65.00, z=-95.00], EntityBat['Bat'/662, l='MpServer', x=-25.50, y=66.35, z=-95.00], EntityArmorStand['§b道具商店'/663, l='MpServer', x=-25.50, y=65.16, z=-95.00], EntityArmorStand['§e§l右键点击'/664, l='MpServer', x=-25.50, y=64.91, z=-95.00], EntityOtherPlayerMP['MC小文文'/60, l='MpServer', x=-90.67, y=-30.66, z=28.19], EntityArmorStand['§b道具商店'/667, l='MpServer', x=-38.50, y=65.16, z=96.00], EntityOtherPlayerMP['15s3zxz7nm'/645, l='MpServer', x=96.00, y=65.00, z=26.50], EntityArmorStand['§e§l右键点击'/668, l='MpServer', x=-38.50, y=64.91, z=96.00], EntityArmorStand['§e将在§c25§e秒后产出'/669, l='MpServer', x=33.50, y=81.13, z=0.50], EntityOtherPlayerMP['Cs丶诗小仙'/59, l='MpServer', x=-32.00, y=66.00, z=-95.00], EntityArmorStand['§e将在§c25§e秒后产出'/675, l='MpServer', x=-32.50, y=81.13, z=0.50], EntityPlayerSP['MacAdamKaren'/1881652, l='MpServer', x=-99.13, y=64.50, z=-31.73], EntityItem['item.item.ingotIron'/1189, l='MpServer', x=33.00, y=64.50, z=100.00], EntityOtherPlayerMP['a67r8nj697'/634, l='MpServer', x=96.00, y=65.00, z=-25.50], EntityOtherPlayerMP['大海与黑夜之子'/55, l='MpServer', x=2.31, y=118.00, z=5.38], EntityItem['item.item.diamond'/679, l='MpServer', x=-75.50, y=62.00, z=-74.50], EntityOtherPlayerMP['Morbid丶钟情'/65, l='MpServer', x=86.55, y=65.00, z=37.35], EntityItem['item.item.diamond'/684, l='MpServer', x=-74.50, y=62.00, z=76.50], EntityItem['item.item.ingotIron'/1197, l='MpServer', x=-99.00, y=64.50, z=33.00], EntityOtherPlayerMP['53ij2115e2'/628, l='MpServer', x=96.00, y=65.00, z=-38.50], EntityItem['item.item.ingotIron'/1205, l='MpServer', x=33.00, y=64.50, z=100.00], EntityOtherPlayerMP['情殇桥山丶哈克芬'/58, l='MpServer', x=38.78, y=65.04, z=-78.96], EntityOtherPlayerMP['Cs丶诗小仙'/59, l='MpServer', x=21.90, y=5.26, z=-80.97], EntityOtherPlayerMP['MC小文文'/60, l='MpServer', x=-93.96, y=65.68, z=-30.00], EntityOtherPlayerMP['触手TV小天baby'/62, l='MpServer', x=0.50, y=119.16, z=0.50], EntityOtherPlayerMP['1h5kukjp53'/593, l='MpServer', x=96.00, y=65.00, z=39.50], EntityOtherPlayerMP['龜薾嗭'/193, l='MpServer', x=32.20, y=64.41, z=-99.65], EntityOtherPlayerMP['包皮过长要割包皮'/376, l='MpServer', x=36.89, y=65.00, z=83.52], EntityItem['item.item.ingotIron'/1218, l='MpServer', x=-99.00, y=64.50, z=33.00], EntityOtherPlayerMP['闪电史蒂夫少年'/63, l='MpServer', x=-37.00, y=65.50, z=96.44], EntityOtherPlayerMP['Stay_岁月'/64, l='MpServer', x=-45.78, y=-26.26, z=87.06], EntityItem['item.item.ingotIron'/1222, l='MpServer', x=33.00, y=64.50, z=100.00], EntityOtherPlayerMP['Samakud'/374, l='MpServer', x=51.39, y=65.00, z=78.88], EntityOtherPlayerMP['我是新手别打我哇'/67, l='MpServer', x=-4.49, y=118.67, z=-3.88], EntityItem['item.item.ingotIron'/1233, l='MpServer', x=-32.00, y=64.50, z=-99.00], EntityItem['item.item.ingotIron'/1234, l='MpServer', x=-99.00, y=64.50, z=33.00], EntityItem['item.tile.wood.oak'/1237, l='MpServer', x=-93.13, y=65.00, z=28.53], EntityOtherPlayerMP['Morbid丶钟情'/65, l='MpServer', x=-0.03, y=118.00, z=-7.94], EntityItem['item.item.ingotIron'/1242, l='MpServer', x=33.00, y=64.50, z=100.00], EntityOtherPlayerMP['网意papa快弄我'/66, l='MpServer', x=7.78, y=118.00, z=1.87], EntityItem['item.item.ingotGold'/1253, l='MpServer', x=33.00, y=64.50, z=100.00], EntityItem['item.item.ingotGold'/1256, l='MpServer', x=-99.00, y=64.50, z=33.00], EntityItem['item.item.ingotGold'/1260, l='MpServer', x=-32.00, y=64.59, z=-99.00], EntityItem['item.item.ingotIron'/1261, l='MpServer', x=-99.00, y=64.50, z=33.00], EntityItem['item.item.ingotIron'/1262, l='MpServer', x=-32.00, y=64.50, z=-99.00], EntityItem['item.item.ingotIron'/1277, l='MpServer', x=33.00, y=64.50, z=100.00], EntityOtherPlayerMP['龜薾嗭'/193, l='MpServer', x=11.86, y=3.58, z=-83.90], EntityOtherPlayerMP['Cs丶诗小仙'/59, l='MpServer', x=30.50, y=65.88, z=-84.31], EntityItem['item.item.diamond'/1282, l='MpServer', x=-75.50, y=62.00, z=-74.50], EntityItem['item.item.ingotIron'/1283, l='MpServer', x=-99.00, y=64.50, z=33.00], EntityItem['item.item.diamond'/1287, l='MpServer', x=-74.50, y=62.00, z=76.50], EntityItem['item.item.ingotIron'/1290, l='MpServer', x=-32.00, y=64.50, z=-99.00], EntityOtherPlayerMP['马五德的高尚的画'/112, l='MpServer', x=-99.42, y=76.95, z=-31.57], EntityItem['item.item.ingotIron'/1303, l='MpServer', x=33.00, y=64.50, z=100.00], EntityOtherPlayerMP['方健皓'/383, l='MpServer', x=-94.31, y=66.05, z=32.55], EntityItem['item.item.ingotIron'/1309, l='MpServer', x=-99.00, y=64.50, z=33.00], EntityOtherPlayerMP['Bili丶Chara'/384, l='MpServer', x=-92.00, y=65.22, z=32.07], EntityItem['item.item.ingotIron'/1316, l='MpServer', x=-32.00, y=64.50, z=-99.00], EntityOtherPlayerMP['龜薾嗭'/193, l='MpServer', x=32.20, y=64.41, z=-99.65], EntityItem['item.item.ingotIron'/1321, l='MpServer', x=33.00, y=64.50, z=100.00], EntityItem['item.item.ingotIron'/1325, l='MpServer', x=-99.00, y=64.50, z=33.00], EntityItem['item.item.ingotIron'/1333, l='MpServer', x=-32.00, y=64.50, z=-99.00], EntityItem['item.item.ingotIron'/1337, l='MpServer', x=33.00, y=64.50, z=100.00], EntityItem['item.item.ingotIron'/1342, l='MpServer', x=-32.04, y=64.50, z=99.92], EntityItem['item.item.ingotIron'/1345, l='MpServer', x=-99.00, y=64.50, z=33.00], EntityOtherPlayerMP['天瞳煞'/304, l='MpServer', x=-0.06, y=118.00, z=3.66], EntityOtherPlayerMP['Zibey'/351, l='MpServer', x=32.58, y=65.91, z=-90.02], EntityOtherPlayerMP['f159z039f3'/587, l='MpServer', x=-38.50, y=65.00, z=-95.00], EntityOtherPlayerMP['bij9i36g72'/613, l='MpServer', x=-95.00, y=65.00, z=-38.50], EntityOtherPlayerMP['9u9x011ex0'/660, l='MpServer', x=-25.50, y=65.00, z=-95.00], EntityOtherPlayerMP['Samakud'/374, l='MpServer', x=33.00, y=65.00, z=96.00], EntityOtherPlayerMP['包皮过长要割包皮'/376, l='MpServer', x=36.89, y=65.00, z=83.52], EntityOtherPlayerMP['方健皓'/383, l='MpServer', x=-94.31, y=66.05, z=32.55], EntityOtherPlayerMP['Bili丶Chara'/384, l='MpServer', x=-92.00, y=65.22, z=32.07], EntityItemFrame['entity.ItemFrame.name'/464, l='MpServer', x=-26.50, y=66.50, z=87.97], EntityItemFrame['entity.ItemFrame.name'/465, l='MpServer', x=27.50, y=66.50, z=87.97], EntityItemFrame['entity.ItemFrame.name'/468, l='MpServer', x=27.50, y=66.50, z=-86.97], EntityItemFrame['entity.ItemFrame.name'/469, l='MpServer', x=-26.50, y=66.50, z=-86.97], EntityItemFrame['entity.ItemFrame.name'/470, l='MpServer', x=-86.97, y=66.50, z=-26.50], EntityItemFrame['entity.ItemFrame.name'/471, l='MpServer', x=-86.97, y=66.50, z=27.50], EntityItemFrame['entity.ItemFrame.name'/472, l='MpServer', x=-76.50, y=66.50, z=82.97], EntityArmorStand['§e点击！'/473, l='MpServer', x=-76.50, y=63.75, z=82.84], EntityItemFrame['entity.ItemFrame.name'/478, l='MpServer', x=-81.97, y=66.50, z=-76.50], EntityArmorStand['§e点击！'/479, l='MpServer', x=-81.84, y=63.75, z=-76.50], EntityItemFrame['entity.ItemFrame.name'/480, l='MpServer', x=39.50, y=68.50, z=29.03], EntityArmorStand['§e点击！'/481, l='MpServer', x=39.50, y=65.75, z=29.16], EntityItemFrame['entity.ItemFrame.name'/482, l='MpServer', x=29.03, y=68.50, z=-38.50], EntityArmorStand['§e点击！'/483, l='MpServer', x=29.16, y=65.75, z=-38.50], EntityItemFrame['entity.ItemFrame.name'/484, l='MpServer', x=-38.50, y=68.50, z=-28.03], EntityArmorStand['§e点击！'/485, l='MpServer', x=-38.50, y=65.75, z=-28.16], EntityItemFrame['entity.ItemFrame.name'/486, l='MpServer', x=-28.03, y=68.50, z=39.50], EntityArmorStand['§e点击！'/487, l='MpServer', x=-28.16, y=65.75, z=39.50], EntityArmorStand['§e等级§cI'/508, l='MpServer', x=0.50, y=81.88, z=33.50], EntityArmorStand['§2§l绿宝石'/509, l='MpServer', x=0.50, y=81.50, z=33.50]]
+	Retry entities: 0 total; []
+	Server brand: BungeeCord (Hypixel) <- vanilla
+	Server type: Non-integrated multiplayer server
+Stacktrace:
+	at net.minecraft.client.multiplayer.WorldClient.func_72914_a(WorldClient.java:412)
+	at net.minecraft.client.Minecraft.func_71396_d(Minecraft.java:2529)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:372)
+	at net.minecraft.client.main.Main.main(SourceFile:124)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:146)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:25)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.8.9
+	Operating System: Windows 7 (amd64) version 6.1
+	CPU: <unknown>
+	Java Version: 1.8.0_60, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 221560016 bytes (211 MB) / 652267520 bytes (622 MB) up to 1215561728 bytes (1159 MB)
+	JVM Flags: 8 total; -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -Xmx1172M -Xmn128M -XX:PermSize=64M -XX:MaxPermSize=128M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy
+	IntCache: cache: 0, tcache: 0, allocated: 13, tallocated: 95
+	FML: MCP 9.19 Powered by Forge 11.15.1.0 Optifine OptiFine_1.8.9_HD_U_H8 35 mods loaded, 35 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+	UCHIJA	mcp{9.19} [Minecraft Coder Pack] (minecraft.jar)
+	UCHIJA	FML{8.0.99.99} [Forge Mod Loader] (forge-1.8.9-11.15.1.0.jar)
+	UCHIJA	Forge{11.15.1.0} [Minecraft Forge] (forge-1.8.9-11.15.1.0.jar)
+	UCHIJA	randftcoremod{1.8.9} [randftcoremod] (minecraft.jar)
+	UCHIJA	InputFix{1.8.x-v2} [InputFix] (minecraft.jar)
+	UCHIJA	skincoremod{1.8.9} [skincoremod] (minecraft.jar)
+	UCHIJA	betterfps{1.1.0} [BetterFps] (minecraft.jar)
+	UCHIJA	oldanimations{2.4.2} [OldAnimationsMod] (minecraft.jar)
+	UCHIJA	itemphysic{1.3.0} [ItemPhysic] (minecraft.jar)
+	UCHIJA	mousedelayfix{1.0} [MouseDelayFix] (minecraft.jar)
+	UCHIJA	neteasecore{1.11.2} [NeteaseCore] (minecraft.jar)
+	UCHIJA	basemodneteasecore{1.8.9} [BaseModNeteaseCore] (minecraft.jar)
+	UCHIJA	keystrokesmod{KMV5} [KeystrokesMod] (%5B1.8.9%5D+Keystrokes+Mod+V5.jar)
+	UCHIJA	networkmod{1.0} [network rpc Mod] (4620273813222949778@3@0.jar)
+	UCHIJA	storemod{1.0} [storemod] (4618419806295460477@3@0.jar)
+	UCHIJA	antimod{2.0} [anti addiction Mod] (4618827437296985101@3@0.jar)
+	UCHIJA	filtermod{1.0} [filtermod] (4619774556351054392@3@0.jar)
+	UCHIJA	friendplaymod{1.0} [Friendplay Mod] (4620273813159696403@3@0.jar)
+	UCHIJA	mcbasemod{1.0} [mcbasemod] (4620273813196076442@3@0.jar)
+	UCHIJA	updatecore{1.0} [updatecore] (4620608833856825631@3@0.jar)
+	UCHIJA	playermanager{1.0} [playermanager] (4620702952524438419@3@0.jar)
+	UCHIJA	fullscreenpopup{1.8.9.38000} [Fullscreen Popup Mod] (4624103992226684617@3@0.jar)
+	UCHIJA	skinmod{1.8.8-15739} [skinmod] (4626894634154779079@3@0.jar)
+	UCHIJA	motionblurmod{1.0} [MotionBlurMod] ([1.8.9][动态模糊] MotionBlur-1.0.jar)
+	UCHIJA	wingsmod{1.2} [Wings Mod] ([翅膀]Wings+Mod-1.2.jar)
+	UCHIJA	MouseTweaks{2.6.2} [Mouse Tweaks] ([鼠标手势]MouseTweaks-2.6.2-mc1.8.9 - 副本.jar)
+	UCHIJA	TcpNoDelayMod-2.0{1.0} [TcpNoDelayMod-2.0] (ghostmod-bymarisa.jar)
+	UCHIJA	PingTag{3.0} [Ping Tag] (Ping Tag Mod-3.0.jar)
+	UCHIJA	MemoryCleaner{1.0} [Memory Cleaner] (内存清理.jar)
+	UCHIJA	orangetogglesprint{1.0} [Orange's Simple ToggleSprint] (强制疾跑【按I开】.jar)
+	UCHIJA	hitrangemod{1.0} [Hit Range Mod] (攻击范围显示 HitRangeMod 1.0 MC1.8.9.jar)
+	UCHIJA	blockoverlay{2.1} [BlockOverlay] (方块边框自定义.jar)
+	UCHIJA	XaeroBetterPvP{1.9} [Better PVP Mod] (更好的pvp.jar)
+	UCHIJA	keystroke{1.2} [Ben's Keystrokes] (速搭mod 按v开启[By-苏辰汉化].jar)
+	UCHIJA	sharpnessparticles{1.1} [Sharpness Particles] (锋利粒子mod.jar)
+	Loaded coremods (and transformers):
+SkinCore (4626894634154779079@3@0.jar)
+  com.netease.mc.mod.skin.coremod.SkinCoreTransformer
+BaseModNeteaseCore (4620273813196076442@3@0.jar)
+  com.netease.mc.core.base.NeteaseCoreTransformer
+ItemPatchingLoader (ItemPhysic-Mod-Lite-1.8.9.jar)
+  com.creativemd.itemphysic.ItemTransformer
+RandFTCore (4618421856281952104@2@33.jar)
+  com.netease.mc.mod.randomfont.RandFTCoreTransformer
+Main ([防砍动画]OldAnimationsMod v2.4.2 FORGE MC1.8.9.jar)
+  com.spiderfrog.main.ClassTransformer
+InputFix (4618424574399199550@3@0.jar)
+  lain.mods.inputfix.InputFixTransformer
+BetterFps ([1.8Fps提升]Ex-BetterFps-1.1.0[laozikaiG].jar)
+  me.guichaguri.betterfps.BetterFpsTransformer
+FMLLoadingPlugin ([防砍动画未响应修复]OldAnimationsModUnresponsiveFix-1.0.jar)
+  io.github.zekerzhayard.unresponsivefix.ClassTransformer
+FMLLoadingPlugin (【鼠标无延迟】1.8nodelay mouse.jar)
+  io.prplz.mousedelayfix.ClassTransformer
+NeteaseCore (4619774556351054392@3@0.jar)
+  com.netease.mc.core.NeteaseCoreTransformer
+	GL info: ' Vendor: 'Intel' Version: '4.3.0 - Build 10.18.14.4578' Renderer: 'Intel(R) HD Graphics 4400'
+	Launched Version: 1.8.9
+	LWJGL: 2.9.4
+	OpenGL: Intel(R) HD Graphics 4400 GL version 4.3.0 - Build 10.18.14.4578, Intel
+	GL Caps: Using GL 1.3 multitexturing.
+Using GL 1.3 texture combiners.
+Using framebuffer objects because OpenGL 3.0 is supported and separate blending is supported.
+Shaders are available because OpenGL 2.1 is supported.
+VBOs are available because OpenGL 1.5 is supported.
+
+	Using VBOs: No
+	Is Modded: Definitely; Client brand changed to 'fml,forge'
+	Type: Client (map_client.txt)
+	Resource Packs: Chroma音效材质.zip, §c§l药儿§b§lPVP材质包 弯剑柄, 我现在正在用的字体.zip
+	Current Language: English (US)
+	Profiler Position: N/A (disabled)
+	CPU: <unknown>
+	OptiFine Version: OptiFine_1.8.9_HD_U_H8
+	Render Distance Chunks: 10
+	Mipmaps: 4
+	Anisotropic Filtering: 1
+	Antialiasing: 0
+	Multitexture: false
+	Shaders: null
+	OpenGlVersion: 4.3.0 - Build 10.18.14.4578
+	OpenGlRenderer: Intel(R) HD Graphics 4400
+	OpenGlVendor: Intel
+	CpuCount: 4

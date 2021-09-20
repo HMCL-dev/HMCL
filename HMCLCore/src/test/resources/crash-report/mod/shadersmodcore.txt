@@ -1,0 +1,146 @@
+---- Minecraft Crash Report ----
+// But it works on my machine.
+
+Time: 1/30/19 2:37 AM
+Description: Stitching texture atlas
+
+java.lang.NullPointerException: Stitching texture atlas
+	at shadersmodcore.client.ShadersTex.readImage(ShadersTex.java:464)
+	at shadersmodcore.client.ShadersTex.readImageAndMipmaps(ShadersTex.java:439)
+	at shadersmodcore.client.ShadersTex.uploadTexSubForLoadAtlas(ShadersTex.java:419)
+	at net.minecraft.client.renderer.texture.TextureMap.func_110571_b(TextureMap.java:381)
+	at net.minecraft.client.renderer.texture.TextureMap.func_110551_a(TextureMap.java:136)
+	at net.minecraft.client.renderer.texture.TextureManager.func_110579_a(TextureManager.java:94)
+	at net.minecraft.client.renderer.texture.TextureManager.func_110580_a(TextureManager.java:76)
+	at net.minecraft.client.renderer.texture.TextureManager.func_130088_a(TextureManager.java:63)
+	at net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:545)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:878)
+	at net.minecraft.client.main.Main.main(SourceFile:148)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:135)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:28)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Stacktrace:
+	at shadersmodcore.client.ShadersTex.readImage(ShadersTex.java:464)
+	at shadersmodcore.client.ShadersTex.readImageAndMipmaps(ShadersTex.java:439)
+	at shadersmodcore.client.ShadersTex.uploadTexSubForLoadAtlas(ShadersTex.java:419)
+
+-- Texture being stitched together --
+Details:
+	Atlas path: textures/blocks
+	Sprite: TextureAtlasSprite{name='missingno', frameCount=1, rotated=false, x=0, y=0, height=16, width=16, u0=6.25E-4, u1=0.999375, v0=6.25E-4, v1=0.999375}
+Stacktrace:
+	at net.minecraft.client.renderer.texture.TextureMap.func_110571_b(TextureMap.java:381)
+	at net.minecraft.client.renderer.texture.TextureMap.func_110551_a(TextureMap.java:136)
+
+-- Resource location being registered --
+Details:
+	Resource location: minecraft:textures/atlas/blocks.png
+	Texture object class: net.minecraft.client.renderer.texture.TextureMap
+Stacktrace:
+	at net.minecraft.client.renderer.texture.TextureManager.func_110579_a(TextureManager.java:94)
+	at net.minecraft.client.renderer.texture.TextureManager.func_110580_a(TextureManager.java:76)
+	at net.minecraft.client.renderer.texture.TextureManager.func_130088_a(TextureManager.java:63)
+	at net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:545)
+
+-- Initialization --
+Details:
+Stacktrace:
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:878)
+	at net.minecraft.client.main.Main.main(SourceFile:148)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:135)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:28)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.7.10
+	Operating System: Windows 8.1 (amd64) version 6.3
+	Java Version: 1.8.0_51, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 488780776 bytes (466 MB) / 1676148736 bytes (1598 MB) up to 3817865216 bytes (3641 MB)
+	JVM Flags: 2 total; -Xmx4096m -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump
+	AABB Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+	FML: MCP v9.05 FML v7.10.99.99 Minecraft Forge 10.13.4.1558 Optifine OptiFine_1.7.10_HD_U_D3 43 mods loaded, 43 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+	UCH	mcp{9.05} [Minecraft Coder Pack] (minecraft.jar)
+	UCH	FML{7.10.99.99} [Forge Mod Loader] (forge-1.7.10-10.13.4.1558-1.7.10.jar)
+	UCH	Forge{10.13.4.1558} [Minecraft Forge] (forge-1.7.10-10.13.4.1558-1.7.10.jar)
+	UCH	UraniumPlus{1.0} [Added title and actionbar support for client and server] ([motd]UraniumPlus.jar)
+	UCH	CodeChickenCore{1.0.4.35} [CodeChicken Core] (minecraft.jar)
+	UCH	NotEnoughItems{1.0.4.83} [Not Enough Items] ([NEI]NotEnoughItems-1.0.4.83-universal.jar)
+	UCH	betterfps{1.0.0} [BetterFps] (minecraft.jar)
+	UCH	uniskinmod{1.2-dev4} [Universal Skin Mod] (minecraft.jar)
+	UCH	IC2{2.2.828-experimental} [IndustrialCraft 2] ([工业2]industrialcraft.jar)
+	UCH	BuildCraft|Core{7.1.22} [BuildCraft] ([建筑管道]buildcraft-7.1.22.jar)
+	UCH	BuildCraft|Transport{7.1.22} [BC Transport] ([建筑管道]buildcraft-7.1.22.jar)
+	UCH	BuildCraft|Factory{7.1.22} [BC Factory] ([建筑管道]buildcraft-7.1.22.jar)
+	UCH	BuildCraft|Silicon{7.1.22} [BC Silicon] ([建筑管道]buildcraft-7.1.22.jar)
+	UCH	BuildCraft|Energy{7.1.22} [BC Energy] ([建筑管道]buildcraft-7.1.22.jar)
+	UCH	BuildCraft|Builders{7.1.22} [BC Builders] ([建筑管道]buildcraft-7.1.22.jar)
+	UCH	TwilightForest{2.3.7} [The Twilight Forest] ([暮色]twilightforest-1.7.10-2.3.7.jar)
+	UCH	gregtech{MC1710} [GregTech] ([GT5]格雷科技5-gregtech-5.09.31.jar)
+	UCH	Waila{1.5.8} [Waila] ([NEI扩展]Waila-1.5.9_1.7.10.jar)
+	UCH	customnpcs{1.7.10d} [CustomNpcs] ([NPC]CustomNPCs_1.7.10d.jar)
+	UCH	ReiMinimap{1.7.10} [Rei's Minimap] ([小地图]LittleMap.jar)
+	UCH	flammpfeil.slashblade{mc1.7.10-r87} [SlashBlade] ([拔刀]SlashBlade.jar)
+	UCH	mrblade{1.2.7} [Technology Revolution Blade Extra] ([工业拔刀附属]TRblade技术革新 v1.2.7(MC1710).jar)
+	UCH	BuildCraft|Robotics{7.1.22} [BC Robotics] ([建筑管道]buildcraft-7.1.22.jar)
+	UCH	saligia{1.0.0} [PROJECT_SALIGIA] ([拔刀附属]七宗罪PROJECT_saligia_2.1.0.jar)
+	UCH	flammpfeil.nihil{mc1.7.x-r8} [Nihil] ([拔刀附属]似蛭1.7.x-r8.jar)
+	UCH	Yamazakura{1.0.0} [Yamazakura] ([拔刀附属]山樱SlashBlade-Yamazakura-mc1.7-r4.jar)
+	UCH	flammpfeil.slashblade.kirisaya{r1} [SlashBlade-Kirisaya] ([拔刀附属]无神Kirisaya-r1.jar)
+	UCH	foxex{1.1.2} [FoxBlade Extra] ([拔刀附属]狐月刀FoxExtrav1.1.2(MC1710).jar)
+	UCH	flammpfeil.slashblade.kamuy{mc1.7.10-r6} [Kamuy] ([拔刀附属]神剑.jar)
+	UCH	flammpfeil.fluorescentbar{mc1.7.2-r3} [fluorescentbar] ([拔刀附属]荧光FluorescentBar-mc1.7.2-r3.jar)
+	UCH	DamageIndicatorsMod{3.2.0} [Damage Indicators] ([显血]DamageIndicatorsMod.jar)
+	UCH	IronChest{6.0.62.742} [Iron Chest] ([更多箱子]ironchest-1.7.10-6.0.62.742-universal.jar)
+	UCH	LotsOfFood{1.7.10} [Lots of Food] ([更多食物]Lots+of+Food.jar)
+	UCH	music{1.3} [Music] ([点歌]music-1.3 1.7.10.jar)
+	UCH	BambooMod{Minecraft@MC_VERSION@ var@VERSION@} [BambooMod] ([竹]Bamboo.jar)
+	UCH	AdvancedSolarPanel{1.7.10-3.5.1} [Advanced Solar Panels] ([高级太阳能]AdvancedSolarPanel.jar)
+	UCH	supersolarpanel{1.7.10-1.1.1-release} [Super Solar Panel] ([超级太阳能]SSP-1.1.2-1.7.10工业时代腐竹汉化.jar)
+	UCH	GraviSuite{1.7.10-2.0.3} [Graviation Suite] ([重力装甲]GraviSuite.jar)
+	UCH	FoodCraft{1.2.0} [FoodCraft(FoodCraft)] ([食物工艺]-FoodCraft-16.8.9-1.2.1.jar)
+	UCH	DragonMounts{r39} [Dragon Mounts] ([龙骑士]dragonmount_r38.jar)
+	UCH	AFSU{1.2.3a-Freeza} [AFSU Mod] (AFSU-1.2.3a-Freeza.jar)
+	UCH	inventorytweaks{1.59-dev-152-cf6e263} [Inventory Tweaks] (R键整理.jar)
+	UCH	gvc{0.6.1} [Gliby's Voice Chat Mod] (语音聊天 GlibysVC 1.7.10 0.6.2a CN.jar)
+	GL info: ' Vendor: 'NVIDIA Corporation' Version: '4.6.0 NVIDIA 390.65' Renderer: 'GeForce GT 610/PCIe/SSE2'
+	Launched Version: 1.7.10-Forge10.13.4.1558-1.7.10
+	LWJGL: 2.9.1
+	OpenGL: GeForce GT 610/PCIe/SSE2 GL version 4.6.0 NVIDIA 390.65, NVIDIA Corporation
+	GL Caps: Using GL 1.3 multitexturing.
+Using framebuffer objects because OpenGL 3.0 is supported and separate blending is supported.
+Anisotropic filtering is supported and maximum anisotropy is 16.
+Shaders are available because OpenGL 2.1 is supported.
+
+	Is Modded: Definitely; Client brand changed to 'fml,forge'
+	Type: Client (map_client.txt)
+	Resource Packs: []
+	Current Language: 简体中文 (中国)
+	Profiler Position: N/A (disabled)
+	Vec3 Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	Anisotropic Filtering: Off (1)
+	OptiFine Version: OptiFine_1.7.10_HD_U_D3
+	Render Distance Chunks: 12
+	Mipmaps: 4
+	Anisotropic Filtering: 1
+	Antialiasing: 0
+	Multitexture: false
+	OpenGlVersion: 4.6.0 NVIDIA 390.65
+	OpenGlRenderer: GeForce GT 610/PCIe/SSE2
+	OpenGlVendor: NVIDIA Corporation
+	CpuCount: 4

@@ -1,0 +1,190 @@
+---- Minecraft Crash Report ----
+// Oh - I know what I did wrong!
+
+Time: 19-1-22 下午11:44
+Description: Exception getting block type in world
+
+java.lang.ArrayIndexOutOfBoundsException: 2
+	at ecru.MapleTree.gen.ecru_WorldGenBigMapleTree.generateLeaves(ecru_WorldGenBigMapleTree.java:359)
+	at ecru.MapleTree.gen.ecru_WorldGenBigMapleTree.generate(ecru_WorldGenBigMapleTree.java:657)
+	at ecru.MapleTree.gen.ecru_WorldGenerate.generate(ecru_WorldGenerate.java:239)
+	at cpw.mods.fml.common.registry.GameRegistry.generateWorld(GameRegistry.java:137)
+	at net.minecraft.world.gen.ChunkProviderServer.func_73153_a(ChunkProviderServer.java:447)
+	at net.minecraft.world.chunk.Chunk.func_76624_a(Chunk.java:1188)
+	at net.minecraft.world.gen.ChunkProviderServer.originalLoadChunk(ChunkProviderServer.java:300)
+	at net.minecraft.world.gen.ChunkProviderServer.loadChunk(ChunkProviderServer.java:205)
+	at net.minecraft.world.gen.ChunkProviderServer.func_73158_c(ChunkProviderServer.java:167)
+	at net.minecraft.world.gen.ChunkProviderServer.func_73154_d(ChunkProviderServer.java:312)
+	at net.minecraft.world.World.func_72964_e(World.java:735)
+	at net.minecraft.world.World.func_147439_a(World.java:661)
+	at ruby.bamboo.worldgen.WorldGenBamboo.func_76484_a(WorldGenBamboo.java:22)
+	at ruby.bamboo.worldgen.GeneraterHandler.generateBambooshoot(GeneraterHandler.java:78)
+	at ruby.bamboo.worldgen.GeneraterHandler.generate(GeneraterHandler.java:37)
+	at cpw.mods.fml.common.registry.GameRegistry.generateWorld(GameRegistry.java:137)
+	at net.minecraft.world.gen.ChunkProviderServer.func_73153_a(ChunkProviderServer.java:447)
+	at net.minecraft.world.chunk.Chunk.func_76624_a(Chunk.java:1188)
+	at net.minecraft.world.gen.ChunkProviderServer.originalLoadChunk(ChunkProviderServer.java:300)
+	at cc.uraniummc.ChunkGenerator.internalGenerate(ChunkGenerator.java:71)
+	at cc.uraniummc.ChunkGenerator.chunkGeneratorCycle(ChunkGenerator.java:50)
+	at cpw.mods.fml.common.FMLCommonHandler.onPostServerTick(FMLCommonHandler.java:252)
+	at net.minecraft.server.MinecraftServer.func_71217_p(MinecraftServer.java:859)
+	at net.minecraft.server.MinecraftServer.run(MinecraftServer.java:665)
+	at java.lang.Thread.run(Unknown Source)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Stacktrace:
+	at ecru.MapleTree.gen.ecru_WorldGenBigMapleTree.generateLeaves(ecru_WorldGenBigMapleTree.java:359)
+	at ecru.MapleTree.gen.ecru_WorldGenBigMapleTree.generate(ecru_WorldGenBigMapleTree.java:657)
+	at ecru.MapleTree.gen.ecru_WorldGenerate.generate(ecru_WorldGenerate.java:239)
+	at cpw.mods.fml.common.registry.GameRegistry.generateWorld(GameRegistry.java:137)
+	at net.minecraft.world.gen.ChunkProviderServer.func_73153_a(ChunkProviderServer.java:447)
+	at net.minecraft.world.chunk.Chunk.func_76624_a(Chunk.java:1188)
+	at net.minecraft.world.gen.ChunkProviderServer.originalLoadChunk(ChunkProviderServer.java:300)
+	at net.minecraft.world.gen.ChunkProviderServer.loadChunk(ChunkProviderServer.java:205)
+	at net.minecraft.world.gen.ChunkProviderServer.func_73158_c(ChunkProviderServer.java:167)
+	at net.minecraft.world.gen.ChunkProviderServer.func_73154_d(ChunkProviderServer.java:312)
+	at net.minecraft.world.World.func_72964_e(World.java:735)
+
+-- Requested block coordinates --
+Details:
+	Found chunk: true
+	Location: World: (-241,96,-13169), Chunk: (at 15,6,15 in -16,-824; contains blocks -256,0,-13184 to -241,255,-13169), Region: (-1,-26; contains chunks -32,-832 to -1,-801, blocks -512,0,-13312 to -1,255,-12801)
+Stacktrace:
+	at net.minecraft.world.World.func_147439_a(World.java:661)
+	at ruby.bamboo.worldgen.WorldGenBamboo.func_76484_a(WorldGenBamboo.java:22)
+	at ruby.bamboo.worldgen.GeneraterHandler.generateBambooshoot(GeneraterHandler.java:78)
+	at ruby.bamboo.worldgen.GeneraterHandler.generate(GeneraterHandler.java:37)
+	at cpw.mods.fml.common.registry.GameRegistry.generateWorld(GameRegistry.java:137)
+	at net.minecraft.world.gen.ChunkProviderServer.func_73153_a(ChunkProviderServer.java:447)
+	at net.minecraft.world.chunk.Chunk.func_76624_a(Chunk.java:1188)
+	at net.minecraft.world.gen.ChunkProviderServer.originalLoadChunk(ChunkProviderServer.java:300)
+	at cc.uraniummc.ChunkGenerator.internalGenerate(ChunkGenerator.java:71)
+	at cc.uraniummc.ChunkGenerator.chunkGeneratorCycle(ChunkGenerator.java:50)
+	at cpw.mods.fml.common.FMLCommonHandler.onPostServerTick(FMLCommonHandler.java:252)
+	at net.minecraft.server.MinecraftServer.func_71217_p(MinecraftServer.java:859)
+	at net.minecraft.server.MinecraftServer.run(MinecraftServer.java:665)
+	at java.lang.Thread.run(Unknown Source)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.7.10
+	KCauldron Version: cc.uraniummc:Uranium:1710-dev-4-BUnkonwn UNOFFICIAL DON'T REPORT THIS CRASH
+	Plugins: SlashFortifier, GroupManager, BetterLottery2, BanWorld, AsyncKeepAlive, TpLogin, DeluxeTags, ItemTime, AutoRestart, Yum, BanItem, CommandsItem, BBSToper, ProtectItemFrame, CoreProtect, WorldEdit, ColorChat, NOWorldCommand, NoRain, OpenInv, Essentials, TimingsPatcher, ColorSigns, WorldBorder, MessageAnnouncer, IronElevators, ProtocolLib, AntiDrop, Notbuild, EasyKits, GaiaLimit, EssentialsChat, DAutoMessage, LevelChat, CommandCode, UltimateGuild, Vault, SFWSupport, bugfix, Lores, NeverLag, AntiSpamBot, Trading, LWC, OnlineMoney, PlotSquared, QuickShop, PlayerPoints, ChestCommands, EssentialsProtect, EssentialsAntiBuild, RandomLocation, EssentialsSpawn, MoreSounds, MCLib, ColorMOTD, Multiverse-Core, InfoBoardReborn, LWCAutoLock, Residence, GlobalMarket, AuthMe, HolographicDisplays
+	Disabled Plugins:
+	Operating System: Windows NT (unknown) (amd64) version 10.0
+	Java Version: 1.8.0_102, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 5172277384 bytes (4932 MB) / 12771524608 bytes (12179 MB) up to 17064394752 bytes (16273 MB)
+	JVM Flags: 5 total; -Xincgc -Xms12G -Xms12G -XX:+AggressiveOpts -XX:+UseCompressedOops
+	AABB Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	IntCache: cache: 0, tcache: 0, allocated: 15, tallocated: 95
+	FML: MCP v9.05 FML v7.10.99.99 Minecraft Forge 10.13.4.1614 91 mods loaded, 91 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+	UCHIJAAAA	mcp{9.05} [Minecraft Coder Pack] (minecraft.jar)
+	UCHIJAAAA	FML{7.10.99.99} [Forge Mod Loader] (Uranium-1.7.10服务端核心[修复GuiCloseEvent].jar)
+	UCHIJAAAA	Forge{10.13.4.1614} [Minecraft Forge] (Uranium-1.7.10服务端核心[修复GuiCloseEvent].jar)
+	UCHIJAAAA	kimagine{0.2} [KImagine] (minecraft.jar)
+	UCHIJAAAA	UraniumPlus{${UMP_VER}} [Added title and actionbar support for client and server] (Uranium-1.7.10服务端核心[修复GuiCloseEvent].jar)
+	UCHIJAAAA	ThE-core{1.0.0.1} [Thaumic Energistics Core] (minecraft.jar)
+	UCHIJAAAA	ThaumicTinkerer-preloader{0.1} [Thaumic Tinkerer Core] (minecraft.jar)
+	UCHIJAAAA	appliedenergistics2-core{rv3-beta-16} [Applied Energistics 2 Core] (minecraft.jar)
+	UCHIJAAAA	ChocoPatcher{1.2} [Choco Patcher] (minecraft.jar)
+	UCHIJAAAA	<CoFH ASM>{000} [CoFH ASM] (minecraft.jar)
+	UCHIJAAAA	flammpfeil.slashblade{mc1.7.10-r87} [SlashBlade] ([拔刀剑]SlashBlade-mc1.7.10-r87-icere.jar)
+	UCHIJAAAA	Pseudo{1.0.0} [Pseudo] (-伪刃.jar)
+	UCHIJAAAA	creativecore{1.3.14} [CreativeCore] (-在线图片加载.jar)
+	UCHIJAAAA	opframe{2.1} [OnlinePictureFrame] (-在线图片加载前置.jar)
+	UCHIJAAAA	horn_plenty{1.0.0} [Horn 'o' Plenty] (-无限食物.jar)
+	UCHIJAAAA	CoFHCore{1.7.10R3.1.4} [CoFH Core] (-热力前置.jar)
+	UCHIJAAAA	Baubles{1.0.1.10} [Baubles] (Baubles-1.7.10-1.0.1.10.jar)
+	UCHIJAAAA	ThermalFoundation{1.7.10R1.2.6} [Thermal Foundation] (-热力基础.jar)
+	UCHIJAAAA	ThermalExpansion{1.7.10R4.1.5} [Thermal Expansion] (-热力膨胀.jar)
+	UCHIJAAAA	ThermalDynamics{1.7.10R1.2.1} [Thermal Dynamics] (-热动力学.jar)
+	UCHIJAAAA	flammpfeil.slashblade.exsa{mc1.7.10-r6} [SlashBlade-ExSa] (-狂暴SA.jar)
+	UCHIJAAAA	IC2{2.2.828-experimental} [IndustrialCraft 2] ([工业时代2]industrialcraft-2-2.2.828-experimental.jar)
+	UCHIJAAAA	Thaumcraft{4.2.3.5} [Thaumcraft] (【神秘时代4修复版2】M-Thaumcraft-1.7.10-4.2.3.5-SaraFix-a1.jar)
+	UCHIJAAAA	EMT{1.2.2} [Electro-Magic Tools] (-电子魔法工具.jar)
+	UCHIJAAAA	flammpfeil.darkraven{mc1.7.2-r2} [DarkRaven] (拔刀剑-暗鸦-r2-1.7.10.jar)
+	UCHIJAAAA	lastsmith{1.0.0} [The Last Smith] (-结晶.jar)
+	UCHIJAAAA	gvc{0.6.1} [Gliby's Voice Chat Mod] (-语音聊天.jar)
+	UCHIJAAAA	MineTweaker3{3.0.10} [MineTweaker 3] (-魔改GUI.jar)
+	UCHIJAAAA	modtweaker2{0.9.6} [Mod Tweaker 2] (-魔改前置.jar)
+	UCHIJAAAA	MTRM{1.0} [MineTweakerRecipeMaker] (-魔改物品.jar)
+	UCHIJAAAA	pozo{4.0.0} [pozo] (2333333.jar)
+	UCHIJAAAA	BambooMod{Minecraft@MC_VERSION@ var@VERSION@} [BambooMod] ([和风]Bamboo-2.6.8.5.jar)
+	UCHIJAAAA	NoIC2Destruction{1.0.0} [No IC2 Destruction] ([工业防爆]NoIC2Destruction-1.0.0-1.7.10.jar)
+	UCHIJAAAA	BuildCraft|Core{7.1.23} [BuildCraft] ([建筑_核心]buildcraft-7.1.23-core.jar)
+	UCHIJAAAA	BuildCraft|Transport{7.1.23} [BC Transport] ([建筑_运输]buildcraft-7.1.23-transport.jar)
+	UCHIJAAAA	BuildCraft|Compat{7.1.7} [BuildCraft Compat] ([建筑_兼容]buildcraft-compat-7.1.7.jar)
+	UCHIJAAAA	BuildCraft|Factory{7.1.23} [BC Factory] ([建筑_工厂]buildcraft-7.1.23-factory.jar)
+	UCHIJAAAA	BuildCraft|Energy{7.1.23} [BC Energy] ([建筑_能量]buildcraft-7.1.23-energy.jar)
+	UCHIJAAAA	BuildCraft|Silicon{7.1.23} [BC Silicon] ([建筑_芯片]buildcraft-7.1.23-silicon.jar)
+	UCHIJAAAA	cookingbook{1.0.134} [Cooking for Blockheads] ([懒人厨房]cookingbook-mc1.7.10-1.0.134.jar)
+	UCHIJAAAA	flammpfeil.nihil{mc1.7.x-r8} [Nihil] ([拔刀剑_似蛭]Nihil-mc1.7.x-r8.jar)
+	UCHIJAAAA	flammpfeil.slashblade.blademaster{mc1.7.2-r1} [BladeMaster] ([拔刀剑_剑圣之刃]BladeMaster-mc1.7.x-r1.2.jar)
+	UCHIJAAAA	flammpfeil.slashblade.kirisaya{r1} [SlashBlade-Kirisaya] ([拔刀剑_无神]Kirisaya-r1.jar)
+	UCHIJAAAA	flammpfeil.slashblade.kamuy{mc1.7.10-r6} [Kamuy] ([拔刀剑_神剑]SlashBlade-Kamuy-mc1.7.10-r6.jar)
+	UCHIJAAAA	flammpfeil.fluorescentbar{mc1.7.2-r3} [fluorescentbar] ([拔刀剑_荧光]FluorescentBar-mc1.7.x-r3.jar)
+	UCHIJAAAA	flammpfeil.slashblade.wanderer{mc1.7.2-r1} [SlashBladeWanderer] ([拔刀剑_风来剑]Wanderer-mc1.7.x-r1.jar)
+	UCHIJAAAA	IronChest{6.0.62.742} [Iron Chest] ([更多箱子]ironchest-1.7.10-6.0.62.742-universal.jar)
+	UCHIJAAAA	mod_ecru_MapleTree{1.1.32c} [MapleTree] ([枫树]MapleTree+Forge.jar)
+	UCHIJAAAA	ForgeMultipart{1.1.2.331} [Forge Multipart] (ForgeMultipart-1.7.10-1.1.2.331-universal.jar)
+	UCHIJAAAA	appliedenergistics2{rv3-beta-16} [Applied Energistics 2] (应用能源.jar)
+	UCHIJAAAA	ThaumicTinkerer{unspecified} [Thaumic Tinkerer] (【神秘工匠 】ThaumicTinkerer-2.5-1.7.10-164.jar)
+	UCHIJAAAA	TaintedMagic{1.1.6.3} [Tainted Magic] ([污秽魔法]TaintedMagic-1.1.6.3.jar)
+	UCHIJAAAA	harvestcraft{1.7.10j} [Pam's HarvestCraft] ([潘马斯丰收工艺]Pams+HarvestCraft+1.7.10Lb.jar)
+	UCHIJAAAA	miners{v3.1.1} [Miner's Heaven] ([矿工天堂]汉化v3.1.1.jar)
+	UCHIJAAAA	tcinventoryscan{1.0.11} [TC Inventory Scanning] ([神秘时代库存扫描]tcinventoryscan-mc1.7.10-1.0.11.jar)
+	UCHIJAAAA	TCBotaniaExoflame{1.0} [TCBotaniaExoflame] ([神秘时代植物魔法冶炼火]TCBotaniaExoflame-1.7.10-1.2.jar)
+	UCHIJAAAA	thaumicenergistics{1.1.2.0} [Thaumic Energistics] ([神秘能源]thaumicenergistics-1.1.2.0.jar)
+	UCHIJAAAA	AntiCheat3{AntiCheat 3 Mod} [AntiCheat 3 Mod] ([辅助]防盗号安全卫士.jar)
+	UCHIJAAAA	Anti_Anti_AntiCheat{2.0} [Anti_Anti_AntiCheat] ([辅助]防盗号安全卫士2.jar)
+	UCHIJAAAA	Mekanism{9.1.1} [Mekanism] ([通用机械]Mekanism-1.7.10-9.1.1.1031.jar)
+	UCHIJAAAA	MekanismTools{9.1.1} [MekanismTools] ([通用机械前置]MekanismTools-1.7.10-9.1.1.1031.jar)
+	UCHIJAAAA	MekanismGenerators{9.1.1} [MekanismGenerators] ([通用机械发电机]MekanismGenerators-1.7.10-9.1.1.1031.jar)
+	UCHIJAAAA	GraviSuite{1.7.10-2.0.3} [Graviation Suite] ([重力装甲]GraviSuite-1.7.10-2.0.3.jar)
+	UCHIJAAAA	FoodCraft{1.2.0} [FoodCraft(FoodCraft)] ([食物工艺]-FoodCraft-16.8.9-1.2.1.jar)
+	UCHIJAAAA	AdvancedSolarPanel{1.7.10-3.5.1} [Advanced Solar Panels] ([高级太阳能]AdvancedSolarPanel-1.7.10-3.5.1-icere.jar)
+	UCHIJAAAA	customnpcs{1.7.10d} [CustomNpcs] (CustomNPCs_1.7.10 .jar)
+	UCHIJAAAA	allweapon{1.0} [allweapon] (【附属：万物皆刃】.jar)
+	UCHIJAAAA	NegoreRouse{1.0.0} [NegoreRouse] (SlashBlade-NegoreRouse-r2vL.jar)
+	UCHIJAAAA	Botania{r1.8-249} [Botania] (【植物魔法】Botania r1.8-249.jar)
+	UCHIJAAAA	ForbiddenMagic{1.7.10-0.57} [Forbidden Magic] (【禁忌魔法 】Forbidden+Magic-1.7.10-0.57.jar)
+	UCHIJAAAA	ExtraBotany{r1.0-21} [ExtraBotany] (【额外魔法学】ExtraBotany-1.7.10-r1.0-21.jar)
+	UCHIJAAAA	Avaritia{1.1} [Avaritia] (修复Avaritia-1.1.jar)
+	UCHIJAAAA	Torcherino{2.2s} [Torcherino] (加速火把Torcherino-TehNut-1.7.10-2.2.jar)
+	UCHIJAAAA	Mantle{1.7.10-0.3.2.jenkins184} [Mantle] (匠魂手册Mantle-1.7.10-0.3.2.jar)
+	UCHIJAAAA	armourersWorkshop{1.7.10-0.48.1} [Armourer's Workshop] (时装工坊-1.7.10-0.48.1.jar)
+	UCHIJAAAA	TConstruct{1.7.10-1.8.7.build979} [Tinkers' Construct] (匠魂本体TConstruct-1.7.10-1.8.7.jar)
+	UCHIJAAAA	TiCTooltips{1.2.3} [TiC Tooltips] (匠魂工具TiCTooltips-mc1.7.10-1.2.3.jar)
+	UCHIJAAAA	flammpfeil.frostwolf{mc1.7.2-r1} [FrostWolf] (拔刀剑-冰狼之刃-r1-1.7.10.jar)
+	UCHIJAAAA	saligia{1.0.0} [PROJECT_SALIGIA] (拔刀剑-原罪PROJECT_saligia_2.1.0.jar)
+	UCHIJAAAA	flammpfeil.slashblade.terra{mc1.7.10-r1} [SlashBlade-Terra] (拔刀剑-大地之刃.jar)
+	UCHIJAAAA	balumg{1.0.0} [balumg] (拔刀剑-巴鲁蒙格-r1.0-1-1.7.10.jar)
+	UCHIJAAAA	foxex{1.1.2} [FoxBlade Extra] (拔刀剑-狐月刀FoxExtra v1.1.2(MC1710).jar)
+	UCHIJAAAA	slashblade.yukari{mc1.7.10-r2} [Slashblade-yukari] (拔刀剑-节月刀.jar)
+	UCHIJAAAA	flammpfeil.slashblade.anvilenchant{mc1.7.10-r1} [Slashblade-AnvilEnchant] (拔刀剑-铁砧附魔-r1-1.7.10.jar)
+	UCHIJAAAA	flammpfeil.kevinwalker{mc1.7.10} [kevinwalker] (炫彩之刃0.3v.jar)
+	UCHIJAAAA	GrimoireOfGaia{1.0.0} [Grimoire of Gaia 3] (盖亚魔典3-1.0.2.jar)
+	UCHIJAAAA	flammpfeil.slashblade.splight{r5} [SlashBlade-SPLight] (龙一文字SlashBlade-SPLight-r5.jar)
+	UCHIJAAAA	bspkrsCore{6.16} [bspkrsCore] ([1.7.10]bspkrsCore-universal-6.16.jar)
+	UCHIJAAAA	McMultipart{1.1.2.331} [Minecraft Multipart Plugin] (ForgeMultipart-1.7.10-1.1.2.331-universal.jar)
+	UCHIJAAAA	flammpfeil.slashblade.slasharts{1.7.10 r1} [SlashBlade-SlashArts] (拔刀剑-刀之艺术SlashBlade-SlashArts-mc1.7.10-r2.jar)
+	UCHIJAAAA	ForgeMicroblock{1.1.2.331} [Forge Microblocks] (ForgeMultipart-1.7.10-1.1.2.331-universal.jar)
+	CoFHCore: -[1.7.10]3.1.4-329
+	ThermalFoundation: -[1.7.10]1.2.6-118
+	ThermalExpansion: -[1.7.10]4.1.5-248
+	ThermalDynamics: -[1.7.10]1.2.1-172
+	AE2 Version: beta rv3-beta-16 for Forge 10.13.4.1448
+	Mantle Environment: DO NOT REPORT THIS CRASH! Unsupported mods in environment: bukkit
+	TConstruct Environment: Environment healthy.
+	AE2 Integration: IC2:ON, RotaryCraft:OFF, RC:OFF, BuildCraftCore:ON, BuildCraftTransport:ON, BuildCraftBuilder:OFF, RF:ON, RFItem:ON, MFR:OFF, DSU:ON, FZ:OFF, FMP:ON, RB:OFF, CLApi:OFF, Waila:OFF, Mekanism:ON, ImmibisMicroblocks:OFF, BetterStorage:OFF, OpenComputers:OFF, PneumaticCraft:OFF
+	Profiler Position: N/A (disabled)
+	Vec3 Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	Player Count: 23 / 120; [EntityPlayerMP['YeXin_'/58460, l='world', x=745.79, y=4.00, z=17.48](YeXin_ at 745.7856314711456,4.0,17.481752868749858), EntityPlayerMP['PresLEdit'/1711092, l='sc', x=214.70, y=70.00, z=245.14](PresLEdit at 214.69999998807907,70.0,245.1370726272644), EntityPlayerMP['Jinxinlei'/746830, l='sc', x=122.52, y=63.00, z=-174.70](Jinxinlei at 122.51683827589015,63.0,-174.69999998807907), EntityPlayerMP['NicoNico'/694599, l='plotworld', x=-653.70, y=45.00, z=-202.70](NicoNico at -653.6999999880791,45.0,-202.69999998807907), EntityPlayerMP['Mere_odo'/2671836, l='plotworld', x=-35.93, y=59.00, z=1409.41](Mere_odo at -35.931202757813224,59.0,1409.4115590543638), EntityPlayerMP['ADWASDWAA'/2970188, l='plotworld', x=-705.32, y=65.50, z=-424.56](ADWASDWAA at -705.3209889764047,65.5,-424.5644169773898), EntityPlayerMP['mojjhhh'/2550203, l='plotworld', x=-1024.10, y=63.00, z=-211.30](mojjhhh at -1024.098944208268,63.0,-211.30000001192093), EntityPlayerMP['honglantu'/2309613, l='plotworld', x=-2522.83, y=78.00, z=-1480.85](honglantu at -2522.829559546585,78.0,-1480.8501401729739), EntityPlayerMP['X_Kang'/4228282, l='plotworld', x=57.98, y=65.00, z=1060.58](X_Kang at 57.98043650520994,65.0,1060.583496813775), EntityPlayerMP['NiE4'/1717, l='plotworld', x=504.35, y=65.00, z=796.11](NiE4 at 504.3476405493866,65.0,796.1071896245816), EntityPlayerMP['32364596621'/161954, l='plotworld', x=-1255.40, y=65.00, z=1186.68](32364596621 at -1255.3957378976766,65.0,1186.6815602956085), EntityPlayerMP['momo'/4476571, l='plotworld', x=-683.68, y=68.11, z=-421.34](momo at -683.6843243124188,68.11032685842268,-421.3376121935361), EntityPlayerMP['SG25'/725218, l='zy', x=-1860.59, y=43.00, z=-210.52](SG25 at -1860.5945566574449,43.0,-210.51502152724186), EntityPlayerMP['tangmaosheng'/3942144, l='sc', x=217.08, y=69.88, z=247.30](tangmaosheng at 217.0826576787733,69.875,247.30000001192093), EntityPlayerMP['Durure_'/1407, l='plotworld', x=372.15, y=63.00, z=-121.71](Durure_ at 372.1489700463021,63.0,-121.71456996828749), EntityPlayerMP['MC_JG'/4142396, l='sc', x=219.35, y=70.00, z=244.53](MC_JG at 219.3476121409894,70.0,244.5277430282933), EntityPlayerMP['yumi'/4032374, l='sc', x=-284.72, y=86.63, z=-13090.62](yumi at -284.7201237878742,86.62929637844661,-13090.615578558567), EntityPlayerMP['ji_guang'/3344055, l='plotworld', x=371.94, y=63.00, z=-120.26](ji_guang at 371.9424788133897,63.0,-120.25669820054522), EntityPlayerMP['Kinght'/3064275, l='plotworld', x=334.05, y=65.00, z=-139.75](Kinght at 334.05008831784,65.0,-139.75316377587154), EntityPlayerMP['qinshi233'/4472290, l='plotworld', x=-1262.91, y=64.00, z=1190.06](qinshi233 at -1262.910117432677,64.0,1190.0611003716083), EntityPlayerMP['ZhangLuo_'/4558282, l='plotworld', x=-2118.91, y=77.92, z=-1247.99](ZhangLuo_ at -2118.9146514973577,77.91636799395752,-1247.993375045845), EntityPlayerMP['Dearm'/4603750, l='world', x=747.54, y=4.00, z=16.55](Dearm at 747.5437527152422,4.0,16.548873658238385), EntityPlayerMP['FengYe'/4605518, l='world', x=746.10, y=4.00, z=16.49](FengYe at 746.1002914455179,4.0,16.490857509587194)]
+	Is Modded: Definitely; Server brand changed to 'uranium,kcauldron,cauldron,craftbukkit,mcpc,fml,forge'
+	Type: Dedicated Server (map_server.txt)

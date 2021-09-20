@@ -1,0 +1,210 @@
+---- Minecraft Crash Report ----
+
+WARNING: coremods are present:
+  FMLLoadingPlugin (【内存溢出修复】MemoryFix-0.3.jar)
+  ForgePlugin (【超战皮肤显示】CustomSkinLoader.jar)
+  SkinCore (4626894634154779079@3@0.jar)
+  Main (【防砍模组】OldAnimationsMod v2.4 FORGE MC1.8.9.jar)
+  BaseModNeteaseCore (4620273813196076442@3@0.jar)
+  RandFTCore (4618421856281952104@2@33.jar)
+  InputFix (4618424574399199550@3@0.jar)
+  FMLLoadingPlugin ([防砍动画未响应修复]OldAnimationsModUnresponsiveFix-1.0.jar)
+  NeteaseCore (4619774556351054392@3@0.jar)
+Contact their authors BEFORE contacting forge
+
+// Uh... Did I do that?
+
+Time: 19-3-16 下午12:46
+Description: Rendering entity in world
+
+java.lang.OutOfMemoryError: unable to create new native thread
+	at java.lang.Thread.start0(Native Method)
+	at java.lang.Thread.start(Unknown Source)
+	at customskinloader.profile.DynamicSkullManager.getTexture(DynamicSkullManager.java:160)
+	at customskinloader.CustomSkinLoader.loadProfileFromCache(CustomSkinLoader.java:145)
+	at customskinloader.fake.FakeSkinManager.loadSkinFromCache(FakeSkinManager.java:74)
+	at net.minecraft.client.resources.SkinManager.func_152788_a(SourceFile)
+	at net.minecraft.client.renderer.tileentity.TileEntitySkullRenderer.func_180543_a(SourceFile:76)
+	at net.minecraft.client.renderer.entity.layers.LayerCustomHead.func_177141_a(SourceFile:90)
+	at net.minecraft.client.renderer.entity.RendererLivingEntity.func_177093_a(RendererLivingEntity.java:481)
+	at net.minecraft.client.renderer.entity.RendererLivingEntity.func_76986_a(RendererLivingEntity.java:186)
+	at net.minecraft.client.renderer.entity.RenderPlayer.func_76986_a(RenderPlayer.java:63)
+	at net.minecraft.client.renderer.entity.RenderPlayer.func_76986_a(RenderPlayer.java:23)
+	at com.orangemarshall.enhancements.custom.CustomHitboxRenderManager.func_147939_a(CustomHitboxRenderManager.java:66)
+	at net.minecraft.client.renderer.entity.RenderManager.func_147936_a(RenderManager.java:356)
+	at net.minecraft.client.renderer.entity.RenderManager.func_147937_a(RenderManager.java:323)
+	at net.minecraft.client.renderer.RenderGlobal.func_180446_a(RenderGlobal.java:834)
+	at net.minecraft.client.renderer.EntityRenderer.func_175068_a(EntityRenderer.java:1751)
+	at net.minecraft.client.renderer.EntityRenderer.func_78471_a(EntityRenderer.java:1580)
+	at net.minecraft.client.renderer.EntityRenderer.func_181560_a(EntityRenderer.java:1370)
+	at net.minecraft.client.Minecraft.func_71411_J(Minecraft.java:1044)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:351)
+	at net.minecraft.client.main.Main.main(SourceFile:124)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:146)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:25)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Stacktrace:
+	at java.lang.Thread.start0(Native Method)
+	at java.lang.Thread.start(Unknown Source)
+	at customskinloader.profile.DynamicSkullManager.getTexture(DynamicSkullManager.java:160)
+	at customskinloader.CustomSkinLoader.loadProfileFromCache(CustomSkinLoader.java:145)
+	at customskinloader.fake.FakeSkinManager.loadSkinFromCache(FakeSkinManager.java:74)
+	at net.minecraft.client.resources.SkinManager.func_152788_a(SourceFile)
+	at net.minecraft.client.renderer.tileentity.TileEntitySkullRenderer.func_180543_a(SourceFile:76)
+	at net.minecraft.client.renderer.entity.layers.LayerCustomHead.func_177141_a(SourceFile:90)
+	at net.minecraft.client.renderer.entity.RendererLivingEntity.func_177093_a(RendererLivingEntity.java:481)
+	at net.minecraft.client.renderer.entity.RendererLivingEntity.func_76986_a(RendererLivingEntity.java:186)
+	at net.minecraft.client.renderer.entity.RenderPlayer.func_76986_a(RenderPlayer.java:63)
+	at net.minecraft.client.renderer.entity.RenderPlayer.func_76986_a(RenderPlayer.java:23)
+
+-- Entity being rendered --
+Details:
+	Entity Type: null (net.minecraft.client.entity.EntityOtherPlayerMP)
+	Entity ID: 573304
+	Entity Name: 唯一的毁灭i
+	Entity's Exact location: 18.09, 51.97, 13.13
+	Entity's Block location: 18.00,51.00,13.00 - World: (18,51,13), Chunk: (at 2,3,13 in 1,0; contains blocks 16,0,0 to 31,255,15), Region: (0,0; contains chunks 0,0 to 31,31, blocks 0,0,0 to 511,255,511)
+	Entity's Momentum: 0.00, 0.00, 0.00
+	Entity's Rider: ~~ERROR~~ NullPointerException: null
+	Entity's Vehicle: ~~ERROR~~ NullPointerException: null
+
+-- Renderer details --
+Details:
+	Assigned renderer: net.minecraft.client.renderer.entity.RenderPlayer@359ec
+	Location: 20.47,-2.03,12.04 - World: (20,-3,12), Chunk: (at 4,-1,12 in 1,0; contains blocks 16,0,0 to 31,255,15), Region: (0,0; contains chunks 0,0 to 31,31, blocks 0,0,0 to 511,255,511)
+	Rotation: 124.75678
+	Delta: 0.8521968
+Stacktrace:
+	at com.orangemarshall.enhancements.custom.CustomHitboxRenderManager.func_147939_a(CustomHitboxRenderManager.java:66)
+	at net.minecraft.client.renderer.entity.RenderManager.func_147936_a(RenderManager.java:356)
+	at net.minecraft.client.renderer.entity.RenderManager.func_147937_a(RenderManager.java:323)
+	at net.minecraft.client.renderer.RenderGlobal.func_180446_a(RenderGlobal.java:834)
+	at net.minecraft.client.renderer.EntityRenderer.func_175068_a(EntityRenderer.java:1751)
+	at net.minecraft.client.renderer.EntityRenderer.func_78471_a(EntityRenderer.java:1580)
+
+-- Affected level --
+Details:
+	Level name: MpServer
+	All players: 13 total; [EntityPlayerSP['Rucec的弟弟'/88680, l='MpServer', x=-2.37, y=54.00, z=1.09], EntityOtherPlayerMP['核桃人'/573171, l='MpServer', x=1.59, y=53.00, z=5.19], EntityOtherPlayerMP['LonelyChest'/574415, l='MpServer', x=14.13, y=51.00, z=7.69], EntityOtherPlayerMP['苦恼的雾a'/573985, l='MpServer', x=-18.72, y=62.00, z=8.28], EntityOtherPlayerMP['Sking是你爹爹'/574963, l='MpServer', x=-1.94, y=54.00, z=-0.88], EntityOtherPlayerMP['yRicky'/574993, l='MpServer', x=-1.25, y=54.00, z=-0.41], EntityOtherPlayerMP['s9w8yqgs10'/123, l='MpServer', x=14.50, y=51.00, z=-6.50], EntityOtherPlayerMP['迁葬性格如此丶'/575017, l='MpServer', x=7.69, y=54.72, z=-1.31], EntityOtherPlayerMP['over100'/575031, l='MpServer', x=3.50, y=53.50, z=-0.59], EntityOtherPlayerMP['逍遥九天丿蛋蛋L'/575046, l='MpServer', x=9.45, y=54.00, z=-1.08], EntityOtherPlayerMP['花心大萝卜吖'/575056, l='MpServer', x=15.97, y=54.00, z=-0.14], EntityOtherPlayerMP['唯一的毁灭i'/573304, l='MpServer', x=18.09, y=51.97, z=13.13], EntityOtherPlayerMP['Heartbreak_'/575165, l='MpServer', x=-0.72, y=54.00, z=-0.22]]
+	Chunk stats: MultiplayerChunkCache: 15, 15
+	Level seed: 0
+	Level generator: ID 01 - flat, ver 0. Features enabled: false
+	Level generator options:
+	Level spawn location: -3.00,54.00,1.00 - World: (-3,54,1), Chunk: (at 13,3,1 in -1,0; contains blocks -16,0,0 to -1,255,15), Region: (-1,0; contains chunks -32,0 to -1,31, blocks -512,0,0 to -1,255,511)
+	Level time: 1243847886 game time, 361000 day time
+	Level dimension: 0
+	Level storage version: 0x00000 - Unknown?
+	Level weather: Rain time: 0 (now: false), thunder time: 0 (now: false)
+	Level game mode: Game mode: survival (ID 0). Hardcore: false. Cheats: false
+	Forced entities: 83 total; [EntityBat['Bat'/129, l='MpServer', x=26.50, y=51.00, z=6.50], EntityArmorStand['Armor Stand'/3, l='MpServer', x=14.16, y=51.00, z=-7.66], EntityOtherPlayerMP['唯一的毁灭i'/573304, l='MpServer', x=18.09, y=51.97, z=13.13], EntityArmorStand['Armor Stand'/136, l='MpServer', x=28.50, y=52.69, z=0.50], EntityArmorStand['Armor Stand'/137, l='MpServer', x=28.50, y=52.31, z=0.50], EntityArmorStand['Armor Stand'/138, l='MpServer', x=28.50, y=51.94, z=0.50], EntityArmorStand['Armor Stand'/139, l='MpServer', x=29.50, y=52.69, z=-2.50], EntityArmorStand['Armor Stand'/140, l='MpServer', x=29.50, y=52.31, z=-2.50], EntityArmorStand['Armor Stand'/141, l='MpServer', x=29.50, y=51.94, z=-2.50], EntityArmorStand['Armor Stand'/142, l='MpServer', x=29.50, y=53.03, z=3.50], EntityArmorStand['Armor Stand'/143, l='MpServer', x=29.50, y=52.69, z=3.50], EntityOtherPlayerMP['Heartbreak_'/575165, l='MpServer', x=-0.72, y=54.00, z=-0.22], EntityArmorStand['Armor Stand'/144, l='MpServer', x=29.50, y=52.31, z=3.50], EntityArmorStand['Armor Stand'/145, l='MpServer', x=29.50, y=51.94, z=3.50], EntityArmorStand['§e§l点击开始游戏'/146, l='MpServer', x=26.50, y=51.66, z=6.50], EntityArmorStand['§6§l决斗游戏§bMegaWalls'/147, l='MpServer', x=26.50, y=51.28, z=6.50], EntityArmorStand['§e§l44名玩家'/148, l='MpServer', x=26.50, y=50.91, z=6.50], EntityBat['Bat'/149, l='MpServer', x=14.50, y=52.35, z=-6.50], EntityOtherPlayerMP['yRicky'/574993, l='MpServer', x=-1.25, y=54.00, z=-0.41], EntityArmorStand['Armor Stand'/574994, l='MpServer', x=-0.15, y=52.59, z=-1.46], EntityArmorStand['§2Blt§4SB'/574995, l='MpServer', x=-0.15, y=53.25, z=-1.46], EntityZombie['Zombie'/574996, l='MpServer', x=-1.00, y=54.00, z=-1.44], EntityOtherPlayerMP['迁葬性格如此丶'/575017, l='MpServer', x=7.69, y=54.72, z=-1.31], EntityOtherPlayerMP['苦恼的雾a'/573985, l='MpServer', x=-18.72, y=62.00, z=8.28], EntityArmorStand['§c4个礼包！§r'/575164, l='MpServer', x=14.50, y=51.56, z=-6.50], EntityOtherPlayerMP['Heartbreak_'/575165, l='MpServer', x=-0.72, y=54.00, z=-0.22], EntityArmorStand['Armor Stand'/575166, l='MpServer', x=5.50, y=51.00, z=-4.50], EntityZombie['Zombie'/575167, l='MpServer', x=5.50, y=51.00, z=-4.50], EntityArmorStand['Armor Stand'/564915, l='MpServer', x=28.50, y=53.00, z=0.50], EntityPlayerSP['Rucec的弟弟'/88680, l='MpServer', x=-2.37, y=54.00, z=1.09], EntityOtherPlayerMP['over100'/575031, l='MpServer', x=3.50, y=53.50, z=-0.59], EntityOtherPlayerMP['LonelyChest'/574415, l='MpServer', x=14.13, y=51.00, z=7.69], EntityArmorStand['Armor Stand'/575168, l='MpServer', x=14.50, y=51.56, z=-6.50], EntityOtherPlayerMP['逍遥九天丿蛋蛋L'/575046, l='MpServer', x=9.45, y=54.00, z=-1.08], EntitySlime['§8Lv§7001 §r史莱姆（巨）'/575047, l='MpServer', x=-2.88, y=56.68, z=5.95], EntityArmorStand['Armor Stand'/575064, l='MpServer', x=-1.55, y=51.03, z=9.15], EntityWither['§6空岛战争§a实验室更新 - §d§l疯狂TNT§a开放中!'/-1234, l='MpServer', x=30.63, y=54.00, z=1.06], EntityArmorStand['Armor Stand'/575065, l='MpServer', x=-1.55, y=51.44, z=9.24], EntityZombie['Zombie'/575066, l='MpServer', x=-1.59, y=51.50, z=8.03], EntityOtherPlayerMP['核桃人'/573171, l='MpServer', x=1.59, y=53.00, z=5.19], EntityOtherPlayerMP['花心大萝卜吖'/575056, l='MpServer', x=15.97, y=54.00, z=-0.14], EntityArmorStand['§28KDDDD'/575057, l='MpServer', x=-1.61, y=50.44, z=8.13], EntityArmorStand['Armor Stand'/575058, l='MpServer', x=-1.65, y=50.53, z=8.33], EntityArmorStand['Armor Stand'/575059, l='MpServer', x=-1.71, y=50.19, z=8.83], EntityArmorStand['Armor Stand'/575060, l='MpServer', x=-1.74, y=50.53, z=9.15], EntityOtherPlayerMP['LonelyChest'/574415, l='MpServer', x=14.13, y=51.00, z=7.69], EntityArmorStand['Armor Stand'/575061, l='MpServer', x=-1.83, y=51.03, z=8.30], EntityArmorStand['Armor Stand'/575062, l='MpServer', x=-1.93, y=51.03, z=9.09], EntityOtherPlayerMP['Sking是你爹爹'/574963, l='MpServer', x=-1.94, y=54.00, z=-0.88], EntityArmorStand['Armor Stand'/575063, l='MpServer', x=-1.46, y=51.03, z=8.34], EntityOtherPlayerMP['苦恼的雾a'/573985, l='MpServer', x=-18.72, y=62.00, z=8.28], EntityOtherPlayerMP['yRicky'/574993, l='MpServer', x=-1.25, y=54.00, z=-0.41], EntityOtherPlayerMP['s9w8yqgs10'/123, l='MpServer', x=14.50, y=51.00, z=-6.50], EntityOtherPlayerMP['迁葬性格如此丶'/575017, l='MpServer', x=7.69, y=54.72, z=-1.31], EntityOtherPlayerMP['逍遥九天丿蛋蛋L'/575046, l='MpServer', x=9.45, y=54.00, z=-1.08], EntityOtherPlayerMP['over100'/575031, l='MpServer', x=3.50, y=53.50, z=-0.59], EntityOtherPlayerMP['花心大萝卜吖'/575056, l='MpServer', x=15.97, y=54.00, z=-0.14], EntityArmorStand['Armor Stand'/574968, l='MpServer', x=-1.74, y=53.53, z=1.09], EntityOtherPlayerMP['唯一的毁灭i'/573304, l='MpServer', x=18.09, y=51.97, z=13.13], EntityArmorStand['Armor Stand'/574969, l='MpServer', x=-1.74, y=53.53, z=1.90], EntityArmorStand['Armor Stand'/574970, l='MpServer', x=-1.34, y=53.53, z=1.09], EntityArmorStand['Armor Stand'/574971, l='MpServer', x=-1.33, y=53.53, z=1.89], EntityArmorStand['Armor Stand'/574972, l='MpServer', x=-1.33, y=53.94, z=1.99], EntityVillager['Villager'/116, l='MpServer', x=14.50, y=51.00, z=7.50], EntityZombie['Zombie'/574973, l='MpServer', x=-1.56, y=54.00, z=0.84], EntityArmorStand['§e§l右键点击'/117, l='MpServer', x=14.50, y=51.16, z=7.50], EntityArmorStand['§b任务达人'/118, l='MpServer', x=14.50, y=51.47, z=7.50], EntityArmorStand['§b神秘宝库'/119, l='MpServer', x=21.50, y=52.38, z=-7.50], EntityArmorStand['§e§l右键点击'/120, l='MpServer', x=21.50, y=52.09, z=-7.50], EntityArmorStand['§b神秘宝库'/121, l='MpServer', x=21.50, y=52.38, z=8.50], EntityArmorStand['§e§l右键点击'/122, l='MpServer', x=21.50, y=52.09, z=8.50], EntityOtherPlayerMP['核桃人'/573171, l='MpServer', x=1.59, y=53.00, z=5.19], EntityOtherPlayerMP['Sking是你爹爹'/574963, l='MpServer', x=-1.94, y=54.00, z=-0.88], EntityOtherPlayerMP['s9w8yqgs10'/123, l='MpServer', x=14.50, y=51.00, z=-6.50], EntityArmorStand['§5Awakening'/574964, l='MpServer', x=-1.55, y=52.94, z=0.90], EntityArmorStand['Armor Stand'/573172, l='MpServer', x=0.53, y=52.09, z=4.03], EntityArmorStand['Armor Stand'/574965, l='MpServer', x=-1.55, y=53.03, z=1.09], EntityArmorStand['§d§lThreadripper'/573173, l='MpServer', x=0.53, y=52.75, z=4.03], EntityArmorStand['§e§l右键点击§r'/125, l='MpServer', x=14.50, y=50.97, z=-6.50], EntityArmorStand['Armor Stand'/574966, l='MpServer', x=-1.54, y=52.69, z=1.59], EntityZombie['Zombie'/573174, l='MpServer', x=0.47, y=53.50, z=3.53], EntityArmorStand['§b礼包使者§r'/126, l='MpServer', x=14.50, y=51.25, z=-6.50], EntityArmorStand['Armor Stand'/574967, l='MpServer', x=-1.53, y=53.03, z=1.92]]
+	Retry entities: 0 total; []
+	Server brand: BungeeCord (Hypixel) <- vanilla
+	Server type: Non-integrated multiplayer server
+Stacktrace:
+	at net.minecraft.client.multiplayer.WorldClient.func_72914_a(WorldClient.java:412)
+	at net.minecraft.client.Minecraft.func_71396_d(Minecraft.java:2529)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:372)
+	at net.minecraft.client.main.Main.main(SourceFile:124)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:146)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:25)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.8.9
+	Operating System: Windows 7 (x86) version 6.1
+	CPU: <unknown>
+	Java Version: 1.8.0_101, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) Client VM (mixed mode), Oracle Corporation
+	Memory: 188731064 bytes (179 MB) / 667463680 bytes (636 MB) up to 1060372480 bytes (1011 MB)
+	JVM Flags: 8 total; -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -Xmx1024M -Xmn128M -XX:PermSize=64M -XX:MaxPermSize=128M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy
+	IntCache: cache: 0, tcache: 0, allocated: 13, tallocated: 95
+	FML: MCP 9.19 Powered by Forge 11.15.1.0 Optifine OptiFine_1.8.9_HD_U_H8 29 mods loaded, 29 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+	UCHIJA	mcp{9.19} [Minecraft Coder Pack] (minecraft.jar)
+	UCHIJA	FML{8.0.99.99} [Forge Mod Loader] (forge-1.8.9-11.15.1.0.jar)
+	UCHIJA	Forge{11.15.1.0} [Minecraft Forge] (forge-1.8.9-11.15.1.0.jar)
+	UCHIJA	randftcoremod{1.8.9} [randftcoremod] (minecraft.jar)
+	UCHIJA	InputFix{1.8.x-v2} [InputFix] (minecraft.jar)
+	UCHIJA	skincoremod{1.8.9} [skincoremod] (minecraft.jar)
+	UCHIJA	oldanimations{2.4} [OldAnimationsMod] (minecraft.jar)
+	UCHIJA	neteasecore{1.11.2} [NeteaseCore] (minecraft.jar)
+	UCHIJA	basemodneteasecore{1.8.9} [BaseModNeteaseCore] (minecraft.jar)
+	UCHIJA	networkmod{1.0} [network rpc Mod] (4620273813222949778@3@0.jar)
+	UCHIJA	storemod{1.0} [storemod] (4618419806295460477@3@0.jar)
+	UCHIJA	antimod{2.0} [anti addiction Mod] (4618827437296985101@3@0.jar)
+	UCHIJA	filtermod{1.0} [filtermod] (4619774556351054392@3@0.jar)
+	UCHIJA	friendplaymod{1.0} [Friendplay Mod] (4620273813159696403@3@0.jar)
+	UCHIJA	mcbasemod{1.0} [mcbasemod] (4620273813196076442@3@0.jar)
+	UCHIJA	updatecore{1.0} [updatecore] (4620608833856825631@3@0.jar)
+	UCHIJA	playermanager{1.0} [playermanager] (4620702952524438419@3@0.jar)
+	UCHIJA	fullscreenpopup{1.8.9.38000} [Fullscreen Popup Mod] (4624103992226684617@3@0.jar)
+	UCHIJA	skinmod{1.8.8-15739} [skinmod] (4626894634154779079@3@0.jar)
+	UCHIJA	potioneffects{1.0} [potioneffects] ([1.8.9] PotionEffects.jar)
+	UCHIJA	mwautokill{1.0} [mwautokill] ([1.8.9]MWAutoKill V1.1.jar)
+	UCHIJA	sidebarmod{1.01} [SidebarMod] ([右侧信息]SidebarMod-1.01.jar)
+	UCHIJA	PingTag{3.0} [Ping Tag] ([延迟显示] PingTag Mod-3.0.jar)
+	UCHIJA	togglesprint{1.0} [togglesprint] ([强制疾跑] ToggleSprint.jar)
+	UCHIJA	dynamicfov{1.0} [Dynamic FOV] (dynamicfov-1.0.jar)
+	UCHIJA	memoryfix{0.3} [MemoryFix] (【内存溢出修复】MemoryFix-0.3.jar)
+	UCHIJA	enhancements{7.7} [Vanilla Enhancements] (【原版增强】Vanilla Enhancements-7.7.jar)
+	UCHIJA	customskinloader{14.7} [CustomSkinLoader] (【超战皮肤显示】CustomSkinLoader.jar)
+	UCHIJA	DJTastyMod{1.0} [DJTastyMod] (披风模组.jar)
+	Loaded coremods (and transformers):
+FMLLoadingPlugin (【内存溢出修复】MemoryFix-0.3.jar)
+  io.prplz.memoryfix.ClassTransformer
+ForgePlugin (【超战皮肤显示】CustomSkinLoader.jar)
+  customskinloader.forge.TransformerManager
+SkinCore (4626894634154779079@3@0.jar)
+  com.netease.mc.mod.skin.coremod.SkinCoreTransformer
+Main (【防砍模组】OldAnimationsMod v2.4 FORGE MC1.8.9.jar)
+  com.spiderfrog.main.ClassTransformer
+BaseModNeteaseCore (4620273813196076442@3@0.jar)
+  com.netease.mc.core.base.NeteaseCoreTransformer
+RandFTCore (4618421856281952104@2@33.jar)
+  com.netease.mc.mod.randomfont.RandFTCoreTransformer
+InputFix (4618424574399199550@3@0.jar)
+  lain.mods.inputfix.InputFixTransformer
+FMLLoadingPlugin ([防砍动画未响应修复]OldAnimationsModUnresponsiveFix-1.0.jar)
+  io.github.zekerzhayard.unresponsivefix.ClassTransformer
+NeteaseCore (4619774556351054392@3@0.jar)
+  com.netease.mc.core.NeteaseCoreTransformer
+	Launched Version: 1.8.9
+	LWJGL: 2.9.4
+	OpenGL: AMD Radeon HD 7560D GL version 4.4.13283 Compatibility Profile Context 14.501.1003.0, ATI Technologies Inc.
+	GL Caps: Using GL 1.3 multitexturing.
+Using GL 1.3 texture combiners.
+Using framebuffer objects because OpenGL 3.0 is supported and separate blending is supported.
+Shaders are available because OpenGL 2.1 is supported.
+VBOs are available because OpenGL 1.5 is supported.
+
+	Using VBOs: No
+	Is Modded: Definitely; Client brand changed to 'fml,forge'
+	Type: Client (map_client.txt)
+	Resource Packs: !Dynamic Duo
+	Current Language: English (US)
+	Profiler Position: N/A (disabled)
+	CPU: <unknown>
+	OptiFine Version: OptiFine_1.8.9_HD_U_H8
+	Render Distance Chunks: 5
+	Mipmaps: 0
+	Anisotropic Filtering: 1
+	Antialiasing: 0
+	Multitexture: false
+	Shaders: null
+	OpenGlVersion: 4.4.13283 Compatibility Profile Context 14.501.1003.0
+	OpenGlRenderer: AMD Radeon HD 7560D
+	OpenGlVendor: ATI Technologies Inc.
+	CpuCount: 4
