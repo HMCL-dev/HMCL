@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "main.h"
 #include "os.h"
 #include "java.h"
@@ -7,8 +7,8 @@
 Version J8(TEXT("8"));
 
 extern "C" {
-  _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
-  _declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001;
+_declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+_declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001;
 }
 
 void RawLaunchJVM(const std::wstring &javaPath, const std::wstring &workdir,
