@@ -19,16 +19,15 @@ package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.nio.file.*;
+import java.util.Collection;
+import java.util.TreeSet;
 
 public final class ModManager {
     private final GameRepository repository;
@@ -61,29 +60,29 @@ public final class ModManager {
         }
     }
 
-    public ModInfo getModInfo(File modFile) {
+    public static ModInfo getModInfo(File modFile) {
         File file = isDisabled(modFile) ? new File(modFile.getAbsoluteFile().getParentFile(), FileUtils.getNameWithoutExtension(modFile)) : modFile;
         String description, extension = FileUtils.getExtension(file);
         switch (extension) {
             case "zip":
             case "jar":
                 try {
-                    return ForgeOldModMetadata.fromFile(this, modFile);
+                    return ForgeOldModMetadata.fromFile(modFile);
                 } catch (Exception ignore) {
                 }
 
                 try {
-                    return ForgeNewModMetadata.fromFile(this, modFile);
+                    return ForgeNewModMetadata.fromFile(modFile);
                 } catch (Exception ignore) {
                 }
 
                 try {
-                    return FabricModMetadata.fromFile(this, modFile);
+                    return FabricModMetadata.fromFile(modFile);
                 } catch (Exception ignore) {
                 }
 
                 try {
-                    return PackMcMeta.fromFile(this, modFile);
+                    return PackMcMeta.fromFile(modFile);
                 } catch (Exception ignore) {
                 }
 
@@ -91,7 +90,7 @@ public final class ModManager {
                 break;
             case "litemod":
                 try {
-                    return LiteModMetadata.fromFile(this, modFile);
+                    return LiteModMetadata.fromFile(modFile);
                 } catch (Exception ignore) {
                     description = "LiteLoader Mod";
                 }
@@ -99,7 +98,7 @@ public final class ModManager {
             default:
                 throw new IllegalArgumentException("File " + modFile + " is not a mod file.");
         }
-        return new ModInfo(this, modFile, null, FileUtils.getNameWithoutExtension(modFile), new ModInfo.Description(description));
+        return new ModInfo(modFile, null, FileUtils.getNameWithoutExtension(modFile), new ModInfo.Description(description));
     }
 
     public void refreshMods() throws IOException {
@@ -130,7 +129,7 @@ public final class ModManager {
     }
 
     public void addMod(File file) throws IOException {
-        if (!isFileMod(file))
+        if (!isFileNameMod(file))
             throw new IllegalArgumentException("File " + file + " is not a valid mod file.");
 
         if (!loaded)
@@ -152,29 +151,57 @@ public final class ModManager {
         }
     }
 
-    public Path disableMod(Path file) throws IOException {
+    public static Path disableMod(Path file) throws IOException {
         Path disabled = file.getParent().resolve(StringUtils.addSuffix(FileUtils.getName(file), DISABLED_EXTENSION));
         if (Files.exists(file))
             Files.move(file, disabled, StandardCopyOption.REPLACE_EXISTING);
         return disabled;
     }
 
-    public Path enableMod(Path file) throws IOException {
+    public static Path enableMod(Path file) throws IOException {
         Path enabled = file.getParent().resolve(StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION));
         if (Files.exists(file))
             Files.move(file, enabled, StandardCopyOption.REPLACE_EXISTING);
         return enabled;
     }
 
-    public boolean isDisabled(File file) {
+    public static boolean isDisabled(File file) {
         return file.getPath().endsWith(DISABLED_EXTENSION);
     }
 
-    public boolean isFileMod(File file) {
+    public static boolean isFileNameMod(File file) {
         String name = file.getName();
         if (isDisabled(file))
             name = FileUtils.getNameWithoutExtension(file);
         return name.endsWith(".zip") || name.endsWith(".jar") || name.endsWith(".litemod");
+    }
+
+    public static boolean isFileMod(Path modFile) {
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
+            if (Files.exists(fs.getPath("mcmod.info")) || Files.exists(fs.getPath("META-INF/mods.toml"))) {
+                // Forge mod
+                return true;
+            }
+
+            if (Files.exists(fs.getPath("fabric.mod.json"))) {
+                // Fabric mod
+                return true;
+            }
+
+            if (Files.exists(fs.getPath("litemod.json"))) {
+                // Liteloader mod
+                return true;
+            }
+
+            if (Files.exists(fs.getPath("pack.mcmeta"))) {
+                // resource pack, data pack
+                return true;
+            }
+
+            return false;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     /**

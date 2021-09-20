@@ -49,11 +49,11 @@ public final class ModInfo implements Comparable<ModInfo> {
     private final String logoPath;
     private final BooleanProperty activeProperty;
 
-    public ModInfo(ModManager modManager, File file, String id, String name, Description description) {
-        this(modManager, file, id, name, description, "", "", "", "", "");
+    public ModInfo(File file, String id, String name, Description description) {
+        this(file, id, name, description, "", "", "", "", "");
     }
 
-    public ModInfo(ModManager modManager, File file, String id, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
+    public ModInfo(File file, String id, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
         this.file = file.toPath();
         this.id = id;
         this.name = name;
@@ -64,16 +64,16 @@ public final class ModInfo implements Comparable<ModInfo> {
         this.url = url;
         this.logoPath = logoPath;
 
-        activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
+        activeProperty = new SimpleBooleanProperty(this, "active", !ModManager.isDisabled(file)) {
             @Override
             protected void invalidated() {
                 Path path = ModInfo.this.file.toAbsolutePath();
 
                 try {
                     if (get())
-                        ModInfo.this.file = modManager.enableMod(path);
+                        ModInfo.this.file = ModManager.enableMod(path);
                     else
-                        ModInfo.this.file = modManager.disableMod(path);
+                        ModInfo.this.file = ModManager.disableMod(path);
                 } catch (IOException e) {
                     Logging.LOG.log(Level.SEVERE, "Unable to invert state of mod file " + path, e);
                 }

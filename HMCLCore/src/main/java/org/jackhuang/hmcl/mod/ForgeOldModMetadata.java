@@ -120,7 +120,7 @@ public final class ForgeOldModMetadata {
         return authors;
     }
 
-    public static ModInfo fromFile(ModManager modManager, File modFile) throws IOException, JsonParseException {
+    public static ModInfo fromFile(File modFile) throws IOException, JsonParseException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.toPath())) {
             Path mcmod = fs.getPath("mcmod.info");
             if (Files.notExists(mcmod))
@@ -138,7 +138,7 @@ public final class ForgeOldModMetadata {
                 authors = String.join(", ", metadata.getAuthorList());
             if (StringUtils.isBlank(authors))
                 authors = metadata.getCredits();
-            return new ModInfo(modManager, modFile, metadata.getModId(), metadata.getName(), new ModInfo.Description(metadata.getDescription()),
+            return new ModInfo(modFile, metadata.getModId(), metadata.getName(), new ModInfo.Description(metadata.getDescription()),
                     authors, metadata.getVersion(), metadata.getGameVersion(),
                     StringUtils.isBlank(metadata.getUrl()) ? metadata.getUpdateUrl() : metadata.url,
                     metadata.getLogoFile());
