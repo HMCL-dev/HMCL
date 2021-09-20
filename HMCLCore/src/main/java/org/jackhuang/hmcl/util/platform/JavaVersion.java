@@ -119,7 +119,7 @@ public final class JavaVersion {
 
         Process process = new ProcessBuilder(executable.toString(), "-version").start();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-            for (String line; (line = reader.readLine()) != null;) {
+            for (String line; (line = reader.readLine()) != null; ) {
                 Matcher m = REGEX.matcher(line);
                 if (m.find())
                     version = m.group("version");
@@ -247,10 +247,10 @@ public final class JavaVersion {
                 }
 
                 if (System.getenv("PATH") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("PATH").split(";")).map(path -> Paths.get(path, "java.exe")));
+                    javaExecutables.add(Arrays.stream(System.getenv("PATH").split(";")).flatMap(path -> getPathSafely(path, "java.exe")));
                 }
                 if (System.getenv("HMCL_JRES") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(";")).map(path -> Paths.get(path, "bin", "java.exe")));
+                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(";")).flatMap(path -> getPathSafely(path, "bin", "java.exe")));
                 }
                 break;
 
@@ -259,10 +259,10 @@ public final class JavaVersion {
                 javaExecutables.add(listDirectory(Paths.get("/usr/lib/jvm")).map(JavaVersion::getExecutable)); // General locations
                 javaExecutables.add(listDirectory(Paths.get("/usr/lib32/jvm")).map(JavaVersion::getExecutable)); // General locations
                 if (System.getenv("PATH") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).map(path -> Paths.get(path, "java")));
+                    javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).flatMap(path -> getPathSafely(path, "java")));
                 }
                 if (System.getenv("HMCL_JRES") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).map(path -> Paths.get(path, "bin", "java")));
+                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).flatMap(path -> getPathSafely(path, "bin", "java")));
                 }
                 break;
 
@@ -276,10 +276,10 @@ public final class JavaVersion {
                 javaExecutables.add(Stream.of(Paths.get("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin/java")));
                 javaExecutables.add(Stream.of(Paths.get("/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/MacOS/itms/java/bin/java")));
                 if (System.getenv("PATH") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).map(path -> Paths.get(path, "java")));
+                    javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).flatMap(path -> getPathSafely(path, "java")));
                 }
                 if (System.getenv("HMCL_JRES") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).map(path -> Paths.get(path, "bin", "java")));
+                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).flatMap(path -> getPathSafely(path, "bin", "java")));
                 }
                 break;
 
@@ -299,6 +299,15 @@ public final class JavaVersion {
                 return paths.stream();
             }
         } else {
+            return Stream.empty();
+        }
+    }
+
+    private static Stream<Path> getPathSafely(String base, String... more) {
+        try {
+            return Stream.of(Paths.get(base, more));
+        } catch (Throwable ex) {
+            LOG.log(Level.WARNING, "Failed to get path", ex);
             return Stream.empty();
         }
     }
