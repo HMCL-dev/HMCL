@@ -340,14 +340,21 @@ public final class Accounts {
             RemoteAuthenticationException remoteException = (RemoteAuthenticationException) exception;
             String remoteMessage = remoteException.getRemoteMessage();
             if ("ForbiddenOperationException".equals(remoteException.getRemoteName()) && remoteMessage != null) {
-                if (remoteMessage.contains("Invalid credentials"))
+                if (remoteMessage.contains("Invalid credentials")) {
                     return i18n("account.failed.invalid_credentials");
-                else if (remoteMessage.contains("Invalid token"))
+                } else if (remoteMessage.contains("Invalid token")) {
                     return i18n("account.failed.invalid_token");
-                else if (remoteMessage.contains("Invalid username or password"))
+                } else if (remoteMessage.contains("Invalid username or password")) {
                     return i18n("account.failed.invalid_password");
-                else
+                } else {
                     return remoteMessage;
+                }
+            } else if ("ResourceException".equals(remoteException.getRemoteName()) && remoteMessage != null) {
+                if (remoteMessage.contains("The requested resource is no longer available")) {
+                    return i18n("account.failed.migration");
+                } else {
+                    return remoteMessage;
+                }
             }
             return exception.getMessage();
         } else if (exception instanceof AuthlibInjectorDownloadException) {

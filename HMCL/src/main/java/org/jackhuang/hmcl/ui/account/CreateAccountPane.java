@@ -277,7 +277,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
             profileLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/editprof.aspx"));
             JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
-            purchaseLink.setOnAction(e -> FXUtils.openLink("https://www.minecraft.net/zh-hans/store/minecraft-java-edition"));
+            purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
             box.getChildren().setAll(profileLink, birthLink, purchaseLink);
             GridPane.setColumnSpan(box, 2);
 
@@ -418,13 +418,17 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             if (factory instanceof YggdrasilAccountFactory) {
                 HBox box = new HBox();
                 GridPane.setColumnSpan(box, 2);
+
                 JFXHyperlink migrationLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration"));
-                migrationLink.setOnAction(e -> FXUtils.openLink("https://help.minecraft.net/hc/en-us/articles/360050865492-JAVA-Account-Migration-FAQ"));
+                migrationLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PROFILE_URL));
+
+                JFXHyperlink migrationHowLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration.how"));
+                migrationHowLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.MIGRATION_FAQ_URL));
 
                 JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
-                purchaseLink.setOnAction(e -> FXUtils.openLink("https://www.minecraft.net/zh-hans/store/minecraft-java-edition"));
+                purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
 
-                box.getChildren().setAll(migrationLink, purchaseLink);
+                box.getChildren().setAll(migrationLink, migrationHowLink, purchaseLink);
                 add(box, 0, rowIndex);
 
                 rowIndex++;
@@ -432,7 +436,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             if (factory instanceof OfflineAccountFactory) {
                 JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
-                purchaseLink.setOnAction(e -> FXUtils.openLink("https://www.minecraft.net/zh-hans/store/minecraft-java-edition"));
+                purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
                 HBox linkPane = new HBox(purchaseLink);
                 GridPane.setColumnSpan(linkPane, 2);
                 add(linkPane, 0, rowIndex);
