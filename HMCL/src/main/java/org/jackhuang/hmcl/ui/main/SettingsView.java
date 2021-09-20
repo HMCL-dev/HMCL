@@ -29,6 +29,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -49,7 +50,6 @@ public abstract class SettingsView extends StackPane {
     protected final MultiFileItem<EnumCommonDirectory> fileCommonLocation;
     protected final Label lblUpdate;
     protected final Label lblUpdateSub;
-    protected final Text lblUpdateNote;
     protected final JFXRadioButton chkUpdateStable;
     protected final JFXRadioButton chkUpdateDev;
     protected final JFXButton btnUpdate;
@@ -132,10 +132,8 @@ public abstract class SettingsView extends StackPane {
                         chkUpdateStable = new JFXRadioButton(i18n("update.channel.stable"));
                         chkUpdateDev = new JFXRadioButton(i18n("update.channel.dev"));
 
-                        VBox noteWrapper = new VBox();
-                        noteWrapper.setStyle("-fx-padding: 10 0 0 0;");
-                        lblUpdateNote = new Text(i18n("update.note"));
-                        noteWrapper.getChildren().setAll(lblUpdateNote);
+                        TextFlow noteWrapper = new TextFlow(new Text(i18n("update.note")));
+                        VBox.setMargin(noteWrapper, new Insets(10, 0, 0, 0));
 
                         content.getChildren().setAll(chkUpdateStable, chkUpdateDev, noteWrapper);
 

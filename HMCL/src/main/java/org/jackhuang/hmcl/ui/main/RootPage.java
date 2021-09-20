@@ -191,7 +191,7 @@ public class RootPage extends DecoratorTabPage {
                     .add(gameListItem)
                     .add(gameItem)
                     .add(downloadItem)
-                    .startCategory(i18n("settings.launcher.general").toLowerCase())
+                    .startCategory(i18n("settings.launcher.general").toUpperCase())
                     .add(multiplayerItem)
                     .add(launcherSettingsItem);
 

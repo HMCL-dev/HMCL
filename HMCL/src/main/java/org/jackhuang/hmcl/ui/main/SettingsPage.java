@@ -99,8 +99,6 @@ public final class SettingsPage extends SettingsView {
         UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
         updateListener.invalidated(null);
 
-        lblUpdateNote.setWrappingWidth(470);
-
         ToggleGroup updateChannelGroup = new ToggleGroup();
         chkUpdateDev.setToggleGroup(updateChannelGroup);
         chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);

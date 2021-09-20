@@ -240,6 +240,10 @@
     -fx-font-size: 15px;
 }
 
+.wrap-text > HBox > .subtitle {
+    -fx-wrap-text: true;
+}
+
 .bubble {
     -fx-background-color: rgba(0, 0, 0, 0.5);
     -fx-background-radius: 2px;

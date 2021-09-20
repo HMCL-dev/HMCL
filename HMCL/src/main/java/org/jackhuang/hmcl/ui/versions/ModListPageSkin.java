@@ -292,6 +292,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             content.setTitle(dataItem.getTitle());
             if (dataItem.getMod() != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA) {
                 content.getTags().setAll(dataItem.getMod().getDisplayName());
+            } else {
+                content.getTags().clear();
             }
             content.setSubtitle(dataItem.getSubtitle());
             if (booleanProperty != null) {
