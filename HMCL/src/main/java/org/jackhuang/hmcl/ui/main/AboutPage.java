@@ -64,10 +64,15 @@ public class AboutPage extends StackPane {
             bangbang93.setSubtitle(i18n("about.thanks_to.bangbang93.statement"));
             bangbang93.setExternalLink("https://bmclapi2.bangbang93.com/");
 
+            IconedTwoLineListItem gamerteam = new IconedTwoLineListItem();
+            gamerteam.setTitle("gamerteam");
+            gamerteam.setImage(new Image("/assets/img/gamerteam.jpg", 32, 32, false, true));
+            gamerteam.setSubtitle(i18n("about.thanks_to.gamerteam.statement"));
+
             IconedTwoLineListItem redLnn = new IconedTwoLineListItem();
             redLnn.setTitle("Red_lnn");
             redLnn.setImage(new Image("/assets/img/red_lnn.jpg", 32, 32, false, true));
-            redLnn.setSubtitle(i18n("about.thanks_to.gamerteam.statement"));
+            redLnn.setSubtitle(i18n("about.thanks_to.red_lnn.statement"));
 
             IconedTwoLineListItem mcbbs = new IconedTwoLineListItem();
             mcbbs.setImage(new Image("/assets/img/chest.png", 32, 32, false, true));
@@ -81,6 +86,12 @@ public class AboutPage extends StackPane {
             mcmod.setSubtitle(i18n("about.thanks_to.mcmod.statement"));
             mcmod.setExternalLink("https://www.mcmod.cn/");
 
+            IconedTwoLineListItem noin = new IconedTwoLineListItem();
+            noin.setImage(new Image("/assets/img/noin.png", 32, 32, false, true));
+            noin.setTitle(i18n("about.thanks_to.noin"));
+            noin.setSubtitle(i18n("about.thanks_to.noin.statement"));
+            noin.setExternalLink("https://noin.cn/");
+
             IconedTwoLineListItem contributors = new IconedTwoLineListItem();
             contributors.setImage(new Image("/assets/img/github.png", 32, 32, false, true));
             contributors.setTitle(i18n("about.thanks_to.contributors"));
@@ -93,7 +104,7 @@ public class AboutPage extends StackPane {
             users.setSubtitle(i18n("about.thanks_to.users.statement"));
             users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, mcbbs, mcmod, redLnn, users, contributors);
+            thanks.getContent().setAll(yushijinhun, bangbang93, mcbbs, mcmod, noin, gamerteam, redLnn, users, contributors);
         }
 
         ComponentList dep = new ComponentList();

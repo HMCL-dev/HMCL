@@ -186,12 +186,21 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                 natDetectionPane.getContent().add(pane);
             }
 
+            ComponentList thanksPane = new ComponentList();
+            {
+                Label label = new Label(i18n("multiplayer.powered_by"));
+
+                thanksPane.getContent().add(label);
+            }
+
             content.getChildren().setAll(
                     hint,
                     ComponentList.createComponentListTitle(i18n("multiplayer.session")),
                     roomPane,
                     ComponentList.createComponentListTitle(i18n("multiplayer.nat")),
-                    natDetectionPane
+                    natDetectionPane,
+                    ComponentList.createComponentListTitle(i18n("about.thanks_to")),
+                    thanksPane
             );
         }
     }
