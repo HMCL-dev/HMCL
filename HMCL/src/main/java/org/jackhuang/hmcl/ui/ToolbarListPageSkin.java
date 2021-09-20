@@ -43,7 +43,7 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         SpinnerPane spinnerPane = new SpinnerPane();
         spinnerPane.loadingProperty().bind(skinnable.loadingProperty());
         spinnerPane.failedReasonProperty().bind(skinnable.failedReasonProperty());
-        spinnerPane.onActionProperty().bind(skinnable.onActionProperty());
+        spinnerPane.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
         spinnerPane.getStyleClass().add("large-spinner-pane");
 
         ComponentList root = new ComponentList();

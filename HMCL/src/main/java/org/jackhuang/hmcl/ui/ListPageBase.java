@@ -20,9 +20,11 @@ package org.jackhuang.hmcl.ui;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.control.Control;
+
+import static org.jackhuang.hmcl.ui.construct.SpinnerPane.FAILED_ACTION;
 
 public class ListPageBase<T> extends Control {
     private final ListProperty<T> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
@@ -65,23 +67,22 @@ public class ListPageBase<T> extends Control {
         this.failedReason.set(failedReason);
     }
 
-    public final ObjectProperty<EventHandler<ActionEvent>> onActionProperty() {
-        return onAction;
+    public final ObjectProperty<EventHandler<Event>> onFailedActionProperty() {
+        return onFailedAction;
     }
 
-    public final void setOnAction(EventHandler<ActionEvent> value) {
-        onActionProperty().set(value);
+    public final void setOnFailedAction(EventHandler<Event> value) {
+        onFailedActionProperty().set(value);
     }
 
-    public final EventHandler<ActionEvent> getOnAction() {
-        return onActionProperty().get();
+    public final EventHandler<Event> getOnFailedAction() {
+        return onFailedActionProperty().get();
     }
 
-    private ObjectProperty<EventHandler<ActionEvent>> onAction = new SimpleObjectProperty<EventHandler<ActionEvent>>(this, "onAction") {
+    private ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<EventHandler<Event>>(this, "onFailedAction") {
         @Override
         protected void invalidated() {
-            setEventHandler(ActionEvent.ACTION, get());
+            setEventHandler(FAILED_ACTION, get());
         }
     };
-
 }

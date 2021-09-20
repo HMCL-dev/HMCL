@@ -21,8 +21,9 @@ import com.jfoenix.controls.JFXSpinner;
 import javafx.beans.DefaultProperty;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
-import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
@@ -88,25 +89,24 @@ public class SpinnerPane extends Control {
         this.failedReason.set(failedReason);
     }
 
-    public final ObjectProperty<EventHandler<ActionEvent>> onActionProperty() {
-        return onAction;
+    public final ObjectProperty<EventHandler<Event>> onFailedActionProperty() {
+        return onFailedAction;
     }
 
-    public final void setOnAction(EventHandler<ActionEvent> value) {
-        onActionProperty().set(value);
+    public final void setOnFailedAction(EventHandler<Event> value) {
+        onFailedActionProperty().set(value);
     }
 
-    public final EventHandler<ActionEvent> getOnAction() {
-        return onActionProperty().get();
+    public final EventHandler<Event> getOnFailedAction() {
+        return onFailedActionProperty().get();
     }
 
-    private ObjectProperty<EventHandler<ActionEvent>> onAction = new SimpleObjectProperty<EventHandler<ActionEvent>>(this, "onAction") {
+    private ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<EventHandler<Event>>(this, "onFailedAction") {
         @Override
         protected void invalidated() {
-            setEventHandler(ActionEvent.ACTION, get());
+            setEventHandler(FAILED_ACTION, get());
         }
     };
-
     @Override
     protected Skin createDefaultSkin() {
         return new Skin(this);
@@ -130,8 +130,12 @@ public class SpinnerPane extends Control {
             failedPane.getStyleClass().add("notice-pane");
             failedPane.getChildren().setAll(failedReasonLabel);
             failedPane.onMouseClickedProperty().bind(
-                    BindingMapping.of(control.onAction)
-                            .map(actionHandler -> (e -> actionHandler.handle(new ActionEvent()))));
+                    BindingMapping.of(control.onFailedAction)
+                            .map(actionHandler -> (e -> {
+                                if (actionHandler != null) {
+                                    actionHandler.handle(new Event(FAILED_ACTION));
+                                }
+                            })));
 
             FXUtils.onChangeAndOperate(getSkinnable().content, newValue -> {
                 if (newValue == null) {
@@ -172,4 +176,6 @@ public class SpinnerPane extends Control {
             return reason;
         }
     }
+
+    public static final EventType<Event> FAILED_ACTION = new EventType<>(Event.ANY, "FAILED_ACTION");
 }
