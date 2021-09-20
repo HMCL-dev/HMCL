@@ -141,18 +141,22 @@ public final class LauncherHelper {
                             else
                                 return dependencyManager.checkGameCompletionAsync(version, integrityCheck);
                         }), Task.composeAsync(() -> {
-                            try {
-                                ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
-                                if (CurseInstallTask.MODPACK_TYPE.equals(configuration.getType()))
-                                    return new CurseCompletionTask(dependencyManager, selectedVersion);
-                                else if (ServerModpackLocalInstallTask.MODPACK_TYPE.equals(configuration.getType()))
-                                    return new ServerModpackCompletionTask(dependencyManager, selectedVersion);
-                                else if (McbbsModpackLocalInstallTask.MODPACK_TYPE.equals(configuration.getType()))
-                                    return new McbbsModpackCompletionTask(dependencyManager, selectedVersion);
-                                else
-                                    return null;
-                            } catch (IOException e) {
+                            if (setting.isNotCheckGame()) {
                                 return null;
+                            } else {
+                                try {
+                                    ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
+                                    if (CurseInstallTask.MODPACK_TYPE.equals(configuration.getType()))
+                                        return new CurseCompletionTask(dependencyManager, selectedVersion);
+                                    else if (ServerModpackLocalInstallTask.MODPACK_TYPE.equals(configuration.getType()))
+                                        return new ServerModpackCompletionTask(dependencyManager, selectedVersion);
+                                    else if (McbbsModpackLocalInstallTask.MODPACK_TYPE.equals(configuration.getType()))
+                                        return new McbbsModpackCompletionTask(dependencyManager, selectedVersion);
+                                    else
+                                        return null;
+                                } catch (IOException e) {
+                                    return null;
+                                }
                             }
                         }))).withStage("launch.state.dependencies")
                 .thenComposeAsync(() -> {
