@@ -378,6 +378,8 @@ public final class Accounts {
             return i18n("account.methods.microsoft.error.no_character");
         } else if (exception instanceof MicrosoftService.NoXuiException) {
             return i18n("account.methods.microsoft.error.add_family_probably");
+        } else if (exception instanceof MicrosoftAuthenticationServer.MicrosoftAuthenticationNotSupportedException) {
+            return i18n("account.methods.microsoft.snapshot");
         } else if (exception.getClass() == AuthenticationException.class) {
             return exception.getLocalizedMessage();
         } else {
