@@ -125,6 +125,13 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                     disconnectedPane.getChildren().setAll(hintPane, label);
                 }
 
+                VBox connectingPane = new VBox(8);
+                {
+                    Label label = new Label(i18n("multiplayer.state.connecting"));
+
+                    connectingPane.getChildren().setAll(label);
+                }
+
                 VBox masterPane = new VBox(8);
                 {
                     Label label = new Label(i18n("multiplayer.state.master"));
@@ -149,6 +156,8 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                 FXUtils.onChangeAndOperate(getSkinnable().multiplayerStateProperty(), state -> {
                     if (state == MultiplayerManager.State.DISCONNECTED) {
                         transitionPane.setContent(disconnectedPane, ContainerAnimations.NONE.getAnimationProducer());
+                    } else if (state == MultiplayerManager.State.CONNECTING) {
+                        transitionPane.setContent(connectingPane, ContainerAnimations.NONE.getAnimationProducer());
                     } else if (state == MultiplayerManager.State.MASTER) {
                         transitionPane.setContent(masterPane, ContainerAnimations.NONE.getAnimationProducer());
                     } else if (state == MultiplayerManager.State.SLAVE) {

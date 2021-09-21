@@ -51,7 +51,7 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  */
 public final class MultiplayerManager {
     private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/";
-    private static final String CATO_VERSION = "2021-09-18";
+    private static final String CATO_VERSION = "2021-09-20";
     private static final Artifact CATO_ARTIFACT = new Artifact("cato", "cato", CATO_VERSION,
             OperatingSystem.CURRENT_OS.getCheckedName() + "-" + Architecture.CURRENT.name().toLowerCase(Locale.ROOT),
             OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "exe" : null);
@@ -86,7 +86,7 @@ public final class MultiplayerManager {
                 .command(commands)
                 .start();
 
-        CatoSession session = new CatoSession(sessionName, process, Arrays.asList(commands));
+        CatoSession session = new CatoSession(sessionName, State.SLAVE, process, Arrays.asList(commands));
         session.addRelatedThread(Lang.thread(new LocalServerBroadcaster(localPort, session), "LocalServerBroadcaster", true));
         return session;
     }
@@ -96,12 +96,12 @@ public final class MultiplayerManager {
         if (!Files.isRegularFile(exe)) {
             throw new IllegalStateException("Cato file not found");
         }
-        String[] commands = new String[]{exe.toString(), "--token", "new", "--allow", String.format("127.0.0.1:%d", port)};
+        String[] commands = new String[]{exe.toString(), "--token", "new", "--allows", String.format("127.0.0.1:%d", port)};
         Process process = new ProcessBuilder()
                 .command(commands)
                 .start();
 
-        return new CatoSession(sessionName, process, Arrays.asList(commands));
+        return new CatoSession(sessionName, State.MASTER, process, Arrays.asList(commands));
     }
 
     public static Invitation parseInvitationCode(String invitationCode) throws JsonParseException {
@@ -118,28 +118,38 @@ public final class MultiplayerManager {
     public static class CatoSession extends ManagedProcess {
         private final EventManager<CatoExitEvent> onExit = new EventManager<>();
         private final EventManager<CatoIdEvent> onIdGenerated = new EventManager<>();
+        private final EventManager<Event> onPeerConnected = new EventManager<>();
 
         private final String name;
+        private final State type;
         private String id;
 
-        CatoSession(String name, Process process, List<String> commands) {
+        CatoSession(String name, State type, Process process, List<String> commands) {
             super(process, commands);
 
             LOG.info("Started cato with command: " + new CommandBuilder().addAll(commands).toString());
 
             this.name = name;
+            this.type = type;
             addRelatedThread(Lang.thread(this::waitFor, "CatoExitWaiter", true));
             addRelatedThread(Lang.thread(new StreamPump(process.getInputStream(), this::checkCatoLog), "CatoInputStreamPump", true));
             addRelatedThread(Lang.thread(new StreamPump(process.getErrorStream(), this::checkCatoLog), "CatoErrorStreamPump", true));
         }
 
         private void checkCatoLog(String log) {
+            LOG.info("Cato: " + log);
             if (id == null) {
-                LOG.info("Cato: " + log);
                 Matcher matcher = TEMP_TOKEN_PATTERN.matcher(log);
                 if (matcher.find()) {
                     id = "mix" + matcher.group("id");
                     onIdGenerated.fireEvent(new CatoIdEvent(this, id));
+                }
+            }
+
+            {
+                Matcher matcher = PEER_CONNECTED_PATTERN.matcher(log);
+                if (matcher.find()) {
+                    onPeerConnected.fireEvent(new Event(this));
                 }
             }
         }
@@ -147,6 +157,7 @@ public final class MultiplayerManager {
         private void waitFor() {
             try {
                 int exitCode = getProcess().waitFor();
+                LOG.info("cato exited with exitcode " + exitCode);
                 onExit.fireEvent(new CatoExitEvent(this, exitCode));
             } catch (InterruptedException e) {
                 onExit.fireEvent(new CatoExitEvent(this, CatoExitEvent.EXIT_CODE_INTERRUPTED));
@@ -159,6 +170,10 @@ public final class MultiplayerManager {
 
         public String getName() {
             return name;
+        }
+
+        public State getType() {
+            return type;
         }
 
         @Nullable
@@ -178,7 +193,16 @@ public final class MultiplayerManager {
             return onExit;
         }
 
+        public EventManager<CatoIdEvent> onIdGenerated() {
+            return onIdGenerated;
+        }
+
+        public EventManager<Event> onPeerConnected() {
+            return onPeerConnected;
+        }
+
         private static final Pattern TEMP_TOKEN_PATTERN = Pattern.compile("id\\(mix(?<id>\\w+)\\)");
+        private static final Pattern PEER_CONNECTED_PATTERN = Pattern.compile("Peer connected");
     }
 
     public static class CatoExitEvent extends Event {
@@ -212,6 +236,7 @@ public final class MultiplayerManager {
 
     enum State {
         DISCONNECTED,
+        CONNECTING,
         MASTER,
         SLAVE
     }
