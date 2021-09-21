@@ -151,7 +151,7 @@ public class MultiplayerPage extends Control implements DecoratorPage {
             throw new IllegalStateException("CatoSession not ready");
         }
 
-        FXUtils.copyText(getSession().generateInvitationCode(port.get()));
+        FXUtils.copyText(getSession().generateInvitationCode(port.get(), 0));
     }
 
     public void createRoom() {
@@ -203,7 +203,10 @@ public class MultiplayerPage extends Control implements DecoratorPage {
             }
 
             try {
-                initCatoSession(MultiplayerManager.joinSession(invitation.getSessionName(), invitation.getId(), invitation.getPort(), localPort));
+                initCatoSession(MultiplayerManager.joinSession(invitation.getVersion(), invitation.getSessionName(), invitation.getId(), invitation.getGamePort(), localPort));
+            } catch (MultiplayerManager.IncompatibleCatoVersionException e) {
+                reject.accept(i18n("multiplayer.session.join.invitation_code.version"));
+                return;
             } catch (Exception e) {
                 reject.accept(i18n("multiplayer.session.error"));
                 return;
@@ -223,10 +226,7 @@ public class MultiplayerPage extends Control implements DecoratorPage {
         }
 
         Controllers.confirm(i18n("multiplayer.session.close.warning"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING,
-                () -> {
-                    getSession().stop();
-                    clearCatoSession();
-                }, null);
+                this::stopCatoSession, null);
     }
 
     public void quitRoom() {
@@ -234,8 +234,16 @@ public class MultiplayerPage extends Control implements DecoratorPage {
             throw new IllegalStateException("CatoSession not ready");
         }
 
-        getSession().stop();
-        clearCatoSession();
+        Controllers.confirm(i18n("multiplayer.session.quit.warning"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING,
+                this::stopCatoSession, null);
+    }
+
+    public void cancelRoom() {
+        if (getSession() == null || getSession().isReady() || getMultiplayerState() != MultiplayerManager.State.CONNECTING) {
+            throw new IllegalStateException("CatoSession not existing or already ready");
+        }
+
+        stopCatoSession();
     }
 
     private void initCatoSession(MultiplayerManager.CatoSession session) {
@@ -248,6 +256,11 @@ public class MultiplayerPage extends Control implements DecoratorPage {
         });
     }
 
+    private void stopCatoSession() {
+        getSession().stop();
+        clearCatoSession();
+    }
+
     private void clearCatoSession() {
         this.session.set(null);
         this.token.set(null);
@@ -257,15 +270,27 @@ public class MultiplayerPage extends Control implements DecoratorPage {
 
     private void onCatoExit(MultiplayerManager.CatoExitEvent event) {
         runInFX(() -> {
-            if (event.getExitCode() == MultiplayerManager.CatoExitEvent.EXIT_CODE_SESSION_EXPIRED) {
-                Controllers.dialog(i18n("multiplayer.session.expired"));
-            } else if (event.getExitCode() != 0) {
-                if (!((MultiplayerManager.CatoSession) event.getSource()).isReady()) {
-                    Controllers.dialog(i18n("multiplayer.exit.before_ready", event.getExitCode()));
-                } else {
-                    Controllers.dialog(i18n("multiplayer.exit.after_ready", event.getExitCode()));
-                }
+            boolean ready = ((MultiplayerManager.CatoSession) event.getSource()).isReady();
+            switch (event.getExitCode()) {
+                case 0:
+                    break;
+                case MultiplayerManager.CatoExitEvent.EXIT_CODE_SESSION_EXPIRED:
+                    Controllers.dialog(i18n("multiplayer.session.expired"));
+                    break;
+                case 1:
+                    if (!ready) {
+                        Controllers.dialog(i18n("multiplayer.exit.timeout"));
+                    }
+                    break;
+                default:
+                    if (!((MultiplayerManager.CatoSession) event.getSource()).isReady()) {
+                        Controllers.dialog(i18n("multiplayer.exit.before_ready", event.getExitCode()));
+                    } else {
+                        Controllers.dialog(i18n("multiplayer.exit.after_ready", event.getExitCode()));
+                    }
+                    break;
             }
+
             clearCatoSession();
         });
     }

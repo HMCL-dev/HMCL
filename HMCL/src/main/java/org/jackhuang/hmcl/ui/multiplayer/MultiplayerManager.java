@@ -51,7 +51,7 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  */
 public final class MultiplayerManager {
     private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/";
-    private static final String CATO_VERSION = "2021-09-20";
+    private static final String CATO_VERSION = "2021-09-21";
     private static final Artifact CATO_ARTIFACT = new Artifact("cato", "cato", CATO_VERSION,
             OperatingSystem.CURRENT_OS.getCheckedName() + "-" + Architecture.CURRENT.name().toLowerCase(Locale.ROOT),
             OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "exe" : null);
@@ -76,7 +76,11 @@ public final class MultiplayerManager {
         return CATO_ARTIFACT.getPath(Metadata.HMCL_DIRECTORY.resolve("libraries"));
     }
 
-    public static CatoSession joinSession(String sessionName, String peer, int remotePort, int localPort) throws IOException {
+    public static CatoSession joinSession(String version, String sessionName, String peer, int remotePort, int localPort) throws IOException, IncompatibleCatoVersionException {
+        if (!CATO_VERSION.equals(version)) {
+            throw new IncompatibleCatoVersionException(version, CATO_VERSION);
+        }
+
         Path exe = getCatoExecutable();
         if (!Files.isRegularFile(exe)) {
             throw new IllegalStateException("Cato file not found");
@@ -96,6 +100,10 @@ public final class MultiplayerManager {
         if (!Files.isRegularFile(exe)) {
             throw new IllegalStateException("Cato file not found");
         }
+//
+//        MultiplayerServer server = new MultiplayerServer(port);
+//        server.start();
+
         String[] commands = new String[]{exe.toString(), "--token", "new", "--allows", String.format("127.0.0.1:%d", port)};
         Process process = new ProcessBuilder()
                 .command(commands)
@@ -181,11 +189,11 @@ public final class MultiplayerManager {
             return id;
         }
 
-        public String generateInvitationCode(int port) {
+        public String generateInvitationCode(int gamePort, int serverPort) {
             if (id == null) {
                 throw new IllegalStateException("id not generated");
             }
-            String json = JsonUtils.GSON.toJson(new Invitation(id, name, port));
+            String json = JsonUtils.GSON.toJson(new Invitation(CATO_VERSION, id, name, gamePort, serverPort));
             return new String(Base64.getEncoder().encode(json.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
         }
 
@@ -203,6 +211,7 @@ public final class MultiplayerManager {
 
         private static final Pattern TEMP_TOKEN_PATTERN = Pattern.compile("id\\(mix(?<id>\\w+)\\)");
         private static final Pattern PEER_CONNECTED_PATTERN = Pattern.compile("Peer connected");
+        private static final Pattern LOG_PATTERN = Pattern.compile("(\\[\\d+])\\s+(\\w+)\\s+(\\w+-{0,1}\\w+):\\s(.*)");
     }
 
     public static class CatoExitEvent extends Event {
@@ -242,14 +251,22 @@ public final class MultiplayerManager {
     }
 
     public static class Invitation {
+        private final String version;
         private final String id;
         private final String sessionName;
-        private final int port;
+        private final int gamePort;
+        private final int channelPort;
 
-        public Invitation(String id, String sessionName, int port) {
+        public Invitation(String version, String id, String sessionName, int gamePort, int channelPort) {
+            this.version = version;
             this.id = id;
             this.sessionName = sessionName;
-            this.port = port;
+            this.gamePort = gamePort;
+            this.channelPort = channelPort;
+        }
+
+        public String getVersion() {
+            return version;
         }
 
         public String getId() {
@@ -260,8 +277,30 @@ public final class MultiplayerManager {
             return sessionName;
         }
 
-        public int getPort() {
-            return port;
+        public int getGamePort() {
+            return gamePort;
+        }
+
+        public int getChannelPort() {
+            return channelPort;
+        }
+    }
+
+    public static class IncompatibleCatoVersionException extends Exception {
+        private final String expected;
+        private final String actual;
+
+        public IncompatibleCatoVersionException(String expected, String actual) {
+            this.expected = expected;
+            this.actual = actual;
+        }
+
+        public String getExpected() {
+            return expected;
+        }
+
+        public String getActual() {
+            return actual;
         }
     }
 }

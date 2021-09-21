@@ -64,6 +64,11 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                 copyLinkItem.setLeftGraphic(wrap(SVG::accountArrowRightOutline));
                 copyLinkItem.setOnAction(e -> control.copyInvitationCode());
 
+                AdvancedListItem cancelItem = new AdvancedListItem();
+                cancelItem.setTitle(i18n("button.cancel"));
+                cancelItem.setLeftGraphic(wrap(SVG::closeCircle));
+                cancelItem.setOnAction(e -> control.cancelRoom());
+
                 AdvancedListItem quitItem = new AdvancedListItem();
                 quitItem.setTitle(i18n("multiplayer.session.quit"));
                 quitItem.setLeftGraphic(wrap(SVG::closeCircle));
@@ -77,6 +82,8 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                 FXUtils.onChangeAndOperate(getSkinnable().multiplayerStateProperty(), state -> {
                     if (state == MultiplayerManager.State.DISCONNECTED) {
                         roomPane.getChildren().setAll(createRoomItem, joinRoomItem);
+                    } else if (state == MultiplayerManager.State.CONNECTING) {
+                        roomPane.getChildren().setAll(cancelItem);
                     } else if (state == MultiplayerManager.State.MASTER) {
                         roomPane.getChildren().setAll(copyLinkItem, closeRoomItem);
                     } else if (state == MultiplayerManager.State.SLAVE) {

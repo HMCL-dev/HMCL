@@ -88,16 +88,16 @@ public class MultiplayerServer {
     }
 
     public static class JoinRequest extends Request {
-        private final String clientLauncherVersion;
+        private final String clientVersion;
         private final String username;
 
-        public JoinRequest(String clientLauncherVersion, String username) {
-            this.clientLauncherVersion = clientLauncherVersion;
+        public JoinRequest(String clientVersion, String username) {
+            this.clientVersion = clientVersion;
             this.username = username;
         }
 
-        public String getClientLauncherVersion() {
-            return clientLauncherVersion;
+        public String getClientVersion() {
+            return clientVersion;
         }
 
         public String getUsername() {
