@@ -11,7 +11,6 @@ import static org.junit.Assert.assertEquals;
  */
 public class AggregatedObservableListTest {
 
-
     @Test
     public void testInteger() {
         final AggregatedObservableList<Integer> aggregatedWrapper = new AggregatedObservableList<>();

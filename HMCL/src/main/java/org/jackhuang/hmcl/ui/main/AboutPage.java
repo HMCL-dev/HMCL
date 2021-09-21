@@ -26,7 +26,6 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -68,6 +67,7 @@ public class AboutPage extends StackPane {
             gamerteam.setTitle("gamerteam");
             gamerteam.setImage(new Image("/assets/img/gamerteam.jpg", 32, 32, false, true));
             gamerteam.setSubtitle(i18n("about.thanks_to.gamerteam.statement"));
+            gamerteam.setExternalLink("http://www.zhaisoul.com/");
 
             IconedTwoLineListItem redLnn = new IconedTwoLineListItem();
             redLnn.setTitle("Red_lnn");
@@ -149,17 +149,20 @@ public class AboutPage extends StackPane {
 
         ComponentList legal = new ComponentList();
         {
-            TwoLineListItem copyright = new TwoLineListItem();
+            IconedTwoLineListItem copyright = new IconedTwoLineListItem();
             copyright.setTitle(i18n("about.copyright"));
             copyright.setSubtitle(i18n("about.copyright.statement"));
+            copyright.setExternalLink("https://hmcl.huangyuhui.net/about/");
 
-            TwoLineListItem claim = new TwoLineListItem();
+            IconedTwoLineListItem claim = new IconedTwoLineListItem();
             claim.setTitle(i18n("about.claim"));
             claim.setSubtitle(i18n("about.claim.statement"));
+            claim.setExternalLink(Metadata.EULA_URL);
 
-            TwoLineListItem openSource = new TwoLineListItem();
+            IconedTwoLineListItem openSource = new IconedTwoLineListItem();
             openSource.setTitle(i18n("about.open_source"));
             openSource.setSubtitle(i18n("about.open_source.statement"));
+            openSource.setExternalLink("https://github.com/huanghongxun/HMCL");
 
             legal.getContent().setAll(copyright, claim, openSource);
         }
