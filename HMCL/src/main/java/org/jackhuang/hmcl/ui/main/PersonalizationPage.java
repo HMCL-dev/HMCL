@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXScrollPane;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.effects.JFXDepthManager;
@@ -38,6 +39,7 @@ import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
@@ -75,7 +77,7 @@ public class PersonalizationPage extends StackPane {
             picker.setOnAction(e -> {
                 Theme theme = Theme.custom(Theme.getColorDisplayName(picker.getValue()));
                 config().setTheme(theme);
-                Controllers.getScene().getStylesheets().setAll(theme.getStylesheets());
+                Controllers.getScene().getStylesheets().setAll(theme.getStylesheets(config().getLauncherFontFamily()));
             });
             themeColorPickerContainer.getChildren().setAll(picker);
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
@@ -180,12 +182,17 @@ public class PersonalizationPage extends StackPane {
 
                     {
                         HBox hBox = new HBox();
-                        hBox.setSpacing(3);
+                        hBox.setSpacing(8);
 
                         FontComboBox cboFont = new FontComboBox(12);
                         cboFont.valueProperty().bindBidirectional(config().launcherFontFamilyProperty());
 
-                        hBox.getChildren().setAll(cboFont);
+                        JFXButton clearButton = new JFXButton();
+                        clearButton.getStyleClass().add("toggle-icon4");
+                        clearButton.setGraphic(SVG.restore(Theme.blackFillBinding(), -1, -1));
+                        clearButton.setOnAction(e -> config().setLauncherFontFamily(null));
+
+                        hBox.getChildren().setAll(cboFont, clearButton);
 
                         borderPane.setRight(hBox);
                     }
@@ -195,6 +202,9 @@ public class PersonalizationPage extends StackPane {
                 lblFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
                         () -> Font.font(config().getLauncherFontFamily(), 12),
                         config().launcherFontFamilyProperty()));
+                config().launcherFontFamilyProperty().addListener((a, b, newValue) -> {
+                    Controllers.getScene().getStylesheets().setAll(config().getTheme().getStylesheets(newValue));
+                });
 
                 vbox.getChildren().add(lblFontDisplay);
 

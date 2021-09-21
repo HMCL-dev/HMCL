@@ -42,7 +42,7 @@ public class WebStage extends Stage {
 
     public WebStage(int width, int height) {
         setScene(new Scene(pane, width, height));
-        getScene().getStylesheets().addAll(config().getTheme().getStylesheets());
+        getScene().getStylesheets().addAll(config().getTheme().getStylesheets(config().getLauncherFontFamily()));
         getIcons().add(newImage("/assets/img/icon.png"));
         webView.getEngine().setUserDataDirectory(Metadata.HMCL_DIRECTORY.toFile());
         webView.setContextMenuEnabled(false);

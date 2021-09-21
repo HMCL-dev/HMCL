@@ -195,7 +195,7 @@ public final class Controllers {
         stage.setMinWidth(800 + 2 + 16); // bg width + border width*2 + shadow width*2
         decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
         decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
-        scene.getStylesheets().setAll(config().getTheme().getStylesheets());
+        scene.getStylesheets().setAll(config().getTheme().getStylesheets(config().getLauncherFontFamily()));
 
         stage.getIcons().add(newImage("/assets/img/icon.png"));
         stage.setTitle(Metadata.FULL_TITLE);

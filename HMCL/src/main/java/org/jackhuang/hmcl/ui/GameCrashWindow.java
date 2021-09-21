@@ -90,7 +90,7 @@ public class GameCrashWindow extends Stage {
         this.view = new View();
 
         setScene(new Scene(view, 800, 480));
-        getScene().getStylesheets().addAll(config().getTheme().getStylesheets());
+        getScene().getStylesheets().addAll(config().getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("game.crash.title"));
         getIcons().add(newImage("/assets/img/icon.png"));
 
