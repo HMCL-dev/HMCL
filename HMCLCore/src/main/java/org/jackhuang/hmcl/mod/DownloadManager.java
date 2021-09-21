@@ -28,6 +28,8 @@ public final class DownloadManager {
     }
 
     public interface IMod {
+        List<Mod> loadDependencies() throws IOException;
+
         Stream<Version> loadVersions() throws IOException;
     }
 

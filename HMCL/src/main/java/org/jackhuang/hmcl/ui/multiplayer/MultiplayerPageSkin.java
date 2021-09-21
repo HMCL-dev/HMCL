@@ -18,13 +18,17 @@
 package org.jackhuang.hmcl.ui.multiplayer;
 
 import de.javawi.jstun.test.DiscoveryInfo;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
@@ -42,57 +46,66 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
         super(control);
 
         BorderPane root = new BorderPane();
-        root.setPadding(new Insets(10));
         getChildren().setAll(root);
         {
             VBox roomPane = new VBox();
             {
                 AdvancedListItem createRoomItem = new AdvancedListItem();
-                createRoomItem.setTitle(i18n("multiplayer.room.create"));
-                createRoomItem.setLeftGraphic(wrap(SVG.plusCircleOutline(null, 24, 24)));
-                createRoomItem.setOnAction(e -> FXUtils.openLink(""));
+                createRoomItem.setTitle(i18n("multiplayer.session.create"));
+                createRoomItem.setLeftGraphic(wrap(SVG::plusCircleOutline));
+                createRoomItem.setOnAction(e -> control.createRoom());
 
                 AdvancedListItem joinRoomItem = new AdvancedListItem();
-                joinRoomItem.setTitle(i18n("multiplayer.room.join"));
-                joinRoomItem.setLeftGraphic(wrap(SVG.accountArrowRightOutline(null, 24, 24)));
-                joinRoomItem.setOnAction(e -> FXUtils.openLink(""));
+                joinRoomItem.setTitle(i18n("multiplayer.session.join"));
+                joinRoomItem.setLeftGraphic(wrap(SVG::accountArrowRightOutline));
+                joinRoomItem.setOnAction(e -> control.joinRoom());
 
                 AdvancedListItem copyLinkItem = new AdvancedListItem();
-                copyLinkItem.setTitle(i18n("multiplayer.room.copy_room_code"));
-                copyLinkItem.setLeftGraphic(wrap(SVG.accountArrowRightOutline(null, 24, 24)));
-                copyLinkItem.setOnAction(e -> FXUtils.openLink(""));
+                copyLinkItem.setTitle(i18n("multiplayer.session.copy_room_code"));
+                copyLinkItem.setLeftGraphic(wrap(SVG::accountArrowRightOutline));
+                copyLinkItem.setOnAction(e -> control.copyInvitationCode());
+
+                AdvancedListItem cancelItem = new AdvancedListItem();
+                cancelItem.setTitle(i18n("button.cancel"));
+                cancelItem.setLeftGraphic(wrap(SVG::closeCircle));
+                cancelItem.setOnAction(e -> control.cancelRoom());
 
                 AdvancedListItem quitItem = new AdvancedListItem();
-                quitItem.setTitle(i18n("multiplayer.room.quit"));
-                quitItem.setLeftGraphic(wrap(SVG.closeCircle(null, 24, 24)));
-                quitItem.setOnAction(e -> FXUtils.openLink(""));
+                quitItem.setTitle(i18n("multiplayer.session.quit"));
+                quitItem.setLeftGraphic(wrap(SVG::closeCircle));
+                quitItem.setOnAction(e -> control.quitRoom());
 
                 AdvancedListItem closeRoomItem = new AdvancedListItem();
-                closeRoomItem.setTitle(i18n("multiplayer.room.quit"));
-                closeRoomItem.setLeftGraphic(wrap(SVG.closeCircle(null, 24, 24)));
-                closeRoomItem.setOnAction(e -> FXUtils.openLink(""));
+                closeRoomItem.setTitle(i18n("multiplayer.session.close"));
+                closeRoomItem.setLeftGraphic(wrap(SVG::closeCircle));
+                closeRoomItem.setOnAction(e -> control.closeRoom());
 
                 FXUtils.onChangeAndOperate(getSkinnable().multiplayerStateProperty(), state -> {
                     if (state == MultiplayerManager.State.DISCONNECTED) {
                         roomPane.getChildren().setAll(createRoomItem, joinRoomItem);
+                    } else if (state == MultiplayerManager.State.CONNECTING) {
+                        roomPane.getChildren().setAll(cancelItem);
                     } else if (state == MultiplayerManager.State.MASTER) {
-                        roomPane.getChildren().setAll(copyLinkItem);
-                        roomPane.getChildren().setAll(closeRoomItem);
+                        roomPane.getChildren().setAll(copyLinkItem, closeRoomItem);
                     } else if (state == MultiplayerManager.State.SLAVE) {
-                        roomPane.getChildren().setAll(copyLinkItem);
                         roomPane.getChildren().setAll(quitItem);
                     }
                 });
             }
 
             AdvancedListBox sideBar = new AdvancedListBox()
-                    .startCategory("multiplayer.room")
+                    .startCategory(i18n("multiplayer.session"))
                     .add(roomPane)
-                    .startCategory("help")
-                    .addNavigationDrawerItem(settingsItem -> {
-                        settingsItem.setTitle(i18n("help"));
-                        settingsItem.setLeftGraphic(wrap(SVG.gamepad(null, 20, 20)));
-                        settingsItem.setOnAction(e -> FXUtils.openLink(""));
+                    .startCategory(i18n("help"))
+                    .addNavigationDrawerItem(item -> {
+                        item.setTitle(i18n("help"));
+                        item.setLeftGraphic(wrap(SVG::gamepad));
+                        item.setOnAction(e -> FXUtils.openLink("https://hmcl.huangyuhui.net/help/launcher/multiplayer.html"));
+                    })
+                    .addNavigationDrawerItem(report -> {
+                        report.setTitle(i18n("multiplayer.report"));
+                        report.setLeftGraphic(wrap(SVG::bug));
+                        report.setOnAction(e -> FXUtils.openLink(Metadata.EULA_URL));
                     });
             FXUtils.setLimitWidth(sideBar, 200);
             root.setLeft(sideBar);
@@ -100,16 +113,70 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
 
         {
             VBox content = new VBox(16);
+            content.setPadding(new Insets(10));
             content.setFillWidth(true);
             ScrollPane scrollPane = new ScrollPane(content);
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
             root.setCenter(scrollPane);
 
+            HintPane hint = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+            hint.setText(i18n("multiplayer.hint"));
+
             ComponentList roomPane = new ComponentList();
             {
-                VBox pane = new VBox();
+                TransitionPane transitionPane = new TransitionPane();
+                roomPane.getContent().setAll(transitionPane);
 
+                VBox disconnectedPane = new VBox(8);
+                {
+                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+                    hintPane.setText(i18n("multiplayer.state.disconnected.hint"));
+
+                    Label label = new Label(i18n("multiplayer.state.disconnected"));
+
+                    disconnectedPane.getChildren().setAll(hintPane, label);
+                }
+
+                VBox connectingPane = new VBox(8);
+                {
+                    Label label = new Label(i18n("multiplayer.state.connecting"));
+
+                    connectingPane.getChildren().setAll(label);
+                }
+
+                VBox masterPane = new VBox(8);
+                {
+                    Label label = new Label(i18n("multiplayer.state.master"));
+                    label.textProperty().bind(Bindings.createStringBinding(() ->
+                            i18n("multiplayer.state.master", control.getSession() == null ? "" : control.getSession().getName(), control.getPort()),
+                            control.portProperty(), control.sessionProperty()));
+                    masterPane.getChildren().setAll(label);
+                }
+
+                VBox slavePane = new VBox(8);
+                {
+                    HintPane slaveHintPane = new HintPane();
+                    slaveHintPane.setText(i18n("multiplayer.state.slave.hint"));
+
+                    Label label = new Label();
+                    label.textProperty().bind(Bindings.createStringBinding(() ->
+                            i18n("multiplayer.state.slave", control.getSession() == null ? "" : control.getSession().getName(), control.getPort()),
+                            control.sessionProperty(), control.portProperty()));
+                    slavePane.getChildren().setAll(slaveHintPane, label);
+                }
+
+                FXUtils.onChangeAndOperate(getSkinnable().multiplayerStateProperty(), state -> {
+                    if (state == MultiplayerManager.State.DISCONNECTED) {
+                        transitionPane.setContent(disconnectedPane, ContainerAnimations.NONE.getAnimationProducer());
+                    } else if (state == MultiplayerManager.State.CONNECTING) {
+                        transitionPane.setContent(connectingPane, ContainerAnimations.NONE.getAnimationProducer());
+                    } else if (state == MultiplayerManager.State.MASTER) {
+                        transitionPane.setContent(masterPane, ContainerAnimations.NONE.getAnimationProducer());
+                    } else if (state == MultiplayerManager.State.SLAVE) {
+                        transitionPane.setContent(slavePane, ContainerAnimations.NONE.getAnimationProducer());
+                    }
+                });
             }
 
             ComponentList natDetectionPane = new ComponentList();
@@ -133,19 +200,24 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                         .map(MultiplayerPageSkin::getNATType));
                 pane.addRow(1, new Label(i18n("multiplayer.nat.type")), natResult);
 
-//                Label natResult = new Label();
-//                natResult.textProperty().bind(BindingMapping.of(getSkinnable().natStateProperty())
-//                        .map(MultiplayerPageSkin::getNATType));
-//                pane.addRow(1, new Label(i18n("multiplayer.nat.latency")), natResult);
-
                 natDetectionPane.getContent().add(pane);
             }
 
+            ComponentList thanksPane = new ComponentList();
+            {
+                Label label = new Label(i18n("multiplayer.powered_by"));
+
+                thanksPane.getContent().add(label);
+            }
+
             content.getChildren().setAll(
-                    ComponentList.createComponentListTitle(i18n("multiplayer.room")),
+                    hint,
+                    ComponentList.createComponentListTitle(i18n("multiplayer.session")),
                     roomPane,
                     ComponentList.createComponentListTitle(i18n("multiplayer.nat")),
-                    natDetectionPane
+                    natDetectionPane,
+                    ComponentList.createComponentListTitle(i18n("about.thanks_to")),
+                    thanksPane
             );
         }
     }

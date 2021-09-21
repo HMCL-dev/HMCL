@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import com.jfoenix.controls.JFXScrollPane;
 import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
@@ -25,7 +26,6 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -63,10 +63,16 @@ public class AboutPage extends StackPane {
             bangbang93.setSubtitle(i18n("about.thanks_to.bangbang93.statement"));
             bangbang93.setExternalLink("https://bmclapi2.bangbang93.com/");
 
+            IconedTwoLineListItem gamerteam = new IconedTwoLineListItem();
+            gamerteam.setTitle("gamerteam");
+            gamerteam.setImage(new Image("/assets/img/gamerteam.jpg", 32, 32, false, true));
+            gamerteam.setSubtitle(i18n("about.thanks_to.gamerteam.statement"));
+            gamerteam.setExternalLink("http://www.zhaisoul.com/");
+
             IconedTwoLineListItem redLnn = new IconedTwoLineListItem();
             redLnn.setTitle("Red_lnn");
             redLnn.setImage(new Image("/assets/img/red_lnn.jpg", 32, 32, false, true));
-            redLnn.setSubtitle(i18n("about.thanks_to.gamerteam.statement"));
+            redLnn.setSubtitle(i18n("about.thanks_to.red_lnn.statement"));
 
             IconedTwoLineListItem mcbbs = new IconedTwoLineListItem();
             mcbbs.setImage(new Image("/assets/img/chest.png", 32, 32, false, true));
@@ -80,6 +86,12 @@ public class AboutPage extends StackPane {
             mcmod.setSubtitle(i18n("about.thanks_to.mcmod.statement"));
             mcmod.setExternalLink("https://www.mcmod.cn/");
 
+            IconedTwoLineListItem noin = new IconedTwoLineListItem();
+            noin.setImage(new Image("/assets/img/noin.png", 32, 32, false, true));
+            noin.setTitle(i18n("about.thanks_to.noin"));
+            noin.setSubtitle(i18n("about.thanks_to.noin.statement"));
+            noin.setExternalLink("https://noin.cn/");
+
             IconedTwoLineListItem contributors = new IconedTwoLineListItem();
             contributors.setImage(new Image("/assets/img/github.png", 32, 32, false, true));
             contributors.setTitle(i18n("about.thanks_to.contributors"));
@@ -92,7 +104,7 @@ public class AboutPage extends StackPane {
             users.setSubtitle(i18n("about.thanks_to.users.statement"));
             users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, mcbbs, mcmod, redLnn, users, contributors);
+            thanks.getContent().setAll(yushijinhun, bangbang93, mcbbs, mcmod, noin, gamerteam, redLnn, users, contributors);
         }
 
         ComponentList dep = new ComponentList();
@@ -137,17 +149,20 @@ public class AboutPage extends StackPane {
 
         ComponentList legal = new ComponentList();
         {
-            TwoLineListItem copyright = new TwoLineListItem();
+            IconedTwoLineListItem copyright = new IconedTwoLineListItem();
             copyright.setTitle(i18n("about.copyright"));
             copyright.setSubtitle(i18n("about.copyright.statement"));
+            copyright.setExternalLink("https://hmcl.huangyuhui.net/about/");
 
-            TwoLineListItem claim = new TwoLineListItem();
+            IconedTwoLineListItem claim = new IconedTwoLineListItem();
             claim.setTitle(i18n("about.claim"));
             claim.setSubtitle(i18n("about.claim.statement"));
+            claim.setExternalLink(Metadata.EULA_URL);
 
-            TwoLineListItem openSource = new TwoLineListItem();
+            IconedTwoLineListItem openSource = new IconedTwoLineListItem();
             openSource.setTitle(i18n("about.open_source"));
             openSource.setSubtitle(i18n("about.open_source.statement"));
+            openSource.setExternalLink("https://github.com/huanghongxun/HMCL");
 
             legal.getContent().setAll(copyright, claim, openSource);
         }
@@ -169,9 +184,9 @@ public class AboutPage extends StackPane {
         );
 
 
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setContent(content);
+        ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
+        JFXScrollPane.smoothScrolling(scrollPane);
         getChildren().setAll(scrollPane);
     }
 }

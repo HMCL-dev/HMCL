@@ -272,4 +272,7 @@ public class YggdrasilService {
             .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
             .create();
 
+    public static final String PROFILE_URL = "https://www.minecraft.net/profile";
+    public static final String MIGRATION_FAQ_URL = "https://help.minecraft.net/hc/en-us/articles/360050865492-JAVA-Account-Migration-FAQ";
+    public static final String PURCHASE_URL = "https://www.minecraft.net/zh-hans/store/minecraft-java-edition";
 }

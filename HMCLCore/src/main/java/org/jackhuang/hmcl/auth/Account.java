@@ -69,7 +69,7 @@ public abstract class Account implements Observable {
      * Play offline.
      * @return the specific offline player's info.
      */
-    public abstract Optional<AuthInfo> playOffline();
+    public abstract Optional<AuthInfo> playOffline() throws AuthenticationException;
 
     public abstract Map<Object, Object> toStorage();
 

@@ -56,6 +56,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
@@ -80,23 +81,27 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final JFXTextField txtGameArgs;
     private final JFXTextField txtMetaspace;
     private final JFXTextField txtWrapper;
-    private final JFXTextField txtPrecallingCommand;
+    private final JFXTextField txtPreLaunchCommand;
+    private final JFXTextField txtPostExitCommand;
     private final JFXTextField txtServerIP;
     private final ComponentList componentList;
     private final ComponentList iconPickerItemWrapper;
     private final JFXComboBox<LauncherVisibility> cboLauncherVisibility;
     private final JFXCheckBox chkAutoAllocate;
     private final JFXCheckBox chkFullscreen;
-    private final JFXToggleButton chkNoJVMArgs;
-    private final JFXToggleButton chkNoGameCheck;
-    private final JFXToggleButton chkNoJVMCheck;
-    private final JFXToggleButton chkUseNativeGLFW;
-    private final JFXToggleButton chkUseNativeOpenAL;
+    private final OptionToggleButton noJVMArgsPane;
+    private final OptionToggleButton noGameCheckPane;
+    private final OptionToggleButton noJVMCheckPane;
+    private final OptionToggleButton useNativeGLFWPane;
+    private final OptionToggleButton useNativeOpenALPane;
     private final MultiFileItem<JavaVersion> javaItem;
+    private final MultiFileItem.FileOption<JavaVersion> javaCustomOption;
     private final MultiFileItem<GameDirectoryType> gameDirItem;
+    private final MultiFileItem.FileOption<GameDirectoryType> gameDirCustomOption;
     private final MultiFileItem<NativesDirectoryType> nativesDirItem;
+    private final MultiFileItem.FileOption<NativesDirectoryType> nativesDirCustomOption;
     private final JFXComboBox<ProcessPriority> cboProcessPriority;
-    private final JFXToggleButton chkShowLogs;
+    private final OptionToggleButton showLogsPane;
     private final ImagePickerItem iconPickerItem;
     private final JFXCheckBox chkEnableSpecificSettings;
     private final BorderPane settingsTypePane;
@@ -153,19 +158,24 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             componentList = new ComponentList();
             componentList.setDepth(1);
 
-            javaItem = new MultiFileItem<>(true);
+            javaItem = new MultiFileItem<>();
             javaItem.setTitle(i18n("settings.game.java_directory"));
-            javaItem.setChooserTitle(i18n("settings.game.java_directory.choose"));
             javaItem.setHasSubtitle(true);
-            javaItem.setCustomText(i18n("settings.custom"));
-            javaItem.setDirectory(false);
+            javaCustomOption = new MultiFileItem.FileOption<JavaVersion>(i18n("settings.custom"), null)
+                    .setChooserTitle(i18n("settings.game.java_directory.choose"));
 
-            gameDirItem = new MultiFileItem<>(true);
+            gameDirItem = new MultiFileItem<>();
             gameDirItem.setTitle(i18n("settings.game.working_directory"));
-            gameDirItem.setChooserTitle(i18n("settings.game.working_directory.choose"));
             gameDirItem.setHasSubtitle(true);
-            gameDirItem.setCustomText(i18n("settings.custom"));
-            gameDirItem.setDirectory(true);
+            gameDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.custom"), GameDirectoryType.CUSTOM)
+                            .setChooserTitle(i18n("settings.game.working_directory.choose"))
+                            .setDirectory(true);
+
+            gameDirItem.loadChildren(Arrays.asList(
+                    new MultiFileItem.Option<>(i18n("settings.advanced.game_dir.default"), GameDirectoryType.ROOT_FOLDER),
+                    new MultiFileItem.Option<>(i18n("settings.advanced.game_dir.independent"), GameDirectoryType.VERSION_FOLDER),
+                    gameDirCustomOption
+            ));
 
             VBox maxMemoryPane = new VBox(8);
             {
@@ -318,17 +328,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 }
             }
 
-            BorderPane showLogsPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.show_log"));
-                showLogsPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-
-                chkShowLogs = new JFXToggleButton();
-                showLogsPane.setRight(chkShowLogs);
-                chkShowLogs.setSize(8);
-                FXUtils.setLimitHeight(chkShowLogs, 20);
-            }
+            showLogsPane = new OptionToggleButton();
+            showLogsPane.setTitle(i18n("settings.show_log"));
 
             BorderPane processPriorityPane = new BorderPane();
             {
@@ -376,28 +377,34 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         customCommandsPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
         {
             GridPane pane = new GridPane();
-            ColumnConstraints title = new ColumnConstraints();
-            ColumnConstraints value = new ColumnConstraints();
-            value.setFillWidth(true);
-            value.setHgrow(Priority.ALWAYS);
             pane.setHgap(16);
             pane.setVgap(8);
-            pane.getColumnConstraints().setAll(title, value);
+            pane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
 
             txtGameArgs = new JFXTextField();
             txtGameArgs.setPromptText(i18n("settings.advanced.minecraft_arguments.prompt"));
             txtGameArgs.getStyleClass().add("fit-width");
             pane.addRow(0, new Label(i18n("settings.advanced.minecraft_arguments")), txtGameArgs);
 
-            txtPrecallingCommand = new JFXTextField();
-            txtPrecallingCommand.setPromptText(i18n("settings.advanced.precall_command.prompt"));
-            txtPrecallingCommand.getStyleClass().add("fit-width");
-            pane.addRow(1, new Label(i18n("settings.advanced.precall_command")), txtPrecallingCommand);
+            txtPreLaunchCommand = new JFXTextField();
+            txtPreLaunchCommand.setPromptText(i18n("settings.advanced.precall_command.prompt"));
+            txtPreLaunchCommand.getStyleClass().add("fit-width");
+            pane.addRow(1, new Label(i18n("settings.advanced.precall_command")), txtPreLaunchCommand);
 
             txtWrapper = new JFXTextField();
             txtWrapper.setPromptText(i18n("settings.advanced.wrapper_launcher.prompt"));
             txtWrapper.getStyleClass().add("fit-width");
             pane.addRow(2, new Label(i18n("settings.advanced.wrapper_launcher")), txtWrapper);
+
+            txtPostExitCommand = new JFXTextField();
+            txtPostExitCommand.setPromptText(i18n("settings.advanced.post_exit_command.prompt"));
+            txtPostExitCommand.getStyleClass().add("fit-width");
+            pane.addRow(3, new Label(i18n("settings.advanced.post_exit_command")), txtPostExitCommand);
+
+            HintPane hintPane = new HintPane();
+            hintPane.setText(i18n("settings.advanced.custom_commands.hint"));
+            GridPane.setColumnSpan(hintPane, 2);
+            pane.addRow(4, hintPane);
 
             customCommandsPane.getContent().setAll(pane);
         }
@@ -432,72 +439,31 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         ComponentList workaroundPane = new ComponentList();
         workaroundPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
         {
-            nativesDirItem = new MultiFileItem<>(true);
+            nativesDirItem = new MultiFileItem<>();
             nativesDirItem.setTitle(i18n("settings.advanced.natives_directory"));
-            nativesDirItem.setChooserTitle(i18n("settings.advanced.natives_directory.choose"));
             nativesDirItem.setHasSubtitle(true);
-            nativesDirItem.setCustomText(i18n("settings.custom"));
-            nativesDirItem.setDirectory(true);
+            nativesDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.custom"), NativesDirectoryType.CUSTOM)
+                    .setChooserTitle(i18n("settings.advanced.natives_directory.choose"))
+                    .setDirectory(true);
+            nativesDirItem.loadChildren(Arrays.asList(
+                    new MultiFileItem.Option<>(i18n("settings.advanced.natives_directory.default"), NativesDirectoryType.VERSION_FOLDER),
+                    nativesDirCustomOption
+            ));
 
-            BorderPane noJVMArgsPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced.no_jvm_args"));
-                noJVMArgsPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+            noJVMArgsPane = new OptionToggleButton();
+            noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
 
-                chkNoJVMArgs = new JFXToggleButton();
-                noJVMArgsPane.setRight(chkNoJVMArgs);
-                chkNoJVMArgs.setSize(8);
-                FXUtils.setLimitHeight(chkNoJVMArgs, 20);
-            }
+            noGameCheckPane = new OptionToggleButton();
+            noGameCheckPane.setTitle(i18n("settings.advanced.dont_check_game_completeness"));
 
-            BorderPane noGameCheckPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced.dont_check_game_completeness"));
-                noGameCheckPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+            noJVMCheckPane = new OptionToggleButton();
+            noJVMCheckPane.setTitle(i18n("settings.advanced.dont_check_jvm_validity"));
 
-                chkNoGameCheck = new JFXToggleButton();
-                noGameCheckPane.setRight(chkNoGameCheck);
-                chkNoGameCheck.setSize(8);
-                FXUtils.setLimitHeight(chkNoGameCheck, 20);
-            }
+            useNativeGLFWPane = new OptionToggleButton();
+            useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
 
-            BorderPane noJVMCheckPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced.dont_check_jvm_validity"));
-                noJVMCheckPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-
-                chkNoJVMCheck = new JFXToggleButton();
-                noJVMCheckPane.setRight(chkNoJVMCheck);
-                chkNoJVMCheck.setSize(8);
-                FXUtils.setLimitHeight(chkNoJVMCheck, 20);
-            }
-
-            BorderPane useNativeGLFWPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced.use_native_glfw"));
-                useNativeGLFWPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-
-                chkUseNativeGLFW = new JFXToggleButton();
-                useNativeGLFWPane.setRight(chkUseNativeGLFW);
-                chkUseNativeGLFW.setSize(8);
-                FXUtils.setLimitHeight(chkUseNativeGLFW, 20);
-            }
-
-            BorderPane useNativeOpenALPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced.use_native_openal"));
-                useNativeOpenALPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-
-                chkUseNativeOpenAL = new JFXToggleButton();
-                useNativeOpenALPane.setRight(chkUseNativeOpenAL);
-                chkUseNativeOpenAL.setSize(8);
-                FXUtils.setLimitHeight(chkUseNativeOpenAL, 20);
-            }
+            useNativeOpenALPane = new OptionToggleButton();
+            useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
 
             workaroundPane.getContent().setAll(nativesDirItem, noJVMArgsPane, noGameCheckPane, noJVMCheckPane, useNativeGLFWPane, useNativeOpenALPane);
         }
@@ -527,10 +493,13 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         memoryStatusProperty.set(OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID));
 
         Task.supplyAsync(JavaVersion::getJavas).thenAcceptAsync(Schedulers.javafx(), list -> {
-            javaItem.loadChildren(list.stream()
-                    .map(javaVersion -> javaItem.createChildren(javaVersion.getVersion() + i18n("settings.game.java_directory.bit",
-                            javaVersion.getPlatform().getBit()), javaVersion.getBinary().toString(), javaVersion))
-                    .collect(Collectors.toList()));
+            List<MultiFileItem.Option<JavaVersion>> options = list.stream()
+                    .map(javaVersion -> new MultiFileItem.Option<>(javaVersion.getVersion() + i18n("settings.game.java_directory.bit",
+                            javaVersion.getPlatform().getBit()), javaVersion)
+                            .setSubtitle(javaVersion.getBinary().toString()))
+                    .collect(Collectors.toList());
+            options.add(javaCustomOption);
+            javaItem.loadChildren(options);
             javaItemsLoaded = true;
             initializeSelectedJava();
         }).start();
@@ -538,18 +507,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         javaItem.setSelectedData(null);
         javaItem.setFallbackData(JavaVersion.fromCurrentEnvironment());
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-            javaItem.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe", "javaw.exe"));
-
-        gameDirItem.setCustomUserData(GameDirectoryType.CUSTOM);
-        gameDirItem.loadChildren(Arrays.asList(
-                gameDirItem.createChildren(i18n("settings.advanced.game_dir.default"), GameDirectoryType.ROOT_FOLDER),
-                gameDirItem.createChildren(i18n("settings.advanced.game_dir.independent"), GameDirectoryType.VERSION_FOLDER)
-        ));
-
-        nativesDirItem.setCustomUserData(NativesDirectoryType.CUSTOM);
-        nativesDirItem.loadChildren(Arrays.asList(
-                nativesDirItem.createChildren(i18n("settings.advanced.natives_directory.default"), NativesDirectoryType.VERSION_FOLDER)
-        ));
+            javaCustomOption.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe", "javaw.exe"));
 
         chkEnableSpecificSettings.selectedProperty().addListener((a, b, newValue) -> {
             if (versionId == null) return;
@@ -590,23 +548,24 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbindInt(txtWidth, lastVersionSetting.widthProperty());
             FXUtils.unbindInt(txtHeight, lastVersionSetting.heightProperty());
             maxMemoryProperty.unbindBidirectional(lastVersionSetting.maxMemoryProperty());
-            FXUtils.unbindString(javaItem.getTxtCustom(), lastVersionSetting.javaDirProperty());
-            FXUtils.unbindString(gameDirItem.getTxtCustom(), lastVersionSetting.gameDirProperty());
-            FXUtils.unbindString(nativesDirItem.getTxtCustom(), lastVersionSetting.nativesDirProperty());
+            javaCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.javaDirProperty());
+            gameDirCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.gameDirProperty());
+            nativesDirCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.nativesDirProperty());
             FXUtils.unbindString(txtJVMArgs, lastVersionSetting.javaArgsProperty());
             FXUtils.unbindString(txtGameArgs, lastVersionSetting.minecraftArgsProperty());
             FXUtils.unbindString(txtMetaspace, lastVersionSetting.permSizeProperty());
             FXUtils.unbindString(txtWrapper, lastVersionSetting.wrapperProperty());
-            FXUtils.unbindString(txtPrecallingCommand, lastVersionSetting.preLaunchCommandProperty());
+            FXUtils.unbindString(txtPreLaunchCommand, lastVersionSetting.preLaunchCommandProperty());
+            FXUtils.unbindString(txtPostExitCommand, lastVersionSetting.postExitCommandProperty());
             FXUtils.unbindString(txtServerIP, lastVersionSetting.serverIpProperty());
             FXUtils.unbindBoolean(chkAutoAllocate, lastVersionSetting.autoMemoryProperty());
             FXUtils.unbindBoolean(chkFullscreen, lastVersionSetting.fullscreenProperty());
-            FXUtils.unbindBoolean(chkNoGameCheck, lastVersionSetting.notCheckGameProperty());
-            FXUtils.unbindBoolean(chkNoJVMCheck, lastVersionSetting.notCheckJVMProperty());
-            FXUtils.unbindBoolean(chkNoJVMArgs, lastVersionSetting.noJVMArgsProperty());
-            FXUtils.unbindBoolean(chkShowLogs, lastVersionSetting.showLogsProperty());
-            FXUtils.unbindBoolean(chkUseNativeGLFW, lastVersionSetting.useNativeGLFWProperty());
-            FXUtils.unbindBoolean(chkUseNativeOpenAL, lastVersionSetting.useNativeOpenALProperty());
+            noGameCheckPane.selectedProperty().unbindBidirectional(lastVersionSetting.notCheckGameProperty());
+            noJVMCheckPane.selectedProperty().unbindBidirectional(lastVersionSetting.notCheckJVMProperty());
+            noJVMArgsPane.selectedProperty().unbindBidirectional(lastVersionSetting.noJVMArgsProperty());
+            showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
+            useNativeGLFWPane.selectedProperty().unbindBidirectional(lastVersionSetting.useNativeGLFWProperty());
+            useNativeOpenALPane.selectedProperty().unbindBidirectional(lastVersionSetting.useNativeOpenALProperty());
             FXUtils.unbindEnum(cboLauncherVisibility);
             FXUtils.unbindEnum(cboProcessPriority);
 
@@ -628,23 +587,24 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         FXUtils.bindInt(txtWidth, versionSetting.widthProperty());
         FXUtils.bindInt(txtHeight, versionSetting.heightProperty());
         maxMemoryProperty.bindBidirectional(versionSetting.maxMemoryProperty());
-        FXUtils.bindString(javaItem.getTxtCustom(), versionSetting.javaDirProperty());
-        FXUtils.bindString(gameDirItem.getTxtCustom(), versionSetting.gameDirProperty());
-        FXUtils.bindString(nativesDirItem.getTxtCustom(), versionSetting.nativesDirProperty());
+
+        javaCustomOption.bindBidirectional(versionSetting.javaDirProperty());
+        gameDirCustomOption.bindBidirectional(versionSetting.gameDirProperty());
+        nativesDirCustomOption.bindBidirectional(versionSetting.nativesDirProperty());
         FXUtils.bindString(txtJVMArgs, versionSetting.javaArgsProperty());
         FXUtils.bindString(txtGameArgs, versionSetting.minecraftArgsProperty());
         FXUtils.bindString(txtMetaspace, versionSetting.permSizeProperty());
         FXUtils.bindString(txtWrapper, versionSetting.wrapperProperty());
-        FXUtils.bindString(txtPrecallingCommand, versionSetting.preLaunchCommandProperty());
+        FXUtils.bindString(txtPreLaunchCommand, versionSetting.preLaunchCommandProperty());
         FXUtils.bindString(txtServerIP, versionSetting.serverIpProperty());
         FXUtils.bindBoolean(chkAutoAllocate, versionSetting.autoMemoryProperty());
         FXUtils.bindBoolean(chkFullscreen, versionSetting.fullscreenProperty());
-        FXUtils.bindBoolean(chkNoGameCheck, versionSetting.notCheckGameProperty());
-        FXUtils.bindBoolean(chkNoJVMCheck, versionSetting.notCheckJVMProperty());
-        FXUtils.bindBoolean(chkNoJVMArgs, versionSetting.noJVMArgsProperty());
-        FXUtils.bindBoolean(chkShowLogs, versionSetting.showLogsProperty());
-        FXUtils.bindBoolean(chkUseNativeGLFW, versionSetting.useNativeGLFWProperty());
-        FXUtils.bindBoolean(chkUseNativeOpenAL, versionSetting.useNativeOpenALProperty());
+        noGameCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckGameProperty());
+        noJVMCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckJVMProperty());
+        noJVMArgsPane.selectedProperty().bindBidirectional(versionSetting.noJVMArgsProperty());
+        showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
+        useNativeGLFWPane.selectedProperty().bindBidirectional(versionSetting.useNativeGLFWProperty());
+        useNativeOpenALPane.selectedProperty().bindBidirectional(versionSetting.useNativeOpenALProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
         FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
 
@@ -653,7 +613,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             chkEnableSpecificSettings.setSelected(!versionSetting.isUsesGlobal());
 
         javaItem.setToggleSelectedListener(newValue -> {
-            if (javaItem.isCustomToggle(newValue)) {
+            if (newValue.getUserData() == null) {
                 versionSetting.setUsesCustomJavaDir();
             } else {
                 versionSetting.setJavaVersion((JavaVersion) newValue.getUserData());
@@ -687,7 +647,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         if (lastVersionSetting.isUsesCustomJavaDir()) {
             javaItem.getGroup().getToggles().stream()
-                    .filter(javaItem::isCustomToggle)
+                    .filter(java -> java.getUserData() == null)
                     .findFirst().get()
                     .setSelected(true);
         } else {

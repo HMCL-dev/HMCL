@@ -39,6 +39,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.*;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
@@ -619,6 +621,19 @@ public final class FXUtils {
                 }
             }
         };
+    }
+
+    public static ColumnConstraints getColumnFillingWidth() {
+        ColumnConstraints constraint = new ColumnConstraints();
+        constraint.setFillWidth(true);
+        return constraint;
+    }
+
+    public static ColumnConstraints getColumnHgrowing() {
+        ColumnConstraints constraint = new ColumnConstraints();
+        constraint.setFillWidth(true);
+        constraint.setHgrow(Priority.ALWAYS);
+        return constraint;
     }
 
     public static final Interpolator SINE = new Interpolator() {

@@ -25,7 +25,6 @@ import javafx.scene.Node;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -161,14 +160,12 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
         @Override
         protected List<Node> initializeToolbar(WorldListPage skinnable) {
             JFXCheckBox chkShowAll = new JFXCheckBox();
-            chkShowAll.getStyleClass().add("jfx-tool-bar-checkbox");
-            chkShowAll.textFillProperty().bind(Theme.foregroundFillBinding());
             chkShowAll.setText(i18n("world.show_all"));
             chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
 
             return Arrays.asList(chkShowAll,
-                    createToolbarButton(i18n("button.refresh"), SVG::refresh, skinnable::refresh),
-                    createToolbarButton(i18n("world.add"), SVG::plus, skinnable::add));
+                    createToolbarButton2(i18n("button.refresh"), SVG::refresh, skinnable::refresh),
+                    createToolbarButton2(i18n("world.add"), SVG::plus, skinnable::add));
         }
     }
 }

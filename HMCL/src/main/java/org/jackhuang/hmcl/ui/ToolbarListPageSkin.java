@@ -19,17 +19,18 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXScrollPane;
-import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SkinBase;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
 import java.util.List;
@@ -40,43 +41,39 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         super(skinnable);
 
         SpinnerPane spinnerPane = new SpinnerPane();
+        spinnerPane.loadingProperty().bind(skinnable.loadingProperty());
+        spinnerPane.failedReasonProperty().bind(skinnable.failedReasonProperty());
+        spinnerPane.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
         spinnerPane.getStyleClass().add("large-spinner-pane");
 
-        BorderPane root = new BorderPane();
+        ComponentList root = new ComponentList();
+        root.getStyleClass().add("no-padding");
+        StackPane.setMargin(root, new Insets(10));
 
         List<Node> toolbarButtons = initializeToolbar(skinnable);
         if (!toolbarButtons.isEmpty()) {
             HBox toolbar = new HBox();
-            toolbar.getStyleClass().add("jfx-tool-bar-second");
-            JFXDepthManager.setDepth(toolbar, 1);
+            toolbar.setAlignment(Pos.CENTER_LEFT);
             toolbar.setPickOnBounds(false);
             toolbar.getChildren().setAll(toolbarButtons);
-            root.setTop(toolbar);
+            root.getContent().add(toolbar);
         }
 
         {
             ScrollPane scrollPane = new ScrollPane();
+            ComponentList.setVgrow(scrollPane, Priority.ALWAYS);
             scrollPane.setFitToWidth(true);
 
             VBox content = new VBox();
-            content.setSpacing(10);
-            content.setPadding(new Insets(10));
 
             Bindings.bindContent(content.getChildren(), skinnable.itemsProperty());
 
             scrollPane.setContent(content);
             JFXScrollPane.smoothScrolling(scrollPane);
 
-            root.setCenter(scrollPane);
+            root.getContent().add(scrollPane);
         }
 
-        FXUtils.onChangeAndOperate(skinnable.loadingProperty(), loading -> {
-            if (loading) {
-                spinnerPane.showSpinner();
-            } else {
-                spinnerPane.hideSpinner();
-            }
-        });
         spinnerPane.setContent(root);
 
         getChildren().setAll(spinnerPane);

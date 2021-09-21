@@ -1,0 +1,114 @@
+---- Minecraft Crash Report ----
+// Don't do that.
+
+Time: 2019-12-31 11:43:31 CST
+Description: Initializing game
+
+net.minecraftforge.fml.common.LoaderExceptionModCrash: Caught exception from Kathairis (kathairis)
+Caused by: java.lang.IllegalArgumentException: Failed to register dimension for id 2, One is already registered
+    at net.minecraftforge.common.DimensionManager.registerDimension(DimensionManager.java:134)
+    at mod.krevik.KCore.dimRegistry(KCore.java:493)
+    at mod.krevik.KCore.preInit(KCore.java:799)
+    at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+    at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+    at java.lang.reflect.Method.invoke(Unknown Source)
+    at net.minecraftforge.fml.common.FMLModContainer.handleModStateEvent(FMLModContainer.java:637)
+    at sun.reflect.GeneratedMethodAccessor9.invoke(Unknown Source)
+    at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+    at java.lang.reflect.Method.invoke(Unknown Source)
+    at com.google.common.eventbus.Subscriber.invokeSubscriberMethod(Subscriber.java:91)
+    at com.google.common.eventbus.Subscriber$SynchronizedSubscriber.invokeSubscriberMethod(Subscriber.java:150)
+    at com.google.common.eventbus.Subscriber$1.run(Subscriber.java:76)
+    at com.google.common.util.concurrent.MoreExecutors$DirectExecutor.execute(MoreExecutors.java:399)
+    at com.google.common.eventbus.Subscriber.dispatchEvent(Subscriber.java:71)
+    at com.google.common.eventbus.Dispatcher$PerThreadQueuedDispatcher.dispatch(Dispatcher.java:116)
+    at com.google.common.eventbus.EventBus.post(EventBus.java:217)
+    at net.minecraftforge.fml.common.LoadController.sendEventToModContainer(LoadController.java:219)
+    at net.minecraftforge.fml.common.LoadController.propogateStateMessage(LoadController.java:197)
+    at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+    at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+    at java.lang.reflect.Method.invoke(Unknown Source)
+    at com.google.common.eventbus.Subscriber.invokeSubscriberMethod(Subscriber.java:91)
+    at com.google.common.eventbus.Subscriber$SynchronizedSubscriber.invokeSubscriberMethod(Subscriber.java:150)
+    at com.google.common.eventbus.Subscriber$1.run(Subscriber.java:76)
+    at com.google.common.util.concurrent.MoreExecutors$DirectExecutor.execute(MoreExecutors.java:399)
+    at com.google.common.eventbus.Subscriber.dispatchEvent(Subscriber.java:71)
+    at com.google.common.eventbus.Dispatcher$PerThreadQueuedDispatcher.dispatch(Dispatcher.java:116)
+    at com.google.common.eventbus.EventBus.post(EventBus.java:217)
+    at net.minecraftforge.fml.common.LoadController.distributeStateMessage(LoadController.java:136)
+    at net.minecraftforge.fml.common.Loader.preinitializeMods(Loader.java:627)
+    at net.minecraftforge.fml.client.FMLClientHandler.beginMinecraftLoading(FMLClientHandler.java:252)
+    at net.minecraft.client.Minecraft.init(Minecraft.java:467)
+    at net.minecraft.client.Minecraft.run(Minecraft.java:3931)
+    at net.minecraft.client.main.Main.main(SourceFile:123)
+    at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+    at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+    at java.lang.reflect.Method.invoke(Unknown Source)
+    at net.minecraft.launchwrapper.Launch.launch(Launch.java:135)
+    at net.minecraft.launchwrapper.Launch.main(Launch.java:28)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- System Details --
+  Minecraft Version: 1.12.2
+  Operating System: Windows 7 (amd64) version 6.1
+  Java Version: 1.8.0_121, Oracle Corporation
+  Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+  Memory: 2673556512 bytes (2549 MB) / 3674210304 bytes (3504 MB) up to 3674210304 bytes (3504 MB)
+  JVM Flags: 11 total; -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=16M -XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -Xmn128m -Xmx3500m -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump
+  IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+  FML: MCP 9.42 Powered by Forge 14.23.5.2825 22 mods loaded, 22 mods active
+       States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+
+       | State | ID                  | Version                  | Source                                            | Signature                                |
+       |:----- |:------------------- |:------------------------ |:------------------------------------------------- |:---------------------------------------- |
+       | LCH   | minecraft           | 1.12.2                   | minecraft.jar                                     | None                                     |
+       | LCH   | mcp                 | 9.42                     | minecraft.jar                                     | None                                     |
+       | LCH   | FML                 | 8.0.99.99                | forge-1.12.2-14.23.5.2825.jar                     | e3c3d50c7c986df74c645c0ac54639741c90a557 |
+       | LCH   | forge               | 14.23.5.2825             | forge-1.12.2-14.23.5.2825.jar                     | e3c3d50c7c986df74c645c0ac54639741c90a557 |
+       | LCH   | foamfixcore         | 7.7.4                    | minecraft.jar                                     | None                                     |
+       | LCH   | damageindicatorsmod | 1.0                      | [1.12.2]血量显示.jar                                  | None                                     |
+       | LCH   | inventorytweaks     | 1.63+release.109.220f184 | [R建整理]InventoryTweaks-1.63.jar                    | 55d2cd4f5f0961410bf7b91ef6c6bf00a766dcbe |
+       | LCH   | foamfix             | 0.10.3-1.12.2            | [内存优化]foamfix-0.10.3-1.12.2.jar                   | None                                     |
+       | LCH   | codechickenlib      | 3.2.2.353                | [前置]CodeChickenLib-1.12.2-3.2.2.353-universal.jar | f1850c39b2516232a2108a7bd84d1cb5df93b261 |
+       | LCH   | recipehandler       | 0.13                     | [合成冲突消除器]NoMoreRecipeConflict-0.13(1.12.2).jar    | None                                     |
+       | LCH   | lucky               | 7.5.0                    | [幸运方块]LuckyBlock_1-12_v7-5-0.jar                  | None                                     |
+       | LCH   | jei                 | 4.15.0.287               | jei_1.12.2-4.15.0.287.jar                         | None                                     |
+       | LCH   | projecte            | 1.12.2-PE1.4.0           | [等价交换]ProjectE-1.12.2-PE1.4.0.jar                 | None                                     |
+       | LCH   | durabilityshow      | 5.0.0                    | [耐久显示]Durability+Show-1.12-5.0.0.jar              | None                                     |
+       | LCH   | oreexcavation       | 1.4.137                  | [连锁挖矿]OreExcavation-1.4.137.jar                   | None                                     |
+       | LCH   | vanillafix          | 1.0.10-SNAPSHOT          | [防止崩溃]VanillaFix-1.0.10-99.jar                    | None                                     |
+       | LCH   | hardcorequesting    | @VERSION@                | HQM-1.12-5.4.0-hotfix1.jar                        | None                                     |
+       | LCH   | journeymap          | 1.12-5.4.9               | journeymap-1.12-5.4.9.jar                         | None                                     |
+       | LCH   | kamenridercraft4th  | 1.3                      | KamenRiderCraft4th+-+1.12.2+-+1.4.jar             | None                                     |
+       | LCE   | kathairis           | 1.12.2-1.6.0-beta        | Kathairis-1.12.2-1.6.0-beta.jar                   | None                                     |
+       | LC    | nei                 | 2.4.2                    | NotEnoughItems-1.12.2-2.4.2.244-universal.jar     | f1850c39b2516232a2108a7bd84d1cb5df93b261 |
+       | LC    | aoa3                | 3.1.2.b                  | 虚无世界3.jar                                         | None                                     |
+  Loaded coremods (and transformers): Do not report to Forge! (If you haven't disabled the FoamFix coremod, try disabling it in the config! Note that this bit of text will still appear.) ([内存优化]foamfix-0.10.3-1.12.2.jar)
+                                        pl.asie.foamfix.coremod.FoamFixTransformer
+                                      VanillaFixLoadingPlugin ([防止崩溃]VanillaFix-1.0.10-99.jar)
+
+                                      Inventory Tweaks Coremod ([R建整理]InventoryTweaks-1.63.jar)
+                                        invtweaks.forge.asm.ContainerTransformer
+  GL info: ' Vendor: 'Intel' Version: '4.0.0 - Build 10.18.10.4425' Renderer: 'Intel(R) HD Graphics'
+  Suspected Mods: Kathairis (kathairis)
+  Launched Version: HMCL 3.2.139
+  LWJGL: 2.9.4
+  OpenGL: Intel(R) HD Graphics GL version 4.0.0 - Build 10.18.10.4425, Intel
+  GL Caps: Using GL 1.3 multitexturing.
+           Using GL 1.3 texture combiners.
+           Using framebuffer objects because OpenGL 3.0 is supported and separate blending is supported.
+           Shaders are available because OpenGL 2.1 is supported.
+           VBOs are available because OpenGL 1.5 is supported.
+  Using VBOs: Yes
+  Is Modded: Definitely; Client brand changed to 'fml,forge'
+  Type: Client (map_client.txt)
+  Resource Packs:
+  Current Language: 简体中文 (中国)
+  Profiler Position: N/A (disabled)
+  CPU: 2x Intel(R) Celeron(R) CPU G1620 @ 2.70GHz

@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXScrollPane;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
@@ -37,10 +39,11 @@ import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
-import java.util.Collections;
+import java.util.Arrays;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -52,6 +55,7 @@ public class PersonalizationPage extends StackPane {
         content.setPadding(new Insets(10));
         content.setFillWidth(true);
         ScrollPane scrollPane = new ScrollPane(content);
+        JFXScrollPane.smoothScrolling(scrollPane);
         scrollPane.setFitToWidth(true);
         getChildren().setAll(scrollPane);
 
@@ -73,7 +77,7 @@ public class PersonalizationPage extends StackPane {
             picker.setOnAction(e -> {
                 Theme theme = Theme.custom(Theme.getColorDisplayName(picker.getValue()));
                 config().setTheme(theme);
-                Controllers.getScene().getStylesheets().setAll(theme.getStylesheets());
+                Controllers.getScene().getStylesheets().setAll(theme.getStylesheets(config().getLauncherFontFamily()));
             });
             themeColorPickerContainer.getChildren().setAll(picker);
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
@@ -84,17 +88,19 @@ public class PersonalizationPage extends StackPane {
         {
             StackPane componentList = new StackPane();
 
-            MultiFileItem<EnumBackgroundImage> backgroundItem = new MultiFileItem<>(true);
+            MultiFileItem<EnumBackgroundImage> backgroundItem = new MultiFileItem<>();
             backgroundItem.setTitle(i18n("launcher.background"));
-            backgroundItem.setChooserTitle(i18n("launcher.background.choose"));
             backgroundItem.setHasSubtitle(true);
-            backgroundItem.setCustomText(i18n("settings.custom"));
-            backgroundItem.setStyle("-fx-padding: 8 0 0 0");
 
-            backgroundItem.loadChildren(Collections.singletonList(
-                    backgroundItem.createChildren(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
-            ), EnumBackgroundImage.CUSTOM);
-            backgroundItem.customTextProperty().bindBidirectional(config().backgroundImageProperty());
+            backgroundItem.loadChildren(Arrays.asList(
+                    new MultiFileItem.Option<>(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT),
+                    new MultiFileItem.Option<>(i18n("launcher.background.classic"), EnumBackgroundImage.CLASSIC),
+                    new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumBackgroundImage.CUSTOM)
+                            .setChooserTitle(i18n("launcher.background.choose"))
+                            .bindBidirectional(config().backgroundImageProperty()),
+                    new MultiFileItem.StringOption<>(i18n("launcher.background.network"), EnumBackgroundImage.NETWORK)
+                            .bindBidirectional(config().backgroundImageUrlProperty())
+            ));
             backgroundItem.selectedDataProperty().bindBidirectional(config().backgroundImageTypeProperty());
             backgroundItem.subtitleProperty().bind(
                     new When(backgroundItem.selectedDataProperty().isEqualTo(EnumBackgroundImage.DEFAULT))
@@ -176,21 +182,17 @@ public class PersonalizationPage extends StackPane {
 
                     {
                         HBox hBox = new HBox();
-                        hBox.setSpacing(3);
+                        hBox.setSpacing(8);
 
                         FontComboBox cboFont = new FontComboBox(12);
-                        cboFont.valueProperty().bindBidirectional(config().fontFamilyProperty());
+                        cboFont.valueProperty().bindBidirectional(config().launcherFontFamilyProperty());
 
-                        JFXTextField txtFontSize = new JFXTextField();
-                        FXUtils.setLimitWidth(txtFontSize, 50);
-                        txtFontSize.textProperty().bindBidirectional(config().fontSizeProperty(),
-                                SafeStringConverter.fromFiniteDouble()
-                                        .restrict(it -> it > 0)
-                                        .fallbackTo(12.0)
-                                        .asPredicate(Validator.addTo(txtFontSize)));
+                        JFXButton clearButton = new JFXButton();
+                        clearButton.getStyleClass().add("toggle-icon4");
+                        clearButton.setGraphic(SVG.restore(Theme.blackFillBinding(), -1, -1));
+                        clearButton.setOnAction(e -> config().setLauncherFontFamily(null));
 
-
-                        hBox.getChildren().setAll(cboFont, txtFontSize);
+                        hBox.getChildren().setAll(cboFont, clearButton);
 
                         borderPane.setRight(hBox);
                     }
@@ -198,8 +200,11 @@ public class PersonalizationPage extends StackPane {
 
                 Label lblFontDisplay = new Label("Hello Minecraft! Launcher");
                 lblFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
-                        () -> Font.font(config().getFontFamily(), config().getFontSize()),
-                        config().fontFamilyProperty(), config().fontSizeProperty()));
+                        () -> Font.font(config().getLauncherFontFamily(), 12),
+                        config().launcherFontFamilyProperty()));
+                config().launcherFontFamilyProperty().addListener((a, b, newValue) -> {
+                    Controllers.getScene().getStylesheets().setAll(config().getTheme().getStylesheets(newValue));
+                });
 
                 vbox.getChildren().add(lblFontDisplay);
 

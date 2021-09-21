@@ -1,0 +1,50 @@
+[23:31:31] [main/INFO]: Loading tweak class name net.fabricmc.loader.launch.FabricClientTweaker
+[23:31:31] [main/INFO]: Using primary tweak class name net.fabricmc.loader.launch.FabricClientTweaker
+[23:31:31] [main/INFO]: Calling tweak class net.fabricmc.loader.launch.FabricClientTweaker
+[23:31:31] [main/ERROR]: Unable to load mod from fabric-example-mod-1.0.0.jar
+com.google.gson.JsonSyntaxException: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was BEGIN_ARRAY at path $.mixins
+	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:224)
+	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:129)
+	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:220)
+	at com.google.gson.Gson.fromJson(Gson.java:887)
+	at com.google.gson.Gson.fromJson(Gson.java:952)
+	at com.google.gson.Gson.fromJson(Gson.java:925)
+	at net.fabricmc.loader.FabricLoader.getMods(FabricLoader.java:489)
+	at net.fabricmc.loader.FabricLoader.getJarMods(FabricLoader.java:474)
+	at net.fabricmc.loader.FabricLoader.load(FabricLoader.java:191)
+	at net.fabricmc.loader.FabricLoader.load(FabricLoader.java:148)
+	at net.fabricmc.loader.launch.FabricTweaker.injectIntoClassLoader(FabricTweaker.java:132)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:115)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:28)
+Caused by: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was BEGIN_ARRAY at path $.mixins
+	at com.google.gson.internal.bind.JsonTreeReader.expect(JsonTreeReader.java:162)
+	at com.google.gson.internal.bind.JsonTreeReader.beginObject(JsonTreeReader.java:87)
+	at com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:213)
+	... 12 more
+[23:31:31] [main/INFO]: Loading 1 mod: fabric
+[23:31:31] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.7.11 Source=file:/C:/Users/user/AppData/Roaming/.minecraft/libraries/net/fabricmc/sponge-mixin/0.7.11.10/sponge-mixin-0.7.11.10.jar Service=LaunchWrapper Env=UNKNOWN
+[23:31:32] [main/INFO]: FML platform manager could not load class cpw.mods.fml.relauncher.CoreModManager. Proceeding without FML support.
+[23:31:32] [main/INFO]: Compatibility level set to JAVA_8
+[23:31:32] [main/INFO]: Loading tweak class name org.spongepowered.asm.mixin.EnvironmentStateTweaker
+[23:31:32] [main/INFO]: Calling tweak class org.spongepowered.asm.mixin.EnvironmentStateTweaker
+[23:31:33] [main/WARN]: Error loading class: net/minecraft/server/MinecraftServer (java.lang.IllegalArgumentException: Unsupported class file major version 60)
+[23:31:33] [main/WARN]: @Mixin target net.minecraft.server.MinecraftServer was not found fabric-loader.mixins.common.json:server.MixinMinecraftServerBrand
+[23:31:33] [main/WARN]: Error loading class: net/minecraft/class_310 (java.lang.ClassNotFoundException: The specified class 'net.minecraft.class_310' was not found)
+[23:31:33] [main/WARN]: @Mixin target net.minecraft.class_310 was not found fabric-loader.mixins.client.json:MixinMinecraftClient
+[23:31:33] [main/WARN]: Error loading class: net/minecraft/client/ClientBrandRetriever (java.lang.IllegalArgumentException: Unsupported class file major version 60)
+[23:31:33] [main/WARN]: @Mixin target net.minecraft.client.ClientBrandRetriever was not found fabric-loader.mixins.client.json:MixinClientBrandRetriever
+[23:31:33] [main/ERROR]: Unable to launch
+java.lang.ClassNotFoundException: net.minecraft.client.main.Main
+	at net.minecraft.launchwrapper.LaunchClassLoader.findClass(LaunchClassLoader.java:191) ~[launchwrapper-1.12.jar:?]
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:418) ~[?:1.8.0_241]
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:351) ~[?:1.8.0_241]
+	at java.lang.Class.forName0(Native Method) ~[?:1.8.0_241]
+	at java.lang.Class.forName(Class.java:348) ~[?:1.8.0_241]
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:131) [launchwrapper-1.12.jar:?]
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:28) [launchwrapper-1.12.jar:?]
+Caused by: java.lang.UnsupportedClassVersionError: net/minecraft/client/main/Main has been compiled by a more recent version of the Java Runtime (class file version 60.0), this version of the Java Runtime only recognizes class file versions up to 52.0
+	at java.lang.ClassLoader.defineClass1(Native Method) ~[?:1.8.0_241]
+	at java.lang.ClassLoader.defineClass(ClassLoader.java:756) ~[?:1.8.0_241]
+	at java.security.SecureClassLoader.defineClass(SecureClassLoader.java:142) ~[?:1.8.0_241]
+	at net.minecraft.launchwrapper.LaunchClassLoader.findClass(LaunchClassLoader.java:182) ~[launchwrapper-1.12.jar:?]
+	... 6 more

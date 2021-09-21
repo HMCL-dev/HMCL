@@ -504,7 +504,7 @@ public class MicrosoftService {
          *
          * @throws IOException if an I/O error occurred.
          */
-        OAuthSession startServer() throws IOException;
+        OAuthSession startServer() throws IOException, AuthenticationException;
 
         /**
          * Open browser

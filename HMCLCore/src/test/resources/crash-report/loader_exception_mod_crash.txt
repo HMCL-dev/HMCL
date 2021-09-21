@@ -1,0 +1,99 @@
+---- Minecraft Crash Report ----
+
+WARNING: coremods are present:
+Contact their authors BEFORE contacting forge
+
+// There are four lights!
+
+Time: 1/6/19 2:12 AM
+Description: There was a severe problem during mod loading that has caused the game to fail
+
+net.minecraftforge.fml.common.LoaderExceptionModCrash: Caught exception from Better PvP (xaerobetterpvp)
+Caused by: java.nio.file.FileAlreadyExistsException: D:\Games\Minecraft\Minecraft Longtimeusing\.minecraft\versions\1.12.2-forge1.12.2-14.23.5.2775\config\pvpsettings.txt
+	at sun.nio.fs.WindowsFileCopy.move(Unknown Source)
+	at sun.nio.fs.WindowsFileSystemProvider.move(Unknown Source)
+	at java.nio.file.Files.move(Unknown Source)
+	at xaero.pvp.BetterPVP.preInit(BetterPVP.java:105)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraftforge.fml.common.FMLModContainer.handleModStateEvent(FMLModContainer.java:624)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at com.google.common.eventbus.Subscriber.invokeSubscriberMethod(Subscriber.java:87)
+	at com.google.common.eventbus.Subscriber$SynchronizedSubscriber.invokeSubscriberMethod(Subscriber.java:144)
+	at com.google.common.eventbus.Subscriber$1.run(Subscriber.java:72)
+	at com.google.common.util.concurrent.DirectExecutor.execute(DirectExecutor.java:30)
+	at com.google.common.eventbus.Subscriber.dispatchEvent(Subscriber.java:67)
+	at com.google.common.eventbus.Dispatcher$PerThreadQueuedDispatcher.dispatch(Dispatcher.java:108)
+	at com.google.common.eventbus.EventBus.post(EventBus.java:212)
+	at net.minecraftforge.fml.common.LoadController.sendEventToModContainer(LoadController.java:218)
+	at net.minecraftforge.fml.common.LoadController.propogateStateMessage(LoadController.java:196)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at com.google.common.eventbus.Subscriber.invokeSubscriberMethod(Subscriber.java:87)
+	at com.google.common.eventbus.Subscriber$SynchronizedSubscriber.invokeSubscriberMethod(Subscriber.java:144)
+	at com.google.common.eventbus.Subscriber$1.run(Subscriber.java:72)
+	at com.google.common.util.concurrent.DirectExecutor.execute(DirectExecutor.java:30)
+	at com.google.common.eventbus.Subscriber.dispatchEvent(Subscriber.java:67)
+	at com.google.common.eventbus.Dispatcher$PerThreadQueuedDispatcher.dispatch(Dispatcher.java:108)
+	at com.google.common.eventbus.EventBus.post(EventBus.java:212)
+	at net.minecraftforge.fml.common.LoadController.distributeStateMessage(LoadController.java:135)
+	at net.minecraftforge.fml.common.Loader.preinitializeMods(Loader.java:627)
+	at net.minecraftforge.fml.client.FMLClientHandler.beginMinecraftLoading(FMLClientHandler.java:252)
+	at net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:466)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:377)
+	at net.minecraft.client.main.Main.main(SourceFile:123)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:135)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:28)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- System Details --
+Details:
+	Minecraft Version: 1.12.2
+	Operating System: Windows 10 (amd64) version 10.0
+	Java Version: 1.8.0_192, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 163542816 bytes (155 MB) / 419430400 bytes (400 MB) up to 8506048512 bytes (8112 MB)
+	JVM Flags: 11 total; -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=16M -XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -Xmn128m -Xmx8104m -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump
+	IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+	FML: MCP 9.42 Powered by Forge 14.23.5.2775 Optifine OptiFine_1.12.2_HD_U_E2 8 mods loaded, 8 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+
+	| State | ID             | Version      | Source                                  | Signature                                |
+	|:----- |:-------------- |:------------ |:--------------------------------------- |:---------------------------------------- |
+	| UCH   | minecraft      | 1.12.2       | minecraft.jar                           | None                                     |
+	| UCH   | mcp            | 9.42         | minecraft.jar                           | None                                     |
+	| UCH   | FML            | 8.0.99.99    | forge-1.12.2-14.23.5.2775.jar           | e3c3d50c7c986df74c645c0ac54639741c90a557 |
+	| UCH   | forge          | 14.23.5.2775 | forge-1.12.2-14.23.5.2775.jar           | e3c3d50c7c986df74c645c0ac54639741c90a557 |
+	| UCEE  | xaerobetterpvp | 1.15.9       | BetterPvPFairPlay_1.15.9_Forge_1.12.jar | None                                     |
+	| UC    | hud            | 1.3.9        | hud-1.3.9-1.12.jar                      | None                                     |
+	| UC    | quickplay      | 2.0.3        | Quickplay-1.12-2.0.3.jar                | None                                     |
+	| UC    | level_head     | 5.0          | Sk1er Levelhead (1.12.2)-5.0.jar        | None                                     |
+
+	Loaded coremods (and transformers):
+	GL info: ' Vendor: 'Intel' Version: '4.5.0 - Build 25.20.100.6373' Renderer: 'Intel(R) HD Graphics 530'
+	OptiFine Version: OptiFine_1.12.2_HD_U_E2
+	OptiFine Build: 20180728-185429
+	Render Distance Chunks: 8
+	Mipmaps: 4
+	Anisotropic Filtering: 1
+	Antialiasing: 0
+	Multitexture: false
+	Shaders: null
+	OpenGlVersion: 4.5.0 - Build 25.20.100.6373
+	OpenGlRenderer: Intel(R) HD Graphics 530
+	OpenGlVendor: Intel
+	CpuCount: 4

@@ -66,6 +66,8 @@ public final class NetworkUtils {
     }
 
     public static List<Pair<String, String>> parseQuery(String queryParameterString) {
+        if (queryParameterString == null) return Collections.emptyList();
+
         List<Pair<String, String>> result = new ArrayList<>();
 
         try (Scanner scanner = new Scanner(queryParameterString)) {

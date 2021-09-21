@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXRadioButton;
-import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.SkinBase;
@@ -33,6 +32,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.Lazy;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -109,14 +109,14 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
 
         root.setRight(right);
 
-        root.getStyleClass().add("card");
+        root.getStyleClass().add("md-list-cell");
         root.setStyle("-fx-padding: 8 8 8 0");
-        JFXDepthManager.setDepth(root, 1);
 
-        getChildren().setAll(root);
+        RipplerContainer container = new RipplerContainer(root);
+        getChildren().setAll(container);
 
         root.setCursor(Cursor.HAND);
-        root.setOnMouseClicked(e -> {
+        container.setOnMouseClicked(e -> {
             if (e.getButton() == MouseButton.PRIMARY) {
                 if (e.getClickCount() == 1) {
                     skinnable.modifyGameSettings();

@@ -1,0 +1,14 @@
+OpenJDK 64-Bit Server VM warning: Option --illegal-access is deprecated and will be removed in a future release.
+[06:34:05] [main/INFO]: Loading for game Minecraft 1.17.1
+Exception in thread "main" java.lang.RuntimeException: Failed to resolve mods!
+	at net.fabricmc.loader.FabricLoader.load(FabricLoader.java:159)
+	at net.fabricmc.loader.launch.knot.Knot.init(Knot.java:122)
+	at net.fabricmc.loader.launch.knot.KnotClient.main(KnotClient.java:26)
+Caused by: net.fabricmc.loader.discovery.ModResolutionException: Errors were found!
+ - Mod test depends on mod {fabricloader @ [>=0.11.3]}, which is missing!
+ - Mod test depends on mod {fabric @ [*]}, which is missing!
+ - Mod test depends on mod {java @ [>=16]}, which is missing!
+	at net.fabricmc.loader.discovery.ModResolver.findCompatibleSet(ModResolver.java:323)
+	at net.fabricmc.loader.discovery.ModResolver.resolve(ModResolver.java:508)
+	at net.fabricmc.loader.FabricLoader.load(FabricLoader.java:157)
+	... 2 more

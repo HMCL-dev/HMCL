@@ -30,6 +30,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -408,6 +409,14 @@ public final class FileUtils {
             return true;
         } catch (InvalidPathException ignored) {
             return false;
+        }
+    }
+
+    public static Optional<Path> tryGetPath(String first, String... more) {
+        try {
+            return Optional.of(Paths.get(first, more));
+        } catch (InvalidPathException e) {
+            return Optional.empty();
         }
     }
 }

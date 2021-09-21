@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.InstallerItem;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
@@ -139,22 +140,24 @@ public class InstallersPage extends Control implements WizardPage {
             BorderPane root = new BorderPane();
             root.setPadding(new Insets(16));
 
-            VBox list = new VBox(8);
+            ComponentList list = new ComponentList();
+            list.getStyleClass().add("no-padding");
             root.setCenter(list);
             {
                 HBox versionNamePane = new HBox(8);
                 versionNamePane.setAlignment(Pos.CENTER_LEFT);
-                versionNamePane.getStyleClass().add("card");
-                versionNamePane.setStyle("-fx-padding: 20 8 20 16");
-
-                versionNamePane.getChildren().add(new Label(i18n("archive.name")));
+                versionNamePane.setPadding(new Insets(20, 8, 20, 16));
 
                 control.txtName.setMaxWidth(300);
-                versionNamePane.getChildren().add(control.txtName);
-                list.getChildren().add(versionNamePane);
+                versionNamePane.getChildren().setAll(new Label(i18n("archive.name")), control.txtName);
+                list.getContent().add(versionNamePane);
             }
 
-            list.getChildren().addAll(control.group.getLibraries());
+            {
+                VBox libraryPane = new VBox(control.group.getLibraries());
+                list.getContent().add(libraryPane);
+            }
+
 
             {
                 JFXButton installButton = new JFXButton(i18n("button.install"));

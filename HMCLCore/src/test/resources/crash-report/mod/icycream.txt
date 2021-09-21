@@ -1,0 +1,203 @@
+---- Minecraft Crash Report ----
+// Why did you do that?
+
+Time: 8/17/20 8:14 PM
+Description: Ticking player
+
+java.lang.NullPointerException: Ticking player
+	at icycream.common.item.ItemIceCream.getEffectFromNBT(ItemIceCream.java:43) ~[?:1.0] {re:classloading}
+	at icycream.common.item.ItemIceCream.func_77654_b(ItemIceCream.java:107) ~[?:1.0] {re:classloading}
+	at net.minecraft.item.ItemStack.func_77950_b(ItemStack.java:201) ~[?:?] {re:classloading}
+	at net.minecraft.entity.LivingEntity.func_71036_o(LivingEntity.java:2656) ~[?:?] {re:classloading}
+	at net.minecraft.entity.player.ServerPlayerEntity.func_71036_o(ServerPlayerEntity.java:954) ~[?:?] {re:classloading,pl:accesstransformer:B}
+	at net.minecraft.entity.LivingEntity.func_184608_ct(LivingEntity.java:2537) ~[?:?] {re:classloading}
+	at net.minecraft.entity.LivingEntity.func_70071_h_(LivingEntity.java:2025) ~[?:?] {re:classloading}
+	at net.minecraft.entity.player.PlayerEntity.func_70071_h_(PlayerEntity.java:233) ~[?:?] {re:classloading,pl:accesstransformer:B,xf:fml:nickname:get_display_name}
+	at net.minecraft.entity.player.ServerPlayerEntity.func_71127_g(ServerPlayerEntity.java:361) ~[?:?] {re:classloading,pl:accesstransformer:B}
+	at net.minecraft.network.play.ServerPlayNetHandler.func_73660_a(ServerPlayNetHandler.java:183) ~[?:?] {re:classloading}
+	at net.minecraft.network.NetworkManager.func_74428_b(NetworkManager.java:228) ~[?:?] {re:classloading}
+	at net.minecraft.network.NetworkSystem.func_151269_c(NetworkSystem.java:135) ~[?:?] {re:classloading}
+	at net.minecraft.server.MinecraftServer.func_71190_q(MinecraftServer.java:866) ~[?:?] {re:classloading,pl:accesstransformer:B}
+	at net.minecraft.server.MinecraftServer.func_71217_p(MinecraftServer.java:784) ~[?:?] {re:classloading,pl:accesstransformer:B}
+	at net.minecraft.server.integrated.IntegratedServer.func_71217_p(IntegratedServer.java:114) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.server.MinecraftServer.run(MinecraftServer.java:637) [?:?] {re:classloading,pl:accesstransformer:B}
+	at java.lang.Thread.run(Thread.java:748) [?:1.8.0_261] {}
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Server thread
+Stacktrace:
+	at icycream.common.item.ItemIceCream.getEffectFromNBT(ItemIceCream.java:43)
+	at icycream.common.item.ItemIceCream.func_77654_b(ItemIceCream.java:107)
+	at net.minecraft.item.ItemStack.func_77950_b(ItemStack.java:201)
+	at net.minecraft.entity.LivingEntity.func_71036_o(LivingEntity.java:2656)
+	at net.minecraft.entity.player.ServerPlayerEntity.func_71036_o(ServerPlayerEntity.java:954)
+	at net.minecraft.entity.LivingEntity.func_184608_ct(LivingEntity.java:2537)
+	at net.minecraft.entity.LivingEntity.func_70071_h_(LivingEntity.java:2025)
+	at net.minecraft.entity.player.PlayerEntity.func_70071_h_(PlayerEntity.java:233)
+
+-- Player being ticked --
+Details:
+	Entity Type: minecraft:player (net.minecraft.entity.player.ServerPlayerEntity)
+	Entity ID: 209
+	Entity Name: ZekerZhayard
+	Entity's Exact location: -44.56, 77.16, -39.57
+	Entity's Block location: World: (-45,77,-40), Chunk: (at 3,4,8 in -3,-3; contains blocks -48,0,-48 to -33,255,-33), Region: (-1,-1; contains chunks -32,-32 to -1,-1, blocks -512,0,-512 to -1,255,-1)
+	Entity's Momentum: 0.00, 0.00, 0.00
+	Entity's Passengers: []
+	Entity's Vehicle: ~~ERROR~~ NullPointerException: null
+Stacktrace:
+	at net.minecraft.entity.player.ServerPlayerEntity.func_71127_g(ServerPlayerEntity.java:361)
+	at net.minecraft.network.play.ServerPlayNetHandler.func_73660_a(ServerPlayNetHandler.java:183)
+	at net.minecraft.network.NetworkManager.func_74428_b(NetworkManager.java:228)
+
+-- Ticking connection --
+Details:
+	Connection: net.minecraft.network.NetworkManager@2525d68a
+Stacktrace:
+	at net.minecraft.network.NetworkSystem.func_151269_c(NetworkSystem.java:135)
+	at net.minecraft.server.MinecraftServer.func_71190_q(MinecraftServer.java:866)
+	at net.minecraft.server.MinecraftServer.func_71217_p(MinecraftServer.java:784)
+	at net.minecraft.server.integrated.IntegratedServer.func_71217_p(IntegratedServer.java:114)
+	at net.minecraft.server.MinecraftServer.run(MinecraftServer.java:637)
+	at java.lang.Thread.run(Thread.java:748)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.15.2
+	Minecraft Version ID: 1.15.2
+	Operating System: Windows 10 (amd64) version 10.0
+	Java Version: 1.8.0_261, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 2333111144 bytes (2225 MB) / 4294967296 bytes (4096 MB) up to 4294967296 bytes (4096 MB)
+	CPUs: 4
+	JVM Flags: 11 total; -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=16M -XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -Xms512m -Xmx4096m
+	Forge Mods:
+		| ID                     | Name                                             | Version              | Source                                        | Status |
+		| ---------------------- | ------------------------------------------------ | -------------------- | --------------------------------------------- | ------ |
+		| minecraft              | Minecraft                                        | 1.15.2               | forge-1.15.2-31.2.0-client.jar                | DONE   |
+		| unexpectedteleport     | Unexpected Teleport                              | NONE                 | unexpectedteleport-1.0.0.jar                  | DONE   |
+		| simple_permission      | Simple Permission                                | 0.1.1                | SimplePermission-Forge-1.15-0.1.1.jar         | DONE   |
+		| icycream               | Icy Cream                                        | 1.0                  | icycream-1.0.jar                              | DONE   |
+		| vida                   | Vida                                             | 0.0.1                | vida-1.0.jar                                  | DONE   |
+		| instantbubblestudio    | Instant Bubble Studio                            | 1.0.0                | instantbubblestudio-1.0.0.jar                 | DONE   |
+		| customskinloader       | CustomSkinLoader                                 | 14.13-SNAPSHOT-170   | CustomSkinLoader_Forge-14.13-SNAPSHOT-170.jar | DONE   |
+		| hamburger              | Hamburger Of LaoBa                               | 1.0                  | hamburger-1.0.jar                             | DONE   |
+		| jei                    | Just Enough Items                                | 6.0.2.12             | jei-1.15.2-6.0.2.12.jar                       | DONE   |
+		| tea                    | Example Mod                                      | 1.0                  | potato-like-mod-forge-1.0.0.jar               | DONE   |
+		| rpgmaths               | RPG Maths                                        | 1.0.0-snapshot       | rpgmaths-1.0.0-snapshot.jar                   | DONE   |
+		| heavenearthring        | Heaven Earth Ring                                | Bata 0.1.3           | heavenearthring-Bata 0.1.3.jar                | DONE   |
+		| vacation_diary         | 度假日记                                             | 1.0                  | vacation_diary-1.0.jar                        | DONE   |
+		| chineseworkshop        | ChineseWorkshop                                  | 2.4.5                | ChineseWorkshop-1.15.2-2.4.5.jar              | DONE   |
+		| nickname               | Nickname                                         | 0.2.5                | Nickname-Forge-1.15-0.2.5.jar                 | DONE   |
+		| curios                 | Curios API                                       | FORGE-1.15.2-2.0.2.4 | curios-FORGE-1.15.2-2.0.2.4.jar               | DONE   |
+		| patchouli              | Patchouli                                        | 1.15.2-1.2-35        | Patchouli-1.15.2-1.2-35.jar                   | DONE   |
+		| waystones              | Waystones                                        | 6.0.2                | Waystones_1.15.2-6.0.2.jar                    | DONE   |
+		| hnkinvention           | Hoshtimber&Kadokawa Wonderful Invention          | 1.15.2-Beta-1.0.0    | hnkinvention-1.15.2-Beta-1.0.0.jar            | DONE   |
+		| arcaneart              | Arcane Art                                       | 0.0.1                | arcaneart-0.0.1.jar                           | DONE   |
+		| storagedrawers         | Storage Drawers                                  | 1.15.2-7.0.1         | StorageDrawers-1.15.2-7.0.2.jar               | DONE   |
+		| morecrashinfo          | MoreCrashInfo                                    | 1.0.4                | MoreCrashInfo-1.0.4.jar                       | DONE   |
+		| suuuuuuuper_herbal_tea | Suuuuuuuper herbal tea                           | 1.15.2_Alpha_V1      | Suuuuuuuper_Herbal_Tea-1.15.2_Alpha_V1.jar    | DONE   |
+		| abouttea               | AboutTea                                         | 1.0                  | AboutTea-1.0.jar                              | DONE   |
+		| throwable              | Throwable                                        | 1.0                  | throwable-1.0-SNAPSHOT.jar                    | DONE   |
+		| kaleido                | 看过来！关于在酷暑难耐的炎炎夏日，一边品味下午茶，一边惬意地装饰自己的空间，这样的模组你喜欢吗？ | 1.0.1                | Kaleido-1.15.2-1.0.1.jar                      | DONE   |
+		| kiwi                   | Kiwi                                             | 2.8.3                | Kiwi-1.15.2-2.8.3.jar                         | DONE   |
+		| crockpot               | Crock Pot                                        | 0.1.0                | CrockPot-1.15.2-0.1.0.jar                     | DONE   |
+		| dprm                   | Datapack Recipe Maker                            | 1.2                  | DatapackRecipeMaker-1.15.2-1.2.jar            | DONE   |
+		| watersprayer           | Water Sprayer                                    | 1.0.0                | WaterSprayer-1.0.0.jar                        | DONE   |
+		| honkaiimpact           | HonkaiImpact3                                    | 1.0                  | HonkaiImpact-1.0.jar                          | DONE   |
+		| tea_sorcerer           | Tea Sorcerer                                     | 1.0                  | tea_sorcerer-1.0.jar                          | DONE   |
+		| bananacraft            | Banana Craft                                     | 1.0                  | bananacraft-1.0.jar                           | DONE   |
+		| afterthedrizzle        | After the Drizzle                                | 0.2.21-TC-1.15.2     | AfterTheDrizzle-0.2.21-TC-1.15.2.jar          | DONE   |
+		| sinocraft              | Sino Craft                                       | 1.15.2-1.0.0         | sinocraft-1.15.2-1.0.0.jar                    | DONE   |
+		| crafttweaker           | CraftTweaker                                     | 6.0.0.24             | CraftTweaker-1.15.2-6.0.0.24.jar              | DONE   |
+		| chromeball             | Chrome Ball                                      | 0.2.2                | ChromeBall-Forge-1.15-0.2.2.jar               | DONE   |
+		| forge                  | Forge                                            | 31.2.0               | forge-1.15.2-31.2.0-universal.jar             | DONE   |
+		| slide_show             | Slide Show                                       | 0.1.0                | SlideShow-Forge-1.15-0.1.0.jar                | DONE   |
+		| examplemod             | Example Mod                                      | 1.0                  | Out-s-teacon--1.0.jar                         | DONE   |
+	Forge CoreMods:
+		| ID               | Name                      | Source                       | Status |
+		| ---------------- | ------------------------- | ---------------------------- | ------ |
+		| customskinloader | transformers              | transformers.js              | Loaded |
+		| nickname         | nickname_hooks            | hooks.js                     | Loaded |
+		| patchouli        | patchouli_on_advancement  | on_advancement.js            | Loaded |
+		| morecrashinfo    | crashtransformers         | crashtransformers.js         | Loaded |
+		| afterthedrizzle  | atd_celestial_angle       | celestial-angle.js           | Loaded |
+		| forge            | fieldtomethodtransformers | fieldtomethodtransformers.js | Loaded |
+	ModLauncher: 5.1.0+69+master.79f13f7
+	ModLauncher launch target: fmlclient
+	ModLauncher naming: srg
+	ModLauncher services:
+		/eventbus-2.2.0-service.jar eventbus PLUGINSERVICE
+		/forge-1.15.2-31.2.0-launcher.jar object_holder_definalize PLUGINSERVICE
+		/forge-1.15.2-31.2.0-launcher.jar runtime_enum_extender PLUGINSERVICE
+		/accesstransformers-2.1.1-shadowed.jar accesstransformer PLUGINSERVICE
+		/forge-1.15.2-31.2.0-launcher.jar capability_inject_definalize PLUGINSERVICE
+		/forge-1.15.2-31.2.0-launcher.jar runtimedistcleaner PLUGINSERVICE
+		/forge-1.15.2-31.2.0-launcher.jar fml TRANSFORMATIONSERVICE
+	FML: 31.2
+	Forge: net.minecraftforge:31.2.0
+	FML Language Providers:
+		javafml@31.2
+		minecraft@1
+		kotlinforforge@1.3.1
+		scorge@3.0.6
+	Mod List:
+		forge-1.15.2-31.2.0-client.jar Minecraft {minecraft@1.15.2 DONE}
+		unexpectedteleport-1.0.0.jar Unexpected Teleport {unexpectedteleport@NONE DONE}
+		SimplePermission-Forge-1.15-0.1.1.jar Simple Permission {simple_permission@0.1.1 DONE}
+		icycream-1.0.jar Icy Cream {icycream@1.0 DONE}
+		vida-1.0.jar Vida {vida@0.0.1 DONE}
+		instantbubblestudio-1.0.0.jar Instant Bubble Studio {instantbubblestudio@1.0.0 DONE}
+		CustomSkinLoader_Forge-14.13-SNAPSHOT-170.jar CustomSkinLoader {customskinloader@14.13-SNAPSHOT-170 DONE}
+		hamburger-1.0.jar Hamburger Of LaoBa {hamburger@1.0 DONE}
+		jei-1.15.2-6.0.2.12.jar Just Enough Items {jei@6.0.2.12 DONE}
+		potato-like-mod-forge-1.0.0.jar Example Mod {tea@1.0 DONE}
+		rpgmaths-1.0.0-snapshot.jar RPG Maths {rpgmaths@1.0.0-snapshot DONE}
+		heavenearthring-Bata 0.1.3.jar Heaven Earth Ring {heavenearthring@Bata 0.1.3 DONE}
+		vacation_diary-1.0.jar 度假日记 {vacation_diary@1.0 DONE}
+		ChineseWorkshop-1.15.2-2.4.5.jar ChineseWorkshop {chineseworkshop@2.4.5 DONE}
+		Nickname-Forge-1.15-0.2.5.jar Nickname {nickname@0.2.5 DONE}
+		curios-FORGE-1.15.2-2.0.2.4.jar Curios API {curios@FORGE-1.15.2-2.0.2.4 DONE}
+		Patchouli-1.15.2-1.2-35.jar Patchouli {patchouli@1.15.2-1.2-35 DONE}
+		Waystones_1.15.2-6.0.2.jar Waystones {waystones@6.0.2 DONE}
+		hnkinvention-1.15.2-Beta-1.0.0.jar Hoshtimber&Kadokawa Wonderful Invention {hnkinvention@1.15.2-Beta-1.0.0 DONE}
+		arcaneart-0.0.1.jar Arcane Art {arcaneart@0.0.1 DONE}
+		StorageDrawers-1.15.2-7.0.2.jar Storage Drawers {storagedrawers@1.15.2-7.0.1 DONE}
+		MoreCrashInfo-1.0.4.jar MoreCrashInfo {morecrashinfo@1.0.4 DONE}
+		Suuuuuuuper_Herbal_Tea-1.15.2_Alpha_V1.jar Suuuuuuuper herbal tea {suuuuuuuper_herbal_tea@1.15.2_Alpha_V1 DONE}
+		AboutTea-1.0.jar AboutTea {abouttea@1.0 DONE}
+		throwable-1.0-SNAPSHOT.jar Throwable {throwable@1.0 DONE}
+		Kaleido-1.15.2-1.0.1.jar 看过来！关于在酷暑难耐的炎炎夏日，一边品味下午茶，一边惬意地装饰自己的空间，这样的模组你喜欢吗？ {kaleido@1.0.1 DONE}
+		Kiwi-1.15.2-2.8.3.jar Kiwi {kiwi@2.8.3 DONE}
+		CrockPot-1.15.2-0.1.0.jar Crock Pot {crockpot@0.1.0 DONE}
+		DatapackRecipeMaker-1.15.2-1.2.jar Datapack Recipe Maker {dprm@1.2 DONE}
+		WaterSprayer-1.0.0.jar Water Sprayer {watersprayer@1.0.0 DONE}
+		HonkaiImpact-1.0.jar HonkaiImpact3 {honkaiimpact@1.0 DONE}
+		tea_sorcerer-1.0.jar Tea Sorcerer {tea_sorcerer@1.0 DONE}
+		bananacraft-1.0.jar Banana Craft {bananacraft@1.0 DONE}
+		AfterTheDrizzle-0.2.21-TC-1.15.2.jar After the Drizzle {afterthedrizzle@0.2.21-TC-1.15.2 DONE}
+		sinocraft-1.15.2-1.0.0.jar Sino Craft {sinocraft@1.15.2-1.0.0 DONE}
+		CraftTweaker-1.15.2-6.0.0.24.jar CraftTweaker {crafttweaker@6.0.0.24 DONE}
+		ChromeBall-Forge-1.15-0.2.2.jar Chrome Ball {chromeball@0.2.2 DONE}
+		forge-1.15.2-31.2.0-universal.jar Forge {forge@31.2.0 DONE}
+		SlideShow-Forge-1.15-0.1.0.jar Slide Show {slide_show@0.1.0 DONE}
+		Out-s-teacon--1.0.jar Example Mod {examplemod@1.0 DONE}
+	Kiwi Modules:
+		chineseworkshop:blocks
+		chineseworkshop:debug_stick
+		chineseworkshop:decorations
+		chineseworkshop:materials
+		chineseworkshop:retexture
+		kaleido:carpentry
+		kaleido:kaleido
+		kiwi:contributors
+		kiwi:data
+	Patchouli open book context: n/a
+	Player Count: 1 / 8; [ServerPlayerEntity['ZekerZhayard'/209, l='Test', x=-44.56, y=77.16, z=-39.57]]
+	Data Packs: mod:customskinloader (incompatible), mod:morecrashinfo (incompatible), vanilla, mod:unexpectedteleport, mod:simple_permission, mod:icycream, mod:vida, mod:instantbubblestudio, mod:hamburger, mod:jei (incompatible), mod:tea, mod:rpgmaths, mod:heavenearthring, mod:vacation_diary, mod:chineseworkshop, mod:nickname, mod:curios (incompatible), mod:patchouli (incompatible), mod:waystones (incompatible), mod:hnkinvention, mod:arcaneart, mod:storagedrawers (incompatible), mod:suuuuuuuper_herbal_tea, mod:abouttea, mod:throwable (incompatible), mod:kaleido, mod:kiwi, mod:crockpot, mod:dprm, mod:watersprayer, mod:honkaiimpact, mod:tea_sorcerer, mod:bananacraft, mod:afterthedrizzle (incompatible), mod:sinocraft, mod:crafttweaker (incompatible), mod:chromeball, mod:forge (incompatible), mod:slide_show, mod:examplemod
+	Type: Integrated Server (map_client.txt)
+	Is Modded: Definitely; Client brand changed to 'forge'

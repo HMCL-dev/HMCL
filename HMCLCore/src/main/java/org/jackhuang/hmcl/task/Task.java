@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -665,14 +664,14 @@ public abstract class Task<T> {
             @Override
             public void execute() throws Exception {
                 if (isDependentsSucceeded() != (Task.this.getException() == null))
-                    throw new AssertionError("When dependents succeeded, Task.exception must be nonnull.");
+                    throw new AssertionError("When whenComplete succeeded, Task.exception must be null.");
 
                 action.execute(Task.this.getException());
 
                 if (!isDependentsSucceeded()) {
                     setSignificance(TaskSignificance.MINOR);
                     if (Task.this.getException() == null)
-                        throw new CancellationException();
+                        throw new AssertionError("When failed, exception cannot be null");
                     else
                         throw Task.this.getException();
                 }
@@ -866,7 +865,7 @@ public abstract class Task<T> {
      * @param tasks the Tasks
      * @return a new Task that is completed when all of the given Tasks complete
      */
-    public static Task<Void> allOf(Task<?>... tasks) {
+    public static Task<List<Object>> allOf(Task<?>... tasks) {
         return allOf(Arrays.asList(tasks));
     }
 
@@ -881,14 +880,15 @@ public abstract class Task<T> {
      * @param tasks the Tasks
      * @return a new Task that is completed when all of the given Tasks complete
      */
-    public static Task<Void> allOf(Collection<Task<?>> tasks) {
-        return new Task<Void>() {
+    public static Task<List<Object>> allOf(Collection<Task<?>> tasks) {
+        return new Task<List<Object>>() {
             {
                 setSignificance(TaskSignificance.MINOR);
             }
 
             @Override
             public void execute() {
+                setResult(tasks.stream().map(Task::getResult).collect(Collectors.toList()));
             }
 
             @Override

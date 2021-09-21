@@ -81,7 +81,7 @@ public final class Accounts {
         }
     }
 
-    public static final OfflineAccountFactory FACTORY_OFFLINE = OfflineAccountFactory.INSTANCE;
+    public static final OfflineAccountFactory FACTORY_OFFLINE = new OfflineAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER);
     public static final YggdrasilAccountFactory FACTORY_MOJANG = YggdrasilAccountFactory.MOJANG;
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
     public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(new MicrosoftAuthenticationServer.Factory()));
@@ -340,14 +340,21 @@ public final class Accounts {
             RemoteAuthenticationException remoteException = (RemoteAuthenticationException) exception;
             String remoteMessage = remoteException.getRemoteMessage();
             if ("ForbiddenOperationException".equals(remoteException.getRemoteName()) && remoteMessage != null) {
-                if (remoteMessage.contains("Invalid credentials"))
+                if (remoteMessage.contains("Invalid credentials")) {
                     return i18n("account.failed.invalid_credentials");
-                else if (remoteMessage.contains("Invalid token"))
+                } else if (remoteMessage.contains("Invalid token")) {
                     return i18n("account.failed.invalid_token");
-                else if (remoteMessage.contains("Invalid username or password"))
+                } else if (remoteMessage.contains("Invalid username or password")) {
                     return i18n("account.failed.invalid_password");
-                else
+                } else {
                     return remoteMessage;
+                }
+            } else if ("ResourceException".equals(remoteException.getRemoteName()) && remoteMessage != null) {
+                if (remoteMessage.contains("The requested resource is no longer available")) {
+                    return i18n("account.failed.migration");
+                } else {
+                    return remoteMessage;
+                }
             }
             return exception.getMessage();
         } else if (exception instanceof AuthlibInjectorDownloadException) {
@@ -371,6 +378,8 @@ public final class Accounts {
             return i18n("account.methods.microsoft.error.no_character");
         } else if (exception instanceof MicrosoftService.NoXuiException) {
             return i18n("account.methods.microsoft.error.add_family_probably");
+        } else if (exception instanceof MicrosoftAuthenticationServer.MicrosoftAuthenticationNotSupportedException) {
+            return i18n("account.methods.microsoft.snapshot");
         } else if (exception.getClass() == AuthenticationException.class) {
             return exception.getLocalizedMessage();
         } else {

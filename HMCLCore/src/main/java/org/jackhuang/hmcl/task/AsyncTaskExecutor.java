@@ -95,7 +95,6 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         }
 
         cancelled.set(true);
-        future.cancel(true);
     }
 
     private CompletableFuture<?> executeTasksExceptionally(Task<?> parentTask, Collection<Task<?>> tasks) {
@@ -229,13 +228,15 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                 .thenComposeAsync(dependentsException -> {
                     boolean isDependentsSucceeded = dependentsException == null;
 
-                    if (!isDependentsSucceeded && task.isRelyingOnDependents()) {
-                        task.setException(dependentsException);
-                        rethrow(dependentsException);
-                    }
-
-                    if (isDependentsSucceeded)
+                    if (isDependentsSucceeded) {
                         task.setDependentsSucceeded();
+                    } else {
+                        task.setException(dependentsException);
+
+                        if (task.isRelyingOnDependents()) {
+                            rethrow(dependentsException);
+                        }
+                    }
 
                     return CompletableFuture.runAsync(wrap(() -> {
                         task.setState(Task.TaskState.RUNNING);
@@ -263,10 +264,12 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                 .thenApplyAsync(dependenciesException -> {
                     boolean isDependenciesSucceeded = dependenciesException == null;
 
-                    if (!isDependenciesSucceeded && task.isRelyingOnDependencies()) {
+                    if (!isDependenciesSucceeded) {
                         Logging.LOG.severe("Subtasks failed for " + task.getName());
                         task.setException(dependenciesException);
-                        rethrow(dependenciesException);
+                        if (task.isRelyingOnDependencies()) {
+                            rethrow(dependenciesException);
+                        }
                     }
 
                     checkCancellation();
@@ -285,23 +288,20 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                 .exceptionally(throwable -> {
                     Throwable resolved = resolveException(throwable);
                     if (resolved instanceof Exception) {
-                        Exception e = (Exception) resolved;
-                        if (e instanceof InterruptedException || e instanceof CancellationException) {
-                            task.setException(null);
+                        Exception e = convertInterruptedException((Exception) resolved);
+                        task.setException(e);
+                        exception = e;
+                        if (e instanceof CancellationException) {
                             if (task.getSignificance().shouldLog()) {
                                 Logging.LOG.log(Level.FINE, "Task aborted: " + task.getName());
                             }
-                            task.onDone().fireEvent(new TaskEvent(this, task, true));
-                            taskListeners.forEach(it -> it.onFailed(task, e));
                         } else {
-                            task.setException(e);
-                            exception = e;
                             if (task.getSignificance().shouldLog()) {
                                 Logging.LOG.log(Level.FINE, "Task failed: " + task.getName(), e);
                             }
-                            task.onDone().fireEvent(new TaskEvent(this, task, true));
-                            taskListeners.forEach(it -> it.onFailed(task, e));
                         }
+                        task.onDone().fireEvent(new TaskEvent(this, task, true));
+                        taskListeners.forEach(it -> it.onFailed(task, e));
 
                         task.setState(Task.TaskState.FAILED);
                     }
@@ -328,6 +328,14 @@ public final class AsyncTaskExecutor extends TaskExecutor {
     private void checkCancellation() {
         if (isCancelled()) {
             throw new CancellationException("Cancelled by user");
+        }
+    }
+
+    private static Exception convertInterruptedException(Exception e) {
+        if (e instanceof InterruptedException) {
+            return new CancellationException(e.getMessage());
+        } else {
+            return e;
         }
     }
 

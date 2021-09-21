@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -74,7 +75,7 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
         String html;
         try {
             html = IOUtils.readFullyAsString(MicrosoftAuthenticationServer.class.getResourceAsStream("/assets/microsoft_auth.html"), StandardCharsets.UTF_8)
-            .replace("%close-page%", i18n("account.methods.microsoft.close_page"));
+                    .replace("%close-page%", i18n("account.methods.microsoft.close_page"));
         } catch (IOException e) {
             Logging.LOG.log(Level.SEVERE, "Failed to load html");
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_HTML, "");
@@ -93,7 +94,11 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
     public static class Factory implements MicrosoftService.OAuthCallback {
 
         @Override
-        public MicrosoftService.OAuthSession startServer() throws IOException {
+        public MicrosoftService.OAuthSession startServer() throws IOException, AuthenticationException {
+            if (StringUtils.isBlank(getClientId())) {
+                throw new MicrosoftAuthenticationNotSupportedException();
+            }
+
             IOException exception = null;
             for (int port : new int[]{29111, 29112, 29113, 29114, 29115}) {
                 try {
@@ -125,5 +130,8 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
                     JarUtils.thisJar().flatMap(JarUtils::getManifest).map(manifest -> manifest.getMainAttributes().getValue("Microsoft-Auth-Secret")).orElse(""));
         }
 
+    }
+
+    public static class MicrosoftAuthenticationNotSupportedException extends AuthenticationException {
     }
 }

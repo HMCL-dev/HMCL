@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
@@ -30,6 +31,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -42,6 +44,7 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         BorderPane root = new BorderPane();
 
         HBox center = new HBox();
+        center.setMouseTransparent(true);
         center.setSpacing(8);
         center.setAlignment(Pos.CENTER_LEFT);
 
@@ -82,9 +85,9 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         right.getChildren().add(btnManage);
         root.setRight(right);
 
-        root.getStyleClass().add("card");
-        root.setStyle("-fx-padding: 8 8 8 0");
+        root.getStyleClass().add("md-list-cell");
+        root.setPadding(new Insets(8));
 
-        getChildren().setAll(root);
+        getChildren().setAll(new RipplerContainer(root));
     }
 }

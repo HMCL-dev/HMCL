@@ -32,7 +32,7 @@ import java.util.logging.Level;
  *
  * @author huangyuhui
  */
-final class StreamPump implements Runnable {
+public final class StreamPump implements Runnable {
 
     private final InputStream inputStream;
     private final Consumer<String> callback;

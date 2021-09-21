@@ -59,7 +59,7 @@
 }
 
 .memory-allocate {
-    -fx-background-color: -fx-base-check-color;
+    -fx-background-color: derive(-fx-base-color, 100%);
 }
 
 .memory-total {
@@ -77,7 +77,7 @@
 }
 
 .rippler-container {
-    -jfx-rippler-fill: derive(-fx-base-color, 100%);
+    -jfx-rippler-fill: #a2a2a2;
 }
 
 .rippler-container:selected .label {
@@ -225,6 +225,25 @@
     -fx-font-size: 12px;
 }
 
+.two-line-item-second-large {
+
+}
+
+.two-line-item-second-large > FlowPane > .title {
+    -fx-text-fill: rgba(0, 0, 0, 0.5);
+    -fx-font-weight: normal;
+    -fx-font-size: 12px;
+}
+
+.two-line-item-second-large > HBox > .subtitle {
+    -fx-text-fill: #292929;
+    -fx-font-size: 15px;
+}
+
+.wrap-text > HBox > .subtitle {
+    -fx-wrap-text: true;
+}
+
 .bubble {
     -fx-background-color: rgba(0, 0, 0, 0.5);
     -fx-background-radius: 2px;
@@ -237,12 +256,7 @@
 }
 
 .sponsor-pane {
-    -fx-padding: 16;
     -fx-cursor: hand;
-}
-
-.sponsor-pane > .label {
-    -fx-wrap-text: true;
 }
 
 /*******************************************************************************
@@ -469,6 +483,12 @@
     -fx-background-color: -fx-base-check-color;
     -fx-alignment: CENTER-LEFT;
     -fx-spacing: 8;
+}
+
+.jfx-tool-bar-second .label {
+    -fx-text-fill: -fx-base-text-fill;
+    -fx-font-size: 16;
+    -fx-font-weight: bold;
 }
 
 .jfx-tool-bar-second .jfx-rippler {
@@ -761,6 +781,10 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 30, 0.3, 0, 10);
 }
 
+.padding-8 {
+    -fx-padding: 8px;
+}
+
 .card {
     -fx-background-color: rgba(255, 255, 255, 0.8);
     -fx-background-radius: 4;
@@ -805,6 +829,10 @@
     -fx-border-width: 1 0 0 0;
     -fx-padding: 10 16 10 16;
     -fx-font-size: 12;
+}
+
+.options-list-item.no-padding {
+    -fx-padding: 0;
 }
 
 .no-padding .options-list-item {

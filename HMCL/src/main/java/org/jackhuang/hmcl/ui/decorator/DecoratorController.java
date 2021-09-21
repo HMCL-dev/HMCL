@@ -138,13 +138,19 @@ public class DecoratorController {
                                 image = tryLoadImage(Paths.get(config().getBackgroundImage()))
                                         .orElse(null);
                             }
+                            if (config().getBackgroundImageType() == EnumBackgroundImage.NETWORK) {
+                                image = new Image(config().getBackgroundImageUrl(), true);
+                            } else if (config().getBackgroundImageType() == EnumBackgroundImage.CLASSIC) {
+                                image = newImage("/assets/img/background-classic.jpg");
+                            }
                             if (image == null) {
                                 image = loadDefaultBackgroundImage();
                             }
                             return new Background(new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true)));
                         },
                         config().backgroundImageTypeProperty(),
-                        config().backgroundImageProperty()));
+                        config().backgroundImageProperty(),
+                        config().backgroundImageUrlProperty()));
     }
 
     private Image defaultBackground = newImage("/assets/img/background.jpg");

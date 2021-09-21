@@ -22,16 +22,14 @@ import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.Theme;
@@ -78,7 +76,9 @@ class ComponentListCell extends StackPane {
             content.getStyleClass().remove("options-list");
             content.getStyleClass().add("options-sublist");
 
-            BorderPane groupNode = new BorderPane();
+            getStyleClass().add("no-padding");
+
+            VBox groupNode = new VBox();
 
             Node expandIcon = SVG.expand(Theme.blackFillBinding(), 20, 20);
             JFXButton expandButton = new JFXButton();
@@ -86,6 +86,7 @@ class ComponentListCell extends StackPane {
             expandButton.getStyleClass().add("options-list-item-expand-button");
 
             VBox labelVBox = new VBox();
+            labelVBox.setMouseTransparent(true);
             labelVBox.setAlignment(Pos.CENTER_LEFT);
 
             boolean overrideHeaderLeft = false;
@@ -110,59 +111,72 @@ class ComponentListCell extends StackPane {
                 }
             }
 
-            groupNode.setLeft(labelVBox);
-
-            HBox right = new HBox();
-            right.setSpacing(16);
-            right.setAlignment(Pos.CENTER_RIGHT);
+            HBox header = new HBox();
+            header.setSpacing(16);
+            header.getChildren().add(labelVBox);
+            header.setPadding(new Insets(10, 16, 10, 16));
+            header.setAlignment(Pos.CENTER_LEFT);
+            HBox.setHgrow(labelVBox, Priority.ALWAYS);
             if (list instanceof ComponentSublist) {
                 Node rightNode = ((ComponentSublist) list).getHeaderRight();
                 if (rightNode != null)
-                    right.getChildren().add(rightNode);
+                    header.getChildren().add(rightNode);
             }
-            right.getChildren().add(expandButton);
-            groupNode.setRight(right);
+            header.getChildren().add(expandButton);
+
+            RipplerContainer headerRippler = new RipplerContainer(header);
+            groupNode.getChildren().add(headerRippler);
 
             VBox container = new VBox();
-            container.setPadding(new Insets(8, 0, 0, 0));
+            container.setPadding(new Insets(8, 16, 10, 16));
             FXUtils.setLimitHeight(container, 0);
             FXUtils.setOverflowHidden(container);
             container.getChildren().setAll(content);
-            groupNode.setBottom(container);
+            groupNode.getChildren().add(container);
 
-            expandButton.setOnMouseClicked(e -> {
+            Runnable onExpand = () -> {
                 if (expandAnimation != null && expandAnimation.getStatus() == Animation.Status.RUNNING) {
                     expandAnimation.stop();
                 }
 
                 setExpanded(!isExpanded());
 
-                double newAnimatedHeight = content.prefHeight(-1) * (isExpanded() ? 1 : -1);
-                double newHeight = isExpanded() ? getHeight() + newAnimatedHeight : prefHeight(-1);
-                double contentHeight = isExpanded() ? newAnimatedHeight : 0;
-
                 if (isExpanded()) {
-                    updateClip(newHeight);
                     list.onExpand();
+                    list.layout();
                 }
 
-                expandAnimation = new Timeline(new KeyFrame(new Duration(320.0),
-                        new KeyValue(container.minHeightProperty(), contentHeight, FXUtils.SINE),
-                        new KeyValue(container.maxHeightProperty(), contentHeight, FXUtils.SINE)
-                ));
+                Platform.runLater(() -> {
+                    double newAnimatedHeight = (content.prefHeight(-1) + 8 + 10) * (isExpanded() ? 1 : -1);
+                    double newHeight = isExpanded() ? getHeight() + newAnimatedHeight : prefHeight(-1);
+                    double contentHeight = isExpanded() ? newAnimatedHeight : 0;
 
-                if (!isExpanded()) {
-                    expandAnimation.setOnFinished(e2 -> updateClip(newHeight));
-                }
+                    if (isExpanded()) {
+                        updateClip(newHeight);
+                    }
 
-                expandAnimation.play();
-            });
+                    expandAnimation = new Timeline(new KeyFrame(new Duration(320.0),
+                            new KeyValue(container.minHeightProperty(), contentHeight, FXUtils.SINE),
+                            new KeyValue(container.maxHeightProperty(), contentHeight, FXUtils.SINE)
+                    ));
+
+                    if (!isExpanded()) {
+                        expandAnimation.setOnFinished(e2 -> updateClip(newHeight));
+                    }
+
+                    expandAnimation.play();
+                });
+            };
+
+            headerRippler.setOnMouseClicked(e -> onExpand.run());
+            expandButton.setOnMouseClicked(e -> onExpand.run());
 
             expandedProperty().addListener((a, b, newValue) ->
                     expandIcon.setRotate(newValue ? 180 : 0));
 
             getChildren().setAll(groupNode);
         } else {
+            getStyleClass().remove("no-padding");
             getChildren().setAll(content);
         }
     }

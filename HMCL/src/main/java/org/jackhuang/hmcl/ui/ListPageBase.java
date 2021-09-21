@@ -17,17 +17,19 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ListProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.scene.control.Control;
+
+import static org.jackhuang.hmcl.ui.construct.SpinnerPane.FAILED_ACTION;
 
 public class ListPageBase<T> extends Control {
     private final ListProperty<T> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
     private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading", false);
+    private final StringProperty failedReason = new SimpleStringProperty(this, "failed");
 
     public ObservableList<T> getItems() {
         return items.get();
@@ -52,4 +54,35 @@ public class ListPageBase<T> extends Control {
     public BooleanProperty loadingProperty() {
         return loading;
     }
+
+    public String getFailedReason() {
+        return failedReason.get();
+    }
+
+    public StringProperty failedReasonProperty() {
+        return failedReason;
+    }
+
+    public void setFailedReason(String failedReason) {
+        this.failedReason.set(failedReason);
+    }
+
+    public final ObjectProperty<EventHandler<Event>> onFailedActionProperty() {
+        return onFailedAction;
+    }
+
+    public final void setOnFailedAction(EventHandler<Event> value) {
+        onFailedActionProperty().set(value);
+    }
+
+    public final EventHandler<Event> getOnFailedAction() {
+        return onFailedActionProperty().get();
+    }
+
+    private ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<EventHandler<Event>>(this, "onFailedAction") {
+        @Override
+        protected void invalidated() {
+            setEventHandler(FAILED_ACTION, get());
+        }
+    };
 }

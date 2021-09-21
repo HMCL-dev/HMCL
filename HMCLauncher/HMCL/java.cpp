@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "java.h"
 #include "os.h"
 #include "version.h"

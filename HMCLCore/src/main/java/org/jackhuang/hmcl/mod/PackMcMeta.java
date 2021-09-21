@@ -144,13 +144,13 @@ public class PackMcMeta implements Validation {
         }
     }
 
-    public static ModInfo fromFile(ModManager modManager, File modFile) throws IOException, JsonParseException {
+    public static ModInfo fromFile(File modFile) throws IOException, JsonParseException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.toPath())) {
             Path mcmod = fs.getPath("pack.mcmeta");
             if (Files.notExists(mcmod))
                 throw new IOException("File " + modFile + " is not a resource pack.");
             PackMcMeta metadata = JsonUtils.fromNonNullJson(FileUtils.readText(mcmod), PackMcMeta.class);
-            return new ModInfo(modManager, modFile, null, FileUtils.getNameWithoutExtension(modFile), metadata.pack.description, "", "", "", "", "");
+            return new ModInfo(modFile, null, FileUtils.getNameWithoutExtension(modFile), metadata.pack.description, "", "", "", "", "");
         }
     }
 }

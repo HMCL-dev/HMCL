@@ -1,0 +1,148 @@
+---- Minecraft Crash Report ----
+// Uh... Did I do that?
+
+Time: 21-1-24 下午5:10
+Description: Tesselating block model
+
+java.lang.NullPointerException: Tesselating block model
+	at slimeknights.tconstruct.smeltery.SmelteryClientEvents.lambda$blockColors$4(SmelteryClientEvents.java:134) ~[tconstruct:1.16.5-3.0.1.48] {re:classloading,pl:eventbus:A}
+	at net.minecraft.client.renderer.color.BlockColors.func_228054_a_(BlockColors.java:92) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.BlockModelRenderer.func_228800_a_(BlockModelRenderer.java:132) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.BlockModelRenderer.func_228798_a_(BlockModelRenderer.java:220) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.BlockModelRenderer.renderModelFlat(BlockModelRenderer.java:103) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraftforge.client.model.pipeline.ForgeBlockModelRenderer.renderModelFlat(ForgeBlockModelRenderer.java:69) ~[forge:?] {re:classloading}
+	at net.minecraft.client.renderer.BlockModelRenderer.renderModel(BlockModelRenderer.java:51) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.BlockRendererDispatcher.renderModel(BlockRendererDispatcher.java:63) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender$RebuildTask.func_228940_a_(ChunkRenderDispatcher.java:527) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender$RebuildTask.func_225618_a_(ChunkRenderDispatcher.java:449) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender.func_228936_k_(ChunkRenderDispatcher.java:383) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.func_228902_a_(ChunkRenderDispatcher.java:164) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.WorldRenderer.func_228437_a_(WorldRenderer.java:847) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.WorldRenderer.func_228426_a_(WorldRenderer.java:936) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.GameRenderer.func_228378_a_(GameRenderer.java:607) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.GameRenderer.func_195458_a(GameRenderer.java:425) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.Minecraft.func_195542_b(Minecraft.java:976) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:607) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.main.Main.main(Main.java:184) ~[1.16.5.jar:?] {re:classloading,pl:runtimedistcleaner:A}
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_202] {}
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_202] {}
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_202] {}
+	at java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_202] {}
+	at net.minecraftforge.fml.loading.FMLClientLaunchProvider.lambda$launchService$0(FMLClientLaunchProvider.java:51) ~[forge-1.16.5-36.0.1.jar:36.0] {}
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:37) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:54) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:72) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:82) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:66) [modlauncher-8.0.9.jar:?] {}
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Render thread
+Stacktrace:
+	at slimeknights.tconstruct.smeltery.SmelteryClientEvents.lambda$blockColors$4(SmelteryClientEvents.java:134) ~[tconstruct:1.16.5-3.0.1.48] {re:classloading,pl:eventbus:A}
+	at net.minecraft.client.renderer.color.BlockColors.func_228054_a_(BlockColors.java:92) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.BlockModelRenderer.func_228800_a_(BlockModelRenderer.java:132) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.BlockModelRenderer.func_228798_a_(BlockModelRenderer.java:220) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.BlockModelRenderer.renderModelFlat(BlockModelRenderer.java:103) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraftforge.client.model.pipeline.ForgeBlockModelRenderer.renderModelFlat(ForgeBlockModelRenderer.java:69) ~[forge:?] {re:classloading}
+-- Block model being tesselated --
+Details:
+	Block: Block{tconstruct:seared_drain}[active=true,facing=north]
+	Block location: World: (1370,92,-738), Chunk: (at 10,5,14 in 85,-47; contains blocks 1360,0,-752 to 1375,255,-737), Region: (2,-2; contains chunks 64,-64 to 95,-33, blocks 1024,0,-1024 to 1535,255,-513)
+	Using AO: false
+Stacktrace:
+	at net.minecraft.client.renderer.BlockModelRenderer.renderModel(BlockModelRenderer.java:51) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+
+
+-- Block being tesselated --
+Details:
+	Block: Block{tconstruct:seared_drain}[active=true,facing=north]
+	Block location: World: (1370,92,-738), Chunk: (at 10,5,14 in 85,-47; contains blocks 1360,0,-752 to 1375,255,-737), Region: (2,-2; contains chunks 64,-64 to 95,-33, blocks 1024,0,-1024 to 1535,255,-513)
+Stacktrace:
+	at net.minecraft.client.renderer.BlockRendererDispatcher.renderModel(BlockRendererDispatcher.java:63) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender$RebuildTask.func_228940_a_(ChunkRenderDispatcher.java:527) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender$RebuildTask.func_225618_a_(ChunkRenderDispatcher.java:449) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender.func_228936_k_(ChunkRenderDispatcher.java:383) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.func_228902_a_(ChunkRenderDispatcher.java:164) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.WorldRenderer.func_228437_a_(WorldRenderer.java:847) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.WorldRenderer.func_228426_a_(WorldRenderer.java:936) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.renderer.GameRenderer.func_228378_a_(GameRenderer.java:607) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+
+
+-- Affected level --
+Details:
+	All players: 1 total; [ClientPlayerEntity['Light'/15217, l='ClientLevel', x=1389.50, y=91.00, z=-733.34]]
+	Chunk stats: Client Chunk Cache: 529, 342
+	Level dimension: minecraft:overworld
+	Level spawn location: World: (1382,4,-758), Chunk: (at 6,0,10 in 86,-48; contains blocks 1376,0,-768 to 1391,255,-753), Region: (2,-2; contains chunks 64,-64 to 95,-33, blocks 1024,0,-1024 to 1535,255,-513)
+	Level time: 1567868 game time, 513106 day time
+	Server brand: forge
+	Server type: Non-integrated multiplayer server
+Stacktrace:
+	at net.minecraft.client.world.ClientWorld.func_72914_a(ClientWorld.java:447) ~[?:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.Minecraft.func_71396_d(Minecraft.java:2024) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:623) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.main.Main.main(Main.java:184) ~[1.16.5.jar:?] {re:classloading,pl:runtimedistcleaner:A}
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_202] {}
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_202] {}
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_202] {}
+	at java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_202] {}
+	at net.minecraftforge.fml.loading.FMLClientLaunchProvider.lambda$launchService$0(FMLClientLaunchProvider.java:51) ~[forge-1.16.5-36.0.1.jar:36.0] {}
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:37) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:54) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:72) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:82) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:66) [modlauncher-8.0.9.jar:?] {}
+
+
+-- System Details --
+Details:
+	Minecraft Version: 1.16.5
+	Minecraft Version ID: 1.16.5
+	Operating System: Windows 10 (amd64) version 10.0
+	Java Version: 1.8.0_202, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 1363596192 bytes (1300 MB) / 2147483648 bytes (2048 MB) up to 2147483648 bytes (2048 MB)
+	CPUs: 4
+	JVM Flags: 11 total; -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=16M -XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -Xmn128m -Xmx2048m -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump
+	ModLauncher: 8.0.9+86+master.3cf110c
+	ModLauncher launch target: fmlclient
+	ModLauncher naming: srg
+	ModLauncher services:
+		/mixin-0.8.2.jar mixin PLUGINSERVICE
+		/eventbus-4.0.0.jar eventbus PLUGINSERVICE
+		/forge-1.16.5-36.0.1.jar object_holder_definalize PLUGINSERVICE
+		/forge-1.16.5-36.0.1.jar runtime_enum_extender PLUGINSERVICE
+		/accesstransformers-3.0.1.jar accesstransformer PLUGINSERVICE
+		/forge-1.16.5-36.0.1.jar capability_inject_definalize PLUGINSERVICE
+		/forge-1.16.5-36.0.1.jar runtimedistcleaner PLUGINSERVICE
+		/mixin-0.8.2.jar mixin TRANSFORMATIONSERVICE
+		/forge-1.16.5-36.0.1.jar fml TRANSFORMATIONSERVICE
+	FML: 36.0
+	Forge: net.minecraftforge:36.0.1
+	FML Language Providers:
+		javafml@36.0
+		minecraft@1
+	Mod List:
+		forge-1.16.5-36.0.1-client.jar                    |Minecraft                     |minecraft                     |1.16.5              |DONE      |NOSIGNATURE
+		TConstruct-1.16.5-3.0.1.48.jar                    |Tinkers' Construct            |tconstruct                    |3.0.1.48            |DONE      |NOSIGNATURE
+		RoughlyEnoughItems-Forge-5.8.11+20210123-1121.jar |Roughly Enough Items          |roughlyenoughitems            |5.8.11+20210123-1121|DONE      |NOSIGNATURE
+		forge-1.16.5-36.0.1-universal.jar                 |Forge                         |forge                         |36.0.1              |DONE      |22:af:21:d8:19:82:7f:93:94:fe:2b:ac:b7:e4:41:57:68:39:87:b1:a7:5c:c6:44:f9:25:74:21:14:f5:0d:90
+		exnihilosequentia-1.16-2.0.1.0.jar                |Ex Nihilo: Sequentia          |exnihilosequentia             |1.16-2.0.1.0        |DONE      |NOSIGNATURE
+		Mantle-1.16.5-1.6.74.jar                          |Mantle                        |mantle                        |1.6.74              |DONE      |NOSIGNATURE
+		cloth-config-forge-4.1.3.jar                      |Cloth Config v4 API           |cloth-config                  |4.1.3               |DONE      |NOSIGNATURE
+	Crash Report UUID: 3375ccb6-b708-402f-9f12-d1e8d4fbf854
+	Launched Version: HMCL 3.3.180
+	Backend library: LWJGL version 3.2.2 build 10
+	Backend API: Intel(R) HD Graphics 4000 GL version 4.0.0 - Build 10.18.10.4252, Intel
+	GL Caps: Using framebuffer using OpenGL 3.0
+	Using VBOs: Yes
+	Is Modded: Definitely; Client brand changed to 'forge'
+	Type: Client (map_client.txt)
+	Graphics mode: fast
+	Resource Packs:
+	Current Language: 简体中文 (中国)
+	CPU: 4x Intel(R) Core(TM) i3-3110M CPU @ 2.40GHz

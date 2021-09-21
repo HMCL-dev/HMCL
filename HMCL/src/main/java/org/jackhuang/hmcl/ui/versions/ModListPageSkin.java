@@ -114,6 +114,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         label.prefWidthProperty().bind(pane.widthProperty().add(-100));
 
         FXUtils.onChangeAndOperate(skinnable.moddedProperty(), modded -> {
+
             if (modded) pane.getChildren().setAll(root);
             else pane.getChildren().setAll(label);
         });
@@ -281,18 +282,18 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
             container.getChildren().setAll(checkBox, content, revealButton, infoButton);
 
-            StackPane.setMargin(container, new Insets(10, 16, 10, 16));
+            StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
         }
 
         @Override
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             if (empty) return;
+            content.setTitle(dataItem.getTitle());
             if (dataItem.getMod() != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA) {
-                content.setTitle(dataItem.getMod().getDisplayName());
-                content.getTags().setAll(dataItem.getTitle());
+                content.getTags().setAll(dataItem.getMod().getDisplayName());
             } else {
-                content.setTitle(dataItem.getTitle());
+                content.getTags().clear();
             }
             content.setSubtitle(dataItem.getSubtitle());
             if (booleanProperty != null) {

@@ -187,6 +187,10 @@ public class AggregatedObservableList<T> {
 
     }
 
+    public String dump() {
+        return dump(x -> x);
+    }
+
     public String dump(Function<T, Object> function) {
         StringBuilder sb = new StringBuilder();
         sb.append("[");

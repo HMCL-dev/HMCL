@@ -24,12 +24,16 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -423,15 +427,30 @@ public class McbbsModpackManifest implements Validation {
         launchOptions.getJavaArguments().addAll(launchInfo.getJavaArguments());
     }
 
+    private static Modpack fromManifestFile(Path manifestFile, Charset encoding) throws IOException, JsonParseException {
+        String json = FileUtils.readText(manifestFile, StandardCharsets.UTF_8);
+        McbbsModpackManifest manifest = JsonUtils.fromNonNullJson(json, McbbsModpackManifest.class);
+        return manifest.toModpack(encoding);
+    }
+
     /**
-     * @param zip the CurseForge modpack file.
+     * @param zip the MCBBS modpack file.
+     * @param encoding the modpack zip file encoding.
      * @throws IOException if the file is not a valid zip file.
      * @throws JsonParseException if the server-manifest.json is missing or malformed.
      * @return the manifest.
      */
     public static Modpack readManifest(Path zip, Charset encoding) throws IOException, JsonParseException {
-        String json = CompressingUtils.readTextZipEntry(zip, "manifest.json", encoding);
-        McbbsModpackManifest manifest = JsonUtils.fromNonNullJson(json, McbbsModpackManifest.class);
-        return manifest.toModpack(encoding);
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(zip, encoding)) {
+            Path mcbbsPackMeta = fs.getPath("mcbbs.packmeta");
+            if (Files.exists(mcbbsPackMeta)) {
+                return fromManifestFile(mcbbsPackMeta, encoding);
+            }
+            Path manifestJson = fs.getPath("manifest.json");
+            if (Files.exists(manifestJson)) {
+                return fromManifestFile(manifestJson, encoding);
+            }
+            throw new IOException("`mcbbs.packmeta` or `manifest.json` cannot be found");
+        }
     }
 }

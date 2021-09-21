@@ -1,0 +1,102 @@
+---- Minecraft Crash Report ----
+// Ouch. That hurt :(
+
+Time: 1/22/19 5:35 AM
+Description: Exception in server tick loop
+
+io.netty.handler.codec.EncoderException: java.lang.NullPointerException
+	at io.netty.handler.codec.MessageToMessageEncoder.write(MessageToMessageEncoder.java:107)
+	at io.netty.handler.codec.MessageToMessageCodec.write(MessageToMessageCodec.java:116)
+	at io.netty.channel.DefaultChannelHandlerContext.invokeWrite(DefaultChannelHandlerContext.java:644)
+	at io.netty.channel.DefaultChannelHandlerContext.write(DefaultChannelHandlerContext.java:698)
+	at io.netty.channel.DefaultChannelHandlerContext.write(DefaultChannelHandlerContext.java:637)
+	at io.netty.channel.DefaultChannelHandlerContext.write(DefaultChannelHandlerContext.java:626)
+	at io.netty.channel.DefaultChannelPipeline.write(DefaultChannelPipeline.java:878)
+	at io.netty.channel.AbstractChannel.write(AbstractChannel.java:229)
+	at io.netty.channel.embedded.EmbeddedChannel.writeOutbound(EmbeddedChannel.java:195)
+	at cpw.mods.fml.common.network.FMLEmbeddedChannel.generatePacketFrom(FMLEmbeddedChannel.java:48)
+	at cpw.mods.fml.common.network.internal.FMLNetworkHandler.getEntitySpawningPacket(FMLNetworkHandler.java:158)
+	at net.minecraft.entity.EntityTrackerEntry.func_151260_c(EntityTrackerEntry.java:570)
+	at net.minecraft.entity.EntityTrackerEntry.func_73117_b(EntityTrackerEntry.java:433)
+	at net.minecraft.entity.EntityTracker.func_72788_a(EntityTracker.java:296)
+	at net.minecraft.server.MinecraftServer.func_71190_q(MinecraftServer.java:975)
+	at net.minecraft.server.dedicated.DedicatedServer.func_71190_q(DedicatedServer.java:458)
+	at net.minecraft.server.MinecraftServer.func_71217_p(MinecraftServer.java:806)
+	at net.minecraft.server.MinecraftServer.run(MinecraftServer.java:665)
+	at java.lang.Thread.run(Unknown Source)
+Caused by: java.lang.NullPointerException
+	at electroblob.wizardry.entity.projectile.EntitySparkBomb.writeSpawnData(EntitySparkBomb.java:123)
+	at cpw.mods.fml.common.network.internal.FMLMessage$EntitySpawnMessage.toBytes(FMLMessage.java:230)
+	at cpw.mods.fml.common.network.internal.FMLRuntimeCodec.encodeInto(FMLRuntimeCodec.java:22)
+	at cpw.mods.fml.common.network.internal.FMLRuntimeCodec.encodeInto(FMLRuntimeCodec.java:11)
+	at cpw.mods.fml.common.network.FMLIndexedMessageToMessageCodec.encode(FMLIndexedMessageToMessageCodec.java:51)
+	at io.netty.handler.codec.MessageToMessageCodec$1.encode(MessageToMessageCodec.java:67)
+	at io.netty.handler.codec.MessageToMessageEncoder.write(MessageToMessageEncoder.java:89)
+	... 18 more
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- System Details --
+Details:
+	Minecraft Version: 1.7.10
+	KCauldron Version: cc.uraniummc:Uranium:1710-dev-4-B210 UNOFFICIAL DON'T REPORT THIS CRASH
+	Plugins: ItemDurability, ILSRepair, PlaceholderAPI, GroupManager, TigerSigns, tpLogin, ConsoleSpamFix, HyperFlyCheck, CloudTrade, WorldProtect, NoSellLoreItemToGlobalShop, NoCmds, BanItem, PointShop, EasyAPI, PreFixGui, VexView, RichAutoMessage, ClickLimit, ILSAddonOrnament, Deadbolt, WorldEdit, FastRespawn, Essentials, EasyCommand, TimingsPatcher, uSkyBlock, CraftGuard, fixILS, VexInfoBar, ProtocolLib, Multiverse-Core, MCserverManager, LevelChat, EssentialsChat, GlobalMarket, iConomy, StarLogin, Vault, SFWSupport, Lores, ScriptBlock, LR-ActionBarMessage, VexKeyBoardHelper, NeverLag, HolographicDisplays, OnlineMoney, PlayerPoints, WorldGuard, ItemLoreStats, ChestCommands, EssentialsProtect, EssentialsAntiBuild, JoinMessage, VexCraftTable, EssentialsSpawn, RPG_Items, ColorMOTD, HamsterAPI, Lottery
+	Disabled Plugins:
+	Operating System: Windows 10 (amd64) version 10.0
+	Java Version: 1.8.0_101, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 1365178232 bytes (1301 MB) / 2848456704 bytes (2716 MB) up to 27030192128 bytes (25778 MB)
+	JVM Flags: 4 total; -Xms512m -Xmx29000m -XX:+AggressiveOpts -XX:+UseCompressedOops
+	AABB Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+	FML: MCP v9.05 FML v7.10.99.99 Minecraft Forge 10.13.4.1614 42 mods loaded, 42 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+	UCHIJAAAA	mcp{9.05} [Minecraft Coder Pack] (minecraft.jar)
+	UCHIJAAAA	FML{7.10.99.99} [Forge Mod Loader] (Server.jar)
+	UCHIJAAAA	Forge{10.13.4.1614} [Minecraft Forge] (Server.jar)
+	UCHIJAAAA	kimagine{0.2} [KImagine] (minecraft.jar)
+	UCHIJAAAA	UraniumPlus{${UMP_VER}} [Added title and actionbar support for client and server] (Server.jar)
+	UCHIJAAAA	creativecore{1.3.14} [CreativeCore] (-在线图片加载.jar)
+	UCHIJAAAA	opframe{2.1} [OnlinePictureFrame] (-在线图片加载前置.jar)
+	UCHIJAAAA	Block3DPixelMc{1.7.x} [PokemonGo-Block] ([更多装备道具]pokemongoitem.jar)
+	UCHIJAAAA	Mod_bag{1.7.x} [PokemonGo-Bag] ([更多装备道具]pokemongoitem.jar)
+	UCHIJAAAA	pixelmcrop{1.7.10} [PokemonGo-Crop] ([更多装备道具]pokemongoitem.jar)
+	UCHIJAAAA	Mod_Wing{1.7.x} [PokemonGo-Wing] ([更多装备道具]pokemongoitem.jar)
+	UCHIJAAAA	shopy{1.7.x} [PokemonGo-Shop] ([更多装备道具]pokemongoitem.jar)
+	UCHIJAAAA	bikesystem{1.0} [bikesystem] ([更多装备道具]WtfWhateveritems.jar)
+	UCHIJAAAA	BANK-ONEPIECE BLOCK3D{Takakung} [Takakung BLOCK3D] ([更多装备道具]WtfWhateveritems.jar)
+	UCHIJAAAA	chillingmoneysystem{1.0} [ChillingMoneySystem] ([更多装备道具]WtfWhateveritems.jar)
+	UCHIJAAAA	PIXEL-STATION{Takakung} [PIXEL-STATION] ([更多装备道具]WtfWhateveritems.jar)
+	UCHIJAAAA	PIXEL-STATION 3D{Takakung} [PIXEL-STATION 3D] ([更多装备道具]WtfWhateveritems.jar)
+	UCHIJAAAA	shopplayers{1.7.10} [CubeMMOShop] ([更多装备道具]WtfWhateveritems.jar)
+	UCHIJAAAA	GrimoireOfGaia{1.0.0} [Grimoire of Gaia 3] ([魔典盖亚III]1.7.10-1.2.7.jar)
+	UCHIJAAAA	ChestTransporter{2.0.6} [Chest Transporter] (ChestTransporter-1.7.10-2.0.6.jar)
+	UCHIJAAAA	custommc{1.0v} [custommc] (CustomMc.jar)
+	UCHIJAAAA	gxozb{0.0.0.1} [Minecreft Not Enough Items] (gxozb-1.0(3).jar)
+	UCHIJAAAA	lycanitesmobs{1.9.0e - MC 1.7.10} [Lycanites Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	arcticmobs{1.9.0e - MC 1.7.10} [Lycanites Arctic Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	demonmobs{1.9.0e - MC 1.7.10} [Lycanites Demon Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	desertmobs{1.9.0e - MC 1.7.10} [Lycanites Desert Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	forestmobs{1.9.0e - MC 1.7.10} [Lycanites Forest Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	freshwatermobs{1.9.0e - MC 1.7.10} [Lycanites Freshwater Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	infernomobs{1.9.0e - MC 1.7.10} [Lycanites Inferno Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	junglemobs{1.9.0e - MC 1.7.10} [Lycanites Jungle Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	mountainmobs{1.9.0e - MC 1.7.10} [Lycanites Mountain Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	plainsmobs{1.9.0e - MC 1.7.10} [Lycanites Plains Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	saltwatermobs{1.9.0e - MC 1.7.10} [Lycanites Saltwater Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	swampmobs{1.9.0e - MC 1.7.10} [Lycanites Swamp Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	wizardry{1.1.4} [Electroblob's Wizardry] (mofa.jar)
+	UCHIJAAAA	NBTEdit{1.7.2.2} [In-game NBTEdit] (NBTEdit_1.7.10.jar)
+	UCHIJAAAA	pozo{4.0.0} [pozo] (pozo全贴图版.jar)
+	UCHIJAAAA	YoHern{2.1.0} [YoHern] (古衍秘制.jar)
+	UCHIJAAAA	armourersWorkshop{1.7.10-0.45.0} [Armourer's Workshop] (时装工坊-1.7.10-0.45.0.jar)
+	UCHIJAAAA	plushieWrapper{0.0.0} [Plushie Wrapper] (时装工坊-1.7.10-0.45.0.jar)
+	UCHIJAAAA	newnpc{1.0.0} [NewNpc] (炽焰改-贴图Mod1.7.10.jar)
+	UCHIJAAAA	customnpcs{1.7.10d} [CustomNpcs] (自定义NPC(1).jar)
+	Profiler Position: N/A (disabled)
+	Vec3 Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	Player Count: 2 / 888; [EntityPlayerMP['chiyan_C'/9, l='px', x=-330.90, y=57.92, z=1112.15](chiyan_C at -330.8975918600241,57.92458305075876,1112.1469986025677), EntityPlayerMP['Surii'/56, l='px', x=-299.23, y=57.02, z=1120.27](Surii at -299.2297200833873,57.015555072702206,1120.274395758027)]
+	Is Modded: Definitely; Server brand changed to 'uranium,kcauldron,cauldron,craftbukkit,mcpc,fml,forge'
+	Type: Dedicated Server (map_server.txt)
