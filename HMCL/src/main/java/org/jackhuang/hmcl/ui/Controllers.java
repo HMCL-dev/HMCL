@@ -17,11 +17,14 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
+import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -37,11 +40,8 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.construct.InputDialogPane;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
-import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -64,6 +64,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -201,6 +202,27 @@ public final class Controllers {
         stage.setTitle(Metadata.FULL_TITLE);
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.setScene(scene);
+
+        if (globalConfig().getAgreementVersion() < 1) {
+            JFXDialogLayout agreementPane = new JFXDialogLayout();
+            agreementPane.setHeading(new Label(i18n("launcher.agreement")));
+            agreementPane.setBody(new Label(i18n("launcher.agreement.hint")));
+            JFXHyperlink agreementLink = new JFXHyperlink(i18n("launcher.agreement"));
+            agreementLink.setOnAction(e -> FXUtils.openLink("https://hmcl.huangyuhui.net/eula"));
+            JFXButton yesButton = new JFXButton(i18n("launcher.agreement.accept"));
+            yesButton.getStyleClass().add("dialog-accept");
+            yesButton.setOnAction(e -> {
+                globalConfig().setAgreementVersion(1);
+                agreementPane.fireEvent(new DialogCloseEvent());
+            });
+            JFXButton noButton = new JFXButton(i18n("launcher.agreement.decline"));
+            noButton.getStyleClass().add("dialog-cancel");
+            noButton.setOnAction(e -> {
+                System.exit(1);
+            });
+            agreementPane.setActions(agreementLink, yesButton, noButton);
+            Controllers.dialog(agreementPane);
+        }
     }
 
     public static void dialog(Region content) {
