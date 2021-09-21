@@ -24,6 +24,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -96,10 +97,15 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                     .startCategory(i18n("multiplayer.session"))
                     .add(roomPane)
                     .startCategory(i18n("help"))
-                    .addNavigationDrawerItem(settingsItem -> {
-                        settingsItem.setTitle(i18n("help"));
-                        settingsItem.setLeftGraphic(wrap(SVG::gamepad));
-                        settingsItem.setOnAction(e -> FXUtils.openLink("https://hmcl.huangyuhui.net/help/launcher/multiplayer.html"));
+                    .addNavigationDrawerItem(item -> {
+                        item.setTitle(i18n("help"));
+                        item.setLeftGraphic(wrap(SVG::gamepad));
+                        item.setOnAction(e -> FXUtils.openLink("https://hmcl.huangyuhui.net/help/launcher/multiplayer.html"));
+                    })
+                    .addNavigationDrawerItem(report -> {
+                        report.setTitle(i18n("multiplayer.report"));
+                        report.setLeftGraphic(wrap(SVG::bug));
+                        report.setOnAction(e -> FXUtils.openLink(Metadata.EULA_URL));
                     });
             FXUtils.setLimitWidth(sideBar, 200);
             root.setLeft(sideBar);
@@ -193,11 +199,6 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                 natResult.textProperty().bind(BindingMapping.of(getSkinnable().natStateProperty())
                         .map(MultiplayerPageSkin::getNATType));
                 pane.addRow(1, new Label(i18n("multiplayer.nat.type")), natResult);
-
-//                Label natResult = new Label();
-//                natResult.textProperty().bind(BindingMapping.of(getSkinnable().natStateProperty())
-//                        .map(MultiplayerPageSkin::getNATType));
-//                pane.addRow(1, new Label(i18n("multiplayer.nat.latency")), natResult);
 
                 natDetectionPane.getContent().add(pane);
             }

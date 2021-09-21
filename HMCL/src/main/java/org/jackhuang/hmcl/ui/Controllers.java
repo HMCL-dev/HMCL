@@ -208,7 +208,7 @@ public final class Controllers {
             agreementPane.setHeading(new Label(i18n("launcher.agreement")));
             agreementPane.setBody(new Label(i18n("launcher.agreement.hint")));
             JFXHyperlink agreementLink = new JFXHyperlink(i18n("launcher.agreement"));
-            agreementLink.setOnAction(e -> FXUtils.openLink("https://hmcl.huangyuhui.net/eula"));
+            agreementLink.setOnAction(e -> FXUtils.openLink(Metadata.EULA_URL));
             JFXButton yesButton = new JFXButton(i18n("launcher.agreement.accept"));
             yesButton.getStyleClass().add("dialog-accept");
             yesButton.setOnAction(e -> {
