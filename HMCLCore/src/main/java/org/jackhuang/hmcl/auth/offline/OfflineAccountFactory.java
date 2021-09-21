@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.auth.offline;
 
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactProvider;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
 import java.util.Map;
@@ -32,9 +33,10 @@ import static org.jackhuang.hmcl.util.Lang.tryCast;
  * @author huangyuhui
  */
 public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> {
-    public static final OfflineAccountFactory INSTANCE = new OfflineAccountFactory();
+    private final AuthlibInjectorArtifactProvider downloader;
 
-    private OfflineAccountFactory() {
+    public OfflineAccountFactory(AuthlibInjectorArtifactProvider downloader) {
+        this.downloader = downloader;
     }
 
     @Override
@@ -43,18 +45,25 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
     }
 
     public OfflineAccount create(String username, UUID uuid) {
-        return new OfflineAccount(username, uuid);
+        return new OfflineAccount(downloader, username, uuid, null, null);
     }
 
     @Override
     public OfflineAccount create(CharacterSelector selector, String username, String password, ProgressCallback progressCallback, Object additionalData) {
+        AdditionalData data;
         UUID uuid;
+        String skin;
+        String cape;
         if (additionalData != null) {
-            uuid = (UUID) additionalData;
+            data = (AdditionalData) additionalData;
+            uuid = data.uuid == null ? getUUIDFromUserName(username) : data.uuid;
+            skin = data.skin;
+            cape = data.cape;
         } else {
             uuid = getUUIDFromUserName(username);
+            skin = cape = null;
         }
-        return new OfflineAccount(username, uuid);
+        return new OfflineAccount(downloader, username, uuid, skin, cape);
     }
 
     @Override
@@ -64,12 +73,26 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
         UUID uuid = tryCast(storage.get("uuid"), String.class)
                 .map(UUIDTypeAdapter::fromString)
                 .orElse(getUUIDFromUserName(username));
+        String skin = tryCast(storage.get("skin"), String.class).orElse(null);
+        String cape = tryCast(storage.get("cape"), String.class).orElse(null);
 
-        return new OfflineAccount(username, uuid);
+        return new OfflineAccount(downloader, username, uuid, skin, cape);
     }
 
     public static UUID getUUIDFromUserName(String username) {
         return UUID.nameUUIDFromBytes(("OfflinePlayer:" + username).getBytes(UTF_8));
+    }
+
+    public static class AdditionalData {
+        private final UUID uuid;
+        private final String skin;
+        private final String cape;
+
+        public AdditionalData(UUID uuid, String skin, String cape) {
+            this.uuid = uuid;
+            this.skin = skin;
+            this.cape = cape;
+        }
     }
 
 }

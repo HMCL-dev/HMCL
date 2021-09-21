@@ -62,6 +62,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
 import static java.util.Collections.emptyList;
@@ -521,7 +522,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             if (factory instanceof AuthlibInjectorAccountFactory) {
                 return getAuthServer();
             } else if (factory instanceof OfflineAccountFactory) {
-                return txtUUID == null ? null : StringUtils.isBlank(txtUUID.getText()) ? null : UUIDTypeAdapter.fromString(txtUUID.getText());
+                UUID uuid = txtUUID == null ? null : StringUtils.isBlank(txtUUID.getText()) ? null : UUIDTypeAdapter.fromString(txtUUID.getText());
+                return new OfflineAccountFactory.AdditionalData(uuid, null, null);
             } else {
                 return null;
             }
