@@ -137,6 +137,9 @@ public class ComponentList extends Control {
                 if (node.getProperties().containsKey("ComponentList.vgrow")) {
                     VBox.setVgrow(cell, (Priority) node.getProperties().get("ComponentList.vgrow"));
                 }
+                if (node.getProperties().containsKey("ComponentList.noPadding")) {
+                    cell.getStyleClass().add("no-padding");
+                }
                 return cell;
             });
 

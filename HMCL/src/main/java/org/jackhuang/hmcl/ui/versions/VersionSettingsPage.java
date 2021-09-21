@@ -89,11 +89,11 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final JFXComboBox<LauncherVisibility> cboLauncherVisibility;
     private final JFXCheckBox chkAutoAllocate;
     private final JFXCheckBox chkFullscreen;
-    private final JFXToggleButton chkNoJVMArgs;
-    private final JFXToggleButton chkNoGameCheck;
-    private final JFXToggleButton chkNoJVMCheck;
-    private final JFXToggleButton chkUseNativeGLFW;
-    private final JFXToggleButton chkUseNativeOpenAL;
+    private final OptionToggleButton noJVMArgsPane;
+    private final OptionToggleButton noGameCheckPane;
+    private final OptionToggleButton noJVMCheckPane;
+    private final OptionToggleButton useNativeGLFWPane;
+    private final OptionToggleButton useNativeOpenALPane;
     private final MultiFileItem<JavaVersion> javaItem;
     private final MultiFileItem.FileOption<JavaVersion> javaCustomOption;
     private final MultiFileItem<GameDirectoryType> gameDirItem;
@@ -101,7 +101,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final MultiFileItem<NativesDirectoryType> nativesDirItem;
     private final MultiFileItem.FileOption<NativesDirectoryType> nativesDirCustomOption;
     private final JFXComboBox<ProcessPriority> cboProcessPriority;
-    private final JFXToggleButton chkShowLogs;
+    private final OptionToggleButton showLogsPane;
     private final ImagePickerItem iconPickerItem;
     private final JFXCheckBox chkEnableSpecificSettings;
     private final BorderPane settingsTypePane;
@@ -328,17 +328,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 }
             }
 
-            BorderPane showLogsPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.show_log"));
-                showLogsPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-
-                chkShowLogs = new JFXToggleButton();
-                showLogsPane.setRight(chkShowLogs);
-                chkShowLogs.setSize(8);
-                FXUtils.setLimitHeight(chkShowLogs, 20);
-            }
+            showLogsPane = new OptionToggleButton();
+            showLogsPane.setTitle(i18n("settings.show_log"));
 
             BorderPane processPriorityPane = new BorderPane();
             {
@@ -459,65 +450,20 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     nativesDirCustomOption
             ));
 
-            BorderPane noJVMArgsPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced.no_jvm_args"));
-                noJVMArgsPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+            noJVMArgsPane = new OptionToggleButton();
+            noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
 
-                chkNoJVMArgs = new JFXToggleButton();
-                noJVMArgsPane.setRight(chkNoJVMArgs);
-                chkNoJVMArgs.setSize(8);
-                FXUtils.setLimitHeight(chkNoJVMArgs, 20);
-            }
+            noGameCheckPane = new OptionToggleButton();
+            noGameCheckPane.setTitle(i18n("settings.advanced.dont_check_game_completeness"));
 
-            BorderPane noGameCheckPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced.dont_check_game_completeness"));
-                noGameCheckPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+            noJVMCheckPane = new OptionToggleButton();
+            noJVMCheckPane.setTitle(i18n("settings.advanced.dont_check_jvm_validity"));
 
-                chkNoGameCheck = new JFXToggleButton();
-                noGameCheckPane.setRight(chkNoGameCheck);
-                chkNoGameCheck.setSize(8);
-                FXUtils.setLimitHeight(chkNoGameCheck, 20);
-            }
+            useNativeGLFWPane = new OptionToggleButton();
+            useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
 
-            BorderPane noJVMCheckPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced.dont_check_jvm_validity"));
-                noJVMCheckPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-
-                chkNoJVMCheck = new JFXToggleButton();
-                noJVMCheckPane.setRight(chkNoJVMCheck);
-                chkNoJVMCheck.setSize(8);
-                FXUtils.setLimitHeight(chkNoJVMCheck, 20);
-            }
-
-            BorderPane useNativeGLFWPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced.use_native_glfw"));
-                useNativeGLFWPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-
-                chkUseNativeGLFW = new JFXToggleButton();
-                useNativeGLFWPane.setRight(chkUseNativeGLFW);
-                chkUseNativeGLFW.setSize(8);
-                FXUtils.setLimitHeight(chkUseNativeGLFW, 20);
-            }
-
-            BorderPane useNativeOpenALPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced.use_native_openal"));
-                useNativeOpenALPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-
-                chkUseNativeOpenAL = new JFXToggleButton();
-                useNativeOpenALPane.setRight(chkUseNativeOpenAL);
-                chkUseNativeOpenAL.setSize(8);
-                FXUtils.setLimitHeight(chkUseNativeOpenAL, 20);
-            }
+            useNativeOpenALPane = new OptionToggleButton();
+            useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
 
             workaroundPane.getContent().setAll(nativesDirItem, noJVMArgsPane, noGameCheckPane, noJVMCheckPane, useNativeGLFWPane, useNativeOpenALPane);
         }
@@ -614,12 +560,12 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbindString(txtServerIP, lastVersionSetting.serverIpProperty());
             FXUtils.unbindBoolean(chkAutoAllocate, lastVersionSetting.autoMemoryProperty());
             FXUtils.unbindBoolean(chkFullscreen, lastVersionSetting.fullscreenProperty());
-            FXUtils.unbindBoolean(chkNoGameCheck, lastVersionSetting.notCheckGameProperty());
-            FXUtils.unbindBoolean(chkNoJVMCheck, lastVersionSetting.notCheckJVMProperty());
-            FXUtils.unbindBoolean(chkNoJVMArgs, lastVersionSetting.noJVMArgsProperty());
-            FXUtils.unbindBoolean(chkShowLogs, lastVersionSetting.showLogsProperty());
-            FXUtils.unbindBoolean(chkUseNativeGLFW, lastVersionSetting.useNativeGLFWProperty());
-            FXUtils.unbindBoolean(chkUseNativeOpenAL, lastVersionSetting.useNativeOpenALProperty());
+            noGameCheckPane.selectedProperty().unbindBidirectional(lastVersionSetting.notCheckGameProperty());
+            noJVMCheckPane.selectedProperty().unbindBidirectional(lastVersionSetting.notCheckJVMProperty());
+            noJVMArgsPane.selectedProperty().unbindBidirectional(lastVersionSetting.noJVMArgsProperty());
+            showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
+            useNativeGLFWPane.selectedProperty().unbindBidirectional(lastVersionSetting.useNativeGLFWProperty());
+            useNativeOpenALPane.selectedProperty().unbindBidirectional(lastVersionSetting.useNativeOpenALProperty());
             FXUtils.unbindEnum(cboLauncherVisibility);
             FXUtils.unbindEnum(cboProcessPriority);
 
@@ -653,12 +599,12 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         FXUtils.bindString(txtServerIP, versionSetting.serverIpProperty());
         FXUtils.bindBoolean(chkAutoAllocate, versionSetting.autoMemoryProperty());
         FXUtils.bindBoolean(chkFullscreen, versionSetting.fullscreenProperty());
-        FXUtils.bindBoolean(chkNoGameCheck, versionSetting.notCheckGameProperty());
-        FXUtils.bindBoolean(chkNoJVMCheck, versionSetting.notCheckJVMProperty());
-        FXUtils.bindBoolean(chkNoJVMArgs, versionSetting.noJVMArgsProperty());
-        FXUtils.bindBoolean(chkShowLogs, versionSetting.showLogsProperty());
-        FXUtils.bindBoolean(chkUseNativeGLFW, versionSetting.useNativeGLFWProperty());
-        FXUtils.bindBoolean(chkUseNativeOpenAL, versionSetting.useNativeOpenALProperty());
+        noGameCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckGameProperty());
+        noJVMCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckJVMProperty());
+        noJVMArgsPane.selectedProperty().bindBidirectional(versionSetting.noJVMArgsProperty());
+        showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
+        useNativeGLFWPane.selectedProperty().bindBidirectional(versionSetting.useNativeGLFWProperty());
+        useNativeOpenALPane.selectedProperty().bindBidirectional(versionSetting.useNativeOpenALProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
         FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
 

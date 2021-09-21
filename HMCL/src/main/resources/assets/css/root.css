@@ -831,6 +831,10 @@
     -fx-font-size: 12;
 }
 
+.options-list-item.no-padding {
+    -fx-padding: 0;
+}
+
 .no-padding .options-list-item {
     -fx-padding: 0;
 }
