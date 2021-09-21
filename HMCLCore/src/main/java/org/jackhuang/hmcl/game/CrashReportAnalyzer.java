@@ -10,7 +10,11 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class CrashReportAnalyzer {
+public final class CrashReportAnalyzer {
+
+    private CrashReportAnalyzer() {
+    }
+
     public enum Rule {
         // We manually write "Pattern.compile" here for IDEA syntax highlighting.
 

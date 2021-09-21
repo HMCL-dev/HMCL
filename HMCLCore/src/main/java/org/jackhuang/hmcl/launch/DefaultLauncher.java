@@ -406,7 +406,7 @@ public class DefaultLauncher extends Launcher {
         env.put("INST_NAME", versionName);
         env.put("INST_ID", versionName);
         env.put("INST_DIR", repository.getVersionRoot(version.getId()).getAbsolutePath());
-        env.put("INST_MC_DIR",  repository.getRunDirectory(version.getId()).getAbsolutePath());
+        env.put("INST_MC_DIR", repository.getRunDirectory(version.getId()).getAbsolutePath());
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
@@ -452,6 +452,7 @@ public class DefaultLauncher extends Launcher {
                 writer.write("@echo off");
                 writer.newLine();
                 writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
+                writer.newLine();
                 for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
                     writer.write("set " + entry.getKey() + "=" + entry.getValue());
                     writer.newLine();

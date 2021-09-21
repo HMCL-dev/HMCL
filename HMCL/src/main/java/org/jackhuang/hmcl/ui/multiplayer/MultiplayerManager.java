@@ -129,16 +129,19 @@ public final class MultiplayerManager {
 
             this.name = name;
             addRelatedThread(Lang.thread(this::waitFor, "CatoExitWaiter", true));
-            addRelatedThread(Lang.thread(new StreamPump(process.getErrorStream(), it -> {
-                if (id == null) {
-                    LOG.info("Cato: " + it);
-                    Matcher matcher = TEMP_TOKEN_PATTERN.matcher(it);
-                    if (matcher.find()) {
-                        id = "mix" + matcher.group("id");
-                        onIdGenerated.fireEvent(new CatoIdEvent(this, id));
-                    }
+            addRelatedThread(Lang.thread(new StreamPump(process.getInputStream(), this::checkCatoLog), "CatoInputStreamPump", true));
+            addRelatedThread(Lang.thread(new StreamPump(process.getErrorStream(), this::checkCatoLog), "CatoErrorStreamPump", true));
+        }
+
+        private void checkCatoLog(String log) {
+            if (id == null) {
+                LOG.info("Cato: " + log);
+                Matcher matcher = TEMP_TOKEN_PATTERN.matcher(log);
+                if (matcher.find()) {
+                    id = "mix" + matcher.group("id");
+                    onIdGenerated.fireEvent(new CatoIdEvent(this, id));
                 }
-            }), "CatoStreamPump", true));
+            }
         }
 
         private void waitFor() {
