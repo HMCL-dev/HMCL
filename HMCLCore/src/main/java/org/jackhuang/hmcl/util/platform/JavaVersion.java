@@ -249,6 +249,17 @@ public final class JavaVersion {
                     }
                 }
 
+                final Optional<Path> programFilesX86 = FileUtils.tryGetPath(Optional.ofNullable(System.getenv("ProgramFiles(x86)")).orElse("C:\\Program Files (x86)"));
+                if (programFilesX86.isPresent()) {
+                    final Path runtimeDir = programFilesX86.get().resolve("Minecraft Launcher").resolve("runtime");
+                    javaExecutables.add(Stream.of(
+                            runtimeDir.resolve("jre-legacy").resolve("windows-x64").resolve("jre-legacy"),
+                            runtimeDir.resolve("jre-legacy").resolve("windows-x86").resolve("jre-legacy"),
+                            runtimeDir.resolve("java-runtime-alpha").resolve("windows-x64").resolve("java-runtime-alpha"),
+                            runtimeDir.resolve("java-runtime-alpha").resolve("windows-x86").resolve("java-runtime-alpha")
+                    ).map(JavaVersion::getExecutable));
+                }
+
                 if (System.getenv("PATH") != null) {
                     javaExecutables.add(Arrays.stream(System.getenv("PATH").split(";")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "java.exe"))));
                 }
@@ -267,6 +278,15 @@ public final class JavaVersion {
                 if (System.getenv("HMCL_JRES") != null) {
                     javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "bin", "java"))));
                 }
+
+                final Optional<Path> home = FileUtils.tryGetPath(System.getProperty("user.home", ""));
+                if (home.isPresent()) {
+                    final Path runtimeDir = home.get().resolve(".minecraft").resolve("runtime");
+                    javaExecutables.add(Stream.of(
+                            runtimeDir.resolve("jre-legacy").resolve("linux").resolve("jre-legacy"),
+                            runtimeDir.resolve("java-runtime-alpha").resolve("linux").resolve("java-runtime-alpha")
+                    ).map(JavaVersion::getExecutable));
+                }
                 break;
 
             case OSX:
@@ -278,6 +298,7 @@ public final class JavaVersion {
                         .map(JavaVersion::getExecutable));
                 javaExecutables.add(Stream.of(Paths.get("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin/java")));
                 javaExecutables.add(Stream.of(Paths.get("/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/MacOS/itms/java/bin/java")));
+                javaExecutables.add(Stream.of(Paths.get("/Library/Application Support/minecraft/runtime/jre-x64/jre.bundle/Contents/Home/bin/java")));
                 if (System.getenv("PATH") != null) {
                     javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "java"))));
                 }
