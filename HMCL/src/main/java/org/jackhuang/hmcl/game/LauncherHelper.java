@@ -338,7 +338,7 @@ public final class LauncherHelper {
                             MessageType.QUESTION);
 
                     JFXButton linkButton = new JFXButton(i18n("download.external_link"));
-                    linkButton.setOnAction(e -> FXUtils.openLink("https://adoptopenjdk.net/"));
+                    linkButton.setOnAction(e -> FXUtils.openLink("https://adoptium.net/"));
                     linkButton.getStyleClass().add("dialog-accept");
                     dialog.addButton(linkButton);
 
@@ -380,7 +380,7 @@ public final class LauncherHelper {
                 mayContinueAfterJavaChanged = true;
             } else {
                 Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 16), i18n("message.warning"), () -> {
-                    FXUtils.openLink("https://adoptopenjdk.net/");
+                    FXUtils.openLink("https://adoptium.net/?variant=openjdk17");
                 }, null);
             }
             javaChanged = true;
