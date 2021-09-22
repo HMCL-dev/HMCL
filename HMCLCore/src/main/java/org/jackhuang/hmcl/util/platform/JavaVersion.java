@@ -246,6 +246,8 @@ public final class JavaVersion {
                         javaExecutables.add(listDirectory(programFiles.get().resolve("AdoptOpenJDK")).map(JavaVersion::getExecutable));
                         javaExecutables.add(listDirectory(programFiles.get().resolve("Zulu")).map(JavaVersion::getExecutable));
                         javaExecutables.add(listDirectory(programFiles.get().resolve("Microsoft")).map(JavaVersion::getExecutable));
+                        javaExecutables.add(listDirectory(programFiles.get().resolve("Eclipse Foundation")).map(JavaVersion::getExecutable));
+                        javaExecutables.add(listDirectory(programFiles.get().resolve("Semeru")).map(JavaVersion::getExecutable));
                     }
                 }
 
