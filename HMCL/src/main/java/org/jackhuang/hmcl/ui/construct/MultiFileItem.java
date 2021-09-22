@@ -29,6 +29,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -128,7 +129,8 @@ public class MultiFileItem<T> extends ComponentSublist {
         protected final T data;
 
         public Option(String title, T data) {
-            this.title = title; this.data = data;
+            this.title = title;
+            this.data = data;
         }
 
         public T getData() {
@@ -160,7 +162,14 @@ public class MultiFileItem<T> extends ComponentSublist {
             pane.setLeft(left);
 
             if (StringUtils.isNotBlank(subtitle)) {
-                Label right = new Label(subtitle);
+                Optional<String> shortSubtitle = StringUtils.truncate(subtitle);
+                Label right;
+                if (shortSubtitle.isPresent()) {
+                    right = new Label(shortSubtitle.get());
+                    right.setTooltip(new Tooltip(subtitle));
+                } else {
+                    right = new Label(subtitle);
+                }
                 BorderPane.setAlignment(right, Pos.CENTER_RIGHT);
                 right.setWrapText(true);
                 right.getStyleClass().add("subtitle-label");

@@ -21,10 +21,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -243,6 +240,17 @@ public final class StringUtils {
             result.append(ch);
         }
         return result.toString();
+    }
+
+    public static int MAX_SHORT_STRING_LENGTH = 77;
+
+    public static Optional<String> truncate(String str) {
+        if (str.length() <= MAX_SHORT_STRING_LENGTH) {
+            return Optional.empty();
+        }
+
+        final int halfLength = (MAX_SHORT_STRING_LENGTH - 5) / 2;
+        return Optional.of(str.substring(0, halfLength) + " ... " + str.substring(str.length() - halfLength));
     }
 
     /**
