@@ -18,9 +18,10 @@
 package org.jackhuang.hmcl.auth.offline;
 
 import com.google.gson.reflect.TypeToken;
-import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
+import org.jackhuang.hmcl.util.KeyUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
@@ -36,13 +37,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -67,7 +68,11 @@ public class YggdrasilServer extends HttpServer {
 
     private Response root(Request request) {
         return ok(mapOf(
-                pair("skinDomains", Collections.emptyList()),
+                pair("signaturePublickey", KeyUtils.toPEMPublicKey(getSignaturePublicKey())),
+                pair("skinDomains", Arrays.asList(
+                        "127.0.0.1",
+                        "localhost"
+                )),
                 pair("meta", mapOf(
                         pair("serverName", "HMCL Offline Account Skin/Cape Server"),
                         pair("implementationName", "HMCL"),
@@ -86,7 +91,7 @@ public class YggdrasilServer extends HttpServer {
     }
 
     private Response profiles(Request request) throws IOException {
-        String body = IOUtils.readFullyAsString(request.getSession().getInputStream(), StandardCharsets.UTF_8);
+        String body = IOUtils.readFullyAsString(request.getSession().getInputStream(), UTF_8);
         List<String> names = JsonUtils.fromNonNullJson(body, new TypeToken<List<String>>() {
         }.getType());
         return ok(names.stream().distinct()
@@ -195,7 +200,7 @@ public class YggdrasilServer extends HttpServer {
             return existent;
         }
 
-        String url = String.format("http://127.0.0.1:%d/textures/%s", getListeningPort(), hash);
+        String url = String.format("http://localhost:%d/textures/%s", getListeningPort(), hash);
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         ImageIO.write(img, "png", buf);
         Texture texture = new Texture(hash, buf.toByteArray(), url);
@@ -218,28 +223,13 @@ public class YggdrasilServer extends HttpServer {
         charactersByName.put(character.getName(), character);
     }
 
-    public enum ModelType {
-        STEVE("default"),
-        ALEX("slim");
-
-        private String modelName;
-
-        ModelType(String modelName) {
-            this.modelName = modelName;
-        }
-
-        public String getModelName() {
-            return modelName;
-        }
-    }
-
     public static class Character {
         private final UUID uuid;
         private final String name;
-        private final ModelType model;
+        private final TextureModel model;
         private final Map<TextureType, Texture> textures;
 
-        public Character(UUID uuid, String name, ModelType model, Map<TextureType, Texture> textures) {
+        public Character(UUID uuid, String name, TextureModel model, Map<TextureType, Texture> textures) {
             this.uuid = uuid;
             this.name = name;
             this.model = model;
@@ -254,7 +244,7 @@ public class YggdrasilServer extends HttpServer {
             return name;
         }
 
-        public ModelType getModel() {
+        public TextureModel getModel() {
             return model;
         }
 
@@ -273,11 +263,11 @@ public class YggdrasilServer extends HttpServer {
             return new GameProfile(uuid, name);
         }
 
-        public CompleteGameProfile toCompleteResponse(String rootUrl) {
-            Map<TextureType, Object> realTextures = new HashMap<>();
+        public Object toCompleteResponse(String rootUrl) {
+            Map<String, Object> realTextures = new HashMap<>();
             for (Map.Entry<TextureType, Texture> textureEntry : textures.entrySet()) {
                 if (textureEntry.getValue() == null) continue;
-                realTextures.put(textureEntry.getKey(), mapOf(pair("url", rootUrl + "/textures/" + textureEntry.getValue().hash)));
+                realTextures.put(textureEntry.getKey().name(), mapOf(pair("url", rootUrl + "/textures/" + textureEntry.getValue().hash)));
             }
 
             Map<String, Object> textureResponse = mapOf(
@@ -287,13 +277,15 @@ public class YggdrasilServer extends HttpServer {
                     pair("textures", realTextures)
             );
 
-            return new CompleteGameProfile(uuid, name, mapOf(
-                    pair("textures", new String(
-                            Base64.getEncoder().encode(
-                                    JsonUtils.GSON.toJson(textureResponse).getBytes(StandardCharsets.UTF_8)
-                            ), StandardCharsets.UTF_8)
-                    )
-            ));
+            return mapOf(
+                    pair("id", uuid),
+                    pair("name", name),
+                    pair("properties", properties(true,
+                            pair("textures", new String(
+                                    Base64.getEncoder().encode(
+                                            JsonUtils.GSON.toJson(textureResponse).getBytes(UTF_8)
+                                    ), UTF_8))))
+            );
         }
     }
 
@@ -319,6 +311,47 @@ public class YggdrasilServer extends HttpServer {
         public int getLength() {
             return data.length;
         }
+    }
+
+    // === Signature ===
+
+    private static final KeyPair keyPair = KeyUtils.generateKey();
+
+    public static PublicKey getSignaturePublicKey() {
+        return keyPair.getPublic();
+    }
+
+    private static String sign(String data) {
+        try {
+            Signature signature = Signature.getInstance("SHA1withRSA");
+            signature.initSign(keyPair.getPrivate(), new SecureRandom());
+            signature.update(data.getBytes(UTF_8));
+            return Base64.getEncoder().encodeToString(signature.sign());
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // === properties ===
+
+    @SafeVarargs
+    public static List<?> properties(Map.Entry<String, String>... entries) {
+        return properties(false, entries);
+    }
+
+    @SafeVarargs
+    public static List<?> properties(boolean sign, Map.Entry<String, String>... entries) {
+        return Stream.of(entries)
+                .map(entry -> {
+                    LinkedHashMap<String, String> property = new LinkedHashMap<>();
+                    property.put("name", entry.getKey());
+                    property.put("value", entry.getValue());
+                    if (sign) {
+                        property.put("signature", sign(entry.getValue()));
+                    }
+                    return property;
+                })
+                .collect(Collectors.toList());
     }
 
 }

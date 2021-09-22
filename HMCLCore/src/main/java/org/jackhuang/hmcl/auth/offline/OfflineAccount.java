@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactInfo;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactProvider;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -110,14 +111,14 @@ public class OfflineAccount extends Account {
             try {
                 YggdrasilServer server = new YggdrasilServer(0);
                 server.start();
-                server.addCharacter(new YggdrasilServer.Character(uuid, username, YggdrasilServer.ModelType.STEVE,
+                server.addCharacter(new YggdrasilServer.Character(uuid, username, TextureModel.STEVE,
                         mapOf(
                                 pair(TextureType.SKIN, server.loadTexture(skin)),
                                 pair(TextureType.CAPE, server.loadTexture(cape))
                         )));
 
                 return authInfo.withArguments(new Arguments().addJVMArguments(
-                                "-javaagent:" + artifact.getLocation().toString() + "=" + "http://127.0.0.1:" + server.getListeningPort(),
+                                "-javaagent:" + artifact.getLocation().toString() + "=" + "http://localhost:" + server.getListeningPort(),
                                 "-Dauthlibinjector.side=client"
                         ))
                         .withCloseable(server::stop);
