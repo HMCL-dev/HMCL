@@ -51,15 +51,13 @@ public class OfflineAccount extends Account {
     private final AuthlibInjectorArtifactProvider downloader;
     private final String username;
     private final UUID uuid;
-    private final String skin;
-    private final String cape;
+    private final Map<TextureType, Texture> textures;
 
-    protected OfflineAccount(AuthlibInjectorArtifactProvider downloader, String username, UUID uuid, String skin, String cape) {
+    protected OfflineAccount(AuthlibInjectorArtifactProvider downloader, String username, UUID uuid, Map<TextureType, Texture> textures) {
         this.downloader = requireNonNull(downloader);
         this.username = requireNonNull(username);
         this.uuid = requireNonNull(uuid);
-        this.skin = skin;
-        this.cape = cape;
+        this.textures = textures;
 
         if (StringUtils.isBlank(username)) {
             throw new IllegalArgumentException("Username cannot be blank");

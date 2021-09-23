@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.net.URLConnection;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -35,6 +32,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -190,14 +188,34 @@ public class CacheRepository {
         //     conn.setRequestProperty("If-Modified-Since", eTagItem.getRemoteLastModified());
     }
 
-    public synchronized void cacheRemoteFile(Path downloaded, URLConnection conn) throws IOException {
+    public void cacheRemoteFile(Path downloaded, URLConnection conn) throws IOException {
+        cacheData(() -> {
+            String hash = Hex.encodeHex(DigestUtils.digest(SHA1, downloaded));
+            Path cached = cacheFile(downloaded, SHA1, hash);
+            return new CacheResult(hash, cached);
+        }, conn);
+    }
+
+    public void cacheText(String text, URLConnection conn) throws IOException {
+        cacheBytes(text.getBytes(UTF_8), conn);
+    }
+
+    public void cacheBytes(byte[] bytes, URLConnection conn) throws IOException {
+        cacheData(() -> {
+            String hash = Hex.encodeHex(DigestUtils.digest(SHA1, bytes));
+            Path cached = getFile(SHA1, hash);
+            FileUtils.writeBytes(cached.toFile(), bytes);
+            return new CacheResult(hash, cached);
+        }, conn);
+    }
+
+    public synchronized void cacheData(ExceptionalSupplier<CacheResult, IOException> cacheSupplier, URLConnection conn) throws IOException {
         String eTag = conn.getHeaderField("ETag");
         if (eTag == null) return;
         String url = conn.getURL().toString();
         String lastModified = conn.getHeaderField("Last-Modified");
-        String hash = Hex.encodeHex(DigestUtils.digest(SHA1, downloaded));
-        Path cached = cacheFile(downloaded, SHA1, hash);
-        ETagItem eTagItem = new ETagItem(url, eTag, hash, Files.getLastModifiedTime(cached).toMillis(), lastModified);
+        CacheResult cacheResult = cacheSupplier.get();
+        ETagItem eTagItem = new ETagItem(url, eTag, cacheResult.hash, Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(), lastModified);
         Lock writeLock = lock.writeLock();
         writeLock.lock();
         try {
@@ -208,22 +226,13 @@ public class CacheRepository {
         }
     }
 
-    public synchronized void cacheText(String text, URLConnection conn) throws IOException {
-        String eTag = conn.getHeaderField("ETag");
-        if (eTag == null) return;
-        String url = conn.getURL().toString();
-        String lastModified = conn.getHeaderField("Last-Modified");
-        String hash = Hex.encodeHex(DigestUtils.digest(SHA1, text));
-        Path cached = getFile(SHA1, hash);
-        FileUtils.writeText(cached.toFile(), text);
-        ETagItem eTagItem = new ETagItem(url, eTag, hash, Files.getLastModifiedTime(cached).toMillis(), lastModified);
-        Lock writeLock = lock.writeLock();
-        writeLock.lock();
-        try {
-            index.compute(eTagItem.url, updateEntity(eTagItem));
-            saveETagIndex();
-        } finally {
-            writeLock.unlock();
+    private static class CacheResult {
+        public String hash;
+        public Path cachedFile;
+
+        public CacheResult(String hash, Path cachedFile) {
+            this.hash = hash;
+            this.cachedFile = cachedFile;
         }
     }
 

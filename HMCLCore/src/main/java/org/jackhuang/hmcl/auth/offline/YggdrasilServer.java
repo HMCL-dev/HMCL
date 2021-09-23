@@ -28,15 +28,7 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.HttpServer;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
-import javax.imageio.IIOException;
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.net.URL;
 import java.security.*;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -50,7 +42,6 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class YggdrasilServer extends HttpServer {
 
-    private final Map<String, Texture> textures = new HashMap<>();
     private final Map<UUID, Character> charactersByUuid = new HashMap<>();
     private final Map<String, Character> charactersByName = new HashMap<>();
 
@@ -125,8 +116,8 @@ public class YggdrasilServer extends HttpServer {
     private Response texture(Request request) {
         String hash = request.getPathVariables().group("hash");
 
-        if (textures.containsKey(hash)) {
-            Texture texture = textures.get(hash);
+        if (Texture.hasTexture(hash)) {
+            Texture texture = Texture.getTexture(hash);
             Response response = newFixedLengthResponse(Response.Status.OK, "image/png", texture.getInputStream(), texture.getLength());
             response.addHeader("Etag", String.format("\"%s\"", hash));
             response.addHeader("Cache-Control", "max-age=2592000, public");
@@ -142,80 +133,6 @@ public class YggdrasilServer extends HttpServer {
 
     private Optional<Character> findCharacterByName(String uuid) {
         return Optional.ofNullable(charactersByName.get(uuid));
-    }
-
-    private static String computeTextureHash(BufferedImage img) {
-        MessageDigest digest;
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-        int width = img.getWidth();
-        int height = img.getHeight();
-        byte[] buf = new byte[4096];
-
-        putInt(buf, 0, width);
-        putInt(buf, 4, height);
-        int pos = 8;
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                putInt(buf, pos, img.getRGB(x, y));
-                if (buf[pos + 0] == 0) {
-                    buf[pos + 1] = buf[pos + 2] = buf[pos + 3] = 0;
-                }
-                pos += 4;
-                if (pos == buf.length) {
-                    pos = 0;
-                    digest.update(buf, 0, buf.length);
-                }
-            }
-        }
-        if (pos > 0) {
-            digest.update(buf, 0, pos);
-        }
-
-        byte[] sha256 = digest.digest();
-        return String.format("%0" + (sha256.length << 1) + "x", new BigInteger(1, sha256));
-    }
-
-    private static void putInt(byte[] array, int offset, int x) {
-        array[offset + 0] = (byte) (x >> 24 & 0xff);
-        array[offset + 1] = (byte) (x >> 16 & 0xff);
-        array[offset + 2] = (byte) (x >> 8 & 0xff);
-        array[offset + 3] = (byte) (x >> 0 & 0xff);
-    }
-
-    private Texture loadTexture(InputStream in) throws IOException {
-        if (in == null) return null;
-        BufferedImage img = ImageIO.read(in);
-        if (img == null) {
-            throw new IIOException("No image found");
-        }
-
-        String hash = computeTextureHash(img);
-
-        Texture existent = textures.get(hash);
-        if (existent != null) {
-            return existent;
-        }
-
-        String url = String.format("http://localhost:%d/textures/%s", getListeningPort(), hash);
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        ImageIO.write(img, "png", buf);
-        Texture texture = new Texture(hash, buf.toByteArray(), url);
-
-        existent = textures.putIfAbsent(hash, texture);
-
-        if (existent != null) {
-            return existent;
-        }
-        return texture;
-    }
-
-    public Texture loadTexture(String url) throws IOException {
-        if (url == null) return null;
-        return loadTexture(new URL(url).openStream());
     }
 
     public void addCharacter(Character character) {
@@ -267,7 +184,7 @@ public class YggdrasilServer extends HttpServer {
             Map<String, Object> realTextures = new HashMap<>();
             for (Map.Entry<TextureType, Texture> textureEntry : textures.entrySet()) {
                 if (textureEntry.getValue() == null) continue;
-                realTextures.put(textureEntry.getKey().name(), mapOf(pair("url", rootUrl + "/textures/" + textureEntry.getValue().hash)));
+                realTextures.put(textureEntry.getKey().name(), mapOf(pair("url", rootUrl + "/textures/" + textureEntry.getValue().getHash())));
             }
 
             Map<String, Object> textureResponse = mapOf(
@@ -286,30 +203,6 @@ public class YggdrasilServer extends HttpServer {
                                             JsonUtils.GSON.toJson(textureResponse).getBytes(UTF_8)
                                     ), UTF_8))))
             );
-        }
-    }
-
-    private static class Texture {
-        private final String hash;
-        private final byte[] data;
-        private final String url;
-
-        public Texture(String hash, byte[] data, String url) {
-            this.hash = requireNonNull(hash);
-            this.data = requireNonNull(data);
-            this.url = requireNonNull(url);
-        }
-
-        public String getUrl() {
-            return url;
-        }
-
-        public InputStream getInputStream() {
-            return new ByteArrayInputStream(data);
-        }
-
-        public int getLength() {
-            return data.length;
         }
     }
 
