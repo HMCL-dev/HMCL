@@ -98,13 +98,30 @@ public class AboutPage extends StackPane {
             contributors.setSubtitle(i18n("about.thanks_to.contributors.statement"));
             contributors.setExternalLink("https://github.com/huanghongxun/HMCL/graphs/contributors");
 
+            thanks.getContent().setAll(yushijinhun, bangbang93, mcbbs, mcmod, noin, gamerteam, redLnn, contributors);
+        }
+
+        ComponentList community = new ComponentList();
+        {
             IconedTwoLineListItem users = new IconedTwoLineListItem();
             users.setImage(new Image("/assets/img/craft_table.png", 32, 32, false, true));
             users.setTitle(i18n("about.thanks_to.users"));
             users.setSubtitle(i18n("about.thanks_to.users.statement"));
             users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, mcbbs, mcmod, noin, gamerteam, redLnn, users, contributors);
+            IconedTwoLineListItem discord = new IconedTwoLineListItem();
+            discord.setImage(new Image("/assets/img/discord.png", 32, 32, false, true));
+            discord.setTitle(i18n("about.community.discord"));
+            discord.setSubtitle(i18n("about.community.discord.statement"));
+            discord.setExternalLink("https://discord.gg/jVvC7HfM6U");
+
+            IconedTwoLineListItem kaiheila = new IconedTwoLineListItem();
+            kaiheila.setImage(new Image("/assets/img/kaiheila.jpeg", 32, 32, false, true));
+            kaiheila.setTitle(i18n("about.community.kaiheila"));
+            kaiheila.setSubtitle(i18n("about.community.kaiheila.statement"));
+            kaiheila.setExternalLink("https://kaihei.co/Kx7n3t");
+
+            community.getContent().setAll(users, discord, kaiheila);
         }
 
         ComponentList dep = new ComponentList();
@@ -175,6 +192,9 @@ public class AboutPage extends StackPane {
 
                 ComponentList.createComponentListTitle(i18n("about.thanks_to")),
                 thanks,
+
+                ComponentList.createComponentListTitle(i18n("about.community")),
+                community,
 
                 ComponentList.createComponentListTitle(i18n("about.dependency")),
                 dep,
