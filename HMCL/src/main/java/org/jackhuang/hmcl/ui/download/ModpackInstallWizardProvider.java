@@ -120,7 +120,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
                     if (exception.getCause() instanceof FileNotFoundException) {
                         Controllers.dialog(i18n("modpack.type.curse.not_found"), i18n("install.failed"), MessageType.ERROR, next);
                     } else {
-                        Controllers.dialog(i18n("install.success"), i18n("install.success"), MessageType.INFORMATION, next);
+                        Controllers.dialog(i18n("install.success"), i18n("install.success"), MessageType.SUCCESS, next);
                     }
                 } else {
                     UpdateInstallerWizardProvider.alertFailureMessage(exception, next);

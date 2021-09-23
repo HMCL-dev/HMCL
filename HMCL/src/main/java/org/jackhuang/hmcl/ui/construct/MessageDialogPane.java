@@ -31,6 +31,8 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
+
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -38,10 +40,14 @@ public final class MessageDialogPane extends StackPane {
 
     public enum MessageType {
         ERROR,
-        INFORMATION,
+        INFO,
         WARNING,
         QUESTION,
-        FINE,
+        SUCCESS;
+
+        public String getDisplayName() {
+            return i18n("message." + name().toLowerCase(Locale.ROOT));
+        }
     }
 
     @FXML
@@ -64,13 +70,13 @@ public final class MessageDialogPane extends StackPane {
             this.title.setText(title);
 
         switch (type) {
-            case INFORMATION:
+            case INFO:
                 graphic.setGraphic(SVG.infoCircle(Theme.blackFillBinding(), 40, 40));
                 break;
             case ERROR:
                 graphic.setGraphic(SVG.closeCircle(Theme.blackFillBinding(), 40, 40));
                 break;
-            case FINE:
+            case SUCCESS:
                 graphic.setGraphic(SVG.checkCircle(Theme.blackFillBinding(), 40, 40));
                 break;
             case WARNING:

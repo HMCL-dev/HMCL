@@ -57,7 +57,7 @@ public class VersionPage extends Control implements DecoratorPage {
     private String preferredVersionName = null;
 
     {
-        versionSettingsTab.setNodeSupplier(VersionSettingsPage::new);
+        versionSettingsTab.setNodeSupplier(() -> new VersionSettingsPage(false));
         modListTab.setNodeSupplier(ModListPage::new);
         installerListTab.setNodeSupplier(InstallerListPage::new);
         worldListTab.setNodeSupplier(WorldListPage::new);

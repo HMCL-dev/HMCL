@@ -124,10 +124,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         }
 
         if (versionSelection) {
-            versions.setAll(profile.getRepository().getVersions().stream()
-                    .filter(v -> !v.isHidden())
-                    .sorted(Comparator.comparing((Version v) -> v.getReleaseTime() == null ? new Date(0L) : v.getReleaseTime())
-                            .thenComparing(v -> VersionNumber.asVersion(v.getId())))
+            versions.setAll(profile.getRepository().getDisplayVersions()
                     .map(Version::getId)
                     .collect(Collectors.toList()));
             selectedVersion.set(profile.getSelectedVersion());

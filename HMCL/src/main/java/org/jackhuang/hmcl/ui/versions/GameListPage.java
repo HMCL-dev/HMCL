@@ -190,15 +190,12 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
             toggleGroup = new ToggleGroup();
             WeakListenerHolder listenerHolder = new WeakListenerHolder();
             toggleGroup.getProperties().put("ReferenceHolder", listenerHolder);
-            List<GameListItem> children = repository.getVersions().parallelStream()
-                    .filter(version -> !version.isHidden())
-                    .sorted(Comparator.comparing((Version version) -> version.getReleaseTime() == null ? new Date(0L) : version.getReleaseTime())
-                            .thenComparing(a -> VersionNumber.asVersion(a.getId())))
-                    .map(version -> new GameListItem(toggleGroup, profile, version.getId()))
-                    .collect(Collectors.toList());
             runInFX(() -> {
                 if (profile == Profiles.getSelectedProfile()) {
                     setLoading(false);
+                    List<GameListItem> children = repository.getDisplayVersions()
+                            .map(version -> new GameListItem(toggleGroup, profile, version.getId()))
+                            .collect(Collectors.toList());
                     itemsProperty().setAll(children);
                     children.forEach(GameListItem::checkSelection);
 

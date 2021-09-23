@@ -154,7 +154,7 @@ public class DownloadSettingsPage extends StackPane {
                 }
 
                 {
-                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
                     VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
                     hintPane.disableProperty().bind(config().autoDownloadThreadsProperty());
                     hintPane.setText(i18n("settings.launcher.download.threads.hint"));

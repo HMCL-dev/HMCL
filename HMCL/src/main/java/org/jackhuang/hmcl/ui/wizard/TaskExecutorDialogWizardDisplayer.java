@@ -62,9 +62,9 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                     runInFX(() -> {
                         if (success) {
                             if (settings.containsKey("success_message") && settings.get("success_message") instanceof String)
-                                Controllers.dialog((String) settings.get("success_message"), null, MessageType.FINE, () -> onEnd());
+                                Controllers.dialog((String) settings.get("success_message"), null, MessageType.SUCCESS, () -> onEnd());
                             else if (!settings.containsKey("forbid_success_message"))
-                                Controllers.dialog(i18n("message.success"), null, MessageType.FINE, () -> onEnd());
+                                Controllers.dialog(i18n("message.success"), null, MessageType.SUCCESS, () -> onEnd());
                         } else {
                             if (executor.getException() == null)
                                 return;

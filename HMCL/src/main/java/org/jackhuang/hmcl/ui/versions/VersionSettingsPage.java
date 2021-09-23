@@ -29,6 +29,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -42,11 +43,13 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -69,8 +72,11 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class VersionSettingsPage extends StackPane implements DecoratorPage, VersionPage.VersionLoadable {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(new State("", null, false, false, false));
 
+    private final boolean globalSetting;
+
     private VersionSetting lastVersionSetting = null;
     private Profile profile;
+    private WeakListenerHolder listenerHolder;
     private String versionId;
     private boolean javaItemsLoaded;
 
@@ -85,7 +91,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final JFXTextField txtPostExitCommand;
     private final JFXTextField txtServerIP;
     private final ComponentList componentList;
-    private final ComponentList iconPickerItemWrapper;
     private final JFXComboBox<LauncherVisibility> cboLauncherVisibility;
     private final JFXCheckBox chkAutoAllocate;
     private final JFXCheckBox chkFullscreen;
@@ -102,19 +107,23 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final MultiFileItem.FileOption<NativesDirectoryType> nativesDirCustomOption;
     private final JFXComboBox<ProcessPriority> cboProcessPriority;
     private final OptionToggleButton showLogsPane;
-    private final ImagePickerItem iconPickerItem;
-    private final JFXCheckBox chkEnableSpecificSettings;
-    private final BorderPane settingsTypePane;
+    private ImagePickerItem iconPickerItem;
 
     private final InvalidationListener specificSettingsListener;
 
     private final InvalidationListener javaListener = any -> initJavaSubtitle();
 
     private boolean uiVisible = false;
-    private final IntegerProperty maxMemoryProperty = new SimpleIntegerProperty();
-    private final ObjectProperty<OperatingSystem.PhysicalMemoryStatus> memoryStatusProperty = new SimpleObjectProperty<>(OperatingSystem.PhysicalMemoryStatus.INVALID);
+    private final StringProperty selectedVersion = new SimpleStringProperty();
+    private final BooleanProperty navigateToSpecificSettings = new SimpleBooleanProperty(false);
+    private final BooleanProperty enableSpecificSettings = new SimpleBooleanProperty(true);
+    private final IntegerProperty maxMemory = new SimpleIntegerProperty();
+    private final ObjectProperty<OperatingSystem.PhysicalMemoryStatus> memoryStatus = new SimpleObjectProperty<>(OperatingSystem.PhysicalMemoryStatus.INVALID);
+    private final BooleanProperty modpack = new SimpleBooleanProperty();
 
-    public VersionSettingsPage() {
+    public VersionSettingsPage(boolean globalSetting) {
+        this.globalSetting = globalSetting;
+
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
         scrollPane.setFitToWidth(true);
@@ -122,34 +131,58 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         getChildren().setAll(scrollPane);
 
         rootPane = new VBox();
+        rootPane.setFillWidth(true);
         scrollPane.setContent(rootPane);
         FXUtils.smoothScrolling(scrollPane);
         rootPane.getStyleClass().add("card-list");
 
-        {
-            iconPickerItemWrapper = new ComponentList();
+        if (globalSetting) {
+            HintPane skinHint = new HintPane(MessageDialogPane.MessageType.INFO);
+            skinHint.setText(i18n("settings.skin"));
+            rootPane.getChildren().add(skinHint);
+
+            HintPane specificSettingsHint = new HintPane(MessageDialogPane.MessageType.WARNING);
+            Text text = new Text();
+            text.textProperty().bind(BindingMapping.of(selectedVersion)
+                    .map(selectedVersion -> i18n("settings.type.special.edit.hint", selectedVersion)));
+
+            JFXHyperlink specificSettingsLink = new JFXHyperlink();
+            specificSettingsLink.setText(i18n("settings.type.special.edit"));
+            specificSettingsLink.setOnMouseClicked(e -> editSpecificSettings());
+
+            specificSettingsHint.setChildren(text, specificSettingsLink);
+
+            rootPane.getChildren().addAll(specificSettingsHint);
+        }
+
+        if (!globalSetting) {
+            ComponentList iconPickerItemWrapper = new ComponentList();
+            rootPane.getChildren().add(iconPickerItemWrapper);
+
             iconPickerItem = new ImagePickerItem();
             iconPickerItem.setImage(new Image("/assets/img/icon.png"));
             iconPickerItem.setTitle(i18n("settings.icon"));
             iconPickerItem.setOnSelectButtonClicked(e -> onExploreIcon());
             iconPickerItem.setOnDeleteButtonClicked(e -> onDeleteIcon());
             iconPickerItemWrapper.getContent().setAll(iconPickerItem);
-        }
 
-        {
-            settingsTypePane = new BorderPane();
 
-            chkEnableSpecificSettings = new JFXCheckBox();
-            settingsTypePane.setLeft(chkEnableSpecificSettings);
-            chkEnableSpecificSettings.setText(i18n("settings.type.special.enable"));
-            BorderPane.setAlignment(chkEnableSpecificSettings, Pos.CENTER_RIGHT);
+            BorderPane settingsTypePane = new BorderPane();
+            settingsTypePane.disableProperty().bind(modpack);
+            rootPane.getChildren().add(settingsTypePane);
+
+            JFXCheckBox enableSpecificCheckBox = new JFXCheckBox();
+            enableSpecificCheckBox.selectedProperty().bindBidirectional(enableSpecificSettings);
+            settingsTypePane.setLeft(enableSpecificCheckBox);
+            enableSpecificCheckBox.setText(i18n("settings.type.special.enable"));
+            BorderPane.setAlignment(enableSpecificCheckBox, Pos.CENTER_RIGHT);
 
             JFXButton editGlobalSettingsButton = new JFXButton();
             settingsTypePane.setRight(editGlobalSettingsButton);
             editGlobalSettingsButton.setText(i18n("settings.type.global.edit"));
             editGlobalSettingsButton.getStyleClass().add("jfx-button-raised");
             editGlobalSettingsButton.setButtonType(JFXButton.ButtonType.RAISED);
-            editGlobalSettingsButton.disableProperty().bind(chkEnableSpecificSettings.selectedProperty());
+            editGlobalSettingsButton.disableProperty().bind(enableSpecificCheckBox.selectedProperty());
             BorderPane.setAlignment(editGlobalSettingsButton, Pos.CENTER_RIGHT);
             editGlobalSettingsButton.setOnMouseClicked(e -> editGlobalSettings());
         }
@@ -167,6 +200,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             gameDirItem = new MultiFileItem<>();
             gameDirItem.setTitle(i18n("settings.game.working_directory"));
             gameDirItem.setHasSubtitle(true);
+            gameDirItem.disableProperty().bind(modpack);
             gameDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.custom"), GameDirectoryType.CUSTOM)
                             .setChooserTitle(i18n("settings.game.working_directory.choose"))
                             .setDirectory(true);
@@ -203,20 +237,20 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     HBox.setHgrow(slider, Priority.ALWAYS);
                     slider.setValueFactory(self -> Bindings.createStringBinding(() -> (int) (self.getValue() * 100) + "%", self.valueProperty()));
                     AtomicBoolean changedByTextField = new AtomicBoolean(false);
-                    FXUtils.onChangeAndOperate(maxMemoryProperty, maxMemory -> {
+                    FXUtils.onChangeAndOperate(maxMemory, maxMemory -> {
                         changedByTextField.set(true);
                         slider.setValue(maxMemory.intValue() * 1.0 / OperatingSystem.TOTAL_MEMORY);
                         changedByTextField.set(false);
                     });
                     slider.valueProperty().addListener((value, oldVal, newVal) -> {
                         if (changedByTextField.get()) return;
-                        maxMemoryProperty.set((int) (value.getValue().doubleValue() * OperatingSystem.TOTAL_MEMORY));
+                        maxMemory.set((int) (value.getValue().doubleValue() * OperatingSystem.TOTAL_MEMORY));
                     });
 
                     JFXTextField txtMaxMemory = new JFXTextField();
                     FXUtils.setLimitWidth(txtMaxMemory, 60);
                     FXUtils.setValidateWhileTextChanged(txtMaxMemory, true);
-                    txtMaxMemory.textProperty().bindBidirectional(maxMemoryProperty, SafeStringConverter.fromInteger());
+                    txtMaxMemory.textProperty().bindBidirectional(maxMemory, SafeStringConverter.fromInteger());
                     txtMaxMemory.setValidators(new NumberValidator(i18n("input.number"), false));
 
                     lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label("MB"));
@@ -233,16 +267,16 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     usedMemory.getStyleClass().add("memory-used");
                     usedMemory.maxWidthProperty().bind(Bindings.createDoubleBinding(() ->
                                     progressBarPane.getWidth() *
-                                            (memoryStatusProperty.get().getUsed() * 1.0 / memoryStatusProperty.get().getTotal()), progressBarPane.widthProperty(),
-                            memoryStatusProperty));
+                                            (memoryStatus.get().getUsed() * 1.0 / memoryStatus.get().getTotal()), progressBarPane.widthProperty(),
+                            memoryStatus));
                     StackPane allocateMemory = new StackPane();
                     allocateMemory.getStyleClass().add("memory-allocate");
                     allocateMemory.maxWidthProperty().bind(Bindings.createDoubleBinding(() ->
                                     progressBarPane.getWidth() *
                                             Math.min(1.0,
-                                                    (double) (HMCLGameRepository.getAllocatedMemory(maxMemoryProperty.get() * 1024L * 1024L, memoryStatusProperty.get().getAvailable(), chkAutoAllocate.isSelected())
-                                                            + memoryStatusProperty.get().getUsed()) / memoryStatusProperty.get().getTotal()), progressBarPane.widthProperty(),
-                            maxMemoryProperty, memoryStatusProperty, chkAutoAllocate.selectedProperty()));
+                                                    (double) (HMCLGameRepository.getAllocatedMemory(maxMemory.get() * 1024L * 1024L, memoryStatus.get().getAvailable(), chkAutoAllocate.isSelected())
+                                                            + memoryStatus.get().getUsed()) / memoryStatus.get().getTotal()), progressBarPane.widthProperty(),
+                            maxMemory, memoryStatus, chkAutoAllocate.selectedProperty()));
 
                     progressBarPane.getChildren().setAll(allocateMemory, usedMemory);
                 }
@@ -254,19 +288,19 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     lblPhysicalMemory.getStyleClass().add("memory-label");
                     digitalPane.setLeft(lblPhysicalMemory);
                     lblPhysicalMemory.textProperty().bind(Bindings.createStringBinding(() -> {
-                        return i18n("settings.memory.used_per_total", memoryStatusProperty.get().getUsedGB(), memoryStatusProperty.get().getTotalGB());
-                    }, memoryStatusProperty));
+                        return i18n("settings.memory.used_per_total", memoryStatus.get().getUsedGB(), memoryStatus.get().getTotalGB());
+                    }, memoryStatus));
 
                     Label lblAllocateMemory = new Label();
                     lblAllocateMemory.textProperty().bind(Bindings.createStringBinding(() -> {
-                        long maxMemory = Lang.parseInt(maxMemoryProperty.get(), 0) * 1024L * 1024L;
-                        return i18n(memoryStatusProperty.get().hasAvailable() && maxMemory > memoryStatusProperty.get().getAvailable()
+                        long maxMemory = Lang.parseInt(this.maxMemory.get(), 0) * 1024L * 1024L;
+                        return i18n(memoryStatus.get().hasAvailable() && maxMemory > memoryStatus.get().getAvailable()
                                         ? (chkAutoAllocate.isSelected() ? "settings.memory.allocate.auto.exceeded" : "settings.memory.allocate.manual.exceeded")
                                         : (chkAutoAllocate.isSelected() ? "settings.memory.allocate.auto" : "settings.memory.allocate.manual"),
                                 OperatingSystem.PhysicalMemoryStatus.toGigaBytes(maxMemory),
-                                OperatingSystem.PhysicalMemoryStatus.toGigaBytes(HMCLGameRepository.getAllocatedMemory(maxMemory, memoryStatusProperty.get().getAvailable(), chkAutoAllocate.isSelected())),
-                                OperatingSystem.PhysicalMemoryStatus.toGigaBytes(memoryStatusProperty.get().getAvailable()));
-                    }, memoryStatusProperty, maxMemoryProperty, chkAutoAllocate.selectedProperty()));
+                                OperatingSystem.PhysicalMemoryStatus.toGigaBytes(HMCLGameRepository.getAllocatedMemory(maxMemory, memoryStatus.get().getAvailable(), chkAutoAllocate.isSelected())),
+                                OperatingSystem.PhysicalMemoryStatus.toGigaBytes(memoryStatus.get().getAvailable()));
+                    }, memoryStatus, maxMemory, chkAutoAllocate.selectedProperty()));
                     lblAllocateMemory.getStyleClass().add("memory-label");
                     digitalPane.setRight(lblAllocateMemory);
                 }
@@ -374,7 +408,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         }
 
         ComponentList customCommandsPane = new ComponentList();
-        customCommandsPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
+        customCommandsPane.disableProperty().bind(enableSpecificSettings.not());
         {
             GridPane pane = new GridPane();
             pane.setHgap(16);
@@ -410,7 +444,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         }
 
         ComponentList jvmPane = new ComponentList();
-        jvmPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
+        jvmPane.disableProperty().bind(enableSpecificSettings.not());
         {
             GridPane pane = new GridPane();
             ColumnConstraints title = new ColumnConstraints();
@@ -437,7 +471,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         }
 
         ComponentList workaroundPane = new ComponentList();
-        workaroundPane.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
+        workaroundPane.disableProperty().bind(enableSpecificSettings.not());
         {
             nativesDirItem = new MultiFileItem<>();
             nativesDirItem.setTitle(i18n("settings.advanced.natives_directory"));
@@ -468,7 +502,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             workaroundPane.getContent().setAll(nativesDirItem, noJVMArgsPane, noGameCheckPane, noJVMCheckPane, useNativeGLFWPane, useNativeOpenALPane);
         }
 
-        rootPane.getChildren().setAll(iconPickerItemWrapper, settingsTypePane, componentList,
+        rootPane.getChildren().addAll(componentList,
                 advancedHintPane,
                 ComponentList.createComponentListTitle(i18n("settings.advanced.custom_commands")), customCommandsPane,
                 ComponentList.createComponentListTitle(i18n("settings.advanced.jvm")), jvmPane,
@@ -477,7 +511,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         initialize();
 
         specificSettingsListener = any -> {
-            chkEnableSpecificSettings.setSelected(!lastVersionSetting.isUsesGlobal());
+            enableSpecificSettings.set(!lastVersionSetting.isUsesGlobal());
         };
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onDecoratorPageNavigating);
@@ -490,7 +524,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     }
 
     private void initialize() {
-        memoryStatusProperty.set(OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID));
+        memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID));
 
         Task.supplyAsync(JavaVersion::getJavas).thenAcceptAsync(Schedulers.javafx(), list -> {
             List<MultiFileItem.Option<JavaVersion>> options = list.stream()
@@ -509,7 +543,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             javaCustomOption.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe", "javaw.exe"));
 
-        chkEnableSpecificSettings.selectedProperty().addListener((a, b, newValue) -> {
+        enableSpecificSettings.addListener((a, b, newValue) -> {
             if (versionId == null) return;
 
             // do not call versionSettings.setUsesGlobal(true/false)
@@ -523,31 +557,36 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             Platform.runLater(() -> loadVersion(profile, versionId));
         });
 
-        componentList.disableProperty().bind(chkEnableSpecificSettings.selectedProperty().not());
+        componentList.disableProperty().bind(enableSpecificSettings.not());
     }
 
     @Override
     public void loadVersion(Profile profile, String versionId) {
         this.profile = profile;
         this.versionId = versionId;
+        this.listenerHolder = new WeakListenerHolder();
 
         if (versionId == null) {
-            rootPane.getChildren().remove(iconPickerItemWrapper);
-            rootPane.getChildren().remove(settingsTypePane);
-            chkEnableSpecificSettings.setSelected(true);
+            enableSpecificSettings.set(true);
             state.set(State.fromTitle(Profiles.getProfileDisplayName(profile) + " - " + i18n("settings.type.global.manage")));
+
+            listenerHolder.add(FXUtils.onWeakChangeAndOperate(profile.selectedVersionProperty(), selectedVersion -> {
+                this.selectedVersion.setValue(selectedVersion);
+                navigateToSpecificSettings.set(!profile.getRepository().getVersionSetting(selectedVersion).isUsesGlobal());
+            }));
+        } else {
+            navigateToSpecificSettings.set(false);
         }
 
         VersionSetting versionSetting = profile.getVersionSetting(versionId);
 
-        gameDirItem.setDisable(versionId != null && profile.getRepository().isModpack(versionId));
-        settingsTypePane.setDisable(versionId != null && profile.getRepository().isModpack(versionId));
+        modpack.set(versionId != null && profile.getRepository().isModpack(versionId));
 
         // unbind data fields
         if (lastVersionSetting != null) {
             FXUtils.unbindInt(txtWidth, lastVersionSetting.widthProperty());
             FXUtils.unbindInt(txtHeight, lastVersionSetting.heightProperty());
-            maxMemoryProperty.unbindBidirectional(lastVersionSetting.maxMemoryProperty());
+            maxMemory.unbindBidirectional(lastVersionSetting.maxMemoryProperty());
             javaCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.javaDirProperty());
             gameDirCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.gameDirProperty());
             nativesDirCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.nativesDirProperty());
@@ -586,7 +625,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         // bind new data fields
         FXUtils.bindInt(txtWidth, versionSetting.widthProperty());
         FXUtils.bindInt(txtHeight, versionSetting.heightProperty());
-        maxMemoryProperty.bindBidirectional(versionSetting.maxMemoryProperty());
+        maxMemory.bindBidirectional(versionSetting.maxMemoryProperty());
 
         javaCustomOption.bindBidirectional(versionSetting.javaDirProperty());
         gameDirCustomOption.bindBidirectional(versionSetting.gameDirProperty());
@@ -610,7 +649,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         versionSetting.usesGlobalProperty().addListener(specificSettingsListener);
         if (versionId != null)
-            chkEnableSpecificSettings.setSelected(!versionSetting.isUsesGlobal());
+            enableSpecificSettings.set(!versionSetting.isUsesGlobal());
 
         javaItem.setToggleSelectedListener(newValue -> {
             if (newValue.getUserData() == null) {
@@ -669,6 +708,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 .start();
     }
 
+    private void editSpecificSettings() {
+        Versions.modifyGameSettings(profile, profile.getSelectedVersion());
+    }
+
     private void editGlobalSettings() {
         Versions.modifyGlobalSettings(profile);
     }
@@ -703,7 +746,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
     private void loadIcon() {
         if (versionId == null) {
-            iconPickerItem.setImage(newImage("/assets/img/grass.png"));
             return;
         }
 

@@ -38,12 +38,14 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
@@ -87,6 +89,13 @@ public class HMCLGameRepository extends DefaultGameRepository {
             default:
                 throw new Error();
         }
+    }
+
+    public Stream<Version> getDisplayVersions() {
+        return getVersions().stream()
+                .filter(v -> !v.isHidden())
+                .sorted(Comparator.comparing((Version v) -> v.getReleaseTime() == null ? new Date(0L) : v.getReleaseTime())
+                        .thenComparing(v -> VersionNumber.asVersion(v.getId())));
     }
 
     @Override

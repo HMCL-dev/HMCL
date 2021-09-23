@@ -235,7 +235,7 @@ public final class Controllers {
     }
 
     public static void dialog(String text, String title) {
-        dialog(text, title, MessageType.INFORMATION);
+        dialog(text, title, MessageType.INFO);
     }
 
     public static void dialog(String text, String title, MessageType type) {

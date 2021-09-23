@@ -418,7 +418,7 @@ public final class LauncherHelper {
             if (java8.isPresent()) {
                 java8required = true;
                 setting.setJavaVersion(java8.get());
-                Controllers.dialog(i18n("launch.advice.java9") + "\n" + i18n("launch.advice.corrected"), i18n("message.info"), MessageType.INFORMATION, onAccept);
+                Controllers.dialog(i18n("launch.advice.java9") + "\n" + i18n("launch.advice.corrected"), i18n("message.info"), MessageType.INFO, onAccept);
                 javaChanged = true;
             } else {
                 Controllers.dialog(i18n("launch.advice.java9") + "\n" + i18n("launch.advice.uncorrected"), i18n("message.error"), MessageType.ERROR, null);

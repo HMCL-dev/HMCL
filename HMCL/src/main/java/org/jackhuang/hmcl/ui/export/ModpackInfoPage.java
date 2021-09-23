@@ -187,7 +187,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     });
                     borderPane.setTop(hyperlink);
                 } else {
-                    HintPane pane = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+                    HintPane pane = new HintPane(MessageDialogPane.MessageType.INFO);
                     pane.setText(i18n("modpack.wizard.step.initialization.warning"));
                     borderPane.setTop(pane);
                 }

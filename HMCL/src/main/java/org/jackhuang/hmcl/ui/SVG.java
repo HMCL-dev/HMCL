@@ -216,6 +216,10 @@ public final class SVG {
         return createSVGPath("M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z", fill, width, height);
     }
 
+    public static Node alertOutline(ObjectBinding<? extends Paint> fill, double width, double height) {
+        return createSVGPath("M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16", fill, width, height);
+    }
+
     public static Node plus(ObjectBinding<? extends Paint> fill, double width, double height) {
         return createSVGPath("M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z", fill, width, height);
     }

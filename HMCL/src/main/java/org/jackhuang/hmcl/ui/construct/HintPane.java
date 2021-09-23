@@ -21,6 +21,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -36,27 +37,44 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class HintPane extends VBox {
     private final Text label = new Text();
     private final StringProperty text = new SimpleStringProperty(this, "text");
+    private final TextFlow flow = new TextFlow();
 
     public HintPane() {
-        this(MessageDialogPane.MessageType.INFORMATION);
+        this(MessageDialogPane.MessageType.INFO);
     }
 
     public HintPane(MessageDialogPane.MessageType type) {
         setFillWidth(true);
-        getStyleClass().add("hint");
+        getStyleClass().addAll("hint", type.name().toLowerCase());
         HBox hbox = new HBox();
         hbox.setAlignment(Pos.CENTER_LEFT);
-        hbox.getChildren().setAll(
-                SVG.informationOutline(Theme.blackFillBinding(), 16, 16),
-                new Label(i18n("message.info"))
-        );
-        TextFlow flow = new TextFlow();
+
+        switch (type) {
+            case INFO:
+                hbox.getChildren().add(SVG.informationOutline(Theme.blackFillBinding(), 16, 16));
+                break;
+            case ERROR:
+                hbox.getChildren().add(SVG.closeCircleOutline(Theme.blackFillBinding(), 16, 16));
+                break;
+            case SUCCESS:
+                hbox.getChildren().add(SVG.checkCircleOutline(Theme.blackFillBinding(), 16, 16));
+                break;
+            case WARNING:
+                hbox.getChildren().add(SVG.alertOutline(Theme.blackFillBinding(), 16, 16));
+                break;
+            case QUESTION:
+                hbox.getChildren().add(SVG.helpCircleOutline(Theme.blackFillBinding(), 16, 16));
+                break;
+            default:
+                throw new IllegalArgumentException("Unrecognized message box message type " + type);
+        }
+
+
+        hbox.getChildren().add(new Text(type.getDisplayName()));
         flow.getChildren().setAll(label);
         getChildren().setAll(hbox, flow);
         label.textProperty().bind(text);
         VBox.setMargin(flow, new Insets(2, 2, 0, 2));
-
-        label.fillProperty().bind(BindingMapping.of(disabledProperty()).map(disabled -> disabled ? new Color(0, 0, 0, 0.5) : Color.BLACK));
     }
 
     public String getText() {
@@ -69,5 +87,9 @@ public class HintPane extends VBox {
 
     public void setText(String text) {
         this.text.set(text);
+    }
+
+    public void setChildren(Node... children) {
+        flow.getChildren().setAll(children);
     }
 }

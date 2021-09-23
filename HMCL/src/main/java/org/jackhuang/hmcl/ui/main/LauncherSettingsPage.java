@@ -48,7 +48,7 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
     private final TransitionPane transitionPane = new TransitionPane();
 
     public LauncherSettingsPage() {
-        gameTab.setNodeSupplier(VersionSettingsPage::new);
+        gameTab.setNodeSupplier(() -> new VersionSettingsPage(true));
         settingsTab.setNodeSupplier(SettingsPage::new);
         personalizationTab.setNodeSupplier(PersonalizationPage::new);
         downloadTab.setNodeSupplier(DownloadSettingsPage::new);

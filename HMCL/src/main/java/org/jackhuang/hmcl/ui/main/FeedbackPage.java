@@ -326,7 +326,7 @@ public class FeedbackPage extends VBox {
             searchHintPane.setText(i18n("feedback.add.hint.search_before_add"));
             body.addRow(0, searchHintPane);
 
-            HintPane titleHintPane = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+            HintPane titleHintPane = new HintPane(MessageDialogPane.MessageType.INFO);
             GridPane.setColumnSpan(titleHintPane, 2);
             titleHintPane.setText(i18n("feedback.add.hint.title"));
             body.addRow(1, titleHintPane);

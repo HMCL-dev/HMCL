@@ -120,7 +120,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
             scrollPane.setFitToHeight(true);
             root.setCenter(scrollPane);
 
-            HintPane hint = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+            HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
             hint.setText(i18n("multiplayer.hint"));
 
             ComponentList roomPane = new ComponentList();
@@ -130,7 +130,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
 
                 VBox disconnectedPane = new VBox(8);
                 {
-                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
                     hintPane.setText(i18n("multiplayer.state.disconnected.hint"));
 
                     Label label = new Label(i18n("multiplayer.state.disconnected"));
@@ -190,7 +190,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                 pane.setHgap(16);
                 pane.setVgap(8);
 
-                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
                 hintPane.setText(i18n("multiplayer.nat.hint"));
                 GridPane.setColumnSpan(hintPane, 2);
                 pane.addRow(0, hintPane);

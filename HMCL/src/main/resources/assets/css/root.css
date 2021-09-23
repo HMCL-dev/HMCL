@@ -43,12 +43,52 @@
 }
 
 .hint {
-    -fx-border-color: #b8daff;
-    -fx-background-color: #cce5ff;
     -fx-background-radius: 5;
     -fx-border-width: 1;
     -fx-border-radius: 5;
     -fx-padding: 6;
+}
+
+/*
+  Colors are picked from bootstrap
+
+  https://getbootstrap.com/docs/4.1/components/alerts/
+ */
+
+.hint.info {
+    -fx-background-color: #cce5ff;
+    -fx-border-color: #b8daff;
+}
+
+.hint.info Text, .hint.info .svg {
+    -fx-fill: #004085;
+}
+
+.hint.success {
+    -fx-background-color: #d4edda;
+    -fx-border-color: #c3e6cb;
+}
+
+.hint.success Text, .hint.success .svg {
+    -fx-fill: #155724;
+}
+
+.hint.error {
+    -fx-background-color: #f8d7da;
+    -fx-border-color: #f5c6cb;
+}
+
+.hint.error Text, .hint.error .svg {
+    -fx-fill: #721c24;
+}
+
+.hint.warning {
+    -fx-background-color: #fff3cd;
+    -fx-border-color: #ffeeba;
+}
+
+.hint.warning Text, .hint.warning .svg {
+    -fx-fill: #856404;
 }
 
 .memory-label {
