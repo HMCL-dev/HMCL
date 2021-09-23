@@ -49,18 +49,17 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.platform.JavaVersion.CURRENT_JAVA;
 
-import java.awt.Dialog;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -202,7 +201,7 @@ public final class SelfDependencyPatcher {
     /**
      * Patch in any missing dependencies, if any.
      */
-    public static void patch() throws PatchException, IncompatibleVersionException {
+    public static void patch() throws PatchException, IncompatibleVersionException, CanceledException {
         // Do nothing if JavaFX is detected
         try {
             try {
@@ -233,10 +232,8 @@ public final class SelfDependencyPatcher {
         // Download missing dependencies
         List<DependencyDescriptor> missingDependencies = checkMissingDependencies();
         if (!missingDependencies.isEmpty()) {
-            final Repository repository = showChooseRepositoryDialog();
-
             try {
-                fetchDependencies(repository, missingDependencies);
+                fetchDependencies(missingDependencies);
             } catch (IOException e) {
                 throw new PatchException("Failed to download dependencies", e);
             }
@@ -273,9 +270,9 @@ public final class SelfDependencyPatcher {
             }
         }
 
-        int res = JOptionPane.showConfirmDialog(null, panel, i18n("repositories.chooser.title"), JOptionPane.YES_NO_OPTION);
+        int res = JOptionPane.showConfirmDialog(null, panel, i18n("repositories.chooser.title"), JOptionPane.OK_CANCEL_OPTION);
 
-        if (res == JOptionPane.YES_OPTION) {
+        if (res == JOptionPane.OK_OPTION) {
             final Enumeration<AbstractButton> buttons = buttonGroup.getElements();
             while (buttons.hasMoreElements()) {
                 final AbstractButton button = buttons.nextElement();
@@ -317,28 +314,86 @@ public final class SelfDependencyPatcher {
      *
      * @throws IOException When the files cannot be fetched or saved.
      */
-    private static void fetchDependencies(Repository repository, List<DependencyDescriptor> dependencies) throws IOException {
-        ProgressFrame dialog = new ProgressFrame(i18n("download.javafx"));
-        dialog.setVisible(true);
-
-        int progress = 0;
-        for (DependencyDescriptor dependency : dependencies) {
-            int currentProgress = ++progress;
-            final String url = repository.resolveDependencyURL(dependency);
-            SwingUtilities.invokeLater(() -> {
-                dialog.setStatus(url);
-                dialog.setProgress(currentProgress, dependencies.size() + 1);
-            });
-
-            LOG.info("Downloading " + url);
-            Files.createDirectories(dependency.localPath().getParent());
-            try (InputStream is = new URL(url).openStream()) {
-                Files.copy(is, dependency.localPath(), StandardCopyOption.REPLACE_EXISTING);
-            }
-            verifyChecksum(dependency);
+    private static void fetchDependencies(List<DependencyDescriptor> dependencies) throws IOException {
+        class BooleanHole {
+            volatile boolean value = false;
         }
 
-        dialog.dispose();
+        boolean isFirstTime = true;
+
+        byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
+        Repository repository = Repository.DEFAULT;
+
+        int count = 0;
+        while (true) {
+            BooleanHole isCancelled = new BooleanHole();
+            BooleanHole showDetails = new BooleanHole();
+
+            ProgressFrame dialog = new ProgressFrame(i18n("download.javafx"));
+            dialog.setProgressMaximum(dependencies.size() + 1);
+            dialog.setProgress(count);
+            dialog.setOnCancel(() -> isCancelled.value = true);
+            dialog.setOnChangeSource(() -> {
+                isCancelled.value = true;
+                showDetails.value = true;
+            });
+            SwingUtilities.invokeLater(dialog::showDialog);
+            try {
+                if (isFirstTime) {
+                    isFirstTime = false;
+                    try {
+                        //noinspection BusyWait
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ignored) {
+                    }
+                }
+                Files.createDirectories(DependencyDescriptor.DEPENDENCIES_DIR_PATH);
+                for (int i = count; i < dependencies.size(); i++) {
+                    if (isCancelled.value) {
+                        throw new CanceledException();
+                    }
+
+                    DependencyDescriptor dependency = dependencies.get(i);
+
+                    final String url = repository.resolveDependencyURL(dependency);
+                    SwingUtilities.invokeLater(() -> {
+                        dialog.setCurrent(dependency.module);
+                        dialog.incrementProgress();
+                    });
+
+                    LOG.info("Downloading " + url);
+
+                    try (InputStream is = new URL(url).openStream();
+                         OutputStream os = Files.newOutputStream(dependency.localPath())) {
+
+                        int read;
+                        while ((read = is.read(buffer, 0, IOUtils.DEFAULT_BUFFER_SIZE)) >= 0) {
+                            if (isCancelled.value) {
+                                try {
+                                    os.close();
+                                } finally {
+                                    Files.deleteIfExists(dependency.localPath());
+                                }
+                                throw new CanceledException();
+                            }
+                            os.write(buffer, 0, read);
+                        }
+                    }
+                    verifyChecksum(dependency);
+                    count++;
+                }
+            } catch (CanceledException e) {
+                dialog.dispose();
+                if (showDetails.value) {
+                    repository = showChooseRepositoryDialog();
+                    continue;
+                } else {
+                    throw e;
+                }
+            }
+            dialog.dispose();
+            return;
+        }
     }
 
     private static List<DependencyDescriptor> checkMissingDependencies() {
@@ -383,64 +438,83 @@ public final class SelfDependencyPatcher {
     public static class IncompatibleVersionException extends Exception {
     }
 
-    public static class ProgressFrame extends JDialog {
+    public static class CanceledException extends RuntimeException {
+    }
+
+    public static class ProgressFrame extends JOptionPane {
 
         private final JProgressBar progressBar;
         private final JLabel progressText;
+        private final JButton btnChangeSource;
+        private final JButton btnCancel;
+        private final JDialog dialog;
 
         public ProgressFrame(String title) {
-            super((Dialog) null);
-
             JPanel panel = new JPanel();
+            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-            setResizable(false);
-            setTitle(title);
-            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            setBounds(100, 100, 600, 150);
-            setContentPane(panel);
-            setLocationRelativeTo(null);
 
-            GridBagLayout gridBagLayout = new GridBagLayout();
-            gridBagLayout.columnWidths = new int[]{600, 0};
-            gridBagLayout.rowHeights = new int[]{0, 0, 0, 200};
-            gridBagLayout.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-            gridBagLayout.rowWeights = new double[]{0.0, 0.0, 0.0, 1.0};
-            panel.setLayout(gridBagLayout);
+            for (String note : i18n("download.javafx.notes").split("\n")) {
+                panel.add(new JLabel(note));
+            }
+            panel.add(new JLabel("<html><br/></html>"));
 
-            progressText = new JLabel("");
-            GridBagConstraints gbc_lblProgressText = new GridBagConstraints();
-            gbc_lblProgressText.insets = new Insets(10, 0, 5, 0);
-            gbc_lblProgressText.gridx = 0;
-            gbc_lblProgressText.gridy = 0;
-            panel.add(progressText, gbc_lblProgressText);
+            progressText = new JLabel(i18n("download.javafx.prepare"));
+            panel.add(progressText);
 
             progressBar = new JProgressBar();
-            GridBagConstraints gbc_progressBar = new GridBagConstraints();
-            gbc_progressBar.insets = new Insets(0, 25, 5, 25);
-            gbc_progressBar.fill = GridBagConstraints.HORIZONTAL;
-            gbc_progressBar.gridx = 0;
-            gbc_progressBar.gridy = 1;
-            panel.add(progressBar, gbc_progressBar);
+            panel.add(progressBar);
 
-            JButton btnCancel = new JButton(i18n("button.cancel"));
-            btnCancel.addActionListener(e -> {
-                System.exit(-1);
-            });
-            GridBagConstraints gbc_btnCancel = new GridBagConstraints();
-            gbc_btnCancel.insets = new Insets(0, 25, 5, 25);
-            gbc_btnCancel.fill = GridBagConstraints.HORIZONTAL;
-            gbc_btnCancel.gridx = 0;
-            gbc_btnCancel.gridy = 2;
-            panel.add(btnCancel, gbc_btnCancel);
+            btnChangeSource = new JButton(i18n("button.change_source"));
+            btnCancel = new JButton(i18n("button.cancel"));
+
+            setMessage(panel);
+            setOptions(new Object[]{btnChangeSource, btnCancel});
+            setInitialValue(btnChangeSource);
+
+            dialog = createDialog(title);
+            dialog.setResizable(false);
+            dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            dialog.setBounds(100, 100, 500, 200);
+            dialog.setLocationRelativeTo(null);
         }
 
-        public void setStatus(String status) {
-            progressText.setText(status);
+        public void setCurrent(String component) {
+            progressText.setText(i18n("download.javafx.component", component));
         }
 
-        public void setProgress(int current, int total) {
-            progressBar.setValue(current);
+        public void setProgressMaximum(int total) {
             progressBar.setMaximum(total);
+        }
+
+        public void setProgress(int n) {
+            progressBar.setValue(n);
+        }
+
+        public void incrementProgress() {
+            progressBar.setValue(progressBar.getValue() + 1);
+        }
+
+        public void setOnCancel(Runnable action) {
+            btnCancel.addActionListener(e -> action.run());
+            dialog.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    action.run();
+                }
+            });
+        }
+
+        public void setOnChangeSource(Runnable action) {
+            btnChangeSource.addActionListener(e -> action.run());
+        }
+
+        public void showDialog() {
+            dialog.setVisible(true);
+        }
+
+        public void dispose() {
+            dialog.dispose();
         }
     }
 }
