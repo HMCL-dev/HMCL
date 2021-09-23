@@ -14,13 +14,4 @@ dependencies {
     api group: 'com.nqzero', name: 'permit-reflect', version: '0.3'
     api group: 'org.nanohttpd', name: 'nanohttpd', version: '2.3.1'
     compileOnlyApi group: 'org.jetbrains', name: 'annotations', version: '16.0.3'
-
-    // compileOnlyApi group: 'org.openjfx', name: 'javafx-base', version: '15', classifier: 'win'
-    // compileOnlyApi group: 'org.openjfx', name: 'javafx-controls', version: '15', classifier: 'win'
-    // compileOnlyApi group: 'org.openjfx', name: 'javafx-fxml', version: '15', classifier: 'win'
-    // compileOnlyApi group: 'org.openjfx', name: 'javafx-graphics', version: '15', classifier: 'win'
-    // compileOnlyApi group: 'org.openjfx', name: 'javafx-media', version: '15', classifier: 'win'
-    // compileOnlyApi group: 'org.openjfx', name: 'javafx-swing', version: '15', classifier: 'win'
-    // compileOnlyApi group: 'org.openjfx', name: 'javafx-web', version: '15', classifier: 'win'
-
 }

@@ -316,6 +316,16 @@ public final class Lang {
         };
     }
 
+    @SafeVarargs
+    public static <T> Consumer<T> compose(Consumer<T>... consumers) {
+        return t -> {
+            for (Consumer<T> consumer : consumers) {
+                consumer.accept(t);
+            }
+        };
+    }
+
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static <T> Stream<T> toStream(Optional<T> optional) {
         return optional.map(Stream::of).orElseGet(Stream::empty);
     }
