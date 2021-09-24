@@ -49,6 +49,7 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.platform.JavaVersion.CURRENT_JAVA;
 
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -337,7 +338,7 @@ public final class SelfDependencyPatcher {
                 isCancelled.value = true;
                 showDetails.value = true;
             });
-            SwingUtilities.invokeLater(dialog::showDialog);
+            dialog.setVisible(true);
             try {
                 if (isFirstTime) {
                     isFirstTime = false;
@@ -441,42 +442,45 @@ public final class SelfDependencyPatcher {
     public static class CanceledException extends RuntimeException {
     }
 
-    public static class ProgressFrame extends JOptionPane {
+    public static class ProgressFrame extends JDialog {
 
         private final JProgressBar progressBar;
         private final JLabel progressText;
         private final JButton btnChangeSource;
         private final JButton btnCancel;
-        private final JDialog dialog;
 
         public ProgressFrame(String title) {
             JPanel panel = new JPanel();
-            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
+            setResizable(false);
+            setTitle(title);
+            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            setBounds(100, 100, 500, 200);
+            setContentPane(panel);
+            setLocationRelativeTo(null);
+
+            JPanel content = new JPanel();
+            content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 
             for (String note : i18n("download.javafx.notes").split("\n")) {
-                panel.add(new JLabel(note));
+                content.add(new JLabel(note));
             }
-            panel.add(new JLabel("<html><br/></html>"));
-
+            content.add(new JLabel("<html><br/></html>"));
             progressText = new JLabel(i18n("download.javafx.prepare"));
-            panel.add(progressText);
-
+            content.add(progressText);
             progressBar = new JProgressBar();
-            panel.add(progressBar);
+            content.add(progressBar);
 
+            final JPanel buttonBar = new JPanel();
             btnChangeSource = new JButton(i18n("button.change_source"));
             btnCancel = new JButton(i18n("button.cancel"));
+            buttonBar.add(btnChangeSource);
+            buttonBar.add(btnCancel);
 
-            setMessage(panel);
-            setOptions(new Object[]{btnChangeSource, btnCancel});
-            setInitialValue(btnChangeSource);
-
-            dialog = createDialog(title);
-            dialog.setResizable(false);
-            dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            dialog.setBounds(100, 100, 500, 200);
-            dialog.setLocationRelativeTo(null);
+            panel.setLayout(new BorderLayout());
+            panel.setBorder(BorderFactory.createEmptyBorder(10, 5, 0, 5));
+            panel.add(content, BorderLayout.CENTER);
+            panel.add(buttonBar, BorderLayout.SOUTH);
         }
 
         public void setCurrent(String component) {
@@ -497,7 +501,7 @@ public final class SelfDependencyPatcher {
 
         public void setOnCancel(Runnable action) {
             btnCancel.addActionListener(e -> action.run());
-            dialog.addWindowListener(new WindowAdapter() {
+            addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
                     action.run();
@@ -507,14 +511,6 @@ public final class SelfDependencyPatcher {
 
         public void setOnChangeSource(Runnable action) {
             btnChangeSource.addActionListener(e -> action.run());
-        }
-
-        public void showDialog() {
-            dialog.setVisible(true);
-        }
-
-        public void dispose() {
-            dialog.dispose();
         }
     }
 }
