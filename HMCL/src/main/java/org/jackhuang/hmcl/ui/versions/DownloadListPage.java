@@ -58,7 +58,6 @@ import org.jackhuang.hmcl.util.AggregatedObservableList;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.util.*;

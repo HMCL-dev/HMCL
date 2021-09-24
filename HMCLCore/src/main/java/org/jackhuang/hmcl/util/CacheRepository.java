@@ -17,7 +17,17 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.io.*;
+import com.google.gson.JsonParseException;
+import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.net.URLConnection;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -32,16 +42,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.stream.Stream;
-
-import com.google.gson.JsonParseException;
-import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Logging.LOG;

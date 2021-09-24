@@ -22,17 +22,12 @@ import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.util.javafx.BindingMapping;
-
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class HintPane extends VBox {
     private final Text label = new Text();
