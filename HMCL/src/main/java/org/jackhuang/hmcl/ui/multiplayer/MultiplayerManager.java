@@ -51,7 +51,7 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  */
 public final class MultiplayerManager {
     private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/";
-    private static final String CATO_VERSION = "2021-09-21";
+    private static final String CATO_VERSION = "2021-09-25";
     private static final Artifact CATO_ARTIFACT = new Artifact("cato", "cato", CATO_VERSION,
             OperatingSystem.CURRENT_OS.getCheckedName() + "-" + Architecture.CURRENT.name().toLowerCase(Locale.ROOT),
             OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "exe" : null);
@@ -85,7 +85,7 @@ public final class MultiplayerManager {
         if (!Files.isRegularFile(exe)) {
             throw new IllegalStateException("Cato file not found");
         }
-        String[] commands = new String[]{exe.toString(), "--token", "new", "--peer", peer, "--from", String.format("127.0.0.1:%d", localPort), "--to", String.format("127.0.0.1:%d", remotePort)};
+        String[] commands = new String[]{exe.toString(), "--token", "new", "--peer", peer, "--local", String.format("127.0.0.1:%d", localPort), "--remote", String.format("127.0.0.1:%d", remotePort)};
         Process process = new ProcessBuilder()
                 .command(commands)
                 .start();
