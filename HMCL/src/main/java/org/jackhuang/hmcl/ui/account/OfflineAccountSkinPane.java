@@ -17,19 +17,184 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
+import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
-import javafx.scene.layout.StackPane;
+import com.jfoenix.controls.JFXTextField;
+import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.geometry.Insets;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.TransferMode;
+import javafx.scene.layout.*;
+import moe.mickey.minecraft.skin.fx.SkinCanvas;
+import moe.mickey.minecraft.skin.fx.animation.SkinAniRunning;
+import moe.mickey.minecraft.skin.fx.animation.SkinAniWavingArms;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
-import org.jackhuang.hmcl.ui.construct.MultiFileItem;
+import org.jackhuang.hmcl.auth.offline.Skin;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.ui.construct.*;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
+import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class OfflineAccountSkinPane extends StackPane {
+    private final OfflineAccount account;
+
+    private final MultiFileItem<Skin.Type> skinItem = new MultiFileItem<>();
+    private final JFXTextField cslApiField = new JFXTextField();
+    private final FileSelector skinSelector = new FileSelector();
+    private final FileSelector capeSelector = new FileSelector();
+
+    private final InvalidationListener skinBinding;
 
     public OfflineAccountSkinPane(OfflineAccount account) {
+        this.account = account;
+
+        getStyleClass().add("skin-pane");
 
         JFXDialogLayout layout = new JFXDialogLayout();
         getChildren().setAll(layout);
+        layout.setHeading(new Label(i18n("account.skin")));
 
-        MultiFileItem<>
+        BorderPane pane = new BorderPane();
 
+        SkinCanvas canvas = new SkinCanvas(SkinCanvas.STEVE, 300, 300, true);
+        StackPane canvasPane = new StackPane(canvas);
+        canvasPane.setPrefWidth(300);
+        canvasPane.setPrefHeight(300);
+        pane.setCenter(canvas);
+        canvas.getAnimationplayer().addSkinAnimation(new SkinAniWavingArms(100, 2000, 7.5, canvas), new SkinAniRunning(100, 100, 30, canvas));
+        canvas.enableRotation(.5);
+
+        canvas.addEventHandler(DragEvent.DRAG_OVER, e -> {
+            if (e.getDragboard().hasFiles()) {
+                File file = e.getDragboard().getFiles().get(0);
+                if (file.getAbsolutePath().endsWith(".png"))
+                    e.acceptTransferModes(TransferMode.COPY);
+            }
+        });
+        canvas.addEventHandler(DragEvent.DRAG_DROPPED, e -> {
+            if (e.isAccepted()) {
+                File skin = e.getDragboard().getFiles().get(0);
+                Platform.runLater(() -> {
+                    skinSelector.setValue(skin.getAbsolutePath());
+                    skinItem.setSelectedData(Skin.Type.LOCAL_FILE);
+                });
+            }
+        });
+
+        TransitionPane skinOptionPane = new TransitionPane();
+        skinOptionPane.setMaxWidth(300);
+        VBox optionPane = new VBox(skinItem, skinOptionPane);
+        pane.setRight(optionPane);
+
+        layout.setBody(pane);
+
+        cslApiField.setPromptText(i18n("account.skin.type.csl_api.location.hint"));
+        cslApiField.setValidators(new URLValidator());
+
+        skinItem.loadChildren(Arrays.asList(
+                new MultiFileItem.Option<>(i18n("message.default"), Skin.Type.DEFAULT),
+                new MultiFileItem.Option<>("Steve", Skin.Type.STEVE),
+                new MultiFileItem.Option<>("Alex", Skin.Type.ALEX),
+                new MultiFileItem.Option<>(i18n("account.skin.type.local_file"), Skin.Type.LOCAL_FILE),
+                new MultiFileItem.Option<>("LittleSkin", Skin.Type.LITTLE_SKIN),
+                new MultiFileItem.Option<>(i18n("account.skin.type.csl_api"), Skin.Type.CUSTOM_SKIN_LOADER_API)
+        ));
+
+        if (account.getSkin() == null) {
+            skinItem.setSelectedData(Skin.Type.DEFAULT);
+        } else {
+            skinItem.setSelectedData(account.getSkin().getType());
+            cslApiField.setText(account.getSkin().getCslApi());
+            skinSelector.setValue(account.getSkin().getLocalSkinPath());
+            capeSelector.setValue(account.getSkin().getLocalCapePath());
+        }
+
+        skinBinding = FXUtils.observeWeak(() -> {
+            getSkin().load(account.getUsername())
+                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception != null) {
+                            LOG.log(Level.WARNING, "Failed to load skin", exception);
+                            Controllers.showToast(i18n("message.failed"));
+                        } else {
+                            if (result == null || result.getSkin() == null) {
+                                canvas.updateSkin(getDefaultTexture(), isDefaultSlim());
+                                return;
+                            }
+                            canvas.updateSkin(new Image(result.getSkin().getInputStream()), result.getModel() == TextureModel.ALEX);
+                        }
+                    }).start();
+        }, skinItem.selectedDataProperty(), cslApiField.textProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
+
+        FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
+            GridPane gridPane = new GridPane();
+            gridPane.setPadding(new Insets(0, 0, 0, 10));
+            gridPane.setHgap(16);
+            gridPane.setVgap(8);
+            gridPane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
+
+            switch (selectedData) {
+                case DEFAULT:
+                case STEVE:
+                case ALEX:
+                case LITTLE_SKIN:
+                    break;
+                case LOCAL_FILE:
+                    gridPane.addRow(0, new Label(i18n("account.skin")), skinSelector);
+                    gridPane.addRow(1, new Label(i18n("account.cape")), capeSelector);
+                    break;
+                case CUSTOM_SKIN_LOADER_API:
+                    gridPane.addRow(0, new Label(i18n("account.skin.type.csl_api.location")), cslApiField);
+                    break;
+            }
+
+            skinOptionPane.setContent(gridPane, ContainerAnimations.NONE.getAnimationProducer());
+        });
+
+        JFXButton acceptButton = new JFXButton(i18n("button.ok"));
+        acceptButton.getStyleClass().add("dialog-accept");
+        acceptButton.setOnAction(e -> {
+            account.setSkin(getSkin());
+            fireEvent(new DialogCloseEvent());
+        });
+
+        JFXHyperlink littleSkinLink = new JFXHyperlink(i18n("account.skin.type.little_skin.hint"));
+        littleSkinLink.setOnAction(e -> FXUtils.openLink("https://mcskin.littleservice.cn/"));
+        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+        cancelButton.getStyleClass().add("dialog-cancel");
+        cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+        onEscPressed(this, cancelButton::fire);
+
+        layout.setActions(littleSkinLink, acceptButton, cancelButton);
     }
+
+    private Skin getSkin() {
+        return new Skin(skinItem.getSelectedData(), cslApiField.getText(), skinSelector.getValue(), capeSelector.getValue());
+    }
+
+    private boolean isDefaultSlim() {
+        return TextureModel.detectUUID(account.getUUID()) == TextureModel.ALEX;
+    }
+
+    private Image getDefaultTexture() {
+        if (isDefaultSlim()) {
+            return SkinCanvas.ALEX;
+        } else {
+            return SkinCanvas.STEVE;
+        }
+    }
+
 }

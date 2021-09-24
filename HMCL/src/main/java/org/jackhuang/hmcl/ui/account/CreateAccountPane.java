@@ -523,7 +523,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 return getAuthServer();
             } else if (factory instanceof OfflineAccountFactory) {
                 UUID uuid = txtUUID == null ? null : StringUtils.isBlank(txtUUID.getText()) ? null : UUIDTypeAdapter.fromString(txtUUID.getText());
-                return new OfflineAccountFactory.AdditionalData(uuid, null, null);
+                return new OfflineAccountFactory.AdditionalData(uuid, null);
             } else {
                 return null;
             }

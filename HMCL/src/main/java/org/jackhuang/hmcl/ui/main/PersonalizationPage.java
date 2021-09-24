@@ -86,11 +86,13 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
-            StackPane componentList = new StackPane();
+            ComponentList componentList = new ComponentList();
 
             MultiFileItem<EnumBackgroundImage> backgroundItem = new MultiFileItem<>();
-            backgroundItem.setTitle(i18n("launcher.background"));
-            backgroundItem.setHasSubtitle(true);
+            ComponentSublist backgroundSublist = new ComponentSublist();
+            backgroundSublist.getContent().add(backgroundItem);
+            backgroundSublist.setTitle(i18n("launcher.background"));
+            backgroundSublist.setHasSubtitle(true);
 
             backgroundItem.loadChildren(Arrays.asList(
                     new MultiFileItem.Option<>(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT),
@@ -102,12 +104,12 @@ public class PersonalizationPage extends StackPane {
                             .bindBidirectional(config().backgroundImageUrlProperty())
             ));
             backgroundItem.selectedDataProperty().bindBidirectional(config().backgroundImageTypeProperty());
-            backgroundItem.subtitleProperty().bind(
+            backgroundSublist.subtitleProperty().bind(
                     new When(backgroundItem.selectedDataProperty().isEqualTo(EnumBackgroundImage.DEFAULT))
                             .then(i18n("launcher.background.default"))
                             .otherwise(config().backgroundImageProperty()));
 
-            componentList.getChildren().add(backgroundItem);
+            componentList.getContent().add(backgroundItem);
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("launcher.background")), componentList);
         }
 

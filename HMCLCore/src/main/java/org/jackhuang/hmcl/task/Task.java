@@ -340,7 +340,7 @@ public abstract class Task<T> {
         messageUpdate.accept(newMessage);
     }
 
-    public final void run() throws Exception {
+    public final T run() throws Exception {
         if (getSignificance().shouldLog())
             Logging.LOG.log(Level.FINE, "Executing task: " + getName());
 
@@ -350,6 +350,8 @@ public abstract class Task<T> {
         for (Task<?> task : getDependencies())
             doSubTask(task);
         onDone.fireEvent(new TaskEvent(this, this, false));
+
+        return getResult();
     }
 
     private void doSubTask(Task<?> task) throws Exception {

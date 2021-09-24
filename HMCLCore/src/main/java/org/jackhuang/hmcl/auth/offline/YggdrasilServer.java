@@ -19,8 +19,6 @@ package org.jackhuang.hmcl.auth.offline;
 
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
-import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
-import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.KeyUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -36,7 +34,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
@@ -143,14 +140,12 @@ public class YggdrasilServer extends HttpServer {
     public static class Character {
         private final UUID uuid;
         private final String name;
-        private final TextureModel model;
-        private final Map<TextureType, Texture> textures;
+        private final Skin.LoadedSkin skin;
 
-        public Character(UUID uuid, String name, TextureModel model, Map<TextureType, Texture> textures) {
+        public Character(UUID uuid, String name, Skin.LoadedSkin skin) {
             this.uuid = uuid;
             this.name = name;
-            this.model = model;
-            this.textures = textures;
+            this.skin = Objects.requireNonNull(skin);
         }
 
         public UUID getUUID() {
@@ -161,30 +156,17 @@ public class YggdrasilServer extends HttpServer {
             return name;
         }
 
-        public TextureModel getModel() {
-            return model;
-        }
-
-        public Map<TextureType, Texture> getTextures() {
-            return textures;
-        }
-
-        private Map<String, Object> createKeyValue(String key, String value) {
-            return mapOf(
-                    pair("name", key),
-                    pair("value", value)
-            );
-        }
-
         public GameProfile toSimpleResponse() {
             return new GameProfile(uuid, name);
         }
 
         public Object toCompleteResponse(String rootUrl) {
             Map<String, Object> realTextures = new HashMap<>();
-            for (Map.Entry<TextureType, Texture> textureEntry : textures.entrySet()) {
-                if (textureEntry.getValue() == null) continue;
-                realTextures.put(textureEntry.getKey().name(), mapOf(pair("url", rootUrl + "/textures/" + textureEntry.getValue().getHash())));
+            if (skin.getSkin() != null) {
+                realTextures.put("SKIN", mapOf(pair("url", rootUrl + "/textures/" + skin.getSkin().getHash())));
+            }
+            if (skin.getCape() != null) {
+                realTextures.put("CAPE", mapOf(pair("url", rootUrl + "/textures/" + skin.getSkin().getHash())));
             }
 
             Map<String, Object> textureResponse = mapOf(

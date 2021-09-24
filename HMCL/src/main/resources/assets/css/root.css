@@ -91,6 +91,10 @@
     -fx-fill: #856404;
 }
 
+.skin-pane .jfx-text-field {
+    -fx-pref-width: 200;
+}
+
 .memory-label {
 }
 

@@ -46,9 +46,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -243,17 +240,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                                 txtModpackFileApi.getValidators().add(new RequiredValidator());
                             }
 
-                            txtModpackFileApi.getValidators().add(new Validator(s -> {
-                                if (s.isEmpty()) {
-                                    return true;
-                                }
-                                try {
-                                    new URL(s).toURI();
-                                    return true;
-                                } catch (IOException | URISyntaxException e) {
-                                    return false;
-                                }
-                            }));
+                            txtModpackFileApi.getValidators().add(new URLValidator());
                             pane.addRow(rowIndex++, new Label(i18n("modpack.file_api")), txtModpackFileApi);
                         }
 

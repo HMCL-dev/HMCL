@@ -99,10 +99,13 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final OptionToggleButton noJVMCheckPane;
     private final OptionToggleButton useNativeGLFWPane;
     private final OptionToggleButton useNativeOpenALPane;
+    private final ComponentSublist javaSublist;
     private final MultiFileItem<JavaVersion> javaItem;
     private final MultiFileItem.FileOption<JavaVersion> javaCustomOption;
+    private final ComponentSublist gameDirSublist;
     private final MultiFileItem<GameDirectoryType> gameDirItem;
     private final MultiFileItem.FileOption<GameDirectoryType> gameDirCustomOption;
+    private final ComponentSublist nativesDirSublist;
     private final MultiFileItem<NativesDirectoryType> nativesDirItem;
     private final MultiFileItem.FileOption<NativesDirectoryType> nativesDirCustomOption;
     private final JFXComboBox<ProcessPriority> cboProcessPriority;
@@ -192,14 +195,18 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             componentList.setDepth(1);
 
             javaItem = new MultiFileItem<>();
-            javaItem.setTitle(i18n("settings.game.java_directory"));
-            javaItem.setHasSubtitle(true);
+            javaSublist = new ComponentSublist();
+            javaSublist.getContent().add(javaItem);
+            javaSublist.setTitle(i18n("settings.game.java_directory"));
+            javaSublist.setHasSubtitle(true);
             javaCustomOption = new MultiFileItem.FileOption<JavaVersion>(i18n("settings.custom"), null)
                     .setChooserTitle(i18n("settings.game.java_directory.choose"));
 
             gameDirItem = new MultiFileItem<>();
-            gameDirItem.setTitle(i18n("settings.game.working_directory"));
-            gameDirItem.setHasSubtitle(true);
+            gameDirSublist = new ComponentSublist();
+            gameDirSublist.getContent().add(gameDirItem);
+            gameDirSublist.setTitle(i18n("settings.game.working_directory"));
+            gameDirSublist.setHasSubtitle(true);
             gameDirItem.disableProperty().bind(modpack);
             gameDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.custom"), GameDirectoryType.CUSTOM)
                             .setChooserTitle(i18n("settings.game.working_directory.choose"))
@@ -395,7 +402,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 serverPane.addRow(0, new Label(i18n("settings.advanced.server_ip")), txtServerIP);
             }
 
-            componentList.getContent().setAll(javaItem, gameDirItem, maxMemoryPane, launcherVisibilityPane, dimensionPane, showLogsPane, processPriorityPane, serverPane);
+            componentList.getContent().setAll(javaSublist, gameDirSublist, maxMemoryPane, launcherVisibilityPane, dimensionPane, showLogsPane, processPriorityPane, serverPane);
         }
 
         HBox advancedHintPane = new HBox();
@@ -474,8 +481,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         workaroundPane.disableProperty().bind(enableSpecificSettings.not());
         {
             nativesDirItem = new MultiFileItem<>();
-            nativesDirItem.setTitle(i18n("settings.advanced.natives_directory"));
-            nativesDirItem.setHasSubtitle(true);
+            nativesDirSublist = new ComponentSublist();
+            nativesDirSublist.getContent().add(nativesDirItem);
+            nativesDirSublist.setTitle(i18n("settings.advanced.natives_directory"));
+            nativesDirSublist.setHasSubtitle(true);
             nativesDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.custom"), NativesDirectoryType.CUSTOM)
                     .setChooserTitle(i18n("settings.advanced.natives_directory.choose"))
                     .setDirectory(true);
@@ -499,7 +508,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             useNativeOpenALPane = new OptionToggleButton();
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
 
-            workaroundPane.getContent().setAll(nativesDirItem, noJVMArgsPane, noGameCheckPane, noJVMCheckPane, useNativeGLFWPane, useNativeOpenALPane);
+            workaroundPane.getContent().setAll(nativesDirSublist, noJVMArgsPane, noGameCheckPane, noJVMCheckPane, useNativeGLFWPane, useNativeOpenALPane);
         }
 
         rootPane.getChildren().addAll(componentList,
@@ -613,10 +622,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             lastVersionSetting.javaProperty().removeListener(javaListener);
 
             gameDirItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.gameDirTypeProperty());
-            gameDirItem.subtitleProperty().unbind();
+            gameDirSublist.subtitleProperty().unbind();
 
             nativesDirItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.nativesDirTypeProperty());
-            nativesDirItem.subtitleProperty().unbind();
+            nativesDirSublist.subtitleProperty().unbind();
         }
 
         // unbind data fields
@@ -663,11 +672,11 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         versionSetting.javaProperty().addListener(javaListener);
 
         gameDirItem.selectedDataProperty().bindBidirectional(versionSetting.gameDirTypeProperty());
-        gameDirItem.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath()).normalize().toString(),
+        gameDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath()).normalize().toString(),
                 versionSetting.gameDirProperty(), versionSetting.gameDirTypeProperty()));
         
         nativesDirItem.selectedDataProperty().bindBidirectional(versionSetting.nativesDirTypeProperty());
-        nativesDirItem.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath() + "/natives").normalize().toString(),
+        nativesDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath() + "/natives").normalize().toString(),
                 versionSetting.nativesDirProperty(), versionSetting.nativesDirTypeProperty()));
 
         lastVersionSetting = versionSetting;
@@ -703,7 +712,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         if (versionSetting == null)
             return;
         Task.supplyAsync(versionSetting::getJavaVersion)
-                .thenAcceptAsync(Schedulers.javafx(), javaVersion -> javaItem.setSubtitle(Optional.ofNullable(javaVersion)
+                .thenAcceptAsync(Schedulers.javafx(), javaVersion -> javaSublist.setSubtitle(Optional.ofNullable(javaVersion)
                         .map(JavaVersion::getBinary).map(Path::toString).orElse("Invalid Java Path")))
                 .start();
     }

@@ -42,6 +42,10 @@ public class Texture {
         this.data = requireNonNull(data);
     }
 
+    public byte[] getData() {
+        return data;
+    }
+
     public String getHash() {
         return hash;
     }

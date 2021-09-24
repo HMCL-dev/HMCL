@@ -64,7 +64,7 @@ public final class SettingsPage extends SettingsView {
         // ====
 
         fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
-        fileCommonLocation.subtitleProperty().bind(
+        fileCommonLocationSublist.subtitleProperty().bind(
                 Bindings.createObjectBinding(() -> Optional.ofNullable(Settings.instance().getCommonDirectory())
                                 .orElse(i18n("launcher.cache_directory.disabled")),
                         config().commonDirectoryProperty(), config().commonDirTypeProperty()));

@@ -1,12 +1,9 @@
 package moe.mickey.minecraft.skin.fx;
 
-import javafx.scene.Group;
-import javafx.scene.Node;
-import javafx.scene.PerspectiveCamera;
-import javafx.scene.SceneAntialiasing;
-import javafx.scene.SubScene;
+import javafx.scene.*;
 import javafx.scene.image.Image;
-import javafx.scene.paint.Color;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.paint.Material;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Shape3D;
@@ -16,9 +13,8 @@ import javafx.scene.transform.Translate;
 
 public class SkinCanvas extends Group {
 	
-	public static final Image ALEX = new Image(SkinCanvas.class.getResourceAsStream("/alex.png"));
-	public static final Image STEVE = new Image(SkinCanvas.class.getResourceAsStream("/steve.png"));
-	public static final Image CHOCOLATE = new Image(SkinCanvas.class.getResourceAsStream("/chocolate.png"));
+	public static final Image ALEX = new Image(SkinCanvas.class.getResourceAsStream("/assets/img/alex.png"));
+	public static final Image STEVE = new Image(SkinCanvas.class.getResourceAsStream("/assets/img//steve.png"));
 	
 	public static final SkinCube ALEX_LARM = new SkinCube(3, 12, 4, 14F / 64F, 16F / 64F, 32F / 64F, 48F / 64F, 0F, true);
 	public static final SkinCube ALEX_RARM = new SkinCube(3, 12, 4, 14F / 64F, 16F / 64F, 40F / 64F, 16F / 64F, 0F, true);
@@ -208,7 +204,6 @@ public class SkinCanvas extends Group {
 		
 		subScene = new SubScene(group, preW, preH, true,
 				msaa ? SceneAntialiasing.BALANCED : SceneAntialiasing.DISABLED);
-        subScene.setFill(Color.ALICEBLUE);
         subScene.setCamera(camera);
         
         return subScene;
@@ -216,6 +211,47 @@ public class SkinCanvas extends Group {
 	
 	protected void init() {
 		getChildren().add(createSubScene());
+	}
+
+    private double lastX, lastY;
+
+	public void enableRotation(double sensitivity) {
+		addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
+			lastX = -1;
+			lastY = -1;
+		});
+		addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> {
+			if (!(lastX == -1 || lastY == -1)) {
+				if (e.isAltDown() || e.isControlDown() || e.isShiftDown()) {
+					if (e.isShiftDown())
+						zRotate.setAngle(zRotate.getAngle() - (e.getSceneY() - lastY) * sensitivity);
+					if (e.isAltDown())
+						yRotate.setAngle(yRotate.getAngle() + (e.getSceneX() - lastX) * sensitivity);
+					if (e.isControlDown())
+						xRotate.setAngle(xRotate.getAngle() + (e.getSceneY() - lastY) * sensitivity);
+				} else {
+					double yaw = yRotate.getAngle() + (e.getSceneX() - lastX) * sensitivity;
+					yaw %= 360;
+					if (yaw < 0)
+						yaw += 360;
+
+					int flagX = yaw < 90 || yaw > 270 ? 1 : -1;
+					int flagZ = yaw < 180 ? -1 : 1;
+					double kx = Math.abs(90 - yaw % 180) / 90 * flagX, kz = Math.abs(90 - (yaw + 90) % 180) / 90 * flagZ;
+
+					xRotate.setAngle(xRotate.getAngle() + (e.getSceneY() - lastY) * sensitivity * kx);
+					yRotate.setAngle(yaw);
+					zRotate.setAngle(zRotate.getAngle() + (e.getSceneY() - lastY) * sensitivity * kz);
+				}
+			}
+			lastX = e.getSceneX();
+			lastY = e.getSceneY();
+		});
+		addEventHandler(ScrollEvent.SCROLL, e -> {
+			double delta = (e.getDeltaY() > 0 ? 1 : e.getDeltaY() == 0 ? 0 : -1) / 10D * sensitivity;
+			scale.setX(Math.min(Math.max(scale.getX() - delta, 0.1), 10));
+			scale.setY(Math.min(Math.max(scale.getY() - delta, 0.1), 10));
+		});
 	}
 
 }

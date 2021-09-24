@@ -1,7 +1,5 @@
 package moe.mickey.minecraft.skin.fx.test;
 
-import java.util.function.Consumer;
-
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -11,12 +9,14 @@ import moe.mickey.minecraft.skin.fx.SkinCanvasSupport;
 import moe.mickey.minecraft.skin.fx.animation.SkinAniRunning;
 import moe.mickey.minecraft.skin.fx.animation.SkinAniWavingArms;
 
+import java.util.function.Consumer;
+
 public class Test extends Application {
 
     public static final String TITLE = "FX - Minecraft skin preview";
 
     public static SkinCanvas createSkinCanvas() {
-        SkinCanvas canvas = new SkinCanvas(SkinCanvas.CHOCOLATE, 400, 400, true);
+        SkinCanvas canvas = new SkinCanvas(SkinCanvas.STEVE, 400, 400, true);
         canvas.getAnimationplayer().addSkinAnimation(new SkinAniWavingArms(100, 2000, 7.5, canvas), new SkinAniRunning(100, 100, 30, canvas));
         FunctionHelper.alwaysB(Consumer<SkinCanvas>::accept, canvas, new SkinCanvasSupport.Mouse(.5), new SkinCanvasSupport.Drag(TITLE));
         return canvas;
