@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.game.ModpackHelper;
+import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
 import org.jackhuang.hmcl.mod.curse.CurseCompletionException;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
@@ -35,6 +36,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -72,11 +74,18 @@ public class ModpackInstallWizardProvider implements WizardProvider {
         settings.put(PROFILE, profile);
     }
 
-    private Task<Void> finishModpackInstallingAsync(Map<String, Object> settings) {
+    private Task<?> finishModpackInstallingAsync(Map<String, Object> settings) {
         File selected = tryCast(settings.get(LocalModpackPage.MODPACK_FILE), File.class).orElse(null);
         ServerModpackManifest serverModpackManifest = tryCast(settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST), ServerModpackManifest.class).orElse(null);
         Modpack modpack = tryCast(settings.get(LocalModpackPage.MODPACK_MANIFEST), Modpack.class).orElse(null);
         String name = tryCast(settings.get(LocalModpackPage.MODPACK_NAME), String.class).orElse(null);
+        Charset charset = tryCast(settings.get(LocalModpackPage.MODPACK_CHARSET), Charset.class).orElse(null);
+        boolean isManuallyCreated = tryCast(settings.get(LocalModpackPage.MODPACK_MANUALLY_CREATED), Boolean.class).orElse(false);
+
+        if (isManuallyCreated) {
+            return ModpackHelper.getInstallManuallyCreatedModpackTask(profile, selected, name, charset);
+        }
+
         if ((selected == null && serverModpackManifest == null) || modpack == null || name == null) return null;
 
         if (updateVersion != null) {
@@ -90,7 +99,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
                 } else {
                     return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
                 }
-            } catch (UnsupportedModpackException e) {
+            } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
             } catch (MismatchedModpackTypeException e) {
                 Controllers.dialog(i18n("modpack.mismatched_type"), i18n("message.error"), MessageType.ERROR);

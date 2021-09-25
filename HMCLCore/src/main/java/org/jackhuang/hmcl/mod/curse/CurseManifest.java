@@ -19,11 +19,14 @@ package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -122,7 +125,12 @@ public final class CurseManifest {
         String json = CompressingUtils.readTextZipEntry(zip, "manifest.json", encoding);
         CurseManifest manifest = JsonUtils.fromNonNullJson(json, CurseManifest.class);
         return new Modpack(manifest.getName(), manifest.getAuthor(), manifest.getVersion(), manifest.getMinecraft().getGameVersion(),
-                CompressingUtils.readTextZipEntryQuietly(zip, "modlist.html", encoding).orElse( "No description"), encoding, manifest);
+                CompressingUtils.readTextZipEntryQuietly(zip, "modlist.html", encoding).orElse( "No description"), encoding, manifest) {
+            @Override
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name) {
+                return new CurseInstallTask(dependencyManager, zipFile, this, manifest, name);
+            }
+        };
     }
 
     public static final String MINECRAFT_MODPACK = "minecraftModpack";

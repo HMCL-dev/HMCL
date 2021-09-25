@@ -330,6 +330,14 @@ public final class Lang {
         return optional.map(Stream::of).orElseGet(Stream::empty);
     }
 
+    public static <T> Iterable<T> toIterable(Stream<T> stream) {
+        return stream::iterator;
+    }
+
+    public static <T> Iterable<T> toIterable(Iterator<T> iterator) {
+        return () -> iterator;
+    }
+
     /**
      * This is a useful function to prevent exceptions being eaten when using CompletableFuture.
      * You can write:

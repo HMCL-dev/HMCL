@@ -99,6 +99,7 @@ public final class FileUtils {
     }
 
     public static String getName(Path path) {
+        if (path.getFileName() == null) return "";
         return StringUtils.removeSuffix(path.getFileName().toString(), "/", "\\");
     }
 

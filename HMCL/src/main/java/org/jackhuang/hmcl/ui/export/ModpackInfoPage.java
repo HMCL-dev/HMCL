@@ -240,7 +240,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                                 txtModpackFileApi.getValidators().add(new RequiredValidator());
                             }
 
-                            txtModpackFileApi.getValidators().add(new URLValidator());
+                            txtModpackFileApi.getValidators().add(new URLValidator(true));
                             pane.addRow(rowIndex++, new Label(i18n("modpack.file_api")), txtModpackFileApi);
                         }
 

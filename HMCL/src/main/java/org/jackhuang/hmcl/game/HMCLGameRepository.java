@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.ProxyManager;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -49,6 +48,7 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
@@ -114,7 +114,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             if (!file.exists() && !versions.isEmpty())
                 FileUtils.writeText(file, PROFILE);
         } catch (IOException ex) {
-            Logging.LOG.log(Level.WARNING, "Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex);
+            LOG.log(Level.WARNING, "Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex);
         }
 
         // https://github.com/huanghongxun/HMCL/issues/938
@@ -267,7 +267,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             FileUtils.writeText(file, GSON.toJson(localVersionSettings.get(id)));
             return true;
         } catch (IOException e) {
-            Logging.LOG.log(Level.SEVERE, "Unable to save version setting of " + id, e);
+            LOG.log(Level.SEVERE, "Unable to save version setting of " + id, e);
             return false;
         }
     }

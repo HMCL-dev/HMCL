@@ -18,13 +18,16 @@
 package org.jackhuang.hmcl.mod.server;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -117,7 +120,12 @@ public class ServerModpackManifest implements Validation {
     public Modpack toModpack(Charset encoding) throws IOException {
         String gameVersion = addons.stream().filter(x -> MINECRAFT.getPatchId().equals(x.id)).findAny()
                 .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
-        return new Modpack(name, author, version, gameVersion, description, encoding, this);
+        return new Modpack(name, author, version, gameVersion, description, encoding, this) {
+            @Override
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name) {
+                return new ServerModpackLocalInstallTask(dependencyManager, zipFile, this, ServerModpackManifest.this, name);
+            }
+        };
     }
 
     /**

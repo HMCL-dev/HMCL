@@ -10,6 +10,7 @@ hs_err_pid*
 *.2
 *.log
 .mine*
+/externalgames
 NVIDIA
 
 # gradle build
