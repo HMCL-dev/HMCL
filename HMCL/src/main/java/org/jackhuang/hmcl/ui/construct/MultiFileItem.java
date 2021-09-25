@@ -170,32 +170,31 @@ public class MultiFileItem<T> extends VBox {
     }
 
     public static class StringOption<T> extends Option<T> {
-        private StringProperty value = new SimpleStringProperty();
-        private ValidatorBase[] validators;
+        private JFXTextField customField = new JFXTextField();
 
         public StringOption(String title, T data) {
             super(title, data);
         }
 
         public String getValue() {
-            return value.get();
+            return customField.getText();
         }
 
         public StringProperty valueProperty() {
-            return value;
+            return customField.textProperty();
         }
 
         public void setValue(String value) {
-            this.value.set(value);
+            customField.setText(value);
         }
 
         public StringOption<T> bindBidirectional(Property<String> property) {
-            this.value.bindBidirectional(property);
+            customField.textProperty().bindBidirectional(property);
             return this;
         }
 
         public StringOption<T> setValidators(ValidatorBase... validators) {
-            this.validators = validators;
+            customField.setValidators(validators);
             return this;
         }
 
@@ -211,13 +210,8 @@ public class MultiFileItem<T> extends VBox {
             left.setUserData(data);
             pane.setLeft(left);
 
-            JFXTextField customField = new JFXTextField();
             BorderPane.setAlignment(customField, Pos.CENTER_RIGHT);
-            customField.textProperty().bindBidirectional(valueProperty());
             customField.disableProperty().bind(left.selectedProperty().not());
-            if (validators != null) {
-                customField.setValidators(validators);
-            }
             pane.setRight(customField);
 
             return pane;
