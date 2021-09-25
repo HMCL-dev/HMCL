@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,18 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import org.jackhuang.hmcl.ui.Controllers;
-
-/**
- * @author yushijinhun
- * @see Controllers#dialog(javafx.scene.layout.Region)
- */
-public interface DialogAware {
-
-    default void onDialogShown() {
+public interface PageAware {
+    default void onPageShown() {
     }
 
-    default void onDialogClosed() {
+    default void onPageHidden() {
     }
-
 }

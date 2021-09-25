@@ -360,6 +360,10 @@ public class DecoratorController {
         if (dialog != null) {
             dialogPane.pop(node);
 
+            if (node instanceof DialogAware) {
+                ((DialogAware) node).onDialogClosed();
+            }
+
             if (dialogPane.getChildren().isEmpty()) {
                 dialog.close();
                 dialog = null;

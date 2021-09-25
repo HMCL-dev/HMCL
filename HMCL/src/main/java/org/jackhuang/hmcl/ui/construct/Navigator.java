@@ -50,6 +50,7 @@ public class Navigator extends TransitionPane {
         getChildren().setAll(init);
 
         fireEvent(new NavigationEvent(this, init, Navigation.NavigationDirection.START, NavigationEvent.NAVIGATED));
+        if (init instanceof PageAware) ((PageAware) init).onPageShown();
 
         initialized = true;
     }
@@ -78,6 +79,7 @@ public class Navigator extends TransitionPane {
 
         NavigationEvent navigated = new NavigationEvent(this, node, Navigation.NavigationDirection.NEXT, NavigationEvent.NAVIGATED);
         node.fireEvent(navigated);
+        if (node instanceof PageAware) ((PageAware) node).onPageShown();
 
         EventHandler<PageCloseEvent> handler = event -> close(node);
         node.getProperties().put(PROPERTY_DIALOG_CLOSE_HANDLER, handler);
@@ -108,7 +110,9 @@ public class Navigator extends TransitionPane {
 
         Logging.LOG.info("Closed page " + from);
 
-        stack.pop();
+        Node poppedNode = stack.pop();
+        if (poppedNode instanceof PageAware) ((PageAware) poppedNode).onPageHidden();
+
         backable.set(canGoBack());
         Node node = stack.peek();
 
@@ -202,6 +206,7 @@ public class Navigator extends TransitionPane {
     };
 
     public static class NavigationEvent extends Event {
+        public static final EventType<NavigationEvent> EXITED = new EventType<>("EXITED");
         public static final EventType<NavigationEvent> NAVIGATED = new EventType<>("NAVIGATED");
         public static final EventType<NavigationEvent> NAVIGATING = new EventType<>("NAVIGATING");
 

@@ -29,11 +29,9 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.NumberValidator;
-import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
-import org.jackhuang.hmcl.ui.construct.RequiredValidator;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
@@ -43,7 +41,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class MultiplayerPage extends Control implements DecoratorPage {
+public class MultiplayerPage extends Control implements DecoratorPage, PageAware {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("multiplayer"), -1));
 
     private final ObjectProperty<MultiplayerManager.State> multiplayerState = new SimpleObjectProperty<>(MultiplayerManager.State.DISCONNECTED);
@@ -58,6 +56,10 @@ public class MultiplayerPage extends Control implements DecoratorPage {
 
     public MultiplayerPage() {
         testNAT();
+    }
+
+    @Override
+    public void onPageShown() {
         downloadCatoIfNecessary();
     }
 
@@ -124,6 +126,12 @@ public class MultiplayerPage extends Control implements DecoratorPage {
     }
 
     private void downloadCatoIfNecessary() {
+        if (StringUtils.isBlank(MultiplayerManager.getCatoPath())) {
+            Controllers.dialog(i18n("multiplayer.download."), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+            fireEvent(new PageCloseEvent());
+            return;
+        }
+
         if (!MultiplayerManager.getCatoExecutable().toFile().exists()) {
             setDisabled(true);
             TaskExecutor executor = MultiplayerManager.downloadCato()
@@ -134,6 +142,7 @@ public class MultiplayerPage extends Control implements DecoratorPage {
                                 Controllers.showToast(i18n("message.cancelled"));
                             } else {
                                 Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                                fireEvent(new PageCloseEvent());
                             }
                         } else {
                             Controllers.showToast(i18n("multiplayer.download.success"));
@@ -159,10 +168,10 @@ public class MultiplayerPage extends Control implements DecoratorPage {
             throw new IllegalStateException("CatoSession already ready");
         }
 
-        Controllers.prompt(new PromptDialogPane.Builder(i18n("multiplayer.session.create"), (result, resolve, reject) -> {
-            int port = Integer.parseInt(((PromptDialogPane.Builder.StringQuestion) result.get(2)).getValue());
+        Controllers.dialog(new CreateMultiplayerRoomDialog((result, resolve, reject) -> {
+            int port = result.getAd();
             try {
-                initCatoSession(MultiplayerManager.createSession(((PromptDialogPane.Builder.StringQuestion) result.get(1)).getValue(), port));
+                initCatoSession(MultiplayerManager.createSession(result.getMotd(), port));
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "Failed to create session", e);
                 reject.accept(i18n("multiplayer.session.create.error"));
@@ -172,10 +181,7 @@ public class MultiplayerPage extends Control implements DecoratorPage {
             this.port.set(port);
             setMultiplayerState(MultiplayerManager.State.CONNECTING);
             resolve.run();
-        })
-                .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("multiplayer.session.create.hint")))
-                .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("multiplayer.session.create.name"), "", new RequiredValidator()))
-                .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("multiplayer.session.create.port"), "", new NumberValidator())));
+        }));
     }
 
     public void joinRoom() {

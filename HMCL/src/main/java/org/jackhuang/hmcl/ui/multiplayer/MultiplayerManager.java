@@ -21,7 +21,6 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
-import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.launch.StreamPump;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -40,7 +39,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,17 +53,15 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  */
 public final class MultiplayerManager {
     private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/";
-    private static final String CATO_VERSION = "2021-09-25";
-    private static final Artifact CATO_ARTIFACT = new Artifact("cato", "cato", CATO_VERSION,
-            OperatingSystem.CURRENT_OS.getCheckedName() + "-" + Architecture.CURRENT.name().toLowerCase(Locale.ROOT),
-            OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "exe" : null);
+    private static final String CATO_VERSION = "1.0.8";
+    private static final String CATO_PATH = getCatoPath();
 
     private MultiplayerManager() {
     }
 
     public static Task<Void> downloadCato() {
         return new FileDownloadTask(
-                NetworkUtils.toURL(CATO_DOWNLOAD_URL + CATO_ARTIFACT.getPath()),
+                NetworkUtils.toURL(CATO_DOWNLOAD_URL + CATO_PATH),
                 getCatoExecutable().toFile()
         ).thenRunAsync(() -> {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
@@ -73,7 +73,7 @@ public final class MultiplayerManager {
     }
 
     public static Path getCatoExecutable() {
-        return CATO_ARTIFACT.getPath(Metadata.HMCL_DIRECTORY.resolve("libraries"));
+        return Metadata.HMCL_DIRECTORY.resolve("libraries").resolve(CATO_PATH);
     }
 
     public static CatoSession joinSession(String version, String sessionName, String peer, int remotePort, int localPort) throws IOException, IncompatibleCatoVersionException {
@@ -120,6 +120,33 @@ public final class MultiplayerManager {
     public static int findAvailablePort() throws IOException {
         try (ServerSocket socket = new ServerSocket(0)) {
             return socket.getLocalPort();
+        }
+    }
+
+    public static String getCatoPath() {
+        switch (OperatingSystem.CURRENT_OS) {
+            case WINDOWS:
+                if (Architecture.CURRENT == Architecture.X86_64) {
+                    return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-windows-amd64.exe";
+                } else {
+                    return "";
+                }
+            case OSX:
+                if (Architecture.CURRENT == Architecture.X86_64) {
+                    return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-darwin-amd64";
+                } else {
+                    return "";
+                }
+            case LINUX:
+                if (Architecture.CURRENT == Architecture.X86_64) {
+                    return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-linux-amd64";
+                } else if (Architecture.CURRENT == Architecture.ARM || Architecture.CURRENT == Architecture.ARM64) {
+                    return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-linux-arm7";
+                } else {
+                    return "";
+                }
+            default:
+                return "";
         }
     }
 
