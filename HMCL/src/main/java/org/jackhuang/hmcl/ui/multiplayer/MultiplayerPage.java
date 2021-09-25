@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.multiplayer;
 
 import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
+import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
@@ -210,21 +211,31 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
             }
 
             try {
-                initCatoSession(MultiplayerManager.joinSession(token, invitation.getVersion(), invitation.getSessionName(), invitation.getId(), invitation.getGamePort(), localPort));
+                MultiplayerManager.joinSession(token, invitation.getVersion(), invitation.getSessionName(), invitation.getId(), invitation.getGamePort(), localPort)
+                        .thenAcceptAsync(session -> {
+                            initCatoSession(session);
+
+                            session.getClient().onDisconnected().register(() -> {
+                                runInFX(() -> {
+                                    stopCatoSession();
+                                    Controllers.dialog(i18n("multiplayer.session.join.lost_connection"));
+                                });
+                            });
+
+                            port.set(localPort);
+                            setMultiplayerState(MultiplayerManager.State.CONNECTING);
+                            resolve.run();
+                        }, Platform::runLater).exceptionally(throwable -> {
+                            LOG.log(Level.WARNING, "Failed to join sessoin");
+                            reject.accept(i18n("multiplayer.session.error"));
+                            return null;
+                        });
             } catch (MultiplayerManager.IncompatibleCatoVersionException e) {
                 reject.accept(i18n("multiplayer.session.join.invitation_code.version"));
-                return;
-            } catch (Exception e) {
-                reject.accept(i18n("multiplayer.session.error"));
-                return;
             }
-
-            port.set(localPort);
-            setMultiplayerState(MultiplayerManager.State.CONNECTING);
-            resolve.run();
         })
                 .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("multiplayer.session.join.hint")))
-                .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("multiplayer.session.create.token"), ""))
+                .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("multiplayer.session.create.token"), "").setPromptText(i18n("multiplayer.session.create.token.prompt")))
                 .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("multiplayer.session.join.invitation_code"), "", new RequiredValidator())));
     }
 

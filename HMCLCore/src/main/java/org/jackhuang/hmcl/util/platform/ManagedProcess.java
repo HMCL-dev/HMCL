@@ -119,6 +119,10 @@ public class ManagedProcess {
      */
     public void stop() {
         process.destroy();
+        destroyRelatedThreads();
+    }
+
+    public void destroyRelatedThreads() {
         relatedThreads.forEach(Thread::interrupt);
     }
 

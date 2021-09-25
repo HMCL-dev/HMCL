@@ -27,21 +27,26 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class MultiplayerServer {
+import static org.jackhuang.hmcl.util.Logging.LOG;
+
+public class MultiplayerServer extends Thread {
     private ServerSocket socket;
     private final int gamePort;
 
     public MultiplayerServer(int gamePort) {
         this.gamePort = gamePort;
+
+        setName("MultiplayerServer");
+        setDaemon(true);
     }
 
-    public void start() throws IOException {
+    public void startServer() throws IOException {
         if (socket != null) {
             throw new IllegalStateException("MultiplayerServer already started");
         }
         socket = new ServerSocket(0);
 
-        Lang.thread(this::run, "MultiplayerServer", true);
+        start();
     }
 
     public int getPort() {
@@ -52,10 +57,12 @@ public class MultiplayerServer {
         return socket.getLocalPort();
     }
 
-    private void run() {
+    @Override
+    public void run() {
         try {
-            while (true) {
+            while (!isInterrupted()) {
                 Socket clientSocket = socket.accept();
+                clientSocket.setSoTimeout(10000);
                 Lang.thread(() -> handleClient(clientSocket), "MultiplayerServerClientThread", true);
             }
         } catch (IOException ignored) {
@@ -78,7 +85,8 @@ public class MultiplayerServer {
     @JsonType(
             property = "type",
             subtypes = {
-                    @JsonSubtype(clazz = JoinRequest.class, name = "join")
+                    @JsonSubtype(clazz = JoinRequest.class, name = "join"),
+                    @JsonSubtype(clazz = KeepAliveRequest.class, name = "keepalive")
             }
     )
     public static class Request {
@@ -106,14 +114,34 @@ public class MultiplayerServer {
 
         @Override
         public void process(MultiplayerServer server, BufferedWriter writer) throws IOException, JsonParseException {
+            LOG.fine("Received join request with clientVersion=" + clientVersion + ", id=" + username);
+
             writer.write(JsonUtils.GSON.toJson(new JoinResponse(server.gamePort)));
+        }
+    }
+
+    public static class KeepAliveRequest extends Request {
+        private final long timestamp;
+
+        public KeepAliveRequest(long timestamp) {
+            this.timestamp = timestamp;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        @Override
+        public void process(MultiplayerServer server, BufferedWriter writer) throws IOException, JsonParseException {
+            writer.write(JsonUtils.GSON.toJson(new KeepAliveResponse(System.currentTimeMillis())));
         }
     }
 
     @JsonType(
             property = "type",
             subtypes = {
-                    @JsonSubtype(clazz = JoinResponse.class, name = "join")
+                    @JsonSubtype(clazz = JoinResponse.class, name = "join"),
+                    @JsonSubtype(clazz = KeepAliveResponse.class, name = "keepalive")
             }
     )
     public static class Response {
@@ -129,6 +157,18 @@ public class MultiplayerServer {
 
         public int getPort() {
             return port;
+        }
+    }
+
+    public static class KeepAliveResponse extends Response {
+        private final long timestamp;
+
+        public KeepAliveResponse(long timestamp) {
+            this.timestamp = timestamp;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
         }
     }
 }
