@@ -228,8 +228,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void launch() {
-        Profile profile = Profiles.getSelectedProfile();
-        Versions.launch(profile, profile.getSelectedVersion());
+        Versions.launch(Profiles.getSelectedProfile());
     }
 
     private void onMenu() {

@@ -62,7 +62,7 @@ public class YggdrasilServer extends HttpServer {
                         "localhost"
                 )),
                 pair("meta", mapOf(
-                        pair("serverName", "HMCL Offline Account Skin/Cape Server"),
+                        pair("serverName", "HMCL"),
                         pair("implementationName", "HMCL"),
                         pair("implementationVersion", "1.0"),
                         pair("feature.non_email_login", true)

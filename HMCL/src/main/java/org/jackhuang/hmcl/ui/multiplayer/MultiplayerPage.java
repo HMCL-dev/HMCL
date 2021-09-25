@@ -169,9 +169,9 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
         }
 
         Controllers.dialog(new CreateMultiplayerRoomDialog((result, resolve, reject) -> {
-            int port = result.getAd();
+            int port = result.getServer().getAd();
             try {
-                initCatoSession(MultiplayerManager.createSession(result.getMotd(), port));
+                initCatoSession(MultiplayerManager.createSession(result.getToken(), result.getServer().getMotd(), port));
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "Failed to create session", e);
                 reject.accept(i18n("multiplayer.session.create.error"));
@@ -190,7 +190,8 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
         }
 
         Controllers.prompt(new PromptDialogPane.Builder(i18n("multiplayer.session.join"), (result, resolve, reject) -> {
-            String invitationCode = ((PromptDialogPane.Builder.StringQuestion) result.get(1)).getValue();
+            String token = ((PromptDialogPane.Builder.StringQuestion) result.get(1)).getValue();
+            String invitationCode = ((PromptDialogPane.Builder.StringQuestion) result.get(2)).getValue();
             MultiplayerManager.Invitation invitation;
             try {
                 invitation = MultiplayerManager.parseInvitationCode(invitationCode);
@@ -209,7 +210,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
             }
 
             try {
-                initCatoSession(MultiplayerManager.joinSession(invitation.getVersion(), invitation.getSessionName(), invitation.getId(), invitation.getGamePort(), localPort));
+                initCatoSession(MultiplayerManager.joinSession(token, invitation.getVersion(), invitation.getSessionName(), invitation.getId(), invitation.getGamePort(), localPort));
             } catch (MultiplayerManager.IncompatibleCatoVersionException e) {
                 reject.accept(i18n("multiplayer.session.join.invitation_code.version"));
                 return;
@@ -223,6 +224,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
             resolve.run();
         })
                 .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("multiplayer.session.join.hint")))
+                .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("multiplayer.session.create.token"), ""))
                 .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("multiplayer.session.join.invitation_code"), "", new RequiredValidator())));
     }
 

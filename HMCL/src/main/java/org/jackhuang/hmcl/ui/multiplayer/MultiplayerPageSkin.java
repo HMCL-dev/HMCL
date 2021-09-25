@@ -25,11 +25,15 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
@@ -53,31 +57,37 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                 AdvancedListItem createRoomItem = new AdvancedListItem();
                 createRoomItem.setTitle(i18n("multiplayer.session.create"));
                 createRoomItem.setLeftGraphic(wrap(SVG::plusCircleOutline));
+                createRoomItem.setActionButtonVisible(false);
                 createRoomItem.setOnAction(e -> control.createRoom());
 
                 AdvancedListItem joinRoomItem = new AdvancedListItem();
                 joinRoomItem.setTitle(i18n("multiplayer.session.join"));
                 joinRoomItem.setLeftGraphic(wrap(SVG::accountArrowRightOutline));
+                joinRoomItem.setActionButtonVisible(false);
                 joinRoomItem.setOnAction(e -> control.joinRoom());
 
                 AdvancedListItem copyLinkItem = new AdvancedListItem();
                 copyLinkItem.setTitle(i18n("multiplayer.session.copy_room_code"));
                 copyLinkItem.setLeftGraphic(wrap(SVG::accountArrowRightOutline));
+                copyLinkItem.setActionButtonVisible(false);
                 copyLinkItem.setOnAction(e -> control.copyInvitationCode());
 
                 AdvancedListItem cancelItem = new AdvancedListItem();
                 cancelItem.setTitle(i18n("button.cancel"));
                 cancelItem.setLeftGraphic(wrap(SVG::closeCircle));
+                cancelItem.setActionButtonVisible(false);
                 cancelItem.setOnAction(e -> control.cancelRoom());
 
                 AdvancedListItem quitItem = new AdvancedListItem();
                 quitItem.setTitle(i18n("multiplayer.session.quit"));
                 quitItem.setLeftGraphic(wrap(SVG::closeCircle));
+                quitItem.setActionButtonVisible(false);
                 quitItem.setOnAction(e -> control.quitRoom());
 
                 AdvancedListItem closeRoomItem = new AdvancedListItem();
                 closeRoomItem.setTitle(i18n("multiplayer.session.close"));
                 closeRoomItem.setLeftGraphic(wrap(SVG::closeCircle));
+                closeRoomItem.setActionButtonVisible(false);
                 closeRoomItem.setOnAction(e -> control.closeRoom());
 
                 FXUtils.onChangeAndOperate(getSkinnable().multiplayerStateProperty(), state -> {
@@ -94,6 +104,14 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
             }
 
             AdvancedListBox sideBar = new AdvancedListBox()
+                    .addNavigationDrawerItem(item -> {
+                        item.setTitle(i18n("version.launch"));
+                        item.setLeftGraphic(wrap(SVG::rocketLaunchOutline));
+                        item.setOnAction(e -> {
+                            Profile profile = Profiles.getSelectedProfile();
+                            Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
+                        });
+                    })
                     .startCategory(i18n("multiplayer.session"))
                     .add(roomPane)
                     .startCategory(i18n("help"))

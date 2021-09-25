@@ -35,8 +35,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class DialogPane extends JFXDialogLayout {
     private final StringProperty title = new SimpleStringProperty();
     private final BooleanProperty valid = new SimpleBooleanProperty();
-    private final SpinnerPane acceptPane = new SpinnerPane();
-    private final Label warningLabel = new Label();
+    protected final SpinnerPane acceptPane = new SpinnerPane();
+    protected final JFXButton cancelButton = new JFXButton();
+    protected final Label warningLabel = new Label();
     private final JFXProgressBar progressBar = new JFXProgressBar();
 
     public DialogPane() {
@@ -57,7 +58,7 @@ public class DialogPane extends JFXDialogLayout {
         acceptPane.getStyleClass().add("small-spinner-pane");
         acceptPane.setContent(acceptButton);
 
-        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+        cancelButton.setText(i18n("button.cancel"));
         cancelButton.setOnAction(e -> onCancel());
         cancelButton.getStyleClass().add("dialog-cancel");
         onEscPressed(this, cancelButton::fire);

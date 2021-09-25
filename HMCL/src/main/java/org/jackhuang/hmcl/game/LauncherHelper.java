@@ -99,6 +99,10 @@ public final class LauncherHelper {
         showLogs = true;
     }
 
+    public void setKeep() {
+        launcherVisibility = LauncherVisibility.KEEP;
+    }
+
     public void launch() {
         Logging.LOG.info("Launching game version: " + selectedVersion);
 

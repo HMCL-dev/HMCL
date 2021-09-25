@@ -208,22 +208,27 @@ public final class Versions {
         });
     }
 
+    public static void launch(Profile profile) {
+        launch(profile, profile.getSelectedVersion());
+    }
+
     public static void launch(Profile profile, String id) {
+        launch(profile, id, null);
+    }
+
+    public static void launch(Profile profile, String id, Consumer<LauncherHelper> injecter) {
         if (!checkVersionForLaunching(profile, id))
             return;
         ensureSelectedAccount(account -> {
-            new LauncherHelper(profile, account, id).launch();
+            LauncherHelper launcherHelper = new LauncherHelper(profile, account, id);
+            if (injecter != null)
+                injecter.accept(launcherHelper);
+            launcherHelper.launch();
         });
     }
 
     public static void testGame(Profile profile, String id) {
-        if (!checkVersionForLaunching(profile, id))
-            return;
-        ensureSelectedAccount(account -> {
-            LauncherHelper helper = new LauncherHelper(profile, account, id);
-            helper.setTestMode();
-            helper.launch();
-        });
+        launch(profile, id, LauncherHelper::setTestMode);
     }
 
     private static boolean checkVersionForLaunching(Profile profile, String id) {

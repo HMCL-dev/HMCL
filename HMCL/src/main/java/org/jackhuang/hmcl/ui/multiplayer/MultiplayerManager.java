@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.launch.StreamPump;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -76,7 +77,7 @@ public final class MultiplayerManager {
         return Metadata.HMCL_DIRECTORY.resolve("libraries").resolve(CATO_PATH);
     }
 
-    public static CatoSession joinSession(String version, String sessionName, String peer, int remotePort, int localPort) throws IOException, IncompatibleCatoVersionException {
+    public static CatoSession joinSession(String token, String version, String sessionName, String peer, int remotePort, int localPort) throws IOException, IncompatibleCatoVersionException {
         if (!CATO_VERSION.equals(version)) {
             throw new IncompatibleCatoVersionException(version, CATO_VERSION);
         }
@@ -85,7 +86,12 @@ public final class MultiplayerManager {
         if (!Files.isRegularFile(exe)) {
             throw new IllegalStateException("Cato file not found");
         }
-        String[] commands = new String[]{exe.toString(), "--token", "new", "--peer", peer, "--local", String.format("127.0.0.1:%d", localPort), "--remote", String.format("127.0.0.1:%d", remotePort)};
+        String[] commands = new String[]{exe.toString(),
+                "--token", StringUtils.isBlank(token) ? "new" : token,
+                "--peer", peer,
+                "--local", String.format("127.0.0.1:%d", localPort),
+                "--remote", String.format("127.0.0.1:%d", remotePort),
+                "--mode", "relay"};
         Process process = new ProcessBuilder()
                 .command(commands)
                 .start();
@@ -95,7 +101,7 @@ public final class MultiplayerManager {
         return session;
     }
 
-    public static CatoSession createSession(String sessionName, int port) throws IOException {
+    public static CatoSession createSession(String token, String sessionName, int port) throws IOException {
         Path exe = getCatoExecutable();
         if (!Files.isRegularFile(exe)) {
             throw new IllegalStateException("Cato file not found");
@@ -104,7 +110,10 @@ public final class MultiplayerManager {
 //        MultiplayerServer server = new MultiplayerServer(port);
 //        server.start();
 
-        String[] commands = new String[]{exe.toString(), "--token", "new", "--allows", String.format("127.0.0.1:%d", port)};
+        String[] commands = new String[]{exe.toString(),
+                "--token", StringUtils.isBlank(token) ? "new" : token,
+                "--allows", String.format("127.0.0.1:%d", port),
+                "--mode", "relay"};
         Process process = new ProcessBuilder()
                 .command(commands)
                 .start();
