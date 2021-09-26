@@ -115,6 +115,7 @@ public class MultiFileItem<T> extends VBox {
         protected final String title;
         protected String subtitle;
         protected final T data;
+        protected final BooleanProperty selected = new SimpleBooleanProperty();
 
         public Option(String title, T data) {
             this.title = title;
@@ -138,6 +139,18 @@ public class MultiFileItem<T> extends VBox {
             return this;
         }
 
+        public boolean isSelected() {
+            return selected.get();
+        }
+
+        public BooleanProperty selectedProperty() {
+            return selected;
+        }
+
+        public void setSelected(boolean selected) {
+            this.selected.set(selected);
+        }
+
         protected Node createItem(ToggleGroup group) {
             BorderPane pane = new BorderPane();
             pane.setPadding(new Insets(3));
@@ -147,6 +160,7 @@ public class MultiFileItem<T> extends VBox {
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
             left.setToggleGroup(group);
             left.setUserData(data);
+            selected.bind(left.selectedProperty());
             pane.setLeft(left);
 
             if (StringUtils.isNotBlank(subtitle)) {
@@ -208,6 +222,7 @@ public class MultiFileItem<T> extends VBox {
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
             left.setToggleGroup(group);
             left.setUserData(data);
+            selected.bind(left.selectedProperty());
             pane.setLeft(left);
 
             BorderPane.setAlignment(customField, Pos.CENTER_RIGHT);
@@ -266,6 +281,7 @@ public class MultiFileItem<T> extends VBox {
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
             left.setToggleGroup(group);
             left.setUserData(data);
+            selected.bind(left.selectedProperty());
             pane.setLeft(left);
 
             selector.disableProperty().bind(left.selectedProperty().not());

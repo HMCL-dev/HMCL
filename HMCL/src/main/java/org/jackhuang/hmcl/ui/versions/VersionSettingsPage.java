@@ -101,6 +101,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final OptionToggleButton useNativeOpenALPane;
     private final ComponentSublist javaSublist;
     private final MultiFileItem<JavaVersion> javaItem;
+    private final MultiFileItem.Option<JavaVersion> javaAutoDeterminedOption;
     private final MultiFileItem.FileOption<JavaVersion> javaCustomOption;
     private final ComponentSublist gameDirSublist;
     private final MultiFileItem<GameDirectoryType> gameDirItem;
@@ -199,6 +200,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             javaSublist.getContent().add(javaItem);
             javaSublist.setTitle(i18n("settings.game.java_directory"));
             javaSublist.setHasSubtitle(true);
+            javaAutoDeterminedOption = new MultiFileItem.Option<>(i18n("settings.game.java_directory.auto"), null);
             javaCustomOption = new MultiFileItem.FileOption<JavaVersion>(i18n("settings.custom"), null)
                     .setChooserTitle(i18n("settings.game.java_directory.choose"));
 
@@ -541,6 +543,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                             javaVersion.getPlatform().getBit()), javaVersion)
                             .setSubtitle(javaVersion.getBinary().toString()))
                     .collect(Collectors.toList());
+            options.add(0, javaAutoDeterminedOption);
             options.add(javaCustomOption);
             javaItem.loadChildren(options);
             javaItemsLoaded = true;
@@ -661,8 +664,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             enableSpecificSettings.set(!versionSetting.isUsesGlobal());
 
         javaItem.setToggleSelectedListener(newValue -> {
-            if (newValue.getUserData() == null) {
+            if (javaCustomOption.isSelected()) {
                 versionSetting.setUsesCustomJavaDir();
+            } else if (javaAutoDeterminedOption.isSelected()) {
+                versionSetting.setJavaAutoSelected();
             } else {
                 versionSetting.setJavaVersion((JavaVersion) newValue.getUserData());
             }
@@ -711,7 +716,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         VersionSetting versionSetting = lastVersionSetting;
         if (versionSetting == null)
             return;
-        Task.supplyAsync(versionSetting::getJavaVersion)
+        Task.fromCompletableFuture(versionSetting.getJavaVersion())
                 .thenAcceptAsync(Schedulers.javafx(), javaVersion -> javaSublist.setSubtitle(Optional.ofNullable(javaVersion)
                         .map(JavaVersion::getBinary).map(Path::toString).orElse("Invalid Java Path")))
                 .start();

@@ -21,14 +21,13 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
-import org.jackhuang.hmcl.game.GameDirectoryType;
-import org.jackhuang.hmcl.game.NativesDirectoryType;
-import org.jackhuang.hmcl.game.ProcessPriority;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -36,6 +35,8 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -102,6 +103,15 @@ public final class VersionSetting implements Cloneable {
 
     public void setUsesCustomJavaDir() {
         setJava("Custom");
+        setDefaultJavaPath(null);
+    }
+
+    public boolean isJavaAutoSelected() {
+        return "Auto".equals(getJava());
+    }
+
+    public void setJavaAutoSelected() {
+        setJava("Auto");
         setDefaultJavaPath(null);
     }
 
@@ -571,38 +581,46 @@ public final class VersionSetting implements Cloneable {
         launcherVisibilityProperty.set(launcherVisibility);
     }
 
-    public JavaVersion getJavaVersion() throws InterruptedException {
-        return getJavaVersion(true);
+    public CompletableFuture<JavaVersion> getJavaVersion(String gameVersion, Version version) {
+        return getJavaVersion(gameVersion, version, true);
     }
 
-    public JavaVersion getJavaVersion(boolean checkJava) throws InterruptedException {
-        // TODO: lazy initialization may result in UI suspension.
-        if (StringUtils.isBlank(getJava()))
-            setJava(StringUtils.isBlank(getJavaDir()) ? "Default" : "Custom");
-        if ("Default".equals(getJava())) return JavaVersion.fromCurrentEnvironment();
-        else if (isUsesCustomJavaDir()) {
+    public CompletableFuture<JavaVersion> getJavaVersion(String gameVersion, Version version, boolean checkJava) {
+        return CompletableFuture.supplyAsync(() -> {
             try {
-                if (checkJava)
-                    return JavaVersion.fromExecutable(Paths.get(getJavaDir()));
-                else
-                    return new JavaVersion(Paths.get(getJavaDir()), "", Platform.getPlatform());
-            } catch (IOException | InvalidPathException e) {
-                return null; // Custom Java Directory not found,
+                if (StringUtils.isBlank(getJava()))
+                    setJava(StringUtils.isBlank(getJavaDir()) ? "Default" : "Custom");
+                if ("Default".equals(getJava())) {
+                    return JavaVersion.fromCurrentEnvironment();
+                } else if (isJavaAutoSelected()) {
+                    return HMCLJavaVersion.findSuitableJavaVersion(VersionNumber.asVersion(gameVersion), version);
+                } else if (isUsesCustomJavaDir()) {
+                    try {
+                        if (checkJava)
+                            return JavaVersion.fromExecutable(Paths.get(getJavaDir()));
+                        else
+                            return new JavaVersion(Paths.get(getJavaDir()), "", Platform.getPlatform());
+                    } catch (IOException | InvalidPathException e) {
+                        return null; // Custom Java Directory not found,
+                    }
+                } else if (StringUtils.isNotBlank(getJava())) {
+                    List<JavaVersion> matchedJava = JavaVersion.getJavas().stream()
+                            .filter(java -> java.getVersion().equals(getJava()))
+                            .collect(Collectors.toList());
+                    if (matchedJava.isEmpty()) {
+                        setJava("Default");
+                        return JavaVersion.fromCurrentEnvironment();
+                    } else {
+                        return matchedJava.stream()
+                                .filter(java -> java.getBinary().toString().equals(getDefaultJavaPath()))
+                                .findFirst()
+                                .orElse(matchedJava.get(0));
+                    }
+                } else throw new Error();
+            } catch (InterruptedException e) {
+                throw new CancellationException();
             }
-        } else if (StringUtils.isNotBlank(getJava())) {
-            List<JavaVersion> matchedJava = JavaVersion.getJavas().stream()
-                    .filter(java -> java.getVersion().equals(getJava()))
-                    .collect(Collectors.toList());
-            if (matchedJava.isEmpty()) {
-                setJava("Default");
-                return JavaVersion.fromCurrentEnvironment();
-            } else {
-                return matchedJava.stream()
-                        .filter(java -> java.getBinary().toString().equals(getDefaultJavaPath()))
-                        .findFirst()
-                        .orElse(matchedJava.get(0));
-            }
-        } else throw new Error();
+        });
     }
 
     public void setJavaVersion(JavaVersion java) {
