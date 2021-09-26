@@ -1,15 +1,9 @@
 package moe.mickey.minecraft.skin.fx;
 
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 
 public final class SkinHelper {
 
@@ -126,15 +120,6 @@ public final class SkinHelper {
                     }
 
         return newSkin;
-    }
-
-    public static void saveToFile(Image image, File output) {
-        BufferedImage buffer = SwingFXUtils.fromFXImage(image, null);
-        try {
-            ImageIO.write(buffer, "png", output);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
 }
