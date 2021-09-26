@@ -97,8 +97,7 @@ public final class MultiplayerManager {
                     "--token", StringUtils.isBlank(token) ? "new" : token,
                     "--id", peer,
                     "--local", String.format("0.0.0.0:%d", localPort),
-                    "--remote", String.format("0.0.0.0:%d", remotePort),
-                    "--mode", "relay"};
+                    "--remote", String.format("0.0.0.0:%d", remotePort)};
             Process process;
             try {
                 process = new ProcessBuilder()
@@ -154,8 +153,7 @@ public final class MultiplayerManager {
 
         String[] commands = new String[]{exe.toString(),
                 "--token", StringUtils.isBlank(token) ? "new" : token,
-                "--allows", String.format("0.0.0.0:%d/0.0.0.0:%d", port, server.getPort()),
-                "--mode", "relay"};
+                "--allows", String.format("0.0.0.0:%d/0.0.0.0:%d", port, server.getPort())};
         Process process = new ProcessBuilder()
                 .command(commands)
                 .start();
