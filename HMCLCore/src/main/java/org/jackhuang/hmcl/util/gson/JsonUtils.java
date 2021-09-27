@@ -35,6 +35,12 @@ public final class JsonUtils {
 
     public static final Gson GSON = defaultGsonBuilder().create();
 
+    public static final Gson UGLY_GSON = new GsonBuilder()
+            .registerTypeAdapterFactory(JsonTypeAdapterFactory.INSTANCE)
+            .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
+            .registerTypeAdapterFactory(LowerCaseEnumTypeAdapterFactory.INSTANCE)
+            .create();
+
     private JsonUtils() {
     }
 

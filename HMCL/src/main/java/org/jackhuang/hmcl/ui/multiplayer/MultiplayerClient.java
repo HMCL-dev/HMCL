@@ -23,9 +23,11 @@ import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.*;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
 
+import static org.jackhuang.hmcl.ui.multiplayer.MultiplayerChannel.*;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class MultiplayerClient extends Thread {
@@ -64,42 +66,56 @@ public class MultiplayerClient extends Thread {
     @Override
     public void run() {
         LOG.info("Connecting to 127.0.0.1:" + port);
-        try (Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
+        for (int i = 0; i < 5; i++) {
+            try (Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
+                LOG.info("Connected to 127.0.0.1:" + port);
 
-            writer.write(JsonUtils.GSON.toJson(new MultiplayerServer.JoinRequest(MultiplayerManager.CATO_VERSION, id)));
-            writer.write("\n");
+                writer.write(JsonUtils.UGLY_GSON.toJson(new JoinRequest(MultiplayerManager.CATO_VERSION, id)));
+                writer.newLine();
+                writer.flush();
 
-            LOG.fine("Send join request with id=" + id);
+                LOG.fine("Sent join request with id=" + id);
 
-            String line = reader.readLine();
-            if (line == null) {
-                return;
-            }
-
-            MultiplayerServer.JoinResponse response = JsonUtils.fromNonNullJson(line, MultiplayerServer.JoinResponse.class);
-            setGamePort(response.getPort());
-            onConnected.fireEvent(new ConnectedEvent(this, response.getPort()));
-
-            LOG.fine("Received join response with port " + response.getPort());
-
-            while (!isInterrupted()) {
-                writer.write(JsonUtils.GSON.toJson(new MultiplayerServer.KeepAliveResponse(System.currentTimeMillis())));
-                writer.write("\n");
-
-                try {
-                    Thread.sleep(1500);
-                } catch (InterruptedException ignored) {
+                String line = reader.readLine();
+                if (line == null) {
+                    return;
                 }
-            }
 
-        } catch (IOException | JsonParseException e) {
-            e.printStackTrace();
-        } finally {
-            LOG.info("Lost connection to 127.0.0.1:" + port);
-            onDisconnected.fireEvent(new Event(this));
+                JoinResponse response = JsonUtils.fromNonNullJson(line, JoinResponse.class);
+                setGamePort(response.getPort());
+                onConnected.fireEvent(new ConnectedEvent(this, response.getPort()));
+
+                LOG.fine("Received join response with port " + response.getPort());
+
+                while (!isInterrupted()) {
+                    writer.write(verifyJson(JsonUtils.UGLY_GSON.toJson(new KeepAliveResponse(System.currentTimeMillis()))));
+                    writer.newLine();
+                    writer.flush();
+
+                    try {
+                        Thread.sleep(1500);
+                    } catch (InterruptedException ignored) {
+                        LOG.warning("MultiplayerClient interrupted");
+                        return;
+                    }
+                }
+            } catch (ConnectException e) {
+                LOG.info("Failed to connect to 127.0.0.1:" + port + ", tried " + i + " time(s)");
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException ex) {
+                    LOG.warning("MultiplayerClient interrupted");
+                    return;
+                }
+                continue;
+            } catch (IOException | JsonParseException e) {
+                e.printStackTrace();
+            }
         }
+        LOG.info("Lost connection to 127.0.0.1:" + port);
+        onDisconnected.fireEvent(new Event(this));
     }
 
     public static class ConnectedEvent extends Event {

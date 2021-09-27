@@ -301,7 +301,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
     }
 
     private static class ClientItem extends StackPane {
-        ClientItem(MultiplayerServer.CatoClient client) {
+        ClientItem(MultiplayerChannel.CatoClient client) {
             BorderPane pane = new BorderPane();
             pane.setLeft(new Label(client.getUsername()));
 

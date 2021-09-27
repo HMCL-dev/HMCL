@@ -65,6 +65,7 @@ public final class MultiplayerManager {
 
     private static final String REMOTE_ADDRESS = "127.0.0.1";
     private static final String LOCAL_ADDRESS = "127.0.0.1";
+    private static final String MODE = "p2p";
 
     private MultiplayerManager() {
     }
@@ -101,7 +102,8 @@ public final class MultiplayerManager {
                     "--token", StringUtils.isBlank(token) ? "new" : token,
                     "--id", peer,
                     "--local", String.format("%s:%d", LOCAL_ADDRESS, localPort),
-                    "--remote", String.format("%s:%d", REMOTE_ADDRESS, remotePort)};
+                    "--remote", String.format("%s:%d", REMOTE_ADDRESS, remotePort),
+                    "--mode", MODE};
             Process process;
             try {
                 process = new ProcessBuilder()
@@ -133,7 +135,11 @@ public final class MultiplayerManager {
                 client.onConnected().register(connectedEvent -> {
                     try {
                         int port = findAvailablePort();
-                        writer.write(String.format("net add %s %s:%d %s:%d p2p\n", peer, LOCAL_ADDRESS, port, REMOTE_ADDRESS, connectedEvent.getPort()));
+                        String command = String.format("net add %s %s:%d %s:%d %s\n", peer, LOCAL_ADDRESS, port, REMOTE_ADDRESS, connectedEvent.getPort(), MODE);
+                        LOG.info("Invoking cato: " + command);
+                        writer.write(command);
+                        writer.newLine();
+                        writer.flush();
                         future.complete(session);
                     } catch (IOException e) {
                         future.completeExceptionally(e);
@@ -157,7 +163,8 @@ public final class MultiplayerManager {
 
         String[] commands = new String[]{exe.toString(),
                 "--token", StringUtils.isBlank(token) ? "new" : token,
-                "--allows", String.format("%s:%d/%s:%d", REMOTE_ADDRESS, server.getPort(), REMOTE_ADDRESS, gamePort)};
+                "--allows", String.format("%s:%d/%s:%d", REMOTE_ADDRESS, server.getPort(), REMOTE_ADDRESS, gamePort),
+                "--mode", MODE};
         Process process = new ProcessBuilder()
                 .command(commands)
                 .start();
@@ -214,6 +221,7 @@ public final class MultiplayerManager {
         private final String name;
         private final State type;
         private String id;
+        private boolean peerConnected = false;
         private MultiplayerClient client;
         private MultiplayerServer server;
 
@@ -254,14 +262,15 @@ public final class MultiplayerManager {
             if (id == null) {
                 Matcher matcher = TEMP_TOKEN_PATTERN.matcher(log);
                 if (matcher.find()) {
-                    id = "mix" + matcher.group("id");
+                    id = matcher.group("id");
                     onIdGenerated.fireEvent(new CatoIdEvent(this, id));
                 }
             }
 
-            {
+            if (!peerConnected) {
                 Matcher matcher = PEER_CONNECTED_PATTERN.matcher(log);
                 if (matcher.find()) {
+                    peerConnected = true;
                     onPeerConnected.fireEvent(new Event(this));
                 }
             }
@@ -315,8 +324,8 @@ public final class MultiplayerManager {
             return onPeerConnected;
         }
 
-        private static final Pattern TEMP_TOKEN_PATTERN = Pattern.compile("id\\(mix(?<id>\\w+)\\)");
-        private static final Pattern PEER_CONNECTED_PATTERN = Pattern.compile("Connection established");
+        private static final Pattern TEMP_TOKEN_PATTERN = Pattern.compile("id\\((?<id>\\w+)\\)");
+        private static final Pattern PEER_CONNECTED_PATTERN = Pattern.compile("Connected to main net");
         private static final Pattern LOG_PATTERN = Pattern.compile("(\\[\\d+])\\s+(\\w+)\\s+(\\w+-{0,1}\\w+):\\s(.*)");
     }
 

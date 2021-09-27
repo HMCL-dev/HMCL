@@ -21,21 +21,22 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.gson.JsonSubtype;
-import org.jackhuang.hmcl.util.gson.JsonType;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.ui.multiplayer.MultiplayerChannel.*;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class MultiplayerServer extends Thread {
     private ServerSocket socket;
     private final int gamePort;
 
-    private final EventManager<CatoClient> onClientAdded = new EventManager<CatoClient>();
+    private final EventManager<MultiplayerChannel.CatoClient> onClientAdded = new EventManager<>();
+    private final EventManager<Event> onKeepAlive = new EventManager<>();
 
     public MultiplayerServer(int gamePort) {
         this.gamePort = gamePort;
@@ -44,15 +45,23 @@ public class MultiplayerServer extends Thread {
         setDaemon(true);
     }
 
-    public EventManager<CatoClient> onClientAdded() {
+    public EventManager<MultiplayerChannel.CatoClient> onClientAdded() {
         return onClientAdded;
     }
 
+    public EventManager<Event> onKeepAlive() {
+        return onKeepAlive;
+    }
+
     public void startServer() throws IOException {
+        startServer(0);
+    }
+
+    public void startServer(int port) throws IOException {
         if (socket != null) {
             throw new IllegalStateException("MultiplayerServer already started");
         }
-        socket = new ServerSocket(0);
+        socket = new ServerSocket(port);
 
         start();
     }
@@ -79,120 +88,42 @@ public class MultiplayerServer extends Thread {
     }
 
     private void handleClient(Socket targetSocket) {
+        LOG.info("Accepted client " + targetSocket.getRemoteSocketAddress());
         try (Socket clientSocket = targetSocket;
              BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                Request request = JsonUtils.fromNonNullJson(line, Request.class);
-                request.process(this, writer);
+                if (isInterrupted()) {
+                    return;
+                }
+
+                LOG.fine("Message from client " + targetSocket.getRemoteSocketAddress() + ":" + line);
+                MultiplayerChannel.Request request = JsonUtils.fromNonNullJson(line, MultiplayerChannel.Request.class);
+
+                if (request instanceof JoinRequest) {
+                    JoinRequest joinRequest = (JoinRequest) request;
+                    LOG.info("Received join request with clientVersion=" + joinRequest.getClientVersion() + ", id=" + joinRequest.getUsername());
+
+                    writer.write(verifyJson(JsonUtils.UGLY_GSON.toJson(new JoinResponse(gamePort))));
+                    writer.newLine();
+                    writer.flush();
+
+                    onClientAdded.fireEvent(new CatoClient(this, joinRequest.getUsername()));
+                } else if (request instanceof KeepAliveRequest) {
+                    writer.write(JsonUtils.UGLY_GSON.toJson(new KeepAliveResponse(System.currentTimeMillis())));
+                    writer.newLine();
+                    writer.flush();
+
+                    onKeepAlive.fireEvent(new Event(this));
+                } else {
+                    LOG.log(Level.WARNING, "Unrecognized packet from client " + targetSocket.getRemoteSocketAddress() + ":" + line);
+                }
             }
-        } catch (IOException | JsonParseException ignored) {
-        }
-    }
-
-    @JsonType(
-            property = "type",
-            subtypes = {
-                    @JsonSubtype(clazz = JoinRequest.class, name = "join"),
-                    @JsonSubtype(clazz = KeepAliveRequest.class, name = "keepalive")
-            }
-    )
-    public static class Request {
-
-        public void process(MultiplayerServer server, BufferedWriter writer) throws IOException, JsonParseException {
-        }
-    }
-
-    public static class JoinRequest extends Request {
-        private final String clientVersion;
-        private final String username;
-
-        public JoinRequest(String clientVersion, String username) {
-            this.clientVersion = clientVersion;
-            this.username = username;
-        }
-
-        public String getClientVersion() {
-            return clientVersion;
-        }
-
-        public String getUsername() {
-            return username;
-        }
-
-        @Override
-        public void process(MultiplayerServer server, BufferedWriter writer) throws IOException, JsonParseException {
-            LOG.fine("Received join request with clientVersion=" + clientVersion + ", id=" + username);
-
-            writer.write(JsonUtils.GSON.toJson(new JoinResponse(server.gamePort)));
-
-            server.onClientAdded.fireEvent(new CatoClient(server, username));
-        }
-    }
-
-    public static class KeepAliveRequest extends Request {
-        private final long timestamp;
-
-        public KeepAliveRequest(long timestamp) {
-            this.timestamp = timestamp;
-        }
-
-        public long getTimestamp() {
-            return timestamp;
-        }
-
-        @Override
-        public void process(MultiplayerServer server, BufferedWriter writer) throws IOException, JsonParseException {
-            writer.write(JsonUtils.GSON.toJson(new KeepAliveResponse(System.currentTimeMillis())));
-        }
-    }
-
-    @JsonType(
-            property = "type",
-            subtypes = {
-                    @JsonSubtype(clazz = JoinResponse.class, name = "join"),
-                    @JsonSubtype(clazz = KeepAliveResponse.class, name = "keepalive")
-            }
-    )
-    public static class Response {
-
-    }
-
-    public static class JoinResponse extends Response {
-        private final int port;
-
-        public JoinResponse(int port) {
-            this.port = port;
-        }
-
-        public int getPort() {
-            return port;
-        }
-    }
-
-    public static class KeepAliveResponse extends Response {
-        private final long timestamp;
-
-        public KeepAliveResponse(long timestamp) {
-            this.timestamp = timestamp;
-        }
-
-        public long getTimestamp() {
-            return timestamp;
-        }
-    }
-
-    public static class CatoClient extends Event {
-        private final String username;
-
-        public CatoClient(Object source, String username) {
-            super(source);
-            this.username = username;
-        }
-
-        public String getUsername() {
-            return username;
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to handle client socket.", e);
+        } catch (JsonParseException e) {
+            LOG.log(Level.SEVERE, "Failed to parse client request. This should not happen.", e);
         }
     }
 }

@@ -53,7 +53,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
     private final ReadOnlyObjectWrapper<DiscoveryInfo> natState = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyIntegerWrapper gamePort = new ReadOnlyIntegerWrapper(-1);
     private final ReadOnlyObjectWrapper<MultiplayerManager.CatoSession> session = new ReadOnlyObjectWrapper<>();
-    private final ObservableList<MultiplayerServer.CatoClient> clients = FXCollections.observableArrayList();
+    private final ObservableList<MultiplayerChannel.CatoClient> clients = FXCollections.observableArrayList();
 
     private Consumer<MultiplayerManager.CatoExitEvent> onExit;
     private Consumer<MultiplayerManager.CatoIdEvent> onIdGenerated;
@@ -73,7 +73,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
         return new MultiplayerPageSkin(this);
     }
 
-    public ObservableList<MultiplayerServer.CatoClient> getClients() {
+    public ObservableList<MultiplayerChannel.CatoClient> getClients() {
         return clients;
     }
 
@@ -236,7 +236,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
                             });
 
                             gamePort.set(session.getClient().getGamePort());
-                            setMultiplayerState(MultiplayerManager.State.CONNECTING);
+                            setMultiplayerState(MultiplayerManager.State.SLAVE);
                             resolve.run();
                         }, Platform::runLater).exceptionally(throwable -> {
                             LOG.log(Level.WARNING, "Failed to join sessoin");
@@ -314,6 +314,9 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
                         Controllers.dialog(i18n("multiplayer.exit.timeout"));
                     }
                     break;
+                case -1:
+                    // do nothing
+                    break;
                 default:
                     if (!((MultiplayerManager.CatoSession) event.getSource()).isReady()) {
                         Controllers.dialog(i18n("multiplayer.exit.before_ready", event.getExitCode()));
@@ -335,7 +338,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
     private void onCatoIdGenerated(MultiplayerManager.CatoIdEvent event) {
         runInFX(() -> {
             token.set(event.getId());
-            multiplayerState.set(((MultiplayerManager.CatoSession) event.getSource()).getType());
+            setMultiplayerState(((MultiplayerManager.CatoSession) event.getSource()).getType());
         });
     }
 
