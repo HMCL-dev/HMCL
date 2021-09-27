@@ -17,9 +17,11 @@
  */
 package org.jackhuang.hmcl.ui.multiplayer;
 
+import com.jfoenix.controls.JFXButton;
 import de.javawi.jstun.test.DiscoveryInfo;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SkinBase;
@@ -172,16 +174,22 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                     masterPane.getChildren().setAll(label);
                 }
 
-                VBox slavePane = new VBox(8);
+                BorderPane slavePane = new BorderPane();
                 {
                     HintPane slaveHintPane = new HintPane();
                     slaveHintPane.setText(i18n("multiplayer.state.slave.hint"));
+                    slavePane.setTop(slaveHintPane);
 
                     Label label = new Label();
                     label.textProperty().bind(Bindings.createStringBinding(() ->
-                            i18n("multiplayer.state.slave", control.getSession() == null ? "" : control.getSession().getName(), control.getPort()),
+                            i18n("multiplayer.state.slave", control.getSession() == null ? "" : control.getSession().getName(), "0.0.0.0:" + control.getPort()),
                             control.sessionProperty(), control.portProperty()));
-                    slavePane.getChildren().setAll(slaveHintPane, label);
+                    BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+                    slavePane.setCenter(label);
+
+                    JFXButton copyButton = new JFXButton(i18n("multiplayer.state.slave.copy"));
+                    copyButton.setOnAction(e -> FXUtils.copyText("0.0.0.0:" + control.getPort()));
+                    slavePane.setRight(copyButton);
                 }
 
                 FXUtils.onChangeAndOperate(getSkinnable().multiplayerStateProperty(), state -> {

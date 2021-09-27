@@ -59,7 +59,7 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  */
 public final class MultiplayerManager {
     private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/";
-    static final String CATO_VERSION = "1.0.8";
+    static final String CATO_VERSION = "1.0.9";
     private static final String CATO_PATH = getCatoPath();
 
     private MultiplayerManager() {
@@ -96,8 +96,8 @@ public final class MultiplayerManager {
             String[] commands = new String[]{exe.toString(),
                     "--token", StringUtils.isBlank(token) ? "new" : token,
                     "--id", peer,
-                    "--local", String.format("127.0.0.1:%d", localPort),
-                    "--remote", String.format("127.0.0.1:%d", remotePort),
+                    "--local", String.format("0.0.0.0:%d", localPort),
+                    "--remote", String.format("0.0.0.0:%d", remotePort),
                     "--mode", "relay"};
             Process process;
             try {
@@ -130,7 +130,7 @@ public final class MultiplayerManager {
                 client.onConnected().register(connectedEvent -> {
                     try {
                         int port = findAvailablePort();
-                        writer.write(String.format("net add %s 127.0.0.1:%d 127.0.0.1:%d p2p\n", peer, port, connectedEvent.getPort()));
+                        writer.write(String.format("net add %s 0.0.0.0:%d 0.0.0.0:%d p2p\n", peer, port, connectedEvent.getPort()));
                         future.complete(session);
                     } catch (IOException e) {
                         future.completeExceptionally(e);
@@ -154,7 +154,7 @@ public final class MultiplayerManager {
 
         String[] commands = new String[]{exe.toString(),
                 "--token", StringUtils.isBlank(token) ? "new" : token,
-                "--allows", String.format("127.0.0.1:%d,127.0.0.1:%d", port, server.getPort()),
+                "--allows", String.format("0.0.0.0:%d/0.0.0.0:%d", port, server.getPort()),
                 "--mode", "relay"};
         Process process = new ProcessBuilder()
                 .command(commands)

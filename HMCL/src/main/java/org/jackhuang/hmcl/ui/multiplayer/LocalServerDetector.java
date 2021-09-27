@@ -79,7 +79,7 @@ public class LocalServerDetector extends Thread {
             }
 
             String response = new String(packet.getData(), packet.getOffset(), packet.getLength(), StandardCharsets.UTF_8);
-            LOG.fine("Local server broadcast message: " + response);
+            LOG.fine("Local server " + packet.getAddress() + ":" + packet.getPort() + " broadcast message: " + response);
             onDetectedLanServer.fireEvent(new DetectedLanServerEvent(this, PingResponse.parsePingResponse(response)));
             break;
         }

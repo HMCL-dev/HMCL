@@ -330,6 +330,25 @@ public final class Lang {
         return optional.map(Stream::of).orElseGet(Stream::empty);
     }
 
+    public static <T> Iterable<T> toIterable(Enumeration<T> enumeration) {
+        if (enumeration == null) {
+            throw new NullPointerException();
+        }
+        return () -> new Iterator<T>() {
+            public boolean hasNext() {
+                return enumeration.hasMoreElements();
+            }
+
+            public T next() {
+                return enumeration.nextElement();
+            }
+
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
     public static <T> Iterable<T> toIterable(Stream<T> stream) {
         return stream::iterator;
     }

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,49 +17,39 @@
  */
 package org.jackhuang.hmcl.ui.multiplayer;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.nio.charset.StandardCharsets;
-import java.util.logging.Level;
+import org.junit.Ignore;
+import org.junit.Test;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import java.io.IOException;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
+
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class LocalServerBroadcaster implements Runnable {
-    private final int port;
-    private final MultiplayerManager.CatoSession session;
+public class LocalServerBroadcastTest {
 
-    public LocalServerBroadcaster(int port, MultiplayerManager.CatoSession session) {
-        this.port = port;
-        this.session = session;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    @Override
-    public void run() {
+    @Test
+    @Ignore("for manually testing")
+    public void test() {
+        int port = 12345;
         DatagramSocket socket;
         InetAddress broadcastAddress;
         try {
             socket = new DatagramSocket();
             broadcastAddress = InetAddress.getByName("224.0.2.60");
         } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to create datagram socket", e);
+            e.printStackTrace();
             return;
         }
 
-        while (session.isRunning()) {
+        while (true) {
             try {
-                byte[] data = String.format("[MOTD]%s[/MOTD][AD]%d[/AD]", i18n("multiplayer.session.name.motd", session.getName()), port).getBytes(StandardCharsets.UTF_8);
+                byte[] data = String.format("[MOTD]%s[/MOTD][AD]%d[/AD]", i18n("multiplayer.session.name.motd", "Test server"), port).getBytes(StandardCharsets.UTF_8);
                 DatagramPacket packet = new DatagramPacket(data, 0, data.length, broadcastAddress, 4445);
                 socket.send(packet);
-                LOG.fine("Broadcast server 0.0.0.0:" + port);
+                System.out.println("Broadcast server 127.0.0.1:" + port);
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to send motd packet", e);
+                e.printStackTrace();
             }
 
             try {
@@ -68,7 +58,12 @@ public class LocalServerBroadcaster implements Runnable {
                 return;
             }
         }
+    }
 
-        socket.close();
+    @Test
+    @Ignore
+    public void printLocalAddress() throws IOException {
+        DatagramSocket socket = new DatagramSocket(new InetSocketAddress((InetAddress) null, 4444));
+        System.out.println(socket.getLocalAddress());
     }
 }
