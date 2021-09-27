@@ -182,11 +182,13 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                             i18n("multiplayer.state.master", control.getSession() == null ? "" : control.getSession().getName(), control.getGamePort()),
                             control.gamePortProperty(), control.sessionProperty()));
 
+                    Label membersLabel = new Label(i18n("multiplayer.session.create.members"));
+
                     VBox clientsPane = new VBox(8);
-                    clients = MappedObservableList.create(control.getClients(), client -> new ClientItem(client));
+                    clients = MappedObservableList.create(control.getClients(), ClientItem::new);
                     Bindings.bindContent(clientsPane.getChildren(), clients);
 
-                    masterPane.getChildren().setAll(masterHintPane, label, clientsPane);
+                    masterPane.getChildren().setAll(masterHintPane, label, membersLabel, clientsPane);
                 }
 
                 BorderPane slavePane = new BorderPane();
@@ -303,6 +305,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
     private static class ClientItem extends StackPane {
         ClientItem(MultiplayerChannel.CatoClient client) {
             BorderPane pane = new BorderPane();
+            pane.setPadding(new Insets(8));
             pane.setLeft(new Label(client.getUsername()));
 
             RipplerContainer container = new RipplerContainer(pane);

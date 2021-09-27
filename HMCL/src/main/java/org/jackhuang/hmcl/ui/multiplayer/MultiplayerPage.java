@@ -186,6 +186,11 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
                         clients.add(event);
                     });
                 });
+                session.getServer().onClientDisconnected().register(event -> {
+                    runInFX(() -> {
+                        clients.remove(event);
+                    });
+                });
                 initCatoSession(session);
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "Failed to create session", e);

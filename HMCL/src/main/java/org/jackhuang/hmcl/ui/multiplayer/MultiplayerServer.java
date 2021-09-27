@@ -36,6 +36,7 @@ public class MultiplayerServer extends Thread {
     private final int gamePort;
 
     private final EventManager<MultiplayerChannel.CatoClient> onClientAdded = new EventManager<>();
+    private final EventManager<MultiplayerChannel.CatoClient> onClientDisconnected = new EventManager<>();
     private final EventManager<Event> onKeepAlive = new EventManager<>();
 
     public MultiplayerServer(int gamePort) {
@@ -47,6 +48,10 @@ public class MultiplayerServer extends Thread {
 
     public EventManager<MultiplayerChannel.CatoClient> onClientAdded() {
         return onClientAdded;
+    }
+
+    public EventManager<MultiplayerChannel.CatoClient> onClientDisconnected() {
+        return onClientDisconnected;
     }
 
     public EventManager<Event> onKeepAlive() {
@@ -88,6 +93,7 @@ public class MultiplayerServer extends Thread {
     }
 
     private void handleClient(Socket targetSocket) {
+        String clientName = null;
         LOG.info("Accepted client " + targetSocket.getRemoteSocketAddress());
         try (Socket clientSocket = targetSocket;
              BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -109,6 +115,7 @@ public class MultiplayerServer extends Thread {
                     writer.newLine();
                     writer.flush();
 
+                    clientName = joinRequest.getUsername();
                     onClientAdded.fireEvent(new CatoClient(this, joinRequest.getUsername()));
                 } else if (request instanceof KeepAliveRequest) {
                     writer.write(JsonUtils.UGLY_GSON.toJson(new KeepAliveResponse(System.currentTimeMillis())));
@@ -124,6 +131,10 @@ public class MultiplayerServer extends Thread {
             LOG.log(Level.WARNING, "Failed to handle client socket.", e);
         } catch (JsonParseException e) {
             LOG.log(Level.SEVERE, "Failed to parse client request. This should not happen.", e);
+        } finally {
+            if (clientName != null) {
+                onClientDisconnected.fireEvent(new CatoClient(this, clientName));
+            }
         }
     }
 }
