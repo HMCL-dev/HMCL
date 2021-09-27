@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXTextField;
 import de.javawi.jstun.test.DiscoveryInfo;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
@@ -38,6 +39,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -231,9 +233,19 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
 
             ComponentList thanksPane = new ComponentList();
             {
+                GridPane gridPane = new GridPane();
+                gridPane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
+                gridPane.setVgap(8);
+                gridPane.setHgap(16);
+
+                JFXTextField tokenField = new JFXTextField();
+                tokenField.textProperty().bindBidirectional(config().multiplayerTokenProperty());
+                tokenField.setPromptText(i18n("multiplayer.session.create.token.prompt"));
+                gridPane.addRow(0, new Label(i18n("multiplayer.session.create.token")), tokenField);
+
                 Label label = new Label(i18n("multiplayer.powered_by"));
 
-                thanksPane.getContent().add(label);
+                thanksPane.getContent().addAll(gridPane, label);
             }
 
             content.getChildren().setAll(

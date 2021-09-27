@@ -38,6 +38,7 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -170,9 +171,9 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
         }
 
         Controllers.dialog(new CreateMultiplayerRoomDialog((result, resolve, reject) -> {
-            int port = result.getServer().getAd();
+            int port = result.getAd();
             try {
-                initCatoSession(MultiplayerManager.createSession(result.getToken(), result.getServer().getMotd(), port));
+                initCatoSession(MultiplayerManager.createSession(config().getMultiplayerToken(), result.getMotd(), port));
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "Failed to create session", e);
                 reject.accept(i18n("multiplayer.session.create.error"));
@@ -191,8 +192,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
         }
 
         Controllers.prompt(new PromptDialogPane.Builder(i18n("multiplayer.session.join"), (result, resolve, reject) -> {
-            String token = ((PromptDialogPane.Builder.StringQuestion) result.get(1)).getValue();
-            String invitationCode = ((PromptDialogPane.Builder.StringQuestion) result.get(2)).getValue();
+            String invitationCode = ((PromptDialogPane.Builder.StringQuestion) result.get(1)).getValue();
             MultiplayerManager.Invitation invitation;
             try {
                 invitation = MultiplayerManager.parseInvitationCode(invitationCode);
@@ -211,7 +211,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
             }
 
             try {
-                MultiplayerManager.joinSession(token, invitation.getVersion(), invitation.getSessionName(), invitation.getId(), invitation.getGamePort(), localPort)
+                MultiplayerManager.joinSession(config().getMultiplayerToken(), invitation.getVersion(), invitation.getSessionName(), invitation.getId(), invitation.getGamePort(), localPort)
                         .thenAcceptAsync(session -> {
                             initCatoSession(session);
 
@@ -235,7 +235,6 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
             }
         })
                 .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("multiplayer.session.join.hint")))
-                .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("multiplayer.session.create.token"), "").setPromptText(i18n("multiplayer.session.create.token.prompt")))
                 .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("multiplayer.session.join.invitation_code"), "", new RequiredValidator())));
     }
 

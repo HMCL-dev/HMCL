@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.multiplayer;
 
-import com.jfoenix.controls.JFXTextField;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.ColumnConstraints;
@@ -38,13 +35,12 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class CreateMultiplayerRoomDialog extends DialogPane implements DialogAware {
 
-    private final StringProperty token = new SimpleStringProperty();
-    private final FutureCallback<CreationResult> callback;
+    private final FutureCallback<LocalServerDetector.PingResponse> callback;
     private final LocalServerDetector lanServerDetectorThread;
 
     private LocalServerDetector.PingResponse server;
 
-    CreateMultiplayerRoomDialog(FutureCallback<CreationResult> callback) {
+    CreateMultiplayerRoomDialog(FutureCallback<LocalServerDetector.PingResponse> callback) {
         this.callback = callback;
 
         setTitle(i18n("multiplayer.session.create"));
@@ -63,21 +59,16 @@ public class CreateMultiplayerRoomDialog extends DialogPane implements DialogAwa
 
         body.addRow(0, hintPane);
 
-        JFXTextField tokenField = new JFXTextField();
-        tokenField.textProperty().bindBidirectional(token);
-        tokenField.setPromptText(i18n("multiplayer.session.create.token.prompt"));
-        body.addRow(1, new Label(i18n("multiplayer.session.create.token")), tokenField);
-
         Label nameField = new Label();
         nameField.setText(Optional.ofNullable(Accounts.getSelectedAccount())
                 .map(Account::getUsername)
                 .map(username -> i18n("multiplayer.session.name.format", username))
                 .orElse(""));
-        body.addRow(2, new Label(i18n("multiplayer.session.create.name")), nameField);
+        body.addRow(1, new Label(i18n("multiplayer.session.create.name")), nameField);
 
         Label portLabel = new Label(i18n("multiplayer.nat.testing"));
         portLabel.setText(i18n("multiplayer.nat.testing"));
-        body.addRow(3, new Label(i18n("multiplayer.session.create.port")), portLabel);
+        body.addRow(2, new Label(i18n("multiplayer.session.create.port")), portLabel);
 
         setValid(false);
 
@@ -111,7 +102,7 @@ public class CreateMultiplayerRoomDialog extends DialogPane implements DialogAwa
     protected void onAccept() {
         setLoading();
 
-        callback.call(new CreationResult(token.get(), Objects.requireNonNull(server)), () -> {
+        callback.call(Objects.requireNonNull(server), () -> {
             runInFX(this::onSuccess);
         }, msg -> {
             runInFX(() -> onFailure(msg));
@@ -130,21 +121,4 @@ public class CreateMultiplayerRoomDialog extends DialogPane implements DialogAwa
         lanServerDetectorThread.interrupt();
     }
 
-    public static class CreationResult {
-        private final String token;
-        private final LocalServerDetector.PingResponse server;
-
-        public CreationResult(String token, LocalServerDetector.PingResponse server) {
-            this.token = token;
-            this.server = server;
-        }
-
-        public String getToken() {
-            return token;
-        }
-
-        public LocalServerDetector.PingResponse getServer() {
-            return server;
-        }
-    }
 }
