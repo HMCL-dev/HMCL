@@ -196,6 +196,9 @@ public final class JavaVersion {
 
         JAVAS = Collections.newSetFromMap(new ConcurrentHashMap<>());
         JAVAS.addAll(javaVersions);
+
+        LOG.log(Level.FINE, "Finished Java installation lookup, found " + JAVAS.size());
+
         LATCH.countDown();
     }
 
@@ -216,7 +219,10 @@ public final class JavaVersion {
                         return Stream.of(CURRENT_JAVA);
                     }
                     try {
-                        return Stream.of(fromExecutable(executable));
+                        LOG.log(Level.FINER, "Looking for Java" + executable);
+                        JavaVersion javaVersion = fromExecutable(executable);
+                        LOG.log(Level.FINE, "Found Java (" + javaVersion.getVersion() + ") " + javaVersion.getBinary().toString());
+                        return Stream.of(javaVersion);
                     } catch (IOException e) {
                         LOG.log(Level.WARNING, "Failed to determine Java at " + executable, e);
                         return Stream.empty();
