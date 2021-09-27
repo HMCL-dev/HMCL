@@ -149,7 +149,7 @@ public class OfflineAccount extends Account {
         return mapOf(
                 pair("uuid", UUIDTypeAdapter.fromUUID(uuid)),
                 pair("username", username),
-                pair("skin", skin.toStorage())
+                pair("skin", skin == null ? null : skin.toStorage())
         );
     }
 
