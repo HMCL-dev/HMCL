@@ -57,7 +57,7 @@ public class LocalServerBroadcaster implements Runnable {
                 byte[] data = String.format("[MOTD]%s[/MOTD][AD]%d[/AD]", i18n("multiplayer.session.name.motd", session.getName()), port).getBytes(StandardCharsets.UTF_8);
                 DatagramPacket packet = new DatagramPacket(data, 0, data.length, broadcastAddress, 4445);
                 socket.send(packet);
-                LOG.fine("Broadcast server 0.0.0.0:" + port);
+                LOG.finest("Broadcast server 0.0.0.0:" + port);
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "Failed to send motd packet", e);
             }

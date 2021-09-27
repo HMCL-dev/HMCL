@@ -218,7 +218,7 @@ public final class MultiplayerManager {
         CatoSession(String name, State type, Process process, List<String> commands) {
             super(process, commands);
 
-            Runtime.getRuntime().addShutdownHook(Lang.thread(this::stop));
+            Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
 
             LOG.info("Started cato with command: " + new CommandBuilder().addAll(commands).toString());
 

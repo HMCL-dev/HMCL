@@ -169,11 +169,14 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
 
                 VBox masterPane = new VBox(8);
                 {
+                    HintPane masterHintPane = new HintPane();
+                    masterHintPane.setText(i18n("multiplayer.state.master.hint"));
+
                     Label label = new Label(i18n("multiplayer.state.master"));
                     label.textProperty().bind(Bindings.createStringBinding(() ->
                             i18n("multiplayer.state.master", control.getSession() == null ? "" : control.getSession().getName(), control.getPort()),
                             control.portProperty(), control.sessionProperty()));
-                    masterPane.getChildren().setAll(label);
+                    masterPane.getChildren().setAll(masterHintPane, label);
                 }
 
                 BorderPane slavePane = new BorderPane();
@@ -243,9 +246,14 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                 tokenField.setPromptText(i18n("multiplayer.session.create.token.prompt"));
                 gridPane.addRow(0, new Label(i18n("multiplayer.session.create.token")), tokenField);
 
-                Label label = new Label(i18n("multiplayer.powered_by"));
+                BorderPane pane = new BorderPane();
+                Label versionLabel = new Label("cato " + MultiplayerManager.CATO_VERSION);
+                pane.setLeft(versionLabel);
 
-                thanksPane.getContent().addAll(gridPane, label);
+                Label label = new Label(i18n("multiplayer.powered_by"));
+                pane.setRight(label);
+
+                thanksPane.getContent().addAll(gridPane, pane);
             }
 
             content.getChildren().setAll(
