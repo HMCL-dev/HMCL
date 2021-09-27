@@ -31,10 +31,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.GameDirectoryType;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.NativesDirectoryType;
-import org.jackhuang.hmcl.game.ProcessPriority;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -53,6 +50,7 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.io.IOException;
@@ -674,6 +672,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         });
 
         versionSetting.javaDirProperty().addListener(javaListener);
+        versionSetting.defaultJavaPathPropertyProperty().addListener(javaListener);
         versionSetting.javaProperty().addListener(javaListener);
 
         gameDirItem.selectedDataProperty().bindBidirectional(versionSetting.gameDirTypeProperty());
@@ -686,7 +685,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         lastVersionSetting = versionSetting;
 
-        initializeSelectedJava();
         initJavaSubtitle();
 
         loadIcon();
@@ -699,26 +697,44 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         }
 
         if (lastVersionSetting.isUsesCustomJavaDir()) {
-            javaItem.getGroup().getToggles().stream()
-                    .filter(java -> java.getUserData() == null)
-                    .findFirst().get()
-                    .setSelected(true);
+            javaCustomOption.setSelected(true);
+        } else if (lastVersionSetting.isJavaAutoSelected()) {
+            javaAutoDeterminedOption.setSelected(true);
         } else {
-            try {
-                javaItem.setSelectedData(lastVersionSetting.getJavaVersion());
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+//            javaLoading.set(true);
+            lastVersionSetting.getJavaVersion(null, null)
+                    .thenAcceptAsync(Schedulers.javafx(), javaVersion -> {
+                        javaItem.setSelectedData(javaVersion);
+//                        javaLoading.set(false);
+                    }).start();
         }
     }
 
     private void initJavaSubtitle() {
+        FXUtils.checkFxUserThread();
+        initializeSelectedJava();
         VersionSetting versionSetting = lastVersionSetting;
         if (versionSetting == null)
             return;
-        Task.fromCompletableFuture(versionSetting.getJavaVersion())
-                .thenAcceptAsync(Schedulers.javafx(), javaVersion -> javaSublist.setSubtitle(Optional.ofNullable(javaVersion)
-                        .map(JavaVersion::getBinary).map(Path::toString).orElse("Invalid Java Path")))
+        Profile profile = this.profile;
+        String versionId = this.versionId;
+        boolean autoSelected = versionSetting.isJavaAutoSelected();
+
+        if (autoSelected && versionId == null) {
+            javaSublist.setSubtitle(i18n("settings.game.java_directory.auto"));
+            return;
+        }
+
+        Task.composeAsync(Schedulers.javafx(), () -> {
+            if (versionId == null) {
+                return versionSetting.getJavaVersion(VersionNumber.asVersion("Unknown"), null);
+            } else {
+                return versionSetting.getJavaVersion(
+                        VersionNumber.asVersion(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(versionId)).orElse("Unknown")),
+                        profile.getRepository().getVersion(versionId));
+            }
+        }).thenAcceptAsync(Schedulers.javafx(), javaVersion -> javaSublist.setSubtitle(Optional.ofNullable(javaVersion)
+                .map(JavaVersion::getBinary).map(Path::toString).orElse("Invalid Java Path")))
                 .start();
     }
 

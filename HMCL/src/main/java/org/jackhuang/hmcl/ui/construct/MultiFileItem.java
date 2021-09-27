@@ -116,6 +116,7 @@ public class MultiFileItem<T> extends VBox {
         protected String subtitle;
         protected final T data;
         protected final BooleanProperty selected = new SimpleBooleanProperty();
+        protected final JFXRadioButton left = new JFXRadioButton();
 
         public Option(String title, T data) {
             this.title = title;
@@ -140,15 +141,15 @@ public class MultiFileItem<T> extends VBox {
         }
 
         public boolean isSelected() {
-            return selected.get();
+            return left.isSelected();
         }
 
         public BooleanProperty selectedProperty() {
-            return selected;
+            return left.selectedProperty();
         }
 
         public void setSelected(boolean selected) {
-            this.selected.set(selected);
+            left.setSelected(selected);
         }
 
         protected Node createItem(ToggleGroup group) {
@@ -156,11 +157,10 @@ public class MultiFileItem<T> extends VBox {
             pane.setPadding(new Insets(3));
             FXUtils.setLimitHeight(pane, 30);
 
-            JFXRadioButton left = new JFXRadioButton(title);
+            left.setText(title);
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
             left.setToggleGroup(group);
             left.setUserData(data);
-            selected.bind(left.selectedProperty());
             pane.setLeft(left);
 
             if (StringUtils.isNotBlank(subtitle)) {
@@ -218,11 +218,10 @@ public class MultiFileItem<T> extends VBox {
             pane.setPadding(new Insets(3));
             FXUtils.setLimitHeight(pane, 30);
 
-            JFXRadioButton left = new JFXRadioButton(title);
+            left.setText(title);
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
             left.setToggleGroup(group);
             left.setUserData(data);
-            selected.bind(left.selectedProperty());
             pane.setLeft(left);
 
             BorderPane.setAlignment(customField, Pos.CENTER_RIGHT);
@@ -277,11 +276,10 @@ public class MultiFileItem<T> extends VBox {
             pane.setPadding(new Insets(3));
             FXUtils.setLimitHeight(pane, 30);
 
-            JFXRadioButton left = new JFXRadioButton(title);
+            left.setText(title);
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
             left.setToggleGroup(group);
             left.setUserData(data);
-            selected.bind(left.selectedProperty());
             pane.setLeft(left);
 
             selector.disableProperty().bind(left.selectedProperty().not());

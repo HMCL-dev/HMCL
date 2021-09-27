@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
@@ -64,9 +63,11 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -110,13 +111,10 @@ public final class LauncherHelper {
         Version version = repository.getResolvedVersion(selectedVersion);
 
         Platform.runLater(() -> {
-            try {
-                checkGameState(profile, setting, version, () -> {
-                    Controllers.dialog(launchingStepsPane);
-                    Schedulers.defaultScheduler().execute(this::launch0);
-                });
-            } catch (InterruptedException | RejectedExecutionException ignore) {
-            }
+            checkGameState(profile, setting, version, javaVersion -> {
+                Controllers.dialog(launchingStepsPane);
+                Schedulers.defaultScheduler().execute(() -> launch0(javaVersion));
+            });
         });
     }
 
@@ -126,7 +124,7 @@ public final class LauncherHelper {
         launch();
     }
 
-    private void launch0() {
+    private void launch0(JavaVersion javaVersion) {
         HMCLGameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
         Version version = MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion));
@@ -175,7 +173,7 @@ public final class LauncherHelper {
                     }
                 }).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
-                    LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, profile.getGameDir(), !setting.isNotCheckJVM());
+                    LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersion, profile.getGameDir());
                     return new HMCLGameLauncher(
                             repository,
                             version,
@@ -301,224 +299,204 @@ public final class LauncherHelper {
         executor.start();
     }
 
-    private static void checkGameState(Profile profile, VersionSetting setting, Version version, Runnable onAccept) throws InterruptedException {
+    private static void checkGameState(Profile profile, VersionSetting setting, Version version, Consumer<JavaVersion> onAccept) {
+        VersionNumber gameVersion = VersionNumber.asVersion(profile.getRepository().getGameVersion(version).orElse("Unknown"));
+
         if (setting.isNotCheckJVM()) {
-            onAccept.run();
+            Task.composeAsync(() -> {
+                return setting.getJavaVersion(gameVersion, version);
+            }).thenAcceptAsync(javaVersion -> {
+                onAccept.accept(Optional.ofNullable(javaVersion).orElseGet(JavaVersion::fromCurrentEnvironment));
+            }).start();
             return;
         }
 
-        boolean javaChanged = false;
-        boolean mayContinueAfterJavaChanged = false;
-        boolean java8required = false;
-        boolean newJavaRequired = false;
+        Task.composeAsync(() -> {
+            return setting.getJavaVersion(gameVersion, version);
+        }).thenComposeAsync(Schedulers.javafx(), javaVersion -> {
+            // Reset invalid java version
+            if (javaVersion == null) {
+                CompletableFuture<JavaVersion> future = new CompletableFuture<>();
+                Runnable continueAction = () -> future.complete(JavaVersion.fromCurrentEnvironment());
 
-        // Without onAccept called, the launching operation will be terminated.
-
-        VersionNumber gameVersion = VersionNumber.asVersion(profile.getRepository().getGameVersion(version).orElse("Unknown"));
-        if (setting.getJavaVersion() == null) {
-            Controllers.dialog(i18n("launch.wrong_javadir"), i18n("message.warning"), MessageType.WARNING, onAccept);
-            setting.setJava(null);
-            setting.setDefaultJavaPath(null);
-            setting.setJavaVersion(JavaVersion.fromCurrentEnvironment());
-            // continue java version checking
-        }
-
-        // Check java version recorded in game json
-        // We only checks for 1.7.10 and above, since 1.7.2 with Forge can only run on Java 7, but it is recorded Java 8 in game json, which is not correct.
-        if (!javaChanged && version.getJavaVersion() != null && gameVersion.compareTo(VersionNumber.asVersion("1.7.10")) >= 0) {
-            if (setting.getJavaVersion().getParsedVersion() < version.getJavaVersion().getMajorVersion()) {
-                Optional<JavaVersion> acceptableJava = JavaVersion.getJavas().stream()
-                        .filter(javaVersion -> javaVersion.getParsedVersion() >= version.getJavaVersion().getMajorVersion())
-                        .max(Comparator.comparing(JavaVersion::getVersionNumber));
-                if (acceptableJava.isPresent()) {
-                    setting.setJavaVersion(acceptableJava.get());
-                    mayContinueAfterJavaChanged = true;
+                if (setting.isJavaAutoSelected()) {
+                    Controllers.dialog(i18n("launch.failed.no_accepted_java"), i18n("message.warning"), MessageType.WARNING, continueAction);
                 } else {
-                    MessageDialogPane dialog = new MessageDialogPane(
-                            i18n("launch.advice.require_newer_java_version",
-                                    gameVersion.toString(),
-                                    version.getJavaVersion().getMajorVersion()),
-                            i18n("message.warning"),
-                            MessageType.QUESTION);
+                    Controllers.dialog(i18n("launch.wrong_javadir"), i18n("message.warning"), MessageType.WARNING, continueAction);
 
-                    JFXButton linkButton = new JFXButton(i18n("download.external_link"));
-                    linkButton.setOnAction(e -> FXUtils.openLink("https://adoptopenjdk.net/"));
-                    linkButton.getStyleClass().add("dialog-accept");
-                    dialog.addButton(linkButton);
+                    setting.setJava(null);
+                    setting.setDefaultJavaPath(null);
+                    setting.setJavaVersion(JavaVersion.fromCurrentEnvironment());
+                }
 
-                    JFXButton yesButton = new JFXButton(i18n("button.ok"));
-                    yesButton.setOnAction(event -> {
-                        downloadJava(version.getJavaVersion(), profile)
-                                .thenAcceptAsync(x -> {
-                                    try {
-                                        Optional<JavaVersion> newAcceptableJava = JavaVersion.getJavas().stream()
-                                                .filter(javaVersion -> javaVersion.getParsedVersion() >= version.getJavaVersion().getMajorVersion())
-                                                .max(Comparator.comparing(JavaVersion::getVersionNumber));
-                                        newAcceptableJava.ifPresent(setting::setJavaVersion);
-                                    } catch (InterruptedException e) {
-                                        LOG.log(Level.SEVERE, "Cannot list javas", e);
-                                    }
-                                }, Platform::runLater).thenAccept(x -> onAccept.run());
-                    });
-                    yesButton.getStyleClass().add("dialog-accept");
-                    dialog.addButton(yesButton);
+                return Task.fromCompletableFuture(future);
+            } else {
+                return Task.completed(javaVersion);
+            }
+        }).thenComposeAsync(javaVersion -> {
+            return Task.allOf(Task.completed(javaVersion), Task.supplyAsync(() -> JavaVersionConstraint.findSuitableJavaVersion(gameVersion, version)));
+        }).thenComposeAsync(Schedulers.javafx(), javaVersions -> {
+            JavaVersion javaVersion = (JavaVersion) javaVersions.get(0);
+            JavaVersion suggestedJavaVersion = (JavaVersion) javaVersions.get(1);
+            if (setting.isJavaAutoSelected()) return Task.completed(javaVersion);
 
-                    JFXButton noButton = new JFXButton(i18n("button.cancel"));
-                    noButton.getStyleClass().add("dialog-cancel");
-                    dialog.addButton(noButton);
-                    dialog.setCancelButton(noButton);
+            JavaVersionConstraint violatedMandatoryConstraint = null;
+            JavaVersionConstraint violatedSuggestedConstraint = null;
+            for (JavaVersionConstraint constraint : JavaVersionConstraint.values()) {
+                if (constraint.getGameVersion().contains(gameVersion) && constraint.appliesToVersion(gameVersion, version)) {
+                    if (!constraint.getJavaVersion(version).contains(javaVersion.getVersionNumber())) {
+                        if (constraint.getType() == JavaVersionConstraint.RULE_MANDATORY) {
+                            violatedMandatoryConstraint = constraint;
+                        } else if (constraint.getType() == JavaVersionConstraint.RULE_SUGGESTED) {
+                            violatedSuggestedConstraint = constraint;
+                        }
+                    }
 
-                    Controllers.dialog(dialog);
-                    return;
                 }
             }
-        }
 
-        // Game later than 1.17 requires Java 16.
-        if (!javaChanged && setting.getJavaVersion().getParsedVersion() < JavaVersion.JAVA_16 && gameVersion.compareTo(VersionNumber.asVersion("1.17")) >= 0) {
-            Optional<JavaVersion> acceptableJava = JavaVersion.getJavas().stream()
-                    .filter(javaVersion -> javaVersion.getParsedVersion() >= JavaVersion.JAVA_16)
-                    .max(Comparator.comparing(JavaVersion::getVersionNumber));
-            if (acceptableJava.isPresent()) {
-                setting.setJavaVersion(acceptableJava.get());
-                mayContinueAfterJavaChanged = true;
-            } else {
-                Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 16), i18n("message.warning"), () -> {
-                    FXUtils.openLink("https://adoptopenjdk.net/");
-                }, null);
-            }
-            javaChanged = true;
-        }
+            boolean suggested = false;
+            CompletableFuture<JavaVersion> future = new CompletableFuture<>();
+            Runnable continueAction = () -> future.complete(javaVersion);
+            Runnable breakAction = () -> {
+                future.completeExceptionally(new CancellationException("Launch operation was cancelled by user"));
+            };
 
-        // Game later than 1.7.2 accepts Java 8.
-        if (!javaChanged && setting.getJavaVersion().getParsedVersion() < JavaVersion.JAVA_8 && gameVersion.compareTo(VersionNumber.asVersion("1.7.2")) > 0) {
-            Optional<JavaVersion> java8 = JavaVersion.getJavas().stream()
-                    .filter(javaVersion -> javaVersion.getParsedVersion() >= JavaVersion.JAVA_8)
-                    .max(Comparator.comparing(JavaVersion::getVersionNumber));
-            if (java8.isPresent()) {
-                newJavaRequired = true;
-                setting.setJavaVersion(java8.get());
-            } else {
-                if (gameVersion.compareTo(VersionNumber.asVersion("1.13")) >= 0) {
-                    // Minecraft 1.13 and later versions only support Java 8 or later.
-                    // Terminate launching operation.
-                    Controllers.dialog(i18n("launch.advice.java8_1_13"), i18n("message.error"), MessageType.ERROR, null);
+            if (violatedMandatoryConstraint != null) {
+                if (suggestedJavaVersion != null) {
+                    Controllers.confirm(i18n("launch.advice.java.auto"), i18n("message.warning"), () -> {
+                        setting.setJavaAutoSelected();
+                        future.complete(suggestedJavaVersion);
+                    }, breakAction);
+                    return Task.fromCompletableFuture(future);
                 } else {
-                    // Most mods require Java 8 or later version.
-                    Controllers.dialog(i18n("launch.advice.newer_java"), i18n("message.warning"), MessageType.WARNING, onAccept);
+                    switch (violatedMandatoryConstraint) {
+                        case GAME_JSON:
+                            MessageDialogPane dialog = new MessageDialogPane(
+                                    i18n("launch.advice.require_newer_java_version",
+                                            gameVersion.toString(),
+                                            version.getJavaVersion().getMajorVersion()),
+                                    i18n("message.warning"),
+                                    MessageType.QUESTION);
+
+                            JFXButton linkButton = new JFXButton(i18n("download.external_link"));
+                            linkButton.setOnAction(e -> FXUtils.openLink("https://adoptopenjdk.net/"));
+                            linkButton.getStyleClass().add("dialog-accept");
+                            dialog.addButton(linkButton);
+
+                            JFXButton yesButton = new JFXButton(i18n("button.ok"));
+                            yesButton.setOnAction(event -> {
+                                downloadJava(version.getJavaVersion(), profile)
+                                        .thenAcceptAsync(x -> {
+                                            try {
+                                                Optional<JavaVersion> newAcceptableJava = JavaVersion.getJavas().stream()
+                                                        .filter(newJava -> newJava.getParsedVersion() >= version.getJavaVersion().getMajorVersion())
+                                                        .max(Comparator.comparing(JavaVersion::getVersionNumber));
+                                                if (newAcceptableJava.isPresent()) {
+                                                    setting.setJavaVersion(newAcceptableJava.get());
+                                                    future.complete(newAcceptableJava.get());
+                                                    return;
+                                                }
+                                            } catch (InterruptedException e) {
+                                                LOG.log(Level.SEVERE, "Cannot list javas", e);
+                                            }
+                                            future.complete(javaVersion);
+                                        }, Platform::runLater)
+                                        .exceptionally(Lang.handleUncaught);
+                            });
+                            yesButton.getStyleClass().add("dialog-accept");
+                            dialog.addButton(yesButton);
+
+                            JFXButton noButton = new JFXButton(i18n("button.cancel"));
+                            noButton.getStyleClass().add("dialog-cancel");
+                            dialog.addButton(noButton);
+                            dialog.setCancelButton(noButton);
+
+                            Controllers.dialog(dialog);
+                            return Task.fromCompletableFuture(future);
+                        case VANILLA_JAVA_16:
+                            Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 16), i18n("message.warning"), () -> {
+                                FXUtils.openLink("https://adoptopenjdk.net/");
+                            }, breakAction);
+                            return null;
+                        case VANILLA_JAVA_8:
+                            Controllers.dialog(i18n("launch.advice.java8_1_13"), i18n("message.error"), MessageType.ERROR, breakAction);
+                            return null;
+                        case LAUNCH_WRAPPER:
+                            Controllers.dialog(i18n("launch.advice.java9") + "\n" + i18n("launch.advice.uncorrected"), i18n("message.error"), MessageType.ERROR, breakAction);
+                            return null;
+                    }
                 }
-                javaChanged = true;
-            }
-        }
-
-        // LaunchWrapper 1.12 will crash because of assuming the system class loader is an instance of URLClassLoader.
-        if (!javaChanged && setting.getJavaVersion().getParsedVersion() >= JavaVersion.JAVA_9
-                && gameVersion.compareTo(VersionNumber.asVersion("1.13")) < 0
-                && LibraryAnalyzer.LAUNCH_WRAPPER_MAIN.equals(version.getMainClass())
-                && version.getLibraries().stream()
-                .filter(library -> "launchwrapper".equals(library.getArtifactId()))
-                .anyMatch(library -> VersionNumber.asVersion(library.getVersion()).compareTo(VersionNumber.asVersion("1.13")) < 0)) {
-            Optional<JavaVersion> java8 = JavaVersion.getJavas().stream().filter(javaVersion -> javaVersion.getParsedVersion() == JavaVersion.JAVA_8).findAny();
-            if (java8.isPresent()) {
-                java8required = true;
-                setting.setJavaVersion(java8.get());
-                Controllers.dialog(i18n("launch.advice.java9") + "\n" + i18n("launch.advice.corrected"), i18n("message.info"), MessageType.INFO, onAccept);
-                javaChanged = true;
-            } else {
-                Controllers.dialog(i18n("launch.advice.java9") + "\n" + i18n("launch.advice.uncorrected"), i18n("message.error"), MessageType.ERROR, null);
-                javaChanged = true;
-            }
-        }
-
-        // Minecraft 1.13 may crash when generating world on Java 8 earlier than 1.8.0_51
-        VersionNumber JAVA_8 = VersionNumber.asVersion("1.8.0_51");
-        if (!javaChanged && gameVersion.compareTo(VersionNumber.asVersion("1.13")) >= 0 && setting.getJavaVersion().getParsedVersion() == JavaVersion.JAVA_8 && setting.getJavaVersion().getVersionNumber().compareTo(JAVA_8) < 0) {
-            Optional<JavaVersion> java8 = JavaVersion.getJavas().stream()
-                    .filter(javaVersion -> javaVersion.getVersionNumber().compareTo(JAVA_8) >= 0)
-                    .max(Comparator.comparing(JavaVersion::getVersionNumber));
-            if (java8.isPresent()) {
-                newJavaRequired = true;
-                setting.setJavaVersion(java8.get());
-            } else {
-                Controllers.dialog(i18n("launch.advice.java8_51_1_13"), i18n("message.warning"), MessageType.WARNING, onAccept);
-                javaChanged = true;
-            }
-        }
-
-        if (!javaChanged && setting.getJavaVersion().getPlatform() == org.jackhuang.hmcl.util.platform.Platform.BIT_32 &&
-                Architecture.CURRENT.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.BIT_64) {
-            final JavaVersion java32 = setting.getJavaVersion();
-
-            // First find if same java version but whose platform is 64-bit installed.
-            Optional<JavaVersion> java64 = JavaVersion.getJavas().stream()
-                    .filter(javaVersion -> javaVersion.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.getPlatform())
-                    .filter(javaVersion -> javaVersion.getParsedVersion() == java32.getParsedVersion())
-                    .max(Comparator.comparing(JavaVersion::getVersionNumber));
-
-            if (!java64.isPresent()) {
-                final boolean java8requiredFinal = java8required, newJavaRequiredFinal = newJavaRequired;
-
-                // Then find if other java version which satisfies requirements installed.
-                java64 = JavaVersion.getJavas().stream()
-                        .filter(javaVersion -> javaVersion.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.getPlatform())
-                        .filter(javaVersion -> {
-                            if (java8requiredFinal) return javaVersion.getParsedVersion() == JavaVersion.JAVA_8;
-                            if (newJavaRequiredFinal) return javaVersion.getParsedVersion() >= JavaVersion.JAVA_8;
-                            return true;
-                        })
-                        .max(Comparator.comparing(JavaVersion::getVersionNumber));
             }
 
-            if (java64.isPresent()) {
-                setting.setJavaVersion(java64.get());
-            } else {
-                Controllers.dialog(i18n("launch.advice.different_platform"), i18n("message.error"), MessageType.ERROR, onAccept);
-                javaChanged = true;
+            // 32-bit JVM cannot make use of too much memory.
+            if (javaVersion.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.BIT_32 &&
+                    setting.getMaxMemory() > 1.5 * 1024) {
+                // 1.5 * 1024 is an inaccurate number.
+                // Actual memory limit depends on operating system and memory.
+                Controllers.confirm(i18n("launch.advice.too_large_memory_for_32bit"), i18n("message.error"), continueAction, null);
+                return null;
             }
-        }
 
-        // 32-bit JVM cannot make use of too much memory.
-        if (!javaChanged && setting.getJavaVersion().getPlatform() == org.jackhuang.hmcl.util.platform.Platform.BIT_32 &&
-                setting.getMaxMemory() > 1.5 * 1024) {
-            // 1.5 * 1024 is an inaccurate number.
-            // Actual memory limit depends on operating system and memory.
-            Controllers.confirm(i18n("launch.advice.too_large_memory_for_32bit"), i18n("message.error"), onAccept, null);
-            javaChanged = true;
-        }
-
-        // Cannot allocate too much memory exceeding free space.
-        if (!javaChanged && OperatingSystem.TOTAL_MEMORY > 0 && OperatingSystem.TOTAL_MEMORY < setting.getMaxMemory()) {
-            Controllers.confirm(i18n("launch.advice.not_enough_space", OperatingSystem.TOTAL_MEMORY), i18n("message.error"), onAccept, null);
-            javaChanged = true;
-        }
-
-        // Forge 2760~2773 will crash game with LiteLoader.
-        if (!javaChanged) {
-            boolean hasForge2760 = version.getLibraries().stream().filter(it -> it.is("net.minecraftforge", "forge"))
-                    .anyMatch(it ->
-                            VersionNumber.VERSION_COMPARATOR.compare("1.12.2-14.23.5.2760", it.getVersion()) <= 0 &&
-                                    VersionNumber.VERSION_COMPARATOR.compare(it.getVersion(), "1.12.2-14.23.5.2773") < 0);
-            boolean hasLiteLoader = version.getLibraries().stream().anyMatch(it -> it.is("com.mumfrey", "liteloader"));
-            if (hasForge2760 && hasLiteLoader && gameVersion.compareTo(VersionNumber.asVersion("1.12.2")) == 0) {
-                Controllers.confirm(i18n("launch.advice.forge2760_liteloader"), i18n("message.error"), onAccept, null);
-                javaChanged = true;
+            if (violatedSuggestedConstraint != null) {
+                suggested = true;
+                switch (violatedSuggestedConstraint) {
+                    case MODDED_JAVA_7:
+                        Controllers.dialog(i18n("launch.advice.java.modded_java_7"), i18n("message.error"), MessageType.ERROR, continueAction);
+                        return null;
+                    case MODDED_JAVA_8:
+                        Controllers.dialog(i18n("launch.advice.newer_java"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                        break;
+                    case VANILLA_JAVA_8_51:
+                        Controllers.dialog(i18n("launch.advice.java8_51_1_13"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                        break;
+                }
             }
-        }
 
-        // OptiFine 1.14.4 is not compatible with Forge 28.2.2 and later versions.
-        if (!javaChanged) {
-            boolean hasForge28_2_2 = version.getLibraries().stream().filter(it -> it.is("net.minecraftforge", "forge"))
-                    .anyMatch(it ->
-                            VersionNumber.VERSION_COMPARATOR.compare("1.14.4-28.2.2", it.getVersion()) <= 0);
-            boolean hasOptiFine = version.getLibraries().stream().anyMatch(it -> it.is("optifine", "OptiFine"));
-            if (hasForge28_2_2 && hasOptiFine && gameVersion.compareTo(VersionNumber.asVersion("1.14.4")) == 0) {
-                Controllers.confirm(i18n("launch.advice.forge28_2_2_optifine"), i18n("message.error"), onAccept, null);
-                javaChanged = true;
+            if (!suggested && javaVersion.getPlatform() != Architecture.CURRENT.getPlatform()) {
+                Controllers.dialog(i18n("launch.advice.different_platform"), i18n("message.warning"), MessageType.ERROR, continueAction);
+                suggested = true;
             }
-        }
 
-        if (!javaChanged || mayContinueAfterJavaChanged)
-            onAccept.run();
+            // Cannot allocate too much memory exceeding free space.
+            if (!suggested && OperatingSystem.TOTAL_MEMORY > 0 && OperatingSystem.TOTAL_MEMORY < setting.getMaxMemory()) {
+                Controllers.confirm(i18n("launch.advice.not_enough_space", OperatingSystem.TOTAL_MEMORY), i18n("message.error"), continueAction, null);
+                suggested = true;
+            }
+
+            // Forge 2760~2773 will crash game with LiteLoader.
+            if (!suggested) {
+                boolean hasForge2760 = version.getLibraries().stream().filter(it -> it.is("net.minecraftforge", "forge"))
+                        .anyMatch(it ->
+                                VersionNumber.VERSION_COMPARATOR.compare("1.12.2-14.23.5.2760", it.getVersion()) <= 0 &&
+                                        VersionNumber.VERSION_COMPARATOR.compare(it.getVersion(), "1.12.2-14.23.5.2773") < 0);
+                boolean hasLiteLoader = version.getLibraries().stream().anyMatch(it -> it.is("com.mumfrey", "liteloader"));
+                if (hasForge2760 && hasLiteLoader && gameVersion.compareTo(VersionNumber.asVersion("1.12.2")) == 0) {
+                    Controllers.confirm(i18n("launch.advice.forge2760_liteloader"), i18n("message.error"), continueAction, null);
+                    suggested = true;
+                }
+            }
+
+            // OptiFine 1.14.4 is not compatible with Forge 28.2.2 and later versions.
+            if (!suggested) {
+                boolean hasForge28_2_2 = version.getLibraries().stream().filter(it -> it.is("net.minecraftforge", "forge"))
+                        .anyMatch(it ->
+                                VersionNumber.VERSION_COMPARATOR.compare("1.14.4-28.2.2", it.getVersion()) <= 0);
+                boolean hasOptiFine = version.getLibraries().stream().anyMatch(it -> it.is("optifine", "OptiFine"));
+                if (hasForge28_2_2 && hasOptiFine && gameVersion.compareTo(VersionNumber.asVersion("1.14.4")) == 0) {
+                    Controllers.confirm(i18n("launch.advice.forge28_2_2_optifine"), i18n("message.error"), continueAction, null);
+                    suggested = true;
+                }
+            }
+
+            return Task.fromCompletableFuture(future);
+        }).thenAcceptAsync(Schedulers.javafx(), javaVersion -> {
+            if (javaVersion == null) {
+                return;
+            }
+
+            onAccept.accept(javaVersion);
+        }).start();
     }
 
     private static CompletableFuture<Void> downloadJava(GameJavaVersion javaVersion, Profile profile) {

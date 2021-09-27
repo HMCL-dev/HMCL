@@ -550,7 +550,7 @@ public abstract class Task<T> {
     public final <U> Task<U> thenComposeAsync(Task<U> other) {
         return thenComposeAsync(() -> other);
     }
-    
+
     /**
      * Returns a new Task that, when this task completes
      * normally, is executed.
@@ -560,7 +560,20 @@ public abstract class Task<T> {
      * @return the Task
      */
     public final <U> Task<U> thenComposeAsync(ExceptionalSupplier<Task<U>, ?> fn) {
-        return new UniCompose<>(fn, true);
+        return thenComposeAsync(Schedulers.defaultScheduler(), fn);
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, is executed.
+     *
+     * @param fn the function returning a new Task
+     * @param executor the executor to use for asynchronous execution
+     * @param <U> the type of the returned Task's result
+     * @return the Task
+     */
+    public final <U> Task<U> thenComposeAsync(Executor executor, ExceptionalSupplier<Task<U>, ?> fn) {
+        return new UniCompose<>(fn, true).setExecutor(executor);
     }
 
     /**
@@ -573,7 +586,21 @@ public abstract class Task<T> {
      * @return the Task
      */
     public <U, E extends Exception> Task<U> thenComposeAsync(ExceptionalFunction<T, Task<U>, E> fn) {
-        return new UniCompose<>(fn, true);
+        return thenComposeAsync(Schedulers.defaultScheduler(), fn);
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, is executed with result of this task as the argument
+     * to the supplied function.
+     *
+     * @param fn the function returning a new Task
+     * @param executor the executor to use for asynchronous execution
+     * @param <U> the type of the returned Task's result
+     * @return the Task
+     */
+    public <U, E extends Exception> Task<U> thenComposeAsync(Executor executor, ExceptionalFunction<T, Task<U>, E> fn) {
+        return new UniCompose<>(fn, true).setExecutor(executor);
     }
 
     public final <U> Task<U> withComposeAsync(Task<U> other) {
@@ -840,6 +867,10 @@ public abstract class Task<T> {
         }.setName(name);
     }
 
+    public static <T> Task<T> composeAsync(Executor executor, ExceptionalSupplier<Task<T>, ?> fn) {
+        return composeAsync(fn).setExecutor(executor);
+    }
+
     public static <V> Task<V> supplyAsync(Callable<V> callable) {
         return supplyAsync(getCaller(), callable).setSignificance(TaskSignificance.MODERATE);
     }
@@ -854,6 +885,10 @@ public abstract class Task<T> {
 
     public static <V> Task<V> supplyAsync(String name, Executor executor, Callable<V> callable) {
         return new SimpleTask<>(callable).setExecutor(executor).setName(name);
+    }
+
+    public static <V> Task<V> completed(V value) {
+        return fromCompletableFuture(CompletableFuture.completedFuture(value));
     }
 
     /**

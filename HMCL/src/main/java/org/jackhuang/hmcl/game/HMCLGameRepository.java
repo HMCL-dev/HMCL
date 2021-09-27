@@ -293,10 +293,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
             vs.setUsesGlobal(true);
     }
 
-    public LaunchOptions getLaunchOptions(String version, File gameDir, boolean checkJava) throws InterruptedException {
+    public LaunchOptions getLaunchOptions(String version, JavaVersion javaVersion, File gameDir) {
         VersionSetting vs = getVersionSetting(version);
 
-        JavaVersion javaVersion = Optional.ofNullable(vs.getJavaVersion(checkJava)).orElse(JavaVersion.fromCurrentEnvironment());
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
                 .setGameDir(gameDir)
                 .setJava(javaVersion)

@@ -22,6 +22,7 @@ import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
@@ -36,7 +37,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -123,6 +123,10 @@ public final class VersionSetting implements Cloneable {
      */
     public String getDefaultJavaPath() {
         return defaultJavaPathProperty.get();
+    }
+
+    public StringProperty defaultJavaPathPropertyProperty() {
+        return defaultJavaPathProperty;
     }
 
     public void setDefaultJavaPath(String defaultJavaPath) {
@@ -581,19 +585,19 @@ public final class VersionSetting implements Cloneable {
         launcherVisibilityProperty.set(launcherVisibility);
     }
 
-    public CompletableFuture<JavaVersion> getJavaVersion(String gameVersion, Version version) {
+    public Task<JavaVersion> getJavaVersion(VersionNumber gameVersion, Version version) {
         return getJavaVersion(gameVersion, version, true);
     }
 
-    public CompletableFuture<JavaVersion> getJavaVersion(String gameVersion, Version version, boolean checkJava) {
-        return CompletableFuture.supplyAsync(() -> {
+    public Task<JavaVersion> getJavaVersion(VersionNumber gameVersion, Version version, boolean checkJava) {
+        return Task.supplyAsync(() -> {
             try {
                 if (StringUtils.isBlank(getJava()))
                     setJava(StringUtils.isBlank(getJavaDir()) ? "Default" : "Custom");
                 if ("Default".equals(getJava())) {
                     return JavaVersion.fromCurrentEnvironment();
                 } else if (isJavaAutoSelected()) {
-                    return HMCLJavaVersion.findSuitableJavaVersion(VersionNumber.asVersion(gameVersion), version);
+                    return JavaVersionConstraint.findSuitableJavaVersion(gameVersion, version);
                 } else if (isUsesCustomJavaDir()) {
                     try {
                         if (checkJava)
