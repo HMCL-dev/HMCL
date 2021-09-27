@@ -22,6 +22,7 @@ import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -38,6 +39,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
+
+import static com.jfoenix.concurrency.JFXUtilities.runInFX;
 
 /**
  *
@@ -590,10 +593,12 @@ public final class VersionSetting implements Cloneable {
     }
 
     public Task<JavaVersion> getJavaVersion(VersionNumber gameVersion, Version version, boolean checkJava) {
-        return Task.supplyAsync(() -> {
+        return Task.runAsync(Schedulers.javafx(), () -> {
+            if (StringUtils.isBlank(getJava())) {
+                setJava(StringUtils.isBlank(getJavaDir()) ? "Default" : "Custom");
+            }
+        }).thenSupplyAsync(() -> {
             try {
-                if (StringUtils.isBlank(getJava()))
-                    setJava(StringUtils.isBlank(getJavaDir()) ? "Default" : "Custom");
                 if ("Default".equals(getJava())) {
                     return JavaVersion.fromCurrentEnvironment();
                 } else if (isJavaAutoSelected()) {
@@ -612,7 +617,9 @@ public final class VersionSetting implements Cloneable {
                             .filter(java -> java.getVersion().equals(getJava()))
                             .collect(Collectors.toList());
                     if (matchedJava.isEmpty()) {
-                        setJava("Default");
+                        runInFX(() -> {
+                            setJava("Default");
+                        });
                         return JavaVersion.fromCurrentEnvironment();
                     } else {
                         return matchedJava.stream()

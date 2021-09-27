@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.google.gson.JsonParseException;
+import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
@@ -62,6 +63,9 @@ public final class MultiplayerManager {
     static final String CATO_VERSION = "1.0.9";
     private static final String CATO_PATH = getCatoPath();
 
+    private static final String REMOTE_ADDRESS = "127.0.0.1";
+    private static final String LOCAL_ADDRESS = "127.0.0.1";
+
     private MultiplayerManager() {
     }
 
@@ -96,8 +100,8 @@ public final class MultiplayerManager {
             String[] commands = new String[]{exe.toString(),
                     "--token", StringUtils.isBlank(token) ? "new" : token,
                     "--id", peer,
-                    "--local", String.format("0.0.0.0:%d", localPort),
-                    "--remote", String.format("0.0.0.0:%d", remotePort)};
+                    "--local", String.format("%s:%d", LOCAL_ADDRESS, localPort),
+                    "--remote", String.format("%s:%d", REMOTE_ADDRESS, remotePort)};
             Process process;
             try {
                 process = new ProcessBuilder()
@@ -129,7 +133,7 @@ public final class MultiplayerManager {
                 client.onConnected().register(connectedEvent -> {
                     try {
                         int port = findAvailablePort();
-                        writer.write(String.format("net add %s 0.0.0.0:%d 0.0.0.0:%d p2p\n", peer, port, connectedEvent.getPort()));
+                        writer.write(String.format("net add %s %s:%d %s:%d p2p\n", peer, LOCAL_ADDRESS, port, REMOTE_ADDRESS, connectedEvent.getPort()));
                         future.complete(session);
                     } catch (IOException e) {
                         future.completeExceptionally(e);
@@ -142,18 +146,18 @@ public final class MultiplayerManager {
         });
     }
 
-    public static CatoSession createSession(String token, String sessionName, int port) throws IOException {
+    public static CatoSession createSession(String token, String sessionName, int gamePort) throws IOException {
         Path exe = getCatoExecutable();
         if (!Files.isRegularFile(exe)) {
             throw new IllegalStateException("Cato file not found");
         }
 
-        MultiplayerServer server = new MultiplayerServer(port);
+        MultiplayerServer server = new MultiplayerServer(gamePort);
         server.startServer();
 
         String[] commands = new String[]{exe.toString(),
                 "--token", StringUtils.isBlank(token) ? "new" : token,
-                "--allows", String.format("0.0.0.0:%d/0.0.0.0:%d", port, server.getPort())};
+                "--allows", String.format("%s:%d/%s:%d", REMOTE_ADDRESS, server.getPort(), REMOTE_ADDRESS, gamePort)};
         Process process = new ProcessBuilder()
                 .command(commands)
                 .start();
@@ -291,11 +295,11 @@ public final class MultiplayerManager {
             return id;
         }
 
-        public String generateInvitationCode(int gamePort, int serverPort) {
+        public String generateInvitationCode(int serverPort) {
             if (id == null) {
                 throw new IllegalStateException("id not generated");
             }
-            String json = JsonUtils.GSON.toJson(new Invitation(CATO_VERSION, id, name, gamePort, serverPort));
+            String json = JsonUtils.GSON.toJson(new Invitation(CATO_VERSION, id, name, serverPort));
             return new String(Base64.getEncoder().encode(json.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
         }
 
@@ -312,7 +316,7 @@ public final class MultiplayerManager {
         }
 
         private static final Pattern TEMP_TOKEN_PATTERN = Pattern.compile("id\\(mix(?<id>\\w+)\\)");
-        private static final Pattern PEER_CONNECTED_PATTERN = Pattern.compile("Peer connected");
+        private static final Pattern PEER_CONNECTED_PATTERN = Pattern.compile("Connection established");
         private static final Pattern LOG_PATTERN = Pattern.compile("(\\[\\d+])\\s+(\\w+)\\s+(\\w+-{0,1}\\w+):\\s(.*)");
     }
 
@@ -353,17 +357,18 @@ public final class MultiplayerManager {
     }
 
     public static class Invitation {
+        @SerializedName("v")
         private final String version;
         private final String id;
+        @SerializedName("n")
         private final String sessionName;
-        private final int gamePort;
+        @SerializedName("p")
         private final int channelPort;
 
-        public Invitation(String version, String id, String sessionName, int gamePort, int channelPort) {
+        public Invitation(String version, String id, String sessionName, int channelPort) {
             this.version = version;
             this.id = id;
             this.sessionName = sessionName;
-            this.gamePort = gamePort;
             this.channelPort = channelPort;
         }
 
@@ -377,10 +382,6 @@ public final class MultiplayerManager {
 
         public String getSessionName() {
             return sessionName;
-        }
-
-        public int getGamePort() {
-            return gamePort;
         }
 
         public int getChannelPort() {

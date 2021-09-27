@@ -21,8 +21,10 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import de.javawi.jstun.test.DiscoveryInfo;
 import javafx.beans.binding.Bindings;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SkinBase;
@@ -38,12 +40,15 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
+
+    private ObservableList<Node> clients;
 
     /**
      * Constructor for all SkinBase instances.
@@ -174,9 +179,14 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
 
                     Label label = new Label(i18n("multiplayer.state.master"));
                     label.textProperty().bind(Bindings.createStringBinding(() ->
-                            i18n("multiplayer.state.master", control.getSession() == null ? "" : control.getSession().getName(), control.getPort()),
-                            control.portProperty(), control.sessionProperty()));
-                    masterPane.getChildren().setAll(masterHintPane, label);
+                            i18n("multiplayer.state.master", control.getSession() == null ? "" : control.getSession().getName(), control.getGamePort()),
+                            control.gamePortProperty(), control.sessionProperty()));
+
+                    VBox clientsPane = new VBox(8);
+                    clients = MappedObservableList.create(control.getClients(), client -> new ClientItem(client));
+                    Bindings.bindContent(clientsPane.getChildren(), clients);
+
+                    masterPane.getChildren().setAll(masterHintPane, label, clientsPane);
                 }
 
                 BorderPane slavePane = new BorderPane();
@@ -187,13 +197,13 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
 
                     Label label = new Label();
                     label.textProperty().bind(Bindings.createStringBinding(() ->
-                            i18n("multiplayer.state.slave", control.getSession() == null ? "" : control.getSession().getName(), "0.0.0.0:" + control.getPort()),
-                            control.sessionProperty(), control.portProperty()));
+                            i18n("multiplayer.state.slave", control.getSession() == null ? "" : control.getSession().getName(), "0.0.0.0:" + control.getGamePort()),
+                            control.sessionProperty(), control.gamePortProperty()));
                     BorderPane.setAlignment(label, Pos.CENTER_LEFT);
                     slavePane.setCenter(label);
 
                     JFXButton copyButton = new JFXButton(i18n("multiplayer.state.slave.copy"));
-                    copyButton.setOnAction(e -> FXUtils.copyText("0.0.0.0:" + control.getPort()));
+                    copyButton.setOnAction(e -> FXUtils.copyText("0.0.0.0:" + control.getGamePort()));
                     slavePane.setRight(copyButton);
                 }
 
@@ -287,6 +297,17 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
             return i18n("multiplayer.nat.type.symmetric_udp_firewall");
         } else {
             return i18n("multiplayer.nat.type.unknown");
+        }
+    }
+
+    private static class ClientItem extends StackPane {
+        ClientItem(MultiplayerServer.CatoClient client) {
+            BorderPane pane = new BorderPane();
+            pane.setLeft(new Label(client.getUsername()));
+
+            RipplerContainer container = new RipplerContainer(pane);
+            getChildren().setAll(container);
+            getStyleClass().add("md-list-cell");
         }
     }
 }

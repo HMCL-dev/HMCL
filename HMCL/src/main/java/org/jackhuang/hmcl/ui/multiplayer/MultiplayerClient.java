@@ -32,6 +32,8 @@ public class MultiplayerClient extends Thread {
     private final String id;
     private final int port;
 
+    private int gamePort;
+
     private final EventManager<ConnectedEvent> onConnected = new EventManager<>();
     private final EventManager<Event> onDisconnected = new EventManager<>();
 
@@ -41,6 +43,14 @@ public class MultiplayerClient extends Thread {
 
         setName("MultiplayerClient");
         setDaemon(true);
+    }
+
+    public void setGamePort(int gamePort) {
+        this.gamePort = gamePort;
+    }
+
+    public int getGamePort() {
+        return gamePort;
     }
 
     public EventManager<ConnectedEvent> onConnected() {
@@ -53,6 +63,7 @@ public class MultiplayerClient extends Thread {
 
     @Override
     public void run() {
+        LOG.info("Connecting to 127.0.0.1:" + port);
         try (Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
@@ -68,6 +79,7 @@ public class MultiplayerClient extends Thread {
             }
 
             MultiplayerServer.JoinResponse response = JsonUtils.fromNonNullJson(line, MultiplayerServer.JoinResponse.class);
+            setGamePort(response.getPort());
             onConnected.fireEvent(new ConnectedEvent(this, response.getPort()));
 
             LOG.fine("Received join response with port " + response.getPort());
@@ -85,6 +97,7 @@ public class MultiplayerClient extends Thread {
         } catch (IOException | JsonParseException e) {
             e.printStackTrace();
         } finally {
+            LOG.info("Lost connection to 127.0.0.1:" + port);
             onDisconnected.fireEvent(new Event(this));
         }
     }

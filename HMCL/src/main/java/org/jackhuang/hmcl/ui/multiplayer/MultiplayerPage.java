@@ -21,6 +21,8 @@ import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
 import javafx.application.Platform;
 import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.event.Event;
@@ -49,8 +51,9 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
     private final ObjectProperty<MultiplayerManager.State> multiplayerState = new SimpleObjectProperty<>(MultiplayerManager.State.DISCONNECTED);
     private final ReadOnlyStringWrapper token = new ReadOnlyStringWrapper();
     private final ReadOnlyObjectWrapper<DiscoveryInfo> natState = new ReadOnlyObjectWrapper<>();
-    private final ReadOnlyIntegerWrapper port = new ReadOnlyIntegerWrapper(-1);
+    private final ReadOnlyIntegerWrapper gamePort = new ReadOnlyIntegerWrapper(-1);
     private final ReadOnlyObjectWrapper<MultiplayerManager.CatoSession> session = new ReadOnlyObjectWrapper<>();
+    private final ObservableList<MultiplayerServer.CatoClient> clients = FXCollections.observableArrayList();
 
     private Consumer<MultiplayerManager.CatoExitEvent> onExit;
     private Consumer<MultiplayerManager.CatoIdEvent> onIdGenerated;
@@ -68,6 +71,10 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
     @Override
     protected Skin<?> createDefaultSkin() {
         return new MultiplayerPageSkin(this);
+    }
+
+    public ObservableList<MultiplayerServer.CatoClient> getClients() {
+        return clients;
     }
 
     public MultiplayerManager.State getMultiplayerState() {
@@ -98,12 +105,12 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
         return token.getReadOnlyProperty();
     }
 
-    public int getPort() {
-        return port.get();
+    public int getGamePort() {
+        return gamePort.get();
     }
 
-    public ReadOnlyIntegerProperty portProperty() {
-        return port.getReadOnlyProperty();
+    public ReadOnlyIntegerProperty gamePortProperty() {
+        return gamePort.getReadOnlyProperty();
     }
 
     public MultiplayerManager.CatoSession getSession() {
@@ -158,11 +165,11 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
     }
 
     public void copyInvitationCode() {
-        if (getSession() == null || !getSession().isReady() || port.get() < 0 || getMultiplayerState() != MultiplayerManager.State.MASTER) {
+        if (getSession() == null || !getSession().isReady() || gamePort.get() < 0 || getMultiplayerState() != MultiplayerManager.State.MASTER) {
             throw new IllegalStateException("CatoSession not ready");
         }
 
-        FXUtils.copyText(getSession().generateInvitationCode(port.get(), 0));
+        FXUtils.copyText(getSession().generateInvitationCode(getSession().getServer().getPort()));
     }
 
     public void createRoom() {
@@ -171,16 +178,22 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
         }
 
         Controllers.dialog(new CreateMultiplayerRoomDialog((result, resolve, reject) -> {
-            int port = result.getAd();
+            int gamePort = result.getAd();
             try {
-                initCatoSession(MultiplayerManager.createSession(config().getMultiplayerToken(), result.getMotd(), port));
+                MultiplayerManager.CatoSession session = MultiplayerManager.createSession(config().getMultiplayerToken(), result.getMotd(), gamePort);
+                session.getServer().onClientAdded().register(event -> {
+                    runInFX(() -> {
+                        clients.add(event);
+                    });
+                });
+                initCatoSession(session);
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "Failed to create session", e);
                 reject.accept(i18n("multiplayer.session.create.error"));
                 return;
             }
 
-            this.port.set(port);
+            this.gamePort.set(gamePort);
             setMultiplayerState(MultiplayerManager.State.CONNECTING);
             resolve.run();
         }));
@@ -202,7 +215,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
                 return;
             }
 
-            int localPort;
+            int localPort; // invitation channel
             try {
                 localPort = MultiplayerManager.findAvailablePort();
             } catch (Exception e) {
@@ -211,7 +224,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
             }
 
             try {
-                MultiplayerManager.joinSession(config().getMultiplayerToken(), invitation.getVersion(), invitation.getSessionName(), invitation.getId(), invitation.getGamePort(), localPort)
+                MultiplayerManager.joinSession(config().getMultiplayerToken(), invitation.getVersion(), invitation.getSessionName(), invitation.getId(), invitation.getChannelPort(), localPort)
                         .thenAcceptAsync(session -> {
                             initCatoSession(session);
 
@@ -222,7 +235,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
                                 });
                             });
 
-                            port.set(localPort);
+                            gamePort.set(session.getClient().getGamePort());
                             setMultiplayerState(MultiplayerManager.State.CONNECTING);
                             resolve.run();
                         }, Platform::runLater).exceptionally(throwable -> {
@@ -270,6 +283,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
             onIdGenerated = session.onIdGenerated().registerWeak(this::onCatoIdGenerated);
             onPeerConnected = session.onPeerConnected().registerWeak(this::onCatoPeerConnected);
 
+            this.clients.clear();
             this.session.set(session);
         });
     }
@@ -282,7 +296,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
     private void clearCatoSession() {
         this.session.set(null);
         this.token.set(null);
-        this.port.set(-1);
+        this.gamePort.set(-1);
         this.multiplayerState.set(MultiplayerManager.State.DISCONNECTED);
     }
 

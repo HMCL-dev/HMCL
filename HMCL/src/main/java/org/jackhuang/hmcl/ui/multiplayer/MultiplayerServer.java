@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonSubtype;
 import org.jackhuang.hmcl.util.gson.JsonType;
@@ -33,11 +35,17 @@ public class MultiplayerServer extends Thread {
     private ServerSocket socket;
     private final int gamePort;
 
+    private final EventManager<CatoClient> onClientAdded = new EventManager<CatoClient>();
+
     public MultiplayerServer(int gamePort) {
         this.gamePort = gamePort;
 
         setName("MultiplayerServer");
         setDaemon(true);
+    }
+
+    public EventManager<CatoClient> onClientAdded() {
+        return onClientAdded;
     }
 
     public void startServer() throws IOException {
@@ -59,6 +67,7 @@ public class MultiplayerServer extends Thread {
 
     @Override
     public void run() {
+        LOG.info("Multiplayer Server listening 127.0.0.1:" + socket.getLocalPort());
         try {
             while (!isInterrupted()) {
                 Socket clientSocket = socket.accept();
@@ -117,6 +126,8 @@ public class MultiplayerServer extends Thread {
             LOG.fine("Received join request with clientVersion=" + clientVersion + ", id=" + username);
 
             writer.write(JsonUtils.GSON.toJson(new JoinResponse(server.gamePort)));
+
+            server.onClientAdded.fireEvent(new CatoClient(server, username));
         }
     }
 
@@ -169,6 +180,19 @@ public class MultiplayerServer extends Thread {
 
         public long getTimestamp() {
             return timestamp;
+        }
+    }
+
+    public static class CatoClient extends Event {
+        private final String username;
+
+        public CatoClient(Object source, String username) {
+            super(source);
+            this.username = username;
+        }
+
+        public String getUsername() {
+            return username;
         }
     }
 }

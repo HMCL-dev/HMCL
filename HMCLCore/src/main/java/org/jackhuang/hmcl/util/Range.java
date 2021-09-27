@@ -20,8 +20,7 @@ package org.jackhuang.hmcl.util;
 import java.util.Comparator;
 import java.util.Objects;
 
-public class Range<T> {
-
+public final class Range<T> {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private enum ComparableComparator implements Comparator {

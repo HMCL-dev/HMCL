@@ -67,7 +67,6 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -487,6 +486,10 @@ public final class LauncherHelper {
                     Controllers.confirm(i18n("launch.advice.forge28_2_2_optifine"), i18n("message.error"), continueAction, null);
                     suggested = true;
                 }
+            }
+
+            if (!suggested) {
+                future.complete(javaVersion);
             }
 
             return Task.fromCompletableFuture(future);
