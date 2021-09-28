@@ -121,16 +121,16 @@
 }
 
 .announcement {
-
+    -fx-padding: 16;
 }
 
 .announcement .title {
     -fx-font-size: 14px;
-    -fx-font-weight: bold;
+    -fx-font-weight: BOLD;
 }
 
 .announcement JFXHyperlink, .announcement Text {
-    -fx-font-size: 12px;
+    -fx-font-size: 13px;
 }
 
 .rippler-container {
