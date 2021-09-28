@@ -1,0 +1,16 @@
+[14:49:11] [main/INFO]: Loading for game Minecraft 1.17.1
+[14:49:12] [main/FATAL]: A critical error occurred
+net.fabricmc.loader.discovery.ModResolutionException: Could not find required mod: fabric requires {minecraft @ [~1.16.2-alpha.20.28.a]}
+	at net.fabricmc.loader.discovery.ModResolver.findCompatibleSet(ModResolver.java:198) ~[fabric-loader-0.11.7.jar:?]
+	at net.fabricmc.loader.discovery.ModResolver.resolve(ModResolver.java:832) ~[fabric-loader-0.11.7.jar:?]
+	at net.fabricmc.loader.FabricLoader.setup(FabricLoader.java:195) ~[fabric-loader-0.11.7.jar:?]
+	at net.fabricmc.loader.FabricLoader.load(FabricLoader.java:185) [fabric-loader-0.11.7.jar:?]
+	at net.fabricmc.loader.launch.knot.Knot.init(Knot.java:132) [fabric-loader-0.11.7.jar:?]
+	at net.fabricmc.loader.launch.knot.KnotClient.main(KnotClient.java:28) [fabric-loader-0.11.7.jar:?]
+Caused by: net.fabricmc.loader.util.sat4j.specs.ContradictionException: Creating Empty clause ?
+	at net.fabricmc.loader.util.sat4j.minisat.constraints.cnf.Clauses.propagationCheck(Clauses.java:117) ~[fabric-loader-sat4j-2.3.5.4.jar:?]
+	at net.fabricmc.loader.util.sat4j.minisat.constraints.cnf.Clauses.sanityCheck(Clauses.java:97) ~[fabric-loader-sat4j-2.3.5.4.jar:?]
+	at net.fabricmc.loader.util.sat4j.minisat.constraints.MixedDataStructureDanielWL.createClause(MixedDataStructureDanielWL.java:81) ~[fabric-loader-sat4j-2.3.5.4.jar:?]
+	at net.fabricmc.loader.util.sat4j.minisat.core.Solver.addClause(Solver.java:401) ~[fabric-loader-sat4j-2.3.5.4.jar:?]
+	at net.fabricmc.loader.discovery.ModResolver.findCompatibleSet(ModResolver.java:195) ~[fabric-loader-0.11.7.jar:?]
+	... 5 more

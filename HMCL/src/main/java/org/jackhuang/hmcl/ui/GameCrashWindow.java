@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.game.LogExporter;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -56,6 +57,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -134,6 +137,18 @@ public class GameCrashWindow extends Stage {
                                     CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.getMatcher().group("expected")))))
                                     .append("\n");
                             break;
+                        case MOD_RESOLUTION_CONFLICT:
+                        case MOD_RESOLUTION_MISSING:
+                            reasonText.append(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
+                                    translateFabricModId(result.getMatcher().group("sourcemod")),
+                                    parseFabricModId(result.getMatcher().group("destmod")),
+                                    parseFabricModId(result.getMatcher().group("destmod"))));
+                            break;
+                        case MOD_RESOLUTION_MISSING_MINECRAFT:
+                            reasonText.append(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
+                                    translateFabricModId(result.getMatcher().group("mod")),
+                                    result.getMatcher().group("version")));
+                            break;
                         default:
                             reasonText.append(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     Arrays.stream(result.getRule().getGroupNames()).map(groupName -> result.getMatcher().group(groupName))
@@ -152,7 +167,34 @@ public class GameCrashWindow extends Stage {
                     reason.set(reasonText.toString());
                 }
             }
-        }, Schedulers.javafx());
+        }, Schedulers.javafx()).exceptionally(Lang::handleUncaughtException);
+    }
+
+    private static final Pattern FABRIC_MOD_ID = Pattern.compile("\\{(?<modid>.*?) @ (?<version>.*?)}");
+
+    private String translateFabricModId(String modName) {
+        switch (modName) {
+            case "fabric":
+                return "Fabric API";
+            case "minecraft":
+                return "Minecraft";
+            default:
+                return modName;
+        }
+    }
+
+    private String parseFabricModId(String modName) {
+        Matcher matcher = FABRIC_MOD_ID.matcher(modName);
+        if (matcher.find()) {
+            String modid = matcher.group("modid");
+            String version = matcher.group("version");
+            if ("[*]".equals(version)) {
+                return i18n("game.crash.reason.mod_resolution_mod_version.any", translateFabricModId(modid));
+            } else {
+                return i18n("game.crash.reason.mod_resolution_mod_version", translateFabricModId(modid), version);
+            }
+        }
+        return translateFabricModId(modName);
     }
 
     private void showLogWindow() {

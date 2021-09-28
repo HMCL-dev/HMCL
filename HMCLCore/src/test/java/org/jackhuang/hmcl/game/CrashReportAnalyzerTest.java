@@ -248,6 +248,33 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void fabricConflicts() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-mod-conflict.txt")),
+                CrashReportAnalyzer.Rule.MOD_RESOLUTION_CONFLICT);
+        Assert.assertEquals("phosphor", result.getMatcher().group("sourcemod"));
+        Assert.assertEquals("{starlight @ [*]}", result.getMatcher().group("destmod"));
+    }
+
+    @Test
+    public void fabricMissing() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-mod-missing.txt")),
+                CrashReportAnalyzer.Rule.MOD_RESOLUTION_MISSING);
+        Assert.assertEquals("pca", result.getMatcher().group("sourcemod"));
+        Assert.assertEquals("{fabric @ [>=0.39.2]}", result.getMatcher().group("destmod"));
+    }
+
+    @Test
+    public void fabricMissingMinecraft() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-minecraft.txt")),
+                CrashReportAnalyzer.Rule.MOD_RESOLUTION_MISSING_MINECRAFT);
+        Assert.assertEquals("fabric", result.getMatcher().group("mod"));
+        Assert.assertEquals("[~1.16.2-alpha.20.28.a]", result.getMatcher().group("version"));
+    }
+
+    @Test
     public void customNpc() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/customnpc.txt")),

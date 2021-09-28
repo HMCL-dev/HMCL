@@ -367,7 +367,8 @@ public final class Lang {
         return null;
     };
 
-    public static void handleUncaughtException(Throwable e) {
+    public static <R> R handleUncaughtException(Throwable e) {
         Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+        return null;
     }
 }
