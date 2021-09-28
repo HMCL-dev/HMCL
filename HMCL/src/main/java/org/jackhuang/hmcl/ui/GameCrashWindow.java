@@ -75,6 +75,7 @@ public class GameCrashWindow extends Stage {
     private final StringProperty arch = new SimpleStringProperty(Architecture.SYSTEM_ARCHITECTURE);
     private final StringProperty reason = new SimpleStringProperty(i18n("game.crash.reason.unknown"));
     private final BooleanProperty loading = new SimpleBooleanProperty();
+    private final Label feedbackLabel = new Label(i18n("game.crash.feedback"));
 
     private final ManagedProcess managedProcess;
     private final DefaultGameRepository repository;
@@ -163,6 +164,8 @@ public class GameCrashWindow extends Stage {
                     } else {
                         reason.set(i18n("game.crash.reason.unknown"));
                     }
+
+                    feedbackLabel.setVisible(true);
                 } else {
                     reason.set(reasonText.toString());
                 }
@@ -328,7 +331,7 @@ public class GameCrashWindow extends Stage {
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);
                 toolBar.getStyleClass().add("jfx-tool-bar");
-                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton);
+                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton, feedbackLabel);
             }
 
             getChildren().setAll(titlePane, infoPane, gameDirPane, toolBar);
