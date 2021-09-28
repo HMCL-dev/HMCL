@@ -43,8 +43,8 @@ public class AboutPage extends StackPane {
             IconedTwoLineListItem author = new IconedTwoLineListItem();
             author.setImage(new Image("/assets/img/yellow_fish.jpg", 32, 32, false, true));
             author.setTitle("huanghongxun");
-            author.setSubtitle("https://www.huangyuhui.net");
-            author.setExternalLink("https://www.huangyuhui.net");
+            author.setSubtitle(i18n("about.author.statement"));
+            author.setExternalLink("https://space.bilibili.com/1445341");
 
             about.getContent().setAll(launcher, author);
         }
