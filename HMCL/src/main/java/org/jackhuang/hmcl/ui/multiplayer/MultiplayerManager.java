@@ -64,7 +64,7 @@ public final class MultiplayerManager {
     private static final String CATO_PATH = getCatoPath();
 
     private static final String REMOTE_ADDRESS = "127.0.0.1";
-    private static final String LOCAL_ADDRESS = "127.0.0.1";
+    private static final String LOCAL_ADDRESS = "0.0.0.0";
     private static final String MODE = "p2p";
 
     private MultiplayerManager() {

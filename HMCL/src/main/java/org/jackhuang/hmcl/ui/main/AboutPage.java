@@ -161,7 +161,12 @@ public class AboutPage extends StackPane {
             openNBT.setSubtitle("Copyright (C) 2013-2021 Steveice10.\nLicensed under the MIT License.");
             openNBT.setExternalLink("https://github.com/Steveice10/OpenNBT");
 
-            dep.getContent().setAll(javafx, jfoenix, gson, xz, fxgson, constantPoolScanner, openNBT);
+            IconedTwoLineListItem jstun = new IconedTwoLineListItem();
+            openNBT.setTitle("JSTUN");
+            openNBT.setSubtitle("Copyright (c) 2005 Thomas King <king@t-king.de>.\nLicensed under the Apache License 2.0.");
+            openNBT.setExternalLink("https://github.com/tking/JSTUN");
+
+            dep.getContent().setAll(javafx, jfoenix, gson, xz, fxgson, constantPoolScanner, openNBT, jstun);
         }
 
         ComponentList legal = new ComponentList();
