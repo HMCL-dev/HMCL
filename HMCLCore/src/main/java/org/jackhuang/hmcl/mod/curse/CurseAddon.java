@@ -165,6 +165,7 @@ public class CurseAddon implements DownloadManager.IMod {
     public List<DownloadManager.Mod> loadDependencies() throws IOException {
         Set<Integer> dependencies = latestFiles.stream()
                 .flatMap(latestFile -> latestFile.getDependencies().stream())
+                .filter(dep -> dep.getType() == 3)
                 .map(Dependency::getAddonId)
                 .collect(Collectors.toSet());
         List<DownloadManager.Mod> mods = new ArrayList<>();
