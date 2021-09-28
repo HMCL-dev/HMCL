@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.AnnouncementCard;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -73,8 +74,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final ObservableList<Node> versionNodes;
     private Profile profile;
 
-    private StackPane updatePane;
-    private JFXButton menuButton;
+    private final VBox announcementPane;
+    private final StackPane updatePane;
+    private final JFXButton menuButton;
 
     {
         HBox titleNode = new HBox(8);
@@ -91,6 +93,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
         state.setValue(State.fromTitleNode(titleNode));
 
         setPadding(new Insets(20));
+
+        announcementPane = new VBox(16);
 
         updatePane = new StackPane();
         updatePane.setVisible(false);
@@ -198,7 +202,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             launchPane.getChildren().setAll(launchButton, separator, menuButton);
         }
 
-        getChildren().setAll(updatePane, launchPane);
+        getChildren().setAll(announcementPane, updatePane, launchPane);
 
         menu.setMaxHeight(365);
         menu.setMaxWidth(545);
@@ -210,6 +214,14 @@ public final class MainPage extends StackPane implements DecoratorPage {
             return node;
         });
         Bindings.bindContent(menu.getContent(), versionNodes);
+    }
+
+    public MainPage() {
+        if (Metadata.isNightly()) {
+            announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint")));
+        } else if (Metadata.isDev()) {
+            announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint")));
+        }
     }
 
     private void doAnimation(boolean show) {

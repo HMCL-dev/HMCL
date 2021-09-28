@@ -130,6 +130,10 @@ public class LauncherSettingsPage extends BorderPane implements DecoratorPage {
         tab.getSelectionModel().select(gameTab);
     }
 
+    public void showFeedback() {
+        tab.getSelectionModel().select(feedbackTab);
+    }
+
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state.getReadOnlyProperty();

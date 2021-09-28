@@ -43,6 +43,8 @@ public final class Metadata {
     public static final String PUBLISH_URL = "http://www.mcbbs.net/thread-142335-1-1.html";
     public static final String EULA_URL = "https://hmcl.huangyuhui.net/eula";
 
+    public static final String BUILD_CHANNEL = JarUtils.thisJar().flatMap(JarUtils::getManifest).map(manifest -> manifest.getMainAttributes().getValue("Build-Channel")).orElse("nightly");
+
     public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
     public static final Path HMCL_DIRECTORY = getHMCLDirectory();
 
@@ -53,5 +55,17 @@ public final class Metadata {
             return Paths.get(home, ".cache", "hmcl");
         }
         return OperatingSystem.getWorkingDirectory("hmcl");
+    }
+
+    public static boolean isStable() {
+        return "stable".equals(BUILD_CHANNEL);
+    }
+
+    public static boolean isDev() {
+        return "dev".equals(BUILD_CHANNEL);
+    }
+
+    public static boolean isNightly() {
+        return !isStable() && !isDev();
     }
 }

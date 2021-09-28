@@ -120,6 +120,19 @@
     -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
 }
 
+.announcement {
+
+}
+
+.announcement .title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.announcement JFXHyperlink, .announcement Text {
+    -fx-font-size: 12px;
+}
+
 .rippler-container {
     -jfx-rippler-fill: #a2a2a2;
 }
