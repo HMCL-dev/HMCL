@@ -96,7 +96,7 @@ public class AccountLoginPane extends StackPane {
                 JFXHyperlink migrationHowLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration.how"));
                 migrationHowLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.MIGRATION_FAQ_URL));
 
-                linkPane.getChildren().setAll(migrationLink, migrationLink);
+                linkPane.getChildren().setAll(migrationLink, migrationHowLink);
             }
 
             dialogLayout.setBody(body);
