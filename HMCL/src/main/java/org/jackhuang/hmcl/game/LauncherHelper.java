@@ -63,7 +63,7 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -104,17 +104,12 @@ public final class LauncherHelper {
     }
 
     public void launch() {
+        FXUtils.checkFxUserThread();
+
         Logging.LOG.info("Launching game version: " + selectedVersion);
 
-        GameRepository repository = profile.getRepository();
-        Version version = repository.getResolvedVersion(selectedVersion);
-
-        Platform.runLater(() -> {
-            checkGameState(profile, setting, version, javaVersion -> {
-                Controllers.dialog(launchingStepsPane);
-                Schedulers.defaultScheduler().execute(() -> launch0(javaVersion));
-            });
-        });
+        Controllers.dialog(launchingStepsPane);
+        launch0();
     }
 
     public void makeLaunchScript(File scriptFile) {
@@ -123,7 +118,7 @@ public final class LauncherHelper {
         launch();
     }
 
-    private void launch0(JavaVersion javaVersion) {
+    private void launch0() {
         HMCLGameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
         Version version = MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion));
@@ -131,7 +126,13 @@ public final class LauncherHelper {
         boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
         CountDownLatch launchingLatch = new CountDownLatch(1);
 
-        TaskExecutor executor = dependencyManager.checkPatchCompletionAsync(repository.getVersion(selectedVersion), integrityCheck)
+        AtomicReference<JavaVersion> javaVersionRef = new AtomicReference<>();
+
+        TaskExecutor executor = checkGameState(profile, setting, version)
+                .thenComposeAsync(javaVersion -> {
+                    javaVersionRef.set(Objects.requireNonNull(javaVersion));
+                    return dependencyManager.checkPatchCompletionAsync(repository.getVersion(selectedVersion), integrityCheck);
+                })
                 .thenComposeAsync(Task.allOf(
                         Task.composeAsync(() -> {
                             if (setting.isNotCheckGame())
@@ -172,7 +173,7 @@ public final class LauncherHelper {
                     }
                 }).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
-                    LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersion, profile.getGameDir());
+                    LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir());
                     return new HMCLGameLauncher(
                             repository,
                             version,
@@ -211,6 +212,7 @@ public final class LauncherHelper {
                     launchingLatch.await();
                 }).withStage("launch.state.waiting_launching"))
                 .withStagesHint(Lang.immutableListOf(
+                        "launch.state.java",
                         "launch.state.dependencies",
                         "launch.state.logging_in",
                         "launch.state.waiting_launching"))
@@ -298,19 +300,16 @@ public final class LauncherHelper {
         executor.start();
     }
 
-    private static void checkGameState(Profile profile, VersionSetting setting, Version version, Consumer<JavaVersion> onAccept) {
+    private static Task<JavaVersion> checkGameState(Profile profile, VersionSetting setting, Version version) {
         VersionNumber gameVersion = VersionNumber.asVersion(profile.getRepository().getGameVersion(version).orElse("Unknown"));
 
         if (setting.isNotCheckJVM()) {
-            Task.composeAsync(() -> {
-                return setting.getJavaVersion(gameVersion, version);
-            }).thenAcceptAsync(javaVersion -> {
-                onAccept.accept(Optional.ofNullable(javaVersion).orElseGet(JavaVersion::fromCurrentEnvironment));
-            }).start();
-            return;
+            return Task.composeAsync(() -> setting.getJavaVersion(gameVersion, version))
+                    .thenApplyAsync(javaVersion -> Optional.ofNullable(javaVersion).orElseGet(JavaVersion::fromCurrentEnvironment))
+                    .withStage("launch.state.java");
         }
 
-        Task.composeAsync(() -> {
+        return Task.composeAsync(() -> {
             return setting.getJavaVersion(gameVersion, version);
         }).thenComposeAsync(Schedulers.javafx(), javaVersion -> {
             // Reset invalid java version
@@ -493,13 +492,7 @@ public final class LauncherHelper {
             }
 
             return Task.fromCompletableFuture(future);
-        }).thenAcceptAsync(Schedulers.javafx(), javaVersion -> {
-            if (javaVersion == null) {
-                return;
-            }
-
-            onAccept.accept(javaVersion);
-        }).start();
+        }).withStage("launch.state.java");
     }
 
     private static CompletableFuture<Void> downloadJava(GameJavaVersion javaVersion, Profile profile) {

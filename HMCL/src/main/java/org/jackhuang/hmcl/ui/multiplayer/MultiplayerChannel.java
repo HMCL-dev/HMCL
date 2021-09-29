@@ -21,7 +21,10 @@ import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.util.gson.JsonSubtype;
 import org.jackhuang.hmcl.util.gson.JsonType;
 
-public class MultiplayerChannel {
+public final class MultiplayerChannel {
+
+    private MultiplayerChannel() {
+    }
 
     @JsonType(
             property = "type",
