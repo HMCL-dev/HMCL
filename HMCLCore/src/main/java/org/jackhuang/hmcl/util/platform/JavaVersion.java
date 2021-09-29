@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -27,8 +28,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -219,11 +219,12 @@ public final class JavaVersion {
                         return Stream.of(CURRENT_JAVA);
                     }
                     try {
-                        LOG.log(Level.FINER, "Looking for Java" + executable);
-                        JavaVersion javaVersion = fromExecutable(executable);
+                        LOG.log(Level.FINER, "Looking for Java:" + executable);
+                        Future<JavaVersion> future = Schedulers.io().submit(() -> fromExecutable(executable));
+                        JavaVersion javaVersion = future.get(3, TimeUnit.SECONDS);
                         LOG.log(Level.FINE, "Found Java (" + javaVersion.getVersion() + ") " + javaVersion.getBinary().toString());
                         return Stream.of(javaVersion);
-                    } catch (IOException e) {
+                    } catch (ExecutionException | InterruptedException | TimeoutException e) {
                         LOG.log(Level.WARNING, "Failed to determine Java at " + executable, e);
                         return Stream.empty();
                     }
@@ -318,7 +319,7 @@ public final class JavaVersion {
             default:
                 break;
         }
-        return javaExecutables.stream().flatMap(stream -> stream);
+        return javaExecutables.parallelStream().flatMap(stream -> stream);
     }
 
     private static Stream<Path> listDirectory(Path directory) throws IOException {
