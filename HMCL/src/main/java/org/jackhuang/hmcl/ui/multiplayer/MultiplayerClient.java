@@ -26,6 +26,7 @@ import java.io.*;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
+ import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.ui.multiplayer.MultiplayerChannel.*;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -38,6 +39,7 @@ public class MultiplayerClient extends Thread {
 
     private final EventManager<ConnectedEvent> onConnected = new EventManager<>();
     private final EventManager<Event> onDisconnected = new EventManager<>();
+    private final EventManager<Event> onKicked = new EventManager<>();
 
     public MultiplayerClient(String id, int port) {
         this.id = id;
@@ -63,6 +65,10 @@ public class MultiplayerClient extends Thread {
         return onDisconnected;
     }
 
+    public EventManager<Event> onKicked() {
+        return onDisconnected;
+    }
+
     @Override
     public void run() {
         LOG.info("Connecting to 127.0.0.1:" + port);
@@ -72,33 +78,36 @@ public class MultiplayerClient extends Thread {
                  BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
                 LOG.info("Connected to 127.0.0.1:" + port);
 
+                socket.setKeepAlive(true);
+
                 writer.write(JsonUtils.UGLY_GSON.toJson(new JoinRequest(MultiplayerManager.CATO_VERSION, id)));
                 writer.newLine();
                 writer.flush();
 
                 LOG.fine("Sent join request with id=" + id);
 
-                String line = reader.readLine();
-                if (line == null) {
-                    return;
-                }
-
-                JoinResponse response = JsonUtils.fromNonNullJson(line, JoinResponse.class);
-                setGamePort(response.getPort());
-                onConnected.fireEvent(new ConnectedEvent(this, response.getPort()));
-
-                LOG.fine("Received join response with port " + response.getPort());
-
-                while (!isInterrupted()) {
-                    writer.write(verifyJson(JsonUtils.UGLY_GSON.toJson(new KeepAliveResponse(System.currentTimeMillis()))));
-                    writer.newLine();
-                    writer.flush();
-
-                    try {
-                        Thread.sleep(1500);
-                    } catch (InterruptedException ignored) {
-                        LOG.warning("MultiplayerClient interrupted");
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (isInterrupted()) {
                         return;
+                    }
+
+                    LOG.fine("Message from server:" + line);
+
+                    Response response = JsonUtils.fromNonNullJson(line, Response.class);
+
+                    if (response instanceof JoinResponse) {
+                        JoinResponse joinResponse = JsonUtils.fromNonNullJson(line, JoinResponse.class);
+                        setGamePort(joinResponse.getPort());
+                        onConnected.fireEvent(new ConnectedEvent(this, joinResponse.getPort()));
+
+                        LOG.fine("Received join response with port " + joinResponse.getPort());
+                    } else if (response instanceof KickResponse) {
+                        onKicked.fireEvent(new Event(this));
+
+                        LOG.fine("Kicked by the server");
+                    } else {
+                        LOG.log(Level.WARNING, "Unrecognized packet from server:" + line);
                     }
                 }
             } catch (ConnectException e) {

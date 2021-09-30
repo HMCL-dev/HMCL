@@ -48,6 +48,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -145,6 +146,9 @@ public final class MultiplayerManager {
                     } catch (IOException e) {
                         future.completeExceptionally(e);
                     }
+                });
+                client.onKicked().register(kickedEvent -> {
+                    future.completeExceptionally(new CancellationException());
                 });
                 client.start();
             });

@@ -28,7 +28,6 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -41,11 +40,11 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -211,6 +210,9 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
             int gamePort = result.getAd();
             try {
                 MultiplayerManager.CatoSession session = MultiplayerManager.createSession(config().getMultiplayerToken(), result.getMotd(), gamePort);
+                session.getServer().onClientAdding().register(event -> {
+
+                });
                 session.getServer().onClientAdded().register(event -> {
                     runInFX(() -> {
                         clients.add(event);
@@ -263,19 +265,37 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
                         .thenAcceptAsync(session -> {
                             initCatoSession(session);
 
+                            AtomicBoolean kicked = new AtomicBoolean();
+
                             session.getClient().onDisconnected().register(() -> {
                                 runInFX(() -> {
                                     stopCatoSession();
-                                    Controllers.dialog(i18n("multiplayer.session.join.lost_connection"));
+                                    if (!kicked.get()) {
+                                        Controllers.dialog(i18n("multiplayer.session.join.lost_connection"));
+                                    }
+                                });
+                            });
+
+                            session.getClient().onKicked().register(() -> {
+                                runInFX(() -> {
+                                    kicked.set(true);
+                                    Controllers.dialog(i18n("multiplayer.session.join.kicked"));
                                 });
                             });
 
                             gamePort.set(session.getClient().getGamePort());
                             setMultiplayerState(MultiplayerManager.State.SLAVE);
                             resolve.run();
-                        }, Platform::runLater).exceptionally(throwable -> {
-                            LOG.log(Level.WARNING, "Failed to join sessoin");
-                            reject.accept(i18n("multiplayer.session.error"));
+                        }, Platform::runLater)
+                        .exceptionally(throwable -> {
+                            if (throwable instanceof CancellationException) {
+                                LOG.info("Connection rejected by the server");
+                                reject.accept(i18n("multiplayer.session.join.rejected"));
+                                return null;
+                            } else {
+                                LOG.log(Level.WARNING, "Failed to join sessoin");
+                                reject.accept(i18n("multiplayer.session.error"));
+                            }
                             return null;
                         });
             } catch (MultiplayerManager.IncompatibleCatoVersionException e) {
@@ -284,6 +304,17 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
         })
                 .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("multiplayer.session.join.hint")))
                 .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("multiplayer.session.join.invitation_code"), "", new RequiredValidator())));
+    }
+
+    public void kickPlayer(MultiplayerChannel.CatoClient client) {
+        if (getSession() == null || !getSession().isReady() || getMultiplayerState() != MultiplayerManager.State.MASTER) {
+            throw new IllegalStateException("CatoSession not ready");
+        }
+
+        Controllers.confirm(i18n("multiplayer.session.create.members.kick.prompt"), i18n("multiplayer.session.create.members.kick"), MessageDialogPane.MessageType.WARNING,
+                () -> {
+                    getSession().getServer().kickPlayer(client);
+                }, null);
     }
 
     public void closeRoom() {

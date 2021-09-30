@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -315,11 +316,17 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
         }
     }
 
-    private static class ClientItem extends StackPane {
+    private class ClientItem extends StackPane {
         ClientItem(MultiplayerChannel.CatoClient client) {
             BorderPane pane = new BorderPane();
             pane.setPadding(new Insets(8));
             pane.setLeft(new Label(client.getUsername()));
+
+            JFXButton kickButton = new JFXButton();
+            kickButton.setGraphic(SVG.close(Theme.blackFillBinding(), 16, 16));
+            kickButton.getStyleClass().add("toggle-icon-tiny");
+            kickButton.setOnAction(e -> getSkinnable().kickPlayer(client));
+            pane.setRight(kickButton);
 
             RipplerContainer container = new RipplerContainer(pane);
             getChildren().setAll(container);

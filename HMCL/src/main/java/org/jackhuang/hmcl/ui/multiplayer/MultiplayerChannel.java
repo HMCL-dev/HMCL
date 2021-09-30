@@ -70,7 +70,8 @@ public final class MultiplayerChannel {
             property = "type",
             subtypes = {
                     @JsonSubtype(clazz = JoinResponse.class, name = "join"),
-                    @JsonSubtype(clazz = KeepAliveResponse.class, name = "keepalive")
+                    @JsonSubtype(clazz = KeepAliveResponse.class, name = "keepalive"),
+                    @JsonSubtype(clazz = KickResponse.class, name = "kick")
             }
     )
     public static class Response {
@@ -98,6 +99,18 @@ public final class MultiplayerChannel {
 
         public long getTimestamp() {
             return timestamp;
+        }
+    }
+
+    public static class KickResponse extends Response {
+        private final String msg;
+
+        public KickResponse(String msg) {
+            this.msg = msg;
+        }
+
+        public String getMsg() {
+            return msg;
         }
     }
 

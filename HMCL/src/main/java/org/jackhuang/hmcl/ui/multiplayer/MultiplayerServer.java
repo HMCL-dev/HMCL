@@ -20,12 +20,17 @@ package org.jackhuang.hmcl.ui.multiplayer;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.ui.multiplayer.MultiplayerChannel.*;
@@ -35,9 +40,12 @@ public class MultiplayerServer extends Thread {
     private ServerSocket socket;
     private final int gamePort;
 
+    private FutureCallback<CatoClient> onClientAdding;
     private final EventManager<MultiplayerChannel.CatoClient> onClientAdded = new EventManager<>();
     private final EventManager<MultiplayerChannel.CatoClient> onClientDisconnected = new EventManager<>();
-    private final EventManager<Event> onKeepAlive = new EventManager<>();
+
+    private final Map<String, Client> clients = new ConcurrentHashMap<>();
+    private final Map<String, Client> nameClientMap = new ConcurrentHashMap<>();
 
     public MultiplayerServer(int gamePort) {
         this.gamePort = gamePort;
@@ -46,16 +54,16 @@ public class MultiplayerServer extends Thread {
         setDaemon(true);
     }
 
+    public void setOnClientAdding(FutureCallback<CatoClient> callback) {
+        onClientAdding = callback;
+    }
+
     public EventManager<MultiplayerChannel.CatoClient> onClientAdded() {
         return onClientAdded;
     }
 
     public EventManager<MultiplayerChannel.CatoClient> onClientDisconnected() {
         return onClientDisconnected;
-    }
-
-    public EventManager<Event> onKeepAlive() {
-        return onKeepAlive;
     }
 
     public void startServer() throws IOException {
@@ -92,12 +100,31 @@ public class MultiplayerServer extends Thread {
         }
     }
 
+    public void kickPlayer(CatoClient player) {
+        Client client = nameClientMap.get(player.getUsername());
+        if (client == null) return;
+
+        try {
+            if (client.socket.isConnected()) {
+                client.write(new KickResponse());
+                client.socket.close();
+            }
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to kick player " + player.getUsername() + ". Maybe already disconnected?", e);
+        }
+    }
+
     private void handleClient(Socket targetSocket) {
+        String address = targetSocket.getRemoteSocketAddress().toString();
         String clientName = null;
-        LOG.info("Accepted client " + targetSocket.getRemoteSocketAddress());
+        LOG.info("Accepted client " + address);
         try (Socket clientSocket = targetSocket;
              BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()))) {
+            clientSocket.setKeepAlive(true);
+            Client client = new Client(clientSocket, writer);
+            clients.put(address, client);
+
             String line;
             while ((line = reader.readLine()) != null) {
                 if (isInterrupted()) {
@@ -110,19 +137,35 @@ public class MultiplayerServer extends Thread {
                 if (request instanceof JoinRequest) {
                     JoinRequest joinRequest = (JoinRequest) request;
                     LOG.info("Received join request with clientVersion=" + joinRequest.getClientVersion() + ", id=" + joinRequest.getUsername());
-
-                    writer.write(verifyJson(JsonUtils.UGLY_GSON.toJson(new JoinResponse(gamePort))));
-                    writer.newLine();
-                    writer.flush();
-
                     clientName = joinRequest.getUsername();
-                    onClientAdded.fireEvent(new CatoClient(this, joinRequest.getUsername()));
-                } else if (request instanceof KeepAliveRequest) {
-                    writer.write(JsonUtils.UGLY_GSON.toJson(new KeepAliveResponse(System.currentTimeMillis())));
-                    writer.newLine();
-                    writer.flush();
 
-                    onKeepAlive.fireEvent(new Event(this));
+                    CatoClient catoClient = new CatoClient(this, clientName);
+                    nameClientMap.put(clientName, client);
+                    onClientAdded.fireEvent(catoClient);
+
+                    if (onClientAdding != null) {
+                        onClientAdding.call(catoClient, () -> {
+                            try {
+                                client.write(new JoinResponse(gamePort));
+                            } catch (IOException e) {
+                                LOG.log(Level.WARNING, "Failed to send join response.", e);
+                                try {
+                                    socket.close();
+                                } catch (IOException ioException) {
+                                    LOG.log(Level.WARNING, "Failed to close socket caused by join response sending failure.", e);
+                                    this.interrupt();
+                                }
+                            }
+                        }, msg -> {
+                            try {
+                                client.write(new KickResponse(msg));
+                                LOG.info("Rejected join request from id=" + joinRequest.getUsername());
+                                socket.close();
+                            } catch (IOException e) {
+                                LOG.log(Level.WARNING, "Failed to send kick response.", e);
+                            }
+                        });
+                    }
                 } else {
                     LOG.log(Level.WARNING, "Unrecognized packet from client " + targetSocket.getRemoteSocketAddress() + ":" + line);
                 }
@@ -135,6 +178,25 @@ public class MultiplayerServer extends Thread {
             if (clientName != null) {
                 onClientDisconnected.fireEvent(new CatoClient(this, clientName));
             }
+
+            clients.remove(address);
+            if (clientName != null) nameClientMap.remove(clientName);
+        }
+    }
+
+    private static class Client {
+        public final Socket socket;
+        public final BufferedWriter writer;
+
+        public Client(Socket socket, BufferedWriter writer) {
+            this.socket = socket;
+            this.writer = writer;
+        }
+
+        public synchronized void write(Object object) throws IOException {
+            writer.write(verifyJson(JsonUtils.UGLY_GSON.toJson(object)));
+            writer.newLine();
+            writer.flush();
         }
     }
 }
