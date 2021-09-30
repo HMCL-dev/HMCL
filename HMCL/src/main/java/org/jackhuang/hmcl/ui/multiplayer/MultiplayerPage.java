@@ -210,8 +210,11 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
             int gamePort = result.getAd();
             try {
                 MultiplayerManager.CatoSession session = MultiplayerManager.createSession(config().getMultiplayerToken(), result.getMotd(), gamePort);
-                session.getServer().onClientAdding().register(event -> {
-
+                session.getServer().setOnClientAdding((client, resolveClient, rejectClient) -> {
+                    runInFX(() -> {
+                        Controllers.confirm(i18n("multiplayer.session.create.join.prompt", client.getUsername()), i18n("multiplayer.session.create.join"), MessageDialogPane.MessageType.INFO,
+                                resolveClient, () -> rejectClient.accept(""));
+                    });
                 });
                 session.getServer().onClientAdded().register(event -> {
                     runInFX(() -> {

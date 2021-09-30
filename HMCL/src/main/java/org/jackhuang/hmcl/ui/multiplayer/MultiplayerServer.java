@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.Lang;
@@ -27,10 +26,8 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.ui.multiplayer.MultiplayerChannel.*;
@@ -106,7 +103,7 @@ public class MultiplayerServer extends Thread {
 
         try {
             if (client.socket.isConnected()) {
-                client.write(new KickResponse());
+                client.write(new KickResponse(""));
                 client.socket.close();
             }
         } catch (IOException e) {

@@ -26,7 +26,7 @@ import java.io.*;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
- import java.util.logging.Level;
+import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.ui.multiplayer.MultiplayerChannel.*;
 import static org.jackhuang.hmcl.util.Logging.LOG;
