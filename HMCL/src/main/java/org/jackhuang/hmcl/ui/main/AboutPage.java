@@ -162,9 +162,9 @@ public class AboutPage extends StackPane {
             openNBT.setExternalLink("https://github.com/Steveice10/OpenNBT");
 
             IconedTwoLineListItem jstun = new IconedTwoLineListItem();
-            openNBT.setTitle("JSTUN");
-            openNBT.setSubtitle("Copyright (c) 2005 Thomas King <king@t-king.de>.\nLicensed under the Apache License 2.0.");
-            openNBT.setExternalLink("https://github.com/tking/JSTUN");
+            jstun.setTitle("JSTUN");
+            jstun.setSubtitle("Copyright (c) 2005 Thomas King <king@t-king.de>.\nLicensed under the Apache License 2.0.");
+            jstun.setExternalLink("https://github.com/tking/JSTUN");
 
             dep.getContent().setAll(javafx, jfoenix, gson, xz, fxgson, constantPoolScanner, openNBT, jstun);
         }
