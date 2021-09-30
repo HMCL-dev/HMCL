@@ -19,42 +19,19 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 
-import java.util.logging.Level;
-
-import static org.jackhuang.hmcl.util.Logging.LOG;
-
 public class AnnouncementCard extends VBox {
 
     public AnnouncementCard(String title, String content) {
-        TextFlow tf;
-        try {
-            tf = FXUtils.segmentToTextFlow(content, AnnouncementCard::onAction);
-        } catch (Exception e) {
-            LOG.log(Level.WARNING, "Failed to parse announcement content", e);
-            tf = new TextFlow();
-            tf.getChildren().setAll(new Text(content));
-        }
+        TextFlow tf = FXUtils.segmentToTextFlow(content, Controllers::onHyperlinkAction);
 
         Label label = new Label(title);
         label.getStyleClass().add("title");
         getChildren().setAll(label, tf);
         setSpacing(14);
         getStyleClass().addAll("card", "announcement");
-    }
-
-    private static void onAction(String href) {
-        if (href.startsWith("hmcl://")) {
-            if ("hmcl://settings/feedback".equals(href)) {
-                Controllers.getSettingsPage().showFeedback();
-                Controllers.navigate(Controllers.getSettingsPage());
-            }
-        } else {
-            FXUtils.openLink(href);
-        }
     }
 }

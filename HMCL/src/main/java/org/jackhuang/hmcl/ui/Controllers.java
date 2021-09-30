@@ -298,6 +298,17 @@ public final class Controllers {
         decorator.showToast(content);
     }
 
+    public static void onHyperlinkAction(String href) {
+        if (href.startsWith("hmcl://")) {
+            if ("hmcl://settings/feedback".equals(href)) {
+                Controllers.getSettingsPage().showFeedback();
+                Controllers.navigate(Controllers.getSettingsPage());
+            }
+        } else {
+            FXUtils.openLink(href);
+        }
+    }
+
     public static boolean isStopped() {
         return decorator == null;
     }

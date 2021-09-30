@@ -62,6 +62,7 @@ public final class MultiplayerManager {
     private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/";
     static final String CATO_VERSION = "1.0.9";
     private static final String CATO_PATH = getCatoPath();
+    public static final int CATO_AGREEMENT_VERSION = 2;
 
     private static final String REMOTE_ADDRESS = "127.0.0.1";
     private static final String LOCAL_ADDRESS = "0.0.0.0";

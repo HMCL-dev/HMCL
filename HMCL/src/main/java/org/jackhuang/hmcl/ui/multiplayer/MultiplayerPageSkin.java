@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -249,21 +250,33 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
             ComponentList thanksPane = new ComponentList();
             {
                 GridPane gridPane = new GridPane();
-                gridPane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
+                gridPane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing(), new ColumnConstraints());
                 gridPane.setVgap(8);
                 gridPane.setHgap(16);
 
                 JFXTextField tokenField = new JFXTextField();
                 tokenField.textProperty().bindBidirectional(config().multiplayerTokenProperty());
                 tokenField.setPromptText(i18n("multiplayer.session.create.token.prompt"));
-                gridPane.addRow(0, new Label(i18n("multiplayer.session.create.token")), tokenField);
 
-                BorderPane pane = new BorderPane();
-                Label versionLabel = new Label("cato " + MultiplayerManager.CATO_VERSION);
-                pane.setLeft(versionLabel);
+                JFXHyperlink applyLink = new JFXHyperlink(i18n("multiplayer.session.create.token.apply"));
+                applyLink.setOnAction(e -> FXUtils.openLink("https://noin.cn/circle/386.html"));
 
-                Label label = new Label(i18n("multiplayer.powered_by"));
-                pane.setRight(label);
+                gridPane.addRow(0, new Label(i18n("multiplayer.session.create.token")), tokenField, applyLink);
+
+                HBox pane = new HBox();
+                pane.setAlignment(Pos.CENTER_LEFT);
+
+                JFXHyperlink aboutLink = new JFXHyperlink(i18n("about"));
+                aboutLink.setOnAction(e -> FXUtils.openLink("https://noin.cn/71.html"));
+
+                HBox placeholder = new HBox();
+                HBox.setHgrow(placeholder, Priority.ALWAYS);
+
+                pane.getChildren().setAll(
+                        new Label("cato " + MultiplayerManager.CATO_VERSION),
+                        aboutLink,
+                        placeholder,
+                        FXUtils.segmentToTextFlow(i18n("multiplayer.powered_by"), Controllers::onHyperlinkAction));
 
                 thanksPane.getContent().addAll(gridPane, pane);
             }

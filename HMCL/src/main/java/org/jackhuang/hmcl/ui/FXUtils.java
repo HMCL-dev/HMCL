@@ -700,35 +700,40 @@ public final class FXUtils {
         Controllers.showToast(i18n("message.copied"));
     }
 
-    public static TextFlow segmentToTextFlow(final String segment, Consumer<String> hyperlinkAction) throws ParserConfigurationException, IOException, SAXException {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document doc = builder.parse(new InputSource(new StringReader("<body>" + segment + "</body>")));
-        Element r = doc.getDocumentElement();
+    public static TextFlow segmentToTextFlow(final String segment, Consumer<String> hyperlinkAction) {
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(new InputSource(new StringReader("<body>" + segment + "</body>")));
+            Element r = doc.getDocumentElement();
 
-        NodeList children = r.getChildNodes();
-        List<javafx.scene.Node> texts = new ArrayList<>();
-        for (int i = 0; i < children.getLength(); i++) {
-            org.w3c.dom.Node node = children.item(i);
+            NodeList children = r.getChildNodes();
+            List<javafx.scene.Node> texts = new ArrayList<>();
+            for (int i = 0; i < children.getLength(); i++) {
+                org.w3c.dom.Node node = children.item(i);
 
-            if (node instanceof Element) {
-                Element element = (Element) node;
-                if ("a".equals(element.getTagName())) {
-                    String href = element.getAttribute("href");
-                    JFXHyperlink hyperlink = new JFXHyperlink(element.getTextContent());
-                    hyperlink.setOnAction(e -> hyperlinkAction.accept(href));
-                    texts.add(hyperlink);
-                } else if ("br".equals(element.getTagName())) {
-                    texts.add(new Text("\n"));
+                if (node instanceof Element) {
+                    Element element = (Element) node;
+                    if ("a".equals(element.getTagName())) {
+                        String href = element.getAttribute("href");
+                        JFXHyperlink hyperlink = new JFXHyperlink(element.getTextContent());
+                        hyperlink.setOnAction(e -> hyperlinkAction.accept(href));
+                        texts.add(hyperlink);
+                    } else if ("br".equals(element.getTagName())) {
+                        texts.add(new Text("\n"));
+                    } else {
+                        throw new IllegalArgumentException("unsupported tag " + element.getTagName());
+                    }
                 } else {
-                    throw new IllegalArgumentException("unsupported tag " + element.getTagName());
+                    texts.add(new Text(node.getTextContent()));
                 }
-            } else {
-                texts.add(new Text(node.getTextContent()));
             }
+            final TextFlow tf = new TextFlow(texts.toArray(new javafx.scene.Node[0]));
+            return tf;
+        } catch (SAXException | ParserConfigurationException | IOException e) {
+            LOG.log(Level.WARNING, "Failed to parse xml", e);
+            return new TextFlow(new Text(segment));
         }
-        final TextFlow tf = new TextFlow(texts.toArray(new javafx.scene.Node[0]));
-        return tf;
     }
 
 }

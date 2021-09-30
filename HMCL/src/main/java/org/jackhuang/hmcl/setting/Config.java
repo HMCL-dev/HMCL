@@ -158,6 +158,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("logLines")
     private IntegerProperty logLines = new SimpleIntegerProperty(100);
 
+    @SerializedName("multiplayerAgreementVersion")
+    private IntegerProperty multiplayerAgreementVersion = new SimpleIntegerProperty(0);
+
     @SerializedName("multiplayerToken")
     private StringProperty multiplayerToken = new SimpleStringProperty();
 
@@ -582,6 +585,18 @@ public final class Config implements Cloneable, Observable {
 
     public StringProperty preferredLoginTypeProperty() {
         return preferredLoginType;
+    }
+
+    public int getMultiplayerAgreementVersion() {
+        return multiplayerAgreementVersion.get();
+    }
+
+    public IntegerProperty multiplayerAgreementVersionProperty() {
+        return multiplayerAgreementVersion;
+    }
+
+    public void setMultiplayerAgreementVersion(int multiplayerAgreementVersion) {
+        this.multiplayerAgreementVersion.set(multiplayerAgreementVersion);
     }
 
     public String getMultiplayerToken() {

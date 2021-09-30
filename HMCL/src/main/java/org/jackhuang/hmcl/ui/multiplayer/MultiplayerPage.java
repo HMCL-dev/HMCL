@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.multiplayer;
 
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialogLayout;
 import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
 import javafx.application.Platform;
@@ -24,7 +26,9 @@ import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Control;
+import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -41,6 +45,7 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -65,7 +70,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
 
     @Override
     public void onPageShown() {
-        downloadCatoIfNecessary();
+        checkAgreement(() -> this.downloadCatoIfNecessary());
     }
 
     @Override
@@ -134,9 +139,34 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
         }).start();
     }
 
+    private void checkAgreement(Runnable runnable) {
+        if (config().getMultiplayerAgreementVersion() < MultiplayerManager.CATO_AGREEMENT_VERSION) {
+            JFXDialogLayout agreementPane = new JFXDialogLayout();
+            agreementPane.setHeading(new Label(i18n("launcher.agreement")));
+            agreementPane.setBody(new Label(i18n("multiplayer.agreement.prompt")));
+            JFXHyperlink agreementLink = new JFXHyperlink(i18n("launcher.agreement"));
+            agreementLink.setOnAction(e -> FXUtils.openLink("https://noin.cn/agreement"));
+            JFXButton yesButton = new JFXButton(i18n("launcher.agreement.accept"));
+            yesButton.getStyleClass().add("dialog-accept");
+            yesButton.setOnAction(e -> {
+                config().setMultiplayerAgreementVersion(MultiplayerManager.CATO_AGREEMENT_VERSION);
+                runnable.run();
+                agreementPane.fireEvent(new DialogCloseEvent());
+            });
+            JFXButton noButton = new JFXButton(i18n("launcher.agreement.decline"));
+            noButton.getStyleClass().add("dialog-cancel");
+            noButton.setOnAction(e -> {
+                agreementPane.fireEvent(new DialogCloseEvent());
+                fireEvent(new PageCloseEvent());
+            });
+            agreementPane.setActions(agreementLink, yesButton, noButton);
+            Controllers.dialog(agreementPane);
+        }
+    }
+
     private void downloadCatoIfNecessary() {
         if (StringUtils.isBlank(MultiplayerManager.getCatoPath())) {
-            Controllers.dialog(i18n("multiplayer.download."), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+            Controllers.dialog(i18n("multiplayer.download.failed"), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
             fireEvent(new PageCloseEvent());
             return;
         }
