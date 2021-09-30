@@ -6,6 +6,8 @@ buildscript {
     dependencies {
         classpath 'org.tukaani:xz:1.8'
         classpath 'org.glavo:pack200:0.3.0'
+
+        classpath 'com.guardsquare:proguard-gradle:7.1.0'  // The ProGuard Gradle plugin.
     }
 }
 
@@ -160,6 +162,41 @@ shadowJar {
         attachSignature(jar.archivePath)
         createChecksum(jar.archivePath)
     }
+}
+
+task proguard(type: proguard.gradle.ProGuardTask) {
+    dependsOn shadowJar
+    injars shadowJar
+
+    outjars "${buildDir}/libs/${project.name}-${project.version}-proguard.jar"
+
+
+    dontobfuscate
+    dontoptimize
+    keep 'public class org.jackhuang.**'
+    keep 'public class org.slf4j.**'
+
+    dontwarn 'com.nqzero.**'
+    dontwarn 'org.slf4j.**'
+    dontwarn 'org.jackhuang.hmcl.util.Pack200Utils'
+
+    adaptclassstrings
+
+    // next block taken verbatim from Proguard's documentation examples:
+
+    libraryjars files(configurations.compileClasspath.collect())
+
+    keepattributes 'SourceFile,LineNumberTable'
+
+    // Automatically handle the Java version of this build.
+//    if (System.getProperty('java.version').startsWith('1.')) {
+//        // Before Java 9, the runtime classes were packaged in a single jar file.
+        libraryjars "${System.getProperty('java.home')}/lib/rt.jar"
+        libraryjars "${System.getProperty('java.home')}/lib/ext/jfxrt.jar"
+//    } else {
+//        // As of Java 9, the runtime classes are packaged in modular jmod files.
+//        libraryjars "${System.getProperty('java.home')}/jmods/java.base.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
+//    }
 }
 
 def createExecutable(String suffix, String header) {
