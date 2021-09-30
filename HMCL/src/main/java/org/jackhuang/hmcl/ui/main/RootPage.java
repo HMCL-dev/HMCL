@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
@@ -54,6 +55,7 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class RootPage extends DecoratorTabPage {
@@ -155,30 +157,28 @@ public class RootPage extends DecoratorTabPage {
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
-            gameItem.setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/bookshelf.png")).getKey());
+            gameItem.setLeftGraphic(wrap(SVG::viewList));
+            gameItem.setActionButtonVisible(false);
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
 
             // forth item in left sidebar
             AdvancedListItem downloadItem = new AdvancedListItem();
-            downloadItem
-                    .setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/chest.png")).getKey());
+            downloadItem.setLeftGraphic(wrap(SVG::downloadOutline));
             downloadItem.setActionButtonVisible(false);
             downloadItem.setTitle(i18n("download"));
             downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
 
             // fifth item in left sidebar
             AdvancedListItem multiplayerItem = new AdvancedListItem();
-            multiplayerItem
-                    .setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/command.png")).getKey());
+            multiplayerItem.setLeftGraphic(wrap(SVG::lan));
             multiplayerItem.setActionButtonVisible(false);
             multiplayerItem.setTitle(i18n("multiplayer"));
             multiplayerItem.setOnAction(e -> Controllers.navigate(Controllers.getMultiplayerPage()));
 
             // sixth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
-            launcherSettingsItem
-                    .setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/command.png")).getKey());
+            launcherSettingsItem.setLeftGraphic(wrap(SVG::gearOutline));
             launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));

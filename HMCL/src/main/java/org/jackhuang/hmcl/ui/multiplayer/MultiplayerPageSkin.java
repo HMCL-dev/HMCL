@@ -288,7 +288,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                     roomPane,
                     ComponentList.createComponentListTitle(i18n("multiplayer.nat")),
                     natDetectionPane,
-                    ComponentList.createComponentListTitle(i18n("about.thanks_to")),
+                    ComponentList.createComponentListTitle(i18n("settings")),
                     thanksPane
             );
         }

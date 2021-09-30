@@ -22,6 +22,7 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.SkinBase;
@@ -316,9 +317,10 @@ public class VersionPage extends Control implements DecoratorPage {
 
     public static Node wrap(Node node) {
         StackPane stackPane = new StackPane();
+        stackPane.setAlignment(Pos.CENTER);
         FXUtils.setLimitWidth(stackPane, 30);
         FXUtils.setLimitHeight(stackPane, 20);
-        stackPane.setPadding(new Insets(0, 10, 0, 0));
+        stackPane.setPadding(new Insets(0, 0, 0, 0));
         stackPane.getChildren().setAll(node);
         return stackPane;
     }
