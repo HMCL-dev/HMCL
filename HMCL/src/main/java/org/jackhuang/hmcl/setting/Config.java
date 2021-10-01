@@ -158,12 +158,6 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("logLines")
     private IntegerProperty logLines = new SimpleIntegerProperty(100);
 
-    @SerializedName("multiplayerAgreementVersion")
-    private IntegerProperty multiplayerAgreementVersion = new SimpleIntegerProperty(0);
-
-    @SerializedName("multiplayerToken")
-    private StringProperty multiplayerToken = new SimpleStringProperty();
-
     @SerializedName("authlibInjectorServers")
     private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList(server -> new Observable[] { server });
 
@@ -587,27 +581,4 @@ public final class Config implements Cloneable, Observable {
         return preferredLoginType;
     }
 
-    public int getMultiplayerAgreementVersion() {
-        return multiplayerAgreementVersion.get();
-    }
-
-    public IntegerProperty multiplayerAgreementVersionProperty() {
-        return multiplayerAgreementVersion;
-    }
-
-    public void setMultiplayerAgreementVersion(int multiplayerAgreementVersion) {
-        this.multiplayerAgreementVersion.set(multiplayerAgreementVersion);
-    }
-
-    public String getMultiplayerToken() {
-        return multiplayerToken.get();
-    }
-
-    public StringProperty multiplayerTokenProperty() {
-        return multiplayerToken;
-    }
-
-    public void setMultiplayerToken(String multiplayerToken) {
-        this.multiplayerToken.set(multiplayerToken);
-    }
 }

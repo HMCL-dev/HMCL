@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -139,7 +139,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
     }
 
     private void checkAgreement(Runnable runnable) {
-        if (config().getMultiplayerAgreementVersion() < MultiplayerManager.CATO_AGREEMENT_VERSION) {
+        if (globalConfig().getMultiplayerAgreementVersion() < MultiplayerManager.CATO_AGREEMENT_VERSION) {
             JFXDialogLayout agreementPane = new JFXDialogLayout();
             agreementPane.setHeading(new Label(i18n("launcher.agreement")));
             agreementPane.setBody(new Label(i18n("multiplayer.agreement.prompt")));
@@ -148,7 +148,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
             JFXButton yesButton = new JFXButton(i18n("launcher.agreement.accept"));
             yesButton.getStyleClass().add("dialog-accept");
             yesButton.setOnAction(e -> {
-                config().setMultiplayerAgreementVersion(MultiplayerManager.CATO_AGREEMENT_VERSION);
+                globalConfig().setMultiplayerAgreementVersion(MultiplayerManager.CATO_AGREEMENT_VERSION);
                 runnable.run();
                 agreementPane.fireEvent(new DialogCloseEvent());
             });
@@ -209,7 +209,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
         Controllers.dialog(new CreateMultiplayerRoomDialog((result, resolve, reject) -> {
             int gamePort = result.getAd();
             try {
-                MultiplayerManager.CatoSession session = MultiplayerManager.createSession(config().getMultiplayerToken(), result.getMotd(), gamePort);
+                MultiplayerManager.CatoSession session = MultiplayerManager.createSession(globalConfig().getMultiplayerToken(), result.getMotd(), gamePort);
                 session.getServer().setOnClientAdding((client, resolveClient, rejectClient) -> {
                     runInFX(() -> {
                         Controllers.confirm(i18n("multiplayer.session.create.join.prompt", client.getUsername()), i18n("multiplayer.session.create.join"), MessageDialogPane.MessageType.INFO,
@@ -264,7 +264,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
             }
 
             try {
-                MultiplayerManager.joinSession(config().getMultiplayerToken(), invitation.getVersion(), invitation.getSessionName(), invitation.getId(), invitation.getChannelPort(), localPort)
+                MultiplayerManager.joinSession(globalConfig().getMultiplayerToken(), invitation.getVersion(), invitation.getSessionName(), invitation.getId(), invitation.getChannelPort(), localPort)
                         .thenAcceptAsync(session -> {
                             initCatoSession(session);
 

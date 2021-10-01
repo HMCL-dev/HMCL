@@ -44,7 +44,7 @@ import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -256,7 +256,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                 gridPane.setHgap(16);
 
                 JFXTextField tokenField = new JFXTextField();
-                tokenField.textProperty().bindBidirectional(config().multiplayerTokenProperty());
+                tokenField.textProperty().bindBidirectional(globalConfig().multiplayerTokenProperty());
                 tokenField.setPromptText(i18n("multiplayer.session.create.token.prompt"));
 
                 JFXHyperlink applyLink = new JFXHyperlink(i18n("multiplayer.session.create.token.apply"));
