@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.JFXPasswordField;
 import de.javawi.jstun.test.DiscoveryInfo;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ObservableList;
@@ -255,7 +255,8 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                 gridPane.setVgap(8);
                 gridPane.setHgap(16);
 
-                JFXTextField tokenField = new JFXTextField();
+                // Token acts like password, we hide it here preventing users from accidentally leaking their token when taking screenshots.
+                JFXPasswordField tokenField = new JFXPasswordField();
                 tokenField.textProperty().bindBidirectional(globalConfig().multiplayerTokenProperty());
                 tokenField.setPromptText(i18n("multiplayer.session.create.token.prompt"));
 
