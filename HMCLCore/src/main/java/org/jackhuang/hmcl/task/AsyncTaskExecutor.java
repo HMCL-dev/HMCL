@@ -105,8 +105,10 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                 .thenComposeAsync(unused -> {
                     totTask.addAndGet(tasks.size());
 
-                    if (isCancelled())
+                    if (isCancelled()) {
+                        for (Task<?> task : tasks) task.setException(new CancellationException());
                         return CompletableFuture.runAsync(this::checkCancellation);
+                    }
 
                     return CompletableFuture.allOf(tasks.stream()
                             .map(task -> CompletableFuture.completedFuture(null)
@@ -130,8 +132,6 @@ public final class AsyncTaskExecutor extends TaskExecutor {
     }
 
     private <T> CompletableFuture<T> executeCompletableFutureTask(Task<?> parentTask, CompletableFutureTask<T> task) {
-        checkCancellation();
-
         return CompletableFuture.completedFuture(null)
                 .thenComposeAsync(unused -> {
                     checkCancellation();
@@ -202,8 +202,6 @@ public final class AsyncTaskExecutor extends TaskExecutor {
     }
 
     private <T> CompletableFuture<T> executeNormalTask(Task<?> parentTask, Task<T> task) {
-        checkCancellation();
-
         return CompletableFuture.completedFuture(null)
                 .thenComposeAsync(unused -> {
                     checkCancellation();

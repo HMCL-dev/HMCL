@@ -98,7 +98,7 @@ public class LibraryDownloadTask extends Task<Void> {
             Exception t = task.getException();
             if (t instanceof DownloadException)
                 throw new LibraryDownloadException(library, t.getCause());
-            else if (t == null)
+            else if (t instanceof CancellationException)
                 throw new CancellationException();
             else
                 throw new LibraryDownloadException(library, t);
