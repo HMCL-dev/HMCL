@@ -70,6 +70,22 @@ public class TabHeader extends Control implements TabControl {
         this.selectionModel.set(selectionModel);
     }
 
+    public void select(Tab<?> tab) {
+        Tab<?> oldTab = getSelectionModel().getSelectedItem();
+        if (oldTab != null) {
+            if (oldTab.getNode() instanceof PageAware) {
+                ((PageAware) oldTab.getNode()).onPageHidden();
+            }
+        }
+
+        tab.initializeIfNeeded();
+        if (tab.getNode() instanceof PageAware) {
+            ((PageAware) tab.getNode()).onPageShown();
+        }
+
+        getSelectionModel().select(tab);
+    }
+
     /**
      * The position to place the tabs.
      */
