@@ -21,6 +21,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.Library;
@@ -30,6 +31,8 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.util.*;
+
+import static org.jackhuang.hmcl.download.UnsupportedInstallationException.FABRIC_NOT_COMPATIBLE_WITH_FORGE;
 
 /**
  * <b>Note</b>: Fabric should be installed first.
@@ -61,7 +64,7 @@ public final class FabricInstallTask extends Task<Version> {
     @Override
     public void preExecute() throws Exception {
         if (!Objects.equals("net.minecraft.client.main.Main", version.resolve(dependencyManager.getGameRepository()).getMainClass()))
-            throw new UnsupportedFabricInstallationException();
+            throw new UnsupportedInstallationException(FABRIC_NOT_COMPATIBLE_WITH_FORGE);
     }
 
     @Override
@@ -201,8 +204,5 @@ public final class FabricInstallTask extends Task<Version> {
         public boolean isStable() {
             return stable;
         }
-    }
-
-    public static class UnsupportedFabricInstallationException extends Exception {
     }
 }
