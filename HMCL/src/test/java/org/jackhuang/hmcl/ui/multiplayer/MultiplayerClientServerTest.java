@@ -18,13 +18,13 @@
 package org.jackhuang.hmcl.ui.multiplayer;
 
 import org.jackhuang.hmcl.util.Logging;
-import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class MultiplayerClientServerTest {
 
     @Test
-//    @Ignore
+    @Ignore
     public void startServer() throws Exception {
         Logging.initForTest();
         MultiplayerServer server = new MultiplayerServer(1000);
@@ -33,8 +33,7 @@ public class MultiplayerClientServerTest {
         MultiplayerClient client = new MultiplayerClient("username", 44444);
         client.start();
 
-        server.onClientAdded().register(event -> {
-            Assert.assertEquals("username", event.getUsername());
+        server.onKeepAlive().register(event -> {
             client.interrupt();
             server.interrupt();
         });

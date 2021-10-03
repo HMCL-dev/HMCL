@@ -27,10 +27,13 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 
 public class OptionToggleButton extends StackPane {
     private final StringProperty title = new SimpleStringProperty();
+    private final StringProperty subtitle = new SimpleStringProperty();
     private final BooleanProperty selected = new SimpleBooleanProperty();
 
     public OptionToggleButton() {
@@ -41,11 +44,15 @@ public class OptionToggleButton extends StackPane {
         RipplerContainer container = new RipplerContainer(pane);
         getChildren().setAll(container);
 
-        Label label = new Label();
-        label.setMouseTransparent(true);
-        label.textProperty().bind(title);
-        pane.setLeft(label);
-        BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+        VBox left = new VBox();
+        Label titleLabel = new Label();
+        titleLabel.setMouseTransparent(true);
+        titleLabel.textProperty().bind(title);
+        Label subtitleLabel = new Label();
+        subtitleLabel.setMouseTransparent(true);
+        subtitleLabel.textProperty().bind(subtitle);
+        pane.setLeft(left);
+        BorderPane.setAlignment(left, Pos.CENTER_LEFT);
 
         JFXToggleButton toggleButton = new JFXToggleButton();
         pane.setRight(toggleButton);
@@ -55,6 +62,14 @@ public class OptionToggleButton extends StackPane {
 
         container.setOnMouseClicked(e -> {
             toggleButton.setSelected(!toggleButton.isSelected());
+        });
+
+        FXUtils.onChangeAndOperate(subtitleProperty(), subtitle -> {
+            if (StringUtils.isNotBlank(subtitle)) {
+                left.getChildren().setAll(titleLabel, subtitleLabel);
+            } else {
+                left.getChildren().setAll(titleLabel);
+            }
         });
     }
 
@@ -68,6 +83,18 @@ public class OptionToggleButton extends StackPane {
 
     public void setTitle(String title) {
         this.title.set(title);
+    }
+
+    public String getSubtitle() {
+        return subtitle.get();
+    }
+
+    public StringProperty subtitleProperty() {
+        return subtitle;
+    }
+
+    public void setSubtitle(String subtitle) {
+        this.subtitle.set(subtitle);
     }
 
     public boolean isSelected() {

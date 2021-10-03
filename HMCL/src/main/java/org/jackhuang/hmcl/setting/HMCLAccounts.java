@@ -33,9 +33,12 @@ import java.util.UUID;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
-public class HMCLAccounts {
+public final class HMCLAccounts {
 
     private static final ObjectProperty<HMCLAccount> account = new SimpleObjectProperty<>();
+
+    private HMCLAccounts() {
+    }
 
     public static HMCLAccount getAccount() {
         return account.get();

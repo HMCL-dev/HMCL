@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.Lang;
@@ -40,9 +41,10 @@ public class MultiplayerServer extends Thread {
     private FutureCallback<CatoClient> onClientAdding;
     private final EventManager<MultiplayerChannel.CatoClient> onClientAdded = new EventManager<>();
     private final EventManager<MultiplayerChannel.CatoClient> onClientDisconnected = new EventManager<>();
+    private final EventManager<Event> onKeepAlive = new EventManager<>();
 
-    private final Map<String, Client> clients = new ConcurrentHashMap<>();
-    private final Map<String, Client> nameClientMap = new ConcurrentHashMap<>();
+    private final Map<String, Endpoint> clients = new ConcurrentHashMap<>();
+    private final Map<String, Endpoint> nameClientMap = new ConcurrentHashMap<>();
 
     public MultiplayerServer(int gamePort) {
         this.gamePort = gamePort;
@@ -61,6 +63,10 @@ public class MultiplayerServer extends Thread {
 
     public EventManager<MultiplayerChannel.CatoClient> onClientDisconnected() {
         return onClientDisconnected;
+    }
+
+    public EventManager<Event> onKeepAlive() {
+        return onKeepAlive;
     }
 
     public void startServer() throws IOException {
@@ -98,7 +104,7 @@ public class MultiplayerServer extends Thread {
     }
 
     public void kickPlayer(CatoClient player) {
-        Client client = nameClientMap.get(player.getUsername());
+        Endpoint client = nameClientMap.get(player.getUsername());
         if (client == null) return;
 
         try {
@@ -119,8 +125,8 @@ public class MultiplayerServer extends Thread {
              BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()))) {
             clientSocket.setKeepAlive(true);
-            Client client = new Client(clientSocket, writer);
-            clients.put(address, client);
+            Endpoint endpoint = new Endpoint(clientSocket, writer);
+            clients.put(address, endpoint);
 
             String line;
             while ((line = reader.readLine()) != null) {
@@ -137,13 +143,13 @@ public class MultiplayerServer extends Thread {
                     clientName = joinRequest.getUsername();
 
                     CatoClient catoClient = new CatoClient(this, clientName);
-                    nameClientMap.put(clientName, client);
+                    nameClientMap.put(clientName, endpoint);
                     onClientAdded.fireEvent(catoClient);
 
                     if (onClientAdding != null) {
                         onClientAdding.call(catoClient, () -> {
                             try {
-                                client.write(new JoinResponse(gamePort));
+                                endpoint.write(new JoinResponse(gamePort));
                             } catch (IOException e) {
                                 LOG.log(Level.WARNING, "Failed to send join response.", e);
                                 try {
@@ -155,7 +161,7 @@ public class MultiplayerServer extends Thread {
                             }
                         }, msg -> {
                             try {
-                                client.write(new KickResponse(msg));
+                                endpoint.write(new KickResponse(msg));
                                 LOG.info("Rejected join request from id=" + joinRequest.getUsername());
                                 socket.close();
                             } catch (IOException e) {
@@ -163,6 +169,10 @@ public class MultiplayerServer extends Thread {
                             }
                         });
                     }
+                } else if (request instanceof KeepAliveRequest) {
+                    endpoint.write(new KeepAliveResponse(System.currentTimeMillis()));
+
+                    onKeepAlive.fireEvent(new Event(this));
                 } else {
                     LOG.log(Level.WARNING, "Unrecognized packet from client " + targetSocket.getRemoteSocketAddress() + ":" + line);
                 }
@@ -181,11 +191,11 @@ public class MultiplayerServer extends Thread {
         }
     }
 
-    private static class Client {
+    public static class Endpoint {
         public final Socket socket;
         public final BufferedWriter writer;
 
-        public Client(Socket socket, BufferedWriter writer) {
+        public Endpoint(Socket socket, BufferedWriter writer) {
             this.socket = socket;
             this.writer = writer;
         }

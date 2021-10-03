@@ -227,6 +227,9 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
                     });
                 });
                 initCatoSession(session);
+            } catch (MultiplayerManager.CatoAlreadyStartedException e) {
+                LOG.log(Level.WARNING, "Cato already started", e);
+                reject.accept(i18n("multiplayer.session.error.already_started"));
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "Failed to create session", e);
                 reject.accept(i18n("multiplayer.session.create.error"));
@@ -264,7 +267,16 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
             }
 
             try {
-                MultiplayerManager.joinSession(globalConfig().getMultiplayerToken(), invitation.getVersion(), invitation.getSessionName(), invitation.getId(), invitation.getChannelPort(), localPort)
+                MultiplayerManager.joinSession(
+                                globalConfig().getMultiplayerToken(),
+                                invitation.getVersion(),
+                                invitation.getSessionName(),
+                                invitation.getId(),
+                                globalConfig().isMultiplayerRelay() && StringUtils.isNotBlank(globalConfig().getMultiplayerToken())
+                                        ? MultiplayerManager.Mode.RELAY
+                                        : MultiplayerManager.Mode.P2P,
+                                invitation.getChannelPort(),
+                                localPort)
                         .thenAcceptAsync(session -> {
                             initCatoSession(session);
 
@@ -295,9 +307,13 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
                                 LOG.info("Connection rejected by the server");
                                 reject.accept(i18n("multiplayer.session.join.rejected"));
                                 return null;
+                            } else if (throwable instanceof MultiplayerManager.CatoAlreadyStartedException) {
+                                LOG.info("Cato already started");
+                                reject.accept(i18n("multiplayer.session.error.already_started"));
+                                return null;
                             } else {
                                 LOG.log(Level.WARNING, "Failed to join sessoin");
-                                reject.accept(i18n("multiplayer.session.error"));
+                                reject.accept(i18n("multiplayer.session.join.error"));
                             }
                             return null;
                         });

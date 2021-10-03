@@ -73,18 +73,21 @@ public class MultiplayerClient extends Thread {
     public void run() {
         LOG.info("Connecting to 127.0.0.1:" + port);
         for (int i = 0; i < 5; i++) {
+            KeepAliveThread keepAliveThread = null;
             try (Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
                  BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                  BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
+                MultiplayerServer.Endpoint endpoint = new MultiplayerServer.Endpoint(socket, writer);
                 LOG.info("Connected to 127.0.0.1:" + port);
-
-                socket.setKeepAlive(true);
 
                 writer.write(JsonUtils.UGLY_GSON.toJson(new JoinRequest(MultiplayerManager.CATO_VERSION, id)));
                 writer.newLine();
                 writer.flush();
 
                 LOG.fine("Sent join request with id=" + id);
+
+                keepAliveThread = new KeepAliveThread(endpoint);
+                keepAliveThread.start();
 
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -106,6 +109,7 @@ public class MultiplayerClient extends Thread {
                         onKicked.fireEvent(new Event(this));
 
                         LOG.fine("Kicked by the server");
+                    } else if (response instanceof KeepAliveResponse) {
                     } else {
                         LOG.log(Level.WARNING, "Unrecognized packet from server:" + line);
                     }
@@ -121,10 +125,40 @@ public class MultiplayerClient extends Thread {
                 continue;
             } catch (IOException | JsonParseException e) {
                 e.printStackTrace();
+            } finally {
+                if (keepAliveThread != null) {
+                    keepAliveThread.interrupt();
+                }
             }
         }
         LOG.info("Lost connection to 127.0.0.1:" + port);
         onDisconnected.fireEvent(new Event(this));
+    }
+
+    private static class KeepAliveThread extends Thread {
+
+        private final MultiplayerServer.Endpoint endpoint;
+
+        public KeepAliveThread(MultiplayerServer.Endpoint endpoint) {
+            this.endpoint = endpoint;
+        }
+
+        @Override
+        public void run() {
+            while (!isInterrupted()) {
+                try {
+                    endpoint.write(new KeepAliveRequest(System.currentTimeMillis()));
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to send keep alive packet", e);
+                    break;
+                }
+                try {
+                    Thread.sleep(1500);
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+        }
     }
 
     public static class ConnectedEvent extends Event {

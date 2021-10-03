@@ -44,10 +44,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
@@ -67,7 +64,6 @@ public final class MultiplayerManager {
 
     private static final String REMOTE_ADDRESS = "127.0.0.1";
     private static final String LOCAL_ADDRESS = "0.0.0.0";
-    private static final String MODE = "p2p";
 
     private MultiplayerManager() {
     }
@@ -89,7 +85,7 @@ public final class MultiplayerManager {
         return Metadata.HMCL_DIRECTORY.resolve("libraries").resolve(CATO_PATH);
     }
 
-    public static CompletableFuture<CatoSession> joinSession(String token, String version, String sessionName, String peer, int remotePort, int localPort) throws IncompatibleCatoVersionException {
+    public static CompletableFuture<CatoSession> joinSession(String token, String version, String sessionName, String peer, Mode mode, int remotePort, int localPort) throws IncompatibleCatoVersionException {
         if (!CATO_VERSION.equals(version)) {
             throw new IncompatibleCatoVersionException(version, CATO_VERSION);
         }
@@ -100,12 +96,16 @@ public final class MultiplayerManager {
         }
 
         return CompletableFuture.completedFuture(null).thenComposeAsync(unused -> {
+            if (!isPortAvailable(3478)) {
+                throw new CatoAlreadyStartedException();
+            }
+
             String[] commands = new String[]{exe.toString(),
                     "--token", StringUtils.isBlank(token) ? "new" : token,
                     "--id", peer,
                     "--local", String.format("%s:%d", LOCAL_ADDRESS, localPort),
                     "--remote", String.format("%s:%d", REMOTE_ADDRESS, remotePort),
-                    "--mode", MODE};
+                    "--mode", mode.getName()};
             Process process;
             try {
                 process = new ProcessBuilder()
@@ -137,18 +137,21 @@ public final class MultiplayerManager {
                 client.onConnected().register(connectedEvent -> {
                     try {
                         int port = findAvailablePort();
-                        String command = String.format("net add %s %s:%d %s:%d %s\n", peer, LOCAL_ADDRESS, port, REMOTE_ADDRESS, connectedEvent.getPort(), MODE);
+                        String command = String.format("net add %s %s:%d %s:%d %s\n", peer, LOCAL_ADDRESS, port, REMOTE_ADDRESS, connectedEvent.getPort(), mode.getName());
                         LOG.info("Invoking cato: " + command);
+                        client.setGamePort(port);
                         writer.write(command);
                         writer.newLine();
                         writer.flush();
                         future.complete(session);
                     } catch (IOException e) {
                         future.completeExceptionally(e);
+                        session.stop();
                     }
                 });
                 client.onKicked().register(kickedEvent -> {
                     future.completeExceptionally(new CancellationException());
+                    session.stop();
                 });
                 client.start();
             });
@@ -163,13 +166,16 @@ public final class MultiplayerManager {
             throw new IllegalStateException("Cato file not found");
         }
 
+        if (!isPortAvailable(3478)) {
+            throw new CatoAlreadyStartedException();
+        }
+
         MultiplayerServer server = new MultiplayerServer(gamePort);
         server.startServer();
 
         String[] commands = new String[]{exe.toString(),
                 "--token", StringUtils.isBlank(token) ? "new" : token,
-                "--allows", String.format("%s:%d/%s:%d", REMOTE_ADDRESS, server.getPort(), REMOTE_ADDRESS, gamePort),
-                "--mode", MODE};
+                "--allows", String.format("%s:%d/%s:%d", REMOTE_ADDRESS, server.getPort(), REMOTE_ADDRESS, gamePort)};
         Process process = new ProcessBuilder()
                 .command(commands)
                 .start();
@@ -188,6 +194,14 @@ public final class MultiplayerManager {
     public static int findAvailablePort() throws IOException {
         try (ServerSocket socket = new ServerSocket(0)) {
             return socket.getLocalPort();
+        }
+    }
+
+    public static boolean isPortAvailable(int port) {
+        try (ServerSocket socket = new ServerSocket(port)) {
+            return true;
+        } catch (IOException e) {
+            return false;
         }
     }
 
@@ -419,5 +433,17 @@ public final class MultiplayerManager {
         public String getActual() {
             return actual;
         }
+    }
+
+    public enum Mode {
+        P2P,
+        RELAY;
+
+        String getName() {
+            return name().toLowerCase(Locale.ROOT);
+        }
+    }
+
+    public static class CatoAlreadyStartedException extends RuntimeException {
     }
 }

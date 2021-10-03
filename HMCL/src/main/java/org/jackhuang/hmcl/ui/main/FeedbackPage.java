@@ -183,7 +183,7 @@ public class FeedbackPage extends VBox implements PageAware {
             }
             HttpRequest req = HttpRequest.GET(NetworkUtils.withQuery("https://hmcl.huangyuhui.net/api/feedback", query));
             if (account != null) {
-                    req.authorization("Bearer", HMCLAccounts.getAccount().getIdToken())
+                req.authorization("Bearer", HMCLAccounts.getAccount().getIdToken())
                         .header("Authorization-Provider", HMCLAccounts.getAccount().getProvider());
             }
             return req.<List<FeedbackResponse>>getJson(new TypeToken<List<FeedbackResponse>>(){}.getType());

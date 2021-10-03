@@ -265,6 +265,12 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
 
                 gridPane.addRow(0, new Label(i18n("multiplayer.session.create.token")), tokenField, applyLink);
 
+                OptionToggleButton relay = new OptionToggleButton();
+                relay.disableProperty().bind(tokenField.textProperty().isEmpty());
+                relay.selectedProperty().bindBidirectional(globalConfig().multiplayerRelayProperty());
+                relay.setTitle(i18n("multiplayer.relay"));
+                relay.setSubtitle(i18n("multiplayer.relay.hint"));
+
                 HBox pane = new HBox();
                 pane.setAlignment(Pos.CENTER_LEFT);
 
@@ -280,7 +286,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                         placeholder,
                         FXUtils.segmentToTextFlow(i18n("multiplayer.powered_by"), Controllers::onHyperlinkAction));
 
-                thanksPane.getContent().addAll(gridPane, pane);
+                thanksPane.getContent().addAll(gridPane, relay, pane);
             }
 
             content.getChildren().setAll(

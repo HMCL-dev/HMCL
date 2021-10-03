@@ -21,10 +21,7 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
@@ -73,6 +70,8 @@ public class GlobalConfig implements Cloneable, Observable {
 
     private StringProperty multiplayerToken = new SimpleStringProperty();
 
+    private BooleanProperty multiplayerRelay = new SimpleBooleanProperty();
+
     private IntegerProperty multiplayerAgreementVersion = new SimpleIntegerProperty(0);
 
     private final Map<String, Object> unknownFields = new HashMap<>();
@@ -112,6 +111,18 @@ public class GlobalConfig implements Cloneable, Observable {
 
     public void setAgreementVersion(int agreementVersion) {
         this.agreementVersion.set(agreementVersion);
+    }
+
+    public boolean isMultiplayerRelay() {
+        return multiplayerRelay.get();
+    }
+
+    public BooleanProperty multiplayerRelayProperty() {
+        return multiplayerRelay;
+    }
+
+    public void setMultiplayerRelay(boolean multiplayerRelay) {
+        this.multiplayerRelay.set(multiplayerRelay);
     }
 
     public int getMultiplayerAgreementVersion() {
@@ -154,6 +165,7 @@ public class GlobalConfig implements Cloneable, Observable {
             JsonObject jsonObject = new JsonObject();
             jsonObject.add("agreementVersion", context.serialize(src.getAgreementVersion()));
             jsonObject.add("multiplayerToken", context.serialize(src.getMultiplayerToken()));
+            jsonObject.add("multiplayerRelay", context.serialize(src.isMultiplayerRelay()));
             jsonObject.add("multiplayerAgreementVersion", context.serialize(src.getMultiplayerAgreementVersion()));
             for (Map.Entry<String, Object> entry : src.unknownFields.entrySet()) {
                 jsonObject.add(entry.getKey(), context.serialize(entry.getValue()));
@@ -171,6 +183,7 @@ public class GlobalConfig implements Cloneable, Observable {
             GlobalConfig config = new GlobalConfig();
             config.setAgreementVersion(Optional.ofNullable(obj.get("agreementVersion")).map(JsonElement::getAsInt).orElse(0));
             config.setMultiplayerToken(Optional.ofNullable(obj.get("multiplayerToken")).map(JsonElement::getAsString).orElse(null));
+            config.setMultiplayerRelay(Optional.ofNullable(obj.get("multiplayerRelay")).map(JsonElement::getAsBoolean).orElse(false));
             config.setMultiplayerAgreementVersion(Optional.ofNullable(obj.get("multiplayerAgreementVersion")).map(JsonElement::getAsInt).orElse(0));
 
             for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
