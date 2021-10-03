@@ -114,6 +114,8 @@ public class AccountLoginPane extends StackPane {
             dialogLayout.setActions(lblCreationWarning, acceptButton, cancelButton);
         }
 
+        getChildren().setAll(dialogLayout);
+
         onEscPressed(this, this::onCancel);
     }
 
