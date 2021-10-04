@@ -64,14 +64,14 @@ public final class FabricModMetadata {
         this.contact = contact;
     }
 
-    public static ModInfo fromFile(File modFile) throws IOException, JsonParseException {
+    public static LocalMod fromFile(File modFile) throws IOException, JsonParseException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.toPath())) {
             Path mcmod = fs.getPath("fabric.mod.json");
             if (Files.notExists(mcmod))
                 throw new IOException("File " + modFile + " is not a Fabric mod.");
             FabricModMetadata metadata = JsonUtils.fromNonNullJson(FileUtils.readText(mcmod), FabricModMetadata.class);
             String authors = metadata.authors == null ? "" : metadata.authors.stream().map(author -> author.name).collect(Collectors.joining(", "));
-            return new ModInfo(modFile, metadata.id, metadata.name, new ModInfo.Description(metadata.description),
+            return new LocalMod(modFile, ModLoaderType.FABRIC, metadata.id, metadata.name, new LocalMod.Description(metadata.description),
                     authors, metadata.version, "", metadata.contact != null ? metadata.contact.getOrDefault("homepage", "") : "", metadata.icon);
         }
     }

@@ -202,10 +202,10 @@ public class Datapack {
         private Path file;
         private final BooleanProperty active;
         private final String id;
-        private final ModInfo.Description description;
+        private final LocalMod.Description description;
         private final Datapack datapack;
 
-        public Pack(Path file, String id, ModInfo.Description description, Datapack datapack) {
+        public Pack(Path file, String id, LocalMod.Description description, Datapack datapack) {
             this.file = file;
             this.id = id;
             this.description = description;
@@ -235,7 +235,7 @@ public class Datapack {
             return id;
         }
 
-        public ModInfo.Description getDescription() {
+        public LocalMod.Description getDescription() {
             return description;
         }
 

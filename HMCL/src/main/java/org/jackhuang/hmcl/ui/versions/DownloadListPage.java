@@ -40,6 +40,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -74,7 +75,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final boolean versionSelection;
     private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
-    private final ListProperty<RemoteModRepository.Mod> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
+    private final ListProperty<RemoteMod> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
     private final ObservableList<String> versions = FXCollections.observableArrayList();
     private final StringProperty selectedVersion = new SimpleStringProperty();
     private final DownloadPage.DownloadCallback callback;
@@ -351,16 +352,16 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     }
                 }, getSkinnable().failedProperty()));
 
-                JFXListView<RemoteModRepository.Mod> listView = new JFXListView<>();
+                JFXListView<RemoteMod> listView = new JFXListView<>();
                 spinnerPane.setContent(listView);
                 Bindings.bindContent(listView.getItems(), getSkinnable().items);
                 listView.setOnMouseClicked(e -> {
                     if (listView.getSelectionModel().getSelectedIndex() < 0)
                         return;
-                    RemoteModRepository.Mod selectedItem = listView.getSelectionModel().getSelectedItem();
+                    RemoteMod selectedItem = listView.getSelectionModel().getSelectedItem();
                     Controllers.navigate(new DownloadPage(getSkinnable(), selectedItem, getSkinnable().getProfileVersion(), getSkinnable().callback));
                 });
-                listView.setCellFactory(x -> new FloatListCell<RemoteModRepository.Mod>(listView) {
+                listView.setCellFactory(x -> new FloatListCell<RemoteMod>(listView) {
                     TwoLineListItem content = new TwoLineListItem();
                     ImageView imageView = new ImageView();
 
@@ -373,7 +374,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     }
 
                     @Override
-                    protected void updateControl(RemoteModRepository.Mod dataItem, boolean empty) {
+                    protected void updateControl(RemoteMod dataItem, boolean empty) {
                         if (empty) return;
                         ModTranslations.Mod mod = ModTranslations.getModByCurseForgeId(dataItem.getSlug());
                         content.setTitle(mod != null ? mod.getDisplayName() : dataItem.getTitle());

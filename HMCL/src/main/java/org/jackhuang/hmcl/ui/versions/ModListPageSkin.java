@@ -34,7 +34,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.mod.ModInfo;
+import org.jackhuang.hmcl.mod.LocalMod;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -124,34 +124,34 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
     static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
         private final BooleanProperty active;
-        private final ModInfo modInfo;
+        private final LocalMod localMod;
         private final String message;
         private final ModTranslations.Mod mod;
 
-        ModInfoObject(ModInfo modInfo) {
-            this.modInfo = modInfo;
-            this.active = modInfo.activeProperty();
-            StringBuilder message = new StringBuilder(modInfo.getName());
-            if (isNotBlank(modInfo.getVersion()))
-                message.append(", ").append(i18n("archive.version")).append(": ").append(modInfo.getVersion());
-            if (isNotBlank(modInfo.getGameVersion()))
-                message.append(", ").append(i18n("archive.game_version")).append(": ").append(modInfo.getGameVersion());
-            if (isNotBlank(modInfo.getAuthors()))
-                message.append(", ").append(i18n("archive.author")).append(": ").append(modInfo.getAuthors());
+        ModInfoObject(LocalMod localMod) {
+            this.localMod = localMod;
+            this.active = localMod.activeProperty();
+            StringBuilder message = new StringBuilder(localMod.getName());
+            if (isNotBlank(localMod.getVersion()))
+                message.append(", ").append(i18n("archive.version")).append(": ").append(localMod.getVersion());
+            if (isNotBlank(localMod.getGameVersion()))
+                message.append(", ").append(i18n("archive.game_version")).append(": ").append(localMod.getGameVersion());
+            if (isNotBlank(localMod.getAuthors()))
+                message.append(", ").append(i18n("archive.author")).append(": ").append(localMod.getAuthors());
             this.message = message.toString();
-            this.mod = ModTranslations.getModById(modInfo.getId());
+            this.mod = ModTranslations.getModById(localMod.getId());
         }
 
         String getTitle() {
-            return modInfo.getFileName();
+            return localMod.getFileName();
         }
 
         String getSubtitle() {
             return message;
         }
 
-        ModInfo getModInfo() {
-            return modInfo;
+        LocalMod getModInfo() {
+            return localMod;
         }
 
         public ModTranslations.Mod getMod() {
@@ -160,7 +160,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
         @Override
         public int compareTo(@NotNull ModListPageSkin.ModInfoObject o) {
-            return modInfo.getFileName().toLowerCase().compareTo(o.modInfo.getFileName().toLowerCase());
+            return localMod.getFileName().toLowerCase().compareTo(o.localMod.getFileName().toLowerCase());
         }
     }
 

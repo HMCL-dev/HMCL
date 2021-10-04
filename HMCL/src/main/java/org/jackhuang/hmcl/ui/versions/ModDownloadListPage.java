@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
@@ -46,7 +47,7 @@ public class ModDownloadListPage extends DownloadListPage {
     private class Repository implements RemoteModRepository {
 
         @Override
-        public Stream<Mod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, int sort) throws IOException {
+        public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, int sort) throws IOException {
             String newSearchFilter;
             if (StringUtils.CHINESE_PATTERN.matcher(searchFilter).find()) {
                 List<ModTranslations.Mod> mods = ModTranslations.searchMod(searchFilter);
@@ -76,7 +77,7 @@ public class ModDownloadListPage extends DownloadListPage {
         }
 
         @Override
-        public Optional<Version> getRemoteVersionByLocalFile(Path file) {
+        public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(Path file) {
             throw new UnsupportedOperationException();
         }
 

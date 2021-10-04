@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -77,7 +77,7 @@ public final class Versions {
         }
     }
 
-    public static void downloadModpackImpl(Profile profile, String version, RemoteModRepository.Version file) {
+    public static void downloadModpackImpl(Profile profile, String version, RemoteMod.Version file) {
         Path modpack;
         URL downloadURL;
         try {

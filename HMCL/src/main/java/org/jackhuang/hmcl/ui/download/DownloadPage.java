@@ -24,7 +24,7 @@ import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
-import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
@@ -154,7 +154,7 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
         setCenter(transitionPane);
     }
 
-    private void download(Profile profile, @Nullable String version, RemoteModRepository.Version file, String subdirectoryName) {
+    private void download(Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
         if (version == null) version = profile.getSelectedVersion();
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version).toPath() : profile.getRepository().getBaseDirectory().toPath();

@@ -24,7 +24,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.mod.ModInfo;
+import org.jackhuang.hmcl.mod.LocalMod;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -151,7 +151,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             modManager.removeMods(selectedItems.stream()
                     .filter(Objects::nonNull)
                     .map(ModListPageSkin.ModInfoObject::getModInfo)
-                    .toArray(ModInfo[]::new));
+                    .toArray(LocalMod[]::new));
             loadMods(modManager);
         } catch (IOException ignore) {
             // Fail to remove mods if the game is running or the mod is absent.

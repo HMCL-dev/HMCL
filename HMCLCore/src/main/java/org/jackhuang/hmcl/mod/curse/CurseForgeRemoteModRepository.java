@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.util.MurmurHash;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -64,7 +65,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     @Override
-    public Stream<RemoteModRepository.Mod> search(String gameVersion, RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, int sort) throws IOException {
+    public Stream<RemoteMod> search(String gameVersion, RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, int sort) throws IOException {
         int categoryId = 0;
         if (category != null) categoryId = ((Category) category.getSelf()).getId();
         return searchPaginated(gameVersion, categoryId, pageOffset, pageSize, searchFilter, sort).stream()
@@ -72,7 +73,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     @Override
-    public Optional<RemoteModRepository.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
+    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(file)))) {
             int b;

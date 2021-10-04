@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.mod.curse;
 
-import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.util.Immutable;
 
 import java.io.IOException;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Immutable
-public class CurseAddon implements RemoteModRepository.IMod {
+public class CurseAddon implements RemoteMod.IMod {
     private final int id;
     private final String name;
     private final List<Author> authors;
@@ -168,13 +168,13 @@ public class CurseAddon implements RemoteModRepository.IMod {
     }
 
     @Override
-    public List<RemoteModRepository.Mod> loadDependencies() throws IOException {
+    public List<RemoteMod> loadDependencies() throws IOException {
         Set<Integer> dependencies = latestFiles.stream()
                 .flatMap(latestFile -> latestFile.getDependencies().stream())
                 .filter(dep -> dep.getType() == 3)
                 .map(Dependency::getAddonId)
                 .collect(Collectors.toSet());
-        List<RemoteModRepository.Mod> mods = new ArrayList<>();
+        List<RemoteMod> mods = new ArrayList<>();
         for (int dependencyId : dependencies) {
             mods.add(CurseForgeRemoteModRepository.MODS.getAddon(dependencyId).toMod());
         }
@@ -182,12 +182,12 @@ public class CurseAddon implements RemoteModRepository.IMod {
     }
 
     @Override
-    public Stream<RemoteModRepository.Version> loadVersions() throws IOException {
+    public Stream<RemoteMod.Version> loadVersions() throws IOException {
         return CurseForgeRemoteModRepository.MODS.getFiles(this).stream()
                 .map(CurseAddon.LatestFile::toVersion);
     }
 
-    public RemoteModRepository.Mod toMod() {
+    public RemoteMod toMod() {
         String iconUrl = null;
         for (CurseAddon.Attachment attachment : attachments) {
             if (attachment.isDefault()) {
@@ -195,7 +195,7 @@ public class CurseAddon implements RemoteModRepository.IMod {
             }
         }
 
-        return new RemoteModRepository.Mod(
+        return new RemoteMod(
                 slug,
                 "",
                 name,
@@ -481,31 +481,31 @@ public class CurseAddon implements RemoteModRepository.IMod {
             return fileDataInstant;
         }
 
-        public RemoteModRepository.Version toVersion() {
-            RemoteModRepository.VersionType versionType;
+        public RemoteMod.Version toVersion() {
+            RemoteMod.VersionType versionType;
             switch (getReleaseType()) {
                 case 1:
-                    versionType = RemoteModRepository.VersionType.Release;
+                    versionType = RemoteMod.VersionType.Release;
                     break;
                 case 2:
-                    versionType = RemoteModRepository.VersionType.Beta;
+                    versionType = RemoteMod.VersionType.Beta;
                     break;
                 case 3:
-                    versionType = RemoteModRepository.VersionType.Alpha;
+                    versionType = RemoteMod.VersionType.Alpha;
                     break;
                 default:
-                    versionType = RemoteModRepository.VersionType.Release;
+                    versionType = RemoteMod.VersionType.Release;
                     break;
             }
 
-            return new RemoteModRepository.Version(
+            return new RemoteMod.Version(
                     this,
                     getDisplayName(),
                     null,
                     null,
                     getParsedFileDate(),
                     versionType,
-                    new RemoteModRepository.File(Collections.emptyMap(), getDownloadUrl(), getFileName()),
+                    new RemoteMod.File(Collections.emptyMap(), getDownloadUrl(), getFileName()),
                     Collections.emptyList(),
                     gameVersion.stream().filter(ver -> ver.startsWith("1.") || ver.contains("w")).collect(Collectors.toList()),
                     Collections.emptyList()

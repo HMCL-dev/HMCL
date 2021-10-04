@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.mod.modrinth;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Hex;
@@ -64,13 +65,13 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public Stream<RemoteModRepository.Mod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, int sort) throws IOException {
+    public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, int sort) throws IOException {
         return searchPaginated(gameVersion, pageOffset, pageSize, searchFilter).stream()
                 .map(ModResult::toMod);
     }
 
     @Override
-    public Optional<RemoteModRepository.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
+    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
         String sha1 = Hex.encodeHex(DigestUtils.digest("SHA-1", file));
 
         try {
@@ -288,23 +289,23 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return loaders;
         }
 
-        public Optional<RemoteModRepository.Version> toVersion() {
-            RemoteModRepository.VersionType type;
+        public Optional<RemoteMod.Version> toVersion() {
+            RemoteMod.VersionType type;
             if ("release".equals(versionType)) {
-                type = RemoteModRepository.VersionType.Release;
+                type = RemoteMod.VersionType.Release;
             } else if ("beta".equals(versionType)) {
-                type = RemoteModRepository.VersionType.Beta;
+                type = RemoteMod.VersionType.Beta;
             } else if ("alpha".equals(versionType)) {
-                type = RemoteModRepository.VersionType.Alpha;
+                type = RemoteMod.VersionType.Alpha;
             } else {
-                type = RemoteModRepository.VersionType.Release;
+                type = RemoteMod.VersionType.Release;
             }
 
             if (files.size() == 0) {
                 return Optional.empty();
             }
 
-            return Optional.of(new RemoteModRepository.Version(
+            return Optional.of(new RemoteMod.Version(
                     this,
                     name,
                     versionNumber,
@@ -342,12 +343,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return filename;
         }
 
-        public RemoteModRepository.File toFile() {
-            return new RemoteModRepository.File(hashes, url, filename);
+        public RemoteMod.File toFile() {
+            return new RemoteMod.File(hashes, url, filename);
         }
     }
 
-    public static class ModResult implements RemoteModRepository.IMod {
+    public static class ModResult implements RemoteMod.IMod {
         @SerializedName("mod_id")
         private final String modId;
 
@@ -457,19 +458,19 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         @Override
-        public List<RemoteModRepository.Mod> loadDependencies() throws IOException {
+        public List<RemoteMod> loadDependencies() throws IOException {
             return Collections.emptyList();
         }
 
         @Override
-        public Stream<RemoteModRepository.Version> loadVersions() throws IOException {
+        public Stream<RemoteMod.Version> loadVersions() throws IOException {
             return ModrinthRemoteModRepository.INSTANCE.getFiles(this).stream()
                     .map(ModVersion::toVersion)
                     .flatMap(Lang::toStream);
         }
 
-        public RemoteModRepository.Mod toMod() {
-            return new RemoteModRepository.Mod(
+        public RemoteMod toMod() {
+            return new RemoteMod(
                     slug,
                     author,
                     title,

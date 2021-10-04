@@ -116,7 +116,7 @@ public final class ForgeNewModMetadata {
         }
     }
 
-    public static ModInfo fromFile(File modFile) throws IOException, JsonParseException {
+    public static LocalMod fromFile(File modFile) throws IOException, JsonParseException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.toPath())) {
             Path modstoml = fs.getPath("META-INF/mods.toml");
             if (Files.notExists(modstoml))
@@ -135,7 +135,7 @@ public final class ForgeNewModMetadata {
                     LOG.log(Level.WARNING, "Failed to parse MANIFEST.MF in file " + modFile.getPath());
                 }
             }
-            return new ModInfo(modFile, mod.getModId(), mod.getDisplayName(), new ModInfo.Description(mod.getDescription()),
+            return new LocalMod(modFile, ModLoaderType.FORGE, mod.getModId(), mod.getDisplayName(), new LocalMod.Description(mod.getDescription()),
                     mod.getAuthors(), mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                     mod.getDisplayURL(),
                     metadata.getLogoFile());
