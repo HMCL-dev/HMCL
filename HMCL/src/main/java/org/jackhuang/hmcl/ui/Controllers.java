@@ -32,7 +32,6 @@ import javafx.stage.StageStyle;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.java.JavaRepository;
-import org.jackhuang.hmcl.mod.curse.CurseModManager;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -49,9 +48,7 @@ import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
 import org.jackhuang.hmcl.ui.multiplayer.MultiplayerPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
-import org.jackhuang.hmcl.ui.versions.DownloadListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
-import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.Logging;
@@ -87,13 +84,6 @@ public final class Controllers {
     });
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     private static DecoratorController decorator;
-    private static Lazy<DownloadListPage> modDownloadListPage = new Lazy<>(() -> {
-        return new DownloadListPage(CurseModManager.SECTION_MODPACK, Versions::downloadModpackImpl) {
-            {
-                state.set(State.fromTitle(i18n("modpack.download")));
-            }
-        };
-    });
     private static Lazy<DownloadPage> downloadPage = new Lazy<>(DownloadPage::new);
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
@@ -129,11 +119,6 @@ public final class Controllers {
     // FXThread
     public static RootPage getRootPage() {
         return rootPage.get();
-    }
-
-    // FXThread
-    public static DownloadListPage getModpackDownloadListPage() {
-        return modDownloadListPage.get();
     }
 
     // FXThread
@@ -318,7 +303,6 @@ public final class Controllers {
         versionPage = null;
         gameListPage = null;
         settingsPage = null;
-        modDownloadListPage = null;
         decorator = null;
         stage = null;
         scene = null;

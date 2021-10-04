@@ -18,22 +18,53 @@
 package org.jackhuang.hmcl.mod;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
-public final class DownloadManager {
-    private DownloadManager() {
-    }
+public interface RemoteModRepository {
 
-    public interface IMod {
+    Stream<Mod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, int sort)
+            throws IOException;
+
+    Optional<Version> getRemoteVersionByLocalFile(Path file) throws IOException;
+
+    Stream<Category> getCategories() throws IOException;
+
+    interface IMod {
         List<Mod> loadDependencies() throws IOException;
 
         Stream<Version> loadVersions() throws IOException;
     }
 
-    public static class Mod {
+    class Category {
+        private final Object self;
+        private final String id;
+        private final List<Category> subcategories;
+
+        public Category(Object self, String id, List<Category> subcategories) {
+            this.self = self;
+            this.id = id;
+            this.subcategories = subcategories;
+        }
+
+        public Object getSelf() {
+            return self;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public List<Category> getSubcategories() {
+            return subcategories;
+        }
+    }
+
+    class Mod {
         private final String slug;
         private final String author;
         private final String title;
@@ -87,13 +118,13 @@ public final class DownloadManager {
         }
     }
 
-    public enum VersionType {
+    enum VersionType {
         Release,
         Beta,
         Alpha
     }
 
-    public static class Version {
+    class Version {
         private final Object self;
         private final String name;
         private final String version;
@@ -159,7 +190,7 @@ public final class DownloadManager {
         }
     }
 
-    public static class File {
+    class File {
         private final Map<String, String> hashes;
         private final String url;
         private final String filename;
@@ -183,7 +214,7 @@ public final class DownloadManager {
         }
     }
 
-    public static final String[] DEFAULT_GAME_VERSIONS = new String[]{
+    String[] DEFAULT_GAME_VERSIONS = new String[]{
             "1.17.1", "1.17",
             "1.16.5", "1.16.4", "1.16.3", "1.16.2", "1.16.1", "1.16",
             "1.15.2", "1.15.1", "1.15",

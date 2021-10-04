@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.mod.DownloadManager;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -77,15 +77,7 @@ public final class Versions {
         }
     }
 
-    public static void downloadModpack() {
-        Profile profile = Profiles.getSelectedProfile();
-        if (profile.getRepository().isLoaded()) {
-            Controllers.getModpackDownloadListPage().loadVersion(profile, null);
-            Controllers.navigate(Controllers.getModpackDownloadListPage());
-        }
-    }
-
-    public static void downloadModpackImpl(Profile profile, String version, DownloadManager.Version file) {
+    public static void downloadModpackImpl(Profile profile, String version, RemoteModRepository.Version file) {
         Path modpack;
         URL downloadURL;
         try {
@@ -101,7 +93,7 @@ public final class Versions {
                 new FileDownloadTask(downloadURL, modpack.toFile())
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
-                                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack.toFile()));
+                                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile()));
                             } else {
                                 Controllers.dialog(
                                         i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),

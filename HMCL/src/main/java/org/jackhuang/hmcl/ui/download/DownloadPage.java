@@ -24,8 +24,8 @@ import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
-import org.jackhuang.hmcl.mod.DownloadManager;
-import org.jackhuang.hmcl.mod.curse.CurseModManager;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -81,7 +81,7 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
         newGameTab.setNodeSupplier(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
                 "game", versionPageNavigator::onGameSelected));
         modpackTab.setNodeSupplier(() -> {
-            DownloadListPage page = new DownloadListPage(CurseModManager.SECTION_MODPACK, Versions::downloadModpackImpl);
+            DownloadListPage page = new DownloadListPage(CurseForgeRemoteModRepository.MODPACKS, Versions::downloadModpackImpl);
 
             JFXButton installLocalModpackButton = new JFXButton(i18n("install.modpack"));
             installLocalModpackButton.setButtonType(JFXButton.ButtonType.RAISED);
@@ -91,10 +91,10 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
             page.getActions().add(installLocalModpackButton);
             return page;
         });
-        modTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_MOD, (profile, version, file) -> download(profile, version, file, "mods"), true));
-        resourcePackTab.setNodeSupplier(() -> new DownloadListPage(CurseModManager.SECTION_RESOURCE_PACK, (profile, version, file) -> download(profile, version, file, "resourcepacks")));
-//        customizationTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.SECTION_CUSTOMIZATION, this::download));
-        worldTab.setNodeSupplier(() -> new DownloadListPage(CurseModManager.SECTION_WORLD));
+        modTab.setNodeSupplier(() -> new ModDownloadListPage((profile, version, file) -> download(profile, version, file, "mods"), true));
+        resourcePackTab.setNodeSupplier(() -> new DownloadListPage(CurseForgeRemoteModRepository.RESOURCE_PACKS, (profile, version, file) -> download(profile, version, file, "resourcepacks")));
+//        customizationTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.CUSTOMIZATIONS, this::download));
+        worldTab.setNodeSupplier(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS));
         tab = new TabHeader(newGameTab, modpackTab, modTab, resourcePackTab, worldTab);
 
         Profiles.registerVersionsListener(this::loadVersions);
@@ -154,7 +154,7 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
         setCenter(transitionPane);
     }
 
-    private void download(Profile profile, @Nullable String version, DownloadManager.Version file, String subdirectoryName) {
+    private void download(Profile profile, @Nullable String version, RemoteModRepository.Version file, String subdirectoryName) {
         if (version == null) version = profile.getSelectedVersion();
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version).toPath() : profile.getRepository().getBaseDirectory().toPath();

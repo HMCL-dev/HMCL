@@ -18,27 +18,43 @@
 package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.util.MurmurHash;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
-public final class CurseModManager {
-    private CurseModManager() {
+public final class CurseForgeRemoteModRepository implements RemoteModRepository {
+
+    private static final String PREFIX = "https://addons-ecs.forgesvc.net/api/v2";
+    
+    private final int section;
+
+    public CurseForgeRemoteModRepository(int section) {
+        this.section = section;
     }
 
-    public static List<CurseAddon> searchPaginated(String gameVersion, int category, int section, int pageOffset, String searchFilter, int sort) throws IOException {
-        String response = NetworkUtils.doGet(new URL(NetworkUtils.withQuery("https://addons-ecs.forgesvc.net/api/v2/addon/search", mapOf(
+    public List<CurseAddon> searchPaginated(String gameVersion, int category, int pageOffset, int pageSize, String searchFilter, int sort) throws IOException {
+        String response = NetworkUtils.doGet(new URL(NetworkUtils.withQuery(PREFIX + "/addon/search", mapOf(
                 pair("categoryId", Integer.toString(category)),
                 pair("gameId", "432"),
                 pair("gameVersion", gameVersion),
                 pair("index", Integer.toString(pageOffset)),
-                pair("pageSize", "50"),
+                pair("pageSize", Integer.toString(pageSize)),
                 pair("searchFilter", searchFilter),
                 pair("sectionId", Integer.toString(section)),
                 pair("sort", Integer.toString(sort))
@@ -47,25 +63,63 @@ public final class CurseModManager {
         }.getType());
     }
 
-    public static CurseAddon getAddon(int id) throws IOException {
-        String response = NetworkUtils.doGet(NetworkUtils.toURL("https://addons-ecs.forgesvc.net/api/v2/addon/" + id));
+    @Override
+    public Stream<RemoteModRepository.Mod> search(String gameVersion, RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, int sort) throws IOException {
+        int categoryId = 0;
+        if (category != null) categoryId = ((Category) category.getSelf()).getId();
+        return searchPaginated(gameVersion, categoryId, pageOffset, pageSize, searchFilter, sort).stream()
+                .map(CurseAddon::toMod);
+    }
+
+    @Override
+    public Optional<RemoteModRepository.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(file)))) {
+            int b;
+            while ((b = reader.read()) != -1) {
+                if (b != 0x9 && b != 0xa && b != 0xd && b != 0x20) {
+                    baos.write(b);
+                }
+            }
+        }
+
+        int hash = MurmurHash.hash32(baos.toByteArray(), baos.size(), 1);
+
+        FingerprintResponse response = HttpRequest.POST(PREFIX + "/fingerprint")
+                .json(Collections.singletonList(hash))
+                .getJson(FingerprintResponse.class);
+
+        if (response.getExactMatches() == null || response.getExactMatches().isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(response.getExactMatches().get(0).getFile().toVersion());
+    }
+
+    public CurseAddon getAddon(int id) throws IOException {
+        String response = NetworkUtils.doGet(NetworkUtils.toURL(PREFIX + "/addon/" + id));
         return JsonUtils.fromNonNullJson(response, CurseAddon.class);
     }
 
-    public static List<CurseAddon.LatestFile> getFiles(CurseAddon addon) throws IOException {
-        String response = NetworkUtils.doGet(NetworkUtils.toURL("https://addons-ecs.forgesvc.net/api/v2/addon/" + addon.getId() + "/files"));
+    public List<CurseAddon.LatestFile> getFiles(CurseAddon addon) throws IOException {
+        String response = NetworkUtils.doGet(NetworkUtils.toURL(PREFIX + "/addon/" + addon.getId() + "/files"));
         return JsonUtils.fromNonNullJson(response, new TypeToken<List<CurseAddon.LatestFile>>() {
         }.getType());
     }
 
-    public static List<Category> getCategories(int section) throws IOException {
-        String response = NetworkUtils.doGet(NetworkUtils.toURL("https://addons-ecs.forgesvc.net/api/v2/category/section/" + section));
+    public List<Category> getCategoriesImpl() throws IOException {
+        String response = NetworkUtils.doGet(NetworkUtils.toURL(PREFIX + "/category/section/" + section));
         List<Category> categories = JsonUtils.fromNonNullJson(response, new TypeToken<List<Category>>() {
         }.getType());
         return reorganizeCategories(categories, section);
     }
 
-    private static List<Category> reorganizeCategories(List<Category> categories, int rootId) {
+    @Override
+    public Stream<RemoteModRepository.Category> getCategories() throws IOException {
+        return getCategoriesImpl().stream().map(Category::toCategory);
+    }
+
+    private List<Category> reorganizeCategories(List<Category> categories, int rootId) {
         List<Category> result = new ArrayList<>();
 
         Map<Integer, Category> categoryMap = new HashMap<>();
@@ -97,6 +151,11 @@ public final class CurseModManager {
     public static final int SECTION_UNKNOWN1 = 4944;
     public static final int SECTION_UNKNOWN2 = 4979;
     public static final int SECTION_UNKNOWN3 = 4984;
+
+    public static final CurseForgeRemoteModRepository MODS = new CurseForgeRemoteModRepository(SECTION_MOD);
+    public static final CurseForgeRemoteModRepository MODPACKS = new CurseForgeRemoteModRepository(SECTION_MODPACK);
+    public static final CurseForgeRemoteModRepository RESOURCE_PACKS = new CurseForgeRemoteModRepository(SECTION_RESOURCE_PACK);
+    public static final CurseForgeRemoteModRepository WORLDS = new CurseForgeRemoteModRepository(SECTION_WORLD);
 
     public static class Category {
         private final int id;
@@ -154,6 +213,37 @@ public final class CurseModManager {
 
         public List<Category> getSubcategories() {
             return subcategories;
+        }
+
+        public RemoteModRepository.Category toCategory() {
+            return new RemoteModRepository.Category(
+                    this,
+                    Integer.toString(id),
+                    getSubcategories().stream().map(Category::toCategory).collect(Collectors.toList()));
+        }
+    }
+
+    private static class FingerprintResponse {
+        private final boolean isCacheBuilt;
+        private final List<CurseAddon> exactMatches;
+        private final List<Integer> exactFingerprints;
+
+        public FingerprintResponse(boolean isCacheBuilt, List<CurseAddon> exactMatches, List<Integer> exactFingerprints) {
+            this.isCacheBuilt = isCacheBuilt;
+            this.exactMatches = exactMatches;
+            this.exactFingerprints = exactFingerprints;
+        }
+
+        public boolean isCacheBuilt() {
+            return isCacheBuilt;
+        }
+
+        public List<CurseAddon> getExactMatches() {
+            return exactMatches;
+        }
+
+        public List<Integer> getExactFingerprints() {
+            return exactFingerprints;
         }
     }
 }
