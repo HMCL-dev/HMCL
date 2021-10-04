@@ -26,10 +26,9 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -141,6 +140,17 @@ public final class LocalMod implements Comparable<LocalMod> {
         return fileName;
     }
 
+    public ModUpdate checkUpdates(String gameVersion, RemoteModRepository repository) throws IOException {
+        Optional<RemoteMod.Version> currentVersion = repository.getRemoteVersionByLocalFile(this, file);
+        if (!currentVersion.isPresent()) return null;
+        List<RemoteMod.Version> remoteVersions = repository.getRemoteVersionsById(currentVersion.get().getModid())
+                .filter(version -> version.getGameVersions().contains(gameVersion))
+                .filter(version -> version.getLoaders().contains(modLoaderType))
+                .sorted(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed())
+                .collect(Collectors.toList());
+        return new ModUpdate(this, currentVersion.get(), remoteVersions);
+    }
+
     @Override
     public int compareTo(LocalMod o) {
         return getFileName().compareTo(o.getFileName());
@@ -154,6 +164,30 @@ public final class LocalMod implements Comparable<LocalMod> {
     @Override
     public int hashCode() {
         return Objects.hash(getFileName());
+    }
+
+    public static class ModUpdate {
+        private final LocalMod localMod;
+        private final RemoteMod.Version currentVersion;
+        private final List<RemoteMod.Version> candidates;
+
+        public ModUpdate(LocalMod localMod, RemoteMod.Version currentVersion, List<RemoteMod.Version> candidates) {
+            this.localMod = localMod;
+            this.currentVersion = currentVersion;
+            this.candidates = candidates;
+        }
+
+        public LocalMod getLocalMod() {
+            return localMod;
+        }
+
+        public RemoteMod.Version getCurrentVersion() {
+            return currentVersion;
+        }
+
+        public List<RemoteMod.Version> getCandidates() {
+            return candidates;
+        }
     }
 
     public static class Description {

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import org.jackhuang.hmcl.mod.LocalMod;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
@@ -77,17 +78,27 @@ public class ModDownloadListPage extends DownloadListPage {
         }
 
         @Override
-        public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(Path file) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public Stream<Category> getCategories() throws IOException {
             if ("mods.modrinth".equals(downloadSource.get())) {
                 return ModrinthRemoteModRepository.INSTANCE.getCategories();
             } else {
                 return CurseForgeRemoteModRepository.MODS.getCategories();
             }
+        }
+
+        @Override
+        public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalMod localMod, Path file) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public RemoteMod getModById(String id) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
+            throw new UnsupportedOperationException();
         }
     }
 

@@ -66,6 +66,14 @@ public final class JsonUtils {
         }
     }
 
+    public static <T> T fromMaybeMalformedJson(String json, Type type) throws JsonParseException {
+        try {
+            return GSON.fromJson(json, type);
+        } catch (JsonSyntaxException e) {
+            return null;
+        }
+    }
+
     public static GsonBuilder defaultGsonBuilder() {
         return new GsonBuilder()
                 .enableComplexMapKeySerialization()

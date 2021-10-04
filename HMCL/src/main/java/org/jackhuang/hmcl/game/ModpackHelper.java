@@ -50,6 +50,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -167,7 +168,8 @@ public final class ModpackHelper {
         };
 
         return new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name)
-                .whenComplete(Schedulers.defaultScheduler(), success, failure);
+                .whenComplete(Schedulers.defaultScheduler(), success, failure)
+                .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
     }
 
     public static boolean isExternalGameNameConflicts(String name) {
@@ -223,7 +225,8 @@ public final class ModpackHelper {
     public static Task<Void> getUpdateTask(Profile profile, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
         switch (configuration.getType()) {
             case ServerModpackRemoteInstallTask.MODPACK_TYPE:
-                return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name));
+                return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name))
+                        .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
             default:
                 throw new UnsupportedModpackException();
         }

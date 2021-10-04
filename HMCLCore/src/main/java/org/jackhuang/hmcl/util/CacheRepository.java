@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -53,6 +54,7 @@ public class CacheRepository {
     private Path cacheDirectory;
     private Path indexFile;
     private Map<String, ETagItem> index;
+    private Map<String, Storage> storages = new HashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public void changeDirectory(Path commonDir) {
@@ -62,6 +64,10 @@ public class CacheRepository {
 
         lock.writeLock().lock();
         try {
+            for (Storage storage : storages.values()) {
+                storage.changeDirectory(cacheDirectory);
+            }
+
             if (Files.isRegularFile(indexFile)) {
                 ETagIndex raw = JsonUtils.GSON.fromJson(FileUtils.readText(indexFile.toFile()), ETagIndex.class);
                 if (raw == null)
@@ -76,6 +82,7 @@ public class CacheRepository {
         } finally {
             lock.writeLock().unlock();
         }
+
     }
 
     public Path getCommonDirectory() {
@@ -84,6 +91,15 @@ public class CacheRepository {
 
     public Path getCacheDirectory() {
         return cacheDirectory;
+    }
+
+    public Storage getStorage(String key) {
+        lock.readLock().lock();
+        try {
+            return storages.computeIfAbsent(key, Storage::new);
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     protected Path getFile(String algorithm, String hash) {
@@ -350,6 +366,78 @@ public class CacheRepository {
         @Override
         public int hashCode() {
             return Objects.hash(url, eTag, hash, localLastModified, remoteLastModified);
+        }
+    }
+
+    /**
+     * Universal cache
+     */
+    public static class Storage {
+        private final String name;
+        private Map<String, Object> storage;
+        private final ReadWriteLock lock = new ReentrantReadWriteLock();
+        private Path indexFile;
+
+        public Storage(String name) {
+            this.name = name;
+        }
+
+        public Object getEntry(String key) {
+            lock.readLock().lock();
+            try {
+                return storage.get(key);
+            } finally {
+                lock.readLock().unlock();
+            }
+        }
+
+        public void putEntry(String key, Object value) {
+            lock.writeLock().lock();
+            try {
+                storage.put(key, value);
+                saveToFile();
+            } finally {
+                lock.writeLock().unlock();
+            }
+        }
+
+        private void joinEntries(Map<String, Object> storage) {
+            this.storage.putAll(storage);
+        }
+
+        private void changeDirectory(Path cacheDirectory) {
+            lock.writeLock().lock();
+            try {
+                indexFile = cacheDirectory.resolve(name + ".json");
+                if (Files.isRegularFile(indexFile)) {
+                    joinEntries(JsonUtils.fromNonNullJson(FileUtils.readText(indexFile.toFile()), new TypeToken<Map<String, Object>>() {
+                    }.getType()));
+                }
+            } catch (IOException | JsonParseException e) {
+                LOG.log(Level.WARNING, "Unable to read storage {" + name + "} file");
+            } finally {
+                lock.writeLock().unlock();
+            }
+        }
+
+        public void saveToFile() {
+            try (RandomAccessFile file = new RandomAccessFile(indexFile.toFile(), "rw"); FileChannel channel = file.getChannel()) {
+                FileLock lock = channel.lock();
+                try {
+                    Map<String, Object> indexOnDisk = JsonUtils.fromMaybeMalformedJson(new String(IOUtils.readFullyWithoutClosing(Channels.newInputStream(channel)), UTF_8), new TypeToken<Map<String, Object>>() {
+                    }.getType());
+                    if (indexOnDisk == null) indexOnDisk = new HashMap<>();
+                    indexOnDisk.putAll(storage);
+                    channel.truncate(0);
+                    OutputStream os = Channels.newOutputStream(channel);
+                    IOUtils.write(JsonUtils.GSON.toJson(storage).getBytes(UTF_8), os);
+                    this.storage = indexOnDisk;
+                } finally {
+                    lock.release();
+                }
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Unable to write storage {" + name + "} file");
+            }
         }
     }
 

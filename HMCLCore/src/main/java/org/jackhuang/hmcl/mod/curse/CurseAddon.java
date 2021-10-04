@@ -176,15 +176,14 @@ public class CurseAddon implements RemoteMod.IMod {
                 .collect(Collectors.toSet());
         List<RemoteMod> mods = new ArrayList<>();
         for (int dependencyId : dependencies) {
-            mods.add(CurseForgeRemoteModRepository.MODS.getAddon(dependencyId).toMod());
+            mods.add(CurseForgeRemoteModRepository.MODS.getModById(Integer.toString(dependencyId)));
         }
         return mods;
     }
 
     @Override
     public Stream<RemoteMod.Version> loadVersions() throws IOException {
-        return CurseForgeRemoteModRepository.MODS.getFiles(this).stream()
-                .map(CurseAddon.LatestFile::toVersion);
+        return CurseForgeRemoteModRepository.MODS.getRemoteVersionsById(Integer.toString(id));
     }
 
     public RemoteMod toMod() {
@@ -500,6 +499,7 @@ public class CurseAddon implements RemoteMod.IMod {
 
             return new RemoteMod.Version(
                     this,
+                    Integer.toString(projectId),
                     getDisplayName(),
                     null,
                     null,

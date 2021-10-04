@@ -97,7 +97,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         cancelled.set(true);
     }
 
-    private CompletableFuture<?> executeTasksExceptionally(Task<?> parentTask, Collection<Task<?>> tasks) {
+    private CompletableFuture<?> executeTasksExceptionally(Task<?> parentTask, Collection<? extends Task<?>> tasks) {
         if (tasks == null || tasks.isEmpty())
             return CompletableFuture.completedFuture(null);
 
@@ -117,7 +117,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                 });
     }
 
-    private CompletableFuture<Exception> executeTasks(Task<?> parentTask, Collection<Task<?>> tasks) {
+    private CompletableFuture<Exception> executeTasks(Task<?> parentTask, Collection<? extends Task<?>> tasks) {
         return executeTasksExceptionally(parentTask, tasks)
                 .thenApplyAsync(unused -> (Exception) null)
                 .exceptionally(throwable -> {
@@ -208,8 +208,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
                     task.setCancelled(this::isCancelled);
                     task.setState(Task.TaskState.READY);
-                    if (parentTask != null && task.getStage() == null)
-                        task.setStage(parentTask.getStage());
+                    task.setNotifyPropertiesChanged(() -> taskListeners.forEach(it -> it.onPropertiesUpdate(task)));
 
                     if (task.getSignificance().shouldLog())
                         Logging.LOG.log(Level.FINE, "Executing task: " + task.getName());

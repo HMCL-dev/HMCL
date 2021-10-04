@@ -32,16 +32,14 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -174,6 +172,27 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
     public void openModFolder() {
         FXUtils.openFolder(new File(profile.getRepository().getRunDirectory(versionId), "mods"));
+    }
+
+    public void checkUpdates() {
+        Controllers.taskDialog(
+                Task.composeAsync(() -> {
+                            Optional<String> gameVersion = profile.getRepository().getGameVersion(versionId);
+                            if (gameVersion.isPresent()) {
+                                return new ModUpdateTask(gameVersion.get(), modManager.getMods());
+                            }
+                            return null;
+                        })
+                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                            if (exception != null) {
+                                Controllers.dialog("Failed to check updates", "failed", MessageDialogPane.MessageType.ERROR);
+                            } else {
+                                Controllers.dialog(new ModUpdatesDialog(result));
+                            }
+                        })
+                        .withStagesHint(Collections.singletonList("mods.check_updates"))
+                , i18n("update.checking"), pane -> {
+                });
     }
 
     public boolean isModded() {

@@ -92,7 +92,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("mods.disable"), SVG::close, () ->
                             skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
                     createToolbarButton2(i18n("folder.mod"), SVG::folderOpen, () ->
-                            skinnable.openModFolder()));
+                            skinnable.openModFolder()),
+                    createToolbarButton2(i18n("mods.check_updates"), SVG::update, () ->
+                            skinnable.checkUpdates()));
             root.getContent().add(toolbar);
         }
 

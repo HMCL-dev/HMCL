@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.mod.LocalMod;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.util.MurmurHash;
@@ -73,7 +74,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     @Override
-    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
+    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalMod localMod, Path file) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(file)))) {
             int b;
@@ -97,15 +98,18 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         return Optional.of(response.getExactMatches().get(0).getFile().toVersion());
     }
 
-    public CurseAddon getAddon(int id) throws IOException {
+    @Override
+    public RemoteMod getModById(String id) throws IOException {
         String response = NetworkUtils.doGet(NetworkUtils.toURL(PREFIX + "/addon/" + id));
-        return JsonUtils.fromNonNullJson(response, CurseAddon.class);
+        return JsonUtils.fromNonNullJson(response, CurseAddon.class).toMod();
     }
 
-    public List<CurseAddon.LatestFile> getFiles(CurseAddon addon) throws IOException {
-        String response = NetworkUtils.doGet(NetworkUtils.toURL(PREFIX + "/addon/" + addon.getId() + "/files"));
-        return JsonUtils.fromNonNullJson(response, new TypeToken<List<CurseAddon.LatestFile>>() {
+    @Override
+    public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
+        String response = NetworkUtils.doGet(NetworkUtils.toURL(PREFIX + "/addon/" + id + "/files"));
+        List<CurseAddon.LatestFile> files = JsonUtils.fromNonNullJson(response, new TypeToken<List<CurseAddon.LatestFile>>() {
         }.getType());
+        return files.stream().map(CurseAddon.LatestFile::toVersion);
     }
 
     public List<Category> getCategoriesImpl() throws IOException {

@@ -18,7 +18,7 @@ public class JavaRuntimeDownloadTask extends Task<Void> {
     }
 
     @Override
-    public Collection<Task<?>> getDependencies() {
+    public Collection<? extends Task<?>> getDependencies() {
         return super.getDependencies();
     }
 

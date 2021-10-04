@@ -275,6 +275,16 @@ public final class Controllers {
         return pane;
     }
 
+    public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, Consumer<Region> onCancel) {
+        TaskExecutor executor = task.executor();
+        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
+        pane.setTitle(title);
+        pane.setExecutor(executor);
+        dialog(pane);
+        executor.start();
+        return pane;
+    }
+
     public static void navigate(Node node) {
         decorator.getNavigator().navigate(node, ContainerAnimations.FADE.getAnimationProducer());
     }

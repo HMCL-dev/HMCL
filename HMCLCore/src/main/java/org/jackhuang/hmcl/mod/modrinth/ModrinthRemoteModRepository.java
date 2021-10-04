@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.mod.modrinth;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.mod.LocalMod;
+import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -36,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -71,7 +74,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
+    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalMod localMod, Path file) throws IOException {
         String sha1 = Hex.encodeHex(DigestUtils.digest("SHA-1", file));
 
         try {
@@ -88,11 +91,18 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
     }
 
-    public List<ModVersion> getFiles(ModResult mod) throws IOException {
-        String id = StringUtils.removePrefix(mod.getModId(), "local-");
-        return HttpRequest.GET("https://api.modrinth.com/api/v1/mod/" + id + "/version")
+    @Override
+    public RemoteMod getModById(String id) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
+        id = StringUtils.removePrefix(id, "local-");
+        List<ModVersion> versions = HttpRequest.GET("https://api.modrinth.com/api/v1/mod/" + id + "/version")
                 .getJson(new TypeToken<List<ModVersion>>() {
                 }.getType());
+        return versions.stream().map(ModVersion::toVersion).flatMap(Lang::toStream);
     }
 
     public List<String> getCategoriesImpl() throws IOException {
@@ -307,6 +317,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
             return Optional.of(new RemoteMod.Version(
                     this,
+                    modId,
                     name,
                     versionNumber,
                     changelog,
@@ -315,7 +326,11 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     files.get(0).toFile(),
                     dependencies,
                     gameVersions,
-                    loaders
+                    loaders.stream().flatMap(loader -> {
+                        if ("fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FABRIC);
+                        else if ("forge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FORGE);
+                        else return Stream.empty();
+                    }).collect(Collectors.toList())
             ));
         }
     }
@@ -464,9 +479,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         @Override
         public Stream<RemoteMod.Version> loadVersions() throws IOException {
-            return ModrinthRemoteModRepository.INSTANCE.getFiles(this).stream()
-                    .map(ModVersion::toVersion)
-                    .flatMap(Lang::toStream);
+            return ModrinthRemoteModRepository.INSTANCE.getRemoteVersionsById(getModId());
         }
 
         public RemoteMod toMod() {
