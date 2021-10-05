@@ -19,7 +19,9 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.Range;
+import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +47,7 @@ public enum JavaVersionConstraint {
         }
     },
     // LaunchWrapper<=1.12 will crash because of assuming the system class loader is an instance of URLClassLoader (Java 8)
-    LAUNCH_WRAPPER(JavaVersionConstraint.RULE_MANDATORY, versionRange("0", "1.12"), versionRange("0", "1.8")) {
+    LAUNCH_WRAPPER(JavaVersionConstraint.RULE_MANDATORY, versionRange("0", "1.12.999"), versionRange("0", "1.8.999")) {
         @Override
         public boolean appliesToVersion(VersionNumber gameVersion, Version version) {
             if (version == null) return false;
@@ -77,6 +79,14 @@ public enum JavaVersionConstraint {
             return JavaVersionConstraint.versionRange(javaVersion, JavaVersionConstraint.MAX);
         }
     },
+    // On Linux, JDK 9+ cannot launch Minecraft<=1.12.2, since JDK 9+ does not accept loading native library built in different arch.
+    // For example, JDK 9+ 64-bit cannot load 32-bit lwjgl native library.
+    VANILLA_LINUX_JAVA_8(JavaVersionConstraint.RULE_MANDATORY, versionRange("0", "1.12.999"), versionRange(JavaVersionConstraint.MIN, "1.8.999")) {
+        @Override
+        public boolean appliesToVersion(@Nullable VersionNumber gameVersion, @Nullable Version version) {
+            return OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.CURRENT == Architecture.X86_64;
+        }
+    }
     ;
 
     private final int type;
