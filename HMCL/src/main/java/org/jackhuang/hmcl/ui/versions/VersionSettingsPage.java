@@ -67,7 +67,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class VersionSettingsPage extends StackPane implements DecoratorPage, VersionPage.VersionLoadable {
+public final class VersionSettingsPage extends StackPane implements DecoratorPage, VersionPage.VersionLoadable, PageAware {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(new State("", null, false, false, false));
 
     private final boolean globalSetting;
@@ -153,6 +153,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             specificSettingsLink.setOnMouseClicked(e -> editSpecificSettings());
 
             specificSettingsHint.setChildren(text, specificSettingsLink);
+            specificSettingsHint.managedProperty().bind(navigateToSpecificSettings);
+            specificSettingsHint.visibleProperty().bind(navigateToSpecificSettings);
 
             rootPane.getChildren().addAll(specificSettingsHint);
         }
@@ -582,9 +584,17 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
             listenerHolder.add(FXUtils.onWeakChangeAndOperate(profile.selectedVersionProperty(), selectedVersion -> {
                 this.selectedVersion.setValue(selectedVersion);
-                navigateToSpecificSettings.set(!profile.getRepository().getVersionSetting(selectedVersion).isUsesGlobal());
+
+                VersionSetting specializedVersionSetting = profile.getRepository().getLocalVersionSetting(selectedVersion);
+                if (specializedVersionSetting != null) {
+                    navigateToSpecificSettings.bind(specializedVersionSetting.usesGlobalProperty().not());
+                } else {
+                    navigateToSpecificSettings.unbind();
+                    navigateToSpecificSettings.set(false);
+                }
             }));
         } else {
+            navigateToSpecificSettings.unbind();
             navigateToSpecificSettings.set(false);
         }
 
