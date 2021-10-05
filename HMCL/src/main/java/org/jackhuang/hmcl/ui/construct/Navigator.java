@@ -111,6 +111,8 @@ public class Navigator extends TransitionPane {
         Logging.LOG.info("Closed page " + from);
 
         Node poppedNode = stack.pop();
+        NavigationEvent exited = new NavigationEvent(this, poppedNode, Navigation.NavigationDirection.PREVIOUS, NavigationEvent.EXITED);
+        poppedNode.fireEvent(exited);
         if (poppedNode instanceof PageAware) ((PageAware) poppedNode).onPageHidden();
 
         backable.set(canGoBack());

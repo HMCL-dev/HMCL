@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.mod.curse;
 
+import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.util.Immutable;
 
@@ -508,7 +509,7 @@ public class CurseAddon implements RemoteMod.IMod {
                     new RemoteMod.File(Collections.emptyMap(), getDownloadUrl(), getFileName()),
                     Collections.emptyList(),
                     gameVersion.stream().filter(ver -> ver.startsWith("1.") || ver.contains("w")).collect(Collectors.toList()),
-                    Collections.emptyList()
+                    Collections.singletonList(ModLoaderType.FORGE)
             );
         }
     }

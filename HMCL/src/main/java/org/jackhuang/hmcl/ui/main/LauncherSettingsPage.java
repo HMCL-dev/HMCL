@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
+import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -34,7 +35,7 @@ import org.jackhuang.hmcl.ui.versions.VersionSettingsPage;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class LauncherSettingsPage extends DecoratorAnimatedPage implements DecoratorPage {
+public class LauncherSettingsPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("settings"), -1));
     private final TabHeader tab;
     private final TabHeader.Tab<VersionSettingsPage> gameTab = new TabHeader.Tab<>("versionSettingsPage");
@@ -122,6 +123,16 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         }
 
         setCenter(transitionPane);
+    }
+
+    @Override
+    public void onPageShown() {
+        tab.onPageShown();
+    }
+
+    @Override
+    public void onPageHidden() {
+        tab.onPageHidden();
     }
 
     public void showGameSettings(Profile profile) {

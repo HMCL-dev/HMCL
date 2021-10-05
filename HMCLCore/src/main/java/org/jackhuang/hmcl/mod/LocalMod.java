@@ -148,6 +148,7 @@ public final class LocalMod implements Comparable<LocalMod> {
                 .filter(version -> version.getLoaders().contains(modLoaderType))
                 .sorted(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed())
                 .collect(Collectors.toList());
+        if (remoteVersions.isEmpty()) return null;
         return new ModUpdate(this, currentVersion.get(), remoteVersions);
     }
 

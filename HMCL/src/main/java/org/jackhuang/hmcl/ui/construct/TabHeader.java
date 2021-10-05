@@ -39,7 +39,7 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
-public class TabHeader extends Control implements TabControl {
+public class TabHeader extends Control implements TabControl, PageAware {
 
     public TabHeader(Tab<?>... tabs) {
         getStyleClass().setAll("tab-header");
@@ -84,6 +84,26 @@ public class TabHeader extends Control implements TabControl {
         }
 
         getSelectionModel().select(tab);
+    }
+
+    @Override
+    public void onPageShown() {
+        Tab<?> tab = getSelectionModel().getSelectedItem();
+        if (tab != null) {
+            if (tab.getNode() instanceof PageAware) {
+                ((PageAware) tab.getNode()).onPageShown();
+            }
+        }
+    }
+
+    @Override
+    public void onPageHidden() {
+        Tab<?> tab = getSelectionModel().getSelectedItem();
+        if (tab != null) {
+            if (tab.getNode() instanceof PageAware) {
+                ((PageAware) tab.getNode()).onPageHidden();
+            }
+        }
     }
 
     /**

@@ -208,6 +208,11 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
                     task.setCancelled(this::isCancelled);
                     task.setState(Task.TaskState.READY);
+                    if (task.getStage() != null) {
+                        task.setInheritedStage(task.getStage());
+                    } else if (parentTask != null) {
+                        task.setInheritedStage(parentTask.getInheritedStage());
+                    }
                     task.setNotifyPropertiesChanged(() -> taskListeners.forEach(it -> it.onPropertiesUpdate(task)));
 
                     if (task.getSignificance().shouldLog())

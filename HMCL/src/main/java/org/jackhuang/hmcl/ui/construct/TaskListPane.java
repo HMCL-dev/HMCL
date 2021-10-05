@@ -144,7 +144,7 @@ public final class TaskListPane extends StackPane {
                 Platform.runLater(() -> {
                     ProgressListNode node = new ProgressListNode(task);
                     nodes.put(task, node);
-                    StageNode stageNode = stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().orElse(null);
+                    StageNode stageNode = stageNodes.stream().filter(x -> x.stage.equals(task.getInheritedStage())).findAny().orElse(null);
                     listBox.add(listBox.indexOf(stageNode) + 1, node);
                 });
             }

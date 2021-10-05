@@ -99,6 +99,16 @@ public abstract class Task<T> {
         this.stage = stage;
     }
 
+    private String inheritedStage = null;
+
+    public String getInheritedStage() {
+        return inheritedStage;
+    }
+
+    void setInheritedStage(String inheritedStage) {
+        this.inheritedStage = inheritedStage;
+    }
+
     // properties
     Map<String, Object> properties;
 
