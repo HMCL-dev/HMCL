@@ -135,6 +135,13 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
                 }
 
                 {
+                    AdvancedListItem installNewGameItem = new AdvancedListItem();
+                    installNewGameItem.getStyleClass().add("navigation-drawer-item");
+                    installNewGameItem.setTitle(i18n("install.new_game"));
+                    installNewGameItem.setActionButtonVisible(false);
+                    installNewGameItem.setLeftGraphic(VersionPage.wrap(SVG::plusCircleOutline));
+                    installNewGameItem.setOnAction(e -> Versions.addNewGame());
+
                     AdvancedListItem installModpackItem = new AdvancedListItem();
                     installModpackItem.getStyleClass().add("navigation-drawer-item");
                     installModpackItem.setTitle(i18n("install.modpack"));
@@ -157,6 +164,7 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
                     globalManageItem.setOnAction(e -> modifyGlobalGameSettings());
 
                     AdvancedListBox bottomLeftCornerList = new AdvancedListBox()
+                            .add(installNewGameItem)
                             .add(installModpackItem)
                             .add(refreshItem)
                             .add(globalManageItem);
