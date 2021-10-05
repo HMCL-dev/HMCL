@@ -29,13 +29,10 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import org.jackhuang.hmcl.game.CrashReportAnalyzer;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.LaunchOptions;
-import org.jackhuang.hmcl.game.LogExporter;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
@@ -68,9 +65,10 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameCrashWindow extends Stage {
-    private final StringProperty version = new SimpleStringProperty();
-    private final StringProperty memory = new SimpleStringProperty();
-    private final StringProperty java = new SimpleStringProperty();
+    private final Version version;
+    private final String memory;
+    private final String java;
+    private final LibraryAnalyzer analyzer;
     private final StringProperty os = new SimpleStringProperty(System.getProperty("os.name"));
     private final StringProperty arch = new SimpleStringProperty(Architecture.SYSTEM_ARCHITECTURE);
     private final StringProperty reason = new SimpleStringProperty(i18n("game.crash.reason.unknown"));
@@ -85,10 +83,11 @@ public class GameCrashWindow extends Stage {
 
     private final LinkedList<Pair<String, Log4jLevel>> logs;
 
-    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, LaunchOptions launchOptions, LinkedList<Pair<String, Log4jLevel>> logs) {
+    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, Version version, LaunchOptions launchOptions, LinkedList<Pair<String, Log4jLevel>> logs) {
         this.managedProcess = managedProcess;
         this.exitType = exitType;
         this.repository = repository;
+        this.version = version;
         this.launchOptions = launchOptions;
         this.logs = logs;
         this.view = new View();
@@ -98,9 +97,10 @@ public class GameCrashWindow extends Stage {
         setTitle(i18n("game.crash.title"));
         getIcons().add(newImage("/assets/img/icon.png"));
 
-        version.set(launchOptions.getVersionName());
-        memory.set(Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-"));
-        java.set(launchOptions.getJava().getVersion());
+        memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-");
+        java = launchOptions.getJava().getVersion();
+
+        analyzer = LibraryAnalyzer.analyze(version);
 
         analyzeCrashReport();
     }
@@ -263,35 +263,43 @@ public class GameCrashWindow extends Stage {
                 TwoLineListItem version = new TwoLineListItem();
                 version.getStyleClass().setAll("two-line-item-second-large");
                 version.setTitle(i18n("archive.game_version"));
-                version.subtitleProperty().bind(GameCrashWindow.this.version);
-                StackPane versionCard = new StackPane(version);
+                version.setSubtitle(GameCrashWindow.this.version.getId());
 
                 TwoLineListItem memory = new TwoLineListItem();
                 memory.getStyleClass().setAll("two-line-item-second-large");
                 memory.setTitle(i18n("settings.memory"));
-                memory.subtitleProperty().bind(GameCrashWindow.this.memory);
-                StackPane memoryCard = new StackPane(memory);
+                memory.setSubtitle(GameCrashWindow.this.memory);
 
                 TwoLineListItem java = new TwoLineListItem();
                 java.getStyleClass().setAll("two-line-item-second-large");
                 java.setTitle("Java");
-                java.subtitleProperty().bind(GameCrashWindow.this.java);
-                StackPane javaCard = new StackPane(java);
+                java.setSubtitle(GameCrashWindow.this.java);
 
                 TwoLineListItem os = new TwoLineListItem();
                 os.getStyleClass().setAll("two-line-item-second-large");
                 os.setTitle(i18n("system.operating_system"));
                 os.subtitleProperty().bind(GameCrashWindow.this.os);
-                StackPane osCard = new StackPane(os);
 
                 TwoLineListItem arch = new TwoLineListItem();
                 arch.getStyleClass().setAll("two-line-item-second-large");
                 arch.setTitle(i18n("system.architecture"));
                 arch.subtitleProperty().bind(GameCrashWindow.this.arch);
-                StackPane archCard = new StackPane(arch);
 
                 infoPane.setPadding(new Insets(8));
-                infoPane.getChildren().setAll(versionCard, memoryCard, javaCard, osCard, archCard);
+                infoPane.getChildren().setAll(version, memory, java, os, arch);
+            }
+
+            HBox moddedPane = new HBox();
+            {
+                for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
+                    analyzer.getVersion(type).ifPresent(ver -> {
+                        TwoLineListItem item = new TwoLineListItem();
+                        item.getStyleClass().setAll("two-line-item-second-large");
+                        item.setTitle(i18n("install.installer." + type.getPatchId()));
+                        item.setSubtitle(ver);
+                        moddedPane.getChildren().add(item);
+                    });
+                }
             }
 
             VBox gameDirPane = new VBox(8);
@@ -334,7 +342,7 @@ public class GameCrashWindow extends Stage {
                 toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton, feedbackLabel);
             }
 
-            getChildren().setAll(titlePane, infoPane, gameDirPane, toolBar);
+            getChildren().setAll(titlePane, infoPane, moddedPane, gameDirPane, toolBar);
         }
 
     }

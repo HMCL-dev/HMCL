@@ -181,7 +181,7 @@ public final class LauncherHelper {
                             launchOptions,
                             launcherVisibility == LauncherVisibility.CLOSE
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(repository, selectedVersion, authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
+                                    : new HMCLProcessListener(repository, version, authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
@@ -557,7 +557,7 @@ public final class LauncherHelper {
     class HMCLProcessListener implements ProcessListener {
 
         private final HMCLGameRepository repository;
-        private final String version;
+        private final Version version;
         private final Map<String, String> forbiddenTokens;
         private final LaunchOptions launchOptions;
         private ManagedProcess process;
@@ -568,7 +568,7 @@ public final class LauncherHelper {
         private final CountDownLatch logWindowLatch = new CountDownLatch(1);
         private final CountDownLatch launchingLatch;
 
-        public HMCLProcessListener(HMCLGameRepository repository, String version, AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
+        public HMCLProcessListener(HMCLGameRepository repository, Version version, AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
             this.repository = repository;
             this.version = version;
             this.launchOptions = launchOptions;
@@ -680,8 +680,8 @@ public final class LauncherHelper {
             if (!lwjgl) finishLaunch();
 
             if (exitType != ExitType.NORMAL) {
-                repository.markVersionLaunchedAbnormally(version);
-                Platform.runLater(() -> new GameCrashWindow(process, exitType, repository, launchOptions, logs).show());
+                repository.markVersionLaunchedAbnormally(version.getId());
+                Platform.runLater(() -> new GameCrashWindow(process, exitType, repository, version, launchOptions, logs).show());
             }
 
             checkExit();
