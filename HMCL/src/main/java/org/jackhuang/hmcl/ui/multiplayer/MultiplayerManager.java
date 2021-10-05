@@ -116,7 +116,6 @@ public final class MultiplayerManager {
             }
 
             CatoSession session = new CatoSession(sessionName, State.SLAVE, process, Arrays.asList(commands));
-            session.addRelatedThread(Lang.thread(new LocalServerBroadcaster(localPort, session), "LocalServerBroadcaster", true));
 
             CompletableFuture<CatoSession> future = new CompletableFuture<>();
 
@@ -137,8 +136,9 @@ public final class MultiplayerManager {
                 client.onConnected().register(connectedEvent -> {
                     try {
                         int port = findAvailablePort();
-                        String command = String.format("net add %s %s:%d %s:%d %s\n", peer, LOCAL_ADDRESS, port, REMOTE_ADDRESS, connectedEvent.getPort(), mode.getName());
+                        String command = String.format("net add %s %s:%d %s:%d %s", peer, LOCAL_ADDRESS, port, REMOTE_ADDRESS, connectedEvent.getPort(), mode.getName());
                         LOG.info("Invoking cato: " + command);
+                        session.addRelatedThread(Lang.thread(new LocalServerBroadcaster(port, session), "LocalServerBroadcaster", true));
                         client.setGamePort(port);
                         writer.write(command);
                         writer.newLine();
