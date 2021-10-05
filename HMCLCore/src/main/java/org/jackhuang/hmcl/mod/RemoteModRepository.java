@@ -28,7 +28,7 @@ public interface RemoteModRepository {
     Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, int sort)
             throws IOException;
 
-    Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalMod localMod, Path file) throws IOException;
+    Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException;
 
     RemoteMod getModById(String id) throws IOException;
 

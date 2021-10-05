@@ -82,14 +82,23 @@ public class RemoteMod {
         Alpha
     }
 
+    public enum Type {
+        CURSEFORGE,
+        MODRINTH
+    }
+
     public interface IMod {
         List<RemoteMod> loadDependencies() throws IOException;
 
         Stream<Version> loadVersions() throws IOException;
     }
 
+    public interface IVersion {
+        Type getType();
+    }
+
     public static class Version {
-        private final Object self;
+        private final IVersion self;
         private final String modid;
         private final String name;
         private final String version;
@@ -101,7 +110,7 @@ public class RemoteMod {
         private final List<String> gameVersions;
         private final List<ModLoaderType> loaders;
 
-        public Version(Object self, String modid, String name, String version, String changelog, Instant datePublished, VersionType versionType, File file, List<String> dependencies, List<String> gameVersions, List<ModLoaderType> loaders) {
+        public Version(IVersion self, String modid, String name, String version, String changelog, Instant datePublished, VersionType versionType, File file, List<String> dependencies, List<String> gameVersions, List<ModLoaderType> loaders) {
             this.self = self;
             this.modid = modid;
             this.name = name;
@@ -115,7 +124,7 @@ public class RemoteMod {
             this.loaders = loaders;
         }
 
-        public Object getSelf() {
+        public IVersion getSelf() {
             return self;
         }
 

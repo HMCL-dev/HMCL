@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import org.jackhuang.hmcl.mod.LocalMod;
+import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
@@ -87,7 +87,7 @@ public class ModDownloadListPage extends DownloadListPage {
         }
 
         @Override
-        public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalMod localMod, Path file) {
+        public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) {
             throw new UnsupportedOperationException();
         }
 

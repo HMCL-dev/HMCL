@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.mod.modrinth;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import org.jackhuang.hmcl.mod.LocalMod;
+import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
@@ -74,7 +74,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalMod localMod, Path file) throws IOException {
+    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
         String sha1 = Hex.encodeHex(DigestUtils.digest("SHA-1", file));
 
         try {
@@ -198,7 +198,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
     }
 
-    public static class ModVersion {
+    public static class ModVersion implements RemoteMod.IVersion {
         private final String id;
 
         @SerializedName("mod_id")
@@ -297,6 +297,11 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         public List<String> getLoaders() {
             return loaders;
+        }
+
+        @Override
+        public RemoteMod.Type getType() {
+            return RemoteMod.Type.MODRINTH;
         }
 
         public Optional<RemoteMod.Version> toVersion() {

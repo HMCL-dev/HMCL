@@ -32,7 +32,7 @@ import java.util.TreeSet;
 public final class ModManager {
     private final GameRepository repository;
     private final String id;
-    private final TreeSet<LocalMod> localMods = new TreeSet<>();
+    private final TreeSet<LocalModFile> localModFiles = new TreeSet<>();
 
     private boolean loaded = false;
 
@@ -55,12 +55,12 @@ public final class ModManager {
 
     private void addModInfo(File file) {
         try {
-            localMods.add(getModInfo(file));
+            localModFiles.add(getModInfo(file));
         } catch (IllegalArgumentException ignore) {
         }
     }
 
-    public static LocalMod getModInfo(File modFile) {
+    public static LocalModFile getModInfo(File modFile) {
         File file = isDisabled(modFile) ? new File(modFile.getAbsoluteFile().getParentFile(), FileUtils.getNameWithoutExtension(modFile)) : modFile;
         String description, extension = FileUtils.getExtension(file);
         switch (extension) {
@@ -98,11 +98,11 @@ public final class ModManager {
             default:
                 throw new IllegalArgumentException("File " + modFile + " is not a mod file.");
         }
-        return new LocalMod(modFile, ModLoaderType.UNKNOWN, null, FileUtils.getNameWithoutExtension(modFile), new LocalMod.Description(description));
+        return new LocalModFile(modFile, ModLoaderType.UNKNOWN, null, FileUtils.getNameWithoutExtension(modFile), new LocalModFile.Description(description));
     }
 
     public void refreshMods() throws IOException {
-        localMods.clear();
+        localModFiles.clear();
         if (Files.isDirectory(getModsDirectory())) {
             try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getModsDirectory())) {
                 for (Path subitem : modsDirectoryStream) {
@@ -122,10 +122,10 @@ public final class ModManager {
         loaded = true;
     }
 
-    public Collection<LocalMod> getMods() throws IOException {
+    public Collection<LocalModFile> getMods() throws IOException {
         if (!loaded)
             refreshMods();
-        return localMods;
+        return localModFiles;
     }
 
     public void addMod(File file) throws IOException {
@@ -145,9 +145,9 @@ public final class ModManager {
         addModInfo(newFile);
     }
 
-    public void removeMods(LocalMod... localMods) throws IOException {
-        for (LocalMod localMod : localMods) {
-            Files.deleteIfExists(localMod.getFile());
+    public void removeMods(LocalModFile... localModFiles) throws IOException {
+        for (LocalModFile localModFile : localModFiles) {
+            Files.deleteIfExists(localModFile.getFile());
         }
     }
 
@@ -163,6 +163,10 @@ public final class ModManager {
         if (Files.exists(file))
             Files.move(file, enabled, StandardCopyOption.REPLACE_EXISTING);
         return enabled;
+    }
+
+    public static boolean isOld(File file) {
+        return file.getPath().endsWith(OLD_EXTENSION);
     }
 
     public static boolean isDisabled(File file) {
@@ -228,4 +232,5 @@ public final class ModManager {
     }
 
     public static final String DISABLED_EXTENSION = ".disabled";
+    public static final String OLD_EXTENSION = ".old";
 }

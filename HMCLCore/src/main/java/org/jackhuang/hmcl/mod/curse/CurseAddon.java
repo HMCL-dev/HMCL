@@ -341,7 +341,7 @@ public class CurseAddon implements RemoteMod.IMod {
     }
 
     @Immutable
-    public static class LatestFile {
+    public static class LatestFile implements RemoteMod.IVersion {
         private final int id;
         private final String displayName;
         private final String fileName;
@@ -479,6 +479,11 @@ public class CurseAddon implements RemoteMod.IMod {
                 fileDataInstant = Instant.parse(fileDate);
             }
             return fileDataInstant;
+        }
+
+        @Override
+        public RemoteMod.Type getType() {
+            return RemoteMod.Type.CURSEFORGE;
         }
 
         public RemoteMod.Version toVersion() {

@@ -108,7 +108,7 @@ public final class LiteModMetadata {
         return updateURI;
     }
     
-    public static LocalMod fromFile(File modFile) throws IOException, JsonParseException {
+    public static LocalModFile fromFile(File modFile) throws IOException, JsonParseException {
         try (ZipFile zipFile = new ZipFile(modFile)) {
             ZipEntry entry = zipFile.getEntry("litemod.json");
             if (entry == null)
@@ -116,7 +116,7 @@ public final class LiteModMetadata {
             LiteModMetadata metadata = JsonUtils.GSON.fromJson(IOUtils.readFullyAsString(zipFile.getInputStream(entry)), LiteModMetadata.class);
             if (metadata == null)
                 throw new IOException("Mod " + modFile + " `litemod.json` is malformed.");
-            return new LocalMod(modFile, ModLoaderType.FORGE, null, metadata.getName(), new LocalMod.Description(metadata.getDescription()), metadata.getAuthor(),
+            return new LocalModFile(modFile, ModLoaderType.FORGE, null, metadata.getName(), new LocalModFile.Description(metadata.getDescription()), metadata.getAuthor(),
                     metadata.getVersion(), metadata.getGameVersion(), metadata.getUpdateURI(), "");
         }
     }

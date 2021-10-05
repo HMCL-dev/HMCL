@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  *
  * @author huangyuhui
  */
-public final class LocalMod implements Comparable<LocalMod> {
+public final class LocalModFile implements Comparable<LocalModFile> {
 
     private Path file;
     private final ModLoaderType modLoaderType;
@@ -49,11 +49,11 @@ public final class LocalMod implements Comparable<LocalMod> {
     private final String logoPath;
     private final BooleanProperty activeProperty;
 
-    public LocalMod(File file, ModLoaderType modLoaderType, String id, String name, Description description) {
+    public LocalModFile(File file, ModLoaderType modLoaderType, String id, String name, Description description) {
         this(file, modLoaderType, id, name, description, "", "", "", "", "");
     }
 
-    public LocalMod(File file, ModLoaderType modLoaderType, String id, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
+    public LocalModFile(File file, ModLoaderType modLoaderType, String id, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
         this.file = file.toPath();
         this.modLoaderType = modLoaderType;
         this.id = id;
@@ -68,13 +68,13 @@ public final class LocalMod implements Comparable<LocalMod> {
         activeProperty = new SimpleBooleanProperty(this, "active", !ModManager.isDisabled(file)) {
             @Override
             protected void invalidated() {
-                Path path = LocalMod.this.file.toAbsolutePath();
+                Path path = LocalModFile.this.file.toAbsolutePath();
 
                 try {
                     if (get())
-                        LocalMod.this.file = ModManager.enableMod(path);
+                        LocalModFile.this.file = ModManager.enableMod(path);
                     else
-                        LocalMod.this.file = ModManager.disableMod(path);
+                        LocalModFile.this.file = ModManager.disableMod(path);
                 } catch (IOException e) {
                     Logging.LOG.log(Level.SEVERE, "Unable to invert state of mod file " + path, e);
                 }
@@ -153,13 +153,13 @@ public final class LocalMod implements Comparable<LocalMod> {
     }
 
     @Override
-    public int compareTo(LocalMod o) {
+    public int compareTo(LocalModFile o) {
         return getFileName().compareTo(o.getFileName());
     }
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof LocalMod && Objects.equals(getFileName(), ((LocalMod) obj).getFileName());
+        return obj instanceof LocalModFile && Objects.equals(getFileName(), ((LocalModFile) obj).getFileName());
     }
 
     @Override
@@ -168,18 +168,18 @@ public final class LocalMod implements Comparable<LocalMod> {
     }
 
     public static class ModUpdate {
-        private final LocalMod localMod;
+        private final LocalModFile localModFile;
         private final RemoteMod.Version currentVersion;
         private final List<RemoteMod.Version> candidates;
 
-        public ModUpdate(LocalMod localMod, RemoteMod.Version currentVersion, List<RemoteMod.Version> candidates) {
-            this.localMod = localMod;
+        public ModUpdate(LocalModFile localModFile, RemoteMod.Version currentVersion, List<RemoteMod.Version> candidates) {
+            this.localModFile = localModFile;
             this.currentVersion = currentVersion;
             this.candidates = candidates;
         }
 
-        public LocalMod getLocalMod() {
-            return localMod;
+        public LocalModFile getLocalMod() {
+            return localModFile;
         }
 
         public RemoteMod.Version getCurrentVersion() {

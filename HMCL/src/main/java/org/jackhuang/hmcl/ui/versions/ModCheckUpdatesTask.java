@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import org.jackhuang.hmcl.mod.LocalMod;
+import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.task.Task;
 
@@ -25,13 +25,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ModUpdateTask extends Task<List<LocalMod.ModUpdate>> {
+public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
 
     private final String gameVersion;
-    private final Collection<LocalMod> mods;
-    private final Collection<Task<LocalMod.ModUpdate>> dependents;
+    private final Collection<LocalModFile> mods;
+    private final Collection<Task<LocalModFile.ModUpdate>> dependents;
 
-    public ModUpdateTask(String gameVersion, Collection<LocalMod> mods) {
+    public ModCheckUpdatesTask(String gameVersion, Collection<LocalModFile> mods) {
         this.gameVersion = gameVersion;
         this.mods = mods;
 
@@ -51,7 +51,7 @@ public class ModUpdateTask extends Task<List<LocalMod.ModUpdate>> {
     }
 
     @Override
-    public void preExecute() throws Exception {
+    public void preExecute() {
         notifyPropertiesChanged();
     }
 
