@@ -145,7 +145,7 @@ public class YggdrasilServer extends HttpServer {
         public Character(UUID uuid, String name, Skin.LoadedSkin skin) {
             this.uuid = uuid;
             this.name = name;
-            this.skin = Objects.requireNonNull(skin);
+            this.skin = skin;
         }
 
         public UUID getUUID() {
@@ -162,10 +162,10 @@ public class YggdrasilServer extends HttpServer {
 
         public Object toCompleteResponse(String rootUrl) {
             Map<String, Object> realTextures = new HashMap<>();
-            if (skin.getSkin() != null) {
+            if (skin != null && skin.getSkin() != null) {
                 realTextures.put("SKIN", mapOf(pair("url", rootUrl + "/textures/" + skin.getSkin().getHash())));
             }
-            if (skin.getCape() != null) {
+            if (skin != null && skin.getCape() != null) {
                 realTextures.put("CAPE", mapOf(pair("url", rootUrl + "/textures/" + skin.getSkin().getHash())));
             }
 
