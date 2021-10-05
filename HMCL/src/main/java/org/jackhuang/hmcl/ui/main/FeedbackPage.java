@@ -32,6 +32,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.MicrosoftAuthenticationServer;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.HMCLAccounts;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -278,7 +279,7 @@ public class FeedbackPage extends VBox implements PageAware {
                     } else if (exception instanceof JsonParseException) {
                         errorLabel.setText(i18n("account.failed.server_response_malformed"));
                     } else {
-                        errorLabel.setText(exception.getClass().getName() + ": " + exception.getLocalizedMessage());
+                        errorLabel.setText(Accounts.localizeErrorMessage(exception));
                     }
                 } else {
                     fireEvent(new DialogCloseEvent());
