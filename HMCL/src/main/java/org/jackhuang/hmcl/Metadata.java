@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl;
 
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.nio.file.Path;
@@ -52,6 +53,10 @@ public final class Metadata {
         String home = System.getProperty("user.home", ".");
         if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
             // to fulfill XDG standard.
+            String xdgCache = System.getenv("XDG_CACHE_HOME");
+            if (StringUtils.isNotBlank(xdgCache)) {
+                return Paths.get(xdgCache, "hmcl");
+            }
             return Paths.get(home, ".cache", "hmcl");
         }
         return OperatingSystem.getWorkingDirectory("hmcl");
