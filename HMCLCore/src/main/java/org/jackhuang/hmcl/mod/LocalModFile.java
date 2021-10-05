@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,10 +20,8 @@ package org.jackhuang.hmcl.mod;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -37,8 +35,8 @@ import java.util.stream.Collectors;
 public final class LocalModFile implements Comparable<LocalModFile> {
 
     private Path file;
-    private final ModLoaderType modLoaderType;
-    private final String id;
+    private final ModManager modManager;
+    private final LocalMod mod;
     private final String name;
     private final Description description;
     private final String authors;
@@ -49,14 +47,14 @@ public final class LocalModFile implements Comparable<LocalModFile> {
     private final String logoPath;
     private final BooleanProperty activeProperty;
 
-    public LocalModFile(File file, ModLoaderType modLoaderType, String id, String name, Description description) {
-        this(file, modLoaderType, id, name, description, "", "", "", "", "");
+    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
+        this(modManager, mod, file, name, description, "", "", "", "", "");
     }
 
-    public LocalModFile(File file, ModLoaderType modLoaderType, String id, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
-        this.file = file.toPath();
-        this.modLoaderType = modLoaderType;
-        this.id = id;
+    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
+        this.modManager = modManager;
+        this.mod = mod;
+        this.file = file;
         this.name = name;
         this.description = description;
         this.authors = authors;
@@ -65,23 +63,39 @@ public final class LocalModFile implements Comparable<LocalModFile> {
         this.url = url;
         this.logoPath = logoPath;
 
-        activeProperty = new SimpleBooleanProperty(this, "active", !ModManager.isDisabled(file)) {
+        activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
             @Override
             protected void invalidated() {
+                if (isOld()) return;
+
                 Path path = LocalModFile.this.file.toAbsolutePath();
 
                 try {
                     if (get())
-                        LocalModFile.this.file = ModManager.enableMod(path);
+                        LocalModFile.this.file = modManager.enableMod(path);
                     else
-                        LocalModFile.this.file = ModManager.disableMod(path);
+                        LocalModFile.this.file = modManager.disableMod(path);
                 } catch (IOException e) {
                     Logging.LOG.log(Level.SEVERE, "Unable to invert state of mod file " + path, e);
                 }
             }
         };
 
-        fileName = StringUtils.substringBeforeLast(isActive() ? file.getName() : FileUtils.getNameWithoutExtension(file), '.');
+        fileName = FileUtils.getNameWithoutExtension(ModManager.getModName(file));
+
+        if (isOld()) {
+            mod.getOldFiles().add(this);
+        } else {
+            mod.getFiles().add(this);
+        }
+    }
+
+    public ModManager getModManager() {
+        return modManager;
+    }
+
+    public LocalMod getMod() {
+        return mod;
     }
 
     public Path getFile() {
@@ -89,11 +103,11 @@ public final class LocalModFile implements Comparable<LocalModFile> {
     }
 
     public ModLoaderType getModLoaderType() {
-        return modLoaderType;
+        return mod.getModLoaderType();
     }
 
     public String getId() {
-        return id;
+        return mod.getId();
     }
 
     public String getName() {
@@ -140,12 +154,29 @@ public final class LocalModFile implements Comparable<LocalModFile> {
         return fileName;
     }
 
+    public boolean isOld() {
+        return modManager.isOld(file);
+    }
+
+    public void setOld(boolean old) throws IOException {
+        file = modManager.setOld(this, old);
+
+        if (old) {
+            mod.getFiles().remove(this);
+            mod.getOldFiles().add(this);
+        } else {
+            mod.getOldFiles().remove(this);
+            mod.getFiles().add(this);
+        }
+    }
+
     public ModUpdate checkUpdates(String gameVersion, RemoteModRepository repository) throws IOException {
         Optional<RemoteMod.Version> currentVersion = repository.getRemoteVersionByLocalFile(this, file);
         if (!currentVersion.isPresent()) return null;
         List<RemoteMod.Version> remoteVersions = repository.getRemoteVersionsById(currentVersion.get().getModid())
                 .filter(version -> version.getGameVersions().contains(gameVersion))
-                .filter(version -> version.getLoaders().contains(modLoaderType))
+                .filter(version -> version.getLoaders().contains(getModLoaderType()))
+                .filter(version -> version.getDatePublished().compareTo(currentVersion.get().getDatePublished()) > 0)
                 .sorted(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed())
                 .collect(Collectors.toList());
         if (remoteVersions.isEmpty()) return null;

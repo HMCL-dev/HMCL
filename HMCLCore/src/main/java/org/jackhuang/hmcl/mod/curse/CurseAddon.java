@@ -507,7 +507,7 @@ public class CurseAddon implements RemoteMod.IMod {
                     this,
                     Integer.toString(projectId),
                     getDisplayName(),
-                    null,
+                    getFileName(),
                     null,
                     getParsedFileDate(),
                     versionType,

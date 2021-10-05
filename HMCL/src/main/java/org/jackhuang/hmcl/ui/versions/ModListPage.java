@@ -60,7 +60,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)), mods -> {
             mods.forEach(it -> {
                 try {
-                    modManager.addMod(it);
+                    modManager.addMod(it.toPath());
                 } catch (IOException | IllegalArgumentException e) {
                     Logging.LOG.log(Level.WARNING, "Unable to parse mod file " + it, e);
                 }
@@ -125,7 +125,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         Task.runAsync(() -> {
             for (File file : res) {
                 try {
-                    modManager.addMod(file);
+                    modManager.addMod(file.toPath());
                     succeeded.add(file.getName());
                 } catch (Exception e) {
                     Logging.LOG.log(Level.WARNING, "Unable to add mod " + file, e);
@@ -194,6 +194,15 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         .withStagesHint(Collections.singletonList("mods.check_updates"))
                 , i18n("update.checking"), pane -> {
                 });
+    }
+
+    public void rollback(LocalModFile from, LocalModFile to) {
+        try {
+            modManager.rollback(from, to);
+            refresh();
+        } catch (IOException ex) {
+            Controllers.showToast(i18n("message.failed"));
+        }
     }
 
     public boolean isModded() {

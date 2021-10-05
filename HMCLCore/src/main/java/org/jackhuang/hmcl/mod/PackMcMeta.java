@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.FileSystem;
@@ -144,13 +143,19 @@ public class PackMcMeta implements Validation {
         }
     }
 
-    public static LocalModFile fromFile(File modFile) throws IOException, JsonParseException {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.toPath())) {
+    public static LocalModFile fromFile(ModManager modManager, Path modFile) throws IOException, JsonParseException {
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
             Path mcmod = fs.getPath("pack.mcmeta");
             if (Files.notExists(mcmod))
                 throw new IOException("File " + modFile + " is not a resource pack.");
             PackMcMeta metadata = JsonUtils.fromNonNullJson(FileUtils.readText(mcmod), PackMcMeta.class);
-            return new LocalModFile(modFile, ModLoaderType.PACK, null, FileUtils.getNameWithoutExtension(modFile), metadata.pack.description, "", "", "", "", "");
+            return new LocalModFile(
+                    modManager,
+                    modManager.getLocalMod(FileUtils.getNameWithoutExtension(modFile), ModLoaderType.PACK),
+                    modFile,
+                    FileUtils.getNameWithoutExtension(modFile),
+                    metadata.pack.description,
+                    "", "", "", "", "");
         }
     }
 }

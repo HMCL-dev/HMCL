@@ -75,6 +75,10 @@ public final class FileUtils {
         }
     }
 
+    public static String getNameWithoutExtension(String fileName) {
+        return StringUtils.substringBeforeLast(fileName, '.');
+    }
+
     public static String getNameWithoutExtension(File file) {
         return StringUtils.substringBeforeLast(file.getName(), '.');
     }

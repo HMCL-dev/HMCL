@@ -32,15 +32,16 @@ import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.curse.CurseAddon;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.construct.JFXCheckBoxTreeTableCell;
-import org.jackhuang.hmcl.ui.construct.MDListCell;
-import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Pair;
 
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
@@ -120,13 +121,26 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
     }
 
     private void updateMods() {
+        ModUpdateTask task = new ModUpdateTask(
+                modManager,
+                objects.stream()
+                        .filter(o -> o.enabled.get())
+                        .map(object -> pair(object.data.getLocalMod(), object.data.getCandidates().get(0)))
+                        .collect(Collectors.toList()));
         Controllers.taskDialog(
-                new ModUpdateTask(
-                        modManager,
-                        objects.stream()
-                                .filter(o -> o.enabled.get())
-                                .map(object -> pair(object.data.getLocalMod(), object.data.getCandidates().get(0)))
-                                .collect(Collectors.toList())),
+                task.whenComplete(Schedulers.javafx(), exception -> {
+                    fireEvent(new PageCloseEvent());
+                    if (!task.getFailedMods().isEmpty()) {
+                        Controllers.dialog(i18n("mods.check_updates.failed") + "\n" +
+                                task.getFailedMods().stream().map(LocalModFile::getFileName).collect(Collectors.joining("\n")),
+                                i18n("install.failed"),
+                                MessageDialogPane.MessageType.ERROR);
+                    }
+
+                    if (exception == null) {
+                        Controllers.dialog(i18n("install.success"));
+                    }
+                }),
                 i18n("mods.check_updates.update"),
                 t -> {
                 });
@@ -249,6 +263,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
     public static class ModUpdateTask extends Task<Void> {
         private final Collection<Task<?>> dependents;
+        private final List<LocalModFile> failedMods = new ArrayList<>();
 
         ModUpdateTask(ModManager modManager, List<Pair<LocalModFile, RemoteMod.Version>> mods) {
             setStage("mods.check_updates.update");
@@ -257,14 +272,31 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             dependents = mods.stream()
                     .map(mod -> {
                         return Task
-                                .supplyAsync(() -> {
-                                    return null;
+                                .runAsync(Schedulers.javafx(), () -> {
+                                    mod.getKey().setOld(true);
                                 })
-                                .setName(mod.getKey().getName())
-                                .setSignificance(TaskSignificance.MAJOR)
+                                .thenComposeAsync(() -> {
+                                    FileDownloadTask task = new FileDownloadTask(
+                                            new URL(mod.getValue().getFile().getUrl()),
+                                            modManager.getModsDirectory().resolve(mod.getValue().getFile().getFilename()).toFile());
+
+                                    task.setName(mod.getValue().getName());
+                                    return task;
+                                })
+                                .whenComplete(Schedulers.javafx(), exception -> {
+                                    if (exception != null) {
+                                        // restore state if failed
+                                        mod.getKey().setOld(false);
+                                        failedMods.add(mod.getKey());
+                                    }
+                                })
                                 .withCounter("mods.check_updates.update");
                     })
                     .collect(Collectors.toList());
+        }
+
+        public List<LocalModFile> getFailedMods() {
+            return failedMods;
         }
 
         @Override

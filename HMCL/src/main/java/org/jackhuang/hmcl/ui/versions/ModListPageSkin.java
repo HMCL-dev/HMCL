@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
-import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -43,6 +40,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -56,6 +54,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
@@ -259,9 +258,13 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    static class ModInfoListCell extends MDListCell<ModInfoObject> {
+    private static Lazy<PopupMenu> menu = new Lazy<>(PopupMenu::new);
+    private static Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
+
+    class ModInfoListCell extends MDListCell<ModInfoObject> {
         JFXCheckBox checkBox = new JFXCheckBox();
         TwoLineListItem content = new TwoLineListItem();
+        JFXButton restoreButton = new JFXButton();
         JFXButton infoButton = new JFXButton();
         JFXButton revealButton = new JFXButton();
         BooleanProperty booleanProperty;
@@ -276,13 +279,18 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             content.setMouseTransparent(true);
             setSelectable();
 
+            restoreButton.getStyleClass().add("toggle-icon4");
+            restoreButton.setGraphic(FXUtils.limitingSize(SVG.restore(Theme.blackFillBinding(), 24, 24), 24, 24));
+
+            FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
+
             revealButton.getStyleClass().add("toggle-icon4");
             revealButton.setGraphic(FXUtils.limitingSize(SVG.folderOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
 
             infoButton.getStyleClass().add("toggle-icon4");
             infoButton.setGraphic(FXUtils.limitingSize(SVG.informationOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
 
-            container.getChildren().setAll(checkBox, content, revealButton, infoButton);
+            container.getChildren().setAll(checkBox, content, restoreButton, revealButton, infoButton);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -302,6 +310,17 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
+            restoreButton.setVisible(!dataItem.getModInfo().getMod().getOldFiles().isEmpty());
+            restoreButton.setOnMouseClicked(e -> {
+                menu.get().getContent().setAll(dataItem.getModInfo().getMod().getOldFiles().stream()
+                        .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(), () -> {
+                            getSkinnable().rollback(dataItem.getModInfo(), localModFile);
+                        }))
+                        .collect(Collectors.toList())
+                );
+
+                popup.get().show(restoreButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, restoreButton.getHeight());
+            });
             revealButton.setOnMouseClicked(e -> {
                 FXUtils.showFileInExplorer(dataItem.getModInfo().getFile());
             });
