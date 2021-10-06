@@ -29,7 +29,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -78,9 +77,9 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
         return () -> {
             T node = nodeSupplier.get();
-            if (this.version.get() != null) {
+            if (version.get() != null) {
                 if (node instanceof VersionPage.VersionLoadable) {
-                    ((VersionPage.VersionLoadable) node).loadVersion(Profiles.getSelectedProfile(), null);
+                    ((VersionLoadable) node).loadVersion(version.get().getProfile(), version.get().getVersion());
                 }
             }
             return node;

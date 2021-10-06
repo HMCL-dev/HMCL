@@ -90,7 +90,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         titleLabel.getStyleClass().add("jfx-decorator-title");
         titleNode.getChildren().setAll(titleIcon, titleLabel);
 
-        state.setValue(State.fromTitleNode(titleNode));
+        state.setValue(new State(null, titleNode, false, false, true));
 
         setPadding(new Insets(20));
 
