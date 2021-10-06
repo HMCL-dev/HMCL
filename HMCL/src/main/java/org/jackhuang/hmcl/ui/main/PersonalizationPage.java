@@ -59,10 +59,10 @@ public class PersonalizationPage extends StackPane {
         scrollPane.setFitToWidth(true);
         getChildren().setAll(scrollPane);
 
+        ComponentList themeList = new ComponentList();
         {
-            ComponentList themeList = new ComponentList();
             BorderPane themePane = new BorderPane();
-            themeList.getContent().setAll(themePane);
+            themeList.getContent().add(themePane);
 
             Label left = new Label(i18n("settings.launcher.theme"));
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
@@ -81,9 +81,14 @@ public class PersonalizationPage extends StackPane {
             });
             themeColorPickerContainer.getChildren().setAll(picker);
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
-
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
         }
+        {
+            OptionToggleButton titleTransparentButton = new OptionToggleButton();
+            themeList.getContent().add(titleTransparentButton);
+            titleTransparentButton.selectedProperty().bindBidirectional(config().titleTransparentProperty());
+            titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
+        }
+        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
 
         {
             ComponentList componentList = new ComponentList();

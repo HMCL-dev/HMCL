@@ -147,9 +147,10 @@ public class FeedbackPage extends VBox implements PageAware {
                     if (empty) return;
                     content.setTitle(feedback.getTitle());
                     content.setSubtitle(feedback.getAuthor());
-                    content.getTags().add("#" + feedback.getId());
-                    content.getTags().add(i18n("feedback.state." + feedback.getState().name().toLowerCase(Locale.US)));
-                    content.getTags().add(i18n("feedback.type." + feedback.getType().name().toLowerCase(Locale.US)));
+                    content.getTags().setAll(
+                            "#" + feedback.getId(),
+                            i18n("feedback.state." + feedback.getState().name().toLowerCase(Locale.US)),
+                            i18n("feedback.type." + feedback.getType().name().toLowerCase(Locale.US)));
                 }
             });
             listView.setOnMouseClicked(e -> {

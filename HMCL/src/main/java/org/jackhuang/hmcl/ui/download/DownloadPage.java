@@ -99,7 +99,7 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
 
         Profiles.registerVersionsListener(this::loadVersions);
 
-        tab.getSelectionModel().select(newGameTab);
+        tab.select(newGameTab);
         FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
             if (newValue.initializeIfNeeded()) {
                 if (newValue.getNode() instanceof VersionPage.VersionLoadable) {
@@ -115,37 +115,37 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
                         item.setTitle(i18n("game"));
                         item.setLeftGraphic(wrap(SVG::gamepad));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(newGameTab));
-                        item.setOnAction(e -> tab.getSelectionModel().select(newGameTab));
+                        item.setOnAction(e -> tab.select(newGameTab));
                     })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("mods"));
                         item.setLeftGraphic(wrap(SVG::puzzle));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modTab));
-                        item.setOnAction(e -> tab.getSelectionModel().select(modTab));
+                        item.setOnAction(e -> tab.select(modTab));
                     })
                     .addNavigationDrawerItem(settingsItem -> {
                         settingsItem.setTitle(i18n("modpack"));
                         settingsItem.setLeftGraphic(wrap(SVG::pack));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modpackTab));
-                        settingsItem.setOnAction(e -> tab.getSelectionModel().select(modpackTab));
+                        settingsItem.setOnAction(e -> tab.select(modpackTab));
                     })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("resourcepack"));
                         item.setLeftGraphic(wrap(SVG::textureBox));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(resourcePackTab));
-                        item.setOnAction(e -> tab.getSelectionModel().select(resourcePackTab));
+                        item.setOnAction(e -> tab.select(resourcePackTab));
                     })
 //                    .addNavigationDrawerItem(item -> {
 //                        item.setTitle(i18n("download.curseforge.customization"));
 //                        item.setLeftGraphic(wrap(SVG::script));
 //                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(customizationTab));
-//                        item.setOnAction(e -> tab.getSelectionModel().select(customizationTab));
+//                        item.setOnAction(e -> tab.select(customizationTab));
 //                    })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("world"));
                         item.setLeftGraphic(wrap(SVG::earth));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(worldTab));
-                        item.setOnAction(e -> tab.getSelectionModel().select(worldTab));
+                        item.setOnAction(e -> tab.select(worldTab));
                     });
             FXUtils.setLimitWidth(sideBar, 200);
             setLeft(sideBar);
@@ -210,6 +210,10 @@ public class DownloadPage extends BorderPane implements DecoratorPage {
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state.getReadOnlyProperty();
+    }
+
+    public void showGameDownloads() {
+        tab.select(newGameTab);
     }
 
     private class DownloadNavigator implements Navigation {

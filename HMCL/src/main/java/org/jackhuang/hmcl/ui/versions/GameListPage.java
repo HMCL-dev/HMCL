@@ -168,7 +168,7 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
                             .add(installModpackItem)
                             .add(refreshItem)
                             .add(globalManageItem);
-                    FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 3 + 12 * 2);
+                    FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 4 + 12 * 2);
                     left.setBottom(bottomLeftCornerList);
                 }
             }

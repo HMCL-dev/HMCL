@@ -106,19 +106,17 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
         parent.getChildren().add(wrapper);
 
-        // center node with a animation layer at bottom, a container layer at middle and a "welcome" layer at top.
+        // center node with an animation layer at bottom, a container layer at middle and a "welcome" layer at top.
         StackPane container = new StackPane();
-        container.backgroundProperty().bind(skinnable.contentBackgroundProperty());
         FXUtils.setOverflowHidden(container);
 
         // animation layer at bottom
+        HBox drawerPane = new HBox();
         {
-            HBox layer = new HBox();
             leftPane = new StackPane();
             leftPane.setPrefWidth(0);
             leftPane.getStyleClass().add("jfx-decorator-drawer");
-            layer.getChildren().setAll(leftPane);
-            container.getChildren().add(layer);
+            drawerPane.getChildren().setAll(leftPane);
         }
 
         // content layer at middle
@@ -153,7 +151,26 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
         titleContainer = new StackPane();
         titleContainer.setPickOnBounds(false);
-        titleContainer.getStyleClass().addAll("jfx-tool-bar", "background");
+        titleContainer.getStyleClass().addAll("jfx-tool-bar");
+
+        FXUtils.onChangeAndOperate(skinnable.titleTransparentProperty(), titleTransparent -> {
+            if (titleTransparent) {
+                wrapper.backgroundProperty().bind(skinnable.contentBackgroundProperty());
+                container.backgroundProperty().unbind();
+                container.setBackground(null);
+                titleContainer.getStyleClass().remove("background");
+                container.getChildren().remove(drawerPane);
+                wrapper.getChildren().add(0, drawerPane);
+            } else {
+                container.backgroundProperty().bind(skinnable.contentBackgroundProperty());
+                wrapper.backgroundProperty().unbind();
+                wrapper.setBackground(null);
+                titleContainer.getStyleClass().add("background");
+                wrapper.getChildren().remove(drawerPane);
+                container.getChildren().add(0, drawerPane);
+            }
+        });
+
         control.capableDraggingWindow(titleContainer);
 
         BorderPane titleBar = new BorderPane();

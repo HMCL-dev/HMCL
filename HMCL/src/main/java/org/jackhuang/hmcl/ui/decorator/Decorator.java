@@ -52,6 +52,7 @@ public class Decorator extends Control {
     private final BooleanProperty canBack = new SimpleBooleanProperty(false);
     private final BooleanProperty canClose = new SimpleBooleanProperty(false);
     private final BooleanProperty showCloseAsHome = new SimpleBooleanProperty(false);
+    private final BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
     private final Stage primaryStage;
     private Navigation.NavigationDirection navigationDirection = Navigation.NavigationDirection.START;
     private StackPane drawerWrapper;
@@ -202,6 +203,18 @@ public class Decorator extends Control {
 
     void setDragging(boolean dragging) {
         this.dragging.set(dragging);
+    }
+
+    public boolean isTitleTransparent() {
+        return titleTransparent.get();
+    }
+
+    public BooleanProperty titleTransparentProperty() {
+        return titleTransparent;
+    }
+
+    public void setTitleTransparent(boolean titleTransparent) {
+        this.titleTransparent.set(titleTransparent);
     }
 
     public ObjectProperty<EventHandler<ActionEvent>> onBackNavButtonActionProperty() {

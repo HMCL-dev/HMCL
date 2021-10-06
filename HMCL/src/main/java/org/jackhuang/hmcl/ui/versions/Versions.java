@@ -41,7 +41,6 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
-import org.jackhuang.hmcl.ui.download.VanillaInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -64,10 +63,8 @@ public final class Versions {
     }
 
     public static void addNewGame() {
-        Profile profile = Profiles.getSelectedProfile();
-        if (profile.getRepository().isLoaded()) {
-            Controllers.getDecorator().startWizard(new VanillaInstallWizardProvider(profile), i18n("install.new_game"));
-        }
+        Controllers.getDownloadPage().showGameDownloads();
+        Controllers.navigate(Controllers.getDownloadPage());
     }
 
     public static void importModpack() {
@@ -255,9 +252,6 @@ public final class Versions {
     public static void modifyGlobalSettings(Profile profile) {
         Controllers.getSettingsPage().showGameSettings(profile);
         Controllers.navigate(Controllers.getSettingsPage());
-//        VersionSettingsPage page = new VersionSettingsPage();
-//        page.loadVersion(profile, null);
-//        Controllers.navigate(page);
     }
 
     public static void modifyGameSettings(Profile profile, String version) {

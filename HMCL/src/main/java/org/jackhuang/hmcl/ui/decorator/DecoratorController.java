@@ -74,6 +74,7 @@ public class DecoratorController {
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
         decorator.setOnCloseButtonAction(Launcher::stopApplication);
+        decorator.titleTransparentProperty().bind(config().titleTransparentProperty());
 
         navigator = new Navigator();
         navigator.setOnNavigated(this::onNavigated);

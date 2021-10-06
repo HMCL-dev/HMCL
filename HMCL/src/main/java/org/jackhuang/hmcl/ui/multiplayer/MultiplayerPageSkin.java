@@ -149,9 +149,6 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
             scrollPane.setFitToHeight(true);
             root.setCenter(scrollPane);
 
-            HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
-            hint.setText(i18n("multiplayer.hint"));
-
             ComponentList roomPane = new ComponentList();
             {
                 TransitionPane transitionPane = new TransitionPane();
@@ -290,7 +287,6 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
             }
 
             content.getChildren().setAll(
-                    hint,
                     ComponentList.createComponentListTitle(i18n("multiplayer.session")),
                     roomPane,
                     ComponentList.createComponentListTitle(i18n("multiplayer.nat")),
