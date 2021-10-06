@@ -196,6 +196,11 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 });
     }
 
+    public void download() {
+        Controllers.getDownloadPage().showModDownloads();
+        Controllers.navigate(Controllers.getDownloadPage());
+    }
+
     public void rollback(LocalModFile from, LocalModFile to) {
         try {
             modManager.rollback(from, to);

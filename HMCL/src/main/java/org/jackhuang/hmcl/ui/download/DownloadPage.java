@@ -222,6 +222,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         tab.select(newGameTab);
     }
 
+    public void showModDownloads() {
+        tab.select(modTab);
+    }
+
     private class DownloadNavigator implements Navigation {
         private final Map<String, Object> settings = new HashMap<>();
 

@@ -39,6 +39,8 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -77,10 +79,19 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         JFXListView<ModInfoObject> listView = new JFXListView<>();
 
         {
-            HBox toolbar = new HBox();
-            toolbar.getChildren().setAll(
+            TransitionPane toolBarPane = new TransitionPane();
+            HBox toolbarNormal = new HBox();
+            toolbarNormal.getChildren().setAll(
                     createToolbarButton2(i18n("button.refresh"), SVG::refresh, skinnable::refresh),
                     createToolbarButton2(i18n("mods.add"), SVG::plus, skinnable::add),
+                    createToolbarButton2(i18n("folder.mod"), SVG::folderOpen, () ->
+                            skinnable.openModFolder()),
+                    createToolbarButton2(i18n("mods.check_updates"), SVG::update, () ->
+                            skinnable.checkUpdates()),
+                    createToolbarButton2(i18n("download"), SVG::downloadOutline, () ->
+                            skinnable.download()));
+            HBox toolbarSelecting = new HBox();
+            toolbarSelecting.getChildren().setAll(
                     createToolbarButton2(i18n("button.remove"), SVG::delete, () -> {
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
                             skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
@@ -90,11 +101,18 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                             skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
                     createToolbarButton2(i18n("mods.disable"), SVG::close, () ->
                             skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
-                    createToolbarButton2(i18n("folder.mod"), SVG::folderOpen, () ->
-                            skinnable.openModFolder()),
-                    createToolbarButton2(i18n("mods.check_updates"), SVG::update, () ->
-                            skinnable.checkUpdates()));
-            root.getContent().add(toolbar);
+                    createToolbarButton2(i18n("button.select_all"), SVG::selectAll, () ->
+                            listView.getSelectionModel().selectAll()),
+                    createToolbarButton2(i18n("button.cancel"), SVG::cancel, () ->
+                            listView.getSelectionModel().clearSelection()));
+            FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(), selectedItem -> {
+                if (selectedItem == null) {
+                    toolBarPane.setContent(toolbarNormal, ContainerAnimations.FADE.getAnimationProducer());
+                } else {
+                    toolBarPane.setContent(toolbarSelecting, ContainerAnimations.FADE.getAnimationProducer());
+                }
+            });
+            root.getContent().add(toolBarPane);
         }
 
         {
