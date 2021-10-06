@@ -48,7 +48,7 @@ import java.nio.charset.StandardCharsets;
  *   Original MurmurHash2 c++ code</a>
  * @since 1.13
  */
-public class MurmurHash2 {
+public final class MurmurHash2 {
 
     // Constants for 32-bit variant
     private static final int M32 = 0x5bd1e995;
@@ -58,16 +58,18 @@ public class MurmurHash2 {
     private static final long M64 = 0xc6a4a7935bd1e995L;
     private static final int R64 = 47;
 
-    /** No instance methods. */
+    /**
+     * No instance methods.
+     */
     private MurmurHash2() {
     }
 
     /**
      * Generates a 32-bit hash from byte array with the given length and seed.
      *
-     * @param data The input byte array
+     * @param data   The input byte array
      * @param length The length of the array
-     * @param seed The initial seed value
+     * @param seed   The initial seed value
      * @return The 32-bit hash
      */
     public static int hash32(final byte[] data, final int length, final int seed) {
@@ -93,8 +95,10 @@ public class MurmurHash2 {
         switch (length - index) {
             case 3:
                 h ^= (data[index + 2] & 0xff) << 16;
+                // fallthrough
             case 2:
                 h ^= (data[index + 1] & 0xff) << 8;
+                // fallthrough
             case 1:
                 h ^= (data[index] & 0xff);
                 h *= M32;
@@ -118,7 +122,7 @@ public class MurmurHash2 {
      * int hash = MurmurHash2.hash32(data, length, seed);
      * </pre>
      *
-     * @param data The input byte array
+     * @param data   The input byte array
      * @param length The length of the array
      * @return The 32-bit hash
      * @see #hash32(byte[], int, int)
@@ -161,8 +165,8 @@ public class MurmurHash2 {
      * int hash = MurmurHash2.hash32(bytes, bytes.length, seed);
      * </pre>
      *
-     * @param text The input string
-     * @param from The starting index
+     * @param text   The input string
+     * @param from   The starting index
      * @param length The length of the substring
      * @return The 32-bit hash
      * @see #hash32(byte[], int, int)
@@ -174,9 +178,9 @@ public class MurmurHash2 {
     /**
      * Generates a 64-bit hash from byte array of the given length and seed.
      *
-     * @param data The input byte array
+     * @param data   The input byte array
      * @param length The length of the array
-     * @param seed The initial seed value
+     * @param seed   The initial seed value
      * @return The 64-bit hash of the given array
      */
     public static long hash64(final byte[] data, final int length, final int seed) {
@@ -201,16 +205,22 @@ public class MurmurHash2 {
         switch (length - index) {
             case 7:
                 h ^= ((long) data[index + 6] & 0xff) << 48;
+                // fallthrough
             case 6:
                 h ^= ((long) data[index + 5] & 0xff) << 40;
+                // fallthrough
             case 5:
                 h ^= ((long) data[index + 4] & 0xff) << 32;
+                // fallthrough
             case 4:
                 h ^= ((long) data[index + 3] & 0xff) << 24;
+                // fallthrough
             case 3:
                 h ^= ((long) data[index + 2] & 0xff) << 16;
+                // fallthrough
             case 2:
                 h ^= ((long) data[index + 1] & 0xff) << 8;
+                // fallthrough
             case 1:
                 h ^= ((long) data[index] & 0xff);
                 h *= M64;
@@ -232,7 +242,7 @@ public class MurmurHash2 {
      * int hash = MurmurHash2.hash64(data, length, seed);
      * </pre>
      *
-     * @param data The input byte array
+     * @param data   The input byte array
      * @param length The length of the array
      * @return The 64-bit hash
      * @see #hash64(byte[], int, int)
@@ -275,8 +285,8 @@ public class MurmurHash2 {
      * int hash = MurmurHash2.hash64(bytes, bytes.length, seed);
      * </pre>
      *
-     * @param text The The input string
-     * @param from The starting index
+     * @param text   The The input string
+     * @param from   The starting index
      * @param length The length of the substring
      * @return The 64-bit hash
      * @see #hash64(byte[], int, int)
@@ -288,13 +298,13 @@ public class MurmurHash2 {
     /**
      * Gets the little-endian int from 4 bytes starting at the specified index.
      *
-     * @param data The data
+     * @param data  The data
      * @param index The index
      * @return The little-endian int
      */
     private static int getLittleEndianInt(final byte[] data, final int index) {
-        return ((data[index    ] & 0xff)      ) |
-                ((data[index + 1] & 0xff) <<  8) |
+        return ((data[index] & 0xff)) |
+                ((data[index + 1] & 0xff) << 8) |
                 ((data[index + 2] & 0xff) << 16) |
                 ((data[index + 3] & 0xff) << 24);
     }
@@ -302,13 +312,13 @@ public class MurmurHash2 {
     /**
      * Gets the little-endian long from 8 bytes starting at the specified index.
      *
-     * @param data The data
+     * @param data  The data
      * @param index The index
      * @return The little-endian long
      */
     private static long getLittleEndianLong(final byte[] data, final int index) {
-        return (((long) data[index    ] & 0xff)      ) |
-                (((long) data[index + 1] & 0xff) <<  8) |
+        return (((long) data[index] & 0xff)) |
+                (((long) data[index + 1] & 0xff) << 8) |
                 (((long) data[index + 2] & 0xff) << 16) |
                 (((long) data[index + 3] & 0xff) << 24) |
                 (((long) data[index + 4] & 0xff) << 32) |

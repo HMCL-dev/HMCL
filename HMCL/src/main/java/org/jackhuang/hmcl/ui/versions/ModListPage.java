@@ -176,8 +176,8 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void checkUpdates() {
-        Controllers.taskDialog(
-                Task.composeAsync(() -> {
+        Controllers.taskDialog(Task
+                        .composeAsync(() -> {
                             Optional<String> gameVersion = profile.getRepository().getGameVersion(versionId);
                             if (gameVersion.isPresent()) {
                                 return new ModCheckUpdatesTask(gameVersion.get(), modManager.getMods());
@@ -191,8 +191,8 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                                 Controllers.navigate(new ModUpdatesPage(modManager, result));
                             }
                         })
-                        .withStagesHint(Collections.singletonList("mods.check_updates"))
-                , i18n("update.checking"), pane -> {
+                        .withStagesHint(Collections.singletonList("mods.check_updates")),
+                i18n("update.checking"), pane -> {
                 });
     }
 

@@ -54,12 +54,11 @@ public class JFXCheckBoxTreeTableCell<S, T> extends TreeTableCell<S, T> {
         setConverter(converter);
     }
 
-    private ObjectProperty<StringConverter<T>> converter =
-            new SimpleObjectProperty<StringConverter<T>>(this, "converter") {
-                protected void invalidated() {
-                    updateShowLabel();
-                }
-            };
+    private ObjectProperty<StringConverter<T>> converter = new SimpleObjectProperty<StringConverter<T>>(this, "converter") {
+        protected void invalidated() {
+            updateShowLabel();
+        }
+    };
 
     public final ObjectProperty<StringConverter<T>> converterProperty() {
         return converter;

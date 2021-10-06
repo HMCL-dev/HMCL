@@ -1113,7 +1113,7 @@ public abstract class Task<T> {
         }
     }
 
-    public class CountTask extends Task<T> {
+    public final class CountTask extends Task<T> {
         private final String countStage;
 
         private CountTask(String countStage) {
