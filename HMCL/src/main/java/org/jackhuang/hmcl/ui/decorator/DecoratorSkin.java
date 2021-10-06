@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.svg.SVGGlyph;
-import javafx.animation.Animation;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
@@ -197,21 +196,8 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                     navBarPane.getChildren().setAll(node);
                 }
 
-                leftPane.prefWidthProperty().unbind();
-                if (s.getLeftPaneWidth() >= 0) {
-                    FXUtils.playAnimation(leftPane, "animation",
-                            s.isAnimate() ? Duration.millis(160) : null, leftPane.prefWidthProperty(), null, s.getLeftPaneWidth(), FXUtils.SINE);
-                } else {
-                    Animation animation = FXUtils.playAnimation(leftPane, "animation1",
-                            s.isAnimate() ? Duration.millis(160) : null, leftPane.prefWidthProperty(), null, container.getWidth(), FXUtils.SINE);
-                    if (animation != null) {
-                        animation.setOnFinished(action -> {
-                            if (animation.getStatus() != Animation.Status.STOPPED) {
-                                leftPane.prefWidthProperty().bind(container.widthProperty());
-                            }
-                        });
-                    }
-                }
+                FXUtils.playAnimation(leftPane, "animation",
+                        s.isAnimate() ? Duration.millis(160) : null, leftPane.prefWidthProperty(), null, s.getLeftPaneWidth(), FXUtils.SINE);
             });
             titleBar.setCenter(navBarPane);
             titleBar.setRight(buttonsContainerPlaceHolder);

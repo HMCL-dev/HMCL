@@ -95,5 +95,8 @@ public class TransitionPane extends StackPane implements AnimationHandler {
         getChildren().setAll(previousNode, currentNode);
     }
 
-    private final StackPane EMPTY_PANE = new StackPane();
+    private final EmptyPane EMPTY_PANE = new EmptyPane();
+
+    public static class EmptyPane extends StackPane {
+    }
 }

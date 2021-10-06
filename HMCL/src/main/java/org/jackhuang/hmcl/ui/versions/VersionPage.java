@@ -29,6 +29,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -41,6 +42,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -58,27 +60,31 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private String preferredVersionName = null;
 
     {
-        versionSettingsTab.setNodeSupplier(() -> new VersionSettingsPage(false));
-        modListTab.setNodeSupplier(ModListPage::new);
-        installerListTab.setNodeSupplier(InstallerListPage::new);
-        worldListTab.setNodeSupplier(WorldListPage::new);
+        versionSettingsTab.setNodeSupplier(loadVersionFor(() -> new VersionSettingsPage(false)));
+        modListTab.setNodeSupplier(loadVersionFor(ModListPage::new));
+        installerListTab.setNodeSupplier(loadVersionFor(InstallerListPage::new));
+        worldListTab.setNodeSupplier(loadVersionFor(WorldListPage::new));
 
         tab = new TabHeader(versionSettingsTab, modListTab, installerListTab, worldListTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
-        tab.getSelectionModel().select(versionSettingsTab);
+        tab.select(versionSettingsTab);
         FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
-            if (newValue.initializeIfNeeded()) {
-                if (this.version.get() != null) {
-                    if (newValue.getNode() instanceof VersionLoadable) {
-                        ((VersionLoadable) newValue.getNode()).loadVersion(version.get().getProfile(), version.get().getVersion());
-                    }
-                }
-            }
-
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE.getAnimationProducer());
         });
+    }
+
+    private <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
+        return () -> {
+            T node = nodeSupplier.get();
+            if (this.version.get() != null) {
+                if (node instanceof VersionPage.VersionLoadable) {
+                    ((VersionPage.VersionLoadable) node).loadVersion(Profiles.getSelectedProfile(), null);
+                }
+            }
+            return node;
+        };
     }
 
     public void setVersion(String version, Profile profile) {
@@ -207,7 +213,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 versionSettingsItem.setLeftGraphic(wrap(SVG::gearOutline));
                 versionSettingsItem.setActionButtonVisible(false);
                 versionSettingsItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.versionSettingsTab));
-                versionSettingsItem.setOnAction(e -> control.tab.getSelectionModel().select(control.versionSettingsTab));
+                versionSettingsItem.setOnAction(e -> control.tab.select(control.versionSettingsTab));
 
                 AdvancedListItem modListItem = new AdvancedListItem();
                 modListItem.getStyleClass().add("navigation-drawer-item");
@@ -215,7 +221,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 modListItem.setLeftGraphic(wrap(SVG::puzzle));
                 modListItem.setActionButtonVisible(false);
                 modListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.modListTab));
-                modListItem.setOnAction(e -> control.tab.getSelectionModel().select(control.modListTab));
+                modListItem.setOnAction(e -> control.tab.select(control.modListTab));
 
                 AdvancedListItem installerListItem = new AdvancedListItem();
                 installerListItem.getStyleClass().add("navigation-drawer-item");
@@ -223,7 +229,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 installerListItem.setLeftGraphic(wrap(SVG::cube));
                 installerListItem.setActionButtonVisible(false);
                 installerListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.installerListTab));
-                installerListItem.setOnAction(e -> control.tab.getSelectionModel().select(control.installerListTab));
+                installerListItem.setOnAction(e -> control.tab.select(control.installerListTab));
 
                 AdvancedListItem worldListItem = new AdvancedListItem();
                 worldListItem.getStyleClass().add("navigation-drawer-item");
@@ -231,7 +237,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 worldListItem.setLeftGraphic(wrap(SVG::earth));
                 worldListItem.setActionButtonVisible(false);
                 worldListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.worldListTab));
-                worldListItem.setOnAction(e -> control.tab.getSelectionModel().select(control.worldListTab));
+                worldListItem.setOnAction(e -> control.tab.select(control.worldListTab));
 
                 AdvancedListBox sideBar = new AdvancedListBox()
                         .add(versionSettingsItem)

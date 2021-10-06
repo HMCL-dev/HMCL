@@ -52,13 +52,15 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class ModUpdatesPage extends BorderPane implements DecoratorPage {
-    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("mods.check_updates"), -1));
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("mods.check_updates")));
 
     private final ModManager modManager;
     private final ObservableList<ModUpdateObject> objects;
 
     public ModUpdatesPage(ModManager modManager, List<LocalModFile.ModUpdate> updates) {
         this.modManager = modManager;
+
+        getStyleClass().add("gray-background");
 
         JFXTreeTableColumn<ModUpdateObject, Boolean> enabledColumn = new JFXTreeTableColumn<>();
         enabledColumn.setCellFactory(column -> new JFXCheckBoxTreeTableCell<>());

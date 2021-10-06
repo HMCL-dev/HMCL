@@ -224,8 +224,10 @@ public class DecoratorController {
 
     // ==== Navigation ====
 
-    public Navigator getNavigator() {
-        return navigator;
+    private static final DecoratorAnimationProducer animation = new DecoratorAnimationProducer();
+
+    public void navigate(Node node) {
+        navigator.navigate(node, animation);
     }
 
     private void close() {
@@ -390,7 +392,7 @@ public class DecoratorController {
     public void startWizard(WizardProvider wizardProvider, String category) {
         FXUtils.checkFxUserThread();
 
-        getNavigator().navigate(new DecoratorWizardDisplayer(wizardProvider, category), ContainerAnimations.FADE.getAnimationProducer());
+        navigator.navigate(new DecoratorWizardDisplayer(wizardProvider, category), ContainerAnimations.FADE.getAnimationProducer());
     }
 
     // ==== Authlib Injector DnD ====

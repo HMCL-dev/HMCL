@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
@@ -286,7 +285,7 @@ public final class Controllers {
     }
 
     public static void navigate(Node node) {
-        decorator.getNavigator().navigate(node, ContainerAnimations.FADE.getAnimationProducer());
+        decorator.navigate(node);
     }
 
     public static void showToast(String content) {

@@ -58,6 +58,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
@@ -78,9 +79,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private WeakListenerHolder listenerHolder;
 
     public DownloadPage() {
-        newGameTab.setNodeSupplier(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
-                "game", versionPageNavigator::onGameSelected));
-        modpackTab.setNodeSupplier(() -> {
+        newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
+                "game", versionPageNavigator::onGameSelected)));
+        modpackTab.setNodeSupplier(loadVersionFor(() -> {
             DownloadListPage page = new DownloadListPage(CurseForgeRemoteModRepository.MODPACKS, Versions::downloadModpackImpl);
 
             JFXButton installLocalModpackButton = new JFXButton(i18n("install.modpack"));
@@ -90,22 +91,17 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
             page.getActions().add(installLocalModpackButton);
             return page;
-        });
-        modTab.setNodeSupplier(() -> new ModDownloadListPage((profile, version, file) -> download(profile, version, file, "mods"), true));
-        resourcePackTab.setNodeSupplier(() -> new DownloadListPage(CurseForgeRemoteModRepository.RESOURCE_PACKS, (profile, version, file) -> download(profile, version, file, "resourcepacks")));
+        }));
+        modTab.setNodeSupplier(loadVersionFor(() -> new ModDownloadListPage((profile, version, file) -> download(profile, version, file, "mods"), true)));
+        resourcePackTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.RESOURCE_PACKS, (profile, version, file) -> download(profile, version, file, "resourcepacks"))));
 //        customizationTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.CUSTOMIZATIONS, this::download));
-        worldTab.setNodeSupplier(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS));
+        worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
         tab = new TabHeader(newGameTab, modpackTab, modTab, resourcePackTab, worldTab);
 
         Profiles.registerVersionsListener(this::loadVersions);
 
         tab.select(newGameTab);
         FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
-            if (newValue.initializeIfNeeded()) {
-                if (newValue.getNode() instanceof VersionPage.VersionLoadable) {
-                    ((VersionPage.VersionLoadable) newValue.getNode()).loadVersion(Profiles.getSelectedProfile(), null);
-                }
-            }
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE.getAnimationProducer());
         });
 
@@ -152,6 +148,16 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         setCenter(transitionPane);
+    }
+
+    private <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
+        return () -> {
+            T node = nodeSupplier.get();
+            if (node instanceof VersionPage.VersionLoadable) {
+                ((VersionPage.VersionLoadable) node).loadVersion(Profiles.getSelectedProfile(), null);
+            }
+            return node;
+        };
     }
 
     private void download(Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
