@@ -25,7 +25,6 @@ import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.event.Event;
@@ -36,6 +35,7 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 
@@ -49,7 +49,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class MultiplayerPage extends Control implements DecoratorPage, PageAware {
+public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("multiplayer"), -1));
 
     private final ObjectProperty<MultiplayerManager.State> multiplayerState = new SimpleObjectProperty<>(MultiplayerManager.State.DISCONNECTED);
@@ -69,7 +69,7 @@ public class MultiplayerPage extends Control implements DecoratorPage, PageAware
 
     @Override
     public void onPageShown() {
-        checkAgreement(() -> this.downloadCatoIfNecessary());
+        checkAgreement(this::downloadCatoIfNecessary);
     }
 
     @Override

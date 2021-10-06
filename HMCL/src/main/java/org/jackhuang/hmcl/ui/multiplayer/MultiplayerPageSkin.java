@@ -27,7 +27,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.SkinBase;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.LauncherHelper;
@@ -40,6 +39,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -48,7 +48,7 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
+public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimatedPageSkin<MultiplayerPage> {
 
     private ObservableList<Node> clients;
 
@@ -60,8 +60,6 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
     protected MultiplayerPageSkin(MultiplayerPage control) {
         super(control);
 
-        BorderPane root = new BorderPane();
-        getChildren().setAll(root);
         {
             VBox roomPane = new VBox();
             {
@@ -137,7 +135,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
                         report.setOnAction(e -> FXUtils.openLink(Metadata.EULA_URL));
                     });
             FXUtils.setLimitWidth(sideBar, 200);
-            root.setLeft(sideBar);
+            setLeft(sideBar);
         }
 
         {
@@ -147,7 +145,7 @@ public class MultiplayerPageSkin extends SkinBase<MultiplayerPage> {
             ScrollPane scrollPane = new ScrollPane(content);
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
-            root.setCenter(scrollPane);
+            setCenter(scrollPane);
 
             ComponentList roomPane = new ComponentList();
             {

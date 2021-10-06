@@ -24,11 +24,12 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 public class DecoratorAnimatedPage extends Control {
 
-    private final VBox left = new VBox();
-    private final StackPane center = new StackPane();
+    protected final VBox left = new VBox();
+    protected final StackPane center = new StackPane();
 
     protected void setLeft(Node... children) {
         left.getChildren().setAll(children);
@@ -40,19 +41,29 @@ public class DecoratorAnimatedPage extends Control {
 
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new DecoratorAnimatedPageSkin(this);
+        return new DecoratorAnimatedPageSkin<>(this);
     }
 
-    private static class DecoratorAnimatedPageSkin extends SkinBase<DecoratorAnimatedPage> {
+    public static class DecoratorAnimatedPageSkin<T extends DecoratorAnimatedPage> extends SkinBase<T> {
 
-        protected DecoratorAnimatedPageSkin(DecoratorAnimatedPage control) {
+        protected DecoratorAnimatedPageSkin(T control) {
             super(control);
 
             BorderPane pane = new BorderPane();
             pane.setLeft(control.left);
+            FXUtils.setLimitWidth(control.left, 200);
             pane.setCenter(control.center);
             getChildren().setAll(pane);
         }
+
+        protected void setLeft(Node... children) {
+            getSkinnable().setLeft(children);
+        }
+
+        protected void setCenter(Node... children) {
+            getSkinnable().setCenter(children);
+        }
+
     }
 
 }
