@@ -160,12 +160,14 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
             });
             agreementPane.setActions(agreementLink, yesButton, noButton);
             Controllers.dialog(agreementPane);
+        } else {
+            runnable.run();
         }
     }
 
     private void downloadCatoIfNecessary() {
         if (StringUtils.isBlank(MultiplayerManager.getCatoPath())) {
-            Controllers.dialog(i18n("multiplayer.download.failed"), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+            Controllers.dialog(i18n("multiplayer.download.unsupported"), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
             fireEvent(new PageCloseEvent());
             return;
         }
