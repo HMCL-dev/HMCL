@@ -90,6 +90,7 @@ public class GameCrashWindow extends Stage {
         this.version = version;
         this.launchOptions = launchOptions;
         this.logs = logs;
+        this.analyzer = LibraryAnalyzer.analyze(version);
         this.view = new View();
 
         setScene(new Scene(view, 800, 480));
@@ -100,7 +101,6 @@ public class GameCrashWindow extends Stage {
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-");
         java = launchOptions.getJava().getVersion();
 
-        analyzer = LibraryAnalyzer.analyze(version);
 
         analyzeCrashReport();
     }
