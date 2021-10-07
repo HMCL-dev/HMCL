@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.ui.multiplayer;
 
+import com.jfoenix.controls.JFXCheckBox;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.ColumnConstraints;
@@ -35,12 +38,13 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class CreateMultiplayerRoomDialog extends DialogPane implements DialogAware {
 
-    private final FutureCallback<LocalServerDetector.PingResponse> callback;
+    private final FutureCallback<CreationRequest> callback;
     private final LocalServerDetector lanServerDetectorThread;
+    private final BooleanProperty allowAllJoinRequests = new SimpleBooleanProperty(true);
 
     private LocalServerDetector.PingResponse server;
 
-    CreateMultiplayerRoomDialog(FutureCallback<LocalServerDetector.PingResponse> callback) {
+    CreateMultiplayerRoomDialog(FutureCallback<CreationRequest> callback) {
         this.callback = callback;
 
         setTitle(i18n("multiplayer.session.create"));
@@ -69,6 +73,11 @@ public class CreateMultiplayerRoomDialog extends DialogPane implements DialogAwa
         Label portLabel = new Label(i18n("multiplayer.nat.testing"));
         portLabel.setText(i18n("multiplayer.nat.testing"));
         body.addRow(2, new Label(i18n("multiplayer.session.create.port")), portLabel);
+
+        JFXCheckBox allowAllJoinRequestsCheckBox = new JFXCheckBox(i18n("multiplayer.session.create.join.allow"));
+        allowAllJoinRequestsCheckBox.selectedProperty().bindBidirectional(allowAllJoinRequests);
+        GridPane.setColumnSpan(allowAllJoinRequestsCheckBox, 2);
+        body.addRow(3, allowAllJoinRequestsCheckBox);
 
         setValid(false);
 
@@ -102,7 +111,10 @@ public class CreateMultiplayerRoomDialog extends DialogPane implements DialogAwa
     protected void onAccept() {
         setLoading();
 
-        callback.call(Objects.requireNonNull(server), () -> {
+        callback.call(new CreationRequest(
+                Objects.requireNonNull(server),
+                allowAllJoinRequests.get()
+        ), () -> {
             runInFX(this::onSuccess);
         }, msg -> {
             runInFX(() -> onFailure(msg));
@@ -121,4 +133,21 @@ public class CreateMultiplayerRoomDialog extends DialogPane implements DialogAwa
         lanServerDetectorThread.interrupt();
     }
 
+    public static class CreationRequest {
+        private final LocalServerDetector.PingResponse server;
+        private final boolean allowAllJoinRequests;
+
+        public CreationRequest(LocalServerDetector.PingResponse server, boolean allowAllJoinRequests) {
+            this.server = server;
+            this.allowAllJoinRequests = allowAllJoinRequests;
+        }
+
+        public LocalServerDetector.PingResponse getServer() {
+            return server;
+        }
+
+        public boolean isAllowAllJoinRequests() {
+            return allowAllJoinRequests;
+        }
+    }
 }

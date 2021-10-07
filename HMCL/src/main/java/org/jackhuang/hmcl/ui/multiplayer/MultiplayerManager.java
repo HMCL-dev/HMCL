@@ -85,7 +85,7 @@ public final class MultiplayerManager {
         return Metadata.HMCL_DIRECTORY.resolve("libraries").resolve(CATO_PATH);
     }
 
-    public static CompletableFuture<CatoSession> joinSession(String token, String version, String sessionName, String peer, Mode mode, int remotePort, int localPort) throws IncompatibleCatoVersionException {
+    public static CompletableFuture<CatoSession> joinSession(String token, String version, String sessionName, String peer, Mode mode, int remotePort, int localPort, JoinSessionHandler handler) throws IncompatibleCatoVersionException {
         if (!CATO_VERSION.equals(version)) {
             throw new IncompatibleCatoVersionException(version, CATO_VERSION);
         }
@@ -133,6 +133,16 @@ public final class MultiplayerManager {
                 MultiplayerClient client = new MultiplayerClient(session.getId(), localPort);
                 session.addRelatedThread(client);
                 session.setClient(client);
+
+                if (handler != null) {
+                    handler.onWaitingForJoinResponse();
+                }
+
+                TimerTask task = Lang.setTimeout(() -> {
+                    future.completeExceptionally(new JoinRequestTimeoutException());
+                    session.stop();
+                }, 30 * 1000);
+
                 client.onConnected().register(connectedEvent -> {
                     try {
                         int port = findAvailablePort();
@@ -148,10 +158,12 @@ public final class MultiplayerManager {
                         future.completeExceptionally(e);
                         session.stop();
                     }
+                    task.cancel();
                 });
                 client.onKicked().register(kickedEvent -> {
                     future.completeExceptionally(new CancellationException());
                     session.stop();
+                    task.cancel();
                 });
                 client.start();
             });
@@ -160,7 +172,7 @@ public final class MultiplayerManager {
         });
     }
 
-    public static CatoSession createSession(String token, String sessionName, int gamePort) throws IOException {
+    public static CatoSession createSession(String token, String sessionName, int gamePort, boolean allowAllJoinRequests) throws IOException {
         Path exe = getCatoExecutable();
         if (!Files.isRegularFile(exe)) {
             throw new IllegalStateException("Cato file not found");
@@ -170,7 +182,7 @@ public final class MultiplayerManager {
             throw new CatoAlreadyStartedException();
         }
 
-        MultiplayerServer server = new MultiplayerServer(gamePort);
+        MultiplayerServer server = new MultiplayerServer(gamePort, allowAllJoinRequests);
         server.startServer();
 
         String[] commands = new String[]{exe.toString(),
@@ -419,6 +431,10 @@ public final class MultiplayerManager {
         }
     }
 
+    public interface JoinSessionHandler {
+        void onWaitingForJoinResponse();
+    }
+
     public static class IncompatibleCatoVersionException extends Exception {
         private final String expected;
         private final String actual;
@@ -447,5 +463,8 @@ public final class MultiplayerManager {
     }
 
     public static class CatoAlreadyStartedException extends RuntimeException {
+    }
+
+    public static class JoinRequestTimeoutException extends RuntimeException {
     }
 }

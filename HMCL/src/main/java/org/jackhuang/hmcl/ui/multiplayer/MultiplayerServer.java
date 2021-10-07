@@ -37,6 +37,7 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 public class MultiplayerServer extends Thread {
     private ServerSocket socket;
     private final int gamePort;
+    private final boolean allowAllJoinRequests;
 
     private FutureCallback<CatoClient> onClientAdding;
     private final EventManager<MultiplayerChannel.CatoClient> onClientAdded = new EventManager<>();
@@ -46,8 +47,9 @@ public class MultiplayerServer extends Thread {
     private final Map<String, Endpoint> clients = new ConcurrentHashMap<>();
     private final Map<String, Endpoint> nameClientMap = new ConcurrentHashMap<>();
 
-    public MultiplayerServer(int gamePort) {
+    public MultiplayerServer(int gamePort, boolean allowAllJoinRequests) {
         this.gamePort = gamePort;
+        this.allowAllJoinRequests = allowAllJoinRequests;
 
         setName("MultiplayerServer");
         setDaemon(true);
@@ -146,7 +148,7 @@ public class MultiplayerServer extends Thread {
                     nameClientMap.put(clientName, endpoint);
                     onClientAdded.fireEvent(catoClient);
 
-                    if (onClientAdding != null) {
+                    if (onClientAdding != null && !allowAllJoinRequests) {
                         onClientAdding.call(catoClient, () -> {
                             try {
                                 endpoint.write(new JoinResponse(gamePort));
@@ -168,6 +170,9 @@ public class MultiplayerServer extends Thread {
                                 LOG.log(Level.WARNING, "Failed to send kick response.", e);
                             }
                         });
+                    } else {
+                        // Allow all join requests.
+                        endpoint.write(new JoinResponse(gamePort));
                     }
                 } else if (request instanceof KeepAliveRequest) {
                     endpoint.write(new KeepAliveResponse(System.currentTimeMillis()));

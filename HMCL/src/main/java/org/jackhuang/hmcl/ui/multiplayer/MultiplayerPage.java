@@ -210,9 +210,9 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         }
 
         Controllers.dialog(new CreateMultiplayerRoomDialog((result, resolve, reject) -> {
-            int gamePort = result.getAd();
+            int gamePort = result.getServer().getAd();
             try {
-                MultiplayerManager.CatoSession session = MultiplayerManager.createSession(globalConfig().getMultiplayerToken(), result.getMotd(), gamePort);
+                MultiplayerManager.CatoSession session = MultiplayerManager.createSession(globalConfig().getMultiplayerToken(), result.getServer().getMotd(), gamePort, result.isAllowAllJoinRequests());
                 session.getServer().setOnClientAdding((client, resolveClient, rejectClient) -> {
                     runInFX(() -> {
                         Controllers.confirm(i18n("multiplayer.session.create.join.prompt", client.getUsername()), i18n("multiplayer.session.create.join"), MessageDialogPane.MessageType.INFO,
@@ -251,6 +251,8 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         }
 
         Controllers.prompt(new PromptDialogPane.Builder(i18n("multiplayer.session.join"), (result, resolve, reject) -> {
+            PromptDialogPane.Builder.HintQuestion hintQuestion = (PromptDialogPane.Builder.HintQuestion) result.get(0);
+
             String invitationCode = ((PromptDialogPane.Builder.StringQuestion) result.get(1)).getValue();
             MultiplayerManager.Invitation invitation;
             try {
@@ -279,7 +281,12 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                                         ? MultiplayerManager.Mode.RELAY
                                         : MultiplayerManager.Mode.P2P,
                                 invitation.getChannelPort(),
-                                localPort)
+                                localPort, new MultiplayerManager.JoinSessionHandler() {
+                                    @Override
+                                    public void onWaitingForJoinResponse() {
+                                        hintQuestion.setQuestion(i18n("multiplayer.session.join.wait"));
+                                    }
+                                })
                         .thenAcceptAsync(session -> {
                             initCatoSession(session);
 
@@ -313,6 +320,10 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                             } else if (throwable instanceof MultiplayerManager.CatoAlreadyStartedException) {
                                 LOG.info("Cato already started");
                                 reject.accept(i18n("multiplayer.session.error.already_started"));
+                                return null;
+                            } else if (throwable instanceof MultiplayerManager.JoinRequestTimeoutException) {
+                                LOG.info("Cato already started");
+                                reject.accept(i18n("multiplayer.session.join.wait_timeout"));
                                 return null;
                             } else {
                                 LOG.log(Level.WARNING, "Failed to join sessoin");

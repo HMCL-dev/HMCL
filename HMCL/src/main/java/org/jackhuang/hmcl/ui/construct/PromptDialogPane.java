@@ -23,6 +23,8 @@ import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.layout.ColumnConstraints;
@@ -67,8 +69,8 @@ public class PromptDialogPane extends DialogPane {
                 }
                 bindings.add(Bindings.createBooleanBinding(textField::validate, textField.textProperty()));
 
-                if (StringUtils.isNotBlank(question.question)) {
-                    body.addRow(rowIndex++, new Label(question.question), textField);
+                if (StringUtils.isNotBlank(question.question.get())) {
+                    body.addRow(rowIndex++, new Label(question.question.get()), textField);
                 } else {
                     GridPane.setColumnSpan(textField, 2);
                     body.addRow(rowIndex++, textField);
@@ -82,7 +84,7 @@ public class PromptDialogPane extends DialogPane {
                 HBox.setMargin(checkBox, new Insets(0, 0, 0, -10));
                 checkBox.setSelected(((Builder.BooleanQuestion) question).value);
                 checkBox.selectedProperty().addListener((a, b, newValue) -> ((Builder.BooleanQuestion) question).value = newValue);
-                checkBox.setText(question.question);
+                checkBox.setText(question.question.get());
                 body.addRow(rowIndex++, hBox);
             } else if (question instanceof Builder.CandidatesQuestion) {
                 JFXComboBox<String> comboBox = new JFXComboBox<>();
@@ -90,8 +92,8 @@ public class PromptDialogPane extends DialogPane {
                 comboBox.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) ->
                         ((Builder.CandidatesQuestion) question).value = newValue.intValue());
                 comboBox.getSelectionModel().select(0);
-                if (StringUtils.isNotBlank(question.question)) {
-                    body.addRow(rowIndex++, new Label(question.question), comboBox);
+                if (StringUtils.isNotBlank(question.question.get())) {
+                    body.addRow(rowIndex++, new Label(question.question.get()), comboBox);
                 } else {
                     GridPane.setColumnSpan(comboBox, 2);
                     body.addRow(rowIndex++, comboBox);
@@ -99,7 +101,7 @@ public class PromptDialogPane extends DialogPane {
             } else if (question instanceof Builder.HintQuestion) {
                 HintPane pane = new HintPane();
                 GridPane.setColumnSpan(pane, 2);
-                pane.setText(question.question);
+                pane.textProperty().bind(question.question);
                 body.addRow(rowIndex++, pane);
             }
         }
@@ -142,15 +144,27 @@ public class PromptDialogPane extends DialogPane {
         }
 
         public static class Question<T> {
-            public final String question;
+            public final StringProperty question = new SimpleStringProperty();
             protected T value;
 
             public Question(String question) {
-                this.question = question;
+                this.question.set(question);
             }
 
             public T getValue() {
                 return value;
+            }
+
+            public String getQuestion() {
+                return question.get();
+            }
+
+            public StringProperty questionProperty() {
+                return question;
+            }
+
+            public void setQuestion(String question) {
+                this.question.set(question);
             }
         }
 

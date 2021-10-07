@@ -357,6 +357,22 @@ public final class Lang {
         return () -> iterator;
     }
 
+    private static Timer timer;
+
+    public static synchronized TimerTask setTimeout(Runnable runnable, long delayMs) {
+        if (timer == null) {
+            timer = new Timer();
+        }
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                runnable.run();
+            }
+        };
+        timer.schedule(task, delayMs);
+        return task;
+    }
+
     /**
      * This is a useful function to prevent exceptions being eaten when using CompletableFuture.
      * You can write:
