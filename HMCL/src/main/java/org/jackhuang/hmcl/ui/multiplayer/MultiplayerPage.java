@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.multiplayer;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import de.javawi.jstun.test.DiscoveryInfo;
-import de.javawi.jstun.test.DiscoveryTest;
 import de.javawi.jstun.test.FastDiscoveryTest;
 import javafx.application.Platform;
 import javafx.beans.property.*;
