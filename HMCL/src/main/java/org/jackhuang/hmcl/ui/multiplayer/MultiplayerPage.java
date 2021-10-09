@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
+import de.javawi.jstun.test.FastDiscoveryTest;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -127,7 +128,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
 
     private void testNAT() {
         Task.supplyAsync(() -> {
-            DiscoveryTest tester = new DiscoveryTest(null, 0, "stun.qq.com", 3478);
+            FastDiscoveryTest tester = new FastDiscoveryTest(null, 0, "stun.qq.com", 3478);
             return tester.test();
         }).whenComplete(Schedulers.javafx(), (info, exception) -> {
             if (exception == null) {
