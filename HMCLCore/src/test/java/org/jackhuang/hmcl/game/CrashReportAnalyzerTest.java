@@ -209,6 +209,14 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void unsatisfiedLinkError() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/unsatisfied_link_error.txt")),
+                CrashReportAnalyzer.Rule.UNSATISFIED_LINK_ERROR);
+        Assert.assertEquals("lwjgl.dll", result.getMatcher().group("name"));
+    }
+
+    @Test
     public void outOfMemoryMC() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/out_of_memory.txt")),

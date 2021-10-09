@@ -81,7 +81,9 @@ public final class CrashReportAnalyzer {
         // Game crashed when ticking entity
         ENTITY(Pattern.compile("Entity Type: (?<type>.*)[\\w\\W\\n\\r]*?Entity's Exact location: (?<location>.*)"), "type", "location"),
         // Game crashed when tesselating block model
-        BLOCK(Pattern.compile("Block: (?<type>.*)[\\w\\W\\n\\r]*?Block location: (?<location>.*)"), "type", "location");
+        BLOCK(Pattern.compile("Block: (?<type>.*)[\\w\\W\\n\\r]*?Block location: (?<location>.*)"), "type", "location"),
+        // Cannot find native libraries
+        UNSATISFIED_LINK_ERROR(Pattern.compile("java.lang.UnsatisfiedLinkError: Failed to locate library: (?<name>.*)"), "name");
 
         private final Pattern pattern;
         private final String[] groupNames;
