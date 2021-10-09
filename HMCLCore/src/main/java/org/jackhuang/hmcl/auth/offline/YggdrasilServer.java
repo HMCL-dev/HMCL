@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.auth.offline;
 
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.util.KeyUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -163,7 +164,15 @@ public class YggdrasilServer extends HttpServer {
         public Object toCompleteResponse(String rootUrl) {
             Map<String, Object> realTextures = new HashMap<>();
             if (skin != null && skin.getSkin() != null) {
-                realTextures.put("SKIN", mapOf(pair("url", rootUrl + "/textures/" + skin.getSkin().getHash())));
+                if (skin.getModel() == TextureModel.ALEX) {
+                    realTextures.put("SKIN", mapOf(
+                            pair("url", rootUrl + "/textures/" + skin.getSkin().getHash()),
+                            pair("metadata", mapOf(
+                                    pair("model", "slim")
+                            ))));
+                } else {
+                    realTextures.put("SKIN", mapOf(pair("url", rootUrl + "/textures/" + skin.getSkin().getHash())));
+                }
             }
             if (skin != null && skin.getCape() != null) {
                 realTextures.put("CAPE", mapOf(pair("url", rootUrl + "/textures/" + skin.getSkin().getHash())));

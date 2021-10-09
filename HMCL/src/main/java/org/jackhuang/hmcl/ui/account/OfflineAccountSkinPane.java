@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
 import javafx.application.Platform;
@@ -46,6 +47,7 @@ import java.util.Arrays;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
+import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -54,6 +56,7 @@ public class OfflineAccountSkinPane extends StackPane {
 
     private final MultiFileItem<Skin.Type> skinItem = new MultiFileItem<>();
     private final JFXTextField cslApiField = new JFXTextField();
+    private final JFXComboBox<TextureModel> modelCombobox = new JFXComboBox<>();
     private final FileSelector skinSelector = new FileSelector();
     private final FileSelector capeSelector = new FileSelector();
 
@@ -95,7 +98,7 @@ public class OfflineAccountSkinPane extends StackPane {
             }
         });
 
-        TransitionPane skinOptionPane = new TransitionPane();
+        StackPane skinOptionPane = new StackPane();
         skinOptionPane.setMaxWidth(300);
         VBox optionPane = new VBox(skinItem, skinOptionPane);
         pane.setRight(optionPane);
@@ -114,11 +117,16 @@ public class OfflineAccountSkinPane extends StackPane {
                 new MultiFileItem.Option<>(i18n("account.skin.type.csl_api"), Skin.Type.CUSTOM_SKIN_LOADER_API)
         ));
 
+        modelCombobox.setConverter(stringConverter(model -> i18n("account.skin.model." + model.modelName)));
+        modelCombobox.getItems().setAll(TextureModel.STEVE, TextureModel.ALEX);
+
         if (account.getSkin() == null) {
             skinItem.setSelectedData(Skin.Type.DEFAULT);
+            modelCombobox.setValue(TextureModel.STEVE);
         } else {
             skinItem.setSelectedData(account.getSkin().getType());
             cslApiField.setText(account.getSkin().getCslApi());
+            modelCombobox.setValue(account.getSkin().getTextureModel());
             skinSelector.setValue(account.getSkin().getLocalSkinPath());
             capeSelector.setValue(account.getSkin().getLocalCapePath());
         }
@@ -150,18 +158,23 @@ public class OfflineAccountSkinPane extends StackPane {
                 case DEFAULT:
                 case STEVE:
                 case ALEX:
+                    break;
                 case LITTLE_SKIN:
+                    HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
+                    hint.setText(i18n("account.skin.type.little_skin.hint"));
+                    gridPane.addRow(0, hint);
                     break;
                 case LOCAL_FILE:
-                    gridPane.addRow(0, new Label(i18n("account.skin")), skinSelector);
-                    gridPane.addRow(1, new Label(i18n("account.cape")), capeSelector);
+                    gridPane.addRow(0, new Label(i18n("account.skin.model")), modelCombobox);
+                    gridPane.addRow(1, new Label(i18n("account.skin")), skinSelector);
+                    gridPane.addRow(2, new Label(i18n("account.cape")), capeSelector);
                     break;
                 case CUSTOM_SKIN_LOADER_API:
                     gridPane.addRow(0, new Label(i18n("account.skin.type.csl_api.location")), cslApiField);
                     break;
             }
 
-            skinOptionPane.setContent(gridPane, ContainerAnimations.NONE.getAnimationProducer());
+            skinOptionPane.getChildren().setAll(gridPane);
         });
 
         JFXButton acceptButton = new JFXButton(i18n("button.ok"));
@@ -171,7 +184,7 @@ public class OfflineAccountSkinPane extends StackPane {
             fireEvent(new DialogCloseEvent());
         });
 
-        JFXHyperlink littleSkinLink = new JFXHyperlink(i18n("account.skin.type.little_skin.hint"));
+        JFXHyperlink littleSkinLink = new JFXHyperlink(i18n("account.skin.type.little_skin"));
         littleSkinLink.setOnAction(e -> FXUtils.openLink("https://mcskin.littleservice.cn/"));
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("dialog-cancel");
@@ -182,7 +195,7 @@ public class OfflineAccountSkinPane extends StackPane {
     }
 
     private Skin getSkin() {
-        return new Skin(skinItem.getSelectedData(), cslApiField.getText(), skinSelector.getValue(), capeSelector.getValue());
+        return new Skin(skinItem.getSelectedData(), cslApiField.getText(), modelCombobox.getValue(), skinSelector.getValue(), capeSelector.getValue());
     }
 
     private boolean isDefaultSlim() {

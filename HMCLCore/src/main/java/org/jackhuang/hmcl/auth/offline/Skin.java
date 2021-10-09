@@ -79,12 +79,14 @@ public class Skin {
 
     private final Type type;
     private final String cslApi;
+    private final TextureModel textureModel;
     private final String localSkinPath;
     private final String localCapePath;
 
-    public Skin(Type type, String cslApi, String localSkinPath, String localCapePath) {
+    public Skin(Type type, String cslApi, TextureModel textureModel, String localSkinPath, String localCapePath) {
         this.type = type;
         this.cslApi = cslApi;
+        this.textureModel = textureModel;
         this.localSkinPath = localSkinPath;
         this.localCapePath = localCapePath;
     }
@@ -95,6 +97,10 @@ public class Skin {
 
     public String getCslApi() {
         return cslApi;
+    }
+
+    public TextureModel getTextureModel() {
+        return textureModel == null ? TextureModel.STEVE : textureModel;
     }
 
     public String getLocalSkinPath() {
@@ -120,7 +126,7 @@ public class Skin {
                     Optional<Path> capePath = FileUtils.tryGetPath(localCapePath);
                     if (skinPath.isPresent()) skin = Texture.loadTexture(Files.newInputStream(skinPath.get()));
                     if (capePath.isPresent()) cape = Texture.loadTexture(Files.newInputStream(capePath.get()));
-                    return new LoadedSkin(TextureModel.STEVE, skin, cape);
+                    return new LoadedSkin(getTextureModel(), skin, cape);
                 });
             case LITTLE_SKIN:
             case CUSTOM_SKIN_LOADER_API:
@@ -167,6 +173,7 @@ public class Skin {
         return mapOf(
                 pair("type", type.name().toLowerCase(Locale.ROOT)),
                 pair("cslApi", cslApi),
+                pair("textureModel", getTextureModel().modelName),
                 pair("localSkinPath", localSkinPath),
                 pair("localCapePath", localCapePath)
         );
@@ -178,10 +185,20 @@ public class Skin {
         Type type = tryCast(storage.get("type"), String.class).flatMap(t -> Optional.ofNullable(Type.fromStorage(t)))
                 .orElse(Type.DEFAULT);
         String cslApi = tryCast(storage.get("cslApi"), String.class).orElse(null);
+        String textureModel = tryCast(storage.get("textureModel"), String.class).orElse("default");
         String localSkinPath = tryCast(storage.get("localSkinPath"), String.class).orElse(null);
         String localCapePath = tryCast(storage.get("localCapePath"), String.class).orElse(null);
 
-        return new Skin(type, cslApi, localSkinPath, localCapePath);
+        TextureModel model;
+        if ("default".equals(textureModel)) {
+            model = TextureModel.STEVE;
+        } else if ("slim".equals(textureModel)) {
+            model = TextureModel.ALEX;
+        } else {
+            model = TextureModel.STEVE;
+        }
+
+        return new Skin(type, cslApi, model, localSkinPath, localCapePath);
     }
 
     private static class FetchBytesTask extends FetchTask<InputStream> {
