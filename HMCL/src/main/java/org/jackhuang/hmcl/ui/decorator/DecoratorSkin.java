@@ -158,6 +158,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 container.backgroundProperty().unbind();
                 container.setBackground(null);
                 titleContainer.getStyleClass().remove("background");
+                titleContainer.getStyleClass().add("gray-background");
                 container.getChildren().remove(drawerPane);
                 wrapper.getChildren().add(0, drawerPane);
             } else {
@@ -165,6 +166,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 wrapper.backgroundProperty().unbind();
                 wrapper.setBackground(null);
                 titleContainer.getStyleClass().add("background");
+                titleContainer.getStyleClass().remove("gray-background");
                 wrapper.getChildren().remove(drawerPane);
                 container.getChildren().add(0, drawerPane);
             }

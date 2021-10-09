@@ -522,6 +522,10 @@
     -fx-text-fill: WHITE;
 }
 
+.jfx-tool-bar.gray-background Label {
+    -fx-text-fill: BLACK;
+}
+
 .jfx-tool-bar .jfx-options-burger {
     -fx-padding: 22px;
 }
