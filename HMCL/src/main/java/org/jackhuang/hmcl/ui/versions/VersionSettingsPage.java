@@ -481,19 +481,26 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         ComponentList workaroundPane = new ComponentList();
         workaroundPane.disableProperty().bind(enableSpecificSettings.not());
+
+        HintPane workaroundWarning = new HintPane(MessageDialogPane.MessageType.WARNING);
+        workaroundWarning.setText(i18n("settings.advanced.workaround.warning"));
+
         {
             nativesDirItem = new MultiFileItem<>();
             nativesDirSublist = new ComponentSublist();
             nativesDirSublist.getContent().add(nativesDirItem);
             nativesDirSublist.setTitle(i18n("settings.advanced.natives_directory"));
             nativesDirSublist.setHasSubtitle(true);
-            nativesDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.custom"), NativesDirectoryType.CUSTOM)
+            nativesDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.advanced.natives_directory.custom"), NativesDirectoryType.CUSTOM)
                     .setChooserTitle(i18n("settings.advanced.natives_directory.choose"))
                     .setDirectory(true);
             nativesDirItem.loadChildren(Arrays.asList(
                     new MultiFileItem.Option<>(i18n("settings.advanced.natives_directory.default"), NativesDirectoryType.VERSION_FOLDER),
                     nativesDirCustomOption
             ));
+            HintPane nativesDirHint = new HintPane(MessageDialogPane.MessageType.WARNING);
+            nativesDirHint.setText(i18n("settings.advanced.natives_directory.hint"));
+            nativesDirItem.getChildren().add(nativesDirHint);
 
             noJVMArgsPane = new OptionToggleButton();
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
@@ -517,7 +524,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 advancedHintPane,
                 ComponentList.createComponentListTitle(i18n("settings.advanced.custom_commands")), customCommandsPane,
                 ComponentList.createComponentListTitle(i18n("settings.advanced.jvm")), jvmPane,
-                ComponentList.createComponentListTitle(i18n("settings.advanced.workaround")), workaroundPane);
+                ComponentList.createComponentListTitle(i18n("settings.advanced.workaround")), workaroundWarning, workaroundPane);
 
         initialize();
 
