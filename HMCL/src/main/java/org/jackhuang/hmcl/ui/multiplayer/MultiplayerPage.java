@@ -215,8 +215,10 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                 MultiplayerManager.CatoSession session = MultiplayerManager.createSession(globalConfig().getMultiplayerToken(), result.getServer().getMotd(), gamePort, result.isAllowAllJoinRequests());
                 session.getServer().setOnClientAdding((client, resolveClient, rejectClient) -> {
                     runInFX(() -> {
-                        Controllers.confirm(i18n("multiplayer.session.create.join.prompt", client.getUsername()), i18n("multiplayer.session.create.join"), MessageDialogPane.MessageType.INFO,
-                                resolveClient, () -> rejectClient.accept(""));
+                        Controllers.dialog(new MessageDialogPane.Builder(i18n("multiplayer.session.create.join.prompt", client.getUsername()), i18n("multiplayer.session.create.join"), MessageDialogPane.MessageType.INFO)
+                                .yesOrNo(resolveClient, () -> rejectClient.accept(""))
+                                .cancelOnTimeout(30 * 1000)
+                                .build());
                     });
                 });
                 session.getServer().onClientAdded().register(event -> {

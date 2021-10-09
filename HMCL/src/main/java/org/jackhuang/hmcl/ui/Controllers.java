@@ -227,7 +227,7 @@ public final class Controllers {
     }
 
     public static void dialog(String text, String title, MessageType type, Runnable ok) {
-        dialog(MessageDialogPane.ok(text, title, type, ok));
+        dialog(new MessageDialogPane.Builder(text, title, type).ok(ok).build());
     }
 
     public static void confirm(String text, String title, Runnable yes, Runnable no) {
@@ -235,15 +235,15 @@ public final class Controllers {
     }
 
     public static void confirm(String text, String title, MessageType type, Runnable yes, Runnable no) {
-        dialog(MessageDialogPane.yesOrNo(text, title, type, yes, no));
+        dialog(new MessageDialogPane.Builder(text, title, type).yesOrNo(yes, no).build());
     }
 
     public static void confirmAction(String text, String title, MessageType type, ButtonBase actionButton) {
-        dialog(MessageDialogPane.actionOrCancel(text, title, type, actionButton, null));
+        dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, null).build());
     }
 
     public static void confirmAction(String text, String title, MessageType type, ButtonBase actionButton, Runnable cancel) {
-        dialog(MessageDialogPane.actionOrCancel(text, title, type, actionButton, cancel));
+        dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, cancel).build());
     }
 
     public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {

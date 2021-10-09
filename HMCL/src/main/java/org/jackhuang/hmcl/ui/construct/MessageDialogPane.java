@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
-
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ButtonBase;
@@ -28,12 +27,16 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.util.Lang;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class MessageDialogPane extends StackPane {
@@ -105,53 +108,89 @@ public final class MessageDialogPane extends StackPane {
         cancelButton = btn;
     }
 
-    public static MessageDialogPane ok(String text, String title, MessageType type, Runnable ok) {
-        MessageDialogPane dialog = new MessageDialogPane(text, title, type);
-
-        JFXButton btnOk = new JFXButton(i18n("button.ok"));
-        btnOk.getStyleClass().add("dialog-accept");
-        if (ok != null) {
-            btnOk.setOnAction(e -> ok.run());
-        }
-        dialog.addButton(btnOk);
-        dialog.setCancelButton(btnOk);
-
-        return dialog;
+    public ButtonBase getCancelButton() {
+        return cancelButton;
     }
 
-    public static MessageDialogPane yesOrNo(String text, String title, MessageType type, Runnable yes, Runnable no) {
-        MessageDialogPane dialog = new MessageDialogPane(text, title, type);
+    public static class Builder {
+        private final MessageDialogPane dialog;
 
-        JFXButton btnYes = new JFXButton(i18n("button.yes"));
-        btnYes.getStyleClass().add("dialog-accept");
-        if (yes != null) {
-            btnYes.setOnAction(e -> yes.run());
+        public Builder(String text, String title, MessageType type) {
+            this.dialog = new MessageDialogPane(text, title, type);
         }
-        dialog.addButton(btnYes);
 
-        JFXButton btnNo = new JFXButton(i18n("button.no"));
-        btnNo.getStyleClass().add("dialog-cancel");
-        if (no != null) {
-            btnNo.setOnAction(e -> no.run());
+        public Builder ok(Runnable ok) {
+            JFXButton btnOk = new JFXButton(i18n("button.ok"));
+            btnOk.getStyleClass().add("dialog-accept");
+            if (ok != null) {
+                btnOk.setOnAction(e -> ok.run());
+            }
+            dialog.addButton(btnOk);
+            dialog.setCancelButton(btnOk);
+            return this;
         }
-        dialog.addButton(btnNo);
-        dialog.setCancelButton(btnNo);
 
-        return dialog;
-    }
+        public Builder yesOrNo(Runnable yes, Runnable no) {
+            JFXButton btnYes = new JFXButton(i18n("button.yes"));
+            btnYes.getStyleClass().add("dialog-accept");
+            if (yes != null) {
+                btnYes.setOnAction(e -> yes.run());
+            }
+            dialog.addButton(btnYes);
 
-    public static MessageDialogPane actionOrCancel(String text, String title, MessageType type, ButtonBase actionButton, Runnable cancel) {
-        MessageDialogPane dialog = new MessageDialogPane(text, title, type);
-        dialog.addButton(actionButton);
-
-        JFXButton btnCancel = new JFXButton(i18n("button.cancel"));
-        btnCancel.getStyleClass().add("dialog-cancel");
-        if (cancel != null) {
-            btnCancel.setOnAction(e -> cancel.run());
+            JFXButton btnNo = new JFXButton(i18n("button.no"));
+            btnNo.getStyleClass().add("dialog-cancel");
+            if (no != null) {
+                btnNo.setOnAction(e -> no.run());
+            }
+            dialog.addButton(btnNo);
+            dialog.setCancelButton(btnNo);
+            return this;
         }
-        dialog.addButton(btnCancel);
-        dialog.setCancelButton(btnCancel);
 
-        return dialog;
+        public Builder actionOrCancel(ButtonBase actionButton, Runnable cancel) {
+            dialog.addButton(actionButton);
+
+            JFXButton btnCancel = new JFXButton(i18n("button.cancel"));
+            btnCancel.getStyleClass().add("dialog-cancel");
+            if (cancel != null) {
+                btnCancel.setOnAction(e -> cancel.run());
+            }
+            dialog.addButton(btnCancel);
+            dialog.setCancelButton(btnCancel);
+
+            return this;
+        }
+
+        public Builder cancelOnTimeout(long timeoutMs) {
+            if (dialog.getCancelButton() == null) {
+                throw new IllegalStateException("Call ok/yesOrNo/actionOrCancel before calling cancelOnTimeout");
+            }
+
+            ButtonBase cancelButton = dialog.getCancelButton();
+            String originalText = cancelButton.getText();
+
+            Timer timer = Lang.getTimer();
+            timer.scheduleAtFixedRate(new TimerTask() {
+                long timeout = timeoutMs;
+
+                @Override
+                public void run() {
+                    if (timeout < 0) {
+                        cancel();
+                        return;
+                    }
+                    timeout -= 1000;
+                    long currentTimeout = timeout;
+                    runInFX(() -> cancelButton.setText(originalText + " (" + (currentTimeout / 1000) + ")"));
+                }
+            }, 1000, 1000);
+
+            return this;
+        }
+
+        public MessageDialogPane build() {
+            return dialog;
+        }
     }
 }

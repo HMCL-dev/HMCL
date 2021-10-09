@@ -359,17 +359,21 @@ public final class Lang {
 
     private static Timer timer;
 
-    public static synchronized TimerTask setTimeout(Runnable runnable, long delayMs) {
+    public static synchronized Timer getTimer() {
         if (timer == null) {
             timer = new Timer();
         }
+        return timer;
+    }
+
+    public static synchronized TimerTask setTimeout(Runnable runnable, long delayMs) {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
                 runnable.run();
             }
         };
-        timer.schedule(task, delayMs);
+        getTimer().schedule(task, delayMs);
         return task;
     }
 
