@@ -58,7 +58,7 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  */
 public final class MultiplayerManager {
     private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/";
-    static final String CATO_VERSION = "1.0.9";
+    static final String CATO_VERSION = "1.0.c";
     private static final String CATO_PATH = getCatoPath();
     public static final int CATO_AGREEMENT_VERSION = 2;
 
@@ -216,6 +216,8 @@ public final class MultiplayerManager {
             case OSX:
                 if (Architecture.CURRENT == Architecture.X86_64) {
                     return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-darwin-amd64";
+                } else if (Architecture.CURRENT == Architecture.ARM64) {
+                    return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-darwin-arm64";
                 } else {
                     return "";
                 }
