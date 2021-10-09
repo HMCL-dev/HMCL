@@ -121,9 +121,10 @@ public class FeedbackPage extends VBox implements PageAware {
                 private final TwoLineListItem content = new TwoLineListItem();
                 private final JFXButton likeButton = new JFXButton();
                 private final JFXButton unlikeButton = new JFXButton();
+                private final HBox container;
 
                 {
-                    HBox container = new HBox(8);
+                    container = new HBox(8);
                     container.setPickOnBounds(false);
                     container.setAlignment(Pos.CENTER_LEFT);
                     HBox.setHgrow(content, Priority.ALWAYS);
@@ -151,17 +152,14 @@ public class FeedbackPage extends VBox implements PageAware {
                             "#" + feedback.getId(),
                             i18n("feedback.state." + feedback.getState().name().toLowerCase(Locale.US)),
                             i18n("feedback.type." + feedback.getType().name().toLowerCase(Locale.US)));
+                    container.setOnMouseClicked(e -> {
+                        getFeedback(feedback.getId())
+                                .thenAcceptAsync(Schedulers.javafx(), f -> {
+                                    Controllers.dialog(new ViewFeedbackDialog(f));
+                                })
+                                .start();
+                    });
                 }
-            });
-            listView.setOnMouseClicked(e -> {
-                if (listView.getSelectionModel().getSelectedIndex() < 0)
-                    return;
-                FeedbackResponse selectedItem = listView.getSelectionModel().getSelectedItem();
-                getFeedback(selectedItem.getId())
-                        .thenAcceptAsync(Schedulers.javafx(), f -> {
-                            Controllers.dialog(new ViewFeedbackDialog(f));
-                        })
-                        .start();
             });
 
             getChildren().add(spinnerPane);
