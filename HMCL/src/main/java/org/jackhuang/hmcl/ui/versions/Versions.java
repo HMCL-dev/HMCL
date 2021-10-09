@@ -141,8 +141,8 @@ public final class Versions {
     public static void duplicateVersion(Profile profile, String version) {
         Controllers.prompt(
                 new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, resolve, reject) -> {
-                    String newVersionName = ((PromptDialogPane.Builder.StringQuestion) res.get(0)).getValue();
-                    boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(1)).getValue();
+                    String newVersionName = ((PromptDialogPane.Builder.StringQuestion) res.get(1)).getValue();
+                    boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(2)).getValue();
                     Task.runAsync(() -> profile.getRepository().duplicateVersion(version, newVersionName, copySaves))
                             .thenComposeAsync(profile.getRepository().refreshVersionsAsync())
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
