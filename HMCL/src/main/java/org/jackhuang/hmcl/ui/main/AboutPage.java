@@ -166,7 +166,12 @@ public class AboutPage extends StackPane {
             jstun.setSubtitle("Copyright (c) 2005 Thomas King <king@t-king.de>.\nLicensed under the Apache License 2.0.");
             jstun.setExternalLink("https://github.com/tking/JSTUN");
 
-            dep.getContent().setAll(javafx, jfoenix, gson, xz, fxgson, constantPoolScanner, openNBT, jstun);
+            IconedTwoLineListItem minecraftJFXSkin = new IconedTwoLineListItem();
+            jstun.setTitle("minecraft-jfx-skin");
+            jstun.setSubtitle("Copyright (c) 2016 InfinityStudio.\nLicensed under the GPL 3.");
+            jstun.setExternalLink("https://github.com/InfinityStudio/minecraft-jfx-skin");
+
+            dep.getContent().setAll(javafx, jfoenix, gson, xz, fxgson, constantPoolScanner, openNBT, jstun, minecraftJFXSkin);
         }
 
         ComponentList legal = new ComponentList();
