@@ -27,7 +27,7 @@ public class MultiplayerClientServerTest {
     @Ignore
     public void startServer() throws Exception {
         Logging.initForTest();
-        MultiplayerServer server = new MultiplayerServer(1000);
+        MultiplayerServer server = new MultiplayerServer(1000, true);
         server.startServer(44444);
 
         MultiplayerClient client = new MultiplayerClient("username", 44444);
