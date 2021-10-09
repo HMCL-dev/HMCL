@@ -46,6 +46,7 @@ import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -215,7 +216,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                 session.getServer().setOnClientAdding((client, resolveClient, rejectClient) -> {
                     runInFX(() -> {
                         Controllers.dialog(new MessageDialogPane.Builder(i18n("multiplayer.session.create.join.prompt", client.getUsername()), i18n("multiplayer.session.create.join"), MessageDialogPane.MessageType.INFO)
-                                .yesOrNo(resolveClient, () -> rejectClient.accept(""))
+                                .yesOrNo(resolveClient, () -> rejectClient.accept(i18n("multiplayer.session.join.wait_timeout")))
                                 .cancelOnTimeout(30 * 1000)
                                 .build());
                     });
@@ -314,20 +315,21 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                             resolve.run();
                         }, Platform::runLater)
                         .exceptionally(throwable -> {
-                            if (throwable instanceof CancellationException) {
+                            Throwable resolved = resolveException(throwable);
+                            if (resolved instanceof CancellationException) {
                                 LOG.info("Connection rejected by the server");
                                 reject.accept(i18n("multiplayer.session.join.rejected"));
                                 return null;
-                            } else if (throwable instanceof MultiplayerManager.CatoAlreadyStartedException) {
+                            } else if (resolved instanceof MultiplayerManager.CatoAlreadyStartedException) {
                                 LOG.info("Cato already started");
                                 reject.accept(i18n("multiplayer.session.error.already_started"));
                                 return null;
-                            } else if (throwable instanceof MultiplayerManager.JoinRequestTimeoutException) {
+                            } else if (resolved instanceof MultiplayerManager.JoinRequestTimeoutException) {
                                 LOG.info("Cato already started");
                                 reject.accept(i18n("multiplayer.session.join.wait_timeout"));
                                 return null;
                             } else {
-                                LOG.log(Level.WARNING, "Failed to join sessoin");
+                                LOG.log(Level.WARNING, "Failed to join session", resolved);
                                 reject.accept(i18n("multiplayer.session.join.error"));
                             }
                             return null;
@@ -389,7 +391,9 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
     }
 
     private void stopCatoSession() {
-        getSession().stop();
+        if (getSession() != null) {
+            getSession().stop();
+        }
         clearCatoSession();
     }
 

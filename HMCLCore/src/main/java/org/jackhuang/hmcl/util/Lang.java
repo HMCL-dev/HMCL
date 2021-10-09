@@ -377,6 +377,13 @@ public final class Lang {
         return task;
     }
 
+    public static Throwable resolveException(Throwable e) {
+        if (e instanceof ExecutionException || e instanceof CompletionException)
+            return resolveException(e.getCause());
+        else
+            return e;
+    }
+
     /**
      * This is a useful function to prevent exceptions being eaten when using CompletableFuture.
      * You can write:

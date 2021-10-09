@@ -26,8 +26,7 @@ import java.util.Collections;
 import java.util.concurrent.*;
 import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.util.Lang.rethrow;
-import static org.jackhuang.hmcl.util.Lang.wrap;
+import static org.jackhuang.hmcl.util.Lang.*;
 
 /**
  *
@@ -318,13 +317,6 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         } else {
             return executeNormalTask(parentTask, task);
         }
-    }
-
-    private static Throwable resolveException(Throwable e) {
-        if (e instanceof ExecutionException || e instanceof CompletionException)
-            return resolveException(e.getCause());
-        else
-            return e;
     }
 
     private void checkCancellation() {

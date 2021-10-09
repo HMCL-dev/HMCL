@@ -176,8 +176,11 @@ public final class MessageDialogPane extends StackPane {
 
                 @Override
                 public void run() {
-                    if (timeout < 0) {
+                    if (timeout <= 0) {
                         cancel();
+                        runInFX(() -> {
+                            cancelButton.fire();
+                        });
                         return;
                     }
                     timeout -= 1000;
