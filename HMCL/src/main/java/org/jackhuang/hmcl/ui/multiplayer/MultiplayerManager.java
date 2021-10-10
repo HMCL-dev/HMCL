@@ -35,10 +35,7 @@ import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -175,7 +172,7 @@ public final class MultiplayerManager {
     public static CatoSession createSession(String token, String sessionName, int gamePort, boolean allowAllJoinRequests) throws IOException {
         Path exe = getCatoExecutable();
         if (!Files.isRegularFile(exe)) {
-            throw new IllegalStateException("Cato file not found");
+            throw new FileNotFoundException("Cato file not found");
         }
 
         if (!isPortAvailable(3478)) {

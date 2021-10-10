@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 
+import java.io.FileNotFoundException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -235,9 +236,14 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
             } catch (MultiplayerManager.CatoAlreadyStartedException e) {
                 LOG.log(Level.WARNING, "Cato already started", e);
                 reject.accept(i18n("multiplayer.session.error.already_started"));
+                return;
+            } catch (FileNotFoundException e) {
+                LOG.log(Level.WARNING, "Cato not found", e);
+                reject.accept(i18n("multiplayer.session.error.file_not_found"));
+                return;
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "Failed to create session", e);
-                reject.accept(i18n("multiplayer.session.create.error"));
+                reject.accept(i18n("multiplayer.session.create.error") + e.getLocalizedMessage());
                 return;
             }
 
@@ -323,6 +329,10 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                             } else if (resolved instanceof MultiplayerManager.CatoAlreadyStartedException) {
                                 LOG.info("Cato already started");
                                 reject.accept(i18n("multiplayer.session.error.already_started"));
+                                return null;
+                            } else if (resolved instanceof FileNotFoundException) {
+                                LOG.log(Level.WARNING, "Cato not found", resolved);
+                                reject.accept(i18n("multiplayer.session.error.file_not_found"));
                                 return null;
                             } else if (resolved instanceof MultiplayerManager.JoinRequestTimeoutException) {
                                 LOG.info("Cato already started");
