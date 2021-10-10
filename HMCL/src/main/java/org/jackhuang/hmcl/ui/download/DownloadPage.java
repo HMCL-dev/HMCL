@@ -94,7 +94,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }));
         modTab.setNodeSupplier(loadVersionFor(() -> new ModDownloadListPage((profile, version, file) -> download(profile, version, file, "mods"), true)));
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.RESOURCE_PACKS, (profile, version, file) -> download(profile, version, file, "resourcepacks"))));
-//        customizationTab.setNodeSupplier(() -> new ModDownloadListPage(CurseModManager.CUSTOMIZATIONS, this::download));
+        customizationTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.CUSTOMIZATIONS)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
         tab = new TabHeader(newGameTab, modpackTab, modTab, resourcePackTab, worldTab);
 
@@ -107,23 +107,25 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         {
             AdvancedListBox sideBar = new AdvancedListBox()
+                    .startCategory(i18n("download.game"))
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("game"));
                         item.setLeftGraphic(wrap(SVG::gamepad));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(newGameTab));
                         item.setOnAction(e -> tab.select(newGameTab));
                     })
-                    .addNavigationDrawerItem(item -> {
-                        item.setTitle(i18n("mods"));
-                        item.setLeftGraphic(wrap(SVG::puzzle));
-                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modTab));
-                        item.setOnAction(e -> tab.select(modTab));
-                    })
                     .addNavigationDrawerItem(settingsItem -> {
                         settingsItem.setTitle(i18n("modpack"));
                         settingsItem.setLeftGraphic(wrap(SVG::pack));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modpackTab));
                         settingsItem.setOnAction(e -> tab.select(modpackTab));
+                    })
+                    .startCategory(i18n("download.content"))
+                    .addNavigationDrawerItem(item -> {
+                        item.setTitle(i18n("mods"));
+                        item.setLeftGraphic(wrap(SVG::puzzle));
+                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modTab));
+                        item.setOnAction(e -> tab.select(modTab));
                     })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("resourcepack"));
