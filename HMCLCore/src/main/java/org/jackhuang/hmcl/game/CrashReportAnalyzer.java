@@ -37,7 +37,7 @@ public final class CrashReportAnalyzer {
 
         OPENJ9(Pattern.compile("(Open J9 is not supported|OpenJ9 is incompatible)")),
         TOO_OLD_JAVA(Pattern.compile("java\\.lang\\.UnsupportedClassVersionError: (.*?) version (?<expected>\\d+)\\.0"), "expected"),
-        JVM_32BIT(Pattern.compile("Could not reserve enough space for 1048576KB object heap")),
+        JVM_32BIT(Pattern.compile("Could not reserve enough space for (.*?) object heap")),
 
         // Some mods/shader packs do incorrect GL operations.
         GL_OPERATION_FAILURE(Pattern.compile("1282: Invalid operation")),

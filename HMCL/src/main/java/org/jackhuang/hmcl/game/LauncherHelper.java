@@ -430,16 +430,21 @@ public final class LauncherHelper {
                 }
             }
 
+            if (javaVersion.getPlatform() != Architecture.CURRENT.getPlatform()) {
+                Controllers.dialog(i18n("launch.advice.different_platform"), i18n("message.warning"), MessageType.ERROR, continueAction);
+                suggested = true;
+            }
+
             // 32-bit JVM cannot make use of too much memory.
             if (javaVersion.getPlatform() == org.jackhuang.hmcl.util.platform.Platform.BIT_32 &&
                     setting.getMaxMemory() > 1.5 * 1024) {
                 // 1.5 * 1024 is an inaccurate number.
                 // Actual memory limit depends on operating system and memory.
-                Controllers.confirm(i18n("launch.advice.too_large_memory_for_32bit"), i18n("message.error"), continueAction, null);
-                return null;
+                Controllers.confirm(i18n("launch.advice.too_large_memory_for_32bit"), i18n("message.error"), continueAction, breakAction);
+                suggested = true;
             }
 
-            if (violatedSuggestedConstraint != null) {
+            if (!suggested && violatedSuggestedConstraint != null) {
                 suggested = true;
                 switch (violatedSuggestedConstraint) {
                     case MODDED_JAVA_7:
@@ -452,11 +457,6 @@ public final class LauncherHelper {
                         Controllers.dialog(i18n("launch.advice.java8_51_1_13"), i18n("message.warning"), MessageType.WARNING, continueAction);
                         break;
                 }
-            }
-
-            if (!suggested && javaVersion.getPlatform() != Architecture.CURRENT.getPlatform()) {
-                Controllers.dialog(i18n("launch.advice.different_platform"), i18n("message.warning"), MessageType.ERROR, continueAction);
-                suggested = true;
             }
 
             // Cannot allocate too much memory exceeding free space.
