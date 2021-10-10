@@ -93,7 +93,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             return page;
         }));
         modTab.setNodeSupplier(loadVersionFor(() -> new ModDownloadListPage((profile, version, file) -> download(profile, version, file, "mods"), true)));
-        resourcePackTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.RESOURCE_PACKS, (profile, version, file) -> download(profile, version, file, "resourcepacks"))));
+        resourcePackTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.RESOURCE_PACKS, (profile, version, file) -> download(profile, version, file, "resourcepacks"), true)));
         customizationTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.CUSTOMIZATIONS)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
         tab = new TabHeader(newGameTab, modpackTab, modTab, resourcePackTab, worldTab);
@@ -193,24 +193,26 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     private void loadVersions(Profile profile) {
-        WeakListenerHolder listenerHolder = new WeakListenerHolder();
+        listenerHolder = new WeakListenerHolder();
         runInFX(() -> {
             if (profile == Profiles.getSelectedProfile()) {
-                if (modTab.isInitialized()) {
-                    modTab.getNode().loadVersion(profile, null);
-                }
-                if (modpackTab.isInitialized()) {
-                    modpackTab.getNode().loadVersion(profile, null);
-                }
-                if (resourcePackTab.isInitialized()) {
-                    resourcePackTab.getNode().loadVersion(profile, null);
-                }
-                if (customizationTab.isInitialized()) {
-                    customizationTab.getNode().loadVersion(profile, null);
-                }
-                if (worldTab.isInitialized()) {
-                    worldTab.getNode().loadVersion(profile, null);
-                }
+                listenerHolder.add(FXUtils.onWeakChangeAndOperate(profile.selectedVersionProperty(), version -> {
+                    if (modTab.isInitialized()) {
+                        modTab.getNode().loadVersion(profile, null);
+                    }
+                    if (modpackTab.isInitialized()) {
+                        modpackTab.getNode().loadVersion(profile, null);
+                    }
+                    if (resourcePackTab.isInitialized()) {
+                        resourcePackTab.getNode().loadVersion(profile, null);
+                    }
+                    if (customizationTab.isInitialized()) {
+                        customizationTab.getNode().loadVersion(profile, null);
+                    }
+                    if (worldTab.isInitialized()) {
+                        worldTab.getNode().loadVersion(profile, null);
+                    }
+                }));
             }
         });
     }

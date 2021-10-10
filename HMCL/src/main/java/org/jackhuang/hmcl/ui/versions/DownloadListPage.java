@@ -238,19 +238,28 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             {
                 int rowIndex = 0;
 
-                if (control.versionSelection && control.downloadSources.getSize() > 1) {
+                if (control.versionSelection) {
                     JFXComboBox<String> versionsComboBox = new JFXComboBox<>();
                     versionsComboBox.setMaxWidth(Double.MAX_VALUE);
                     Bindings.bindContent(versionsComboBox.getItems(), control.versions);
                     selectedItemPropertyFor(versionsComboBox).bindBidirectional(control.selectedVersion);
 
-                    JFXComboBox<String> downloadSourceComboBox = new JFXComboBox<>();
-                    downloadSourceComboBox.setMaxWidth(Double.MAX_VALUE);
-                    downloadSourceComboBox.getItems().setAll(control.downloadSources.get());
-                    downloadSourceComboBox.setConverter(stringConverter(I18n::i18n));
-                    selectedItemPropertyFor(downloadSourceComboBox).bindBidirectional(control.downloadSource);
+                    searchPane.addRow(rowIndex, new Label(i18n("version")), versionsComboBox);
 
-                    searchPane.addRow(rowIndex++, new Label(i18n("version")), versionsComboBox, new Label(i18n("settings.launcher.download_source")), downloadSourceComboBox);
+                    if (control.downloadSources.getSize() > 1) {
+                        JFXComboBox<String> downloadSourceComboBox = new JFXComboBox<>();
+                        downloadSourceComboBox.setMaxWidth(Double.MAX_VALUE);
+                        downloadSourceComboBox.getItems().setAll(control.downloadSources.get());
+                        downloadSourceComboBox.setConverter(stringConverter(I18n::i18n));
+                        selectedItemPropertyFor(downloadSourceComboBox).bindBidirectional(control.downloadSource);
+
+                        searchPane.add(new Label(i18n("settings.launcher.download_source")), 2, rowIndex);
+                        searchPane.add(downloadSourceComboBox, 3, rowIndex);
+                    } else {
+                        GridPane.setColumnSpan(versionsComboBox, 3);
+                    }
+
+                    rowIndex++;
                 }
 
                 JFXTextField nameField = new JFXTextField();
