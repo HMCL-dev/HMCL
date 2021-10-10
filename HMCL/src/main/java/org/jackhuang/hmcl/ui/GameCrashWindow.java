@@ -91,16 +91,16 @@ public class GameCrashWindow extends Stage {
         this.launchOptions = launchOptions;
         this.logs = logs;
         this.analyzer = LibraryAnalyzer.analyze(version);
+
+        memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-");
+        java = launchOptions.getJava().getVersion();
+
         this.view = new View();
 
         setScene(new Scene(view, 800, 480));
         getScene().getStylesheets().addAll(config().getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("game.crash.title"));
         getIcons().add(newImage("/assets/img/icon.png"));
-
-        memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-");
-        java = launchOptions.getJava().getVersion();
-
 
         analyzeCrashReport();
     }
@@ -258,8 +258,11 @@ public class GameCrashWindow extends Stage {
                 titlePane.getChildren().setAll(title);
             }
 
-            HBox infoPane = new HBox();
+            HBox infoPane = new HBox(8);
             {
+                infoPane.setPadding(new Insets(8));
+                infoPane.setAlignment(Pos.CENTER_LEFT);
+
                 TwoLineListItem version = new TwoLineListItem();
                 version.getStyleClass().setAll("two-line-item-second-large");
                 version.setTitle(i18n("archive.game_version"));
@@ -285,12 +288,14 @@ public class GameCrashWindow extends Stage {
                 arch.setTitle(i18n("system.architecture"));
                 arch.subtitleProperty().bind(GameCrashWindow.this.arch);
 
-                infoPane.setPadding(new Insets(8));
                 infoPane.getChildren().setAll(version, memory, java, os, arch);
             }
 
-            HBox moddedPane = new HBox();
+            HBox moddedPane = new HBox(8);
             {
+                moddedPane.setPadding(new Insets(8));
+                moddedPane.setAlignment(Pos.CENTER_LEFT);
+
                 for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
                     analyzer.getVersion(type).ifPresent(ver -> {
                         TwoLineListItem item = new TwoLineListItem();
