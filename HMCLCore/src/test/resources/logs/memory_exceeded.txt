@@ -1,0 +1,23 @@
+[19:39:13] [main/INFO]: Loading tweak class name optifine.OptiFineTweaker
+[19:39:13] [main/INFO]: Using primary tweak class name optifine.OptiFineTweaker
+[19:39:13] [main/INFO]: Calling tweak class optifine.OptiFineTweaker
+OptiFineTweaker: acceptOptions
+OptiFineTweaker: injectIntoClassLoader
+OptiFine ClassTransformer
+OptiFine ZIP file: D:\我的世界\minecraft\.minecraft\libraries\optifine\OptiFine\1.16.4_HD_U_G7\OptiFine-1.16.4_HD_U_G7.jar
+OptiFineTweaker: getLaunchArguments
+OptiFineTweaker: getLaunchTarget
+[19:39:13] [main/INFO]: Launching wrapped minecraft {net.minecraft.client.main.Main}
+[19:39:14] [main/INFO]: [OptiFine] (Reflector) Field not found: World.tileEntitiesToBeRemoved
+[19:39:14] [main/INFO]: [OptiFine] (Reflector) Class not present: net.minecraftforge.eventbus.api.Event$Result
+[19:39:14] [main/INFO]: [OptiFine] (Reflector) Method not present: net.minecraftforge.common.extensions.IForgeBlockState.hasTileEntity
+[19:39:14] [main/INFO]: [OptiFine] (Reflector) Class not present: net.minecraftforge.common.extensions.IForgeEntity
+[19:39:14] [main/INFO]: [OptiFine] (Reflector) Class not present: net.minecraftforge.fml.CrashReportExtender
+[19:39:19] [main/INFO]: [OptiFine] (Reflector) Class not present: net.minecraftforge.client.ForgeHooksClient
+[19:39:20] [main/INFO]: Environment: authHost='https://authserver.mojang.com', accountsHost='https://api.mojang.com', sessionHost='https://sessionserver.mojang.com', servicesHost='https://api.minecraftservices.com', name='PROD'
+Java HotSpot(TM) 64-Bit Server VM warning: INFO: os::commit_memory(0x00000007b4000000, 50331648, 0) failed; error='页面文件太小，无法完成操作。' (DOS error/errno=1455)
+#
+# There is insufficient memory for the Java Runtime Environment to continue.
+# Native memory allocation (mmap) failed to map 50331648 bytes for Failed to commit area from 0x00000007b4000000 to 0x00000007b7000000 of length 50331648.
+# An error report file with more information is saved as:
+# D:\我的世界\minecraft\.minecraft\hs_err_pid1224.log

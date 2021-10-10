@@ -47,6 +47,8 @@ public final class CrashReportAnalyzer {
         GRAPHICS_DRIVER(Pattern.compile("(Pixel format not accelerated|Couldn't set pixel format|net\\.minecraftforge\\.fml.client\\.SplashProgress|org\\.lwjgl\\.LWJGLException|EXCEPTION_ACCESS_VIOLATION(.|\\n|\\r)+# C {2}\\[(ig|atio|nvoglv))")),
         // Out of memory
         OUT_OF_MEMORY(Pattern.compile("(java\\.lang\\.OutOfMemoryError|The system is out of physical RAM or swap space)")),
+        // Memory exceeded
+        MEMORY_EXCEEDED(Pattern.compile("There is insufficient memory for the Java Runtime Environment to continue")),
         // Too high resolution
         RESOLUTION_TOO_HIGH(Pattern.compile("Maybe try a (lower resolution|lowerresolution) (resourcepack|texturepack)\\?")),
         // game can only run on Java 8. Version of uesr's JVM is too high.

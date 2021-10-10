@@ -231,6 +231,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void memoryExceeded() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/memory_exceeded.txt")),
+                CrashReportAnalyzer.Rule.MEMORY_EXCEEDED);
+    }
+
+    @Test
     public void config() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/config.txt")),
