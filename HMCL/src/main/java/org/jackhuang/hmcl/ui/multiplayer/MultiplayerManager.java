@@ -131,10 +131,6 @@ public final class MultiplayerManager {
                 session.addRelatedThread(client);
                 session.setClient(client);
 
-                if (handler != null) {
-                    handler.onWaitingForJoinResponse();
-                }
-
                 TimerTask task = Lang.setTimeout(() -> {
                     future.completeExceptionally(new JoinRequestTimeoutException());
                     session.stop();
@@ -161,6 +157,17 @@ public final class MultiplayerManager {
                     future.completeExceptionally(new CancellationException());
                     session.stop();
                     task.cancel();
+                });
+                client.onDisconnected().register(disconnectedEvent -> {
+                    if (!client.isConnected()) {
+                        // We fail to establish connection with server
+                        future.completeExceptionally(new ConnectionErrorException());
+                    }
+                });
+                client.onHandshake().register(handshakeEvent -> {
+                    if (handler != null) {
+                        handler.onWaitingForJoinResponse();
+                    }
                 });
                 client.start();
             });
@@ -463,5 +470,8 @@ public final class MultiplayerManager {
     }
 
     public static class JoinRequestTimeoutException extends RuntimeException {
+    }
+
+    public static class ConnectionErrorException extends RuntimeException {
     }
 }

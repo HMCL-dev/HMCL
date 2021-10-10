@@ -132,6 +132,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
             FastDiscoveryTest tester = new FastDiscoveryTest(null, 0, "stun.qq.com", 3478);
             return tester.test();
         }).whenComplete(Schedulers.javafx(), (info, exception) -> {
+            LOG.log(Level.INFO, "Nat test result " + MultiplayerPageSkin.getNATType(info), exception);
             if (exception == null) {
                 natState.set(info);
             } else {
@@ -292,7 +293,9 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                                 localPort, new MultiplayerManager.JoinSessionHandler() {
                                     @Override
                                     public void onWaitingForJoinResponse() {
-                                        hintQuestion.setQuestion(i18n("multiplayer.session.join.wait"));
+                                        runInFX(() -> {
+                                            hintQuestion.setQuestion(i18n("multiplayer.session.join.wait"));
+                                        });
                                     }
                                 })
                         .thenAcceptAsync(session -> {
@@ -337,6 +340,10 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                             } else if (resolved instanceof MultiplayerManager.JoinRequestTimeoutException) {
                                 LOG.info("Cato already started");
                                 reject.accept(i18n("multiplayer.session.join.wait_timeout"));
+                                return null;
+                            } else if (resolved instanceof MultiplayerManager.ConnectionErrorException) {
+                                LOG.info("Failed to establish connection with server");
+                                reject.accept(i18n("multiplayer.session.join.error.connection"));
                                 return null;
                             } else {
                                 LOG.log(Level.WARNING, "Failed to join session", resolved);

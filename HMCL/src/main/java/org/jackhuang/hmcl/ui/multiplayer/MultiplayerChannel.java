@@ -29,11 +29,15 @@ public final class MultiplayerChannel {
     @JsonType(
             property = "type",
             subtypes = {
+                    @JsonSubtype(clazz = HandshakeRequest.class, name = "handshake"),
                     @JsonSubtype(clazz = JoinRequest.class, name = "join"),
                     @JsonSubtype(clazz = KeepAliveRequest.class, name = "keepalive")
             }
     )
     public static class Request {
+    }
+
+    public static class HandshakeRequest extends Request {
     }
 
     public static class JoinRequest extends Request {
@@ -69,6 +73,7 @@ public final class MultiplayerChannel {
     @JsonType(
             property = "type",
             subtypes = {
+                    @JsonSubtype(clazz = HandshakeResponse.class, name = "handshake"),
                     @JsonSubtype(clazz = JoinResponse.class, name = "join"),
                     @JsonSubtype(clazz = KeepAliveResponse.class, name = "keepalive"),
                     @JsonSubtype(clazz = KickResponse.class, name = "kick")
@@ -76,6 +81,9 @@ public final class MultiplayerChannel {
     )
     public static class Response {
 
+    }
+
+    public static class HandshakeResponse extends Response {
     }
 
     public static class JoinResponse extends Response {

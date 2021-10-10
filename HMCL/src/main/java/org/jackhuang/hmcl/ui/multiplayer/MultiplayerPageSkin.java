@@ -295,7 +295,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
         }
     }
 
-    private static String getNATType(DiscoveryInfo info) {
+    public static String getNATType(DiscoveryInfo info) {
         if (info == null) {
             return i18n("multiplayer.nat.testing");
         } else if (info.isBlockedUDP()) {
