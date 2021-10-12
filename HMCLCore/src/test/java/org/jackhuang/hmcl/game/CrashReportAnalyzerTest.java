@@ -76,7 +76,7 @@ public class CrashReportAnalyzerTest {
                 CrashReportAnalyzer.anaylze(loadLog("/logs/mod_resolution_collection.txt")),
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION_COLLECTION);
         Assert.assertEquals("tabtps-fabric", result.getMatcher().group("sourcemod"));
-        Assert.assertEquals("{fabricloader @ [>=0.11.1]", result.getMatcher().group("destmod"));
+        Assert.assertEquals("{fabricloader @ [>=0.11.1]}", result.getMatcher().group("destmod"));
     }
 
     @Test
