@@ -430,7 +430,7 @@ public final class LauncherHelper {
                 }
             }
 
-            if (javaVersion.getPlatform() != Architecture.CURRENT.getPlatform()) {
+            if (javaVersion.getPlatform() != Architecture.SYSTEM.getPlatform()) {
                 Controllers.dialog(i18n("launch.advice.different_platform"), i18n("message.warning"), MessageType.ERROR, continueAction);
                 suggested = true;
             }

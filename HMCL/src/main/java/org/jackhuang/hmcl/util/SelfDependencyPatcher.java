@@ -84,7 +84,7 @@ public final class SelfDependencyPatcher {
 
         private static String currentArchClassifier() {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                switch (Architecture.CURRENT) {
+                switch (Architecture.JDK) {
                     case X86_64:
                         return "linux";
                     case ARM:
@@ -93,14 +93,14 @@ public final class SelfDependencyPatcher {
                         return "linux-aarch64";
                 }
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-                switch (Architecture.CURRENT) {
+                switch (Architecture.JDK) {
                     case X86_64:
                         return "mac";
                     case ARM64:
                         return "mac-aarch64";
                 }
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                switch (Architecture.CURRENT) {
+                switch (Architecture.JDK) {
                     case X86_64:
                         return "win";
                     case X86:

@@ -24,8 +24,8 @@ import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
+import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.util.List;
 import java.util.Map;
@@ -94,7 +94,7 @@ public class Library implements Comparable<Library>, Validation {
     public String getClassifier() {
         if (artifact.getClassifier() == null)
             if (natives != null && natives.containsKey(OperatingSystem.CURRENT_OS))
-                return natives.get(OperatingSystem.CURRENT_OS).replace("${arch}", Platform.getPlatform().getBit());
+                return natives.get(OperatingSystem.CURRENT_OS).replace("${arch}", Architecture.SYSTEM.getPlatform().getBit());
             else
                 return null;
         else

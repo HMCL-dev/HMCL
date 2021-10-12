@@ -84,7 +84,7 @@ public enum JavaVersionConstraint {
     VANILLA_LINUX_JAVA_8(JavaVersionConstraint.RULE_MANDATORY, versionRange("0", "1.12.999"), versionRange(JavaVersionConstraint.MIN, "1.8.999")) {
         @Override
         public boolean appliesToVersion(@Nullable VersionNumber gameVersion, @Nullable Version version) {
-            return OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.CURRENT == Architecture.X86_64;
+            return OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.SYSTEM == Architecture.X86_64;
         }
     }
     ;

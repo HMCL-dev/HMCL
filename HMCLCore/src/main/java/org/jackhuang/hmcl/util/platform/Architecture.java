@@ -58,7 +58,8 @@ public enum Architecture {
     }
 
     public static final String SYSTEM_ARCHITECTURE;
-    public static final Architecture CURRENT;
+    public static final Architecture JDK;
+    public static final Architecture SYSTEM;
 
     private static Architecture normalizeArch(String value) {
         value = normalize(value);
@@ -151,7 +152,7 @@ public enum Architecture {
     static {
         SYSTEM_ARCHITECTURE = System.getProperty("os.arch");
 
-        CURRENT = Optional.ofNullable(normalizeProcessorArchitecture())
-                .orElseGet(() -> normalizeArch(SYSTEM_ARCHITECTURE));
+        JDK = normalizeArch(SYSTEM_ARCHITECTURE);
+        SYSTEM = Optional.ofNullable(normalizeProcessorArchitecture()).orElse(JDK);
     }
 }
