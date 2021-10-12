@@ -87,14 +87,14 @@ public final class MultiplayerManager {
             throw new IncompatibleCatoVersionException(version, CATO_VERSION);
         }
 
-        Path exe = getCatoExecutable();
-        if (!Files.isRegularFile(exe)) {
-            throw new IllegalStateException("Cato file not found");
-        }
-
         LOG.info(String.format("Joining session (token=%s,version=%s,sessionName=%s,peer=%s,mode=%s,remotePort=%d,localPort=%d)", token, version, sessionName, peer, mode, remotePort, localPort));
 
         return CompletableFuture.completedFuture(null).thenComposeAsync(unused -> {
+            Path exe = getCatoExecutable();
+            if (!Files.isRegularFile(exe)) {
+                throw new CatoNotExistsException(exe);
+            }
+
             if (!isPortAvailable(3478)) {
                 throw new CatoAlreadyStartedException();
             }
@@ -477,5 +477,17 @@ public final class MultiplayerManager {
     }
 
     public static class ConnectionErrorException extends RuntimeException {
+    }
+    
+    public static class CatoNotExistsException extends RuntimeException {
+        private final Path file;
+
+        public CatoNotExistsException(Path file) {
+            this.file = file;
+        }
+
+        public Path getFile() {
+            return file;
+        }
     }
 }

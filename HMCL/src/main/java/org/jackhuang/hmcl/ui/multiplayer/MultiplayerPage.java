@@ -213,6 +213,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
 
         Controllers.dialog(new CreateMultiplayerRoomDialog((result, resolve, reject) -> {
             int gamePort = result.getServer().getAd();
+            boolean isStaticToken = StringUtils.isNotBlank(globalConfig().getMultiplayerToken());
             try {
                 MultiplayerManager.CatoSession session = MultiplayerManager.createSession(globalConfig().getMultiplayerToken(), result.getServer().getMotd(), gamePort, result.isAllowAllJoinRequests());
                 session.getServer().setOnClientAdding((client, resolveClient, rejectClient) -> {
@@ -238,13 +239,17 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                 LOG.log(Level.WARNING, "Cato already started", e);
                 reject.accept(i18n("multiplayer.session.error.already_started"));
                 return;
-            } catch (FileNotFoundException e) {
-                LOG.log(Level.WARNING, "Cato not found", e);
+            } catch (MultiplayerManager.CatoNotExistsException e) {
+                LOG.log(Level.WARNING, "Cato not found " + e.getFile(), e);
                 reject.accept(i18n("multiplayer.session.error.file_not_found"));
                 return;
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "Failed to create session", e);
-                reject.accept(i18n("multiplayer.session.create.error") + e.getLocalizedMessage());
+                if (isStaticToken) {
+                    reject.accept(i18n("multiplayer.session.create.error.static_token") + e.getLocalizedMessage());
+                } else {
+                    reject.accept(i18n("multiplayer.session.create.error.dynamic_token") + e.getLocalizedMessage());
+                }
                 return;
             }
 
@@ -333,8 +338,8 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                                 LOG.info("Cato already started");
                                 reject.accept(i18n("multiplayer.session.error.already_started"));
                                 return null;
-                            } else if (resolved instanceof FileNotFoundException) {
-                                LOG.log(Level.WARNING, "Cato not found", resolved);
+                            } else if (throwable instanceof MultiplayerManager.CatoNotExistsException) {
+                                LOG.log(Level.WARNING, "Cato not found " + ((MultiplayerManager.CatoNotExistsException) throwable).getFile(), throwable);
                                 reject.accept(i18n("multiplayer.session.error.file_not_found"));
                                 return null;
                             } else if (resolved instanceof MultiplayerManager.JoinRequestTimeoutException) {
