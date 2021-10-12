@@ -52,15 +52,31 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void jvm32() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/jvm_32bit.txt")),
+                CrashReportAnalyzer.Rule.JVM_32BIT);
+    }
+
+    @Test
     public void modResolution() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/mod_resolution.txt")),
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION);
         Assert.assertEquals(("Errors were found!\n" +
-                " - Mod test depends on mod {fabricloader @ [>=0.11.3]}, which is missing!\n" +
-                " - Mod test depends on mod {fabric @ [*]}, which is missing!\n" +
-                " - Mod test depends on mod {java @ [>=16]}, which is missing!\n").replaceAll("\\s+", ""),
+                        " - Mod test depends on mod {fabricloader @ [>=0.11.3]}, which is missing!\n" +
+                        " - Mod test depends on mod {fabric @ [*]}, which is missing!\n" +
+                        " - Mod test depends on mod {java @ [>=16]}, which is missing!\n").replaceAll("\\s+", ""),
                 result.getMatcher().group("reason").replaceAll("\\s+", ""));
+    }
+
+    @Test
+    public void modResolutionCollection() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/mod_resolution_collection.txt")),
+                CrashReportAnalyzer.Rule.MOD_RESOLUTION_COLLECTION);
+        Assert.assertEquals("tabtps-fabric", result.getMatcher().group("sourcemod"));
+        Assert.assertEquals("{fabricloader @ [>=0.11.1]", result.getMatcher().group("destmod"));
     }
 
     @Test

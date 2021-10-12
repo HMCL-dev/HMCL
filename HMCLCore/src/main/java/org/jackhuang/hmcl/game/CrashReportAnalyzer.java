@@ -37,7 +37,7 @@ public final class CrashReportAnalyzer {
 
         OPENJ9(Pattern.compile("(Open J9 is not supported|OpenJ9 is incompatible)")),
         TOO_OLD_JAVA(Pattern.compile("java\\.lang\\.UnsupportedClassVersionError: (.*?) version (?<expected>\\d+)\\.0"), "expected"),
-        JVM_32BIT(Pattern.compile("Could not reserve enough space for (.*?) object heap")),
+        JVM_32BIT(Pattern.compile("(Could not reserve enough space for (.*?) object heap|The specified size exceeds the maximum representable size)")),
 
         // Some mods/shader packs do incorrect GL operations.
         GL_OPERATION_FAILURE(Pattern.compile("1282: Invalid operation")),
@@ -68,6 +68,7 @@ public final class CrashReportAnalyzer {
         MOD_RESOLUTION_CONFLICT(Pattern.compile("ModResolutionException: Found conflicting mods: (?<sourcemod>.*) conflicts with (?<destmod>.*)"), "sourcemod", "destmod"),
         MOD_RESOLUTION_MISSING(Pattern.compile("ModResolutionException: Could not find required mod: (?<sourcemod>.*) requires (?<destmod>.*)"), "sourcemod", "destmod"),
         MOD_RESOLUTION_MISSING_MINECRAFT(Pattern.compile("ModResolutionException: Could not find required mod: (?<mod>.*) requires \\{minecraft @ (?<version>.*)}"), "mod", "version"),
+        MOD_RESOLUTION_COLLECTION(Pattern.compile("ModResolutionException: Could not resolve valid mod collection \\(at: (?<sourcemod>.*) requires (?<destmod>.*)\\)"), "sourcemod", "destmod"),
         // Some mods require a file not existing, asking user to manually delete it
         FILE_ALREADY_EXISTS(Pattern.compile("java\\.nio\\.file\\.FileAlreadyExistsException: (?<file>.*)"), "file"),
         // Forge found some mod crashed in game loading

@@ -140,6 +140,7 @@ public class GameCrashWindow extends Stage {
                             break;
                         case MOD_RESOLUTION_CONFLICT:
                         case MOD_RESOLUTION_MISSING:
+                        case MOD_RESOLUTION_COLLECTION:
                             reasonText.append(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     translateFabricModId(result.getMatcher().group("sourcemod")),
                                     parseFabricModId(result.getMatcher().group("destmod")),
@@ -177,6 +178,8 @@ public class GameCrashWindow extends Stage {
 
     private String translateFabricModId(String modName) {
         switch (modName) {
+            case "fabricloader":
+                return "Fabric";
             case "fabric":
                 return "Fabric API";
             case "minecraft":
