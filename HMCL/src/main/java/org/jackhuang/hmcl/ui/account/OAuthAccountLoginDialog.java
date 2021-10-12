@@ -67,14 +67,17 @@ public class OAuthAccountLoginDialog extends DialogPane {
     @Override
     protected void onAccept() {
         setLoading();
-
+        logging.set(true);
         Task.supplyAsync(account::logInWhenCredentialsExpired)
-                .whenComplete(Schedulers.javafx(), authInfo -> {
-                    success.accept(authInfo);
-                    onSuccess();
-                }, e -> {
-                    LOG.log(Level.INFO, "Failed to login when credentials expired: " + account, e);
-                    onFailure(Accounts.localizeErrorMessage(e));
+                .whenComplete(Schedulers.javafx(), (authInfo, exception) -> {
+                    logging.set(false);
+                    if (exception == null) {
+                        success.accept(authInfo);
+                        onSuccess();
+                    } else {
+                        LOG.log(Level.INFO, "Failed to login when credentials expired: " + account, exception);
+                        onFailure(Accounts.localizeErrorMessage(exception));
+                    }
                 }).start();
     }
 
