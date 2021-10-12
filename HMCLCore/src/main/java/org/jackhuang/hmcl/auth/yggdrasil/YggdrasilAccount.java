@@ -18,14 +18,7 @@
 package org.jackhuang.hmcl.auth.yggdrasil;
 
 import javafx.beans.binding.ObjectBinding;
-import org.jackhuang.hmcl.auth.Account;
-import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.auth.CharacterDeletedException;
-import org.jackhuang.hmcl.auth.CharacterSelector;
-import org.jackhuang.hmcl.auth.CredentialExpiredException;
-import org.jackhuang.hmcl.auth.NoCharacterException;
-import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
+import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
@@ -36,7 +29,7 @@ import java.util.logging.Level;
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
-public class YggdrasilAccount extends Account {
+public class YggdrasilAccount extends ClassicAccount {
 
     protected final YggdrasilService service;
     protected final UUID characterUUID;

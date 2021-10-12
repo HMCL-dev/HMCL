@@ -27,8 +27,8 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
+import org.jackhuang.hmcl.auth.ClassicAccount;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
@@ -48,8 +48,8 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class AccountLoginWithPasswordDialog extends StackPane {
-    private final Account oldAccount;
+public class ClassicAccountLoginDialog extends StackPane {
+    private final ClassicAccount oldAccount;
     private final Consumer<AuthInfo> success;
     private final Runnable failed;
 
@@ -57,7 +57,7 @@ public class AccountLoginWithPasswordDialog extends StackPane {
     private final Label lblCreationWarning = new Label();
     private final JFXProgressBar progressBar;
 
-    public AccountLoginWithPasswordDialog(Account oldAccount, Consumer<AuthInfo> success, Runnable failed) {
+    public ClassicAccountLoginDialog(ClassicAccount oldAccount, Consumer<AuthInfo> success, Runnable failed) {
         this.oldAccount = oldAccount;
         this.success = success;
         this.failed = failed;

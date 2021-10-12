@@ -135,11 +135,6 @@ public class OfflineAccount extends Account {
     }
 
     @Override
-    public AuthInfo logInWithPassword(String password) throws AuthenticationException {
-        return logIn();
-    }
-
-    @Override
     public Optional<AuthInfo> playOffline() throws AuthenticationException {
         return Optional.of(logIn());
     }
