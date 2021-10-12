@@ -115,7 +115,7 @@ public enum JavaVersionConstraint {
         return true;
     }
 
-    public static Pair<Range<VersionNumber>, Range<VersionNumber>> findSuitableJavaVersionRange(VersionNumber gameVersion, Version version) {
+    public static VersionRange findSuitableJavaVersionRange(VersionNumber gameVersion, Version version) {
         Range<VersionNumber> mandatoryJavaRange = versionRange(MIN, MAX);
         Range<VersionNumber> suggestedJavaRange = versionRange(MIN, MAX);
         for (JavaVersionConstraint java : values()) {
@@ -129,26 +129,24 @@ public enum JavaVersionConstraint {
                 }
             }
         }
-        return pair(mandatoryJavaRange, suggestedJavaRange);
+        return new VersionRange(mandatoryJavaRange, suggestedJavaRange);
     }
 
     @Nullable
     public static JavaVersion findSuitableJavaVersion(VersionNumber gameVersion, Version version) throws InterruptedException {
-        Pair<Range<VersionNumber>, Range<VersionNumber>> range = findSuitableJavaVersionRange(gameVersion, version);
-        Range<VersionNumber> mandatoryJavaRange = range.getKey();
-        Range<VersionNumber> suggestedJavaRange = range.getValue();
+        VersionRange range = findSuitableJavaVersionRange(gameVersion, version);
 
         JavaVersion mandatory = null;
         JavaVersion suggested = null;
         for (JavaVersion javaVersion : JavaVersion.getJavas()) {
             // select the latest java version that this version accepts.
-            if (mandatoryJavaRange.contains(javaVersion.getVersionNumber())) {
+            if (range.getMandatory().contains(javaVersion.getVersionNumber())) {
                 if (mandatory == null) mandatory = javaVersion;
                 else if (javaVersion.getVersionNumber().compareTo(mandatory.getVersionNumber()) > 0) {
                     mandatory = javaVersion;
                 }
             }
-            if (suggestedJavaRange.contains(javaVersion.getVersionNumber())) {
+            if (range.getSuggested().contains(javaVersion.getVersionNumber())) {
                 if (suggested == null) suggested = javaVersion;
                 else if (javaVersion.getVersionNumber().compareTo(suggested.getVersionNumber()) > 0) {
                     suggested = javaVersion;
@@ -168,5 +166,23 @@ public enum JavaVersionConstraint {
 
     private static Range<VersionNumber> versionRange(String fromInclusive, String toExclusive) {
         return Range.between(VersionNumber.asVersion(fromInclusive), VersionNumber.asVersion(toExclusive));
+    }
+
+    public static class VersionRange {
+        private final Range<VersionNumber> mandatory;
+        private final Range<VersionNumber> suggested;
+
+        public VersionRange(Range<VersionNumber> mandatory, Range<VersionNumber> suggested) {
+            this.mandatory = mandatory;
+            this.suggested = suggested;
+        }
+
+        public Range<VersionNumber> getMandatory() {
+            return mandatory;
+        }
+
+        public Range<VersionNumber> getSuggested() {
+            return suggested;
+        }
     }
 }

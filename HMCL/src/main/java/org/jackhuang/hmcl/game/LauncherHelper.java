@@ -318,6 +318,8 @@ public final class LauncherHelper {
                 Runnable continueAction = () -> future.complete(JavaVersion.fromCurrentEnvironment());
 
                 if (setting.isJavaAutoSelected()) {
+//                    JavaVersionConstraint.VersionRange range = JavaVersionConstraint.findSuitableJavaVersionRange(gameVersion, version);
+                    // TODO: download java 16 if necessary!
                     Controllers.dialog(i18n("launch.failed.no_accepted_java"), i18n("message.warning"), MessageType.WARNING, continueAction);
                 } else {
                     Controllers.dialog(i18n("launch.wrong_javadir"), i18n("message.warning"), MessageType.WARNING, continueAction);
