@@ -75,6 +75,8 @@ public final class CrashReportAnalyzer {
         BOOTSTRAP_FAILED(Pattern.compile("Failed to create mod instance. ModID: (?<id>.*?),"), "id"),
         // Fabric found some mod crashed in game loading
         LOADING_CRASHED_FABRIC(Pattern.compile("Could not execute entrypoint stage '(.*?)' due to errors, provided by '(?<id>.*)'!"), "id"),
+        // Fabric may have breaking changes.
+        // https://github.com/FabricMC/fabric-loader/tree/master/src/main/legacyJava deprecated classes may be removed in the future.
         FABRIC_VERSION_0_12(Pattern.compile("java\\.lang\\.NoClassDefFoundError: org/spongepowered/asm/mixin/transformer/FabricMixinTransformerProxy")),
         // Manually triggerd debug crash
         DEBUG_CRASH(Pattern.compile("Manually triggered debug crash")),
