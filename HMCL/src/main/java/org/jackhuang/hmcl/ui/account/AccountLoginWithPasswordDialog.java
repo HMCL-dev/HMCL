@@ -48,7 +48,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class AccountLoginPane extends StackPane {
+public class AccountLoginWithPasswordDialog extends StackPane {
     private final Account oldAccount;
     private final Consumer<AuthInfo> success;
     private final Runnable failed;
@@ -57,7 +57,7 @@ public class AccountLoginPane extends StackPane {
     private final Label lblCreationWarning = new Label();
     private final JFXProgressBar progressBar;
 
-    public AccountLoginPane(Account oldAccount, Consumer<AuthInfo> success, Runnable failed) {
+    public AccountLoginWithPasswordDialog(Account oldAccount, Consumer<AuthInfo> success, Runnable failed) {
         this.oldAccount = oldAccount;
         this.success = success;
         this.failed = failed;

@@ -20,8 +20,9 @@ package org.jackhuang.hmcl.ui;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.ui.account.AccountLoginPane;
+import org.jackhuang.hmcl.ui.account.AccountLoginWithPasswordDialog;
 
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
@@ -39,7 +40,7 @@ public final class DialogController {
             CountDownLatch latch = new CountDownLatch(1);
             AtomicReference<AuthInfo> res = new AtomicReference<>(null);
             runInFX(() -> {
-                AccountLoginPane pane = new AccountLoginPane(account, it -> {
+                AccountLoginWithPasswordDialog pane = new AccountLoginWithPasswordDialog(account, it -> {
                     res.set(it);
                     latch.countDown();
                 }, latch::countDown);
@@ -47,6 +48,8 @@ public final class DialogController {
             });
             latch.await();
             return Optional.ofNullable(res.get()).orElseThrow(CancellationException::new);
+        } else if (account instanceof MicrosoftAccount) {
+
         }
         return account.logIn();
     }

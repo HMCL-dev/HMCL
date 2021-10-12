@@ -119,7 +119,12 @@ public class MicrosoftService {
                             pair("client_secret", callback.getClientSecret()),
                             pair("refresh_token", oldSession.getRefreshToken()),
                             pair("grant_type", "refresh_token"))
-                    .accept("application/json").getJson(LiveRefreshResponse.class);
+                    .accept("application/json")
+                    .ignoreHttpErrorCode(400)
+                    .ignoreHttpErrorCode(401)
+                    .getJson(LiveRefreshResponse.class);
+
+            handleLiveErrorMessage(response);
 
             return authenticateViaLiveAccessToken(response.accessToken, response.refreshToken);
         } catch (IOException e) {
@@ -127,6 +132,22 @@ public class MicrosoftService {
         } catch (JsonParseException e) {
             throw new ServerResponseMalformedException(e);
         }
+    }
+
+    private void handleLiveErrorMessage(LiveErrorResponse response) throws AuthenticationException {
+        if (response.error == null || response.errorDescription == null) {
+            return;
+        }
+
+        switch (response.error) {
+            case "invalid_grant":
+                if (response.errorDescription.contains("The user must sign in again and if needed grant the client application access to the requested scope")) {
+                    throw new CredentialExpiredException();
+                }
+                break;
+        }
+
+        throw new RemoteAuthenticationException(response.error, response.errorDescription, "");
     }
 
     private String getUhs(XBoxLiveAuthenticationResponse response, String existingUhs) throws AuthenticationException {
@@ -336,13 +357,24 @@ public class MicrosoftService {
     public static class NoXuiException extends AuthenticationException {
     }
 
+    public static class LiveErrorResponse {
+        @SerializedName("error")
+        public String error;
+
+        @SerializedName("error_description")
+        public String errorDescription;
+
+        @SerializedName("correlation_id")
+        public String correlationId;
+    }
+
     /**
      * Error response: {"error":"invalid_grant","error_description":"The provided
      * value for the 'redirect_uri' is not valid. The value must exactly match the
      * redirect URI used to obtain the authorization
      * code.","correlation_id":"??????"}
      */
-    public static class LiveAuthorizationResponse {
+    public static class LiveAuthorizationResponse extends LiveErrorResponse {
         @SerializedName("token_type")
         public String tokenType;
 
@@ -365,7 +397,7 @@ public class MicrosoftService {
         public String foci;
     }
 
-    private static class LiveRefreshResponse {
+    private static class LiveRefreshResponse extends LiveErrorResponse {
         @SerializedName("expires_in")
         int expiresIn;
 

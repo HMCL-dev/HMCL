@@ -100,7 +100,17 @@ public class MicrosoftAccount extends Account {
 
     @Override
     public AuthInfo logInWithPassword(String password) throws AuthenticationException {
-        throw new UnsupportedOperationException();
+        MicrosoftSession acquiredSession = service.authenticate();
+
+        if (acquiredSession.getProfile() == null) {
+            session = service.refresh(acquiredSession);
+        } else {
+            session = acquiredSession;
+        }
+
+        authenticated = true;
+        invalidate();
+        return session.toAuthInfo();
     }
 
     @Override
