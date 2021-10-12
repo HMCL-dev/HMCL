@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.util.StringUtils;
+
 import java.util.Locale;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.platform.Platform.BIT_32;
 import static org.jackhuang.hmcl.util.platform.Platform.BIT_64;
@@ -119,6 +122,25 @@ public enum Architecture {
         return UNKNOWN;
     }
 
+    private static Architecture normalizeProcessorArchitecture() {
+        String processorArchitecture = System.getenv("PROCESSOR_ARCHITECTURE");
+        if (StringUtils.isBlank(processorArchitecture)) return null;
+
+        switch (processorArchitecture) {
+            case "AMD64":
+            case "EM64T":
+                return X86_64;
+            case "IA64":
+                return IA64;
+            case "ARM64":
+                return ARM64;
+            case "X86":
+                return X86;
+            default:
+                return null;
+        }
+    }
+
     private static String normalize(String value) {
         if (value == null) {
             return "";
@@ -129,6 +151,7 @@ public enum Architecture {
     static {
         SYSTEM_ARCHITECTURE = System.getProperty("os.arch");
 
-        CURRENT = normalizeArch(SYSTEM_ARCHITECTURE);
+        CURRENT = Optional.ofNullable(normalizeProcessorArchitecture())
+                .orElseGet(() -> normalizeArch(SYSTEM_ARCHITECTURE));
     }
 }
