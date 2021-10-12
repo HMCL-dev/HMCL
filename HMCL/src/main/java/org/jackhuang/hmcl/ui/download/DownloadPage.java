@@ -230,6 +230,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         tab.select(modTab);
     }
 
+    public void showWorldDownloads() {
+        tab.select(worldTab);
+    }
+
     private class DownloadNavigator implements Navigation {
         private final Map<String, Object> settings = new HashMap<>();
 
