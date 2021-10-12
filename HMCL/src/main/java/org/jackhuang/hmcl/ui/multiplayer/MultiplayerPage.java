@@ -129,7 +129,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
 
     private void testNAT() {
         Task.supplyAsync(() -> {
-            FastDiscoveryTest tester = new FastDiscoveryTest(null, 0, "stun.qq.com", 3478);
+            FastDiscoveryTest tester = new FastDiscoveryTest(null, 0, "stun.stunprotocol.org", 3478);
             return tester.test();
         }).whenComplete(Schedulers.javafx(), (info, exception) -> {
             LOG.log(Level.INFO, "Nat test result " + MultiplayerPageSkin.getNATType(info), exception);

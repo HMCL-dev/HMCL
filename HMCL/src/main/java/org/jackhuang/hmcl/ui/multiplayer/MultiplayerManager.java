@@ -92,6 +92,8 @@ public final class MultiplayerManager {
             throw new IllegalStateException("Cato file not found");
         }
 
+        LOG.info(String.format("Joining session (token=%s,version=%s,sessionName=%s,peer=%s,mode=%s,remotePort=%d,localPort=%d)", token, version, sessionName, peer, mode, remotePort, localPort));
+
         return CompletableFuture.completedFuture(null).thenComposeAsync(unused -> {
             if (!isPortAvailable(3478)) {
                 throw new CatoAlreadyStartedException();
@@ -185,6 +187,8 @@ public final class MultiplayerManager {
         if (!isPortAvailable(3478)) {
             throw new CatoAlreadyStartedException();
         }
+
+        LOG.info(String.format("Creating session (token=%s,sessionName=%s,gamePort=%d)", token, sessionName, gamePort));
 
         MultiplayerServer server = new MultiplayerServer(gamePort, allowAllJoinRequests);
         server.startServer();
