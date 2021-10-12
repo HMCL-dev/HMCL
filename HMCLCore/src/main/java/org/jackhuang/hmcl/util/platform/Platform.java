@@ -45,13 +45,6 @@ public enum Platform {
     }
 
     /**
-     * The platform of current Java Environment.
-     */
-    public static Platform getPlatform() {
-        return Architecture.CURRENT.getPlatform();
-    }
-
-    /**
      * The json serializer to {@link Platform}.
      */
     public static class Serializer implements JsonSerializer<Platform>, JsonDeserializer<Platform> {
