@@ -281,6 +281,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void fabric0_12() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-version-0.12.txt")),
+                CrashReportAnalyzer.Rule.FABRIC_VERSION_0_12);
+    }
+
+    @Test
     public void fabricMissingMinecraft() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-minecraft.txt")),
