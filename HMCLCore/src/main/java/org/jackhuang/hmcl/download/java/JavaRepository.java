@@ -72,10 +72,16 @@ public final class JavaRepository {
                 return Optional.of("mac-os");
             }
         } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            if (Architecture.SYSTEM_ARCH == Architecture.X86 || Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+            if (Architecture.SYSTEM_ARCH == Architecture.X86) {
                 return Optional.of("windows-x86");
             } else if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
                 return Optional.of("windows-x64");
+            } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+                if (OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277) {
+                    return Optional.of("windows-x64");
+                } else {
+                    return Optional.of("windows-x86");
+                }
             }
         }
         return Optional.empty();

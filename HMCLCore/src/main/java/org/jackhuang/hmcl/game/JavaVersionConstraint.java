@@ -174,7 +174,7 @@ public enum JavaVersionConstraint {
         JavaVersion suggested = null;
         for (JavaVersion javaVersion : JavaVersion.getJavas()) {
             // select the latest x86 java that this version accepts.
-            if(!javaVersion.getArchitecture().isX86())
+            if (!javaVersion.getArchitecture().isX86())
                 continue;
 
             VersionNumber javaVersionNumber = javaVersion.getVersionNumber();

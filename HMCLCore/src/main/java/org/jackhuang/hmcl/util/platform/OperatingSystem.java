@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +28,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
