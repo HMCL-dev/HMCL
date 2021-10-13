@@ -46,10 +46,10 @@ public final class JavaVersion {
 
     private final Path binary;
     private final String longVersion;
-    private final Platform platform;
+    private final Bits platform;
     private final int version;
 
-    public JavaVersion(Path binary, String longVersion, Platform platform) {
+    public JavaVersion(Path binary, String longVersion, Bits platform) {
         this.binary = binary;
         this.longVersion = longVersion;
         this.platform = platform;
@@ -64,7 +64,7 @@ public final class JavaVersion {
         return longVersion;
     }
 
-    public Platform getPlatform() {
+    public Bits getPlatform() {
         return platform;
     }
 
@@ -115,7 +115,7 @@ public final class JavaVersion {
         if (cachedJavaVersion != null)
             return cachedJavaVersion;
 
-        Platform platform = Platform.BIT_32;
+        Bits platform = Bits.BIT_32;
         String version = null;
 
         Process process = new ProcessBuilder(executable.toString(), "-version").start();
@@ -125,7 +125,7 @@ public final class JavaVersion {
                 if (m.find())
                     version = m.group("version");
                 if (line.contains("64-Bit"))
-                    platform = Platform.BIT_64;
+                    platform = Bits.BIT_64;
             }
         }
 
@@ -163,7 +163,7 @@ public final class JavaVersion {
         CURRENT_JAVA = new JavaVersion(
                 currentExecutable,
                 System.getProperty("java.version"),
-                Architecture.JDK.getPlatform());
+                Architecture.JDK.getBits());
     }
 
     private static Collection<JavaVersion> JAVAS;
