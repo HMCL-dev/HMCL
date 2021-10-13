@@ -21,7 +21,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.platform.Bits.BIT_32;
 import static org.jackhuang.hmcl.util.platform.Bits.BIT_64;
@@ -87,26 +86,30 @@ public enum Architecture {
     }
 
     public static final String CURRENT_ARCH_NAME;
+    public static final String SYSTEM_ARCH_NAME;
     public static final Architecture CURRENT_ARCH;
     public static final Architecture SYSTEM_ARCH;
-
-    private static final Pattern NORMALIZER = Pattern.compile("[^a-z0-9]+");
 
     public static Architecture parseArchName(String value) {
         if (value == null) {
             return UNKNOWN;
         }
-        value = NORMALIZER.matcher(value.toLowerCase(Locale.ROOT).trim()).replaceAll("");
+        value = value.trim().toLowerCase(Locale.ROOT);
 
         switch (value) {
             case "x8664":
+            case "x86-64":
+            case "x86_64":
             case "amd64":
             case "ia32e":
             case "em64t":
             case "x64":
                 return X86_64;
             case "x8632":
+            case "x86-32":
+            case "x86_32":
             case "x86":
+            case "i86pc":
             case "i386":
             case "i486":
             case "i586":
@@ -114,6 +117,7 @@ public enum Architecture {
             case "ia32":
             case "x32":
                 return X86;
+            case "arm64":
             case "aarch64":
                 return ARM64;
             case "arm":
@@ -130,6 +134,7 @@ public enum Architecture {
             case "mips32el":
                 return MIPSEL;
             case "riscv":
+            case "risc-v":
                 return RISCV;
             case "ia64":
             case "ia64w":
@@ -144,20 +149,32 @@ public enum Architecture {
             case "sparc32":
                 return SPARC;
             case "ppc64":
-                return PPC64;
+            case "powerpc64":
+                return "little".equals(System.getProperty("sun.cpu.endian")) ? PPC64LE : PPC64;
             case "ppc64le":
+            case "powerpc64le":
                 return PPC64LE;
             case "ppc":
             case "ppc32":
+            case "powerpc":
+            case "powerpc32":
                 return PPC;
             case "ppcle":
             case "ppc32le":
+            case "powerpcle":
+            case "powerpc32le":
                 return PPCLE;
             case "s390":
                 return S390;
             case "s390x":
                 return S390X;
             default:
+                if (value.startsWith("armv7")) {
+                    return ARM32;
+                }
+                if (value.startsWith("armv8") || value.startsWith("armv9")) {
+                    return ARM64;
+                }
                 return UNKNOWN;
         }
     }
@@ -167,16 +184,16 @@ public enum Architecture {
 
         CURRENT_ARCH = parseArchName(CURRENT_ARCH_NAME);
 
-        Architecture sysArch = UNKNOWN;
+        String sysArchName = null;
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            sysArch = parseArchName(System.getenv("PROCESSOR_ARCHITECTURE"));
+            sysArchName = System.getenv("PROCESSOR_ARCHITECTURE").trim();
         } else {
             try {
                 Process process = Runtime.getRuntime().exec("/usr/bin/arch");
                 if (process.waitFor(1, TimeUnit.SECONDS)) {
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                        sysArch = parseArchName(reader.readLine());
+                        sysArchName = reader.readLine().trim();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -185,6 +202,13 @@ public enum Architecture {
             }
         }
 
-        SYSTEM_ARCH = sysArch == UNKNOWN ? CURRENT_ARCH : sysArch;
+        Architecture sysArch = parseArchName(sysArchName);
+        if (sysArch == UNKNOWN) {
+            SYSTEM_ARCH_NAME = CURRENT_ARCH_NAME;
+            SYSTEM_ARCH = CURRENT_ARCH;
+        } else {
+            SYSTEM_ARCH_NAME = sysArchName;
+            SYSTEM_ARCH = sysArch;
+        }
     }
 }
