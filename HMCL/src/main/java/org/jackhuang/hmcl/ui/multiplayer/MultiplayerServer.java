@@ -43,6 +43,7 @@ public class MultiplayerServer extends Thread {
     private final EventManager<MultiplayerChannel.CatoClient> onClientAdded = new EventManager<>();
     private final EventManager<MultiplayerChannel.CatoClient> onClientDisconnected = new EventManager<>();
     private final EventManager<Event> onKeepAlive = new EventManager<>();
+    private final EventManager<Event> onHandshake = new EventManager<>();
 
     private final Map<String, Endpoint> clients = new ConcurrentHashMap<>();
     private final Map<String, Endpoint> nameClientMap = new ConcurrentHashMap<>();
@@ -69,6 +70,10 @@ public class MultiplayerServer extends Thread {
 
     public EventManager<Event> onKeepAlive() {
         return onKeepAlive;
+    }
+
+    public EventManager<Event> onHandshake() {
+        return onHandshake;
     }
 
     public void startServer() throws IOException {
@@ -178,6 +183,10 @@ public class MultiplayerServer extends Thread {
                     endpoint.write(new KeepAliveResponse(System.currentTimeMillis()));
 
                     onKeepAlive.fireEvent(new Event(this));
+                } else if (request instanceof HandshakeRequest) {
+                    endpoint.write(new HandshakeResponse());
+
+                    onHandshake.fireEvent(new Event(this));
                 } else {
                     LOG.log(Level.WARNING, "Unrecognized packet from client " + targetSocket.getRemoteSocketAddress() + ":" + line);
                 }

@@ -18,8 +18,11 @@
 package org.jackhuang.hmcl.ui.multiplayer;
 
 import org.jackhuang.hmcl.util.Logging;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MultiplayerClientServerTest {
 
@@ -27,11 +30,18 @@ public class MultiplayerClientServerTest {
     @Ignore
     public void startServer() throws Exception {
         Logging.initForTest();
+        int localPort = MultiplayerManager.findAvailablePort();
         MultiplayerServer server = new MultiplayerServer(1000, true);
-        server.startServer(44444);
+        server.startServer(localPort);
 
-        MultiplayerClient client = new MultiplayerClient("username", 44444);
+        MultiplayerClient client = new MultiplayerClient("username", localPort);
         client.start();
+
+        AtomicBoolean handshakeReceived = new AtomicBoolean(false);
+
+        server.onHandshake().register(event -> {
+            handshakeReceived.set(true);
+        });
 
         server.onKeepAlive().register(event -> {
             client.interrupt();
@@ -39,5 +49,7 @@ public class MultiplayerClientServerTest {
         });
 
         server.join();
+
+        Assert.assertTrue(handshakeReceived.get());
     }
 }

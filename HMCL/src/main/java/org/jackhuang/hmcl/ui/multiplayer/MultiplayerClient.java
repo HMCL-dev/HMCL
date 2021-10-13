@@ -101,6 +101,7 @@ public class MultiplayerClient extends Thread {
                     // We fail to establish the connection with server.
 
                     try {
+                        LOG.log(Level.WARNING, "Socket connection timeout, closing socket");
                         socket.close();
                     } catch (IOException e) {
                         LOG.log(Level.WARNING, "Failed to close socket", e);
