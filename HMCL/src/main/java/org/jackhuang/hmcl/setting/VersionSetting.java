@@ -608,7 +608,7 @@ public final class VersionSetting implements Cloneable {
                         if (checkJava)
                             return JavaVersion.fromExecutable(Paths.get(getJavaDir()));
                         else
-                            return new JavaVersion(Paths.get(getJavaDir()), "", Architecture.SYSTEM.getPlatform());
+                            return new JavaVersion(Paths.get(getJavaDir()), "", Architecture.SYSTEM.getBits());
                     } catch (IOException | InvalidPathException e) {
                         return null; // Custom Java Directory not found,
                     }
