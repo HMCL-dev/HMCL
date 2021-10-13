@@ -228,7 +228,8 @@ public final class MultiplayerManager {
     public static String getCatoPath() {
         switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
-                if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
+                if (Architecture.SYSTEM_ARCH == Architecture.X86_64
+                        || (Architecture.SYSTEM_ARCH == Architecture.ARM64 && OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277)) {
                     return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-windows-amd64.exe";
                 } else {
                     return "";
@@ -478,7 +479,7 @@ public final class MultiplayerManager {
 
     public static class ConnectionErrorException extends RuntimeException {
     }
-    
+
     public static class CatoNotExistsException extends RuntimeException {
         private final Path file;
 
