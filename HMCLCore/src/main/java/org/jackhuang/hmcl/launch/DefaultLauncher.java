@@ -356,7 +356,7 @@ public class DefaultLauncher extends Launcher {
     public ManagedProcess launch() throws IOException, InterruptedException {
         File nativeFolder = null;
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            nativeFolder = repository.getNativeDirectory(version.getId());
+            nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
         } else {
             nativeFolder = new File(options.getNativesDir());
         }
@@ -431,7 +431,7 @@ public class DefaultLauncher extends Launcher {
 
         File nativeFolder = null;
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            nativeFolder = repository.getNativeDirectory(version.getId());
+            nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
         } else {
             nativeFolder = new File(options.getNativesDir());
         }
