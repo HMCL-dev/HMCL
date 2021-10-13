@@ -82,6 +82,10 @@ public enum Architecture {
         return displayName;
     }
 
+    public boolean isX86() {
+        return this == X86 || this == X86_64;
+    }
+
     public static final String CURRENT_ARCH_NAME;
     public static final Architecture CURRENT_ARCH;
     public static final Architecture SYSTEM_ARCH;
