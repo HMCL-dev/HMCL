@@ -46,10 +46,10 @@ public final class JavaVersion {
 
     private final Path binary;
     private final String longVersion;
-    private final Bits platform;
+    private final Platform platform;
     private final int version;
 
-    public JavaVersion(Path binary, String longVersion, Bits platform) {
+    public JavaVersion(Path binary, String longVersion, Platform platform) {
         this.binary = binary;
         this.longVersion = longVersion;
         this.platform = platform;
@@ -64,8 +64,12 @@ public final class JavaVersion {
         return longVersion;
     }
 
-    public Bits getBits() {
+    public Platform getPlatform() {
         return platform;
+    }
+
+    public Bits getBits() {
+        return platform.getBits();
     }
 
     public VersionNumber getVersionNumber() {
@@ -87,7 +91,12 @@ public final class JavaVersion {
     private static final Pattern REGEX = Pattern.compile("version \"(?<version>(.*?))\"");
     private static final Pattern VERSION = Pattern.compile("^(?<version>[0-9]+)");
 
+    private static final Pattern OS_NAME = Pattern.compile("os\\.name = (?<name>.*)");
+    private static final Pattern OS_ARCH = Pattern.compile("os\\.arch = (?<arch>.*)");
+    private static final Pattern JAVA_VERSION = Pattern.compile("java\\.version = (?<version>.*)");
+
     public static final int UNKNOWN = -1;
+    public static final int JAVA_6 = 6;
     public static final int JAVA_7 = 7;
     public static final int JAVA_8 = 8;
     public static final int JAVA_9 = 9;
@@ -103,6 +112,8 @@ public final class JavaVersion {
             return JAVA_8;
         else if (version.contains("1.7"))
             return JAVA_7;
+        else if (version.contains("1.6"))
+            return JAVA_6;
         else
             return UNKNOWN;
     }
@@ -115,26 +126,75 @@ public final class JavaVersion {
         if (cachedJavaVersion != null)
             return cachedJavaVersion;
 
-        Bits platform = Bits.BIT_32;
+        String osName = null;
+        String osArch = null;
         String version = null;
 
-        Process process = new ProcessBuilder(executable.toString(), "-version").start();
+        Platform platform = null;
+
+        Process process = new ProcessBuilder(executable.toString(), "-XshowSettings:properties", "-version").start();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-            for (String line; (line = reader.readLine()) != null;) {
-                Matcher m = REGEX.matcher(line);
-                if (m.find())
+            for (String line; (line = reader.readLine()) != null; ) {
+                Matcher m;
+
+                m = OS_NAME.matcher(line);
+                if (m.find()) {
+                    osName = m.group("name");
+                    if (osArch != null && version != null) {
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+
+                m = OS_ARCH.matcher(line);
+                if (m.find()) {
+                    osArch = m.group("arch");
+                    if (osName != null && version != null) {
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+
+                m = JAVA_VERSION.matcher(line);
+                if (m.find()) {
                     version = m.group("version");
-                if (line.contains("64-Bit"))
-                    platform = Bits.BIT_64;
+                    if (osName != null && osArch != null) {
+                        break;
+                    } else {
+                        //noinspection UnnecessaryContinue
+                        continue;
+                    }
+                }
             }
         }
 
-        if (version == null)
-            throw new IOException("No Java version is matched");
+        if (osName != null && osArch != null) {
+            platform = Platform.getPlatform(OperatingSystem.parseOSName(osName), Architecture.parseArchName(osArch));
+        }
 
-        if (parseVersion(version) == UNKNOWN)
-            throw new IOException("Unrecognized Java version " + version);
+        if (version == null) {
+            boolean is64Bit = false;
+            process = new ProcessBuilder(executable.toString(), "-version").start();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                for (String line; (line = reader.readLine()) != null; ) {
+                    Matcher m = REGEX.matcher(line);
+                    if (m.find())
+                        version = m.group("version");
+                    if (line.contains("64-Bit"))
+                        is64Bit = true;
+                }
+            }
+
+            if (platform == null) {
+                platform = Platform.getPlatform(OperatingSystem.CURRENT_OS, is64Bit ? Architecture.X86_64 : Architecture.X86);
+            }
+        }
+
         JavaVersion javaVersion = new JavaVersion(executable, version, platform);
+        if (javaVersion.getParsedVersion() == UNKNOWN)
+            throw new IOException("Unrecognized Java version " + version);
         fromExecutableCache.put(executable, javaVersion);
         return javaVersion;
     }
@@ -163,7 +223,8 @@ public final class JavaVersion {
         CURRENT_JAVA = new JavaVersion(
                 currentExecutable,
                 System.getProperty("java.version"),
-                Architecture.JDK.getBits());
+                Platform.CURRENT_PLATFORM
+        );
     }
 
     private static Collection<JavaVersion> JAVAS;

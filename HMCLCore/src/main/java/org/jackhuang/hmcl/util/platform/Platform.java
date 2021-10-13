@@ -4,7 +4,8 @@ import java.util.Objects;
 
 public final class Platform {
     public static final Platform UNKNOWN = new Platform(OperatingSystem.UNKNOWN, Architecture.UNKNOWN);
-    public static final Platform CURRENT = new Platform(OperatingSystem.CURRENT_OS, Architecture.JDK);
+    public static final Platform CURRENT_PLATFORM = new Platform(OperatingSystem.CURRENT_OS, Architecture.CURRENT_ARCH);
+    public static final Platform SYSTEM_PLATFORM = new Platform(OperatingSystem.CURRENT_OS, Architecture.SYSTEM_ARCH);
 
     public static final Platform WINDOWS_X86_64 = new Platform(OperatingSystem.WINDOWS, Architecture.X86_64);
     public static final Platform OSX_X86_64 = new Platform(OperatingSystem.OSX, Architecture.X86_64);
@@ -19,7 +20,7 @@ public final class Platform {
     }
 
     public static Platform getPlatform() {
-        return CURRENT;
+        return CURRENT_PLATFORM;
     }
 
     public static Platform getPlatform(OperatingSystem os, Architecture arch) {
@@ -68,6 +69,6 @@ public final class Platform {
 
     @Override
     public String toString() {
-        return os.getCheckedName() + "-" + arch; // TODO: getCheckedName()
+        return os.getCheckedName() + "-" + arch.getCheckedName();
     }
 }
