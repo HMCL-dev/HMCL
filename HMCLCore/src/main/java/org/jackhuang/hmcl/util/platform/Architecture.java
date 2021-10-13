@@ -181,13 +181,17 @@ public enum Architecture {
 
     static {
         CURRENT_ARCH_NAME = System.getProperty("os.arch");
-
         CURRENT_ARCH = parseArchName(CURRENT_ARCH_NAME);
 
         String sysArchName = null;
-
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            sysArchName = System.getenv("PROCESSOR_ARCHITECTURE").trim();
+            String processorIdentifier = System.getenv("PROCESSOR_IDENTIFIER");
+            if (processorIdentifier != null) {
+                int idx = processorIdentifier.indexOf(' ');
+                if (idx > 0) {
+                    sysArchName = processorIdentifier.substring(0, idx);
+                }
+            }
         } else {
             try {
                 Process process = Runtime.getRuntime().exec("/usr/bin/arch");
