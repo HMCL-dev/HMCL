@@ -17,8 +17,13 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,6 +31,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,7 +71,7 @@ public enum OperatingSystem {
     /**
      * The current operating system.
      */
-    public static final OperatingSystem CURRENT_OS;
+    public static final OperatingSystem CURRENT_OS = parseOSName(System.getProperty("os.name"));
 
     /**
      * The total memory/MB this computer have.
@@ -87,18 +93,66 @@ public enum OperatingSystem {
     public static final String ENCODING = System.getProperty("sun.jnu.encoding", Charset.defaultCharset().name());
 
     /**
+     * Windows system build number.
+     * When the version number is not recognized or on another system, the value will be -1.
+     */
+    public static final int SYSTEM_BUILD_NUMBER;
+
+    /**
+     * The name of current operating system.
+     */
+    public static final String SYSTEM_NAME;
+
+    /**
      * The version of current operating system.
      */
-    public static final String SYSTEM_VERSION = System.getProperty("os.version");
+    public static final String SYSTEM_VERSION;
 
     public static final Pattern INVALID_RESOURCE_CHARACTERS;
     private static final String[] INVALID_RESOURCE_BASENAMES;
     private static final String[] INVALID_RESOURCE_FULLNAMES;
 
     private static final Pattern MEMINFO_PATTERN = Pattern.compile("^(?<key>.*?):\\s+(?<value>\\d+) kB?$");
-    
+
     static {
-        CURRENT_OS = parseOSName(System.getProperty("os.name"));
+        if (CURRENT_OS == WINDOWS) {
+            String versionNumber = null;
+            int buildNumber = -1;
+
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"cmd", "ver"});
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    Matcher matcher = Pattern.compile("(?<version>[0-9]+\\.[0-9]+\\.(?<build>[0-9]+)(\\.[0-9]+)?)]$")
+                            .matcher(reader.readLine().trim());
+
+                    if (matcher.find()) {
+                        versionNumber = matcher.group("version");
+                        buildNumber = Integer.parseInt(matcher.group("build"));
+                    }
+                }
+                process.destroy();
+            } catch (Throwable ignored) {
+            }
+
+            if (versionNumber == null) {
+                versionNumber = System.getProperty("os.version");
+            }
+
+            String osName = System.getProperty("os.name");
+
+            // Java 17 or earlier recognizes Windows 11 as Windows 10
+            if (osName.equals("Windows 10") && buildNumber >= 22000) {
+                osName = "Windows 11";
+            }
+
+            SYSTEM_NAME = osName;
+            SYSTEM_VERSION = versionNumber;
+            SYSTEM_BUILD_NUMBER = buildNumber;
+        } else {
+            SYSTEM_NAME = System.getProperty("os.name");
+            SYSTEM_VERSION = System.getProperty("os.version");
+            SYSTEM_BUILD_NUMBER = -1;
+        }
 
         TOTAL_MEMORY = getPhysicalMemoryStatus()
                 .map(PhysicalMemoryStatus::getTotal)

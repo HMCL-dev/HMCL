@@ -98,6 +98,21 @@ public enum JavaVersionConstraint {
         public boolean checkJava(VersionNumber gameVersionNumber, Version version, JavaVersion javaVersion) {
             return javaVersion.getArchitecture() != Architecture.X86_64 || super.checkJava(gameVersionNumber, version, javaVersion);
         }
+    },
+    // Minecraft currently does not provide official support for architectures other than x86 and x86-64.
+    VANILLA_X86(JavaVersionConstraint.RULE_MANDATORY, versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX), versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX)) {
+        @Override
+        public boolean appliesToVersion(@Nullable VersionNumber gameVersionNumber, @Nullable Version version,
+                                        @Nullable JavaVersion javaVersion) {
+            return getGameVersionRange().contains(gameVersionNumber)
+                    && Architecture.SYSTEM_ARCH != Architecture.X86 && Architecture.SYSTEM_ARCH != Architecture.X86_64
+                    && (javaVersion == null || (javaVersion.getArchitecture() != Architecture.X86 && javaVersion.getArchitecture() != Architecture.X86_64));
+        }
+
+        @Override
+        public boolean checkJava(VersionNumber gameVersionNumber, Version version, JavaVersion javaVersion) {
+            return javaVersion.getArchitecture() == Architecture.X86 || javaVersion.getArchitecture() == Architecture.X86_64;
+        }
     };
 
     private final int type;
