@@ -26,7 +26,7 @@ public class JavaVersionConstraintTest {
 
     @Test
     public void vanillaJava16() {
-        JavaVersionConstraint.VersionRange range = JavaVersionConstraint.findSuitableJavaVersionRange(
+        JavaVersionConstraint.VersionRanges range = JavaVersionConstraint.findSuitableJavaVersionRange(
                 VersionNumber.asVersion("1.17"),
                 null
         );
