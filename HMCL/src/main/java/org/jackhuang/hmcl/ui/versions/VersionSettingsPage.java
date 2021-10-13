@@ -547,7 +547,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         Task.supplyAsync(JavaVersion::getJavas).thenAcceptAsync(Schedulers.javafx(), list -> {
             List<MultiFileItem.Option<JavaVersion>> options = list.stream()
                     .map(javaVersion -> new MultiFileItem.Option<>(javaVersion.getVersion() + i18n("settings.game.java_directory.bit",
-                            javaVersion.getPlatform().getBit()), javaVersion)
+                            javaVersion.getBits().getBit()), javaVersion)
                             .setSubtitle(javaVersion.getBinary().toString()))
                     .collect(Collectors.toList());
             options.add(0, javaAutoDeterminedOption);
