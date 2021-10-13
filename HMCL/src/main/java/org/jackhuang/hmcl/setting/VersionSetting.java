@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -608,7 +609,7 @@ public final class VersionSetting implements Cloneable {
                         if (checkJava)
                             return JavaVersion.fromExecutable(Paths.get(getJavaDir()));
                         else
-                            return new JavaVersion(Paths.get(getJavaDir()), "", Platform.SYSTEM_PLATFORM);
+                            return new JavaVersion(Paths.get(getJavaDir()), "", Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.UNKNOWN));
                     } catch (IOException | InvalidPathException e) {
                         return null; // Custom Java Directory not found,
                     }
