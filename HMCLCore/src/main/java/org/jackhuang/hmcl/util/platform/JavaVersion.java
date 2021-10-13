@@ -68,6 +68,10 @@ public final class JavaVersion {
         return platform;
     }
 
+    public Architecture getArchitecture() {
+        return platform.getArchitecture();
+    }
+
     public Bits getBits() {
         return platform.getBits();
     }

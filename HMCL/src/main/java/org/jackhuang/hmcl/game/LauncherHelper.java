@@ -92,7 +92,8 @@ public final class LauncherHelper {
         this.launchingStepsPane.setTitle(i18n("version.launch"));
     }
 
-    private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(it -> {});
+    private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(it -> {
+    });
 
     public void setTestMode() {
         launcherVisibility = LauncherVisibility.KEEP;
@@ -342,9 +343,9 @@ public final class LauncherHelper {
 
             JavaVersionConstraint violatedMandatoryConstraint = null;
             JavaVersionConstraint violatedSuggestedConstraint = null;
-            for (JavaVersionConstraint constraint : JavaVersionConstraint.values()) {
-                if (constraint.getGameVersion().contains(gameVersion) && constraint.appliesToVersion(gameVersion, version)) {
-                    if (!constraint.getJavaVersion(version).contains(javaVersion.getVersionNumber())) {
+            for (JavaVersionConstraint constraint : JavaVersionConstraint.ALL) {
+                if (constraint.appliesToVersion(gameVersion, version, javaVersion)) {
+                    if (!constraint.checkJava(gameVersion, version, javaVersion)) {
                         if (constraint.getType() == JavaVersionConstraint.RULE_MANDATORY) {
                             violatedMandatoryConstraint = constraint;
                         } else if (constraint.getType() == JavaVersionConstraint.RULE_SUGGESTED) {
@@ -423,8 +424,12 @@ public final class LauncherHelper {
                             Controllers.dialog(i18n("launch.advice.java8_1_13"), i18n("message.error"), MessageType.ERROR, breakAction);
                             return null;
                         case VANILLA_LINUX_JAVA_8:
-                            Controllers.dialog(i18n("launch.advice.vanilla_linux_java_8"), i18n("message.error"), MessageType.ERROR, breakAction);
-                            return null;
+                            if (setting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+                                Controllers.dialog(i18n("launch.advice.vanilla_linux_java_8"), i18n("message.error"), MessageType.ERROR, breakAction);
+                                return null;
+                            } else {
+                                break;
+                            }
                         case LAUNCH_WRAPPER:
                             Controllers.dialog(i18n("launch.advice.java9") + "\n" + i18n("launch.advice.uncorrected"), i18n("message.error"), MessageType.ERROR, breakAction);
                             return null;
@@ -696,6 +701,7 @@ public final class LauncherHelper {
     }
 
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
+
     public static void stopManagedProcesses() {
         while (!PROCESSES.isEmpty())
             Optional.ofNullable(PROCESSES.poll()).ifPresent(ManagedProcess::stop);
