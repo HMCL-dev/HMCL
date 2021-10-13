@@ -24,7 +24,7 @@ public final class JavaRepository {
     public static Task<?> downloadJava(GameJavaVersion javaVersion, DownloadProvider downloadProvider) {
         return new JavaDownloadTask(javaVersion, getJavaStoragePath(), downloadProvider)
                 .thenRunAsync(() -> {
-                    Optional<String> platform = getCurrentJavaPlatform();
+                    Optional<String> platform = getSystemJavaPlatform();
                     if (platform.isPresent()) {
                         addJava(getJavaHome(javaVersion, platform.get()));
                     }
@@ -41,7 +41,7 @@ public final class JavaRepository {
     }
 
     public static void initialize() throws IOException, InterruptedException {
-        Optional<String> platformOptional = getCurrentJavaPlatform();
+        Optional<String> platformOptional = getSystemJavaPlatform();
         if (platformOptional.isPresent()) {
             String platform = platformOptional.get();
             Path javaStoragePath = getJavaStoragePath();
@@ -60,7 +60,7 @@ public final class JavaRepository {
         }
     }
 
-    public static Optional<String> getCurrentJavaPlatform() {
+    public static Optional<String> getSystemJavaPlatform() {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
             if (Architecture.SYSTEM_ARCH == Architecture.X86) {
                 return Optional.of("linux-i386");
@@ -68,7 +68,7 @@ public final class JavaRepository {
                 return Optional.of("linux");
             }
         } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-            if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
+            if (Architecture.SYSTEM_ARCH == Architecture.X86_64 || Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                 return Optional.of("mac-os");
             }
         } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
