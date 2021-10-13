@@ -77,7 +77,7 @@ public class JavaDownloadTask extends Task<Void> {
 
     @Override
     public void preExecute() throws Exception {
-        this.platform = JavaRepository.getCurrentJavaPlatform().orElseThrow(UnsupportedPlatformException::new);
+        this.platform = JavaRepository.getSystemJavaPlatform().orElseThrow(UnsupportedPlatformException::new);
     }
 
     @Override
