@@ -111,7 +111,7 @@ public enum JavaVersionConstraint {
 
         @Override
         public boolean checkJava(VersionNumber gameVersionNumber, Version version, JavaVersion javaVersion) {
-            return javaVersion.getArchitecture() == Architecture.X86 || javaVersion.getArchitecture() == Architecture.X86_64;
+            return javaVersion.getArchitecture().isX86();
         }
     };
 
@@ -173,17 +173,20 @@ public enum JavaVersionConstraint {
         JavaVersion mandatory = null;
         JavaVersion suggested = null;
         for (JavaVersion javaVersion : JavaVersion.getJavas()) {
-            // select the latest java version that this version accepts.
+            // select the latest x86 java that this version accepts.
+            if(!javaVersion.getArchitecture().isX86())
+                continue;
+
             VersionNumber javaVersionNumber = javaVersion.getVersionNumber();
             if (range.getMandatory().contains(javaVersionNumber)) {
                 if (mandatory == null) mandatory = javaVersion;
-                else if (javaVersionNumber.compareTo(mandatory.getVersionNumber()) > 0) {
+                else if (compareJavaVersion(javaVersion, mandatory) > 0) {
                     mandatory = javaVersion;
                 }
             }
             if (range.getSuggested().contains(javaVersionNumber)) {
                 if (suggested == null) suggested = javaVersion;
-                else if (javaVersionNumber.compareTo(suggested.getVersionNumber()) > 0) {
+                else if (compareJavaVersion(javaVersion, suggested) > 0) {
                     suggested = javaVersion;
                 }
             }
@@ -191,6 +194,21 @@ public enum JavaVersionConstraint {
 
         if (suggested != null) return suggested;
         else return mandatory;
+    }
+
+    private static int compareJavaVersion(JavaVersion javaVersion1, JavaVersion javaVersion2) {
+        Architecture arch1 = javaVersion1.getArchitecture();
+        Architecture arch2 = javaVersion2.getArchitecture();
+
+        if (arch1 != arch2) {
+            if (arch1 == Architecture.X86_64) {
+                return 1;
+            }
+            if (arch2 == Architecture.X86_64) {
+                return -1;
+            }
+        }
+        return javaVersion1.getVersionNumber().compareTo(javaVersion2.getVersionNumber());
     }
 
     public static final int RULE_MANDATORY = 1;

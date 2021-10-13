@@ -48,12 +48,14 @@ public final class JavaVersion {
     private final String longVersion;
     private final Platform platform;
     private final int version;
+    private final VersionNumber versionNumber;
 
     public JavaVersion(Path binary, String longVersion, Platform platform) {
         this.binary = binary;
         this.longVersion = longVersion;
         this.platform = platform;
         version = parseVersion(longVersion);
+        versionNumber = VersionNumber.asVersion(longVersion);
     }
 
     public Path getBinary() {
@@ -77,7 +79,7 @@ public final class JavaVersion {
     }
 
     public VersionNumber getVersionNumber() {
-        return VersionNumber.asVersion(longVersion);
+        return versionNumber;
     }
 
     /**
