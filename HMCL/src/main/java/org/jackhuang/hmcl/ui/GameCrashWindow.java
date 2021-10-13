@@ -70,7 +70,7 @@ public class GameCrashWindow extends Stage {
     private final String java;
     private final LibraryAnalyzer analyzer;
     private final StringProperty os = new SimpleStringProperty(System.getProperty("os.name"));
-    private final StringProperty arch = new SimpleStringProperty(Architecture.SYSTEM_ARCHITECTURE);
+    private final StringProperty arch = new SimpleStringProperty(Architecture.CURRENT_ARCH_NAME);
     private final StringProperty reason = new SimpleStringProperty(i18n("game.crash.reason.unknown"));
     private final BooleanProperty loading = new SimpleBooleanProperty();
     private final Label feedbackLabel = new Label(i18n("game.crash.feedback"));

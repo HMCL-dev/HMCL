@@ -228,23 +228,23 @@ public final class MultiplayerManager {
     public static String getCatoPath() {
         switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
-                if (Architecture.SYSTEM == Architecture.X86_64) {
+                if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
                     return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-windows-amd64.exe";
                 } else {
                     return "";
                 }
             case OSX:
-                if (Architecture.SYSTEM == Architecture.X86_64) {
+                if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
                     return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-darwin-amd64";
-                } else if (Architecture.SYSTEM == Architecture.ARM64) {
+                } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                     return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-darwin-arm64";
                 } else {
                     return "";
                 }
             case LINUX:
-                if (Architecture.SYSTEM == Architecture.X86_64) {
+                if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
                     return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-linux-amd64";
-                } else if (Architecture.SYSTEM == Architecture.ARM || Architecture.SYSTEM == Architecture.ARM64) {
+                } else if (Architecture.SYSTEM_ARCH == Architecture.ARM32 || Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                     return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-linux-arm7";
                 } else {
                     return "";

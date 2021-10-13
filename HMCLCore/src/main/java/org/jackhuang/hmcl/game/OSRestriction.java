@@ -72,7 +72,7 @@ public final class OSRestriction {
                 return false;
 
         if (arch != null)
-            return !Lang.test(() -> !Pattern.compile(arch).matcher(Architecture.SYSTEM_ARCHITECTURE).matches());
+            return !Lang.test(() -> !Pattern.compile(arch).matcher(Architecture.CURRENT_ARCH_NAME).matches());
 
         return true;
     }
