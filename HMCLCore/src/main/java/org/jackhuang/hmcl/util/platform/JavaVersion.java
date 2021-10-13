@@ -288,7 +288,7 @@ public final class JavaVersion {
                     try {
                         LOG.log(Level.FINER, "Looking for Java:" + executable);
                         Future<JavaVersion> future = Schedulers.io().submit(() -> fromExecutable(executable));
-                        JavaVersion javaVersion = future.get(3, TimeUnit.SECONDS);
+                        JavaVersion javaVersion = future.get(5, TimeUnit.SECONDS);
                         LOG.log(Level.FINE, "Found Java (" + javaVersion.getVersion() + ") " + javaVersion.getBinary().toString());
                         return Stream.of(javaVersion);
                     } catch (ExecutionException | InterruptedException | TimeoutException e) {
