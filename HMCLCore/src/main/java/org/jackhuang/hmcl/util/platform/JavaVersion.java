@@ -64,7 +64,7 @@ public final class JavaVersion {
         return longVersion;
     }
 
-    public Bits getPlatform() {
+    public Bits getBits() {
         return platform;
     }
 

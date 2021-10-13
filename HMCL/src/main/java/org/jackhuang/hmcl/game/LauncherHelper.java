@@ -432,13 +432,13 @@ public final class LauncherHelper {
                 }
             }
 
-            if (javaVersion.getPlatform() != Architecture.SYSTEM.getBits()) {
+            if (javaVersion.getBits() != Architecture.SYSTEM.getBits()) {
                 Controllers.dialog(i18n("launch.advice.different_platform"), i18n("message.warning"), MessageType.ERROR, continueAction);
                 suggested = true;
             }
 
             // 32-bit JVM cannot make use of too much memory.
-            if (javaVersion.getPlatform() == Bits.BIT_32 &&
+            if (javaVersion.getBits() == Bits.BIT_32 &&
                     setting.getMaxMemory() > 1.5 * 1024) {
                 // 1.5 * 1024 is an inaccurate number.
                 // Actual memory limit depends on operating system and memory.
