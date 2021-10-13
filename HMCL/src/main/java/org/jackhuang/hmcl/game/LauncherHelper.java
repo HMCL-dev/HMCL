@@ -432,7 +432,8 @@ public final class LauncherHelper {
                 }
             }
 
-            if (javaVersion.getBits() != Architecture.SYSTEM_ARCH.getBits()) {
+            if (Architecture.SYSTEM_ARCH == Architecture.X86_64
+                    && javaVersion.getPlatform().getArchitecture() == Architecture.X86) {
                 Controllers.dialog(i18n("launch.advice.different_platform"), i18n("message.warning"), MessageType.ERROR, continueAction);
                 suggested = true;
             }

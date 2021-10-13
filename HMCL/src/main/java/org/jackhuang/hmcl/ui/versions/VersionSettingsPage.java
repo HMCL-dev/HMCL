@@ -48,6 +48,7 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
+import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -545,9 +546,19 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID));
 
         Task.supplyAsync(JavaVersion::getJavas).thenAcceptAsync(Schedulers.javafx(), list -> {
+            boolean isX86 = (Architecture.CURRENT_ARCH == Architecture.X86 || Architecture.CURRENT_ARCH == Architecture.X86_64)
+                    && list.stream()
+                    .map(java -> java.getPlatform().getArchitecture())
+                    .allMatch(arch -> arch == Architecture.X86 || arch == Architecture.X86_64);
+
+            // boolean showSystem = list.stream().anyMatch(java -> java.getPlatform().getOperatingSystem() != OperatingSystem.CURRENT_OS);
+
             List<MultiFileItem.Option<JavaVersion>> options = list.stream()
-                    .map(javaVersion -> new MultiFileItem.Option<>(javaVersion.getVersion() + i18n("settings.game.java_directory.bit",
-                            javaVersion.getBits().getBit()), javaVersion)
+                    .map(javaVersion -> new MultiFileItem.Option<>(
+                             i18n("settings.game.java_directory.template",
+                                     javaVersion.getVersion(),
+                                     isX86 ? i18n("settings.game.java_directory.bit",javaVersion.getBits().getBit())
+                                             : javaVersion.getPlatform().getArchitecture().getDisplayName()), javaVersion)
                             .setSubtitle(javaVersion.getBinary().toString()))
                     .collect(Collectors.toList());
             options.add(0, javaAutoDeterminedOption);
