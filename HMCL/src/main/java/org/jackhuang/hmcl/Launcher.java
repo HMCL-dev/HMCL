@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.awt.*;
@@ -107,6 +108,8 @@ public final class Launcher extends Application {
         try {
             LOG.info("*** " + Metadata.TITLE + " ***");
             LOG.info("Operating System: " + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION);
+            LOG.info("System Architecture: " + Architecture.SYSTEM_ARCH);
+            LOG.info("Java Architecture: " + Architecture.CURRENT_ARCH);
             LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
             LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
             LOG.info("Java Home: " + System.getProperty("java.home"));
