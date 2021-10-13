@@ -99,6 +99,9 @@ public final class Main {
         } catch (SelfDependencyPatcher.IncompatibleVersionException e) {
             LOG.log(Level.SEVERE, "unable to patch JVM", e);
             showErrorAndExit(i18n("fatal.javafx.incompatible"));
+        } catch (SelfDependencyPatcher.CanceledException e) {
+            LOG.log(Level.SEVERE, "User cancels downloading JavaFX", e);
+            System.exit(0);
         }
     }
 
