@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.io.File;
 import java.io.IOException;
@@ -123,9 +124,10 @@ public interface GameRepository extends VersionProvider {
      * always fail({@code UnsupportedOperationException}) and not to use it.
      *
      * @param id version id
+     * @param platform the platform of native libraries
      * @return the native directory
      */
-    File getNativeDirectory(String id);
+    File getNativeDirectory(String id, Platform platform);
 
     /**
      * Get minecraft jar
