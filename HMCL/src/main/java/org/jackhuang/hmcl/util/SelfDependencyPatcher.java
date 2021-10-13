@@ -41,14 +41,14 @@
  */
 package org.jackhuang.hmcl.util;
 
-import static java.lang.Class.forName;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.stream.Collectors.toSet;
-import static org.jackhuang.hmcl.Metadata.HMCL_DIRECTORY;
-import static org.jackhuang.hmcl.util.Logging.LOG;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.platform.JavaVersion.CURRENT_JAVA;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -59,18 +59,18 @@ import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.swing.*;
-
-import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
-import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import static java.lang.Class.forName;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toSet;
+import static org.jackhuang.hmcl.Metadata.HMCL_DIRECTORY;
+import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.platform.JavaVersion.CURRENT_JAVA;
 
 // From: https://github.com/Col-E/Recaf/blob/7378b397cee664ae81b7963b0355ef8ff013c3a7/src/main/java/me/coley/recaf/util/self/SelfDependencyPatcher.java
 public final class SelfDependencyPatcher {
@@ -202,7 +202,7 @@ public final class SelfDependencyPatcher {
     /**
      * Patch in any missing dependencies, if any.
      */
-    public static void patch() throws PatchException, IncompatibleVersionException, CanceledException {
+    public static void patch() throws PatchException, IncompatibleVersionException, CancellationException {
         // Do nothing if JavaFX is detected
         try {
             try {
@@ -316,10 +316,6 @@ public final class SelfDependencyPatcher {
      * @throws IOException When the files cannot be fetched or saved.
      */
     private static void fetchDependencies(List<DependencyDescriptor> dependencies) throws IOException {
-        class BooleanHole {
-            volatile boolean value = false;
-        }
-
         boolean isFirstTime = true;
 
         byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
@@ -327,16 +323,16 @@ public final class SelfDependencyPatcher {
 
         int count = 0;
         while (true) {
-            BooleanHole isCancelled = new BooleanHole();
-            BooleanHole showDetails = new BooleanHole();
+            AtomicBoolean isCancelled = new AtomicBoolean();
+            AtomicBoolean showDetails = new AtomicBoolean();
 
             ProgressFrame dialog = new ProgressFrame(i18n("download.javafx"));
             dialog.setProgressMaximum(dependencies.size() + 1);
             dialog.setProgress(count);
-            dialog.setOnCancel(() -> isCancelled.value = true);
+            dialog.setOnCancel(() -> isCancelled.set(true));
             dialog.setOnChangeSource(() -> {
-                isCancelled.value = true;
-                showDetails.value = true;
+                isCancelled.set(true);
+                showDetails.set(true);
             });
             dialog.setVisible(true);
             try {
@@ -350,8 +346,8 @@ public final class SelfDependencyPatcher {
                 }
                 Files.createDirectories(DependencyDescriptor.DEPENDENCIES_DIR_PATH);
                 for (int i = count; i < dependencies.size(); i++) {
-                    if (isCancelled.value) {
-                        throw new CanceledException();
+                    if (isCancelled.get()) {
+                        throw new CancellationException();
                     }
 
                     DependencyDescriptor dependency = dependencies.get(i);
@@ -369,13 +365,13 @@ public final class SelfDependencyPatcher {
 
                         int read;
                         while ((read = is.read(buffer, 0, IOUtils.DEFAULT_BUFFER_SIZE)) >= 0) {
-                            if (isCancelled.value) {
+                            if (isCancelled.get()) {
                                 try {
                                     os.close();
                                 } finally {
                                     Files.deleteIfExists(dependency.localPath());
                                 }
-                                throw new CanceledException();
+                                throw new CancellationException();
                             }
                             os.write(buffer, 0, read);
                         }
@@ -383,9 +379,9 @@ public final class SelfDependencyPatcher {
                     verifyChecksum(dependency);
                     count++;
                 }
-            } catch (CanceledException e) {
+            } catch (CancellationException e) {
                 dialog.dispose();
-                if (showDetails.value) {
+                if (showDetails.get()) {
                     repository = showChooseRepositoryDialog();
                     continue;
                 } else {
@@ -437,9 +433,6 @@ public final class SelfDependencyPatcher {
     }
 
     public static class IncompatibleVersionException extends Exception {
-    }
-
-    public static class CanceledException extends RuntimeException {
     }
 
     public static class ProgressFrame extends JDialog {

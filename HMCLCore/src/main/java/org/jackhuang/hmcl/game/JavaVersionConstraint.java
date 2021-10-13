@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.Range;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LAUNCH_WRAPPER_MAIN;
-import static org.jackhuang.hmcl.util.Pair.pair;
 
 public enum JavaVersionConstraint {
 

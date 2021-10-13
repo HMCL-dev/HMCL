@@ -35,6 +35,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
@@ -99,7 +100,7 @@ public final class Main {
         } catch (SelfDependencyPatcher.IncompatibleVersionException e) {
             LOG.log(Level.SEVERE, "unable to patch JVM", e);
             showErrorAndExit(i18n("fatal.javafx.incompatible"));
-        } catch (SelfDependencyPatcher.CanceledException e) {
+        } catch (CancellationException e) {
             LOG.log(Level.SEVERE, "User cancels downloading JavaFX", e);
             System.exit(0);
         }
