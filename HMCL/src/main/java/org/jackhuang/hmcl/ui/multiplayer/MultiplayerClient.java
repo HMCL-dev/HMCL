@@ -27,6 +27,7 @@ import java.io.*;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.TimerTask;
 import java.util.logging.Level;
 
@@ -83,8 +84,8 @@ public class MultiplayerClient extends Thread {
         for (int i = 0; i < 5; i++) {
             KeepAliveThread keepAliveThread = null;
             try (Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
-                 BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8))) {
                 MultiplayerServer.Endpoint endpoint = new MultiplayerServer.Endpoint(socket, writer);
                 LOG.info("Connected to 127.0.0.1:" + port);
 

@@ -118,7 +118,7 @@ public final class MultiplayerManager {
 
             CompletableFuture<CatoSession> future = new CompletableFuture<>();
 
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
 
             session.onExit().register(() -> {
                 try {

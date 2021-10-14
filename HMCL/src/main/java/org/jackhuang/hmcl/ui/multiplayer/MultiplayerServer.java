@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -129,8 +130,8 @@ public class MultiplayerServer extends Thread {
         String clientName = null;
         LOG.info("Accepted client " + address);
         try (Socket clientSocket = targetSocket;
-             BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()))) {
+             BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream(), StandardCharsets.UTF_8))) {
             clientSocket.setKeepAlive(true);
             Endpoint endpoint = new Endpoint(clientSocket, writer);
             clients.put(address, endpoint);

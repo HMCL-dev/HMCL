@@ -137,7 +137,7 @@ public final class JavaVersion {
         Platform platform = null;
 
         Process process = new ProcessBuilder(executable.toString(), "-XshowSettings:properties", "-version").start();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream(), OperatingSystem.NATIVE_CHARSET))) {
             for (String line; (line = reader.readLine()) != null; ) {
                 Matcher m;
 
@@ -171,7 +171,7 @@ public final class JavaVersion {
         if (version == null) {
             boolean is64Bit = false;
             process = new ProcessBuilder(executable.toString(), "-version").start();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream(), OperatingSystem.NATIVE_CHARSET))) {
                 for (String line; (line = reader.readLine()) != null; ) {
                     Matcher m = REGEX.matcher(line);
                     if (m.find())
@@ -413,7 +413,7 @@ public final class JavaVersion {
         List<String> res = new ArrayList<>();
 
         Process process = Runtime.getRuntime().exec(new String[] { "cmd", "/c", "reg", "query", location });
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
             for (String line; (line = reader.readLine()) != null;) {
                 if (line.startsWith(location) && !line.equals(location)) {
                     res.add(line);
@@ -427,7 +427,7 @@ public final class JavaVersion {
         boolean last = false;
         Process process = Runtime.getRuntime().exec(new String[] { "cmd", "/c", "reg", "query", location, "/v", name });
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
             for (String line; (line = reader.readLine()) != null;) {
                 if (StringUtils.isNotBlank(line)) {
                     if (last && line.trim().startsWith(name)) {
