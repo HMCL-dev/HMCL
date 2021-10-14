@@ -41,18 +41,18 @@ public enum JavaVersionConstraint {
     // Minecraft<=1.7.2+Forge requires Java<=7
     MODDED_JAVA_7(JavaVersionConstraint.RULE_SUGGESTED, versionRange(JavaVersionConstraint.MIN, "1.7.2"), versionRange(JavaVersionConstraint.MIN, "1.7.999")) {
         @Override
-        public boolean appliesToVersion(@Nullable VersionNumber gameVersionNumber, @Nullable Version version,
-                                        @Nullable JavaVersion javaVersion) {
-            if (!getGameVersionRange().contains(gameVersionNumber) || version == null) return false;
+        protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
+                                               @Nullable JavaVersion javaVersion) {
+            if (version == null) return false;
             return LAUNCH_WRAPPER_MAIN.equals(version.getMainClass());
         }
     },
     // LaunchWrapper<=1.12 will crash because of assuming the system class loader is an instance of URLClassLoader (Java 8)
     LAUNCH_WRAPPER(JavaVersionConstraint.RULE_MANDATORY, versionRange("0", "1.12.999"), versionRange("0", "1.8.999")) {
         @Override
-        public boolean appliesToVersion(@Nullable VersionNumber gameVersionNumber, @Nullable Version version,
-                                        @Nullable JavaVersion javaVersion) {
-            if (!getGameVersionRange().contains(gameVersionNumber) || version == null) return false;
+        protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
+                                               @Nullable JavaVersion javaVersion) {
+            if (version == null) return false;
             return LAUNCH_WRAPPER_MAIN.equals(version.getMainClass()) &&
                     version.getLibraries().stream()
                             .filter(library -> "launchwrapper".equals(library.getArtifactId()))
@@ -64,9 +64,9 @@ public enum JavaVersionConstraint {
     // Minecraft with suggested java version recorded in game json is restrictedly constrained.
     GAME_JSON(JavaVersionConstraint.RULE_MANDATORY, versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX), versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX)) {
         @Override
-        public boolean appliesToVersion(@Nullable VersionNumber gameVersionNumber, @Nullable Version version,
-                                        @Nullable JavaVersion javaVersion) {
-            if (!getGameVersionRange().contains(gameVersionNumber) || version == null) return false;
+        protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
+                                               @Nullable JavaVersion javaVersion) {
+            if (version == null) return false;
             // We only checks for 1.7.10 and above, since 1.7.2 with Forge can only run on Java 7, but it is recorded Java 8 in game json, which is not correct.
             return gameVersionNumber.compareTo(VersionNumber.asVersion("1.7.10")) >= 0 && version.getJavaVersion() != null;
         }
@@ -86,10 +86,9 @@ public enum JavaVersionConstraint {
     // For example, JDK 9+ 64-bit cannot load 32-bit lwjgl native library.
     VANILLA_LINUX_JAVA_8(JavaVersionConstraint.RULE_MANDATORY, versionRange("0", "1.12.999"), versionRange(JavaVersionConstraint.MIN, "1.8.999")) {
         @Override
-        public boolean appliesToVersion(@Nullable VersionNumber gameVersionNumber, @Nullable Version version,
-                                        @Nullable JavaVersion javaVersion) {
-            return getGameVersionRange().contains(gameVersionNumber)
-                    && OperatingSystem.CURRENT_OS == OperatingSystem.LINUX
+        protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
+                                               @Nullable JavaVersion javaVersion) {
+            return OperatingSystem.CURRENT_OS == OperatingSystem.LINUX
                     && Architecture.SYSTEM_ARCH == Architecture.X86_64
                     && (javaVersion == null || javaVersion.getArchitecture() == Architecture.X86_64);
         }
@@ -102,11 +101,9 @@ public enum JavaVersionConstraint {
     // Minecraft currently does not provide official support for architectures other than x86 and x86-64.
     VANILLA_X86(JavaVersionConstraint.RULE_MANDATORY, versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX), versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX)) {
         @Override
-        public boolean appliesToVersion(@Nullable VersionNumber gameVersionNumber, @Nullable Version version,
-                                        @Nullable JavaVersion javaVersion) {
-            return getGameVersionRange().contains(gameVersionNumber)
-                    && javaVersion != null
-                    && !javaVersion.getArchitecture().isX86();
+        protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
+                                               @Nullable JavaVersion javaVersion) {
+            return javaVersion != null && !javaVersion.getArchitecture().isX86();
         }
 
         @Override
@@ -137,9 +134,15 @@ public enum JavaVersionConstraint {
         return javaVersionRange;
     }
 
-    public boolean appliesToVersion(@Nullable VersionNumber gameVersionNumber, @Nullable Version version,
-                                    @Nullable JavaVersion javaVersion) {
-        return gameVersionRange.contains(gameVersionNumber);
+    public final boolean appliesToVersion(@Nullable VersionNumber gameVersionNumber, @Nullable Version version,
+                                          @Nullable JavaVersion javaVersion) {
+        return gameVersionRange.contains(gameVersionNumber)
+                && appliesToVersionImpl(gameVersionNumber, version, javaVersion);
+    }
+
+    protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
+                                           @Nullable JavaVersion javaVersion) {
+        return true;
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
