@@ -447,7 +447,7 @@ public class DefaultLauncher extends Launcher {
 
         if (!FileUtils.makeFile(scriptFile))
             throw new IOException("Script file: " + scriptFile + " cannot be created.");
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(scriptFile)))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(scriptFile), OperatingSystem.NATIVE_CHARSET))) {
             if (isWindows) {
                 writer.write("@echo off");
                 writer.newLine();
@@ -495,12 +495,12 @@ public class DefaultLauncher extends Launcher {
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
             processListener.onLog(it, Optional.ofNullable(Log4jLevel.guessLevel(it)).orElse(Log4jLevel.INFO));
             managedProcess.addLine(it);
-        }), "stdout-pump", isDaemon);
+        }, OperatingSystem.NATIVE_CHARSET), "stdout-pump", isDaemon);
         managedProcess.addRelatedThread(stdout);
         Thread stderr = Lang.thread(new StreamPump(managedProcess.getProcess().getErrorStream(), it -> {
             processListener.onLog(it, Log4jLevel.ERROR);
             managedProcess.addLine(it);
-        }), "stderr-pump", isDaemon);
+        }, OperatingSystem.NATIVE_CHARSET), "stderr-pump", isDaemon);
         managedProcess.addRelatedThread(stderr);
         managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), processListener::onExit), "exit-waiter", isDaemon));
     }

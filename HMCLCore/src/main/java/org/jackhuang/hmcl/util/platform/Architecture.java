@@ -196,7 +196,7 @@ public enum Architecture {
             try {
                 Process process = Runtime.getRuntime().exec("/usr/bin/arch");
                 if (process.waitFor(3, TimeUnit.SECONDS)) {
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
                         sysArchName = reader.readLine().trim();
                     } catch (Exception e) {
                         e.printStackTrace();

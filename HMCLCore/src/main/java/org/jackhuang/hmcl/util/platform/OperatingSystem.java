@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -84,9 +85,9 @@ public enum OperatingSystem {
     public static final String LINE_SEPARATOR = System.lineSeparator();
 
     /**
-     * The system default encoding.
+     * The system default charset.
      */
-    public static final String ENCODING = System.getProperty("sun.jnu.encoding", Charset.defaultCharset().name());
+    public static final Charset NATIVE_CHARSET;
 
     /**
      * Windows system build number.
@@ -111,13 +112,25 @@ public enum OperatingSystem {
     private static final Pattern MEMINFO_PATTERN = Pattern.compile("^(?<key>.*?):\\s+(?<value>\\d+) kB?$");
 
     static {
+        String nativeEncoding = System.getProperty("native.encoding", System.getProperty("sun.jnu.encoding"));
+        Charset nativeCharset = Charset.defaultCharset();
+
+        if (nativeEncoding != null) {
+            try {
+                nativeCharset = Charset.forName(nativeEncoding);
+            } catch (UnsupportedCharsetException e) {
+                e.printStackTrace();
+            }
+        }
+        NATIVE_CHARSET = nativeCharset;
+
         if (CURRENT_OS == WINDOWS) {
             String versionNumber = null;
             int buildNumber = -1;
 
             try {
                 Process process = Runtime.getRuntime().exec(new String[]{"cmd", "ver"});
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
                     Matcher matcher = Pattern.compile("(?<version>[0-9]+\\.[0-9]+\\.(?<build>[0-9]+)(\\.[0-9]+)?)]$")
                             .matcher(reader.readLine().trim());
 
