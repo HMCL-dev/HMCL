@@ -39,10 +39,7 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.util.platform.ManagedProcess;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.*;
 
 import java.awt.*;
 import java.io.IOException;
@@ -93,7 +90,10 @@ public class GameCrashWindow extends Stage {
         this.analyzer = LibraryAnalyzer.analyze(version);
 
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-");
-        java = launchOptions.getJava().getVersion();
+
+        this.java = launchOptions.getJava().getArchitecture() == Architecture.SYSTEM_ARCH
+                ? launchOptions.getJava().getVersion()
+                : launchOptions.getJava().getVersion() + " (" + launchOptions.getJava().getArchitecture().getDisplayName() + ")";
 
         this.view = new View();
 
