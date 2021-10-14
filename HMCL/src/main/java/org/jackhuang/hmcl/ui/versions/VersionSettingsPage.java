@@ -546,10 +546,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID));
 
         Task.supplyAsync(JavaVersion::getJavas).thenAcceptAsync(Schedulers.javafx(), list -> {
-            boolean isX86 = (Architecture.SYSTEM_ARCH.isX86())
-                    && list.stream().allMatch(java -> java.getArchitecture().isX86());
-
-            // boolean showSystem = list.stream().anyMatch(java -> java.getPlatform().getOperatingSystem() != OperatingSystem.CURRENT_OS);
+            boolean isX86 = Architecture.SYSTEM_ARCH.isX86() && list.stream().allMatch(java -> java.getArchitecture().isX86());
 
             List<MultiFileItem.Option<JavaVersion>> options = list.stream()
                     .map(javaVersion -> new MultiFileItem.Option<>(

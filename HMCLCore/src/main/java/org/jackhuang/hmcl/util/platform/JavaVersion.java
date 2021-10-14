@@ -97,7 +97,6 @@ public final class JavaVersion {
     private static final Pattern REGEX = Pattern.compile("version \"(?<version>(.*?))\"");
     private static final Pattern VERSION = Pattern.compile("^(?<version>[0-9]+)");
 
-    private static final Pattern OS_NAME = Pattern.compile("os\\.name = (?<name>.*)");
     private static final Pattern OS_ARCH = Pattern.compile("os\\.arch = (?<arch>.*)");
     private static final Pattern JAVA_VERSION = Pattern.compile("java\\.version = (?<version>.*)");
 
@@ -132,7 +131,6 @@ public final class JavaVersion {
         if (cachedJavaVersion != null)
             return cachedJavaVersion;
 
-        String osName = null;
         String osArch = null;
         String version = null;
 
@@ -143,20 +141,10 @@ public final class JavaVersion {
             for (String line; (line = reader.readLine()) != null; ) {
                 Matcher m;
 
-                m = OS_NAME.matcher(line);
-                if (m.find()) {
-                    osName = m.group("name");
-                    if (osArch != null && version != null) {
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
-
                 m = OS_ARCH.matcher(line);
                 if (m.find()) {
                     osArch = m.group("arch");
-                    if (osName != null && version != null) {
+                    if (version != null) {
                         break;
                     } else {
                         continue;
@@ -166,7 +154,7 @@ public final class JavaVersion {
                 m = JAVA_VERSION.matcher(line);
                 if (m.find()) {
                     version = m.group("version");
-                    if (osName != null && osArch != null) {
+                    if (osArch != null) {
                         break;
                     } else {
                         //noinspection UnnecessaryContinue
@@ -176,8 +164,8 @@ public final class JavaVersion {
             }
         }
 
-        if (osName != null && osArch != null) {
-            platform = Platform.getPlatform(OperatingSystem.parseOSName(osName), Architecture.parseArchName(osArch));
+        if (osArch != null) {
+            platform = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.parseArchName(osArch));
         }
 
         if (version == null) {

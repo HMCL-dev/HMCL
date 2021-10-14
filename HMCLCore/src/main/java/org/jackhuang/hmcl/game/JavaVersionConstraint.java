@@ -105,8 +105,8 @@ public enum JavaVersionConstraint {
         public boolean appliesToVersion(@Nullable VersionNumber gameVersionNumber, @Nullable Version version,
                                         @Nullable JavaVersion javaVersion) {
             return getGameVersionRange().contains(gameVersionNumber)
-                    && Architecture.SYSTEM_ARCH != Architecture.X86 && Architecture.SYSTEM_ARCH != Architecture.X86_64
-                    && (javaVersion != null && (javaVersion.getArchitecture() != Architecture.X86 && javaVersion.getArchitecture() != Architecture.X86_64));
+                    && javaVersion != null
+                    && !javaVersion.getArchitecture().isX86();
         }
 
         @Override
