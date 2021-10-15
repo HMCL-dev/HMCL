@@ -621,6 +621,11 @@ public final class LauncherHelper {
 
             LOG.info("Launched process: " + command);
 
+            String classpath = process.getClasspath();
+            if (classpath != null) {
+                LOG.info("Process CLASSPATH: " + classpath);
+            }
+
             if (showLogs)
                 Platform.runLater(() -> {
                     logWindow = new LogWindow();
