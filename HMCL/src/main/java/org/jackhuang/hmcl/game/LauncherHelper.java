@@ -638,7 +638,7 @@ public final class LauncherHelper {
 
             String classpath = process.getClasspath();
             if (classpath != null) {
-                LOG.info("Process CLASSPATH: " + classpath);
+                LOG.info("Process ClassPath: " + classpath);
             }
 
             if (showLogs)
