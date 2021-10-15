@@ -19,8 +19,10 @@ jobs:
         java-package: jdk+fx
     - name: Build with Gradle
       run: ./gradlew build
+    - name: Get short SHA
+      run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: HMCL
+        name: HMCL-${{ env.SHORT_SHA }}
         path: HMCL/build/libs
