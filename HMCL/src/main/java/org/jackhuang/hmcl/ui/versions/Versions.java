@@ -191,6 +191,7 @@ public final class Versions {
             chooser.getExtensionFilters().add(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                     ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")
                     : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
+            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
             File file = chooser.showSaveDialog(Controllers.getStage());
             if (file != null)
                 new LauncherHelper(profile, account, id).makeLaunchScript(file);

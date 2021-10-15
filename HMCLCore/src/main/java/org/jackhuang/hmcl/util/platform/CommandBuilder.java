@@ -19,7 +19,10 @@ package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.StringUtils;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -163,6 +166,44 @@ public final class CommandBuilder {
         public String toString() {
             return parse ? (OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS ? parseBatch(arg) : parseShell(arg)) : arg;
         }
+    }
+
+    public static String pwshString(String str) {
+        return "'" + str.replace("'", "''") + "'";
+    }
+
+    public static boolean hasExecutionPolicy() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+            return true;
+        }
+        try {
+            final Process process = Runtime.getRuntime().exec("powershell -Command Get-ExecutionPolicy");
+            if (!process.waitFor(5, TimeUnit.SECONDS)) {
+                process.destroy();
+                return false;
+            }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
+                String policy = reader.readLine();
+                return "Unrestricted".equalsIgnoreCase(policy) || "RemoteSigned".equalsIgnoreCase(policy);
+            }
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    public static boolean setExecutionPolicy() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+            return true;
+        }
+        try {
+            final Process process = Runtime.getRuntime().exec(new String[]{"powershell", "-Command", "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser"});
+            if (!process.waitFor(5, TimeUnit.SECONDS)) {
+                process.destroy();
+                return false;
+            }
+        } catch (Throwable ignored) {
+        }
+        return true;
     }
 
     private static String parseBatch(String s) {
