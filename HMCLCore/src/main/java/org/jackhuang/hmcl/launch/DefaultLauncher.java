@@ -491,12 +491,12 @@ public class DefaultLauncher extends Launcher {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, charset))) {
             if (usePowerShell) {
                 if (isWindows) {
-                    writer.write("$Env:APPDATA = ");
+                    writer.write("$Env:APPDATA=");
                     writer.write(CommandBuilder.pwshString(options.getGameDir().getAbsoluteFile().getParent()));
                     writer.newLine();
                 }
                 for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
-                    writer.write("$Env:" + entry.getKey() + " = ");
+                    writer.write("$Env:" + entry.getKey() + "=");
                     writer.write(CommandBuilder.pwshString(entry.getValue()));
                     writer.newLine();
                 }
@@ -509,6 +509,7 @@ public class DefaultLauncher extends Launcher {
                     writer.write(' ');
                     writer.write(CommandBuilder.pwshString(rawCommand));
                 }
+                writer.newLine();
             } else {
                 if (isWindows) {
                     writer.write("@echo off");
@@ -550,9 +551,9 @@ public class DefaultLauncher extends Launcher {
         }
         if (!scriptFile.setExecutable(true))
             throw new PermissionException();
-        if (usePowerShell && !CommandBuilder.hasExecutionPolicy()) {
+
+        if (usePowerShell && !CommandBuilder.hasExecutionPolicy())
             throw new ExecutionPolicyLimitException();
-        }
     }
 
     private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon) {
