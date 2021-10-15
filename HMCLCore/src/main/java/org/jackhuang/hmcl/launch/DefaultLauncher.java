@@ -38,13 +38,11 @@ import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Bits;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Supplier;
@@ -438,7 +436,7 @@ public class DefaultLauncher extends Launcher {
     public void makeLaunchScript(File scriptFile) throws IOException {
         boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
 
-        File nativeFolder = null;
+        File nativeFolder;
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
             nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
         } else {
@@ -449,54 +447,112 @@ public class DefaultLauncher extends Launcher {
             decompressNatives(nativeFolder);
         }
 
-        if (isWindows && !FileUtils.getExtension(scriptFile).equals("bat"))
-            throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' in Windows");
-        else if (!isWindows && !FileUtils.getExtension(scriptFile).equals("sh"))
-            throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh' in macOS/Linux");
+        String scriptExtension = FileUtils.getExtension(scriptFile);
+        boolean usePowerShell = "ps1".equals(scriptExtension);
+
+        if (!usePowerShell) {
+            if (isWindows && !scriptExtension.equals("bat"))
+                throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' or 'ps1' in Windows");
+            else if (!isWindows && !scriptExtension.equals("sh"))
+                throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh' or 'ps1' in macOS/Linux");
+        }
 
         if (!FileUtils.makeFile(scriptFile))
             throw new IOException("Script file: " + scriptFile + " cannot be created.");
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(scriptFile), OperatingSystem.NATIVE_CHARSET))) {
-            if (isWindows) {
-                writer.write("@echo off");
-                writer.newLine();
-                writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
-                writer.newLine();
-                for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
-                    writer.write("set " + entry.getKey() + "=" + entry.getValue());
-                    writer.newLine();
-                }
-                writer.newLine();
-                writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
-                writer.newLine();
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX || OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                writer.write("#!/usr/bin/env bash");
-                writer.newLine();
-                for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
-                    writer.write("export " + entry.getKey() + "=" + entry.getValue());
-                    writer.newLine();
-                }
-                writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
-                writer.newLine();
-            }
-            if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-                writer.write(options.getPreLaunchCommand());
-                writer.newLine();
-            }
-            writer.write(generateCommandLine(nativeFolder).toString());
-            writer.newLine();
-            if (StringUtils.isNotBlank(options.getPostExitCommand())) {
-                writer.write(options.getPostExitCommand());
-                writer.newLine();
-            }
 
-            if (isWindows) {
-                writer.write("pause");
+        final CommandBuilder commandLine = generateCommandLine(nativeFolder);
+        final String command = usePowerShell ? null : commandLine.toString();
+
+        if (!usePowerShell && isWindows) {
+            if (command.length() > 8192) { // maximum length of the command in cmd
+                throw new CommandTooLongException();
+            }
+        }
+
+        OutputStream outputStream = new FileOutputStream(scriptFile);
+        Charset charset = StandardCharsets.UTF_8;
+
+        if (isWindows) {
+            if (usePowerShell) {
+                // Write UTF-8 BOM
+                try {
+                    outputStream.write(0xEF);
+                    outputStream.write(0xBB);
+                    outputStream.write(0xBF);
+                } catch (IOException e) {
+                    outputStream.close();
+                    throw e;
+                }
+            } else {
+                charset = OperatingSystem.NATIVE_CHARSET;
+            }
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, charset))) {
+            if (usePowerShell) {
+                if (isWindows) {
+                    writer.write("$Env:APPDATA = ");
+                    writer.write(CommandBuilder.pwshString(options.getGameDir().getAbsoluteFile().getParent()));
+                    writer.newLine();
+                }
+                for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
+                    writer.write("$Env:" + entry.getKey() + " = ");
+                    writer.write(CommandBuilder.pwshString(entry.getValue()));
+                    writer.newLine();
+                }
+                writer.write("Set-Location -Path ");
+                writer.write(CommandBuilder.pwshString(repository.getRunDirectory(version.getId()).getAbsolutePath()));
                 writer.newLine();
+
+                writer.write('&');
+                for (String rawCommand : commandLine.asList()) {
+                    writer.write(' ');
+                    writer.write(CommandBuilder.pwshString(rawCommand));
+                }
+            } else {
+                if (isWindows) {
+                    writer.write("@echo off");
+                    writer.newLine();
+                    writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
+                    writer.newLine();
+                    for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
+                        writer.write("set " + entry.getKey() + "=" + entry.getValue());
+                        writer.newLine();
+                    }
+                    writer.newLine();
+                    writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
+                } else {
+                    writer.write("#!/usr/bin/env bash");
+                    writer.newLine();
+                    for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
+                        writer.write("export " + entry.getKey() + "=" + entry.getValue());
+                        writer.newLine();
+                    }
+                    writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
+                }
+                writer.newLine();
+                if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
+                    writer.write(options.getPreLaunchCommand());
+                    writer.newLine();
+                }
+                writer.write(generateCommandLine(nativeFolder).toString());
+                writer.newLine();
+                if (StringUtils.isNotBlank(options.getPostExitCommand())) {
+                    writer.write(options.getPostExitCommand());
+                    writer.newLine();
+                }
+
+                if (isWindows) {
+                    writer.write("pause");
+                    writer.newLine();
+                }
             }
         }
         if (!scriptFile.setExecutable(true))
             throw new PermissionException();
+        if (usePowerShell && !CommandBuilder.hasExecutionPolicy()) {
+            throw new ExecutionPolicyLimitException();
+        }
     }
 
     private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon) {

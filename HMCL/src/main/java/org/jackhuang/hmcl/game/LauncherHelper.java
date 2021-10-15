@@ -29,10 +29,7 @@ import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.download.java.JavaRepository;
-import org.jackhuang.hmcl.launch.NotDecompressingNativesException;
-import org.jackhuang.hmcl.launch.PermissionException;
-import org.jackhuang.hmcl.launch.ProcessCreationException;
-import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.curse.CurseCompletionException;
 import org.jackhuang.hmcl.mod.curse.CurseCompletionTask;
@@ -49,6 +46,7 @@ import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -284,6 +282,23 @@ public final class LauncherHelper {
                                         message = i18n("download.code.404", url);
                                     else
                                         message = i18n("download.failed", url, responseCode);
+                                } else if (ex instanceof CommandTooLongException) {
+                                    message = i18n("launch.failed.command_too_long");
+                                } else if (ex instanceof ExecutionPolicyLimitException) {
+                                    Controllers.prompt(new PromptDialogPane.Builder(i18n("launch.failed.execution_policy"),
+                                            (result, resolve, reject) -> {
+                                                if (CommandBuilder.setExecutionPolicy()) {
+                                                    LOG.info("Set the ExecutionPolicy for the scope 'CurrentUser' to 'RemoteSigned'");
+                                                    resolve.run();
+                                                } else {
+                                                    LOG.warning("Failed to set ExecutionPolicy");
+                                                    reject.accept(i18n("launch.failed.execution_policy.failed_to_set"));
+                                                }
+                                            })
+                                            .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("launch.failed.execution_policy.hint")))
+                                    );
+
+                                    return;
                                 } else {
                                     message = StringUtils.getStackTrace(ex);
                                 }
