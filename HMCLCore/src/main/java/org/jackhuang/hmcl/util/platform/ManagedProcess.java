@@ -31,6 +31,7 @@ public class ManagedProcess {
 
     private final Process process;
     private final List<String> commands;
+    private final String classpath;
     private final Map<String, Object> properties = new HashMap<>();
     private final Queue<String> lines = new ConcurrentLinkedQueue<>();
     private final List<Thread> relatedThreads = new LinkedList<>();
@@ -44,6 +45,20 @@ public class ManagedProcess {
     public ManagedProcess(Process process, List<String> commands) {
         this.process = process;
         this.commands = Collections.unmodifiableList(new ArrayList<>(commands));
+        this.classpath = null;
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param process the raw system process that this instance manages.
+     * @param commands the command line of {@code process}.
+     * @param classpath the classpath of java process
+     */
+    public ManagedProcess(Process process, List<String> commands, String classpath) {
+        this.process = process;
+        this.commands = Collections.unmodifiableList(new ArrayList<>(commands));
+        this.classpath = classpath;
     }
 
     /**
@@ -62,6 +77,15 @@ public class ManagedProcess {
      */
     public List<String> getCommands() {
         return commands;
+    }
+
+    /**
+     * The classpath.
+     *
+     * @return classpath
+     */
+    public String getClasspath() {
+        return classpath;
     }
 
     /**

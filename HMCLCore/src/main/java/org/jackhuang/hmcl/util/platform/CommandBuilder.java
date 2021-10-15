@@ -146,6 +146,10 @@ public final class CommandBuilder {
         return raw.stream().map(i -> i.arg).collect(Collectors.toList());
     }
 
+    public List<String> asMutableList() {
+        return raw.stream().map(i -> i.arg).collect(Collectors.toCollection(ArrayList::new));
+    }
+
     private static class Item {
         String arg;
         boolean parse;

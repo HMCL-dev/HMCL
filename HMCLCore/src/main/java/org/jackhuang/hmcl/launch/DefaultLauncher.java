@@ -354,7 +354,7 @@ public class DefaultLauncher extends Launcher {
 
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        File nativeFolder = null;
+        File nativeFolder;
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
             nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
         } else {
@@ -362,7 +362,15 @@ public class DefaultLauncher extends Launcher {
         }
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
-        List<String> rawCommandLine = generateCommandLine(nativeFolder).asList();
+        List<String> rawCommandLine = generateCommandLine(nativeFolder).asMutableList();
+
+        // Pass classpath using the environment variable, to reduce the command length
+        String classpath = null;
+        final int cpIndex = rawCommandLine.indexOf("-cp");
+        if (cpIndex >= 0 && cpIndex < rawCommandLine.size() - 1) {
+            rawCommandLine.remove(cpIndex); // remove "-cp"
+            classpath = rawCommandLine.remove(cpIndex);
+        }
 
         if (rawCommandLine.stream().anyMatch(StringUtils::isBlank)) {
             throw new IllegalStateException("Illegal command line " + rawCommandLine);
@@ -388,13 +396,14 @@ public class DefaultLauncher extends Launcher {
             }
             String appdata = options.getGameDir().getAbsoluteFile().getParent();
             if (appdata != null) builder.environment().put("APPDATA", appdata);
+            if (classpath != null) builder.environment().put("CLASSPATH", classpath);
             builder.environment().putAll(getEnvVars());
             process = builder.start();
         } catch (IOException e) {
             throw new ProcessCreationException(e);
         }
 
-        ManagedProcess p = new ManagedProcess(process, rawCommandLine);
+        ManagedProcess p = new ManagedProcess(process, rawCommandLine, classpath);
         if (listener != null)
             startMonitors(p, listener, daemon);
         return p;
