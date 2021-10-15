@@ -187,8 +187,8 @@ public final class CommandBuilder {
                 return "Unrestricted".equalsIgnoreCase(policy) || "RemoteSigned".equalsIgnoreCase(policy);
             }
         } catch (Throwable ignored) {
-            return false;
         }
+        return false;
     }
 
     public static boolean setExecutionPolicy() {
