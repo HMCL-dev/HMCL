@@ -333,7 +333,7 @@ public final class FXUtils {
     public static void playAnimation(Node node, String animationKey, Timeline timeline) {
         animationKey = "FXUTILS.ANIMATION." + animationKey;
         Object oldTimeline = node.getProperties().get(animationKey);
-        if (oldTimeline instanceof Timeline) ((Timeline) oldTimeline).stop();
+//        if (oldTimeline instanceof Timeline) ((Timeline) oldTimeline).stop();
         if (timeline != null) timeline.play();
         node.getProperties().put(animationKey, timeline);
     }

@@ -37,7 +37,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -56,7 +55,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     private final StackPane titleContainer;
     private final Stage primaryStage;
     private final TransitionPane navBarPane;
-    private final StackPane leftPane;
 
     private double xOffset, yOffset, newX, newY, initX, initY;
     private boolean titleBarTransparent = true;
@@ -109,15 +107,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         StackPane container = new StackPane();
         FXUtils.setOverflowHidden(container);
 
-        // animation layer at bottom
-        HBox drawerPane = new HBox();
-        {
-            leftPane = new StackPane();
-            leftPane.setPrefWidth(0);
-            leftPane.getStyleClass().add("jfx-decorator-drawer");
-            drawerPane.getChildren().setAll(leftPane);
-        }
-
         // content layer at middle
         {
             StackPane contentPlaceHolder = new StackPane();
@@ -159,16 +148,12 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 container.setBackground(null);
                 titleContainer.getStyleClass().remove("background");
                 titleContainer.getStyleClass().add("gray-background");
-                container.getChildren().remove(drawerPane);
-                wrapper.getChildren().add(0, drawerPane);
             } else {
                 container.backgroundProperty().bind(skinnable.contentBackgroundProperty());
                 wrapper.backgroundProperty().unbind();
                 wrapper.setBackground(null);
                 titleContainer.getStyleClass().add("background");
                 titleContainer.getStyleClass().remove("gray-background");
-                wrapper.getChildren().remove(drawerPane);
-                container.getChildren().add(0, drawerPane);
             }
         });
 
@@ -180,6 +165,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         Rectangle buttonsContainerPlaceHolder = new Rectangle();
         {
             navBarPane = new TransitionPane();
+            navBarPane.setId("decoratorTitleTransitionPane");
             FXUtils.onChangeAndOperate(skinnable.stateProperty(), s -> {
                 if (s == null) return;
                 Node node = createNavBar(skinnable, s.getLeftPaneWidth(), s.isBackable(), skinnable.canCloseProperty().get(), skinnable.showCloseAsHomeProperty().get(), s.isRefreshable(), s.getTitle(), s.getTitleNode());
@@ -197,9 +183,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 } else {
                     navBarPane.getChildren().setAll(node);
                 }
-
-                FXUtils.playAnimation(leftPane, "animation",
-                        s.isAnimate() ? Duration.millis(160) : null, leftPane.prefWidthProperty(), null, s.getLeftPaneWidth(), FXUtils.SINE);
             });
             titleBar.setCenter(navBarPane);
             titleBar.setRight(buttonsContainerPlaceHolder);
