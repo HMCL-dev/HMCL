@@ -28,7 +28,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -41,6 +40,7 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
@@ -130,9 +130,9 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         item.setOnAction(e -> FXUtils.openLink("https://hmcl.huangyuhui.net/help/launcher/multiplayer.html"));
                     })
                     .addNavigationDrawerItem(report -> {
-                        report.setTitle(i18n("multiplayer.report"));
-                        report.setLeftGraphic(wrap(SVG::bug));
-                        report.setOnAction(e -> FXUtils.openLink(Metadata.EULA_URL));
+                        report.setTitle(i18n("feedback"));
+                        report.setLeftGraphic(wrap(SVG::messageAlertOutline));
+                        report.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-feedback"));
                     });
             FXUtils.setLimitWidth(sideBar, 200);
             setLeft(sideBar);
@@ -256,7 +256,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                 tokenField.setPromptText(i18n("multiplayer.session.create.token.prompt"));
 
                 JFXHyperlink applyLink = new JFXHyperlink(i18n("multiplayer.session.create.token.apply"));
-                applyLink.setOnAction(e -> FXUtils.openLink("https://noin.cn/circle/386.html"));
+                applyLink.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-static-token"));
 
                 gridPane.addRow(0, new Label(i18n("multiplayer.session.create.token")), tokenField, applyLink);
 
@@ -270,7 +270,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                 pane.setAlignment(Pos.CENTER_LEFT);
 
                 JFXHyperlink aboutLink = new JFXHyperlink(i18n("about"));
-                aboutLink.setOnAction(e -> FXUtils.openLink("https://noin.cn/71.html"));
+                aboutLink.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-about"));
 
                 HBox placeholder = new HBox();
                 HBox.setHgrow(placeholder, Priority.ALWAYS);

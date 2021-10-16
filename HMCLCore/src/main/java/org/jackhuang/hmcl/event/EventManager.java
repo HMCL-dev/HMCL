@@ -72,7 +72,7 @@ public final class EventManager<T extends Event> {
             return Event.Result.DEFAULT;
     }
 
-    private synchronized void removeConsumer(Consumer<T> consumer) {
+    public synchronized void unregister(Consumer<T> consumer) {
         handlers.removeValue(consumer);
     }
 
@@ -87,7 +87,7 @@ public final class EventManager<T extends Event> {
         public void accept(T t) {
             Consumer<T> listener = ref.get();
             if (listener == null) {
-                removeConsumer(this);
+                unregister(this);
             } else {
                 listener.accept(t);
             }

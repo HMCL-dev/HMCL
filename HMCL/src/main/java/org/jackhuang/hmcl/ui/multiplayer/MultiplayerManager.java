@@ -35,7 +35,10 @@ import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UncheckedIOException;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -44,6 +47,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -120,6 +124,19 @@ public final class MultiplayerManager {
 
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
 
+            Consumer<CatoExitEvent> onExit = event -> {
+                boolean ready = session.isReady();
+                switch (event.getExitCode()) {
+                    case 1:
+                        if (!ready) {
+                            future.completeExceptionally(new CatoExitTimeoutException());
+                        }
+                        break;
+                }
+                future.completeExceptionally(new CatoExitException(event.getExitCode(), ready));
+            };
+            session.onExit.register(onExit);
+
             session.onExit().register(() -> {
                 try {
                     writer.close();
@@ -128,7 +145,14 @@ public final class MultiplayerManager {
                 }
             });
 
+            TimerTask peerConnectionTimeoutTask = Lang.setTimeout(() -> {
+                future.completeExceptionally(new PeerConnectionTimeoutException());
+                session.stop();
+            }, 15 * 1000);
+
             session.onPeerConnected.register(event -> {
+                peerConnectionTimeoutTask.cancel();
+
                 MultiplayerClient client = new MultiplayerClient(session.getId(), localPort);
                 session.addRelatedThread(client);
                 session.setClient(client);
@@ -148,6 +172,7 @@ public final class MultiplayerManager {
                         writer.write(command);
                         writer.newLine();
                         writer.flush();
+                        session.onExit.unregister(onExit);
                         future.complete(session);
                     } catch (IOException e) {
                         future.completeExceptionally(e);
@@ -178,32 +203,72 @@ public final class MultiplayerManager {
         });
     }
 
-    public static CatoSession createSession(String token, String sessionName, int gamePort, boolean allowAllJoinRequests) throws IOException {
-        Path exe = getCatoExecutable();
-        if (!Files.isRegularFile(exe)) {
-            throw new FileNotFoundException("Cato file not found");
-        }
+    public static CompletableFuture<CatoSession> createSession(String token, String sessionName, int gamePort, boolean allowAllJoinRequests) {
+        return CompletableFuture.completedFuture(null).thenComposeAsync(unused -> {
+            Path exe = getCatoExecutable();
+            if (!Files.isRegularFile(exe)) {
+                throw new CatoNotExistsException(exe);
+            }
 
-        if (!isPortAvailable(3478)) {
-            throw new CatoAlreadyStartedException();
-        }
+            if (!isPortAvailable(3478)) {
+                throw new CatoAlreadyStartedException();
+            }
 
-        LOG.info(String.format("Creating session (token=%s,sessionName=%s,gamePort=%d)", token, sessionName, gamePort));
+            LOG.info(String.format("Creating session (token=%s,sessionName=%s,gamePort=%d)", token, sessionName, gamePort));
 
-        MultiplayerServer server = new MultiplayerServer(gamePort, allowAllJoinRequests);
-        server.startServer();
+            MultiplayerServer server;
+            try {
+                server = new MultiplayerServer(gamePort, allowAllJoinRequests);
+                server.startServer();
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
 
-        String[] commands = new String[]{exe.toString(),
-                "--token", StringUtils.isBlank(token) ? "new" : token,
-                "--allows", String.format("%s:%d/%s:%d", REMOTE_ADDRESS, server.getPort(), REMOTE_ADDRESS, gamePort)};
-        Process process = new ProcessBuilder()
-                .command(commands)
-                .start();
+            String[] commands = new String[]{exe.toString(),
+                    "--token", StringUtils.isBlank(token) ? "new" : token,
+                    "--allows", String.format("%s:%d/%s:%d", REMOTE_ADDRESS, server.getPort(), REMOTE_ADDRESS, gamePort)};
+            Process process;
+            try {
+                process = new ProcessBuilder()
+                        .command(commands)
+                        .start();
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
 
-        CatoSession session = new CatoSession(sessionName, State.MASTER, process, Arrays.asList(commands));
-        session.setServer(server);
-        session.addRelatedThread(server);
-        return session;
+            CompletableFuture<CatoSession> future = new CompletableFuture<>();
+
+            CatoSession session = new CatoSession(sessionName, State.MASTER, process, Arrays.asList(commands));
+
+            Consumer<CatoExitEvent> onExit = event -> {
+                boolean ready = session.isReady();
+                switch (event.getExitCode()) {
+                    case 1:
+                        if (!ready) {
+                            future.completeExceptionally(new CatoExitTimeoutException());
+                        }
+                        break;
+                }
+                future.completeExceptionally(new CatoExitException(event.getExitCode(), ready));
+            };
+
+            session.onExit.register(onExit);
+            session.setServer(server);
+            session.addRelatedThread(server);
+
+            TimerTask peerConnectionTimeoutTask = Lang.setTimeout(() -> {
+                future.completeExceptionally(new PeerConnectionTimeoutException());
+                session.stop();
+            }, 15 * 1000);
+
+            session.onPeerConnected.register(event -> {
+                session.onExit.unregister(onExit);
+                future.complete(session);
+                peerConnectionTimeoutTask.cancel();
+            });
+
+            return future;
+        });
     }
 
     public static Invitation parseInvitationCode(String invitationCode) throws JsonParseException {
@@ -471,10 +536,37 @@ public final class MultiplayerManager {
         }
     }
 
+    public static class CatoExitException extends RuntimeException {
+        private final int exitCode;
+        private final boolean ready;
+
+        public CatoExitException(int exitCode, boolean ready) {
+            this.exitCode = exitCode;
+            this.ready = ready;
+        }
+
+        public int getExitCode() {
+            return exitCode;
+        }
+
+        public boolean isReady() {
+            return ready;
+        }
+    }
+
+    public static class CatoExitTimeoutException extends RuntimeException {
+    }
+
+    public static class CatoSessionExpiredException extends RuntimeException {
+    }
+
     public static class CatoAlreadyStartedException extends RuntimeException {
     }
 
     public static class JoinRequestTimeoutException extends RuntimeException {
+    }
+
+    public static class PeerConnectionTimeoutException extends RuntimeException {
     }
 
     public static class ConnectionErrorException extends RuntimeException {
