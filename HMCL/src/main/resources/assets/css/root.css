@@ -151,7 +151,7 @@
     -fx-padding: 0 0 0 10;
 }
 
-.advanced-list-item > .rippler-container > .container > .two-line-list-item > FlowPane > .title {
+.advanced-list-item > .rippler-container > .container > .two-line-list-item > .first-line > .title {
     -fx-font-size: 13;
     -fx-text-alignment: justify;
 }
@@ -165,7 +165,7 @@
     -fx-background-color: -fx-base-rippler-color;
 }
 
-.advanced-list-item:selected > .rippler-container > .container > .two-line-list-item > FlowPane > .title {
+.advanced-list-item:selected > .rippler-container > .container > .two-line-list-item > .first-line > .title {
     -fx-text-fill: -fx-base-color;
     -fx-font-weight: bold;
 }
@@ -178,7 +178,7 @@
     -fx-padding: 0 0 0 0;
 }
 
-.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > FlowPane > .title {
+.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
     -fx-font-size: 13;
 }
 
@@ -194,7 +194,7 @@
     -fx-background-color: -fx-base-rippler-color;
 }
 
-.profile-list-item:selected > .rippler-container > BorderPane > .two-line-list-item > FlowPane > .title {
+.profile-list-item:selected > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
     -fx-text-fill: -fx-base-color;
     -fx-font-weight: bold;
 }
@@ -257,12 +257,7 @@
     -fx-padding: 4 0 4 0;
 }
 
-.two-line-list-item > HBox {
-    -fx-spacing: 8;
-    -fx-alignment: center-left;
-}
-
-.two-line-list-item > FlowPane > .title {
+.two-line-list-item > .first-line > .title {
 	-fx-text-fill: #292929;
 	-fx-font-size: 15px;
     -fx-padding: 0 8 0 0;
@@ -274,7 +269,7 @@
     -fx-font-size: 12px;
 }
 
-.two-line-list-item > FlowPane > .tag {
+.two-line-list-item > .first-line > .tag {
     -fx-text-fill: -fx-base-color;
     -fx-background-color: -fx-base-rippler-color;
     -fx-padding: 2;
@@ -286,7 +281,7 @@
 
 }
 
-.two-line-item-second-large > FlowPane > .title {
+.two-line-item-second-large > .first-line > .title {
     -fx-text-fill: rgba(0, 0, 0, 0.5);
     -fx-font-weight: normal;
     -fx-font-size: 12px;
@@ -307,7 +302,7 @@
     -fx-text-fill: white;
 }
 
-.bubble > HBox > .two-line-list-item > FlowPane > .title,
+.bubble > HBox > .two-line-list-item > .first-line > .title,
 .bubble > HBox > .two-line-list-item > HBox > .subtitle {
 	-fx-text-fill: white;
 }
