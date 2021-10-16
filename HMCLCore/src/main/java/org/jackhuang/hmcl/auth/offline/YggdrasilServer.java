@@ -175,7 +175,7 @@ public class YggdrasilServer extends HttpServer {
                 }
             }
             if (skin != null && skin.getCape() != null) {
-                realTextures.put("CAPE", mapOf(pair("url", rootUrl + "/textures/" + skin.getSkin().getHash())));
+                realTextures.put("CAPE", mapOf(pair("url", rootUrl + "/textures/" + skin.getCape().getHash())));
             }
 
             Map<String, Object> textureResponse = mapOf(
