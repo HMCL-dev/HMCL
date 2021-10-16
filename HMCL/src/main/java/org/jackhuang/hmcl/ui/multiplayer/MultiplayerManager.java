@@ -207,7 +207,7 @@ public final class MultiplayerManager {
     }
 
     public static Invitation parseInvitationCode(String invitationCode) throws JsonParseException {
-        String json = new String(Base64.getDecoder().decode(invitationCode.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+        String json = new String(Base64.getDecoder().decode(invitationCode), StandardCharsets.UTF_8);
         return JsonUtils.fromNonNullJson(json, Invitation.class);
     }
 
@@ -350,8 +350,8 @@ public final class MultiplayerManager {
             if (id == null) {
                 throw new IllegalStateException("id not generated");
             }
-            String json = JsonUtils.GSON.toJson(new Invitation(CATO_VERSION, id, name, serverPort));
-            return new String(Base64.getEncoder().encode(json.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+            String json = JsonUtils.UGLY_GSON.toJson(new Invitation(CATO_VERSION, id, name, serverPort));
+            return Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
         }
 
         public EventManager<CatoExitEvent> onExit() {
