@@ -230,6 +230,8 @@ task finalJar(type: Jar) {
 
     classifier = 'final'
 
+    manifest = shadowJar.manifest
+
     from { proguard.outJarFiles.collect { zipTree(it)} }
 
     into('/') {
