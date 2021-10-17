@@ -47,8 +47,9 @@ mainClassName = 'org.jackhuang.hmcl.Main'
 
 dependencies {
     implementation project(":HMCLCore")
-    implementation project(":JSTUN")
     implementation rootProject.files("lib/JFoenix.jar")
+
+    implementation group: 'de.javawi.jstun', name: 'jstun', version: '0.7.4'
 }
 
 def digest(String algorithm, byte[] bytes) {
@@ -117,13 +118,8 @@ compileJava11Java {
     targetCompatibility = 11
 }
 
-jar {
-    enabled = false
-    dependsOn shadowJar
-}
-
 shadowJar {
-    classifier = null
+    classifier = "shadow"
 
     manifest {
         attributes 'Created-By': 'Copyright(c) 2013-2021 huangyuhui.',
@@ -156,12 +152,6 @@ shadowJar {
                         'javafx.base/com.sun.javafx.event'
                 ].join(" ")
     }
-
-    doLast {
-        repack(jar.archivePath) // see repack()
-        attachSignature(jar.archivePath)
-        createChecksum(jar.archivePath)
-    }
 }
 
 task proguard(type: proguard.gradle.ProGuardTask) {
@@ -192,6 +182,7 @@ task proguard(type: proguard.gradle.ProGuardTask) {
     dontwarn 'org.jackhuang.hmcl.util.Pack200Utils'
     dontwarn 'com.sun.javafx.**'
     dontwarn 'com.jfoenix.**'
+    dontwarn 'org.apache.**'
 
     adaptclassstrings
 
@@ -236,8 +227,6 @@ task proguard(type: proguard.gradle.ProGuardTask) {
 task finalJar(type: Jar) {
     dependsOn proguard
 
-    classifier = 'final'
-
     manifest = shadowJar.manifest
 
     from { proguard.outJarFiles.collect { zipTree(it)} }
@@ -246,6 +235,17 @@ task finalJar(type: Jar) {
         from { shadowJar.outputs.files.collect { zipTree(it) } }
         include("META-INF/versions/**")
     }
+
+    doLast {
+        repack(jar.archivePath) // see repack()
+        attachSignature(jar.archivePath)
+        createChecksum(jar.archivePath)
+    }
+}
+
+jar {
+    enabled = false
+    dependsOn finalJar
 }
 
 def createExecutable(String suffix, String header) {

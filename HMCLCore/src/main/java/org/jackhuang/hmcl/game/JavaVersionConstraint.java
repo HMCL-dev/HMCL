@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.apache.commons.lang3.Range;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Range;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;

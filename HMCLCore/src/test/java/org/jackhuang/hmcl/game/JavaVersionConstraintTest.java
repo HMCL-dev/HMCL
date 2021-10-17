@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.util.Range;
+import org.apache.commons.lang3.Range;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.junit.Assert;
 import org.junit.Test;

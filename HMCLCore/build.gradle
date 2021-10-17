@@ -13,5 +13,7 @@ dependencies {
     api group: 'com.github.steveice10', name: 'opennbt', version: '1.1'
     api group: 'com.nqzero', name: 'permit-reflect', version: '0.3'
     api group: 'org.nanohttpd', name: 'nanohttpd', version: '2.3.1'
+    api group: 'org.apache.commons', name: 'commons-compress', version: '1.21'
+    api group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
     compileOnlyApi group: 'org.jetbrains', name: 'annotations', version: '16.0.3'
 }
