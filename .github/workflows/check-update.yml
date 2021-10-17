@@ -1,9 +1,13 @@
 name: Check Update
 
-on: push
+on:
+  push:
+    branches:
+      - javafx
 
 jobs:
   check-update:
+    if: ${{ github.repository_owner == 'huanghongxun' }}
     runs-on: ubuntu-latest
     env:
       HMCL_BASE_VERSION: '3.4'
