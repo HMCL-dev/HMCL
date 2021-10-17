@@ -225,6 +225,19 @@ task proguard(type: proguard.gradle.ProGuardTask) {
     }
 }
 
+task finalJar(type: Jar) {
+    dependsOn proguard
+
+    classifier = 'final'
+
+    from { proguard.outJarFiles.collect { zipTree(it)} }
+
+    into('/') {
+        from { shadowJar.outputs.files.collect { zipTree(it) } }
+        include("META-INF/versions/**")
+    }
+}
+
 def createExecutable(String suffix, String header) {
     def output = new File(jar.archivePath.parentFile, jar.archivePath.name[0..-4] + suffix)
     output.bytes = new File(project.projectDir, header).bytes
