@@ -59,6 +59,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.nio.file.AccessDeniedException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -299,6 +300,8 @@ public final class LauncherHelper {
                                     );
 
                                     return;
+                                } else if (ex instanceof AccessDeniedException) {
+                                    message = i18n("exception.access_denied", ((AccessDeniedException) ex).getFile());
                                 } else {
                                     message = StringUtils.getStackTrace(ex);
                                 }
