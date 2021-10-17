@@ -68,9 +68,9 @@ public final class Locales {
     /**
      * Japanese
      */
-    public static final SupportedLocale JA_JP = new SupportedLocale(Locale.JAPAN);
+    public static final SupportedLocale JA = new SupportedLocale(Locale.JAPANESE);
 
-    public static final List<SupportedLocale> LOCALES = Lang.immutableListOf(DEFAULT, EN, ZH_CN, ZH, ES, RU);
+    public static final List<SupportedLocale> LOCALES = Lang.immutableListOf(DEFAULT, EN, ZH_CN, ZH, ES, RU, JA);
 
     public static SupportedLocale getLocaleByName(String name) {
         if (name == null) return DEFAULT;
@@ -85,8 +85,8 @@ public final class Locales {
                 return ES;
             case "ru":
                 return RU;
-            case "ja_jp":
-                return JA_JP;
+            case "ja":
+                return JA;
             default:
                 return DEFAULT;
         }
@@ -98,7 +98,7 @@ public final class Locales {
         else if (locale == ZH_CN) return "zh_CN";
         else if (locale == ES) return "es";
         else if (locale == RU) return "ru";
-        else if (locale == JA_JP) return "ja_JP";
+        else if (locale == JA) return "ja";
         else if (locale == DEFAULT) return "def";
         else throw new IllegalArgumentException("Unknown locale: " + locale);
     }
