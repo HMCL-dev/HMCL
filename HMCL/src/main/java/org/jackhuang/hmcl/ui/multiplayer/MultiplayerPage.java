@@ -238,9 +238,9 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                         initCatoSession(session);
 
                         this.gamePort.set(gamePort);
-                        setMultiplayerState(MultiplayerManager.State.CONNECTING);
+                        setMultiplayerState(MultiplayerManager.State.MASTER);
                         resolve.run();
-                    })
+                    }, Platform::runLater)
                     .exceptionally(throwable -> {
                         reject.accept(localizeCreateErrorMessage(throwable, isStaticToken));
                         return null;
@@ -255,6 +255,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
 
         Controllers.prompt(new PromptDialogPane.Builder(i18n("multiplayer.session.join"), (result, resolve, reject) -> {
             PromptDialogPane.Builder.HintQuestion hintQuestion = (PromptDialogPane.Builder.HintQuestion) result.get(0);
+            boolean isStaticToken = StringUtils.isNotBlank(globalConfig().getMultiplayerToken());
 
             String invitationCode = ((PromptDialogPane.Builder.StringQuestion) result.get(1)).getValue();
             MultiplayerManager.Invitation invitation;
@@ -280,8 +281,8 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                                 invitation.getVersion(),
                                 invitation.getSessionName(),
                                 invitation.getId(),
-                                globalConfig().isMultiplayerRelay() && StringUtils.isNotBlank(globalConfig().getMultiplayerToken())
-                                        ? MultiplayerManager.Mode.RELAY
+                                globalConfig().isMultiplayerRelay() && (StringUtils.isNotBlank(globalConfig().getMultiplayerToken()) || StringUtils.isNotBlank(System.getProperty("hmcl.multiplayer.relay")))
+                                        ? MultiplayerManager.Mode.BRIDGE
                                         : MultiplayerManager.Mode.P2P,
                                 invitation.getChannelPort(),
                                 localPort, new MultiplayerManager.JoinSessionHandler() {
@@ -318,7 +319,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                             resolve.run();
                         }, Platform::runLater)
                         .exceptionally(throwable -> {
-                            reject.accept(localizeJoinErrorMessage(throwable));
+                            reject.accept(localizeJoinErrorMessage(throwable, isStaticToken));
                             return null;
                         });
             } catch (MultiplayerManager.IncompatibleCatoVersionException e) {
@@ -329,7 +330,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                 .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("multiplayer.session.join.invitation_code"), "", new RequiredValidator())));
     }
 
-    private String localizeErrorMessage(Throwable t, Function<Throwable, String> fallback) {
+    private String localizeErrorMessage(Throwable t, boolean isStaticToken, Function<Throwable, String> fallback) {
         Throwable e = resolveException(t);
         if (e instanceof CancellationException) {
             LOG.info("Connection rejected by the server");
@@ -348,7 +349,11 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
             return i18n("multiplayer.session.join.error.connection");
         } else if (e instanceof MultiplayerManager.CatoExitTimeoutException) {
             LOG.info("Cato failed to connect to main net");
-            return i18n("multiplayer.exit.timeout");
+            if (isStaticToken) {
+                return i18n("multiplayer.exit.timeout.static_token");
+            } else {
+                return i18n("multiplayer.exit.timeout.dynamic_token");
+            }
         } else if (e instanceof MultiplayerManager.CatoExitException) {
             LOG.info("Cato exited accidentally");
             if (!((MultiplayerManager.CatoExitException) e).isReady()) {
@@ -362,7 +367,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
     }
 
     private String localizeCreateErrorMessage(Throwable t, boolean isStaticToken) {
-        return localizeErrorMessage(t, e -> {
+        return localizeErrorMessage(t, isStaticToken, e -> {
             LOG.log(Level.WARNING, "Failed to create session", e);
             if (isStaticToken) {
                 return i18n("multiplayer.session.create.error.static_token") + e.getLocalizedMessage();
@@ -372,8 +377,8 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         });
     }
 
-    private String localizeJoinErrorMessage(Throwable t) {
-        return localizeErrorMessage(t, e -> {
+    private String localizeJoinErrorMessage(Throwable t, boolean isStaticToken) {
+        return localizeErrorMessage(t, isStaticToken, e -> {
             LOG.log(Level.WARNING, "Failed to join session", e);
             return i18n("multiplayer.session.join.error");
         });

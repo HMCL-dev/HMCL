@@ -52,17 +52,18 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.jackhuang.hmcl.util.Lang.wrap;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 /**
  * Cato Management.
  */
 public final class MultiplayerManager {
-    private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/";
-    static final String CATO_VERSION = "1.0.c";
+    static final String CATO_VERSION = "1.1.0";
+//    private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/cato/cato/" + MultiplayerManager.CATO_VERSION;
+    private static final String CATO_DOWNLOAD_URL = "https://codechina.csdn.net/to/ioi_bin/-/raw/e2d1b04805764e77f7c17c2e5a64d0ccb1831e16/client/";
     private static final String CATO_PATH = getCatoPath();
     public static final int CATO_AGREEMENT_VERSION = 2;
-
     private static final String REMOTE_ADDRESS = "127.0.0.1";
     private static final String LOCAL_ADDRESS = "0.0.0.0";
 
@@ -71,7 +72,7 @@ public final class MultiplayerManager {
 
     public static Task<Void> downloadCato() {
         return new FileDownloadTask(
-                NetworkUtils.toURL(CATO_DOWNLOAD_URL + CATO_PATH),
+                NetworkUtils.toURL(CATO_DOWNLOAD_URL + getCatoFileName()),
                 getCatoExecutable().toFile()
         ).thenRunAsync(() -> {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
@@ -86,14 +87,8 @@ public final class MultiplayerManager {
         return Metadata.HMCL_DIRECTORY.resolve("libraries").resolve(CATO_PATH);
     }
 
-    public static CompletableFuture<CatoSession> joinSession(String token, String version, String sessionName, String peer, Mode mode, int remotePort, int localPort, JoinSessionHandler handler) throws IncompatibleCatoVersionException {
-        if (!CATO_VERSION.equals(version)) {
-            throw new IncompatibleCatoVersionException(version, CATO_VERSION);
-        }
-
-        LOG.info(String.format("Joining session (token=%s,version=%s,sessionName=%s,peer=%s,mode=%s,remotePort=%d,localPort=%d)", token, version, sessionName, peer, mode, remotePort, localPort));
-
-        return CompletableFuture.completedFuture(null).thenComposeAsync(unused -> {
+    private static CompletableFuture<CatoSession> startCato(String sessionName, String token, State state) {
+        return CompletableFuture.completedFuture(null).thenApplyAsync(unused -> {
             Path exe = getCatoExecutable();
             if (!Files.isRegularFile(exe)) {
                 throw new CatoNotExistsException(exe);
@@ -103,12 +98,7 @@ public final class MultiplayerManager {
                 throw new CatoAlreadyStartedException();
             }
 
-            String[] commands = new String[]{exe.toString(),
-                    "--token", StringUtils.isBlank(token) ? "new" : token,
-                    "--id", peer,
-                    "--local", String.format("%s:%d", LOCAL_ADDRESS, localPort),
-                    "--remote", String.format("%s:%d", REMOTE_ADDRESS, remotePort),
-                    "--mode", mode.getName()};
+            String[] commands = new String[]{exe.toString(), "--token", StringUtils.isBlank(token) ? "new" : token};
             Process process;
             try {
                 process = new ProcessBuilder()
@@ -118,11 +108,21 @@ public final class MultiplayerManager {
                 throw new UncheckedIOException(e);
             }
 
-            CatoSession session = new CatoSession(sessionName, State.SLAVE, process, Arrays.asList(commands));
+            return new CatoSession(sessionName, state, process, Arrays.asList(commands));
+        });
+    }
 
+    public static CompletableFuture<CatoSession> joinSession(String token, String version, String sessionName, String peer, Mode mode, int remotePort, int localPort, JoinSessionHandler handler) throws IncompatibleCatoVersionException {
+        if (!CATO_VERSION.equals(version)) {
+            throw new IncompatibleCatoVersionException(version, CATO_VERSION);
+        }
+
+        LOG.info(String.format("Joining session (token=%s,version=%s,sessionName=%s,peer=%s,mode=%s,remotePort=%d,localPort=%d)", token, version, sessionName, peer, mode, remotePort, localPort));
+
+        return startCato(sessionName, token, State.SLAVE).thenComposeAsync(wrap(session -> {
             CompletableFuture<CatoSession> future = new CompletableFuture<>();
 
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
+            session.forwardPort(peer, LOCAL_ADDRESS, localPort, REMOTE_ADDRESS, remotePort, mode);
 
             Consumer<CatoExitEvent> onExit = event -> {
                 boolean ready = session.isReady();
@@ -136,14 +136,6 @@ public final class MultiplayerManager {
                 future.completeExceptionally(new CatoExitException(event.getExitCode(), ready));
             };
             session.onExit.register(onExit);
-
-            session.onExit().register(() -> {
-                try {
-                    writer.close();
-                } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to close cato session stdin writer", e);
-                }
-            });
 
             TimerTask peerConnectionTimeoutTask = Lang.setTimeout(() -> {
                 future.completeExceptionally(new PeerConnectionTimeoutException());
@@ -165,13 +157,9 @@ public final class MultiplayerManager {
                 client.onConnected().register(connectedEvent -> {
                     try {
                         int port = findAvailablePort();
-                        String command = String.format("net add %s %s:%d %s:%d %s", peer, LOCAL_ADDRESS, port, REMOTE_ADDRESS, connectedEvent.getPort(), mode.getName());
-                        LOG.info("Invoking cato: " + command);
+                        session.forwardPort(peer, LOCAL_ADDRESS, port, REMOTE_ADDRESS, connectedEvent.getPort(), mode);
                         session.addRelatedThread(Lang.thread(new LocalServerBroadcaster(port, session), "LocalServerBroadcaster", true));
                         client.setGamePort(port);
-                        writer.write(command);
-                        writer.newLine();
-                        writer.flush();
                         session.onExit.unregister(onExit);
                         future.complete(session);
                     } catch (IOException e) {
@@ -200,45 +188,21 @@ public final class MultiplayerManager {
             });
 
             return future;
-        });
+        }));
     }
 
     public static CompletableFuture<CatoSession> createSession(String token, String sessionName, int gamePort, boolean allowAllJoinRequests) {
-        return CompletableFuture.completedFuture(null).thenComposeAsync(unused -> {
-            Path exe = getCatoExecutable();
-            if (!Files.isRegularFile(exe)) {
-                throw new CatoNotExistsException(exe);
-            }
+        LOG.info(String.format("Creating session (token=%s,sessionName=%s,gamePort=%d)", token, sessionName, gamePort));
 
-            if (!isPortAvailable(3478)) {
-                throw new CatoAlreadyStartedException();
-            }
-
-            LOG.info(String.format("Creating session (token=%s,sessionName=%s,gamePort=%d)", token, sessionName, gamePort));
-
-            MultiplayerServer server;
-            try {
-                server = new MultiplayerServer(gamePort, allowAllJoinRequests);
-                server.startServer();
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-
-            String[] commands = new String[]{exe.toString(),
-                    "--token", StringUtils.isBlank(token) ? "new" : token,
-                    "--allows", String.format("%s:%d/%s:%d", REMOTE_ADDRESS, server.getPort(), REMOTE_ADDRESS, gamePort)};
-            Process process;
-            try {
-                process = new ProcessBuilder()
-                        .command(commands)
-                        .start();
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-
+        return startCato(sessionName, token, State.MASTER).thenComposeAsync(wrap(session -> {
             CompletableFuture<CatoSession> future = new CompletableFuture<>();
 
-            CatoSession session = new CatoSession(sessionName, State.MASTER, process, Arrays.asList(commands));
+            MultiplayerServer server = new MultiplayerServer(gamePort, allowAllJoinRequests);
+            server.startServer();
+
+            session.allowForwardingAddress(REMOTE_ADDRESS, server.getPort());
+            session.allowForwardingAddress(REMOTE_ADDRESS, gamePort);
+            session.showAllowedAddress();
 
             Consumer<CatoExitEvent> onExit = event -> {
                 boolean ready = session.isReady();
@@ -268,7 +232,7 @@ public final class MultiplayerManager {
             });
 
             return future;
-        });
+        }));
     }
 
     public static Invitation parseInvitationCode(String invitationCode) throws JsonParseException {
@@ -290,34 +254,45 @@ public final class MultiplayerManager {
         }
     }
 
-    public static String getCatoPath() {
+    private static String getCatoFileName() {
         switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
-                if (Architecture.SYSTEM_ARCH == Architecture.X86_64
-                        || (Architecture.SYSTEM_ARCH == Architecture.ARM64 && OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277)) {
-                    return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-windows-amd64.exe";
+                if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
+                    return "cato-client-windows-amd64.exe";
+                } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+                    return "cato-client-windows-arm64.exe";
+                } else if (Architecture.SYSTEM_ARCH == Architecture.X86) {
+                    return "cato-client-windows-i386.exe";
                 } else {
                     return "";
                 }
             case OSX:
                 if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
-                    return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-darwin-amd64";
+                    return "cato-client-darwin-amd64";
                 } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                    return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-darwin-arm64";
+                    return "cato-client-darwin-arm64";
                 } else {
                     return "";
                 }
             case LINUX:
                 if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
-                    return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-linux-amd64";
-                } else if (Architecture.SYSTEM_ARCH == Architecture.ARM32 || Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                    return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/cato-linux-arm7";
+                    return "cato-client-linux-amd64";
+                } else if (Architecture.SYSTEM_ARCH == Architecture.ARM32) {
+                    return "cato-client-linux-arm7";
+                } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+                    return "cato-client-linux-arm64";
                 } else {
                     return "";
                 }
             default:
                 return "";
         }
+    }
+
+    public static String getCatoPath() {
+        String name = getCatoFileName();
+        if (StringUtils.isBlank(name)) return "";
+        return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/" + name;
     }
 
     public static class CatoSession extends ManagedProcess {
@@ -331,6 +306,7 @@ public final class MultiplayerManager {
         private boolean peerConnected = false;
         private MultiplayerClient client;
         private MultiplayerServer server;
+        private final BufferedWriter writer;
 
         CatoSession(String name, State type, Process process, List<String> commands) {
             super(process, commands);
@@ -344,6 +320,8 @@ public final class MultiplayerManager {
             addRelatedThread(Lang.thread(this::waitFor, "CatoExitWaiter", true));
             addRelatedThread(Lang.thread(new StreamPump(process.getInputStream(), this::checkCatoLog), "CatoInputStreamPump", true));
             addRelatedThread(Lang.thread(new StreamPump(process.getErrorStream(), this::checkCatoLog), "CatoErrorStreamPump", true));
+
+            writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
         }
 
         public MultiplayerClient getClient() {
@@ -390,6 +368,12 @@ public final class MultiplayerManager {
                 onExit.fireEvent(new CatoExitEvent(this, exitCode));
             } catch (InterruptedException e) {
                 onExit.fireEvent(new CatoExitEvent(this, CatoExitEvent.EXIT_CODE_INTERRUPTED));
+            } finally {
+                try {
+                    writer.close();
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to close cato stdin writer", e);
+                }
             }
             destroyRelatedThreads();
         }
@@ -417,6 +401,25 @@ public final class MultiplayerManager {
             }
             String json = JsonUtils.UGLY_GSON.toJson(new Invitation(CATO_VERSION, id, name, serverPort));
             return Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+        }
+
+        public synchronized void invokeCommand(String command) throws IOException {
+            LOG.info("Invoking cato: " + command);
+            writer.write(command);
+            writer.newLine();
+            writer.flush();
+        }
+
+        public void forwardPort(String peerId, String localAddress, int localPort, String remoteAddress, int remotePort, Mode mode) throws IOException {
+            invokeCommand(String.format("net add %s %s:%d %s:%d %s", peerId, localAddress, localPort, remoteAddress, remotePort, mode.getName()));
+        }
+
+        public void allowForwardingAddress(String address, int port) throws IOException {
+            invokeCommand(String.format("ufw net open %s:%d", address, port));
+        }
+
+        public void showAllowedAddress() throws IOException {
+            invokeCommand("ufw net whitelist");
         }
 
         public EventManager<CatoExitEvent> onExit() {
@@ -529,7 +532,7 @@ public final class MultiplayerManager {
 
     public enum Mode {
         P2P,
-        RELAY;
+        BRIDGE;
 
         String getName() {
             return name().toLowerCase(Locale.ROOT);
