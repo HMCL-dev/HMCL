@@ -1,0 +1,62 @@
+name: Check Update
+
+on: push
+
+jobs:
+  check-update:
+    runs-on: ubuntu-latest
+    env:
+      HMCL_BASE_VERSION: '3.4'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Fetch tags
+        run: git fetch --all --tags
+      - name: Install tools
+        run: sudo apt-get install -y jq
+      - name: Fetch last version
+        run: |
+          wget -O ci.json https://ci.huangyuhui.net/job/HMCL/lastSuccessfulBuild/api/json
+
+          export HMCL_BUILD_NUMBER=`cat ci.json | jq -M -r '.id'`
+          export HMCL_VERSION="$HMCL_BASE_VERSION.$HMCL_BUILD_NUMBER"
+          export HMCL_COMMIT_SHA=`cat ci.json | jq -M -r '.actions[] | select(._class == "hudson.plugins.git.util.BuildData") | .lastBuiltRevision.SHA1'`
+
+          if [ "${#HMCL_BUILD_NUMBER}" != 3 ]; then exit 1; fi
+          if [ "${#HMCL_COMMIT_SHA}" != 40 ]; then exit 1; fi
+
+          echo "HMCL_BUILD_NUMBER=$HMCL_BUILD_NUMBER" >> $GITHUB_ENV
+          echo "HMCL_VERSION=$HMCL_VERSION" >> $GITHUB_ENV
+          echo "HMCL_COMMIT_SHA=$HMCL_COMMIT_SHA" >> $GITHUB_ENV
+          echo "HMCL_TAG_NAME=v$HMCL_VERSION" >> $GITHUB_ENV
+      - name: Check for existing tags
+        run: if [ -z "$(git tag -l "$HMCL_TAG_NAME")" ]; then echo "continue=true" >> $GITHUB_ENV; fi
+      - name: Download artifacts
+        if: ${{ env.continue == 'true' }}
+        run: |
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.exe"
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.exe.sha1"
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar"
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar.sha1"
+        env:
+          DOWNLOAD_BASE_URL: https://ci.huangyuhui.net/job/HMCL/${{ env.HMCL_BUILD_NUMBER }}/artifact/HMCL/build/libs
+      - name: Generate release note
+        run: |
+          echo "HMCL v$HMCL_VERSION" >> RELEASE_NOTE
+          echo "" >> RELEASE_NOTE
+          echo "The full changelogs can be found on the website: https://hmcl.huangyuhui.net/changelog/dev.html" >> RELEASE_NOTE
+          echo "Notice: changelogs are written in Chinese." >> RELEASE_NOTE
+      - name: Create release
+        if: ${{ env.continue == 'true' }}
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: RELEASE_NOTE
+          files: |
+            HMCL-${{ env.HMCL_VERSION }}.exe
+            HMCL-${{ env.HMCL_VERSION }}.exe.sha1
+            HMCL-${{ env.HMCL_VERSION }}.jar
+            HMCL-${{ env.HMCL_VERSION }}.jar.sha1
+          target_commitish: ${{ env.HMCL_COMMIT_SHA }}
+          name: ${{ env.HMCL_TAG_NAME }}
+          tag_name: ${{ env.HMCL_TAG_NAME }}
+
+
