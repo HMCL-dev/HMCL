@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
 
@@ -55,7 +56,7 @@ public class Theme {
 
     Theme(String name, String color) {
         this.name = name;
-        this.color = color;
+        this.color = Objects.requireNonNull(color);
         this.paint = Color.web(color);
     }
 

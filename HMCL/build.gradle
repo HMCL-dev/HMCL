@@ -173,8 +173,13 @@ task proguard(type: proguard.gradle.ProGuardTask) {
 
     dontobfuscate
     dontoptimize
-    keep 'public class org.jackhuang.**'
-    keep 'public class org.slf4j.**'
+    dontpreverify
+    printusage
+
+    keep 'public class org.jackhuang.** { *; }'
+    keepclassmembers 'public class org.jackhuang.** { *; }'
+    keep 'public class com.jfoenix.** { *; }'
+    keepclassmembers 'public class com.jfoenix.** { *; }'
 
     dontwarn 'com.nqzero.**'
     dontwarn 'org.slf4j.**'
@@ -198,7 +203,6 @@ task proguard(type: proguard.gradle.ProGuardTask) {
         libraryjars "${javaHome}/lib/rt.jar"
         libraryjars "${javaHome}/lib/ext/jfxrt.jar"
     } else {
-        System.out.println(configurations.compileClasspath.collect())
         // As of Java 9, the runtime classes are packaged in modular jmod files.
         libraryjars "${javaHome}/jmods/java.base.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
         libraryjars "${javaHome}/jmods/java.desktop.jmod", jarfilter: '!**.jar', filter: '!module-info.class'

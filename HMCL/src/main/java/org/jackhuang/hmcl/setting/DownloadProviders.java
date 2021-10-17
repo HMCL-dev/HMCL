@@ -152,7 +152,7 @@ public final class DownloadProviders {
             } else if (exception.getCause() instanceof FileNotFoundException) {
                 return i18n("download.code.404", url);
             } else if (exception.getCause() instanceof AccessDeniedException) {
-                return i18n("install.failed.downloading.access_denied", url, ((AccessDeniedException) exception.getCause()).getFile());
+                return i18n("install.failed.downloading.detail", url) + "\n" + i18n("exception.access_denied", ((AccessDeniedException) exception.getCause()).getFile());
             } else {
                 return i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause());
             }
