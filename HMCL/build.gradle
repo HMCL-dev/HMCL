@@ -170,16 +170,22 @@ task proguard(type: proguard.gradle.ProGuardTask) {
 
     outjars "${buildDir}/libs/${project.name}-${project.version}-proguard.jar"
 
-
     dontobfuscate
     dontoptimize
-    dontpreverify
-    printusage
 
-    keep 'public class org.jackhuang.** { *; }'
-    keepclassmembers 'public class org.jackhuang.** { *; }'
-    keep 'public class com.jfoenix.** { *; }'
-    keepclassmembers 'public class com.jfoenix.** { *; }'
+    keep 'class org.jackhuang.** { *; }'
+    keep 'class com.jfoenix.** { *; }'
+    keep 'class com.google.gson.** { *; }'
+    keep 'class com.github.steveice10.opennbt.** { *; }' // TagRegistry use reflection to create object instance
+
+    keep 'class * extends com.google.gson.TypeAdapter'
+    keep 'class * implements com.google.gson.TypeAdapterFactory'
+    keep 'class * implements com.google.gson.JsonSerializer'
+    keep 'class * implements com.google.gson.JsonDeserializer'
+
+    printusage "${buildDir}/libs/proguard-shrinking-details.txt"
+
+    System.out.println(new File(".").absolutePath)
 
     dontwarn 'com.nqzero.**'
     dontwarn 'org.slf4j.**'
@@ -194,6 +200,8 @@ task proguard(type: proguard.gradle.ProGuardTask) {
     libraryjars files(configurations.compileClasspath.collect())
 
     keepattributes 'SourceFile,LineNumberTable'
+    keepattributes '*Annotation*'
+    keepattributes 'Signature'
 
     var javaHome = System.getProperty('java.home')
 

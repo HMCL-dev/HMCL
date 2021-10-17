@@ -743,7 +743,7 @@
     -fx-font-weight: BOLD;
     -fx-prompt-text-fill: #808080;
     -fx-alignment: top-left;
-    -fx-pref-width: 300.0;
+    -fx-max-width: 1000000000;
     -jfx-focus-color: -fx-base-check-color;
     -fx-padding: 8;
     -jfx-unfocus-color: transparent;
@@ -1214,6 +1214,7 @@
     -jfx-unfocus-color: transparent;
     -fx-background-color: #f1f3f4;
     -fx-padding: 4;
+    -fx-max-width: 1000000000;
 }
 
 .jfx-combo-box-warning {

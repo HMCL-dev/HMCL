@@ -400,7 +400,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
                 txtServerIP = new JFXTextField();
                 txtServerIP.setPromptText(i18n("settings.advanced.server_ip.prompt"));
-                txtServerIP.getStyleClass().add("fit-width");
                 FXUtils.setLimitWidth(txtServerIP, 300);
                 serverPane.addRow(0, new Label(i18n("settings.advanced.server_ip")), txtServerIP);
             }
