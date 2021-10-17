@@ -20,7 +20,10 @@ package org.jackhuang.hmcl.ui.account;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.StringBinding;
-import javafx.beans.property.*;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Skin;
@@ -46,6 +49,7 @@ import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 import org.jackhuang.hmcl.util.skin.NormalizedSkin;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -53,8 +57,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
-
-import javax.imageio.ImageIO;
 
 import static java.util.Collections.emptySet;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
@@ -135,6 +137,8 @@ public class AccountListItem extends RadioButton {
             } else {
                 return createBooleanBinding(() -> true);
             }
+        } else if (account instanceof OfflineAccount) {
+            return createBooleanBinding(() -> true);
         } else {
             return createBooleanBinding(() -> false);
         }
@@ -145,6 +149,10 @@ public class AccountListItem extends RadioButton {
      */
     @Nullable
     public Task<?> uploadSkin() {
+        if (account instanceof OfflineAccount) {
+            Controllers.dialog(new OfflineAccountSkinPane((OfflineAccount) account));
+            return null;
+        }
         if (!(account instanceof YggdrasilAccount)) {
             return null;
         }

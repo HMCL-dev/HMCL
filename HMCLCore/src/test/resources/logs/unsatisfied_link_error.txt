@@ -1,0 +1,35 @@
+2021-10-09 00:17:06,325 main WARN Advanced terminal features are not available in this environment
+[00:17:06] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher running: args [--username, 95_bx, --version, 1.16.4, --gameDir, C:\Users\69510\Desktop\.minecraft, --assetsDir, C:\Users\69510\Desktop\.minecraft\assets, --assetIndex, 1.16, --uuid, 960e00a7ed553d53b6d1e9cfac5fe6e2, --accessToken, ????????, --userType, mojang, --versionType, HMCL 3.4.202, --width, 854, --height, 480, --tweakClass, optifine.OptiFineTweaker, --launchTarget, fmlclient, --fml.forgeVersion, 35.1.37, --fml.mcVersion, 1.16.4, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20201102.104115]
+[00:17:06] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher 8.0.9+86+master.3cf110c starting: java version 1.8.0_151 by Oracle Corporation
+[00:17:06] [main/WARN] [cp.mo.mo.SecureJarHandler/]: LEGACY JDK DETECTED, SECURED JAR HANDLING DISABLED
+[00:17:06] [main/INFO] [op.OptiFineTransformationService/]: OptiFineTransformationService.onLoad
+[00:17:06] [main/INFO] [op.OptiFineTransformationService/]: OptiFine ZIP file: C:\Users\69510\Desktop\.minecraft\libraries\optifine\OptiFine\1.16.4_HD_U_G7\OptiFine-1.16.4_HD_U_G7.jar
+[00:17:06] [main/INFO] [op.OptiFineTransformer/]: Target.PRE_CLASS is available
+[00:17:07] [main/INFO] [ne.mi.fm.lo.FixSSL/CORE]: Added Lets Encrypt root certificates as additional trust
+[00:17:07] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.2 Source=file:/C:/Users/69510/Desktop/.minecraft/libraries/org/spongepowered/mixin/0.8.2/mixin-0.8.2.jar Service=ModLauncher Env=CLIENT
+[00:17:07] [main/INFO] [op.OptiFineTransformationService/]: OptiFineTransformationService.initialize
+[00:17:07] [main/INFO] [STDERR/]: [org.lwjgl.system.Library:printError:424]: [LWJGL] Failed to load a library. Possible solutions:
+	a) Add the directory that contains the shared library to -Djava.library.path or -Dorg.lwjgl.librarypath.
+	b) Add the JAR that contains the shared library to the classpath.
+[00:17:07] [main/INFO] [STDERR/]: [org.lwjgl.system.Library:printError:426]: [LWJGL] Enable debug mode with -Dorg.lwjgl.util.Debug=true for better diagnostics.
+[00:17:07] [main/INFO] [STDERR/]: [org.lwjgl.system.Library:printError:428]: [LWJGL] Enable the SharedLibraryLoader debug mode with -Dorg.lwjgl.util.DebugLoader=true for better diagnostics.
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: java.lang.UnsatisfiedLinkError: Failed to locate library: lwjgl.dll
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at org.lwjgl.system.Library.loadSystem(Library.java:147)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at org.lwjgl.system.Library.loadSystem(Library.java:67)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at org.lwjgl.system.Library.<clinit>(Library.java:50)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at org.lwjgl.system.MemoryUtil.<clinit>(MemoryUtil.java:97)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at org.lwjgl.system.Pointer$Default.<clinit>(Pointer.java:67)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at org.lwjgl.system.Callback.<clinit>(Callback.java:40)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at net.minecraftforge.fml.loading.progress.ClientVisualization.initWindow(ClientVisualization.java:66)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at net.minecraftforge.fml.loading.progress.ClientVisualization.start(ClientVisualization.java:317)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at net.minecraftforge.fml.loading.progress.EarlyProgressVisualization.accept(EarlyProgressVisualization.java:43)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at net.minecraftforge.fml.loading.FMLLoader.setupLaunchHandler(FMLLoader.java:190)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at net.minecraftforge.fml.loading.FMLServiceProvider.initialize(FMLServiceProvider.java:94)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at cpw.mods.modlauncher.TransformationServiceDecorator.onInitialize(TransformationServiceDecorator.java:68)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at cpw.mods.modlauncher.TransformationServicesHandler.lambda$initialiseTransformationServices$7(TransformationServicesHandler.java:107)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at java.util.HashMap$Values.forEach(Unknown Source)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at cpw.mods.modlauncher.TransformationServicesHandler.initialiseTransformationServices(TransformationServicesHandler.java:107)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at cpw.mods.modlauncher.TransformationServicesHandler.initializeTransformationServices(TransformationServicesHandler.java:59)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at cpw.mods.modlauncher.Launcher.run(Launcher.java:76)
+[00:17:07] [main/INFO] [STDERR/]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at cpw.mods.modlauncher.Launcher.main(Launcher.java:66)
+Exception in thread "main"

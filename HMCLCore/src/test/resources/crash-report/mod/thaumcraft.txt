@@ -1,0 +1,169 @@
+---- Minecraft Crash Report ----
+
+WARNING: coremods are present:
+  CreativePatchingLoader ({扶人前置}CreativeCore_v1.9.45_mc1.12.2.jar)
+  BetterFoliageLoader ({树叶}BetterFoliage-MC1.12-2.2.0.jar)
+  ForgelinPlugin ({生命上限前置}Forgelin-1.8.2.jar)
+  PhosphorFMLLoadingPlugin (phosphor-1.12.2-0.1.6+build31.jar)
+  DynamicSurroundingsCore (DynamicSurroundings-core-1.12.2-3.5.4.3.jar)
+Contact their authors BEFORE contacting forge
+
+// I feel sad now :(
+
+Time: 6/17/19 11:30 AM
+Description: Initializing game
+
+java.lang.RuntimeException: Invalid id 4096 - maximum id range exceeded.
+	at net.minecraftforge.registries.ForgeRegistry.add(ForgeRegistry.java:296)
+	at net.minecraftforge.registries.ForgeRegistry.add(ForgeRegistry.java:282)
+	at net.minecraftforge.registries.ForgeRegistry.register(ForgeRegistry.java:115)
+	at thaumcraft.common.config.ConfigBlocks.registerBlock(ConfigBlocks.java:508)
+	at thaumcraft.common.config.ConfigBlocks.registerBlock(ConfigBlocks.java:503)
+	at thaumcraft.common.config.ConfigBlocks.initBlocks(ConfigBlocks.java:362)
+	at thaumcraft.Registrar.registerBlocks(Registrar.java:48)
+	at net.minecraftforge.fml.common.eventhandler.ASMEventHandler_148_Registrar_registerBlocks_Register.invoke(.dynamic)
+	at net.minecraftforge.fml.common.eventhandler.ASMEventHandler.invoke(ASMEventHandler.java:90)
+	at net.minecraftforge.fml.common.eventhandler.EventBus$1.invoke(EventBus.java:144)
+	at net.minecraftforge.fml.common.eventhandler.EventBus.post(EventBus.java:182)
+	at net.minecraftforge.registries.GameData.fireRegistryEvents(GameData.java:775)
+	at net.minecraftforge.fml.common.Loader.preinitializeMods(Loader.java:628)
+	at net.minecraftforge.fml.client.FMLClientHandler.beginMinecraftLoading(FMLClientHandler.java:252)
+	at net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:466)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:377)
+	at net.minecraft.client.main.Main.main(SourceFile:123)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:135)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:28)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Client thread
+Stacktrace:
+	at net.minecraftforge.registries.ForgeRegistry.add(ForgeRegistry.java:296)
+	at net.minecraftforge.registries.ForgeRegistry.add(ForgeRegistry.java:282)
+	at net.minecraftforge.registries.ForgeRegistry.register(ForgeRegistry.java:115)
+	at thaumcraft.common.config.ConfigBlocks.registerBlock(ConfigBlocks.java:508)
+	at thaumcraft.common.config.ConfigBlocks.registerBlock(ConfigBlocks.java:503)
+	at thaumcraft.common.config.ConfigBlocks.initBlocks(ConfigBlocks.java:362)
+	at thaumcraft.Registrar.registerBlocks(Registrar.java:48)
+	at net.minecraftforge.fml.common.eventhandler.ASMEventHandler_148_Registrar_registerBlocks_Register.invoke(.dynamic)
+	at net.minecraftforge.fml.common.eventhandler.ASMEventHandler.invoke(ASMEventHandler.java:90)
+	at net.minecraftforge.fml.common.eventhandler.EventBus$1.invoke(EventBus.java:144)
+	at net.minecraftforge.fml.common.eventhandler.EventBus.post(EventBus.java:182)
+	at net.minecraftforge.registries.GameData.fireRegistryEvents(GameData.java:775)
+	at net.minecraftforge.fml.common.Loader.preinitializeMods(Loader.java:628)
+	at net.minecraftforge.fml.client.FMLClientHandler.beginMinecraftLoading(FMLClientHandler.java:252)
+	at net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:466)
+
+-- Initialization --
+Details:
+Stacktrace:
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:377)
+	at net.minecraft.client.main.Main.main(SourceFile:123)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:135)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:28)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.12.2
+	Operating System: Windows 10 (amd64) version 10.0
+	Java Version: 1.8.0_172, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 145002968 bytes (138 MB) / 687865856 bytes (656 MB) up to 3221225472 bytes (3072 MB)
+	JVM Flags: 11 total; -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=16M -XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -Xmn128m -Xmx3072m -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump
+	IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+	FML: MCP 9.42 Powered by Forge 14.23.5.2768 Optifine OptiFine_1.12.2_HD_U_E4_pre4 39 mods loaded, 39 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+
+	| State | ID                | Version      | Source                                                   | Signature                                |
+	|:----- |:----------------- |:------------ |:-------------------------------------------------------- |:---------------------------------------- |
+	| UCH   | minecraft         | 1.12.2       | minecraft.jar                                            | None                                     |
+	| UCH   | mcp               | 9.42         | minecraft.jar                                            | None                                     |
+	| UCH   | FML               | 8.0.99.99    | forge-1.12.2-14.23.5.2768.jar                            | e3c3d50c7c986df74c645c0ac54639741c90a557 |
+	| UCH   | forge             | 14.23.5.2768 | forge-1.12.2-14.23.5.2768.jar                            | e3c3d50c7c986df74c645c0ac54639741c90a557 |
+	| UCH   | creativecoredummy | 1.0.0        | minecraft.jar                                            | None                                     |
+	| UCH   | dsurroundcore     | 3.5.4.3      | minecraft.jar                                            | None                                     |
+	| UCH   | reforged          | 0.7.5        | [更多武器]Reforged-Mod-1.12.jar                              | None                                     |
+	| UCH   | mocreatures       | 12.0.5       | [更多生物]DrZharks MoCreatures Mod-12.0.5.jar                | None                                     |
+	| UCH   | customspawner     | 3.11.4       | [更多生物前置]CustomMobSpawner-3.11.4.jar                      | None                                     |
+	| UCH   | orbis-lib         | 0.2.0        | orbis-lib-1.12.2-0.2.0+build42.jar                       | db341c083b1b8ce9160a769b569ef6737b3f4cdf |
+	| UCH   | aether            | 0.2.0        | aether_ii-1.12.2-0.2.0+build42-universal.jar             | db341c083b1b8ce9160a769b569ef6737b3f4cdf |
+	| UCH   | jei               | 4.15.0.268   | {JEI}jei_1.12.2-4.15.0.268.jar                           | None                                     |
+	| UCH   | jeresources       | 0.8.9.48     | {JEI附属}JustEnoughResources-1.12.2-0.8.9.48.jar           | None                                     |
+	| UCH   | wawla             | 2.5.273      | {信息显示}Wawla-1.12.2-2.5.273.jar                           | d476d1b22b218a10d845928d1665d45fce301b27 |
+	| UCH   | craftstudioapi    | 1.0.0        | {动物前置}CraftStudioAPI-universal-1.0.1.95-mc1.12-alpha.jar | None                                     |
+	| UCH   | baubles           | 1.5.2        | {神秘前置}Baubles-1.12-1.5.2.jar                             | None                                     |
+	| UCH   | thaumcraft        | 6.1.BETA26   | {神秘}Thaumcraft-1.12.2-6.1.BETA26.jar                     | None                                     |
+	| UCH   | twilightforest    | 3.8.689      | {暮色}twilightforest-1.12.2-3.8.689-universal.jar          | None                                     |
+	| UCH   | animania          | 1.6.2        | {动物}animania-1.12.2-1.6.2.jar                            | None                                     |
+	| UCH   | xaerominimap      | 1.17.1       | {小地图}Xaeros_Minimap_1.17.1_Forge_1.12.jar                | None                                     |
+	| UCH   | playerrevive      | 1.0          | {扶人}PlayerRevive_v1.2.26_mc1.12.2.jar                    | None                                     |
+	| UCH   | creativecore      | 1.9.9        | {扶人前置}CreativeCore_v1.9.45_mc1.12.2.jar                  | None                                     |
+	| UCH   | fbp               | 2.4.1        | {方块破坏}FancyBlockParticles-1.12.x-2.4.1.jar               | None                                     |
+	| UCH   | forgelin          | 1.8.2        | {生命上限前置}Forgelin-1.8.2.jar                               | None                                     |
+	| UCH   | betterfoliage     | 2.2.0        | {树叶}BetterFoliage-MC1.12-2.2.0.jar                       | None                                     |
+	| UCH   | waila             | 1.8.26       | {消息显示}Hwyla-1.8.26-B41_1.12.2.jar                        | None                                     |
+	| UCH   | abyssalcraft      | 1.9.6        | {深渊}AbyssalCraft-1.12.2-1.9.6.jar                        | 220f10d3a93b3ff5fbaa7434cc629d863d6751b9 |
+	| UCH   | shadowmc          | 3.8.0        | {生命上线前置}ShadowMC-1.12-3.8.0.jar                          | None                                     |
+	| UCH   | leveluphp         | 1.12.2-1.4.0 | {生命上限}leveluphp-1.12.2-1.4.0.jar                         | None                                     |
+	| UCH   | dmp               | 1.12.0       | {真实世界}dmp-1.12.0.jar                                     | None                                     |
+	| UCH   | pmp               | 1.12.1       | {真实世界}pmp-1.12.1.jar                                     | None                                     |
+	| UCH   | realworld         | 1.18         | {真实世界}realworld-1.18.jar                                 | None                                     |
+	| UCH   | durabilityshow    | 5.0.0        | {耐久显示}Durability+Show-1.12-5.0.0.jar                     | None                                     |
+	| UCH   | powerinventory    | 2.3.1        | {背包扩大}OverpoweredInventory-1.12-2.3.1.jar                | None                                     |
+	| UCH   | neat              | 1.4-17       | {血条}Neat+1.4-17.jar                                      | None                                     |
+	| UCH   | phosphor-lighting | 1.12.2-0.1.6 | phosphor-1.12.2-0.1.6+build31.jar                        | f0387d288626cc2d937daa504e74af570c52a2f1 |
+	| UCH   | orelib            | 3.5.2.2      | {环境前置}OreLib-1.12.2-3.5.2.2.jar                          | 7a2128d395ad96ceb9d9030fbd41d035b435753a |
+	| UCH   | dsurround         | 3.5.4.3      | {环境}DynamicSurroundings-1.12.2-3.5.4.3.jar               | 7a2128d395ad96ceb9d9030fbd41d035b435753a |
+	| UCH   | dshuds            | 3.5.4.0      | {环境附属}DynamicSurroundingsHuds-1.12.2-3.5.4.0BETA.jar     | 7a2128d395ad96ceb9d9030fbd41d035b435753a |
+
+	Loaded coremods (and transformers):
+CreativePatchingLoader ({扶人前置}CreativeCore_v1.9.45_mc1.12.2.jar)
+
+BetterFoliageLoader ({树叶}BetterFoliage-MC1.12-2.2.0.jar)
+  mods.betterfoliage.loader.BetterFoliageTransformer
+ForgelinPlugin ({生命上限前置}Forgelin-1.8.2.jar)
+
+PhosphorFMLLoadingPlugin (phosphor-1.12.2-0.1.6+build31.jar)
+
+DynamicSurroundingsCore (DynamicSurroundings-core-1.12.2-3.5.4.3.jar)
+  org.orecruncher.dsurround.asm.Transformer
+	GL info: ' Vendor: 'NVIDIA Corporation' Version: '4.5.0 NVIDIA 376.53' Renderer: 'GeForce GTX 960/PCIe/SSE2'
+	Launched Version: HMCL 3.1.77
+	LWJGL: 2.9.4
+	OpenGL: GeForce GTX 960/PCIe/SSE2 GL version 4.5.0 NVIDIA 376.53, NVIDIA Corporation
+	GL Caps: Using GL 1.3 multitexturing.
+Using GL 1.3 texture combiners.
+Using framebuffer objects because OpenGL 3.0 is supported and separate blending is supported.
+Shaders are available because OpenGL 2.1 is supported.
+VBOs are available because OpenGL 1.5 is supported.
+
+	Using VBOs: Yes
+	Is Modded: Definitely; Client brand changed to 'fml,forge'
+	Type: Client (map_client.txt)
+	Resource Packs:
+	Current Language: 简体中文 (中国)
+	Profiler Position: N/A (disabled)
+	CPU: 8x Intel(R) Xeon(R) CPU E3-1231 v3 @ 3.40GHz
+	OptiFine Version: OptiFine_1.12.2_HD_U_E4_pre4
+	OptiFine Build: 20190410-123819
+	Render Distance Chunks: 12
+	Mipmaps: 4
+	Anisotropic Filtering: 1
+	Antialiasing: 0
+	Multitexture: false
+	Shaders: null
+	OpenGlVersion: 4.5.0 NVIDIA 376.53
+	OpenGlRenderer: GeForce GTX 960/PCIe/SSE2
+	OpenGlVendor: NVIDIA Corporation
+	CpuCount: 8

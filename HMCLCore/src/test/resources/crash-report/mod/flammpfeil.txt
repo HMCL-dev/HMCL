@@ -1,0 +1,133 @@
+---- Minecraft Crash Report ----
+// Hey, that tickles! Hehehe!
+
+Time: 1/29/19 10:43 PM
+Description: Ticking entity
+
+java.lang.NullPointerException: Ticking entity
+	at mods.flammpfeil.slashblade.entity.EntitySakuraEndManager.func_70071_h_(EntitySakuraEndManager.java:123)
+	at net.minecraft.world.World.func_72866_a(World.java:2740)
+	at net.minecraft.world.WorldServer.func_72866_a(WorldServer.java:877)
+	at net.minecraft.world.World.func_72870_g(World.java:2678)
+	at net.minecraft.world.World.func_72939_s(World.java:2480)
+	at net.minecraft.world.WorldServer.func_72939_s(WorldServer.java:673)
+	at net.minecraft.server.MinecraftServer.func_71190_q(MinecraftServer.java:986)
+	at net.minecraft.server.dedicated.DedicatedServer.func_71190_q(DedicatedServer.java:432)
+	at net.minecraft.server.MinecraftServer.func_71217_p(MinecraftServer.java:841)
+	at net.minecraft.server.MinecraftServer.run(MinecraftServer.java:693)
+	at java.lang.Thread.run(Unknown Source)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Stacktrace:
+	at mods.flammpfeil.slashblade.entity.EntitySakuraEndManager.func_70071_h_(EntitySakuraEndManager.java:123)
+	at net.minecraft.world.World.func_72866_a(World.java:2740)
+	at net.minecraft.world.WorldServer.func_72866_a(WorldServer.java:877)
+	at net.minecraft.world.World.func_72870_g(World.java:2678)
+
+-- Entity being ticked --
+Details:
+	Entity Type: flammpfeil.slashblade.SakuraEndManager (mods.flammpfeil.slashblade.entity.EntitySakuraEndManager)
+	Entity ID: 9479014
+	Entity Name: entity.flammpfeil.slashblade.SakuraEndManager.name
+	Entity's Exact location: 643.38, 63.81, -79.59
+	Entity's Block location: World: (643,63,-80), Chunk: (at 3,3,0 in 40,-5; contains blocks 640,0,-80 to 655,255,-65), Region: (1,-1; contains chunks 32,-32 to 63,-1, blocks 512,0,-512 to 1023,255,-1)
+	Entity's Momentum: 0.00, 0.00, 0.00
+Stacktrace:
+	at net.minecraft.world.World.func_72939_s(World.java:2480)
+	at net.minecraft.world.WorldServer.func_72939_s(WorldServer.java:673)
+
+-- Affected level --
+Details:
+	Level name: world
+	All players: 11 total; [EntityPlayerMP['DBY'/469469, l='world', x=-4118.00, y=65.00, z=3859.00](DBY at -4118.0,65.0,3859.0), EntityPlayerMP['DBY'/781369, l='world', x=-4126.23, y=64.00, z=3823.59](DBY at -4126.227272121851,64.0,3823.5863172392415), EntityPlayerMP['DBY'/781369, l='world', x=-4126.23, y=64.00, z=3823.59](DBY at -4126.227272121851,64.0,3823.5863172392415), EntityPlayerMP['DBY'/781369, l='world', x=-4137.00, y=64.00, z=3806.00](DBY at -4137.0,64.0,3806.0), EntityPlayerMP['FFF_fuvk'/1538930, l='DIM-37', x=-3032.80, y=92.00, z=3253.17](FFF_fuvk at -3032.795149331054,92.0,3253.1699346065175), EntityPlayerMP['Ah_Fish'/9366620, l='world', x=2014.60, y=63.00, z=2104.45](Ah_Fish at 2014.5971571796383,63.0,2104.4533554409213), EntityPlayerMP['Saoooo'/9289124, l='world', x=643.38, y=63.00, z=-79.59](Saoooo at 643.3807204488786,63.0,-79.5876382983504), EntityPlayerMP['lalala'/9286296, l='world', x=645.87, y=63.00, z=-79.24](lalala at 645.8682427602682,63.0,-79.24332023905657), EntityPlayerMP['a_warm_day'/9395133, l='world', x=2010.60, y=72.00, z=2251.29](a_warm_day at 2010.5973072675706,72.0,2251.2870820180015), EntityPlayerMP['FFF_fuvk'/9426805, l='world', x=-4106.50, y=62.00, z=3874.65](FFF_fuvk at -4106.504930738181,62.0,3874.6547187729243), EntityPlayerMP['666'/9453107, l='world', x=2001.60, y=72.00, z=2240.70](666 at 2001.6005663678816,72.0,2240.699999988079)]
+	Chunk stats: ServerChunkCache: 2256 Drop: 0
+	Level seed: 8436081996934112249
+	Level generator: ID 00 - default, ver 1. Features enabled: true
+	Level generator options:
+	Level spawn location: World: (637,63,-91), Chunk: (at 13,3,5 in 39,-6; contains blocks 624,0,-96 to 639,255,-81), Region: (1,-1; contains chunks 32,-32 to 63,-1, blocks 512,0,-512 to 1023,255,-1)
+	Level time: 15766734 game time, 16267409 day time
+	Level dimension: 0
+	Level storage version: 0x04ABD - Anvil
+	Level weather: Rain time: 27839 (now: false), thunder time: 22680 (now: false)
+	Level game mode: Game mode: survival (ID 0). Hardcore: false. Cheats: false
+Stacktrace:
+	at net.minecraft.server.MinecraftServer.func_71190_q(MinecraftServer.java:986)
+	at net.minecraft.server.dedicated.DedicatedServer.func_71190_q(DedicatedServer.java:432)
+	at net.minecraft.server.MinecraftServer.func_71217_p(MinecraftServer.java:841)
+	at net.minecraft.server.MinecraftServer.run(MinecraftServer.java:693)
+	at java.lang.Thread.run(Unknown Source)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.7.10
+	Thermos Version: cyberdynecc:Thermos:1.7.10-1614.57
+	Plugins: CoreProtect, RedstoneClockPreventer, WorldEdit, Essentials, GroupManager, WorldBorder, Lockette, ProtocolLib, AutoSaveWorld, NoSpawnChunks, EssentialsProtect, RandomPlacer, NoExplode, BasicTrails, EssentialsChat, EssentialsAntiBuild, BanItem, iConomy, PTweaks, MOTDColor, Vault, RichAutoMessage, SFWSupport, VIP, EssentialsSpawn, PlotMe, NeverLag, QuickShop, Multiverse-Core, ColoredTags, Residence, AncientGates, ChestShop, AcademyBukkit, AuthMe
+	Disabled Plugins:
+	Operating System: Windows 7 (amd64) version 6.1
+	Java Version: 1.8.0_201, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 2167226872 bytes (2066 MB) / 10615259136 bytes (10123 MB) up to 10615259136 bytes (10123 MB)
+	JVM Flags: 4 total; -Xms4096M -Xmx10240M -XX:+AggressiveOpts -XX:+UseCompressedOops
+	AABB Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	IntCache: cache: 0, tcache: 0, allocated: 13, tallocated: 95
+	FML: MCP v9.05 FML v7.10.99.99 Minecraft Forge 10.13.4.1614 47 mods loaded, 47 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+	UCHIJAAAA	mcp{9.05} [Minecraft Coder Pack] (minecraft.jar)
+	UCHIJAAAA	FML{7.10.99.99} [Forge Mod Loader] (Thermos-1.7.10-1614-57-server.jar)
+	UCHIJAAAA	Forge{10.13.4.1614} [Minecraft Forge] (Thermos-1.7.10-1614-57-server.jar)
+	UCHIJAAAA	kimagine{0.2} [KImagine] (minecraft.jar)
+	UCHIJAAAA	LambdaLib|Core{1.2.3} [LambdaLib|Core] (minecraft.jar)
+	UCHIJAAAA	ThaumicTinkerer-preloader{0.1} [Thaumic Tinkerer Core] (minecraft.jar)
+	UCHIJAAAA	appliedenergistics2-core{rv3-beta-10} [Applied Energistics 2 Core] (minecraft.jar)
+	UCHIJAAAA	LambdaLib{1.2.3} [LambdaLib] ([AC]超能力前置.jar)
+	UCHIJAAAA	academy-craft{1.0.7} [Academy Craft] ([AC]超能力1.0.7.jar)
+	UCHIJAAAA	IC2{2.2.653-experimental} [IndustrialCraft 2] ([ic]工业2.jar)
+	UCHIJAAAA	GraviSuite{1.7.10-2.0.3} [Graviation Suite] ([ic]重力装甲.jar)
+	UCHIJAAAA	AdvancedSolarPanel{1.7.10-3.5.1} [Advanced Solar Panels] ([ic]高级太阳能.jar)
+	UCHIJAAAA	Baubles{1.0.1.10} [Baubles] (Baubles-1.7.10-1.0.1.10.jar)
+	UCHIJAAAA	Thaumcraft{4.2.3.5} [Thaumcraft] ([TC4]神秘时代.jar)
+	UCHIJAAAA	Botania{r1.8-249} [Botania] ([植物魔法].jar)
+	UCHIJAAAA	appliedenergistics2{rv3-beta-10} [Applied Energistics 2] (应用能源2.jar)
+	UCHIJAAAA	ThaumicTinkerer{unspecified} [Thaumic Tinkerer] ([神秘工匠]ThaumicTinkerer-2.5-1.7.10-164.jar)
+	UCHIJAAAA	AWWayofTime{v1.3.3} [Blood Magic: Alchemical Wizardry] ([血魔法].jar)
+	UCHIJAAAA	ForbiddenMagic{1.7.10-0.575} [Forbidden Magic] ([TC4]禁忌魔法.jar)
+	UCHIJAAAA	witchery{0.24.1} [Witchery] ([巫术].jar)
+	UCHIJAAAA	dakimakuramod{1.7.10-1.2} [Dakimakura Mod] ([抱枕]dakimakuramod-1.7.10-1.2.jar)
+	UCHIJAAAA	flammpfeil.slashblade{mc1.7.10-r87} [SlashBlade] ([拔刀剑主版本]SlashBlade-mc1.7.10-r87.jar)
+	UCHIJAAAA	Pseudo{1.0.0} [Pseudo] ([拔刀剑]伪刃SlashBlade-PseudoEdge-mc1.7.10-r11.jar)
+	UCHIJAAAA	flammpfeil.nihil{mc1.7.x-r8} [Nihil] ([拔刀剑]似蛭1.7.x-r8.jar)
+	UCHIJAAAA	flammpfeil.slashblade.terra{mc1.7.10-r1} [SlashBlade-Terra] ([拔刀剑]大地之刃SlashBlade-Terra-mc1.7.10-r1.jar)
+	UCHIJAAAA	flammpfeil.slashblade.zephyr{1.7.2 r1.2} [SlashBladeZephyr] ([拔刀剑]风雷太刀r1.2.2.jar)
+	UCHIJAAAA	mod_ecru_MapleTree{1.1.33m} [MapleTree] ([新版枫树1.1.33].jar)
+	UCHIJAAAA	eplus{3.0.2-d} [Enchanting Plus] ([更好的附魔].jar)
+	UCHIJAAAA	MSM3{3.0.0d} [More Swords 3] ([武器].jar)
+	UCHIJAAAA	TaintedMagic{1.1.6.3} [Tainted Magic] ([污秽魔法].jar)
+	UCHIJAAAA	guielevator{1.5} [Elrol's GUI Elevator] ([电梯].jar)
+	UCHIJAAAA	flammpfeil.slashblade.kamuy{mc1.7.10-r6} [Kamuy] ([神剑]-Kamuy-r6.jar)
+	UCHIJAAAA	DummyCore{2.0.1710.0.A} [DummyCore] ([神秘基础学前置].jar)
+	UCHIJAAAA	thaumicbases{1.3.1710.2} [Thaumic Bases] ([神秘基础学].jar)
+	UCHIJAAAA	BambooMod{Minecraft1.7.10 var2.6.8.2} [BambooMod] ([竹].jar)
+	UCHIJAAAA	levels{r2.3.0} [Levels] ([等级系统].jar)
+	UCHIJAAAA	Automagy{0.28.2} [Automagy] ([自动化魔法].jar)
+	UCHIJAAAA	customnpcs{1.7.10d} [CustomNpcs] ([自定义NPC].jar)
+	UCHIJAAAA	ExtraBotany{r1.0-21} [ExtraBotany] ([额外植物].jar)
+	UCHIJAAAA	magicalcrops{1.7.2 - 0.1 ALPHA} [Magical Crops] ([魔法作物].jar)
+	UCHIJAAAA	transformers{0.6.3} [Transformers Mod] (变形金刚.jar)
+	UCHIJAAAA	BiblioCraft{1.11.5} [BiblioCraft] (展示架.jar)
+	UCHIJAAAA	armourersWorkshop{1.7.10-0.48.3} [Armourer's Workshop] (时装工坊0.48.jar)
+	UCHIJAAAA	EMT{1.2.2} [Electro-Magic Tools] (电力魔法工具.jar)
+	UCHIJAAAA	PTRModelLib{1.0.0} [PTRModelLib] (装饰工艺.jar)
+	UCHIJAAAA	props{2.4.2} [Decocraft] (装饰工艺.jar)
+	UCHIJAAAA	FoodCraft{1.2.0} [FoodCraft(FoodCraft)] (食物工艺.jar)
+	AE2 Version: beta rv3-beta-10 for Forge 10.13.4.1448
+	[DummyCore]: 'Special case ASM modification mods: ''Note, that this mods might not be involved in the crash in ANY WAY!''DummyCore just prints some known mods for a lot of ASM modifications''DummyCore'
+	AE2 Integration: IC2:ON, RotaryCraft:OFF, RC:OFF, BuildCraftCore:OFF, BuildCraftTransport:OFF, BuildCraftBuilder:OFF, RF:ON, RFItem:ON, MFR:OFF, DSU:OFF, FZ:OFF, FMP:OFF, RB:OFF, CLApi:OFF, Waila:OFF, Mekanism:OFF, ImmibisMicroblocks:OFF, BetterStorage:OFF, OpenComputers:OFF, PneumaticCraft:OFF
+	Profiler Position: N/A (disabled)
+	Vec3 Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	Player Count: 7 / 50; [EntityPlayerMP['lalala'/9286296, l='world', x=645.87, y=63.00, z=-79.24](lalala at 645.8682427602682,63.0,-79.24332023905657), EntityPlayerMP['Saoooo'/9289124, l='world', x=643.38, y=63.00, z=-79.59](Saoooo at 643.3807204488786,63.0,-79.5876382983504), EntityPlayerMP['Ah_Fish'/9366620, l='world', x=2014.60, y=63.00, z=2104.45](Ah_Fish at 2014.5971571796383,63.0,2104.4533554409213), EntityPlayerMP['a_warm_day'/9395133, l='world', x=2010.60, y=72.00, z=2251.29](a_warm_day at 2010.5973072675706,72.0,2251.2870820180015), EntityPlayerMP['FFF_fuvk'/9426805, l='world', x=-4106.50, y=62.00, z=3874.65](FFF_fuvk at -4106.504930738181,62.0,3874.6547187729243), EntityPlayerMP['666'/9453107, l='world', x=2001.60, y=72.00, z=2240.70](666 at 2001.6005663678816,72.0,2240.699999988079), EntityPlayerMP['Guide'/9465741, l='plotworld', x=-83.40, y=59.00, z=-83.12](Guide at -83.39891777874837,59.0,-83.11642267352487)]
+	Is Modded: Definitely; Server brand changed to 'thermos,cauldron,craftbukkit,mcpc,kcauldron,fml,forge'
+	Type: Dedicated Server (map_server.txt)

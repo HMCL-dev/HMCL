@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.FileSystem;
@@ -66,13 +65,13 @@ public class PackMcMeta implements Validation {
         private final int packFormat;
 
         @SerializedName("description")
-        private final ModInfo.Description description;
+        private final LocalModFile.Description description;
 
         public PackInfo() {
-            this(0, new ModInfo.Description(Collections.emptyList()));
+            this(0, new LocalModFile.Description(Collections.emptyList()));
         }
 
-        public PackInfo(int packFormat, ModInfo.Description description) {
+        public PackInfo(int packFormat, LocalModFile.Description description) {
             this.packFormat = packFormat;
             this.description = description;
         }
@@ -81,7 +80,7 @@ public class PackMcMeta implements Validation {
             return packFormat;
         }
 
-        public ModInfo.Description getDescription() {
+        public LocalModFile.Description getDescription() {
             return description;
         }
     }
@@ -112,13 +111,13 @@ public class PackMcMeta implements Validation {
             }
         }
 
-        public ModInfo.Description.Part deserialize(JsonElement json, JsonDeserializationContext context) throws JsonParseException {
+        public LocalModFile.Description.Part deserialize(JsonElement json, JsonDeserializationContext context) throws JsonParseException {
             if (json.isJsonPrimitive()) {
-                return new ModInfo.Description.Part(parseText(json));
+                return new LocalModFile.Description.Part(parseText(json));
             } else if (json.isJsonObject()) {
                 JsonObject obj = json.getAsJsonObject();
                 String text = parseText(obj.get("text"));
-                return new ModInfo.Description.Part(text);
+                return new LocalModFile.Description.Part(text);
             } else {
                 throw new JsonParseException("pack.mcmeta Raw JSON text should be string or an object");
             }
@@ -126,31 +125,37 @@ public class PackMcMeta implements Validation {
 
         @Override
         public PackInfo deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            List<ModInfo.Description.Part> parts = new ArrayList<>();
+            List<LocalModFile.Description.Part> parts = new ArrayList<>();
             JsonObject packInfo = json.getAsJsonObject();
             int packFormat = packInfo.get("pack_format").getAsInt();
             JsonElement description = packInfo.get("description");
             if (description.isJsonPrimitive()) {
-                parts.add(new ModInfo.Description.Part(parseText(description)));
+                parts.add(new LocalModFile.Description.Part(parseText(description)));
             } else if (description.isJsonArray()) {
                 for (JsonElement element : description.getAsJsonArray()) {
                     JsonObject descriptionPart = element.getAsJsonObject();
-                    parts.add(new ModInfo.Description.Part(descriptionPart.get("text").getAsString(), descriptionPart.get("color").getAsString()));
+                    parts.add(new LocalModFile.Description.Part(descriptionPart.get("text").getAsString(), descriptionPart.get("color").getAsString()));
                 }
             } else {
                 throw new JsonParseException("pack.mcmeta::pack::description should be String or array of text objects with text and color fields");
             }
-            return new PackInfo(packFormat, new ModInfo.Description(parts));
+            return new PackInfo(packFormat, new LocalModFile.Description(parts));
         }
     }
 
-    public static ModInfo fromFile(ModManager modManager, File modFile) throws IOException, JsonParseException {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.toPath())) {
+    public static LocalModFile fromFile(ModManager modManager, Path modFile) throws IOException, JsonParseException {
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
             Path mcmod = fs.getPath("pack.mcmeta");
             if (Files.notExists(mcmod))
                 throw new IOException("File " + modFile + " is not a resource pack.");
             PackMcMeta metadata = JsonUtils.fromNonNullJson(FileUtils.readText(mcmod), PackMcMeta.class);
-            return new ModInfo(modManager, modFile, null, FileUtils.getNameWithoutExtension(modFile), metadata.pack.description, "", "", "", "", "");
+            return new LocalModFile(
+                    modManager,
+                    modManager.getLocalMod(FileUtils.getNameWithoutExtension(modFile), ModLoaderType.PACK),
+                    modFile,
+                    FileUtils.getNameWithoutExtension(modFile),
+                    metadata.pack.description,
+                    "", "", "", "", "");
         }
     }
 }

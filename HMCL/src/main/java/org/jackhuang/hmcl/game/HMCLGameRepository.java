@@ -32,21 +32,23 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.ProxyManager;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
@@ -89,6 +91,13 @@ public class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
+    public Stream<Version> getDisplayVersions() {
+        return getVersions().stream()
+                .filter(v -> !v.isHidden())
+                .sorted(Comparator.comparing((Version v) -> v.getReleaseTime() == null ? new Date(0L) : v.getReleaseTime())
+                        .thenComparing(v -> VersionNumber.asVersion(v.getId())));
+    }
+
     @Override
     protected void refreshVersionsImpl() {
         localVersionSettings.clear();
@@ -105,7 +114,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             if (!file.exists() && !versions.isEmpty())
                 FileUtils.writeText(file, PROFILE);
         } catch (IOException ex) {
-            Logging.LOG.log(Level.WARNING, "Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex);
+            LOG.log(Level.WARNING, "Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex);
         }
 
         // https://github.com/huanghongxun/HMCL/issues/938
@@ -258,7 +267,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             FileUtils.writeText(file, GSON.toJson(localVersionSettings.get(id)));
             return true;
         } catch (IOException e) {
-            Logging.LOG.log(Level.SEVERE, "Unable to save version setting of " + id, e);
+            LOG.log(Level.SEVERE, "Unable to save version setting of " + id, e);
             return false;
         }
     }
@@ -284,14 +293,14 @@ public class HMCLGameRepository extends DefaultGameRepository {
             vs.setUsesGlobal(true);
     }
 
-    public LaunchOptions getLaunchOptions(String version, File gameDir, boolean checkJava) throws InterruptedException {
+    public LaunchOptions getLaunchOptions(String version, JavaVersion javaVersion, File gameDir) {
         VersionSetting vs = getVersionSetting(version);
 
-        JavaVersion javaVersion = Optional.ofNullable(vs.getJavaVersion(checkJava)).orElse(JavaVersion.fromCurrentEnvironment());
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
                 .setGameDir(gameDir)
                 .setJava(javaVersion)
                 .setVersionType(Metadata.TITLE)
+                .setVersionName(version)
                 .setProfileName(Metadata.TITLE)
                 .setGameArguments(StringUtils.tokenize(vs.getMinecraftArgs()))
                 .setJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
@@ -307,7 +316,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setFullscreen(vs.isFullscreen())
                 .setServerIp(vs.getServerIp())
                 .setWrapper(vs.getWrapper())
-                .setPrecalledCommand(vs.getPreLaunchCommand())
+                .setPreLaunchCommand(vs.getPreLaunchCommand())
+                .setPostExitCommand(vs.getPostExitCommand())
                 .setNoGeneratedJVMArgs(vs.isNoJVMArgs())
                 .setNativesDirType(vs.getNativesDirType())
                 .setNativesDir(vs.getNativesDir())

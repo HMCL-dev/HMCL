@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 
 import java.io.Closeable;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -117,7 +118,7 @@ public abstract class FetchTask<T> extends Task<T> {
                                 continue;
                             }
                         } else if (responseCode / 100 == 4) {
-                            break; // we will not try this URL again
+                            throw new FileNotFoundException();
                         } else if (responseCode / 100 != 2) {
                             throw new ResponseCodeException(url, responseCode);
                         }
@@ -157,6 +158,12 @@ public abstract class FetchTask<T> extends Task<T> {
                     }
 
                     return;
+                } catch (FileNotFoundException ex) {
+                    failedURL = url;
+                    exception = ex;
+                    Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", not found", ex);
+
+                    break; // we will not try this URL again
                 } catch (IOException ex) {
                     failedURL = url;
                     exception = ex;
@@ -290,6 +297,7 @@ public abstract class FetchTask<T> extends Task<T> {
     }
 
     public static void setDownloadExecutorConcurrency(int concurrency) {
+        concurrency = Math.max(concurrency, 1);
         synchronized (Schedulers.class) {
             downloadExecutorConcurrency = concurrency;
             if (DOWNLOAD_EXECUTOR != null) {

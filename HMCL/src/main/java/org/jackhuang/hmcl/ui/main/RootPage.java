@@ -17,9 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
-import javafx.scene.Node;
-import javafx.scene.control.SkinBase;
-import javafx.scene.layout.BorderPane;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -32,11 +30,12 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.ui.construct.TabHeader;
-import org.jackhuang.hmcl.ui.decorator.DecoratorTabPage;
+import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
+import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
@@ -52,18 +51,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class RootPage extends DecoratorTabPage {
+public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
     private MainPage mainPage = null;
 
-    private final TabHeader.Tab<MainPage> mainTab = new TabHeader.Tab<>("main");
-
     public RootPage() {
-        setLeftPaneWidth(200);
-
         EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class)
                 .register(event -> onRefreshedVersions((HMCLGameRepository) event.getSource()));
 
@@ -71,25 +66,13 @@ public class RootPage extends DecoratorTabPage {
         if (profile != null && profile.getRepository().isLoaded())
             onRefreshedVersions(Profiles.selectedProfileProperty().get().getRepository());
 
-        mainTab.setNodeSupplier(this::getMainPage);
-        getTabs().setAll(mainTab);
+        getStyleClass().remove("gray-background");
+        getLeft().getStyleClass().add("gray-background");
     }
 
     @Override
-    public boolean back() {
-        if (mainTab.isSelected())
-            return true;
-        else {
-            getSelectionModel().select(mainTab);
-            return false;
-        }
-    }
-
-    @Override
-    protected void onNavigated(Node to) {
-        backableProperty().set(!(to instanceof MainPage));
-
-        super.onNavigated(to);
+    public ReadOnlyObjectProperty<State> stateProperty() {
+        return getMainPage().stateProperty();
     }
 
     @Override
@@ -131,7 +114,7 @@ public class RootPage extends DecoratorTabPage {
         return mainPage;
     }
 
-    private static class Skin extends SkinBase<RootPage> {
+    private static class Skin extends DecoratorAnimatedPageSkin<RootPage> {
 
         protected Skin(RootPage control) {
             super(control);
@@ -155,30 +138,28 @@ public class RootPage extends DecoratorTabPage {
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
-            gameItem.setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/bookshelf.png")).getKey());
+            gameItem.setLeftGraphic(wrap(SVG::viewList));
+            gameItem.setActionButtonVisible(false);
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
 
             // forth item in left sidebar
             AdvancedListItem downloadItem = new AdvancedListItem();
-            downloadItem
-                    .setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/chest.png")).getKey());
+            downloadItem.setLeftGraphic(wrap(SVG::downloadOutline));
             downloadItem.setActionButtonVisible(false);
             downloadItem.setTitle(i18n("download"));
             downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
 
             // fifth item in left sidebar
             AdvancedListItem multiplayerItem = new AdvancedListItem();
-            multiplayerItem
-                    .setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/command.png")).getKey());
+            multiplayerItem.setLeftGraphic(wrap(SVG::lan));
             multiplayerItem.setActionButtonVisible(false);
             multiplayerItem.setTitle(i18n("multiplayer"));
             multiplayerItem.setOnAction(e -> Controllers.navigate(Controllers.getMultiplayerPage()));
 
             // sixth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
-            launcherSettingsItem
-                    .setLeftGraphic(AdvancedListItem.createImageView(newImage("/assets/img/command.png")).getKey());
+            launcherSettingsItem.setLeftGraphic(wrap(SVG::gearOutline));
             launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
@@ -191,23 +172,13 @@ public class RootPage extends DecoratorTabPage {
                     .add(gameListItem)
                     .add(gameItem)
                     .add(downloadItem)
-                    .startCategory(i18n("settings.launcher.general").toLowerCase())
-//                    .add(multiplayerItem)
+                    .startCategory(i18n("settings.launcher.general").toUpperCase())
+                    .add(multiplayerItem)
                     .add(launcherSettingsItem);
 
             // the root page, with the sidebar in left, navigator in center.
-            BorderPane root = new BorderPane();
-            sideBar.setPrefWidth(200);
-            root.setLeft(sideBar);
-
-            {
-                control.transitionPane.getStyleClass().add("jfx-decorator-content-container");
-                control.transitionPane.getChildren().setAll(getSkinnable().getMainPage());
-                FXUtils.setOverflowHidden(control.transitionPane, 8);
-                root.setCenter(control.transitionPane);
-            }
-
-            getChildren().setAll(root);
+            setLeft(sideBar);
+            setCenter(getSkinnable().getMainPage());
         }
 
     }

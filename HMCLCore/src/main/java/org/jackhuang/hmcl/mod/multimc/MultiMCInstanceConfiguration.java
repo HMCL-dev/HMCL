@@ -17,11 +17,14 @@
  */
 package org.jackhuang.hmcl.mod.multimc;
 
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -356,7 +359,12 @@ public final class MultiMCInstanceConfiguration {
                 throw new IOException("`instance.cfg` not found, " + modpackFile + " is not a valid MultiMC modpack.");
             try (InputStream instanceStream = Files.newInputStream(instancePath)) {
                 MultiMCInstanceConfiguration cfg = new MultiMCInstanceConfiguration(name, instanceStream, manifest);
-                return new Modpack(cfg.getName(), "", "", cfg.getGameVersion(), cfg.getNotes(), encoding, cfg);
+                return new Modpack(cfg.getName(), "", "", cfg.getGameVersion(), cfg.getNotes(), encoding, cfg) {
+                    @Override
+                    public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name) {
+                        return new MultiMCModpackInstallTask(dependencyManager, zipFile, this, cfg, name);
+                    }
+                };
             }
         }
     }

@@ -114,6 +114,11 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
         installWorld(res.get(0));
     }
 
+    public void download() {
+        Controllers.getDownloadPage().showWorldDownloads();
+        Controllers.navigate(Controllers.getDownloadPage());
+    }
+
     private void installWorld(File zipFile) {
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
@@ -165,7 +170,8 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
 
             return Arrays.asList(chkShowAll,
                     createToolbarButton2(i18n("button.refresh"), SVG::refresh, skinnable::refresh),
-                    createToolbarButton2(i18n("world.add"), SVG::plus, skinnable::add));
+                    createToolbarButton2(i18n("world.add"), SVG::plus, skinnable::add),
+                    createToolbarButton2(i18n("world.download"), SVG::plus, skinnable::download));
         }
     }
 }

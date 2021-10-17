@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.mod.DownloadManager;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -41,7 +41,6 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
-import org.jackhuang.hmcl.ui.download.VanillaInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -64,10 +63,8 @@ public final class Versions {
     }
 
     public static void addNewGame() {
-        Profile profile = Profiles.getSelectedProfile();
-        if (profile.getRepository().isLoaded()) {
-            Controllers.getDecorator().startWizard(new VanillaInstallWizardProvider(profile), i18n("install.new_game"));
-        }
+        Controllers.getDownloadPage().showGameDownloads();
+        Controllers.navigate(Controllers.getDownloadPage());
     }
 
     public static void importModpack() {
@@ -77,15 +74,7 @@ public final class Versions {
         }
     }
 
-    public static void downloadModpack() {
-        Profile profile = Profiles.getSelectedProfile();
-        if (profile.getRepository().isLoaded()) {
-            Controllers.getModpackDownloadListPage().loadVersion(profile, null);
-            Controllers.navigate(Controllers.getModpackDownloadListPage());
-        }
-    }
-
-    public static void downloadModpackImpl(Profile profile, String version, DownloadManager.Version file) {
+    public static void downloadModpackImpl(Profile profile, String version, RemoteMod.Version file) {
         Path modpack;
         URL downloadURL;
         try {
@@ -101,7 +90,7 @@ public final class Versions {
                 new FileDownloadTask(downloadURL, modpack.toFile())
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
-                                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack.toFile()));
+                                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile()));
                             } else {
                                 Controllers.dialog(
                                         i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
@@ -152,8 +141,8 @@ public final class Versions {
     public static void duplicateVersion(Profile profile, String version) {
         Controllers.prompt(
                 new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, resolve, reject) -> {
-                    String newVersionName = ((PromptDialogPane.Builder.StringQuestion) res.get(0)).getValue();
-                    boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(1)).getValue();
+                    String newVersionName = ((PromptDialogPane.Builder.StringQuestion) res.get(1)).getValue();
+                    boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(2)).getValue();
                     Task.runAsync(() -> profile.getRepository().duplicateVersion(version, newVersionName, copySaves))
                             .thenComposeAsync(profile.getRepository().refreshVersionsAsync())
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
@@ -165,7 +154,8 @@ public final class Versions {
                                 }
                             }).start();
                 })
-                        .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("version.manage.duplicate.confirm"), version,
+                        .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("version.manage.duplicate.confirm")))
+                        .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, version,
                                 new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().hasVersion(newVersionName))))
                         .addQuestion(new PromptDialogPane.Builder.BooleanQuestion(i18n("version.manage.duplicate.duplicate_save"), false)));
     }
@@ -201,34 +191,40 @@ public final class Versions {
             chooser.getExtensionFilters().add(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                     ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")
                     : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
+            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
             File file = chooser.showSaveDialog(Controllers.getStage());
             if (file != null)
                 new LauncherHelper(profile, account, id).makeLaunchScript(file);
         });
     }
 
+    public static void launch(Profile profile) {
+        launch(profile, profile.getSelectedVersion());
+    }
+
     public static void launch(Profile profile, String id) {
+        launch(profile, id, null);
+    }
+
+    public static void launch(Profile profile, String id, Consumer<LauncherHelper> injecter) {
         if (!checkVersionForLaunching(profile, id))
             return;
         ensureSelectedAccount(account -> {
-            new LauncherHelper(profile, account, id).launch();
+            LauncherHelper launcherHelper = new LauncherHelper(profile, account, id);
+            if (injecter != null)
+                injecter.accept(launcherHelper);
+            launcherHelper.launch();
         });
     }
 
     public static void testGame(Profile profile, String id) {
-        if (!checkVersionForLaunching(profile, id))
-            return;
-        ensureSelectedAccount(account -> {
-            LauncherHelper helper = new LauncherHelper(profile, account, id);
-            helper.setTestMode();
-            helper.launch();
-        });
+        launch(profile, id, LauncherHelper::setTestMode);
     }
 
     private static boolean checkVersionForLaunching(Profile profile, String id) {
         if (id == null || !profile.getRepository().isLoaded() || !profile.getRepository().hasVersion(id)) {
             Controllers.dialog(i18n("version.empty.launch"), i18n("launch.failed"), MessageDialogPane.MessageType.ERROR, () -> {
-                Controllers.navigate(Controllers.getGameListPage());
+                Controllers.navigate(Controllers.getDownloadPage());
             });
             return false;
         } else {
@@ -257,9 +253,6 @@ public final class Versions {
     public static void modifyGlobalSettings(Profile profile) {
         Controllers.getSettingsPage().showGameSettings(profile);
         Controllers.navigate(Controllers.getSettingsPage());
-//        VersionSettingsPage page = new VersionSettingsPage();
-//        page.loadVersion(profile, null);
-//        Controllers.navigate(page);
     }
 
     public static void modifyGameSettings(Profile profile, String version) {

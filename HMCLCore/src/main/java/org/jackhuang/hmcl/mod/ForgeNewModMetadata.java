@@ -6,7 +6,6 @@ import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -116,8 +115,8 @@ public final class ForgeNewModMetadata {
         }
     }
 
-    public static ModInfo fromFile(ModManager modManager, File modFile) throws IOException, JsonParseException {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.toPath())) {
+    public static LocalModFile fromFile(ModManager modManager, Path modFile) throws IOException, JsonParseException {
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
             Path modstoml = fs.getPath("META-INF/mods.toml");
             if (Files.notExists(modstoml))
                 throw new IOException("File " + modFile + " is not a Forge 1.13+ mod.");
@@ -132,10 +131,10 @@ public final class ForgeNewModMetadata {
                     Manifest manifest = new Manifest(Files.newInputStream(manifestMF));
                     jarVersion = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to parse MANIFEST.MF in file " + modFile.getPath());
+                    LOG.log(Level.WARNING, "Failed to parse MANIFEST.MF in file " + modFile);
                 }
             }
-            return new ModInfo(modManager, modFile, mod.getModId(), mod.getDisplayName(), new ModInfo.Description(mod.getDescription()),
+            return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), ModLoaderType.FORGE), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
                     mod.getAuthors(), mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                     mod.getDisplayURL(),
                     metadata.getLogoFile());

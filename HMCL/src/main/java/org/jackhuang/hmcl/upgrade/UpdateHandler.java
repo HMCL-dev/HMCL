@@ -89,7 +89,7 @@ public final class UpdateHandler {
     public static void updateFrom(RemoteVersion version) {
         checkFxUserThread();
 
-        Controllers.dialog(new UpgradeDialog(() -> {
+        Controllers.dialog(new UpgradeDialog(version, () -> {
             Path downloaded;
             try {
                 downloaded = Files.createTempFile("hmcl-update-", ".jar");

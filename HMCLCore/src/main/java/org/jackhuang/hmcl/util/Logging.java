@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -70,6 +70,16 @@ public final class Logging {
         }
         streamHandler.setLevel(Level.ALL);
         LOG.addHandler(streamHandler);
+    }
+
+    public static void initForTest() {
+        LOG.setLevel(Level.ALL);
+        LOG.setUseParentHandlers(false);
+
+        ConsoleHandler consoleHandler = new ConsoleHandler();
+        consoleHandler.setFormatter(DefaultFormatter.INSTANCE);
+        consoleHandler.setLevel(Level.FINER);
+        LOG.addHandler(consoleHandler);
     }
 
     public static byte[] getRawLogs() {

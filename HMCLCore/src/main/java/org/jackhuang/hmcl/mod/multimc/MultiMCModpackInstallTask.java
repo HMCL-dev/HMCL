@@ -39,9 +39,10 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  *
@@ -177,14 +178,6 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
         }
 
         dependencies.add(repository.saveAsync(version));
-    }
-
-    @Override
-    public List<String> getStages() {
-        return Stream.concat(
-                dependents.stream().flatMap(task -> task.getStages().stream()),
-                Stream.of("hmcl.modpack")
-        ).collect(Collectors.toList());
     }
 
     public static final String MODPACK_TYPE = "MultiMC";

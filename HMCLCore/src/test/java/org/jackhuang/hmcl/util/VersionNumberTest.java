@@ -67,6 +67,10 @@ public class VersionNumberTest {
         v = VersionNumber.asVersion("1.8.0_11");
         Assert.assertTrue(u.compareTo(v) < 0);
 
+        u = VersionNumber.asVersion("1.7.0_22");
+        v = VersionNumber.asVersion("1.7.99");
+        Assert.assertTrue(u.compareTo(v) < 0);
+
         u = VersionNumber.asVersion("1.12.2-14.23.5.2760");
         v = VersionNumber.asVersion("1.12.2-14.23.4.2739");
         Assert.assertTrue(u.compareTo(v) > 0);

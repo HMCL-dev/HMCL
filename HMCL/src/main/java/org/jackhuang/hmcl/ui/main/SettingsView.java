@@ -29,6 +29,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -38,6 +39,8 @@ import org.jackhuang.hmcl.ui.construct.ComponentSublist;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
+import java.util.Arrays;
+
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -45,9 +48,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public abstract class SettingsView extends StackPane {
     protected final JFXComboBox<SupportedLocale> cboLanguage;
     protected final MultiFileItem<EnumCommonDirectory> fileCommonLocation;
+    protected final ComponentSublist fileCommonLocationSublist;
     protected final Label lblUpdate;
     protected final Label lblUpdateSub;
-    protected final Text lblUpdateNote;
     protected final JFXRadioButton chkUpdateStable;
     protected final JFXRadioButton chkUpdateDev;
     protected final JFXButton btnUpdate;
@@ -130,10 +133,8 @@ public abstract class SettingsView extends StackPane {
                         chkUpdateStable = new JFXRadioButton(i18n("update.channel.stable"));
                         chkUpdateDev = new JFXRadioButton(i18n("update.channel.dev"));
 
-                        VBox noteWrapper = new VBox();
-                        noteWrapper.setStyle("-fx-padding: 10 0 0 0;");
-                        lblUpdateNote = new Text(i18n("update.note"));
-                        noteWrapper.getChildren().setAll(lblUpdateNote);
+                        TextFlow noteWrapper = new TextFlow(new Text(i18n("update.note")));
+                        VBox.setMargin(noteWrapper, new Insets(10, 0, 0, 0));
 
                         content.getChildren().setAll(chkUpdateStable, chkUpdateDev, noteWrapper);
 
@@ -143,22 +144,28 @@ public abstract class SettingsView extends StackPane {
                 }
 
                 {
-                    fileCommonLocation = new MultiFileItem<>(true);
-                    fileCommonLocation.setTitle(i18n("launcher.cache_directory"));
-                    fileCommonLocation.setDirectory(true);
-                    fileCommonLocation.setChooserTitle(i18n("launcher.cache_directory.choose"));
-                    fileCommonLocation.setHasSubtitle(true);
-                    fileCommonLocation.setCustomText("settings.custom");
+                    fileCommonLocation = new MultiFileItem<>();
+                    fileCommonLocationSublist = new ComponentSublist();
+                    fileCommonLocationSublist.getContent().add(fileCommonLocation);
+                    fileCommonLocationSublist.setTitle(i18n("launcher.cache_directory"));
+                    fileCommonLocationSublist.setHasSubtitle(true);
+                    fileCommonLocation.loadChildren(Arrays.asList(
+                            new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
+                            new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM)
+                                    .setChooserTitle(i18n("launcher.cache_directory.choose"))
+                                    .setDirectory(true)
+                                    .bindBidirectional(config().commonDirectoryProperty())
+                    ));
 
                     {
                         JFXButton cleanButton = new JFXButton(i18n("launcher.cache_directory.clean"));
                         cleanButton.setOnMouseClicked(e -> clearCacheDirectory());
                         cleanButton.getStyleClass().add("jfx-button-border");
 
-                        fileCommonLocation.setHeaderRight(cleanButton);
+                        fileCommonLocationSublist.setHeaderRight(cleanButton);
                     }
 
-                    settingsPane.getContent().add(fileCommonLocation);
+                    settingsPane.getContent().add(fileCommonLocationSublist);
                 }
 
                 {

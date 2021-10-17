@@ -1,0 +1,143 @@
+---- Minecraft Crash Report ----
+// I'm sorry, Dave.
+
+Time: 1/22/19 12:20 AM
+Description: Ticking entity
+
+java.util.ConcurrentModificationException
+	at java.util.HashMap$HashIterator.nextNode(Unknown Source)
+	at java.util.HashMap$KeyIterator.next(Unknown Source)
+	at net.minecraft.entity.EntityLivingBase.func_70679_bo(EntityLivingBase.java:591)
+	at net.minecraft.entity.EntityLivingBase.func_70030_z(EntityLivingBase.java:332)
+	at net.minecraft.entity.EntityLiving.func_70030_z(EntityLiving.java:164)
+	at net.minecraft.entity.Entity.func_70071_h_(Entity.java:409)
+	at net.minecraft.entity.EntityLivingBase.func_70071_h_(EntityLivingBase.java:1848)
+	at net.minecraft.entity.EntityLiving.func_70071_h_(EntityLiving.java:213)
+	at noppes.npcs.entity.EntityNPCInterface.func_70071_h_(EntityNPCInterface.java:246)
+	at noppes.npcs.entity.EntityCustomNpc.func_70071_h_(EntityCustomNpc.java:34)
+	at net.minecraft.world.World.func_72866_a(World.java:2669)
+	at net.minecraft.world.WorldServer.func_72866_a(WorldServer.java:811)
+	at net.minecraft.world.World.func_72870_g(World.java:2613)
+	at net.minecraft.world.World.func_72939_s(World.java:2414)
+	at net.minecraft.world.WorldServer.func_72939_s(WorldServer.java:636)
+	at net.minecraft.server.MinecraftServer.func_71190_q(MinecraftServer.java:951)
+	at net.minecraft.server.dedicated.DedicatedServer.func_71190_q(DedicatedServer.java:458)
+	at net.minecraft.server.MinecraftServer.func_71217_p(MinecraftServer.java:806)
+	at net.minecraft.server.MinecraftServer.run(MinecraftServer.java:665)
+	at java.lang.Thread.run(Unknown Source)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Stacktrace:
+	at java.util.HashMap$HashIterator.nextNode(Unknown Source)
+	at java.util.HashMap$KeyIterator.next(Unknown Source)
+	at net.minecraft.entity.EntityLivingBase.func_70679_bo(EntityLivingBase.java:591)
+	at net.minecraft.entity.EntityLivingBase.func_70030_z(EntityLivingBase.java:332)
+	at net.minecraft.entity.EntityLiving.func_70030_z(EntityLiving.java:164)
+	at net.minecraft.entity.Entity.func_70071_h_(Entity.java:409)
+	at net.minecraft.entity.EntityLivingBase.func_70071_h_(EntityLivingBase.java:1848)
+	at net.minecraft.entity.EntityLiving.func_70071_h_(EntityLiving.java:213)
+	at noppes.npcs.entity.EntityNPCInterface.func_70071_h_(EntityNPCInterface.java:246)
+	at noppes.npcs.entity.EntityCustomNpc.func_70071_h_(EntityCustomNpc.java:34)
+	at net.minecraft.world.World.func_72866_a(World.java:2669)
+	at net.minecraft.world.WorldServer.func_72866_a(WorldServer.java:811)
+	at net.minecraft.world.World.func_72870_g(World.java:2613)
+
+-- Entity being ticked --
+Details:
+	Entity Type: customnpcs.CustomNpc (noppes.npcs.entity.EntityCustomNpc)
+	Entity ID: 79
+	Entity Name: 复仇马魂
+	Entity's Exact location: 99942.59, 4.00, 100000.98
+	Entity's Block location: World: (99942,4,100000), Chunk: (at 6,0,0 in 6246,6250; contains blocks 99936,0,100000 to 99951,255,100015), Region: (195,195; contains chunks 6240,6240 to 6271,6271, blocks 99840,0,99840 to 100351,255,100351)
+	Entity's Momentum: 0.05, -0.08, -0.11
+Stacktrace:
+	at net.minecraft.world.World.func_72939_s(World.java:2414)
+	at net.minecraft.world.WorldServer.func_72939_s(WorldServer.java:636)
+
+-- Affected level --
+Details:
+	Level name: pvp
+	All players: 2 total; [EntityPlayerMP['Hui_Yan'/9, l='pvp', x=99947.38, y=4.00, z=99990.13](Hui_Yan at 99947.3789625726,4.0,99990.13423393313), EntityPlayerMP['chiyan_C'/175, l='pvp', x=99939.82, y=14.04, z=100010.74](chiyan_C at 99939.82052702823,14.041729801880352,100010.73578345944)]
+	Chunk stats: ServerChunkCache: 99 Drop: 0
+	Level seed: 2672788333781657985
+	Level generator: ID 01 - flat, ver 0. Features enabled: true
+	Level generator options:
+	Level spawn location: World: (-881,4,-100), Chunk: (at 15,0,12 in -56,-7; contains blocks -896,0,-112 to -881,255,-97), Region: (-2,-1; contains chunks -64,-32 to -33,-1, blocks -1024,0,-512 to -513,255,-1)
+	Level time: 227387166 game time, 227583837 day time
+	Level dimension: 3
+	Level storage version: 0x04ABD - Anvil
+	Level weather: Rain time: 75183 (now: false), thunder time: 88592 (now: false)
+	Level game mode: Game mode: survival (ID 0). Hardcore: false. Cheats: false
+Stacktrace:
+	at net.minecraft.server.MinecraftServer.func_71190_q(MinecraftServer.java:951)
+	at net.minecraft.server.dedicated.DedicatedServer.func_71190_q(DedicatedServer.java:458)
+	at net.minecraft.server.MinecraftServer.func_71217_p(MinecraftServer.java:806)
+	at net.minecraft.server.MinecraftServer.run(MinecraftServer.java:665)
+	at java.lang.Thread.run(Unknown Source)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.7.10
+	KCauldron Version: cc.uraniummc:Uranium:1710-dev-4-B210 UNOFFICIAL DON'T REPORT THIS CRASH
+	Plugins: ItemDurability, ILSRepair, PlaceholderAPI, GroupManager, TigerSigns, tpLogin, ConsoleSpamFix, HyperFlyCheck, CloudTrade, WorldProtect, NoSellLoreItemToGlobalShop, NoCmds, BanItem, PointShop, EasyAPI, PreFixGui, VexView, RichAutoMessage, ClickLimit, ILSAddonOrnament, Deadbolt, WorldEdit, FastRespawn, Essentials, EasyCommand, TimingsPatcher, uSkyBlock, CraftGuard, fixILS, VexInfoBar, ProtocolLib, Multiverse-Core, MCserverManager, LevelChat, EssentialsChat, GlobalMarket, iConomy, StarLogin, Vault, SFWSupport, Lores, ScriptBlock, LR-ActionBarMessage, VexKeyBoardHelper, NeverLag, HolographicDisplays, OnlineMoney, PlayerPoints, WorldGuard, ItemLoreStats, ChestCommands, EssentialsProtect, EssentialsAntiBuild, JoinMessage, VexCraftTable, EssentialsSpawn, RPG_Items, ColorMOTD, HamsterAPI, Lottery
+	Disabled Plugins:
+	Operating System: Windows 10 (amd64) version 10.0
+	Java Version: 1.8.0_101, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 3282678464 bytes (3130 MB) / 6844579840 bytes (6527 MB) up to 27030192128 bytes (25778 MB)
+	JVM Flags: 4 total; -Xms512m -Xmx29000m -XX:+AggressiveOpts -XX:+UseCompressedOops
+	AABB Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+	FML: MCP v9.05 FML v7.10.99.99 Minecraft Forge 10.13.4.1614 42 mods loaded, 42 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+	UCHIJAAAA	mcp{9.05} [Minecraft Coder Pack] (minecraft.jar)
+	UCHIJAAAA	FML{7.10.99.99} [Forge Mod Loader] (Server.jar)
+	UCHIJAAAA	Forge{10.13.4.1614} [Minecraft Forge] (Server.jar)
+	UCHIJAAAA	kimagine{0.2} [KImagine] (minecraft.jar)
+	UCHIJAAAA	UraniumPlus{${UMP_VER}} [Added title and actionbar support for client and server] (Server.jar)
+	UCHIJAAAA	creativecore{1.3.14} [CreativeCore] (-在线图片加载.jar)
+	UCHIJAAAA	opframe{2.1} [OnlinePictureFrame] (-在线图片加载前置.jar)
+	UCHIJAAAA	Block3DPixelMc{1.7.x} [PokemonGo-Block] ([更多装备道具]pokemongoitem.jar)
+	UCHIJAAAA	Mod_bag{1.7.x} [PokemonGo-Bag] ([更多装备道具]pokemongoitem.jar)
+	UCHIJAAAA	pixelmcrop{1.7.10} [PokemonGo-Crop] ([更多装备道具]pokemongoitem.jar)
+	UCHIJAAAA	Mod_Wing{1.7.x} [PokemonGo-Wing] ([更多装备道具]pokemongoitem.jar)
+	UCHIJAAAA	shopy{1.7.x} [PokemonGo-Shop] ([更多装备道具]pokemongoitem.jar)
+	UCHIJAAAA	bikesystem{1.0} [bikesystem] ([更多装备道具]WtfWhateveritems.jar)
+	UCHIJAAAA	BANK-ONEPIECE BLOCK3D{Takakung} [Takakung BLOCK3D] ([更多装备道具]WtfWhateveritems.jar)
+	UCHIJAAAA	chillingmoneysystem{1.0} [ChillingMoneySystem] ([更多装备道具]WtfWhateveritems.jar)
+	UCHIJAAAA	PIXEL-STATION{Takakung} [PIXEL-STATION] ([更多装备道具]WtfWhateveritems.jar)
+	UCHIJAAAA	PIXEL-STATION 3D{Takakung} [PIXEL-STATION 3D] ([更多装备道具]WtfWhateveritems.jar)
+	UCHIJAAAA	shopplayers{1.7.10} [CubeMMOShop] ([更多装备道具]WtfWhateveritems.jar)
+	UCHIJAAAA	GrimoireOfGaia{1.0.0} [Grimoire of Gaia 3] ([魔典盖亚III]1.7.10-1.2.7.jar)
+	UCHIJAAAA	ChestTransporter{2.0.6} [Chest Transporter] (ChestTransporter-1.7.10-2.0.6.jar)
+	UCHIJAAAA	custommc{1.0v} [custommc] (CustomMc.jar)
+	UCHIJAAAA	gxozb{0.0.0.1} [Minecreft Not Enough Items] (gxozb-1.0(3).jar)
+	UCHIJAAAA	lycanitesmobs{1.9.0e - MC 1.7.10} [Lycanites Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	arcticmobs{1.9.0e - MC 1.7.10} [Lycanites Arctic Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	demonmobs{1.9.0e - MC 1.7.10} [Lycanites Demon Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	desertmobs{1.9.0e - MC 1.7.10} [Lycanites Desert Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	forestmobs{1.9.0e - MC 1.7.10} [Lycanites Forest Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	freshwatermobs{1.9.0e - MC 1.7.10} [Lycanites Freshwater Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	infernomobs{1.9.0e - MC 1.7.10} [Lycanites Inferno Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	junglemobs{1.9.0e - MC 1.7.10} [Lycanites Jungle Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	mountainmobs{1.9.0e - MC 1.7.10} [Lycanites Mountain Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	plainsmobs{1.9.0e - MC 1.7.10} [Lycanites Plains Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	saltwatermobs{1.9.0e - MC 1.7.10} [Lycanites Saltwater Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	swampmobs{1.9.0e - MC 1.7.10} [Lycanites Swamp Mobs] (Mcmap.cc-[恐怖生物汉化版][1.7.10].jar)
+	UCHIJAAAA	wizardry{1.1.4} [Electroblob's Wizardry] (mofa.jar)
+	UCHIJAAAA	NBTEdit{1.7.2.2} [In-game NBTEdit] (NBTEdit_1.7.10.jar)
+	UCHIJAAAA	pozo{4.0.0} [pozo] (pozo全贴图版.jar)
+	UCHIJAAAA	YoHern{2.1.0} [YoHern] (古衍秘制.jar)
+	UCHIJAAAA	armourersWorkshop{1.7.10-0.45.0} [Armourer's Workshop] (时装工坊-1.7.10-0.45.0.jar)
+	UCHIJAAAA	plushieWrapper{0.0.0} [Plushie Wrapper] (时装工坊-1.7.10-0.45.0.jar)
+	UCHIJAAAA	newnpc{1.0.0} [NewNpc] (炽焰改-贴图Mod1.7.10.jar)
+	UCHIJAAAA	customnpcs{1.7.10d} [CustomNpcs] (自定义NPC(1).jar)
+	Profiler Position: N/A (disabled)
+	Vec3 Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	Player Count: 2 / 888; [EntityPlayerMP['Hui_Yan'/9, l='pvp', x=99947.38, y=4.00, z=99990.13](Hui_Yan at 99947.3789625726,4.0,99990.13423393313), EntityPlayerMP['chiyan_C'/175, l='pvp', x=99939.82, y=14.04, z=100010.74](chiyan_C at 99939.82052702823,14.041729801880352,100010.73578345944)]
+	Is Modded: Definitely; Server brand changed to 'uranium,kcauldron,cauldron,craftbukkit,mcpc,fml,forge'
+	Type: Dedicated Server (map_server.txt)

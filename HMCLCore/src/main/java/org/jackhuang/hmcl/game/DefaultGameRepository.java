@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -154,8 +155,8 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
-    public File getNativeDirectory(String id) {
-        return new File(getVersionRoot(id), "natives");
+    public File getNativeDirectory(String id, Platform platform) {
+        return new File(getVersionRoot(id), "natives-" + platform);
     }
 
     @Override

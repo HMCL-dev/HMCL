@@ -1,0 +1,127 @@
+---- Minecraft Crash Report ----
+// But it works on my machine.
+
+Time: 3/22/19 4:31 PM
+Description: Ticking block entity
+
+java.lang.NullPointerException: Ticking block entity
+	at ic2.core.util.StackUtil.transfer(StackUtil.java:152)
+	at ic2.core.item.ItemUpgradeModule.onTick(ItemUpgradeModule.java:425)
+	at ic2.core.block.machine.tileentity.TileEntityStandardMachine.func_145845_h(TileEntityStandardMachine.java:155)
+	at ic2.core.block.machine.tileentity.TileEntityOreWashing.func_145845_h(TileEntityOreWashing.java:76)
+	at net.minecraft.world.World.func_72939_s(World.java:2583)
+	at net.minecraft.world.WorldServer.func_72939_s(WorldServer.java:673)
+	at net.minecraft.server.MinecraftServer.func_71190_q(MinecraftServer.java:986)
+	at net.minecraft.server.dedicated.DedicatedServer.func_71190_q(DedicatedServer.java:432)
+	at net.minecraft.server.MinecraftServer.func_71217_p(MinecraftServer.java:841)
+	at net.minecraft.server.MinecraftServer.run(MinecraftServer.java:693)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Stacktrace:
+	at ic2.core.util.StackUtil.transfer(StackUtil.java:152)
+	at ic2.core.item.ItemUpgradeModule.onTick(ItemUpgradeModule.java:425)
+	at ic2.core.block.machine.tileentity.TileEntityStandardMachine.func_145845_h(TileEntityStandardMachine.java:155)
+	at ic2.core.block.machine.tileentity.TileEntityOreWashing.func_145845_h(TileEntityOreWashing.java:76)
+
+-- Block entity being ticked --
+Details:
+	Name: Ore Washing Plant // ic2.core.block.machine.tileentity.TileEntityOreWashing
+	Block type: ID #648 (blockMachine2 // ic2.core.block.machine.BlockMachine2)
+	Block data value: 5 / 0x5 / 0b0101
+	Block location: World: (24,59,-172), Chunk: (at 8,3,4 in 1,-11; contains blocks 16,0,-176 to 31,255,-161), Region: (0,-1; contains chunks 0,-32 to 31,-1, blocks 0,0,-512 to 511,255,-1)
+	Actual block type: ID #648 (blockMachine2 // ic2.core.block.machine.BlockMachine2)
+	Actual block data value: 5 / 0x5 / 0b0101
+Stacktrace:
+	at net.minecraft.world.World.func_72939_s(World.java:2583)
+	at net.minecraft.world.WorldServer.func_72939_s(WorldServer.java:673)
+
+-- Affected level --
+Details:
+	Level name: plotworld
+	All players: 3 total; [EntityPlayerMP['long_chalk'/785, l='plotworld', x=-159.52, y=65.00, z=25.54](long_chalk at -159.5206542362536,65.0,25.541882416932502), EntityPlayerMP['YAODYW_D'/1133, l='plotworld', x=138.71, y=72.00, z=-7.45](YAODYW_D at 138.71408242393503,72.0,-7.450665362305571), EntityPlayerMP['a312797261'/953, l='plotworld', x=12.01, y=65.00, z=-176.91](a312797261 at 12.012590248563681,65.0,-176.91436786348493)]
+	Chunk stats: ServerChunkCache: 268 Drop: 0
+	Level seed: -8894455803401860845
+	Level generator: ID 00 - default, ver 1. Features enabled: true
+	Level generator options:
+	Level spawn location: World: (3,66,3), Chunk: (at 3,4,3 in 0,0; contains blocks 0,0,0 to 15,255,15), Region: (0,0; contains chunks 0,0 to 31,31, blocks 0,0,0 to 511,255,511)
+	Level time: 55397029 game time, 4816859 day time
+	Level dimension: 3
+	Level storage version: 0x04ABD - Anvil
+	Level weather: Rain time: 9301 (now: true), thunder time: 14371 (now: false)
+	Level game mode: Game mode: survival (ID 0). Hardcore: false. Cheats: false
+Stacktrace:
+	at net.minecraft.server.MinecraftServer.func_71190_q(MinecraftServer.java:986)
+	at net.minecraft.server.dedicated.DedicatedServer.func_71190_q(DedicatedServer.java:432)
+	at net.minecraft.server.MinecraftServer.func_71217_p(MinecraftServer.java:841)
+	at net.minecraft.server.MinecraftServer.run(MinecraftServer.java:693)
+	at java.lang.Thread.run(Thread.java:748)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.7.10
+	Thermos Version: cyberdynecc:Thermos:1.7.10-1614.58
+	Plugins: CoreProtect, WorldEdit, CheckMaliciousLaodMap, Essentials, Restart, GroupManager, TeleportationTools, ColorSigns, FixArcaneWorkbench, GeneralDataCoreV3.1, LaggRemover, ProtocolLib, AutoSaveWorld, EssentialsProtect, DAutoMessage, EssentialsChat, EssentialsAntiBuild, BanItem, MOTDColor, Vault, EssentialsSpawn, ScriptBlock, FakePlayersOnline, FastLogin, PlotMe, NeverLag, LWC, QuickShop, Residence, PlotMe-DefaultGenerator, RPG_Items, Multiverse-Core
+	Disabled Plugins:
+	Operating System: Linux (amd64) version 4.4.110-1.el6.elrepo.x86_64
+	Java Version: 1.8.0_192, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 115150240 bytes (109 MB) / 734003200 bytes (700 MB) up to 734003200 bytes (700 MB)
+	JVM Flags: 6 total; -XX:+UseFastAccessorMethods -XX:+UseParallelGC -XX:ParallelGCThreads=2 -XX:MaxDirectMemorySize=99M -XX:MaxMetaspaceSize=170M -Xmx755M
+	AABB Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	IntCache: cache: 0, tcache: 0, allocated: 13, tallocated: 95
+	FML: MCP v9.05 FML v7.10.99.99 Minecraft Forge 10.13.4.1614 36 mods loaded, 36 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+	UCHIJAAAA	mcp{9.05} [Minecraft Coder Pack] (minecraft.jar)
+	UCHIJAAAA	FML{7.10.99.99} [Forge Mod Loader] (Thermos-1.7.10-1614.jar)
+	UCHIJAAAA	Forge{10.13.4.1614} [Minecraft Forge] (Thermos-1.7.10-1614.jar)
+	UCHIJAAAA	kimagine{0.2} [KImagine] (minecraft.jar)
+	UCHIJAAAA	appliedenergistics2-core{rv2-stable-10} [AppliedEnergistics2 Core] (minecraft.jar)
+	UCHIJAAAA	uniskinmod{1.2-dev4} [Universal Skin Mod] (minecraft.jar)
+	UCHIJAAAA	ThaumicTinkerer-preloader{0.1} [Thaumic Tinkerer Core] (minecraft.jar)
+	UCHIJAAAA	<CoFH ASM>{000} [CoFH ASM] (minecraft.jar)
+	UCHIJAAAA	CoFHCore{1.7.10R3.1.4} [CoFH Core] (2.jar)
+	UCHIJAAAA	Baubles{1.0.1.10} [Baubles] (Baubles-1.7.10-1.0.1.10.jar)
+	UCHIJAAAA	ThermalFoundation{1.7.10R1.2.6} [Thermal Foundation] (1.jar)
+	UCHIJAAAA	ThermalDynamics{1.7.10R1.2.1} [Thermal Dynamics] (3.jar)
+	UCHIJAAAA	flammpfeil.slashblade{mc1.7.10-r87} [SlashBlade] (【拔刀剑1710】R87.jar)
+	UCHIJAAAA	Yamazakura{1.0.0} [Yamazakura] ([山樱]SlashBlade-Yamazakura-mc1.7-r4.jar)
+	UCHIJAAAA	Thaumcraft{4.2.3.5} [Thaumcraft] (神秘时代4.jar)
+	UCHIJAAAA	Botania{r1.8-249} [Botania] ([植物魔法]Botania r1.8-249.jar)
+	UCHIJAAAA	IC2{2.2.756-experimental} [IndustrialCraft 2] (工业2.jar)
+	UCHIJAAAA	appliedenergistics2{rv2-stable-10} [Applied Energistics 2] (AE.jar)
+	UCHIJAAAA	ThaumicTinkerer{unspecified} [Thaumic Tinkerer] (神秘工匠.jar)
+	UCHIJAAAA	AWWayofTime{v1.3.3} [Blood Magic: Alchemical Wizardry] (血魔法 v1.3.3-17 (1.7.10).jar)
+	UCHIJAAAA	ForbiddenMagic{1.7.10-0.574} [Forbidden Magic] ([神秘附属-禁忌魔法]Forbidden Magic-1.7.10-0.574.jar)
+	UCHIJAAAA	ExtraBotany{r1.0-21} [ExtraBotany] ([额外植物学]ExtraBotany-1.7.10-r1.0-21.jar)
+	UCHIJAAAA	customnpcs{1.7.10d} [CustomNpcs] (NPC.jar)
+	UCHIJAAAA	Mantle{1.7.10-0.3.2.jenkins191} [Mantle] (匠魂前置.jar)
+	UCHIJAAAA	ImmersiveEngineering{0.7.7} [Immersive Engineering] (沉浸.jar)
+	UCHIJAAAA	ThermalExpansion{1.7.10R4.1.5} [Thermal Expansion] (热力膨胀.jar)
+	UCHIJAAAA	TConstruct{1.7.10-1.8.8.build988} [Tinkers' Construct] (匠魂.jar)
+	UCHIJAAAA	BambooMod{Minecraft@MC_VERSION@ var@VERSION@} [BambooMod] (和风.jar)
+	UCHIJAAAA	flammpfeil.nihil{mc1.7.x-r6} [Nihil] (拔刀剑 - [似蛭].jar)
+	UCHIJAAAA	balumg{1.0.0} [balumg] (拔刀剑 - [巴鲁蒙格].jar)
+	UCHIJAAAA	flammpfeil.slashblade.exsa{mc1.7.10-r6} [SlashBlade-ExSa] (拔刀剑 - [更多Sa].jar)
+	UCHIJAAAA	IronChest{6.0.62.742} [Iron Chest] (更多箱子.jar)
+	UCHIJAAAA	TaintedMagic{r7.6} [Tainted Magic] (污秽魔法.jar)
+	UCHIJAAAA	GraviSuite{1.7.10-2.0.3} [Graviation Suite] (重力.jar)
+	UCHIJAAAA	AdvancedSolarPanel{1.7.10-3.5.1} [Advanced Solar Panels] (高级太阳能.jar)
+	UCHIJAAAA	IguanaTweaksTConstruct{1.7.10-2.1.6.163} [Iguana Tinker Tweaks] (%5B匠魂拓展%5DIguanaTinkerTweaks-1.7.10-2.1.6.jar)
+	CoFHCore: -[1.7.10]3.1.4-329
+	ThermalFoundation: -[1.7.10]1.2.6-118
+	ThermalDynamics: -[1.7.10]1.2.1-172
+	AE2 Version: stable rv2-stable-10 for Forge 10.13.2.1291
+	Mantle Environment: DO NOT REPORT THIS CRASH! Unsupported mods in environment: bukkit
+	ThermalExpansion: -[1.7.10]4.1.5-248
+	TConstruct Environment: Environment healthy.
+	AE2 Integration: IC2:ON, RotaryCraft:OFF, RC:OFF, BC:OFF, RF:ON, RFItem:ON, MFR:OFF, DSU:ON, FZ:OFF, FMP:OFF, RB:OFF, CLApi:OFF, Waila:OFF, Mekanism:OFF, ImmibisMicroblocks:OFF, BetterStorage:OFF
+	Profiler Position: N/A (disabled)
+	Vec3 Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	Player Count: 5 / 40; [EntityPlayerMP['long_chalk'/785, l='plotworld', x=-159.52, y=65.00, z=25.54](long_chalk at -159.5206542362536,65.0,25.541882416932502), EntityPlayerMP['a312797261'/953, l='plotworld', x=12.01, y=65.00, z=-176.91](a312797261 at 12.012590248563681,65.0,-176.91436786348493), EntityPlayerMP['zzn_T'/752, l='DIM-1', x=2108.46, y=57.00, z=-97.03](zzn_T at 2108.4571112024496,57.0,-97.02775279909504), EntityPlayerMP['YAODYW_D'/1133, l='plotworld', x=138.71, y=72.00, z=-7.45](YAODYW_D at 138.71408242393503,72.0,-7.450665362305571), EntityPlayerMP['Toccle'/5646, l='world', x=-206.69, y=48.00, z=425.30](Toccle at -206.6917225142045,48.0,425.30000001192093)]
+	Is Modded: Definitely; Server brand changed to 'thermos,cauldron,craftbukkit,mcpc,kcauldron,fml,forge'
+	Type: Dedicated Server (map_server.txt)

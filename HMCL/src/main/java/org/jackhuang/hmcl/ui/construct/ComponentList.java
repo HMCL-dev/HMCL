@@ -109,6 +109,7 @@ public class ComponentList extends Control {
     public void onExpand() {
         if (!expanded && lazyInitializer != null) {
             lazyInitializer.accept(this);
+            setNeedsLayout(true);
         }
 
         expanded = true;
@@ -135,6 +136,9 @@ public class ComponentList extends Control {
                 cell.getStyleClass().add("options-list-item");
                 if (node.getProperties().containsKey("ComponentList.vgrow")) {
                     VBox.setVgrow(cell, (Priority) node.getProperties().get("ComponentList.vgrow"));
+                }
+                if (node.getProperties().containsKey("ComponentList.noPadding")) {
+                    cell.getStyleClass().add("no-padding");
                 }
                 return cell;
             });

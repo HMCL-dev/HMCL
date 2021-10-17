@@ -6,6 +6,8 @@ buildscript {
     dependencies {
         classpath 'org.tukaani:xz:1.8'
         classpath 'org.glavo:pack200:0.3.0'
+
+        classpath 'com.guardsquare:proguard-gradle:7.1.0'  // The ProGuard Gradle plugin.
     }
 }
 
@@ -38,6 +40,7 @@ if (System.getenv("BUILD_NUMBER") != null && System.getenv("BUILD_NUMBER_OFFSET"
 def versionroot = System.getenv("VERSION_ROOT") ?: "3.4"
 def microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 def microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
+def versionType = System.getenv("VERSION_TYPE") ?: "nightly"
 version = versionroot + '.' + buildnumber
 
 mainClassName = 'org.jackhuang.hmcl.Main'
@@ -129,6 +132,7 @@ shadowJar {
                 'Implementation-Version': project.version,
                 'Microsoft-Auth-Id': microsoftAuthId,
                 'Microsoft-Auth-Secret': microsoftAuthSecret,
+                'Build-Channel': versionType,
                 'Class-Path': 'pack200.jar',
                 'Add-Opens': [
                         'java.base/java.lang',
@@ -160,6 +164,41 @@ shadowJar {
     }
 }
 
+task proguard(type: proguard.gradle.ProGuardTask) {
+    dependsOn shadowJar
+    injars shadowJar
+
+    outjars "${buildDir}/libs/${project.name}-${project.version}-proguard.jar"
+
+
+    dontobfuscate
+    dontoptimize
+    keep 'public class org.jackhuang.**'
+    keep 'public class org.slf4j.**'
+
+    dontwarn 'com.nqzero.**'
+    dontwarn 'org.slf4j.**'
+    dontwarn 'org.jackhuang.hmcl.util.Pack200Utils'
+
+    adaptclassstrings
+
+    // next block taken verbatim from Proguard's documentation examples:
+
+    libraryjars files(configurations.compileClasspath.collect())
+
+    keepattributes 'SourceFile,LineNumberTable'
+
+    // Automatically handle the Java version of this build.
+//    if (System.getProperty('java.version').startsWith('1.')) {
+//        // Before Java 9, the runtime classes were packaged in a single jar file.
+        libraryjars "${System.getProperty('java.home')}/lib/rt.jar"
+        libraryjars "${System.getProperty('java.home')}/lib/ext/jfxrt.jar"
+//    } else {
+//        // As of Java 9, the runtime classes are packaged in modular jmod files.
+//        libraryjars "${System.getProperty('java.home')}/jmods/java.base.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
+//    }
+}
+
 def createExecutable(String suffix, String header) {
     def output = new File(jar.archivePath.parentFile, jar.archivePath.name[0..-4] + suffix)
     output.bytes = new File(project.projectDir, header).bytes
@@ -175,6 +214,7 @@ processResources {
             def bssFile = new File(this.projectDir, "build/compiled-resources/" + resource[0..-4] + "bss")
             bssFile.parentFile.mkdirs()
             javaexec {
+                classpath = sourceSets.main.compileClasspath
                 mainClass = "com.sun.javafx.css.parser.Css2Bin"
                 args = [cssFile, bssFile]
             }

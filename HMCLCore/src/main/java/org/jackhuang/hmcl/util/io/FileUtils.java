@@ -30,6 +30,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -74,6 +75,10 @@ public final class FileUtils {
         }
     }
 
+    public static String getNameWithoutExtension(String fileName) {
+        return StringUtils.substringBeforeLast(fileName, '.');
+    }
+
     public static String getNameWithoutExtension(File file) {
         return StringUtils.substringBeforeLast(file.getName(), '.');
     }
@@ -98,6 +103,7 @@ public final class FileUtils {
     }
 
     public static String getName(Path path) {
+        if (path.getFileName() == null) return "";
         return StringUtils.removeSuffix(path.getFileName().toString(), "/", "\\");
     }
 
@@ -408,6 +414,15 @@ public final class FileUtils {
             return true;
         } catch (InvalidPathException ignored) {
             return false;
+        }
+    }
+
+    public static Optional<Path> tryGetPath(String first, String... more) {
+        if (first == null) return Optional.empty();
+        try {
+            return Optional.of(Paths.get(first, more));
+        } catch (InvalidPathException e) {
+            return Optional.empty();
         }
     }
 }

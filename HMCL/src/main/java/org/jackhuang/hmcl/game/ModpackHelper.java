@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.mod.server.ServerModpackLocalInstallTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.mod.server.ServerModpackRemoteInstallTask;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -38,20 +39,28 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
+
+import static org.jackhuang.hmcl.util.Lang.toIterable;
 
 public final class ModpackHelper {
     private ModpackHelper() {}
 
-    public static Modpack readModpackManifest(Path file, Charset charset) throws UnsupportedModpackException {
+    public static Modpack readModpackManifest(Path file, Charset charset) throws UnsupportedModpackException, ManuallyCreatedModpackException {
         try {
             return McbbsModpackManifest.readManifest(file, charset);
         } catch (Exception ignored) {
@@ -82,7 +91,38 @@ public final class ModpackHelper {
             // ignore it, not a valid Server modpack.
         }
 
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file, charset)) {
+            findMinecraftDirectoryInManuallyCreatedModpack(file.toString(), fs);
+            throw new ManuallyCreatedModpackException(file);
+        } catch (IOException e) {
+            // ignore it
+        }
+
         throw new UnsupportedModpackException(file.toString());
+    }
+
+    public static Path findMinecraftDirectoryInManuallyCreatedModpack(String modpackName, FileSystem fs) throws IOException, UnsupportedModpackException {
+        Path root = fs.getPath("/");
+        if (isMinecraftDirectory(root)) return root;
+        try (Stream<Path> firstLayer = Files.list(root)) {
+            for (Path dir : toIterable(firstLayer)) {
+                if (isMinecraftDirectory(dir)) return dir;
+
+                try (Stream<Path> secondLayer = Files.list(dir)) {
+                    for (Path subdir : toIterable(secondLayer)) {
+                        if (isMinecraftDirectory(subdir)) return subdir;
+                    }
+                } catch (IOException ignored) {
+                }
+            }
+        } catch (IOException ignored) {
+        }
+        throw new UnsupportedModpackException(modpackName);
+    }
+
+    private static boolean isMinecraftDirectory(Path path) {
+        return Files.isDirectory(path.resolve("versions")) &&
+                (path.getFileName() == null || ".minecraft".equals(FileUtils.getName(path)));
     }
 
     public static ModpackConfiguration<?> readModpackConfiguration(File file) throws IOException {
@@ -108,7 +148,7 @@ public final class ModpackHelper {
             throw new UnsupportedModpackException();
     }
 
-    public static Task<Void> getInstallTask(Profile profile, ServerModpackManifest manifest, String name, Modpack modpack) {
+    public static Task<?> getInstallTask(Profile profile, ServerModpackManifest manifest, String name, Modpack modpack) {
         profile.getRepository().markVersionAsModpack(name);
 
         ExceptionalRunnable<?> success = () -> {
@@ -128,10 +168,29 @@ public final class ModpackHelper {
         };
 
         return new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name)
-                .whenComplete(Schedulers.defaultScheduler(), success, failure);
+                .whenComplete(Schedulers.defaultScheduler(), success, failure)
+                .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
     }
 
-    public static Task<Void> getInstallTask(Profile profile, File zipFile, String name, Modpack modpack) {
+    public static boolean isExternalGameNameConflicts(String name) {
+        return Files.exists(Paths.get("externalgames").resolve(name));
+    }
+
+    public static Task<?> getInstallManuallyCreatedModpackTask(Profile profile, File zipFile, String name, Charset charset) {
+        if (isExternalGameNameConflicts(name)) {
+            throw new IllegalArgumentException("name existing");
+        }
+
+        return new ManuallyCreatedModpackInstallTask(profile, zipFile.toPath(), charset, name)
+                .thenAcceptAsync(Schedulers.javafx(), location -> {
+                    Profile newProfile = new Profile(name, location.toFile());
+                    newProfile.setUseRelativePath(true);
+                    Profiles.getProfiles().add(newProfile);
+                    Profiles.setSelectedProfile(newProfile);
+                });
+    }
+
+    public static Task<?> getInstallTask(Profile profile, File zipFile, String name, Modpack modpack) {
         profile.getRepository().markVersionAsModpack(name);
 
         ExceptionalRunnable<?> success = () -> {
@@ -150,36 +209,30 @@ public final class ModpackHelper {
             }
         };
 
-        if (modpack.getManifest() instanceof CurseManifest)
-            return new CurseInstallTask(profile.getDependency(), zipFile, modpack, ((CurseManifest) modpack.getManifest()), name)
-                    .whenComplete(Schedulers.defaultScheduler(), success, failure);
-        else if (modpack.getManifest() instanceof HMCLModpackManifest)
-            return new HMCLModpackInstallTask(profile, zipFile, modpack, name)
-                    .whenComplete(Schedulers.defaultScheduler(), success, failure);
-        else if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return new MultiMCModpackInstallTask(profile.getDependency(), zipFile, modpack, (MultiMCInstanceConfiguration) modpack.getManifest(), name)
+        if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
+            return modpack.getInstallTask(profile.getDependency(), zipFile, name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
-        else if (modpack.getManifest() instanceof ServerModpackManifest)
-            return new ServerModpackLocalInstallTask(profile.getDependency(), zipFile, modpack, (ServerModpackManifest) modpack.getManifest(), name)
-                    .whenComplete(Schedulers.defaultScheduler(), success, failure);
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
-            return new McbbsModpackLocalInstallTask(profile.getDependency(), zipFile, modpack, (McbbsModpackManifest) modpack.getManifest(), name)
+            return modpack.getInstallTask(profile.getDependency(), zipFile, name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMcbbsPostInstallTask(profile, (McbbsModpackManifest) modpack.getManifest(), name));
-        else throw new IllegalArgumentException("Unrecognized modpack: " + modpack.getManifest());
+        else
+            return modpack.getInstallTask(profile.getDependency(), zipFile, name)
+                    .whenComplete(Schedulers.javafx(), success, failure);
     }
 
     public static Task<Void> getUpdateTask(Profile profile, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
         switch (configuration.getType()) {
             case ServerModpackRemoteInstallTask.MODPACK_TYPE:
-                return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name));
+                return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name))
+                        .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
             default:
                 throw new UnsupportedModpackException();
         }
     }
 
-    public static Task<Void> getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, MismatchedModpackTypeException {
+    public static Task<Void> getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile.toPath(), charset);
 
         switch (configuration.getType()) {

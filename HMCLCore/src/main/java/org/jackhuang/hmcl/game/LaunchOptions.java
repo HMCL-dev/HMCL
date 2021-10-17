@@ -53,6 +53,7 @@ public class LaunchOptions implements Serializable {
     private String proxyPass;
     private boolean noGeneratedJVMArgs;
     private String preLaunchCommand;
+    private String postExitCommand;
     private NativesDirectoryType nativesDirType;
     private String nativesDir;
     private ProcessPriority processPriority = ProcessPriority.NORMAL;
@@ -199,10 +200,17 @@ public class LaunchOptions implements Serializable {
     }
 
     /**
-     * Called command line before launching the game.
+     * Command called before game launches.
      */
     public String getPreLaunchCommand() {
         return preLaunchCommand;
+    }
+
+    /**
+     * Command called after game exits.
+     */
+    public String getPostExitCommand() {
+        return postExitCommand;
     }
 
     /**
@@ -500,8 +508,13 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setPrecalledCommand(String precalledCommand) {
-            options.preLaunchCommand = precalledCommand;
+        public Builder setPreLaunchCommand(String preLaunchCommand) {
+            options.preLaunchCommand = preLaunchCommand;
+            return this;
+        }
+
+        public Builder setPostExitCommand(String postExitCommand) {
+            options.postExitCommand = postExitCommand;
             return this;
         }
 

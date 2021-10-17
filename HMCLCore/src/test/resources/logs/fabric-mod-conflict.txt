@@ -1,0 +1,28 @@
+[18:27:35] [main/INFO]: Loading for game Minecraft 1.16.5
+[18:27:36] [ForkJoinPool-1-worker-7/WARN]: The mod "autoconfig1u" contains invalid entries in its mod json:
+- Unsupported root entry "$schema" at line 2 column 14
+[18:27:36] [ForkJoinPool-1-worker-2/WARN]: Non-Fabric mod JAR at "/storage/emulated/0/games/PojavLauncher/.minecraft/mods/stoneholm-1.16.52-1.2.2.jar", ignoring
+[18:27:36] [ForkJoinPool-1-worker-4/WARN]: Non-Fabric mod JAR at "/storage/emulated/0/games/PojavLauncher/.minecraft/mods/OfflineSkins_1.16.5_v1a.jar", ignoring
+[18:27:36] [ForkJoinPool-1-worker-6/WARN]: The mod "autoconfig1u" contains invalid entries in its mod json:
+- Unsupported root entry "$schema" at line 2 column 14
+[18:27:36] [ForkJoinPool-1-worker-2/WARN]: The mod "autoconfig1u" contains invalid entries in its mod json:
+- Unsupported root entry "$schema" at line 2 column 14
+[18:27:36] [ForkJoinPool-1-worker-7/WARN]: The mod "autoconfig1u" contains invalid entries in its mod json:
+- Unsupported root entry "$schema" at line 2 column 14
+[18:27:36] [ForkJoinPool-1-worker-6/WARN]: The mod "autoconfig1u" contains invalid entries in its mod json:
+- Unsupported root entry "$schema" at line 2 column 14
+[18:27:37] [main/FATAL]: A critical error occurred
+net.fabricmc.loader.discovery.ModResolutionException: Found conflicting mods: phosphor conflicts with {starlight @ [*]}
+	at net.fabricmc.loader.discovery.ModResolver.findCompatibleSet(ModResolver.java:219) ~[fabric-loader-0.11.6.jar:?]
+	at net.fabricmc.loader.discovery.ModResolver.resolve(ModResolver.java:832) ~[fabric-loader-0.11.6.jar:?]
+	at net.fabricmc.loader.FabricLoader.setup(FabricLoader.java:195) ~[fabric-loader-0.11.6.jar:?]
+	at net.fabricmc.loader.FabricLoader.load(FabricLoader.java:185) [fabric-loader-0.11.6.jar:?]
+	at net.fabricmc.loader.launch.knot.Knot.init(Knot.java:132) [fabric-loader-0.11.6.jar:?]
+	at net.fabricmc.loader.launch.knot.KnotClient.main(KnotClient.java:28) [fabric-loader-0.11.6.jar:?]
+Caused by: net.fabricmc.loader.util.sat4j.specs.ContradictionException: Creating Empty clause ?
+	at net.fabricmc.loader.util.sat4j.minisat.constraints.cnf.Clauses.propagationCheck(Clauses.java:117) ~[fabric-loader-sat4j-2.3.5.4.jar:?]
+	at net.fabricmc.loader.util.sat4j.minisat.constraints.cnf.Clauses.sanityCheck(Clauses.java:97) ~[fabric-loader-sat4j-2.3.5.4.jar:?]
+	at net.fabricmc.loader.util.sat4j.minisat.constraints.MixedDataStructureDanielWL.createClause(MixedDataStructureDanielWL.java:81) ~[fabric-loader-sat4j-2.3.5.4.jar:?]
+	at net.fabricmc.loader.util.sat4j.minisat.core.Solver.addClause(Solver.java:401) ~[fabric-loader-sat4j-2.3.5.4.jar:?]
+	at net.fabricmc.loader.discovery.ModResolver.findCompatibleSet(ModResolver.java:216) ~[fabric-loader-0.11.6.jar:?]
+	... 5 more

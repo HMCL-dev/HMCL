@@ -79,8 +79,17 @@ public class Theme {
         return isLight() ? Color.BLACK : Color.WHITE;
     }
 
-    public String[] getStylesheets() {
+    public String[] getStylesheets(String overrideFontFamily) {
         Color textFill = getForegroundColor();
+
+        String fontFamily;
+        if (System.getProperty("hmcl.font.override") != null) {
+            fontFamily = System.getProperty("hmcl.font.override");
+        } else if (overrideFontFamily != null) {
+            fontFamily = overrideFontFamily;
+        } else {
+            fontFamily = null;
+        }
 
         String css;
         try {
@@ -93,7 +102,7 @@ public class Theme {
                     .replace("%base-rippler-color%", String.format("rgba(%d, %d, %d, 0.3)", (int) Math.ceil(paint.getRed() * 256), (int) Math.ceil(paint.getGreen() * 256), (int) Math.ceil(paint.getBlue() * 256)))
                     .replace("%disabled-font-color%", String.format("rgba(%d, %d, %d, 0.7)", (int) Math.ceil(textFill.getRed() * 256), (int) Math.ceil(textFill.getGreen() * 256), (int) Math.ceil(textFill.getBlue() * 256)))
                     .replace("%font-color%", getColorDisplayName(getForegroundColor()))
-                    .replace("%font%", Optional.ofNullable(System.getProperty("hmcl.font.override")).map(fontFamily -> "-fx-font-family: " + fontFamily + ";").orElse("")));
+                    .replace("%font%", Optional.ofNullable(fontFamily).map(f -> "-fx-font-family: \"" + f + "\";").orElse("")));
             css = temp.toURI().toString();
         } catch (IOException | NullPointerException e) {
             Logging.LOG.log(Level.SEVERE, "Unable to create theme stylesheet. Fallback to blue theme.", e);

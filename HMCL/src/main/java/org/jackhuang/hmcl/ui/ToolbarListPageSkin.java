@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXScrollPane;
-import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -44,6 +43,7 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         SpinnerPane spinnerPane = new SpinnerPane();
         spinnerPane.loadingProperty().bind(skinnable.loadingProperty());
         spinnerPane.failedReasonProperty().bind(skinnable.failedReasonProperty());
+        spinnerPane.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
         spinnerPane.getStyleClass().add("large-spinner-pane");
 
         ComponentList root = new ComponentList();
@@ -54,7 +54,6 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         if (!toolbarButtons.isEmpty()) {
             HBox toolbar = new HBox();
             toolbar.setAlignment(Pos.CENTER_LEFT);
-            JFXDepthManager.setDepth(toolbar, 1);
             toolbar.setPickOnBounds(false);
             toolbar.getChildren().setAll(toolbarButtons);
             root.getContent().add(toolbar);

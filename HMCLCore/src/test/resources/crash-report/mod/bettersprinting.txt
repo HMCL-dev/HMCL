@@ -1,0 +1,161 @@
+---- Minecraft Crash Report ----
+
+WARNING: coremods are present:
+  NeteaseCore (4619774556351054392@3@0.jar)
+  SkinCore (4626894634154779079@3@0.jar)
+  BaseModNeteaseCore (4620273813196076442@3@0.jar)
+  InputFix (4618424574399199550@3@0.jar)
+  RandFTCore (4618421856281952104@2@33.jar)
+Contact their authors BEFORE contacting forge
+
+// Hi. I'm Minecraft, and I'm a crashaholic.
+
+Time: 19-1-20 上午10:58
+Description: Ticking entity
+
+java.lang.IllegalAccessError: tried to access field net.minecraft.client.entity.EntityPlayerSP.field_71156_d from class chylex.bettersprinting.client.player.impl.LivingUpdate
+	at chylex.bettersprinting.client.player.impl.LivingUpdate.callPreSuper(LivingUpdate.java:18)
+	at chylex.bettersprinting.client.player.impl.PlayerOverride.func_70636_d(PlayerOverride.java:33)
+	at net.minecraft.entity.EntityLivingBase.func_70071_h_(EntityLivingBase.java:1614)
+	at net.minecraft.entity.player.EntityPlayer.func_70071_h_(EntityPlayer.java:283)
+	at net.minecraft.client.entity.EntityPlayerSP.func_70071_h_(EntityPlayerSP.java:117)
+	at net.minecraft.world.World.func_72866_a(World.java:1860)
+	at net.minecraft.world.World.func_72870_g(World.java:1829)
+	at net.minecraft.world.World.func_72939_s(World.java:1661)
+	at net.minecraft.client.Minecraft.func_71407_l(Minecraft.java:2082)
+	at net.minecraft.client.Minecraft.func_71411_J(Minecraft.java:1017)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:351)
+	at net.minecraft.client.main.Main.main(SourceFile:124)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:146)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:25)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Stacktrace:
+	at chylex.bettersprinting.client.player.impl.LivingUpdate.callPreSuper(LivingUpdate.java:18)
+	at chylex.bettersprinting.client.player.impl.PlayerOverride.func_70636_d(PlayerOverride.java:33)
+	at net.minecraft.entity.EntityLivingBase.func_70071_h_(EntityLivingBase.java:1614)
+	at net.minecraft.entity.player.EntityPlayer.func_70071_h_(EntityPlayer.java:283)
+	at net.minecraft.client.entity.EntityPlayerSP.func_70071_h_(EntityPlayerSP.java:117)
+	at net.minecraft.world.World.func_72866_a(World.java:1860)
+	at net.minecraft.world.World.func_72870_g(World.java:1829)
+
+-- Entity being ticked --
+Details:
+	Entity Type: null (chylex.bettersprinting.client.player.impl.PlayerOverride)
+	Entity ID: 2833344
+	Entity Name: 屠仙召唤师1
+	Entity's Exact location: -25.07, 70.05, 1.57
+	Entity's Block location: -26.00,70.00,1.00 - World: (-26,70,1), Chunk: (at 6,4,1 in -2,0; contains blocks -32,0,0 to -17,255,15), Region: (-1,0; contains chunks -32,0 to -1,31, blocks -512,0,0 to -1,255,511)
+	Entity's Momentum: 0.00, 0.00, 0.00
+	Entity's Rider: ~~ERROR~~ NullPointerException: null
+	Entity's Vehicle: ~~ERROR~~ NullPointerException: null
+Stacktrace:
+	at net.minecraft.world.World.func_72939_s(World.java:1661)
+
+-- Affected level --
+Details:
+	Level name: MpServer
+	All players: 33 total; [PlayerOverride['屠仙召唤师1'/2833344, l='MpServer', x=-25.07, y=70.05, z=1.57], EntityOtherPlayerMP['Mmqlipe'/2832646, l='MpServer', x=-21.94, y=70.00, z=0.13], EntityOtherPlayerMP['Aghikt'/2833156, l='MpServer', x=-23.77, y=70.00, z=0.35], EntityOtherPlayerMP['任凭暴雪纷飞'/2832666, l='MpServer', x=-22.78, y=70.00, z=0.81], EntityOtherPlayerMP['summer_殇恋'/2833248, l='MpServer', x=-25.00, y=70.03, z=1.63], EntityOtherPlayerMP['单身汪carzy'/2831244, l='MpServer', x=-17.53, y=68.00, z=1.41], EntityOtherPlayerMP['BARRYDCY'/2830748, l='MpServer', x=-23.81, y=70.00, z=0.13], EntityOtherPlayerMP['mc小禾禾'/2832081, l='MpServer', x=-2.50, y=67.00, z=7.89], EntityOtherPlayerMP['逗比牛是真的逗比'/2827646, l='MpServer', x=-13.63, y=67.00, z=9.16], EntityOtherPlayerMP['二次元ren'/2830953, l='MpServer', x=-25.41, y=70.00, z=-0.09], EntityOtherPlayerMP['暗影作者'/2818626, l='MpServer', x=-22.78, y=70.00, z=-0.31], EntityOtherPlayerMP['梦晨丶辉'/2833153, l='MpServer', x=-23.16, y=70.03, z=-0.69], EntityOtherPlayerMP['gu_chen'/2833342, l='MpServer', x=-25.16, y=70.03, z=-0.66], EntityOtherPlayerMP['上进豹猫的飞'/2831854, l='MpServer', x=-24.94, y=70.00, z=-0.44], EntityOtherPlayerMP['隔山打牛丨患幻'/2832942, l='MpServer', x=-0.19, y=67.00, z=-0.63], EntityOtherPlayerMP['c4ru4rp9p9'/55, l='MpServer', x=-8.50, y=67.00, z=-4.50], EntityOtherPlayerMP['辣鸡翅'/2830962, l='MpServer', x=-8.18, y=68.00, z=-7.38], EntityOtherPlayerMP['luksm1'/2828598, l='MpServer', x=-7.59, y=68.00, z=-7.97], EntityOtherPlayerMP['放大阿萨姆'/2831633, l='MpServer', x=-5.44, y=67.80, z=-8.03], EntityOtherPlayerMP['rd65d5wf57'/0, l='MpServer', x=3.50, y=67.00, z=-14.50], EntityOtherPlayerMP['n7m0k9a63m'/6, l='MpServer', x=1.50, y=68.00, z=-5.50], EntityOtherPlayerMP['w1rc9838y8'/7, l='MpServer', x=3.50, y=68.00, z=-2.50], EntityOtherPlayerMP['YlNb'/2830955, l='MpServer', x=12.36, y=75.50, z=3.53], EntityOtherPlayerMP['阳光主播秋日'/2829917, l='MpServer', x=9.63, y=67.00, z=1.03], EntityOtherPlayerMP['24vnu41f3t'/1, l='MpServer', x=10.50, y=67.00, z=0.50], EntityOtherPlayerMP['pa63qhv6ql'/2, l='MpServer', x=-0.50, y=68.00, z=9.50], EntityOtherPlayerMP['4o0yglp9p4'/4, l='MpServer', x=3.50, y=68.00, z=3.50], EntityOtherPlayerMP['9i6ei17ml9'/5, l='MpServer', x=1.50, y=68.00, z=6.50], EntityOtherPlayerMP['pater得得520'/2832550, l='MpServer', x=-14.57, y=69.14, z=-22.54], EntityOtherPlayerMP['YoloYap'/2832181, l='MpServer', x=-1.95, y=69.17, z=-22.41], EntityOtherPlayerMP['敲帅的骚鱼鸭丶'/2831850, l='MpServer', x=-8.79, y=69.15, z=-20.27], EntityOtherPlayerMP['九凤最帅'/2831536, l='MpServer', x=-24.59, y=57.23, z=-31.83], EntityOtherPlayerMP['海神修罗唐三'/2820695, l='MpServer', x=-72.50, y=76.72, z=-7.61]]
+	Chunk stats: MultiplayerChunkCache: 45, 45
+	Level seed: 0
+	Level generator: ID 00 - default, ver 1. Features enabled: false
+	Level generator options:
+	Level spawn location: -26.00,70.00,1.00 - World: (-26,70,1), Chunk: (at 6,4,1 in -2,0; contains blocks -32,0,0 to -17,255,15), Region: (-1,0; contains chunks -32,0 to -1,31, blocks -512,0,0 to -1,255,511)
+	Level time: 236429046 game time, 389000 day time
+	Level dimension: 0
+	Level storage version: 0x00000 - Unknown?
+	Level weather: Rain time: 0 (now: false), thunder time: 0 (now: false)
+	Level game mode: Game mode: survival (ID 0). Hardcore: false. Cheats: false
+	Forced entities: 218 total; [EntityOtherPlayerMP['24vnu41f3t'/1, l='MpServer', x=10.50, y=67.00, z=0.50], PlayerOverride['屠仙召唤师1'/2833344, l='MpServer', x=-25.07, y=70.05, z=1.57], EntityOtherPlayerMP['pa63qhv6ql'/2, l='MpServer', x=-0.50, y=68.00, z=9.50], EntityArmorStand['§e§l1,035名玩家'/3, l='MpServer', x=-0.50, y=67.88, z=9.50], EntityOtherPlayerMP['Mmqlipe'/2832646, l='MpServer', x=-21.94, y=70.00, z=0.13], EntityOtherPlayerMP['4o0yglp9p4'/4, l='MpServer', x=3.50, y=68.00, z=3.50], EntityOtherPlayerMP['Aghikt'/2833156, l='MpServer', x=-23.77, y=70.00, z=0.35], EntityOtherPlayerMP['任凭暴雪纷飞'/2832666, l='MpServer', x=-22.78, y=70.00, z=0.81], EntityOtherPlayerMP['9i6ei17ml9'/5, l='MpServer', x=1.50, y=68.00, z=6.50], EntityOtherPlayerMP['n7m0k9a63m'/6, l='MpServer', x=1.50, y=68.00, z=-5.50], EntityOtherPlayerMP['summer_殇恋'/2833248, l='MpServer', x=-25.00, y=70.03, z=1.63], EntityOtherPlayerMP['w1rc9838y8'/7, l='MpServer', x=3.50, y=68.00, z=-2.50], EntityOtherPlayerMP['单身汪carzy'/2831244, l='MpServer', x=-17.53, y=68.00, z=1.41], EntityOtherPlayerMP['BARRYDCY'/2830748, l='MpServer', x=-23.81, y=70.00, z=0.13], EntityArmorStand['§b神秘宝库'/8, l='MpServer', x=-8.50, y=68.38, z=-8.50], EntityArmorStand['§e§l右键点击'/9, l='MpServer', x=-8.50, y=68.09, z=-8.50], EntityVillager['村民'/10, l='MpServer', x=-8.50, y=67.00, z=10.50], EntityArmorStand['§e§l右键点击'/11, l='MpServer', x=-8.50, y=67.16, z=10.50], EntityArmorStand['§b任务达人'/12, l='MpServer', x=-8.50, y=67.47, z=10.50], EntityOtherPlayerMP['逗比牛是真的逗比'/2827646, l='MpServer', x=-13.63, y=67.00, z=9.16], EntityOtherPlayerMP['mc小禾禾'/2832081, l='MpServer', x=-2.50, y=67.00, z=7.89], EntityOtherPlayerMP['暗影作者'/2818626, l='MpServer', x=-22.78, y=70.00, z=-0.31], EntityOtherPlayerMP['二次元ren'/2830953, l='MpServer', x=-25.41, y=70.00, z=-0.09], EntityOtherPlayerMP['gu_chen'/2833342, l='MpServer', x=-25.16, y=70.03, z=-0.66], EntityOtherPlayerMP['梦晨丶辉'/2833153, l='MpServer', x=-23.16, y=70.03, z=-0.69], EntityOtherPlayerMP['隔山打牛丨患幻'/2832942, l='MpServer', x=-0.19, y=67.00, z=-0.63], EntityOtherPlayerMP['上进豹猫的飞'/2831854, l='MpServer', x=-24.94, y=70.00, z=-0.44], EntityOtherPlayerMP['辣鸡翅'/2830962, l='MpServer', x=-8.18, y=68.00, z=-7.38], EntityOtherPlayerMP['c4ru4rp9p9'/55, l='MpServer', x=-8.50, y=67.00, z=-4.50], EntityOtherPlayerMP['luksm1'/2828598, l='MpServer', x=-7.59, y=68.00, z=-7.97], EntityOtherPlayerMP['放大阿萨姆'/2831633, l='MpServer', x=-5.44, y=67.80, z=-8.03], EntityOtherPlayerMP['c4ru4rp9p9'/55, l='MpServer', x=-8.50, y=67.00, z=-4.50], EntityArmorStand['§b礼包使者§r'/58, l='MpServer', x=-8.50, y=67.25, z=-4.50], EntityArmorStand['§e§l右键点击§r'/57, l='MpServer', x=-8.50, y=66.97, z=-4.50], EntityOtherPlayerMP['n7m0k9a63m'/6, l='MpServer', x=1.50, y=68.00, z=-5.50], EntityArmorStand['盔甲架'/2833250, l='MpServer', x=-8.50, y=70.69, z=-8.50], EntityArmorStand['§e1. §cCC直播丶终宇飞i§r§7 [GHOST]§7 - §e1,054'/62, l='MpServer', x=-10.50, y=72.78, z=-28.00], EntityOtherPlayerMP['YlNb'/2830955, l='MpServer', x=12.36, y=75.50, z=3.53], EntityOtherPlayerMP['summer_殇恋'/2833248, l='MpServer', x=-25.00, y=70.03, z=1.63], EntityArmorStand['§b§l起床战争等级'/60, l='MpServer', x=-10.50, y=73.25, z=-28.00], EntityOtherPlayerMP['敲帅的骚鱼鸭丶'/2831850, l='MpServer', x=-8.79, y=69.15, z=-20.27], EntityArmorStand['§e4. §aAing_§r§7 [S]§7 - §e641'/68, l='MpServer', x=-10.50, y=71.69, z=-28.00], EntityArmorStand['§e5. §bCC直播丶贼能混§r§7 [S]§7 - §e625'/70, l='MpServer', x=-10.50, y=71.31, z=-28.00], EntityOtherPlayerMP['上进豹猫的飞'/2831854, l='MpServer', x=-24.94, y=70.00, z=-0.44], EntityArmorStand['§e2. §b奶糕酷§r§7 [DD]§7 - §e707'/64, l='MpServer', x=-10.50, y=72.41, z=-28.00], EntityArmorStand['§e3. §cMinikloon§7 - §e666'/66, l='MpServer', x=-10.50, y=72.03, z=-28.00], EntityOtherPlayerMP['阳光主播秋日'/2829917, l='MpServer', x=9.63, y=67.00, z=1.03], EntityOtherPlayerMP['24vnu41f3t'/1, l='MpServer', x=10.50, y=67.00, z=0.50], EntityArmorStand['§e8. §7慕依起不来床了§r§7 [CEO]§7 - §e578'/76, l='MpServer', x=-10.50, y=70.19, z=-28.00], EntityOtherPlayerMP['pa63qhv6ql'/2, l='MpServer', x=-0.50, y=68.00, z=9.50], EntityOtherPlayerMP['4o0yglp9p4'/4, l='MpServer', x=3.50, y=68.00, z=3.50], EntityArmorStand['§e9. §7CC直播丶小凯吖§r§7 [S]§7 - §e524'/78, l='MpServer', x=-10.50, y=69.81, z=-28.00], EntityOtherPlayerMP['9i6ei17ml9'/5, l='MpServer', x=1.50, y=68.00, z=6.50], EntityOtherPlayerMP['单身汪carzy'/2831244, l='MpServer', x=-17.53, y=68.00, z=1.41], EntityArmorStand['§e6. §7闻雪此生挚爱唯江§r§7 [V8]§7 - §e611'/72, l='MpServer', x=-10.50, y=70.94, z=-28.00], EntityArmorStand['§e7. §7闻雪一生挚爱唯江§r§7 [SW]§7 - §e608'/74, l='MpServer', x=-10.50, y=70.56, z=-28.00], EntityArmorStand['§7所有模式'/84, l='MpServer', x=-5.00, y=73.38, z=-28.00], EntityArmorStand['§e1. §cCC直播丶终宇飞i§r§7 [GHOST]§7 - §e18,937'/86, l='MpServer', x=-5.00, y=72.91, z=-28.00], EntityArmorStand['§e10. §7樱花落雪思丶飞神§r§7 [CEO]§7 - §e521'/80, l='MpServer', x=-10.50, y=69.47, z=-28.00], EntityArmorStand['§b§l生涯胜场'/82, l='MpServer', x=-5.00, y=73.75, z=-28.00], EntityOtherPlayerMP['梦晨丶辉'/2833153, l='MpServer', x=-23.16, y=70.03, z=-0.69], EntityArmorStand['§e4. §7闻雪一生挚爱唯江§r§7 [SW]§7 - §e8,699'/92, l='MpServer', x=-5.00, y=71.81, z=-28.00], EntityOtherPlayerMP['YoloYap'/2832181, l='MpServer', x=-1.95, y=69.17, z=-22.41], EntityOtherPlayerMP['pater得得520'/2832550, l='MpServer', x=-14.57, y=69.14, z=-22.54], EntityArmorStand['§e5. §7CC直播丶小凯吖§r§7 [S]§7 - §e8,390'/94, l='MpServer', x=-5.00, y=71.44, z=-28.00], EntityOtherPlayerMP['Aghikt'/2833156, l='MpServer', x=-23.77, y=70.00, z=0.35], EntityArmorStand['§e2. §bCC直播丶贼能混§r§7 [S]§7 - §e11,714'/88, l='MpServer', x=-5.00, y=72.53, z=-28.00], EntityArmorStand['§e3. §7闻雪此生挚爱唯江§r§7 [V8]§7 - §e10,068'/90, l='MpServer', x=-5.00, y=72.19, z=-28.00], EntityArmorStand['§e9. §7初雨凉笙叹丶星尘§7 - §e7,605'/102, l='MpServer', x=-5.00, y=69.97, z=-28.00], EntityArmorStand['§e8. §a顽皮野蛮长的大丶§r§7 [CEO]§7 - §e7,934'/100, l='MpServer', x=-5.00, y=70.31, z=-28.00], EntityArmorStand['§e7. §b没人疼爱我了§r§7 [S]§7 - §e8,154'/98, l='MpServer', x=-5.00, y=70.69, z=-28.00], EntityOtherPlayerMP['任凭暴雪纷飞'/2832666, l='MpServer', x=-22.78, y=70.00, z=0.81], EntityOtherPlayerMP['敲帅的骚鱼鸭丶'/2831850, l='MpServer', x=-8.79, y=69.15, z=-20.27], EntityArmorStand['§e6. §biLikeOreo§7 - §e8,323'/96, l='MpServer', x=-5.00, y=71.06, z=-28.00], EntityArmorStand['§b§l生涯最终击杀'/110, l='MpServer', x=0.50, y=73.75, z=-28.00], EntityArmorStand['§a§l生涯 §r§7每周 §r§7每日'/108, l='MpServer', x=-5.00, y=68.75, z=-28.00], EntityArmorStand['§6§l点击切换！'/106, l='MpServer', x=-5.00, y=69.13, z=-28.00], EntityArmorStand['§e10. §b笙歌叹离愁丶旺仔§r§7 [URBBR]§7 - §e7,564'/104, l='MpServer', x=-5.00, y=69.59, z=-28.00], EntityArmorStand['§e3. §b奶糕酷§r§7 [DD]§7 - §e31,951'/118, l='MpServer', x=0.50, y=72.19, z=-28.00], EntityArmorStand['§e2. §bCC直播丶贼能混§r§7 [S]§7 - §e38,941'/116, l='MpServer', x=0.50, y=72.53, z=-28.00], EntityArmorStand['§e1. §cCC直播丶终宇飞i§r§7 [GHOST]§7 - §e62,954'/114, l='MpServer', x=0.50, y=72.91, z=-28.00], EntityArmorStand['§7所有模式'/112, l='MpServer', x=0.50, y=73.38, z=-28.00], EntityOtherPlayerMP['BARRYDCY'/2830748, l='MpServer', x=-23.81, y=70.00, z=0.13], EntityArmorStand['§e7. §7闻雪此生挚爱唯江§r§7 [V8]§7 - §e27,126'/126, l='MpServer', x=0.50, y=70.69, z=-28.00], EntityOtherPlayerMP['海神修罗唐三'/2820695, l='MpServer', x=-72.50, y=76.72, z=-7.61], EntityOtherPlayerMP['阳光主播秋日'/2829917, l='MpServer', x=9.63, y=67.00, z=1.03], EntityOtherPlayerMP['Mmqlipe'/2832646, l='MpServer', x=-21.94, y=70.00, z=0.13], EntityArmorStand['§e6. §7初雨凉笙叹丶星尘§7 - §e29,287'/124, l='MpServer', x=0.50, y=71.06, z=-28.00], EntityArmorStand['§e5. §7闻雪一生挚爱唯江§r§7 [SW]§7 - §e29,751'/122, l='MpServer', x=0.50, y=71.44, z=-28.00], EntityArmorStand['§e4. §b奶熊§r§7 [KID]§7 - §e30,021'/120, l='MpServer', x=0.50, y=71.81, z=-28.00], EntityItemFrame['entity.ItemFrame.name'/2833365, l='MpServer', x=-9.50, y=75.50, z=28.97], EntityArmorStand['§a§l生涯 §r§7每周 §r§7每日'/136, l='MpServer', x=0.50, y=68.75, z=-28.00], EntityItemFrame['entity.ItemFrame.name'/2833364, l='MpServer', x=-9.50, y=74.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833367, l='MpServer', x=-8.50, y=71.50, z=28.97], EntityArmorStand['§b§n点击切换！'/138, l='MpServer', x=5.00, y=70.00, z=-26.00], EntityItemFrame['entity.ItemFrame.name'/2833366, l='MpServer', x=-8.50, y=70.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833361, l='MpServer', x=-9.50, y=71.50, z=28.97], EntityArmorStand['§a§l所有模式'/140, l='MpServer', x=5.00, y=69.53, z=-26.00], EntityItemFrame['entity.ItemFrame.name'/2833360, l='MpServer', x=-9.50, y=70.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833363, l='MpServer', x=-9.50, y=73.50, z=28.97], EntityArmorStand['§7单挑'/142, l='MpServer', x=5.00, y=69.16, z=-26.00], EntityItemFrame['entity.ItemFrame.name'/2833362, l='MpServer', x=-9.50, y=72.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833373, l='MpServer', x=-7.50, y=71.50, z=28.97], EntityArmorStand['§e8. §7唯念龙神三里清风§r§7 [DK]§7 - §e26,547'/128, l='MpServer', x=0.50, y=70.31, z=-28.00], EntityItemFrame['entity.ItemFrame.name'/2833372, l='MpServer', x=-7.50, y=70.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833375, l='MpServer', x=-7.50, y=73.50, z=28.97], EntityArmorStand['§e9. §biLikeOreo§7 - §e23,899'/130, l='MpServer', x=0.50, y=69.97, z=-28.00], EntityItemFrame['entity.ItemFrame.name'/2833374, l='MpServer', x=-7.50, y=72.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833369, l='MpServer', x=-8.50, y=73.50, z=28.97], EntityArmorStand['§e10. §a叮当吖§r§7 [W]§7 - §e21,616'/132, l='MpServer', x=0.50, y=69.59, z=-28.00], EntityItemFrame['entity.ItemFrame.name'/2833368, l='MpServer', x=-8.50, y=72.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833371, l='MpServer', x=-8.50, y=75.50, z=28.97], EntityArmorStand['§6§l点击切换！'/134, l='MpServer', x=0.50, y=69.13, z=-28.00], EntityItemFrame['entity.ItemFrame.name'/2833370, l='MpServer', x=-8.50, y=74.50, z=28.97], EntityArmorStand['§f成就：§e14§a/73'/152, l='MpServer', x=3.50, y=68.03, z=-14.50], EntityItemFrame['entity.ItemFrame.name'/2833348, l='MpServer', x=-11.50, y=70.50, z=28.97], EntityArmorStand['§f总胜利场次：§a2'/153, l='MpServer', x=3.50, y=67.69, z=-14.50], EntityItemFrame['entity.ItemFrame.name'/2833349, l='MpServer', x=-11.50, y=71.50, z=28.97], EntityArmorStand['§f当前连胜次数：§a0'/154, l='MpServer', x=3.50, y=67.31, z=-14.50], EntityItemFrame['entity.ItemFrame.name'/2833350, l='MpServer', x=-11.50, y=72.50, z=28.97], EntityArmorStand['§e§l点击打开'/155, l='MpServer', x=10.50, y=67.28, z=0.50], EntityItemFrame['entity.ItemFrame.name'/2833351, l='MpServer', x=-11.50, y=73.50, z=28.97], EntityArmorStand['§b店主'/156, l='MpServer', x=10.50, y=66.91, z=0.50], EntityArmorStand['§f5个礼包！§r'/2833345, l='MpServer', x=-8.50, y=67.56, z=-4.50], EntityArmorStand['§6§l限时梦幻模式'/157, l='MpServer', x=-0.50, y=69.03, z=9.50], EntityArmorStand['§e§l点击开始游戏§r'/158, l='MpServer', x=-0.50, y=68.69, z=9.50], EntityArmorStand['盔甲架'/2833346, l='MpServer', x=-8.50, y=68.69, z=-8.50], EntityArmorStand['§b疾速起床V2§7 [v1.5]'/159, l='MpServer', x=-0.50, y=68.31, z=9.50], EntityArmorStand['§f1个可用!§r'/2833347, l='MpServer', x=-8.50, y=68.69, z=-8.50], EntityArmorStand['§7双人'/144, l='MpServer', x=5.00, y=68.78, z=-26.00], EntityItemFrame['entity.ItemFrame.name'/2833356, l='MpServer', x=-10.50, y=72.50, z=28.97], EntityBat['蝙蝠'/145, l='MpServer', x=-8.50, y=68.35, z=-4.50], EntityItemFrame['entity.ItemFrame.name'/2833357, l='MpServer', x=-10.50, y=73.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833358, l='MpServer', x=-10.50, y=74.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833359, l='MpServer', x=-10.50, y=75.50, z=28.97], EntityArmorStand['§e§l点击查看更多数据'/148, l='MpServer', x=3.50, y=66.91, z=-14.50], EntityItemFrame['entity.ItemFrame.name'/2833352, l='MpServer', x=-11.50, y=74.50, z=28.97], EntityArmorStand['§6§l你的起床战争信息'/149, l='MpServer', x=3.50, y=69.16, z=-14.50], EntityItemFrame['entity.ItemFrame.name'/2833353, l='MpServer', x=-11.50, y=75.50, z=28.97], EntityArmorStand['§f等级：§a§73?'/150, l='MpServer', x=3.50, y=68.78, z=-14.50], EntityItemFrame['entity.ItemFrame.name'/2833354, l='MpServer', x=-10.50, y=70.50, z=28.97], EntityArmorStand['§f进度：§b125§7/§a3.5k'/151, l='MpServer', x=3.50, y=68.41, z=-14.50], EntityItemFrame['entity.ItemFrame.name'/2833355, l='MpServer', x=-10.50, y=71.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833399, l='MpServer', x=-3.50, y=73.50, z=28.97], EntityArmorStand['§e§l323名玩家'/171, l='MpServer', x=3.50, y=67.94, z=-2.50], EntityItemFrame['entity.ItemFrame.name'/2833398, l='MpServer', x=-3.50, y=72.50, z=28.97], EntityArmorStand['§b双人模式§7 [v1.5]'/170, l='MpServer', x=3.50, y=68.31, z=-2.50], EntityItemFrame['entity.ItemFrame.name'/2833397, l='MpServer', x=-3.50, y=71.50, z=28.97], EntityArmorStand['§e§l点击开始游戏§r'/169, l='MpServer', x=3.50, y=68.69, z=-2.50], EntityItemFrame['entity.ItemFrame.name'/2833396, l='MpServer', x=-3.50, y=70.50, z=28.97], EntityArmorStand['§e§l199名玩家'/168, l='MpServer', x=1.50, y=67.94, z=-5.50], EntityItemFrame['entity.ItemFrame.name'/2833395, l='MpServer', x=-4.50, y=75.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833394, l='MpServer', x=-4.50, y=74.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833393, l='MpServer', x=-4.50, y=73.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833392, l='MpServer', x=-4.50, y=72.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833407, l='MpServer', x=-2.50, y=75.50, z=28.97], EntityArmorStand['§e§l点击开始游戏§r'/163, l='MpServer', x=1.50, y=68.69, z=6.50], EntityItemFrame['entity.ItemFrame.name'/2833406, l='MpServer', x=-2.50, y=74.50, z=28.97], EntityArmorStand['§e§l273名玩家'/162, l='MpServer', x=3.50, y=67.94, z=3.50], EntityItemFrame['entity.ItemFrame.name'/2833405, l='MpServer', x=-2.50, y=73.50, z=28.97], EntityArmorStand['§b3v3v3v3模式§7 [v1.5]'/161, l='MpServer', x=3.50, y=68.31, z=3.50], EntityItemFrame['entity.ItemFrame.name'/2833404, l='MpServer', x=-2.50, y=72.50, z=28.97], EntityArmorStand['§e§l点击开始游戏§r'/160, l='MpServer', x=3.50, y=68.69, z=3.50], EntityItemFrame['entity.ItemFrame.name'/2833403, l='MpServer', x=-2.50, y=71.50, z=28.97], EntityArmorStand['§b单挑模式§7 [v1.5]'/167, l='MpServer', x=1.50, y=68.31, z=-5.50], EntityItemFrame['entity.ItemFrame.name'/2833402, l='MpServer', x=-2.50, y=70.50, z=28.97], EntityArmorStand['§e§l点击开始游戏§r'/166, l='MpServer', x=1.50, y=68.69, z=-5.50], EntityItemFrame['entity.ItemFrame.name'/2833401, l='MpServer', x=-3.50, y=75.50, z=28.97], EntityArmorStand['§e§l1,463名玩家'/165, l='MpServer', x=1.50, y=67.94, z=6.50], EntityItemFrame['entity.ItemFrame.name'/2833400, l='MpServer', x=-3.50, y=74.50, z=28.97], EntityArmorStand['§b4v4v4v4模式§7 [v1.5]'/164, l='MpServer', x=1.50, y=68.31, z=6.50], EntityItemFrame['entity.ItemFrame.name'/2833382, l='MpServer', x=-6.50, y=74.50, z=28.97], EntityArmorStand['盔甲架'/187, l='MpServer', x=-4.50, y=84.13, z=30.50], EntityItemFrame['entity.ItemFrame.name'/2833383, l='MpServer', x=-6.50, y=75.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833380, l='MpServer', x=-6.50, y=72.50, z=28.97], EntityArmorStand['盔甲架'/185, l='MpServer', x=-4.50, y=84.50, z=30.50], EntityItemFrame['entity.ItemFrame.name'/2833381, l='MpServer', x=-6.50, y=73.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833378, l='MpServer', x=-6.50, y=70.50, z=28.97], EntityOtherPlayerMP['放大阿萨姆'/2831633, l='MpServer', x=-5.44, y=67.80, z=-8.03], EntityArmorStand['盔甲架'/191, l='MpServer', x=-60.50, y=98.13, z=0.50], EntityItemFrame['entity.ItemFrame.name'/2833379, l='MpServer', x=-6.50, y=71.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833376, l='MpServer', x=-7.50, y=74.50, z=28.97], EntityArmorStand['盔甲架'/189, l='MpServer', x=-60.50, y=98.50, z=0.50], EntityOtherPlayerMP['YoloYap'/2832181, l='MpServer', x=-1.95, y=69.17, z=-22.41], EntityItemFrame['entity.ItemFrame.name'/2833377, l='MpServer', x=-7.50, y=75.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833390, l='MpServer', x=-4.50, y=70.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833391, l='MpServer', x=-4.50, y=71.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833388, l='MpServer', x=-5.50, y=74.50, z=28.97], EntityOtherPlayerMP['九凤最帅'/2831536, l='MpServer', x=-24.59, y=57.23, z=-31.83], EntityItemFrame['entity.ItemFrame.name'/2833389, l='MpServer', x=-5.50, y=75.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833386, l='MpServer', x=-5.50, y=72.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833387, l='MpServer', x=-5.50, y=73.50, z=28.97], EntityArmorStand['盔甲架'/183, l='MpServer', x=-56.50, y=91.13, z=-21.50], EntityItemFrame['entity.ItemFrame.name'/2833384, l='MpServer', x=-5.50, y=70.50, z=28.97], EntityItemFrame['entity.ItemFrame.name'/2833385, l='MpServer', x=-5.50, y=71.50, z=28.97], EntityArmorStand['盔甲架'/181, l='MpServer', x=-56.50, y=91.50, z=-21.50], EntityArmorStand['盔甲架'/196, l='MpServer', x=-24.50, y=69.50, z=-23.50], EntityArmorStand['盔甲架'/198, l='MpServer', x=-24.50, y=69.13, z=-23.50], EntityOtherPlayerMP['海神修罗唐三'/2820695, l='MpServer', x=-72.50, y=76.72, z=-7.61], EntityOtherPlayerMP['gu_chen'/2833342, l='MpServer', x=-25.16, y=70.03, z=-0.66], EntityOtherPlayerMP['暗影作者'/2818626, l='MpServer', x=-22.78, y=70.00, z=-0.31], EntityOtherPlayerMP['九凤最帅'/2831536, l='MpServer', x=-24.59, y=57.23, z=-31.83], EntityBat['蝙蝠'/2253285, l='MpServer', x=-22.72, y=71.78, z=3.66], EntityOtherPlayerMP['mc小禾禾'/2832081, l='MpServer', x=-2.50, y=67.00, z=7.89], EntityOtherPlayerMP['隔山打牛丨患幻'/2832942, l='MpServer', x=-0.19, y=67.00, z=-0.63], EntityOtherPlayerMP['luksm1'/2828598, l='MpServer', x=-7.59, y=68.00, z=-7.97], EntityWither['§6空岛战争§a实验室更新 - §d§l疯狂TNT§a开放中!'/-1234, l='MpServer', x=7.91, y=70.03, z=1.56], EntityZombie['僵尸'/2830960, l='MpServer', x=11.36, y=67.68, z=1.71], EntityOtherPlayerMP['辣鸡翅'/2830962, l='MpServer', x=-8.18, y=68.00, z=-7.38], EntityArmorStand['§bbili277691049'/2830957, l='MpServer', x=11.40, y=66.16, z=2.00], EntityArmorStand['盔甲架'/2830956, l='MpServer', x=11.41, y=67.16, z=2.05], EntityArmorStand['盔甲架'/2830959, l='MpServer', x=11.17, y=67.38, z=1.79], EntityArmorStand['盔甲架'/2830958, l='MpServer', x=11.31, y=67.16, z=1.54], EntityOtherPlayerMP['二次元ren'/2830953, l='MpServer', x=-25.41, y=70.00, z=-0.09], EntityOtherPlayerMP['YlNb'/2830955, l='MpServer', x=12.36, y=75.50, z=3.53], EntityOtherPlayerMP['pater得得520'/2832550, l='MpServer', x=-14.57, y=69.14, z=-22.54], EntityChicken['鸡'/2495109, l='MpServer', x=-14.50, y=71.00, z=-6.50], EntityOtherPlayerMP['逗比牛是真的逗比'/2827646, l='MpServer', x=-13.63, y=67.00, z=9.16]]
+	Retry entities: 0 total; []
+	Server brand: BungeeCord (Hypixel) <- vanilla
+	Server type: Non-integrated multiplayer server
+Stacktrace:
+	at net.minecraft.client.multiplayer.WorldClient.func_72914_a(WorldClient.java:412)
+	at net.minecraft.client.Minecraft.func_71396_d(Minecraft.java:2529)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:372)
+	at net.minecraft.client.main.Main.main(SourceFile:124)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:146)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:25)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.8.9
+	Operating System: Windows 7 (amd64) version 6.1
+	CPU: <unknown>
+	Java Version: 1.7.0, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 182123040 bytes (173 MB) / 413282304 bytes (394 MB) up to 1345585152 bytes (1283 MB)
+	JVM Flags: 8 total; -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -Xmx1295M -Xmn128M -XX:PermSize=64M -XX:MaxPermSize=128M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy
+	IntCache: cache: 0, tcache: 0, allocated: 13, tallocated: 95
+	FML: MCP 9.19 Powered by Forge 11.15.1.0 Optifine OptiFine_1.8.9_HD_U_H8 19 mods loaded, 19 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+	UCHIJA	mcp{9.19} [Minecraft Coder Pack] (minecraft.jar)
+	UCHIJA	FML{8.0.99.99} [Forge Mod Loader] (forge-1.8.9-11.15.1.0.jar)
+	UCHIJA	Forge{11.15.1.0} [Minecraft Forge] (forge-1.8.9-11.15.1.0.jar)
+	UCHIJA	randftcoremod{1.8.9} [randftcoremod] (minecraft.jar)
+	UCHIJA	InputFix{1.8.x-v2} [InputFix] (minecraft.jar)
+	UCHIJA	skincoremod{1.8.9} [skincoremod] (minecraft.jar)
+	UCHIJA	neteasecore{1.11.2} [NeteaseCore] (minecraft.jar)
+	UCHIJA	basemodneteasecore{1.8.9} [BaseModNeteaseCore] (minecraft.jar)
+	UCHIJA	networkmod{1.0} [network rpc Mod] (4620273813222949778@3@0.jar)
+	UCHIJA	storemod{1.0} [storemod] (4618419806295460477@3@0.jar)
+	UCHIJA	antimod{2.0} [anti addiction Mod] (4618827437296985101@3@0.jar)
+	UCHIJA	filtermod{1.0} [filtermod] (4619774556351054392@3@0.jar)
+	UCHIJA	friendplaymod{1.0} [Friendplay Mod] (4620273813159696403@3@0.jar)
+	UCHIJA	mcbasemod{1.0} [mcbasemod] (4620273813196076442@3@0.jar)
+	UCHIJA	updatecore{1.0} [updatecore] (4620608833856825631@3@0.jar)
+	UCHIJA	playermanager{1.0} [playermanager] (4620702952524438419@3@0.jar)
+	UCHIJA	fullscreenpopup{1.8.9.38000} [Fullscreen Popup Mod] (4624103992226684617@3@0.jar)
+	UCHIJA	skinmod{1.8.8-15739} [skinmod] (4626894634154779079@3@0.jar)
+	UCHIJA	BetterSprinting{1.1.3} [Better Sprinting] (强制疾跑.jar)
+	Loaded coremods (and transformers):
+NeteaseCore (4619774556351054392@3@0.jar)
+  com.netease.mc.core.NeteaseCoreTransformer
+SkinCore (4626894634154779079@3@0.jar)
+  com.netease.mc.mod.skin.coremod.SkinCoreTransformer
+BaseModNeteaseCore (4620273813196076442@3@0.jar)
+  com.netease.mc.core.base.NeteaseCoreTransformer
+InputFix (4618424574399199550@3@0.jar)
+  lain.mods.inputfix.InputFixTransformer
+RandFTCore (4618421856281952104@2@33.jar)
+  com.netease.mc.mod.randomfont.RandFTCoreTransformer
+	Launched Version: 1.8.9
+	LWJGL: 2.9.4
+	OpenGL: GeForce 610M/PCIe/SSE2 GL version 4.5.0 NVIDIA 385.28, NVIDIA Corporation
+	GL Caps: Using GL 1.3 multitexturing.
+Using GL 1.3 texture combiners.
+Using framebuffer objects because OpenGL 3.0 is supported and separate blending is supported.
+Shaders are available because OpenGL 2.1 is supported.
+VBOs are available because OpenGL 1.5 is supported.
+
+	Using VBOs: No
+	Is Modded: Definitely; Client brand changed to 'fml,forge'
+	Type: Client (map_client.txt)
+	Resource Packs: 锟斤拷锟斤拷专锟斤拷锟斤拷锟?zip
+	Current Language: 简体中文 (中国)
+	Profiler Position: N/A (disabled)
+	CPU: <unknown>
+	OptiFine Version: OptiFine_1.8.9_HD_U_H8
+	Render Distance Chunks: 10
+	Mipmaps: 4
+	Anisotropic Filtering: 1
+	Antialiasing: 0
+	Multitexture: false
+	Shaders: null
+	OpenGlVersion: 4.5.0 NVIDIA 385.28
+	OpenGlRenderer: GeForce 610M/PCIe/SSE2
+	OpenGlVendor: NVIDIA Corporation
+	CpuCount: 2

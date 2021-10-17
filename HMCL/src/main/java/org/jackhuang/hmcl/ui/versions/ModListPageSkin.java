@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
-import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -34,7 +31,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.mod.ModInfo;
+import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -42,7 +39,10 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -56,6 +56,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
@@ -78,10 +79,19 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         JFXListView<ModInfoObject> listView = new JFXListView<>();
 
         {
-            HBox toolbar = new HBox();
-            toolbar.getChildren().setAll(
+            TransitionPane toolBarPane = new TransitionPane();
+            HBox toolbarNormal = new HBox();
+            toolbarNormal.getChildren().setAll(
                     createToolbarButton2(i18n("button.refresh"), SVG::refresh, skinnable::refresh),
                     createToolbarButton2(i18n("mods.add"), SVG::plus, skinnable::add),
+                    createToolbarButton2(i18n("folder.mod"), SVG::folderOpen, () ->
+                            skinnable.openModFolder()),
+                    createToolbarButton2(i18n("mods.check_updates"), SVG::update, () ->
+                            skinnable.checkUpdates()),
+                    createToolbarButton2(i18n("download"), SVG::downloadOutline, () ->
+                            skinnable.download()));
+            HBox toolbarSelecting = new HBox();
+            toolbarSelecting.getChildren().setAll(
                     createToolbarButton2(i18n("button.remove"), SVG::delete, () -> {
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
                             skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
@@ -91,9 +101,18 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                             skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
                     createToolbarButton2(i18n("mods.disable"), SVG::close, () ->
                             skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
-                    createToolbarButton2(i18n("folder.mod"), SVG::folderOpen, () ->
-                            skinnable.openModFolder()));
-            root.getContent().add(toolbar);
+                    createToolbarButton2(i18n("button.select_all"), SVG::selectAll, () ->
+                            listView.getSelectionModel().selectAll()),
+                    createToolbarButton2(i18n("button.cancel"), SVG::cancel, () ->
+                            listView.getSelectionModel().clearSelection()));
+            FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(), selectedItem -> {
+                if (selectedItem == null) {
+                    toolBarPane.setContent(toolbarNormal, ContainerAnimations.FADE.getAnimationProducer());
+                } else {
+                    toolBarPane.setContent(toolbarSelecting, ContainerAnimations.FADE.getAnimationProducer());
+                }
+            });
+            root.getContent().add(toolBarPane);
         }
 
         {
@@ -124,34 +143,34 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
     static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
         private final BooleanProperty active;
-        private final ModInfo modInfo;
+        private final LocalModFile localModFile;
         private final String message;
         private final ModTranslations.Mod mod;
 
-        ModInfoObject(ModInfo modInfo) {
-            this.modInfo = modInfo;
-            this.active = modInfo.activeProperty();
-            StringBuilder message = new StringBuilder(modInfo.getName());
-            if (isNotBlank(modInfo.getVersion()))
-                message.append(", ").append(i18n("archive.version")).append(": ").append(modInfo.getVersion());
-            if (isNotBlank(modInfo.getGameVersion()))
-                message.append(", ").append(i18n("archive.game_version")).append(": ").append(modInfo.getGameVersion());
-            if (isNotBlank(modInfo.getAuthors()))
-                message.append(", ").append(i18n("archive.author")).append(": ").append(modInfo.getAuthors());
+        ModInfoObject(LocalModFile localModFile) {
+            this.localModFile = localModFile;
+            this.active = localModFile.activeProperty();
+            StringBuilder message = new StringBuilder(localModFile.getName());
+            if (isNotBlank(localModFile.getVersion()))
+                message.append(", ").append(i18n("archive.version")).append(": ").append(localModFile.getVersion());
+            if (isNotBlank(localModFile.getGameVersion()))
+                message.append(", ").append(i18n("archive.game_version")).append(": ").append(localModFile.getGameVersion());
+            if (isNotBlank(localModFile.getAuthors()))
+                message.append(", ").append(i18n("archive.author")).append(": ").append(localModFile.getAuthors());
             this.message = message.toString();
-            this.mod = ModTranslations.getModById(modInfo.getId());
+            this.mod = ModTranslations.getModById(localModFile.getId());
         }
 
         String getTitle() {
-            return modInfo.getFileName();
+            return localModFile.getFileName();
         }
 
         String getSubtitle() {
             return message;
         }
 
-        ModInfo getModInfo() {
-            return modInfo;
+        LocalModFile getModInfo() {
+            return localModFile;
         }
 
         public ModTranslations.Mod getMod() {
@@ -160,7 +179,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
         @Override
         public int compareTo(@NotNull ModListPageSkin.ModInfoObject o) {
-            return modInfo.getFileName().toLowerCase().compareTo(o.modInfo.getFileName().toLowerCase());
+            return localModFile.getFileName().toLowerCase().compareTo(o.localModFile.getFileName().toLowerCase());
         }
     }
 
@@ -257,9 +276,13 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    static class ModInfoListCell extends MDListCell<ModInfoObject> {
+    private static Lazy<PopupMenu> menu = new Lazy<>(PopupMenu::new);
+    private static Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
+
+    class ModInfoListCell extends MDListCell<ModInfoObject> {
         JFXCheckBox checkBox = new JFXCheckBox();
         TwoLineListItem content = new TwoLineListItem();
+        JFXButton restoreButton = new JFXButton();
         JFXButton infoButton = new JFXButton();
         JFXButton revealButton = new JFXButton();
         BooleanProperty booleanProperty;
@@ -274,13 +297,18 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             content.setMouseTransparent(true);
             setSelectable();
 
+            restoreButton.getStyleClass().add("toggle-icon4");
+            restoreButton.setGraphic(FXUtils.limitingSize(SVG.restore(Theme.blackFillBinding(), 24, 24), 24, 24));
+
+            FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
+
             revealButton.getStyleClass().add("toggle-icon4");
             revealButton.setGraphic(FXUtils.limitingSize(SVG.folderOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
 
             infoButton.getStyleClass().add("toggle-icon4");
             infoButton.setGraphic(FXUtils.limitingSize(SVG.informationOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
 
-            container.getChildren().setAll(checkBox, content, revealButton, infoButton);
+            container.getChildren().setAll(checkBox, content, restoreButton, revealButton, infoButton);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -292,12 +320,25 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             content.setTitle(dataItem.getTitle());
             if (dataItem.getMod() != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA) {
                 content.getTags().setAll(dataItem.getMod().getDisplayName());
+            } else {
+                content.getTags().clear();
             }
             content.setSubtitle(dataItem.getSubtitle());
             if (booleanProperty != null) {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
+            restoreButton.setVisible(!dataItem.getModInfo().getMod().getOldFiles().isEmpty());
+            restoreButton.setOnMouseClicked(e -> {
+                menu.get().getContent().setAll(dataItem.getModInfo().getMod().getOldFiles().stream()
+                        .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(), () -> {
+                            getSkinnable().rollback(dataItem.getModInfo(), localModFile);
+                        }))
+                        .collect(Collectors.toList())
+                );
+
+                popup.get().show(restoreButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, restoreButton.getHeight());
+            });
             revealButton.setOnMouseClicked(e -> {
                 FXUtils.showFileInExplorer(dataItem.getModInfo().getFile());
             });

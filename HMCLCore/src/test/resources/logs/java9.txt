@@ -1,0 +1,3 @@
+Exception in thread "main" java.lang.ClassCastException: class jdk.internal.loader.ClassLoaders$AppClassLoader cannot be cast to class java.net.URLClassLoader (jdk.internal.loader.ClassLoaders$AppClassLoader and java.net.URLClassLoader are in module java.base of loader 'bootstrap')
+	at net.minecraft.launchwrapper.Launch.<init>(Launch.java:34)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:28)

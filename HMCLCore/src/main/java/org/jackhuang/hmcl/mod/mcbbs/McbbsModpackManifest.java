@@ -19,9 +19,11 @@ package org.jackhuang.hmcl.mod.mcbbs;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -419,7 +421,12 @@ public class McbbsModpackManifest implements Validation {
     public Modpack toModpack(Charset encoding) throws IOException {
         String gameVersion = addons.stream().filter(x -> MINECRAFT.getPatchId().equals(x.id)).findAny()
                 .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
-        return new Modpack(name, author, version, gameVersion, description, encoding, this);
+        return new Modpack(name, author, version, gameVersion, description, encoding, this) {
+            @Override
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, java.io.File zipFile, String name) {
+                return new McbbsModpackLocalInstallTask(dependencyManager, zipFile, this, McbbsModpackManifest.this, name);
+            }
+        };
     }
 
     public void injectLaunchOptions(LaunchOptions.Builder launchOptions) {

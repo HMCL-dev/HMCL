@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,7 +34,6 @@ import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.util.gson.EnumOrdinalDeserializer;
 import org.jackhuang.hmcl.util.gson.FileTypeAdapter;
 import org.jackhuang.hmcl.util.i18n.Locales;
@@ -82,6 +81,9 @@ public final class Config implements Cloneable, Observable {
 
     @SerializedName("bgpath")
     private StringProperty backgroundImage = new SimpleStringProperty();
+
+    @SerializedName("bgurl")
+    private StringProperty backgroundImageUrl = new SimpleStringProperty();
 
     @SerializedName("commonDirType")
     private ObjectProperty<EnumCommonDirectory> commonDirType = new SimpleObjectProperty<>(EnumCommonDirectory.DEFAULT);
@@ -149,14 +151,17 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("fontSize")
     private DoubleProperty fontSize = new SimpleDoubleProperty(12);
 
+    @SerializedName("launcherFontFamily")
+    private StringProperty launcherFontFamily = new SimpleStringProperty();
+
     @SerializedName("logLines")
     private IntegerProperty logLines = new SimpleIntegerProperty(100);
 
+    @SerializedName("titleTransparent")
+    private BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
+
     @SerializedName("authlibInjectorServers")
     private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList(server -> new Observable[] { server });
-
-    @SerializedName("updateChannel")
-    private ObjectProperty<UpdateChannel> updateChannel = new SimpleObjectProperty<>(UpdateChannel.STABLE);
 
     @SerializedName("_version")
     private IntegerProperty configVersion = new SimpleIntegerProperty(0);
@@ -237,6 +242,18 @@ public final class Config implements Cloneable, Observable {
 
     public StringProperty backgroundImageProperty() {
         return backgroundImage;
+    }
+
+    public String getBackgroundImageUrl() {
+        return backgroundImageUrl.get();
+    }
+
+    public StringProperty backgroundImageUrlProperty() {
+        return backgroundImageUrl;
+    }
+
+    public void setBackgroundImageUrl(String backgroundImageUrl) {
+        this.backgroundImageUrl.set(backgroundImageUrl);
     }
 
     public EnumCommonDirectory getCommonDirType() {
@@ -487,6 +504,18 @@ public final class Config implements Cloneable, Observable {
         return fontSize;
     }
 
+    public String getLauncherFontFamily() {
+        return launcherFontFamily.get();
+    }
+
+    public StringProperty launcherFontFamilyProperty() {
+        return launcherFontFamily;
+    }
+
+    public void setLauncherFontFamily(String launcherFontFamily) {
+        this.launcherFontFamily.set(launcherFontFamily);
+    }
+
     public int getLogLines() {
         return logLines.get();
     }
@@ -501,18 +530,6 @@ public final class Config implements Cloneable, Observable {
 
     public ObservableList<AuthlibInjectorServer> getAuthlibInjectorServers() {
         return authlibInjectorServers;
-    }
-
-    public UpdateChannel getUpdateChannel() {
-        return updateChannel.get();
-    }
-
-    public ObjectProperty<UpdateChannel> updateChannelProperty() {
-        return updateChannel;
-    }
-
-    public void setUpdateChannel(UpdateChannel updateChannel) {
-        this.updateChannel.set(updateChannel);
     }
 
     public int getConfigVersion() {
@@ -549,5 +566,17 @@ public final class Config implements Cloneable, Observable {
 
     public StringProperty preferredLoginTypeProperty() {
         return preferredLoginType;
+    }
+
+    public boolean isTitleTransparent() {
+        return titleTransparent.get();
+    }
+
+    public BooleanProperty titleTransparentProperty() {
+        return titleTransparent;
+    }
+
+    public void setTitleTransparent(boolean titleTransparent) {
+        this.titleTransparent.set(titleTransparent);
     }
 }

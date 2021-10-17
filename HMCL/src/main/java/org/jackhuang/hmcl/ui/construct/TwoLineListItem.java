@@ -25,7 +25,6 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -52,8 +51,8 @@ public class TwoLineListItem extends VBox {
     public TwoLineListItem() {
         setMouseTransparent(true);
 
-        FlowPane firstLine = new FlowPane();
-        firstLine.setMaxWidth(Double.MAX_VALUE);
+        HBox firstLine = new HBox();
+        firstLine.getStyleClass().add("first-line");
 
         Label lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
@@ -63,7 +62,7 @@ public class TwoLineListItem extends VBox {
             Label tagLabel = new Label();
             tagLabel.getStyleClass().add("tag");
             tagLabel.setText(tag);
-            FlowPane.setMargin(tagLabel, new Insets(0, 8, 0, 0));
+            HBox.setMargin(tagLabel, new Insets(0, 8, 0, 0));
             return tagLabel;
         });
         firstLineChildren = new AggregatedObservableList<>();

@@ -1,0 +1,80 @@
+---- Minecraft Crash Report ----
+// Why is it breaking :(
+
+Time: 05/09/13 15:56
+Description: Registering texture
+
+bkr: Unable to fit: waterlily - size: 128x128 - Maybe try a lowerresolution texturepack?
+	at bko.c(SourceFile:63)
+	at bks.b(SourceFile:87)
+	at bks.a(SourceFile:54)
+	at bku.a(SourceFile:69)
+	at bku.a(SourceFile:133)
+	at bmf.c(SourceFile:99)
+	at bmf.a(SourceFile:87)
+	at avx.b(SourceFile:418)
+	at bcl.a(SourceFile:146)
+	at ayr.a(SourceFile:70)
+	at bcl.a(SourceFile:153)
+	at ayr.d(SourceFile:133)
+	at ayr.m(SourceFile:109)
+	at avx.m(SourceFile:1202)
+	at avx.V(SourceFile:686)
+	at avx.e(SourceFile:642)
+	at net.minecraft.client.main.Main.main(SourceFile:103)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Stacktrace:
+	at bko.c(SourceFile:63)
+	at bks.b(SourceFile:87)
+	at bks.a(SourceFile:54)
+
+-- Resource location being registered --
+Details:
+	Resource location: minecraft:textures/atlas/blocks.png
+	Texture object class: bks
+Stacktrace:
+	at bku.a(SourceFile:69)
+	at bku.a(SourceFile:133)
+	at bmf.c(SourceFile:99)
+	at bmf.a(SourceFile:87)
+	at avx.b(SourceFile:418)
+	at bcl.a(SourceFile:146)
+	at ayr.a(SourceFile:70)
+	at bcl.a(SourceFile:153)
+	at ayr.d(SourceFile:133)
+	at ayr.m(SourceFile:109)
+
+-- Affected screen --
+Details:
+	Screen name: bcl
+Stacktrace:
+	at avx.m(SourceFile:1202)
+	at avx.V(SourceFile:686)
+	at avx.e(SourceFile:642)
+	at net.minecraft.client.main.Main.main(SourceFile:103)
+
+-- System Details --
+Details:
+	Minecraft Version: 13w36a
+	Operating System: Windows Vista (x86) version 6.0
+	Java Version: 1.7.0_25, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) Client VM (mixed mode), Oracle Corporation
+	Memory: 73035976 bytes (69 MB) / 171958272 bytes (163 MB) up to 1037959168 bytes (989 MB)
+	JVM Flags: 2 total; -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -Xmx1G
+	AABB Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	Suspicious classes: [com.ibm.icu.text.ArabicShapingException], [gnu.trove.TIntCollection], [gnu.trove.impl.HashFunctions, PrimeFinder], [gnu.trove.impl.hash.THash, TPrimitiveHash, TIntIntHash], [gnu.trove.iterator.TIterator, TAdvancingIterator, TIntIntIterator], [gnu.trove.map.TIntIntMap], [gnu.trove.map.hash.TIntIntHashMap], [gnu.trove.procedure.TIntIntProcedure], [gnu.trove.set.TIntSet]
+	IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+	Launched Version: 13w36a
+	LWJGL: 2.9.0
+	OpenGL: Intel 965/963 Graphics Media Accelerator GL version 1.5.0 - Build 7.14.10.1437, Intel
+	Is Modded: Probably not. Jar signature remains and client brand is untouched.
+	Type: Client (map_client.txt)
+	Resource Packs: [Herobrine-Craft-Pre-26.zip, Sphax PureBDcraft 128x MC16.zip]
+	Current Language: English (US)
+	Profiler Position: N/A (disabled)
+	Vec3 Pool Size: ~~ERROR~~ NullPointerException: null

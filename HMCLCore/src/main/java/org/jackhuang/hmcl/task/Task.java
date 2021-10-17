@@ -24,7 +24,6 @@ import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ReflectionHelper;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
@@ -35,15 +34,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Disposable task.
@@ -99,19 +95,38 @@ public abstract class Task<T> {
      * You must initialize stage in constructor.
      * @param stage the stage
      */
-    final void setStage(String stage) {
+    protected final void setStage(String stage) {
         this.stage = stage;
     }
 
-    public List<String> getStages() {
-        return getStage() == null ? Collections.emptyList() : Collections.singletonList(getStage());
+    private String inheritedStage = null;
+
+    public String getInheritedStage() {
+        return inheritedStage;
     }
 
+    void setInheritedStage(String inheritedStage) {
+        this.inheritedStage = inheritedStage;
+    }
+
+    // properties
     Map<String, Object> properties;
 
-    protected Map<String, Object> getProperties() {
+    public Map<String, Object> getProperties() {
         if (properties == null) properties = new HashMap<>();
         return properties;
+    }
+
+    private Runnable notifyPropertiesChanged;
+
+    void setNotifyPropertiesChanged(Runnable runnable) {
+        this.notifyPropertiesChanged = runnable;
+    }
+
+    protected void notifyPropertiesChanged() {
+        if (notifyPropertiesChanged != null) {
+            notifyPropertiesChanged.run();
+        }
     }
 
     // state
@@ -284,7 +299,7 @@ public abstract class Task<T> {
     /**
      * The collection of sub-tasks that should execute **before** this task running.
      */
-    public Collection<Task<?>> getDependents() {
+    public Collection<? extends Task<?>> getDependents() {
         return Collections.emptySet();
     }
 
@@ -292,7 +307,7 @@ public abstract class Task<T> {
      * The collection of sub-tasks that should execute **after** this task running.
      * Will not be executed if execution fails.
      */
-    public Collection<Task<?>> getDependencies() {
+    public Collection<? extends Task<?>> getDependencies() {
         return Collections.emptySet();
     }
 
@@ -341,7 +356,7 @@ public abstract class Task<T> {
         messageUpdate.accept(newMessage);
     }
 
-    public final void run() throws Exception {
+    public final T run() throws Exception {
         if (getSignificance().shouldLog())
             Logging.LOG.log(Level.FINE, "Executing task: " + getName());
 
@@ -351,6 +366,8 @@ public abstract class Task<T> {
         for (Task<?> task : getDependencies())
             doSubTask(task);
         onDone.fireEvent(new TaskEvent(this, this, false));
+
+        return getResult();
     }
 
     private void doSubTask(Task<?> task) throws Exception {
@@ -549,7 +566,7 @@ public abstract class Task<T> {
     public final <U> Task<U> thenComposeAsync(Task<U> other) {
         return thenComposeAsync(() -> other);
     }
-    
+
     /**
      * Returns a new Task that, when this task completes
      * normally, is executed.
@@ -559,7 +576,20 @@ public abstract class Task<T> {
      * @return the Task
      */
     public final <U> Task<U> thenComposeAsync(ExceptionalSupplier<Task<U>, ?> fn) {
-        return new UniCompose<>(fn, true);
+        return thenComposeAsync(Schedulers.defaultScheduler(), fn);
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, is executed.
+     *
+     * @param fn the function returning a new Task
+     * @param executor the executor to use for asynchronous execution
+     * @param <U> the type of the returned Task's result
+     * @return the Task
+     */
+    public final <U> Task<U> thenComposeAsync(Executor executor, ExceptionalSupplier<Task<U>, ?> fn) {
+        return new UniCompose<>(fn, true).setExecutor(executor);
     }
 
     /**
@@ -572,7 +602,21 @@ public abstract class Task<T> {
      * @return the Task
      */
     public <U, E extends Exception> Task<U> thenComposeAsync(ExceptionalFunction<T, Task<U>, E> fn) {
-        return new UniCompose<>(fn, true);
+        return thenComposeAsync(Schedulers.defaultScheduler(), fn);
+    }
+
+    /**
+     * Returns a new Task that, when this task completes
+     * normally, is executed with result of this task as the argument
+     * to the supplied function.
+     *
+     * @param fn the function returning a new Task
+     * @param executor the executor to use for asynchronous execution
+     * @param <U> the type of the returned Task's result
+     * @return the Task
+     */
+    public <U, E extends Exception> Task<U> thenComposeAsync(Executor executor, ExceptionalFunction<T, Task<U>, E> fn) {
+        return new UniCompose<>(fn, true).setExecutor(executor);
     }
 
     public final <U> Task<U> withComposeAsync(Task<U> other) {
@@ -687,11 +731,6 @@ public abstract class Task<T> {
             public boolean isRelyingOnDependents() {
                 return false;
             }
-
-            @Override
-            public List<String> getStages() {
-                return Lang.merge(Task.this.getStages(), super.getStages());
-            }
         }.setExecutor(executor).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
@@ -773,27 +812,33 @@ public abstract class Task<T> {
     }
 
     public Task<T> withStagesHint(List<String> stages) {
-        return new Task<T>() {
-
-            @Override
-            public Collection<Task<?>> getDependents() {
-                return Collections.singleton(Task.this);
-            }
-
-            @Override
-            public void execute() throws Exception {
-                setResult(Task.this.getResult());
-            }
-
-            @Override
-            public List<String> getStages() {
-                return stages;
-            }
-        };
+        return new StagesHintTask(stages);
     }
 
-    public Task<T> withCounter() {
-        return new CountTask();
+    public class StagesHintTask extends Task<T> {
+        private final List<String> stages;
+
+        public StagesHintTask(List<String> stages) {
+            this.stages = stages;
+        }
+
+        @Override
+        public Collection<Task<?>> getDependents() {
+            return Collections.singleton(Task.this);
+        }
+
+        @Override
+        public void execute() {
+            setResult(Task.this.getResult());
+        }
+
+        public List<String> getStages() {
+            return stages;
+        }
+    }
+
+    public Task<T> withCounter(String countStage) {
+        return new CountTask(countStage);
     }
 
     public static Task<Void> runAsync(ExceptionalRunnable<?> closure) {
@@ -831,12 +876,11 @@ public abstract class Task<T> {
             public Collection<Task<?>> getDependencies() {
                 return then == null ? Collections.emptySet() : Collections.singleton(then);
             }
-
-            @Override
-            public List<String> getStages() {
-                return Lang.merge(super.getStages(), then == null ? null : then.getStages());
-            }
         }.setName(name);
+    }
+
+    public static <T> Task<T> composeAsync(Executor executor, ExceptionalSupplier<Task<T>, ?> fn) {
+        return composeAsync(fn).setExecutor(executor);
     }
 
     public static <V> Task<V> supplyAsync(Callable<V> callable) {
@@ -855,6 +899,10 @@ public abstract class Task<T> {
         return new SimpleTask<>(callable).setExecutor(executor).setName(name);
     }
 
+    public static <V> Task<V> completed(V value) {
+        return fromCompletableFuture(CompletableFuture.completedFuture(value));
+    }
+
     /**
      * Returns a new Task that is completed when all of the given Tasks
      * complete.  If any of the given Tasks complete exceptionally,
@@ -866,7 +914,7 @@ public abstract class Task<T> {
      * @param tasks the Tasks
      * @return a new Task that is completed when all of the given Tasks complete
      */
-    public static Task<Void> allOf(Task<?>... tasks) {
+    public static Task<List<Object>> allOf(Task<?>... tasks) {
         return allOf(Arrays.asList(tasks));
     }
 
@@ -881,24 +929,20 @@ public abstract class Task<T> {
      * @param tasks the Tasks
      * @return a new Task that is completed when all of the given Tasks complete
      */
-    public static Task<Void> allOf(Collection<Task<?>> tasks) {
-        return new Task<Void>() {
+    public static Task<List<Object>> allOf(Collection<Task<?>> tasks) {
+        return new Task<List<Object>>() {
             {
                 setSignificance(TaskSignificance.MINOR);
             }
 
             @Override
             public void execute() {
+                setResult(tasks.stream().map(Task::getResult).collect(Collectors.toList()));
             }
 
             @Override
             public Collection<Task<?>> getDependents() {
                 return tasks;
-            }
-
-            @Override
-            public List<String> getStages() {
-                return tasks.stream().flatMap(task -> task.getStages().stream()).collect(Collectors.toList());
             }
         };
     }
@@ -995,11 +1039,6 @@ public abstract class Task<T> {
         public void execute() throws Exception {
             setResult(callable.apply(Task.this.getResult()));
         }
-
-        @Override
-        public List<String> getStages() {
-            return Lang.merge(Task.this.getStages(), super.getStages());
-        }
     }
 
     /**
@@ -1059,13 +1098,6 @@ public abstract class Task<T> {
         public boolean isRelyingOnDependents() {
             return relyingOnDependents;
         }
-
-        @Override
-        public List<String> getStages() {
-            return Stream.of(Task.this.getStages(), super.getStages(), succ == null ? Collections.<String>emptyList() : succ.getStages())
-                    .flatMap(Collection::stream)
-                    .collect(Collectors.toList());
-        }
     }
 
     public class StageTask extends Task<T> {
@@ -1079,19 +1111,19 @@ public abstract class Task<T> {
         public void execute() throws Exception {
             setResult(Task.this.getResult());
         }
-
-        @Override
-        public List<String> getStages() {
-            return Lang.merge(Task.this.getStages(), super.getStages());
-        }
     }
 
-    private class CountTask extends Task<T> {
-        private final UnaryOperator<Integer> COUNTER = a -> {
-            int result = 0;
-            if (a != null) result += a;
-            return result + 1;
-        };
+    public final class CountTask extends Task<T> {
+        private final String countStage;
+
+        private CountTask(String countStage) {
+            this.countStage = countStage;
+            setSignificance(TaskSignificance.MINOR);
+        }
+
+        public String getCountStage() {
+            return countStage;
+        }
 
         @Override
         public Collection<Task<?>> getDependents() {
@@ -1109,13 +1141,8 @@ public abstract class Task<T> {
         }
 
         @Override
-        public void postExecute() {
-            getProperties().put("count", COUNTER);
-        }
-
-        @Override
-        public List<String> getStages() {
-            return Lang.merge(Task.this.getStages(), super.getStages());
+        public void postExecute() throws Exception {
+            notifyPropertiesChanged();
         }
     }
 }

@@ -51,7 +51,7 @@ public class FabricAPIVersionList extends VersionList<FabricAPIRemoteVersion> {
         return CompletableFuture.runAsync(wrap(() -> {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(downloadProvider.injectURL("https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml"));
+            Document doc = builder.parse("https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml");
             Element r = doc.getDocumentElement();
             NodeList versionElements = r.getElementsByTagName("version");
             for (int i = 0; i < versionElements.getLength(); i++) {

@@ -43,7 +43,7 @@ public class AggregatedObservableList<T> {
      * @return an unmodifiable view of the aggregatedList
      */
     public ObservableList<T> getAggregatedList() {
-        return FXCollections.unmodifiableObservableList(aggregatedList);
+        return aggregatedList;
     }
 
     public void appendList(@NotNull ObservableList<T> list) {
@@ -185,6 +185,10 @@ public class AggregatedObservableList<T> {
             //System.out.println("listSizesMap = " + sizes);
         }
 
+    }
+
+    public String dump() {
+        return dump(x -> x);
     }
 
     public String dump(Function<T, Object> function) {

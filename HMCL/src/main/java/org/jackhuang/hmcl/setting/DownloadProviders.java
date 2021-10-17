@@ -26,8 +26,10 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 
+import java.io.FileNotFoundException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.nio.file.AccessDeniedException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
@@ -147,6 +149,10 @@ public final class DownloadProviders {
                 } else {
                     return i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause());
                 }
+            } else if (exception.getCause() instanceof FileNotFoundException) {
+                return i18n("download.code.404", url);
+            } else if (exception.getCause() instanceof AccessDeniedException) {
+                return i18n("install.failed.downloading.access_denied", url, ((AccessDeniedException) exception.getCause()).getFile());
             } else {
                 return i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause());
             }

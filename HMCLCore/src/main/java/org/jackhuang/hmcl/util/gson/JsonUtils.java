@@ -35,6 +35,12 @@ public final class JsonUtils {
 
     public static final Gson GSON = defaultGsonBuilder().create();
 
+    public static final Gson UGLY_GSON = new GsonBuilder()
+            .registerTypeAdapterFactory(JsonTypeAdapterFactory.INSTANCE)
+            .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
+            .registerTypeAdapterFactory(LowerCaseEnumTypeAdapterFactory.INSTANCE)
+            .create();
+
     private JsonUtils() {
     }
 
@@ -55,6 +61,14 @@ public final class JsonUtils {
     public static <T> T fromMaybeMalformedJson(String json, Class<T> classOfT) throws JsonParseException {
         try {
             return GSON.fromJson(json, classOfT);
+        } catch (JsonSyntaxException e) {
+            return null;
+        }
+    }
+
+    public static <T> T fromMaybeMalformedJson(String json, Type type) throws JsonParseException {
+        try {
+            return GSON.fromJson(json, type);
         } catch (JsonSyntaxException e) {
             return null;
         }

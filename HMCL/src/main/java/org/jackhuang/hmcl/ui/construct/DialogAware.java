@@ -28,4 +28,7 @@ public interface DialogAware {
     default void onDialogShown() {
     }
 
+    default void onDialogClosed() {
+    }
+
 }

@@ -33,7 +33,7 @@ import java.util.logging.Level;
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
-public class MicrosoftAccount extends Account {
+public class MicrosoftAccount extends OAuthAccount {
 
     protected final MicrosoftService service;
     protected UUID characterUUID;
@@ -99,8 +99,21 @@ public class MicrosoftAccount extends Account {
     }
 
     @Override
-    public AuthInfo logInWithPassword(String password) throws AuthenticationException {
-        throw new UnsupportedOperationException();
+    public AuthInfo logInWhenCredentialsExpired() throws AuthenticationException {
+        MicrosoftSession acquiredSession = service.authenticate();
+        if (!Objects.equals(characterUUID, acquiredSession.getProfile().getId())) {
+            throw new WrongAccountException(characterUUID, acquiredSession.getProfile().getId());
+        }
+
+        if (acquiredSession.getProfile() == null) {
+            session = service.refresh(acquiredSession);
+        } else {
+            session = acquiredSession;
+        }
+
+        authenticated = true;
+        invalidate();
+        return session.toAuthInfo();
     }
 
     @Override

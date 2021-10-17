@@ -62,6 +62,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
 import static java.util.Collections.emptyList;
@@ -260,7 +261,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
         if (factory == Accounts.FACTORY_MICROSOFT) {
             VBox vbox = new VBox(8);
-            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
             hintPane.textProperty().bind(BindingMapping.of(logging).map(logging ->
                     logging
                             ? i18n("account.methods.microsoft.manual")
@@ -276,7 +277,9 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             birthLink.setOnAction(e -> FXUtils.openLink("https://support.microsoft.com/zh-cn/account-billing/如何更改-microsoft-帐户上的出生日期-837badbc-999e-54d2-2617-d19206b9540a"));
             JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
             profileLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/editprof.aspx"));
-            box.getChildren().setAll(profileLink, birthLink);
+            JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
+            purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
+            box.getChildren().setAll(profileLink, birthLink, purchaseLink);
             GridPane.setColumnSpan(box, 2);
 
             vbox.getChildren().setAll(hintPane, box);
@@ -415,17 +418,32 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             if (factory instanceof YggdrasilAccountFactory) {
                 HBox box = new HBox();
-                JFXHyperlink migrationLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration"));
-                migrationLink.setOnAction(e -> FXUtils.openLink("https://help.minecraft.net/hc/en-us/articles/360050865492-JAVA-Account-Migration-FAQ"));
                 GridPane.setColumnSpan(box, 2);
-                box.getChildren().setAll(migrationLink);
 
+                JFXHyperlink migrationLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration"));
+                migrationLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PROFILE_URL));
+
+                JFXHyperlink migrationHowLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration.how"));
+                migrationHowLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.MIGRATION_FAQ_URL));
+
+                JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
+                purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
+
+                box.getChildren().setAll(migrationLink, migrationHowLink, purchaseLink);
                 add(box, 0, rowIndex);
 
                 rowIndex++;
             }
 
             if (factory instanceof OfflineAccountFactory) {
+                JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
+                purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
+                HBox linkPane = new HBox(purchaseLink);
+                GridPane.setColumnSpan(linkPane, 2);
+                add(linkPane, 0, rowIndex);
+
+                rowIndex++;
+
                 HBox box = new HBox();
                 MenuUpDownButton advancedButton = new MenuUpDownButton();
                 box.getChildren().setAll(advancedButton);
@@ -504,7 +522,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             if (factory instanceof AuthlibInjectorAccountFactory) {
                 return getAuthServer();
             } else if (factory instanceof OfflineAccountFactory) {
-                return txtUUID == null ? null : StringUtils.isBlank(txtUUID.getText()) ? null : UUIDTypeAdapter.fromString(txtUUID.getText());
+                UUID uuid = txtUUID == null ? null : StringUtils.isBlank(txtUUID.getText()) ? null : UUIDTypeAdapter.fromString(txtUUID.getText());
+                return new OfflineAccountFactory.AdditionalData(uuid, null);
             } else {
                 return null;
             }

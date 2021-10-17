@@ -27,24 +27,26 @@ import java.util.UUID;
  * @author huangyuhui
  */
 @Immutable
-public final class AuthInfo {
+public final class AuthInfo implements AutoCloseable {
 
     private final String username;
     private final UUID uuid;
     private final String accessToken;
     private final String userProperties;
     private final Arguments arguments;
+    private final AutoCloseable closeable;
 
     public AuthInfo(String username, UUID uuid, String accessToken, String userProperties) {
-        this(username, uuid, accessToken, userProperties, null);
+        this(username, uuid, accessToken, userProperties, null, null);
     }
 
-    public AuthInfo(String username, UUID uuid, String accessToken, String userProperties, Arguments arguments) {
+    public AuthInfo(String username, UUID uuid, String accessToken, String userProperties, Arguments arguments, AutoCloseable closeable) {
         this.username = username;
         this.uuid = uuid;
         this.accessToken = accessToken;
         this.userProperties = userProperties;
         this.arguments = arguments;
+        this.closeable = closeable;
     }
 
     public String getUsername() {
@@ -77,6 +79,17 @@ public final class AuthInfo {
     }
 
     public AuthInfo withArguments(Arguments arguments) {
-        return new AuthInfo(username, uuid, accessToken, userProperties, arguments);
+        return new AuthInfo(username, uuid, accessToken, userProperties, arguments, closeable);
+    }
+
+    public AuthInfo withCloseable(AutoCloseable closeable) {
+        return new AuthInfo(username, uuid, accessToken, userProperties, arguments, closeable);
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
     }
 }

@@ -1,0 +1,105 @@
+---- Minecraft Crash Report ----
+// Everything's going to plan. No, really, that was supposed to happen.
+
+Time: 15-10-30 上午11:23
+Description: Initializing game
+
+java.lang.SecurityException: SHA1 digest error for assets/minecraft/texts/splashes.txt
+	at sun.security.util.ManifestEntryVerifier.verify(Unknown Source)
+	at java.util.jar.JarVerifier.processEntry(Unknown Source)
+	at java.util.jar.JarVerifier.update(Unknown Source)
+	at java.util.jar.JarVerifier$VerifierStream.read(Unknown Source)
+	at java.io.FilterInputStream.read(Unknown Source)
+	at sun.nio.cs.StreamDecoder.readBytes(Unknown Source)
+	at sun.nio.cs.StreamDecoder.implRead(Unknown Source)
+	at sun.nio.cs.StreamDecoder.read(Unknown Source)
+	at java.io.InputStreamReader.read(Unknown Source)
+	at java.io.BufferedReader.fill(Unknown Source)
+	at java.io.BufferedReader.readLine(Unknown Source)
+	at java.io.BufferedReader.readLine(Unknown Source)
+	at net.minecraft.client.gui.GuiMainMenu.<init>(GuiMainMenu.java:89)
+	at net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:519)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:808)
+	at net.minecraft.client.main.Main.main(SourceFile:101)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:131)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:27)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Stacktrace:
+	at sun.security.util.ManifestEntryVerifier.verify(Unknown Source)
+	at java.util.jar.JarVerifier.processEntry(Unknown Source)
+	at java.util.jar.JarVerifier.update(Unknown Source)
+	at java.util.jar.JarVerifier$VerifierStream.read(Unknown Source)
+	at java.io.FilterInputStream.read(Unknown Source)
+	at sun.nio.cs.StreamDecoder.readBytes(Unknown Source)
+	at sun.nio.cs.StreamDecoder.implRead(Unknown Source)
+	at sun.nio.cs.StreamDecoder.read(Unknown Source)
+	at java.io.InputStreamReader.read(Unknown Source)
+	at java.io.BufferedReader.fill(Unknown Source)
+	at java.io.BufferedReader.readLine(Unknown Source)
+	at java.io.BufferedReader.readLine(Unknown Source)
+	at net.minecraft.client.gui.GuiMainMenu.<init>(GuiMainMenu.java:89)
+	at net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:519)
+
+-- Initialization --
+Details:
+Stacktrace:
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:808)
+	at net.minecraft.client.main.Main.main(SourceFile:101)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:131)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:27)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.6.4
+	Operating System: Windows 7 (x86) version 6.1
+	Java Version: 1.7.0_79, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) Client VM (mixed mode), Oracle Corporation
+	Memory: 49779456 bytes (47 MB) / 227700736 bytes (217 MB) up to 1037959168 bytes (989 MB)
+	JVM Flags: 1 total; -Xmx1024m
+	AABB Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	Suspicious classes: FML and Forge are installed
+	IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+	FML: MCP v8.11 FML v6.4.49.965 Minecraft Forge 9.11.1.965 Optifine OptiFine_1.6.4_HD_U_D1[hukk汉化] 21 mods loaded, 21 mods active
+	mcp{8.09} [Minecraft Coder Pack] (minecraft.jar) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	FML{6.4.49.965} [Forge Mod Loader] (minecraftforge-9.11.1.965.jar) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	Forge{9.11.1.965} [Minecraft Forge] (minecraftforge-9.11.1.965.jar) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	TooManyItems{1.6.4[hukk汉化]} [TooManyItems] (minecraft.jar) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	InputFix{1.6.x-v3} [InputFix] (minecraft.jar) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	yarr_cutemobmodels{1.6.4} [Cute Mob Models] ([画面][怪物娘化].zip) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	BetterGrassAndLeavesMod{1.6.4.D[无节操西瓜君汉化]} [更好的草和树叶] ([画面][更好的草和树叶].jar) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	craftguide{1.5.2} [CraftGuide] ([辅助][G键合成表]CraftGuide.zip) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	mod_ReiMinimap{v3.4_01 [1.6.2]} [mod_ReiMinimap] ([辅助][Rei小地图].zip) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	mod_ChatBubbles{3.1.4.4.0} [MamiyaOtaru's Chat Bubbles] ([辅助][聊天气泡].zip) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	DamageIndicatorsMod{2.9.1.1} [Damage Indicators] ([辅助][血量显示]Damagelndicators.zip) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	mod_MouseTweaks{2.3.4 (for Minecraft 1.6.4)} [Mouse Tweaks] ([辅助][鼠标手势]MouseTweaks2.3.4.zip) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	CarpentersBlocks{v1.91} [Carpenter's Blocks] (fangkuai.zip) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	FlansMod{4.1.1} [Flans Mod] (Flsns.jar) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	ThirstMod{1.7.6} [Thirst Mod] (heshui.zip) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	customnpcs{1.6.4} [CustomNpcs] (Npcs.zip) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	weaponmod{1.6.2 v1.13.6} [Balkon's WeaponMod] (wuqi.zip) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	Backpack{1.12.13} [Backpack] (阿宅背包~.zip) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	ForgeMultipart{1.0.0.219} [Forge Multipart] (ForgeMultipart-universal-1.6.4-1.0.0.219.jar) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	McMultipart{1.0.0.219} [Minecraft Multipart Plugin] (ForgeMultipart-universal-1.6.4-1.0.0.219.jar) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	ForgeMicroblock{1.0.0.219} [Forge Microblocks] (ForgeMultipart-universal-1.6.4-1.0.0.219.jar) Unloaded->Constructed->Pre-initialized->Initialized->Post-initialized->Available
+	Launched Version: 1.6.4
+	LWJGL: 2.9.0
+	OpenGL: AMD 760G GL version 3.3.10243 Compatibility Profile Context, ATI Technologies Inc.
+	Is Modded: Definitely; Client brand changed to 'fml,forge'
+	Type: Client (map_client.txt)
+	Resource Pack: 隔离区材质包.zip
+	Current Language: 简体中文 (中国)
+	Profiler Position: N/A (disabled)
+	Vec3 Pool Size: ~~ERROR~~ NullPointerException: null

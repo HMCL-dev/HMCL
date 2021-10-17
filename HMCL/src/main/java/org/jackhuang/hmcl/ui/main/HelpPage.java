@@ -19,7 +19,9 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
+import com.jfoenix.controls.JFXScrollPane;
 import javafx.geometry.Insets;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -43,7 +45,10 @@ public class HelpPage extends SpinnerPane {
         content.setPadding(new Insets(10));
         content.setSpacing(10);
         content.setFillWidth(true);
-        setContent(content);
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        JFXScrollPane.smoothScrolling(scrollPane);
+        setContent(scrollPane);
 
         IconedTwoLineListItem docPane = new IconedTwoLineListItem();
         docPane.setTitle(i18n("help.doc"));

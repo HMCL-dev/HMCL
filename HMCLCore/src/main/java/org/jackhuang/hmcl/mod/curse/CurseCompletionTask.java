@@ -90,6 +90,8 @@ public final class CurseCompletionTask extends Task<Void> {
             } catch (Exception e) {
                 Logging.LOG.log(Level.WARNING, "Unable to read CurseForge modpack manifest.json", e);
             }
+
+        setStage("hmcl.modpack.download");
     }
 
     @Override
@@ -158,12 +160,13 @@ public final class CurseCompletionTask extends Task<Void> {
                     FileDownloadTask task = new FileDownloadTask(file.getUrl(), modManager.getSimpleModPath(file.getFileName()).toFile());
                     task.setCacheRepository(dependency.getCacheRepository());
                     task.setCaching(true);
-                    dependencies.add(task.withCounter());
+                    dependencies.add(task.withCounter("hmcl.modpack.download"));
                 }
             }
 
         if (!dependencies.isEmpty()) {
             getProperties().put("total", dependencies.size());
+            notifyPropertiesChanged();
         }
     }
 

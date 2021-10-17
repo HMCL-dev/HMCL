@@ -24,7 +24,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.mod.ModInfo;
+import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -32,16 +32,15 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -49,7 +48,7 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.VersionLoadable {
+public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.VersionLoadable, PageAware {
     private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
 
     private ModManager modManager;
@@ -61,7 +60,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)), mods -> {
             mods.forEach(it -> {
                 try {
-                    modManager.addMod(it);
+                    modManager.addMod(it.toPath());
                 } catch (IOException | IllegalArgumentException e) {
                     Logging.LOG.log(Level.WARNING, "Unable to parse mod file " + it, e);
                 }
@@ -126,7 +125,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         Task.runAsync(() -> {
             for (File file : res) {
                 try {
-                    modManager.addMod(file);
+                    modManager.addMod(file.toPath());
                     succeeded.add(file.getName());
                 } catch (Exception e) {
                     Logging.LOG.log(Level.WARNING, "Unable to add mod " + file, e);
@@ -151,7 +150,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             modManager.removeMods(selectedItems.stream()
                     .filter(Objects::nonNull)
                     .map(ModListPageSkin.ModInfoObject::getModInfo)
-                    .toArray(ModInfo[]::new));
+                    .toArray(LocalModFile[]::new));
             loadMods(modManager);
         } catch (IOException ignore) {
             // Fail to remove mods if the game is running or the mod is absent.
@@ -174,6 +173,41 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
     public void openModFolder() {
         FXUtils.openFolder(new File(profile.getRepository().getRunDirectory(versionId), "mods"));
+    }
+
+    public void checkUpdates() {
+        Controllers.taskDialog(Task
+                        .composeAsync(() -> {
+                            Optional<String> gameVersion = profile.getRepository().getGameVersion(versionId);
+                            if (gameVersion.isPresent()) {
+                                return new ModCheckUpdatesTask(gameVersion.get(), modManager.getMods());
+                            }
+                            return null;
+                        })
+                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                            if (exception != null) {
+                                Controllers.dialog("Failed to check updates", "failed", MessageDialogPane.MessageType.ERROR);
+                            } else {
+                                Controllers.navigate(new ModUpdatesPage(modManager, result));
+                            }
+                        })
+                        .withStagesHint(Collections.singletonList("mods.check_updates")),
+                i18n("update.checking"), pane -> {
+                });
+    }
+
+    public void download() {
+        Controllers.getDownloadPage().showModDownloads();
+        Controllers.navigate(Controllers.getDownloadPage());
+    }
+
+    public void rollback(LocalModFile from, LocalModFile to) {
+        try {
+            modManager.rollback(from, to);
+            refresh();
+        } catch (IOException ex) {
+            Controllers.showToast(i18n("message.failed"));
+        }
     }
 
     public boolean isModded() {

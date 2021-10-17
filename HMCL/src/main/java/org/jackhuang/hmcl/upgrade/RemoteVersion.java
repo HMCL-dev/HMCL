@@ -30,7 +30,7 @@ import java.util.Optional;
 
 public class RemoteVersion {
 
-    public static RemoteVersion fetch(String url) throws IOException {
+    public static RemoteVersion fetch(UpdateChannel channel, String url) throws IOException {
         try {
             JsonObject response = JsonUtils.fromNonNullJson(NetworkUtils.doGet(NetworkUtils.toURL(url)), JsonObject.class);
             String version = Optional.ofNullable(response.get("version")).map(JsonElement::getAsString).orElseThrow(() -> new IOException("version is missing"));
@@ -39,9 +39,9 @@ public class RemoteVersion {
             String packXZUrl = Optional.ofNullable(response.get("packxz")).map(JsonElement::getAsString).orElse(null);
             String packXZHash = Optional.ofNullable(response.get("packxzsha1")).map(JsonElement::getAsString).orElse(null);
             if (Pack200Utils.isSupported() && packXZUrl != null && packXZHash != null) {
-                return new RemoteVersion(version, packXZUrl, Type.PACK_XZ, new IntegrityCheck("SHA-1", packXZHash));
+                return new RemoteVersion(channel, version, packXZUrl, Type.PACK_XZ, new IntegrityCheck("SHA-1", packXZHash));
             } else if (jarUrl != null && jarHash != null) {
-                return new RemoteVersion(version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash));
+                return new RemoteVersion(channel, version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash));
             } else {
                 throw new IOException("No download url is available");
             }
@@ -50,16 +50,22 @@ public class RemoteVersion {
         }
     }
 
-    private String version;
-    private String url;
-    private Type type;
-    private IntegrityCheck integrityCheck;
+    private final UpdateChannel channel;
+    private final String version;
+    private final String url;
+    private final Type type;
+    private final IntegrityCheck integrityCheck;
 
-    public RemoteVersion(String version, String url, Type type, IntegrityCheck integrityCheck) {
+    public RemoteVersion(UpdateChannel channel, String version, String url, Type type, IntegrityCheck integrityCheck) {
+        this.channel = channel;
         this.version = version;
         this.url = url;
         this.type = type;
         this.integrityCheck = integrityCheck;
+    }
+
+    public UpdateChannel getChannel() {
+        return channel;
     }
 
     public String getVersion() {

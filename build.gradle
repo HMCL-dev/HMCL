@@ -66,6 +66,67 @@ var jfxUnsupported = [
         'linux-arm32-monocle': ['media', 'web']
 ]
 
+var jfxInClasspath = false
+
+try {
+    Class.forName("javafx.application.Application", false, this.getClass().getClassLoader())
+    jfxInClasspath = true
+} catch (Throwable ignored) {
+}
+
+if (!jfxInClasspath && JavaVersion.current() >= JavaVersion.VERSION_11) {
+    String os = null
+    String arch = null
+
+    String osName = System.getProperty("os.name").toLowerCase(Locale.US)
+    if (osName.contains("win"))
+        os = 'win'
+    else if (osName.contains("mac"))
+        os = 'mac'
+    else if (osName.contains("solaris") || osName.contains("linux") || osName.contains("unix") || osName.contains("sunos"))
+        os = 'linux'
+    else
+        os = null
+
+    String archName = System.getProperty("os.arch").toLowerCase(Locale.US)
+    switch (archName) {
+        case "x86_64":
+        case "x86-64":
+        case "amd64":
+            arch = ''
+            break
+        case "x86":
+        case "x86_32":
+        case "x86-32":
+        case "i386":
+        case "i486":
+        case "i586":
+        case "i686":
+        case "i86pc":
+            arch = '-x86'
+            break
+        case "aarch64":
+            arch = '-aarch64';
+            break
+    }
+    String platform = "$os$arch"
+
+    if (os != null && arch != null && jfxArches.contains(platform)) {
+        var jfxDependencies = jfxModules.collect { module -> "org.openjfx:javafx-$module:$jfxVersion:$platform" }
+
+        subprojects {
+            repositories {
+                mavenCentral()
+            }
+            dependencies {
+                jfxDependencies.forEach {
+                    compileOnly it
+                }
+            }
+        }
+    }
+}
+
 import com.google.gson.*
 
 task 'generateOpenJFXDependencies' {

@@ -22,12 +22,14 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -42,6 +44,8 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
     private final CompletableFuture<String> future = new CompletableFuture<>();
 
     public static String lastlyOpenedURL;
+
+    private String idToken;
 
     private MicrosoftAuthenticationServer(int port) {
         super(port);
@@ -60,21 +64,46 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
     }
 
     @Override
+    public String getIdToken() {
+        return idToken;
+    }
+
+    @Override
     public Response serve(IHTTPSession session) {
-        if (session.getMethod() != Method.GET || !"/auth-response".equals(session.getUri())) {
+        if (!"/auth-response".equals(session.getUri())) {
             return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_HTML, "");
         }
-        Map<String, String> query = mapOf(NetworkUtils.parseQuery(session.getQueryParameterString()));
+
+        if (session.getMethod() == Method.POST) {
+            Map<String, String> files = new HashMap<>();
+            try {
+                session.parseBody(files);
+            } catch (IOException e) {
+                Logging.LOG.log(Level.WARNING, "Failed to read post data", e);
+                return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_HTML, "");
+            } catch (ResponseException re) {
+                return newFixedLengthResponse(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
+            }
+        } else if (session.getMethod() == Method.GET) {
+            // do nothing
+        } else {
+            return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_HTML, "");
+        }
+        String parameters = session.getQueryParameterString();
+
+        Map<String, String> query = mapOf(NetworkUtils.parseQuery(parameters));
         if (query.containsKey("code")) {
+            idToken = query.get("id_token");
             future.complete(query.get("code"));
         } else {
+            Logging.LOG.warning("Error: " + parameters);
             future.completeExceptionally(new AuthenticationException("failed to authenticate"));
         }
 
         String html;
         try {
             html = IOUtils.readFullyAsString(MicrosoftAuthenticationServer.class.getResourceAsStream("/assets/microsoft_auth.html"), StandardCharsets.UTF_8)
-            .replace("%close-page%", i18n("account.methods.microsoft.close_page"));
+                    .replace("%close-page%", i18n("account.methods.microsoft.close_page"));
         } catch (IOException e) {
             Logging.LOG.log(Level.SEVERE, "Failed to load html");
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_HTML, "");
@@ -93,7 +122,11 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
     public static class Factory implements MicrosoftService.OAuthCallback {
 
         @Override
-        public MicrosoftService.OAuthSession startServer() throws IOException {
+        public MicrosoftService.OAuthSession startServer() throws IOException, AuthenticationException {
+            if (StringUtils.isBlank(getClientId())) {
+                throw new MicrosoftAuthenticationNotSupportedException();
+            }
+
             IOException exception = null;
             for (int port : new int[]{29111, 29112, 29113, 29114, 29115}) {
                 try {
@@ -125,5 +158,8 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
                     JarUtils.thisJar().flatMap(JarUtils::getManifest).map(manifest -> manifest.getMainAttributes().getValue("Microsoft-Auth-Secret")).orElse(""));
         }
 
+    }
+
+    public static class MicrosoftAuthenticationNotSupportedException extends AuthenticationException {
     }
 }

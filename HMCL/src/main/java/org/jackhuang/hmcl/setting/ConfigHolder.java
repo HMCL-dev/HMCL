@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -40,9 +41,11 @@ public final class ConfigHolder {
 
     public static final String CONFIG_FILENAME = "hmcl.json";
     public static final String CONFIG_FILENAME_LINUX = ".hmcl.json";
+    public static final Path GLOBAL_CONFIG_PATH = Metadata.HMCL_DIRECTORY.resolve("config.json");
 
     private static Path configLocation;
     private static Config configInstance;
+    private static GlobalConfig globalConfigInstance;
     private static boolean newlyCreated;
 
     public static Config config() {
@@ -50,6 +53,13 @@ public final class ConfigHolder {
             throw new IllegalStateException("Configuration hasn't been loaded");
         }
         return configInstance;
+    }
+
+    public static GlobalConfig globalConfig() {
+        if (globalConfigInstance == null) {
+            throw new IllegalStateException("Configuration hasn't been loaded");
+        }
+        return globalConfigInstance;
     }
 
     public static boolean isNewlyCreated() {
@@ -67,6 +77,9 @@ public final class ConfigHolder {
 
         configInstance = loadConfig();
         configInstance.addListener(source -> markConfigDirty());
+
+        globalConfigInstance = loadGlobalConfig();
+        globalConfigInstance.addListener(source -> markGlobalConfigDirty());
 
         Settings.init();
 
@@ -95,7 +108,7 @@ public final class ConfigHolder {
         try {
             Path jarPath = Paths.get(ConfigHolder.class.getProtectionDomain().getCodeSource().getLocation()
                     .toURI()).toAbsolutePath();
-            if (Files.isRegularFile(jarPath)) {
+            if (Files.isRegularFile(jarPath) && Files.isWritable(jarPath)) {
                 jarPath = jarPath.getParent();
                 exePath = jarPath;
 
@@ -145,7 +158,7 @@ public final class ConfigHolder {
         return new Config();
     }
 
-    private static InvocationDispatcher<String> configWriter = InvocationDispatcher.runOn(Lang::thread, content -> {
+    private static final InvocationDispatcher<String> configWriter = InvocationDispatcher.runOn(Lang::thread, content -> {
         try {
             writeToConfig(content);
         } catch (IOException e) {
@@ -166,5 +179,49 @@ public final class ConfigHolder {
 
     private static void saveConfigSync() throws IOException {
         writeToConfig(configInstance.toJson());
+    }
+
+    // Global Config
+
+    private static GlobalConfig loadGlobalConfig() throws IOException {
+        if (Files.exists(GLOBAL_CONFIG_PATH)) {
+            try {
+                String content = FileUtils.readText(GLOBAL_CONFIG_PATH);
+                GlobalConfig deserialized = GlobalConfig.fromJson(content);
+                if (deserialized == null) {
+                    LOG.info("Config is empty");
+                } else {
+                    return deserialized;
+                }
+            } catch (JsonParseException e) {
+                LOG.log(Level.WARNING, "Malformed config.", e);
+            }
+        }
+
+        LOG.info("Creating an empty global config");
+        return new GlobalConfig();
+    }
+
+    private static final InvocationDispatcher<String> globalConfigWriter = InvocationDispatcher.runOn(Lang::thread, content -> {
+        try {
+            writeToGlobalConfig(content);
+        } catch (IOException e) {
+            LOG.log(Level.SEVERE, "Failed to save config", e);
+        }
+    });
+
+    private static void writeToGlobalConfig(String content) throws IOException {
+        LOG.info("Saving global config");
+        synchronized (GLOBAL_CONFIG_PATH) {
+            Files.write(GLOBAL_CONFIG_PATH, content.getBytes(UTF_8));
+        }
+    }
+
+    static void markGlobalConfigDirty() {
+        globalConfigWriter.accept(globalConfigInstance.toJson());
+    }
+
+    private static void saveGlobalConfigSync() throws IOException {
+        writeToConfig(globalConfigInstance.toJson());
     }
 }

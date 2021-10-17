@@ -21,8 +21,8 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.ObjectProperty;
 import javafx.scene.control.ToggleGroup;
-import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -43,7 +43,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.logging.Level;
 
@@ -65,12 +64,8 @@ public final class SettingsPage extends SettingsView {
         selectedItemPropertyFor(cboLanguage).bindBidirectional(config().localizationProperty());
         // ====
 
-        fileCommonLocation.loadChildren(Collections.singletonList(
-                fileCommonLocation.createChildren(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT)
-        ), EnumCommonDirectory.CUSTOM);
         fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
-        fileCommonLocation.customTextProperty().bindBidirectional(config().commonDirectoryProperty());
-        fileCommonLocation.subtitleProperty().bind(
+        fileCommonLocationSublist.subtitleProperty().bind(
                 Bindings.createObjectBinding(() -> Optional.ofNullable(Settings.instance().getCommonDirectory())
                                 .orElse(i18n("launcher.cache_directory.disabled")),
                         config().commonDirectoryProperty(), config().commonDirTypeProperty()));
@@ -105,14 +100,16 @@ public final class SettingsPage extends SettingsView {
         UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
         updateListener.invalidated(null);
 
-        lblUpdateNote.setWrappingWidth(470);
-
         ToggleGroup updateChannelGroup = new ToggleGroup();
         chkUpdateDev.setToggleGroup(updateChannelGroup);
         chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);
         chkUpdateStable.setToggleGroup(updateChannelGroup);
         chkUpdateStable.setUserData(UpdateChannel.STABLE);
-        selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class).bindBidirectional(config().updateChannelProperty());
+        ObjectProperty<UpdateChannel> updateChannel = selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class);
+        updateChannel.set(UpdateChannel.getChannel());
+        updateChannel.addListener((a, b, newValue) -> {
+            UpdateChecker.requestCheckUpdate(newValue);
+        });
         // ====
     }
 

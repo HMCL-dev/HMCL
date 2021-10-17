@@ -46,9 +46,6 @@ import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -186,7 +183,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     });
                     borderPane.setTop(hyperlink);
                 } else {
-                    HintPane pane = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+                    HintPane pane = new HintPane(MessageDialogPane.MessageType.INFO);
                     pane.setText(i18n("modpack.wizard.step.initialization.warning"));
                     borderPane.setTop(pane);
                 }
@@ -242,17 +239,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                                 txtModpackFileApi.getValidators().add(new RequiredValidator());
                             }
 
-                            txtModpackFileApi.getValidators().add(new Validator(s -> {
-                                if (s.isEmpty()) {
-                                    return true;
-                                }
-                                try {
-                                    new URL(s).toURI();
-                                    return true;
-                                } catch (IOException | URISyntaxException e) {
-                                    return false;
-                                }
-                            }));
+                            txtModpackFileApi.getValidators().add(new URLValidator(true));
                             pane.addRow(rowIndex++, new Label(i18n("modpack.file_api")), txtModpackFileApi);
                         }
 

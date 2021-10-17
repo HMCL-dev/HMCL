@@ -1,90 +1,79 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
 package org.jackhuang.hmcl.util.platform;
 
-import com.google.gson.*;
-import com.google.gson.annotations.JsonAdapter;
+import java.util.Objects;
 
-import java.lang.reflect.Type;
+public final class Platform {
+    public static final Platform UNKNOWN = new Platform(OperatingSystem.UNKNOWN, Architecture.UNKNOWN);
 
-/**
- * The platform that indicates which the platform of operating system is, 64-bit or 32-bit.
- * Of course, 128-bit and 16-bit is not supported.
- *
- * @author huangyuhui
- */
-@JsonAdapter(Platform.Serializer.class)
-public enum Platform {
-    BIT_32("32"),
-    BIT_64("64"),
-    UNKNOWN("unknown");
+    public static final Platform WINDOWS_X86_64 = new Platform(OperatingSystem.WINDOWS, Architecture.X86_64);
+    public static final Platform OSX_X86_64 = new Platform(OperatingSystem.OSX, Architecture.X86_64);
+    public static final Platform LINUX_X86_64 = new Platform(OperatingSystem.LINUX, Architecture.X86_64);
 
-    private final String bit;
+    public static final Platform OSX_ARM64 = new Platform(OperatingSystem.OSX, Architecture.ARM64);
 
-    Platform(String bit) {
-        this.bit = bit;
+    public static final Platform CURRENT_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.CURRENT_ARCH);
+    public static final Platform SYSTEM_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.SYSTEM_ARCH);
+
+    private final OperatingSystem os;
+    private final Architecture arch;
+
+    private Platform(OperatingSystem os, Architecture arch) {
+        this.os = os;
+        this.arch = arch;
     }
 
-    public String getBit() {
-        return bit;
-    }
-
-    /**
-     * The platform of current Java Environment.
-     */
     public static Platform getPlatform() {
-        return Architecture.CURRENT.getPlatform();
+        return CURRENT_PLATFORM;
     }
 
-    /**
-     * The json serializer to {@link Platform}.
-     */
-    public static class Serializer implements JsonSerializer<Platform>, JsonDeserializer<Platform> {
-        @Override
-        public JsonElement serialize(Platform t, Type type, JsonSerializationContext jsc) {
-            if (t == null)
-                return null;
-            else
-                switch (t) {
-                    case BIT_32:
-                        return new JsonPrimitive(0);
-                    case BIT_64:
-                        return new JsonPrimitive(1);
-                    default:
-                        return new JsonPrimitive(-1);
-                }
+    public static Platform getPlatform(OperatingSystem os, Architecture arch) {
+        if (os == OperatingSystem.UNKNOWN && arch == Architecture.UNKNOWN) {
+            return UNKNOWN;
         }
 
-        @Override
-        public Platform deserialize(JsonElement je, Type type, JsonDeserializationContext jdc) throws JsonParseException {
-            if (je == null)
-                return null;
-            else
-                switch (je.getAsInt()) {
-                    case 0:
-                        return BIT_32;
-                    case 1:
-                        return BIT_64;
-                    default:
-                        return UNKNOWN;
-                }
+        if (arch == Architecture.X86_64) {
+            switch (os) {
+                case WINDOWS:
+                    return WINDOWS_X86_64;
+                case OSX:
+                    return OSX_X86_64;
+                case LINUX:
+                    return LINUX_X86_64;
+            }
+        } else if (arch == Architecture.ARM64 && OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+            return OSX_ARM64;
         }
 
+        return new Platform(os, arch);
     }
 
+    public OperatingSystem getOperatingSystem() {
+        return os;
+    }
+
+    public Architecture getArchitecture() {
+        return arch;
+    }
+
+    public Bits getBits() {
+        return arch.getBits();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(os, arch);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Platform)) return false;
+        Platform platform = (Platform) o;
+        return os == platform.os && arch == platform.arch;
+    }
+
+    @Override
+    public String toString() {
+        return os.getCheckedName() + "-" + arch.getCheckedName();
+    }
 }

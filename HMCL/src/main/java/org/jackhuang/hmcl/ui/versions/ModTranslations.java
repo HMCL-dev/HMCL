@@ -119,7 +119,9 @@ public final class ModTranslations {
         modIdMap = new HashMap<>();
         for (Mod mod : mods) {
             for (String id : mod.getModIds()) {
-                modIdMap.put(id, mod);
+                if (StringUtils.isNotBlank(id) && !"examplemod".equals(id)) {
+                    modIdMap.put(id, mod);
+                }
             }
         }
         return true;

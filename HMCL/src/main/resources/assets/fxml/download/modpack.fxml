@@ -16,10 +16,10 @@
     </fx:define>
     <SpinnerPane fx:id="spinnerPane" styleClass="large-spinner-pane">
         <VBox fx:id="borderPane" alignment="CENTER" FXUtils.limitWidth="500">
-            <HBox style="-fx-padding: 0 0 16 5;"><Label text="%modpack.task.install" /></HBox>
             <ComponentList>
                 <BorderPane><left><Label text="%modpack.task.install.will" /></left><right><Label fx:id="lblModpackLocation" /></right></BorderPane>
-                <JFXTextField fx:id="txtModpackName" labelFloat="true" promptText="%modpack.enter_name" StackPane.margin="$insets" />
+                <BorderPane><left><Label text="%modpack.enter_name" /></left><right><JFXTextField fx:id="txtModpackName" StackPane.margin="$insets" /></right></BorderPane>
+
                 <BorderPane><left><Label text="%modpack.name"/></left><right><Label fx:id="lblName" /></right></BorderPane>
                 <BorderPane><left><Label text="%archive.version"/></left><right><Label fx:id="lblVersion" /></right></BorderPane>
                 <BorderPane><left><Label text="%archive.author"/></left><right><Label fx:id="lblAuthor" /></right></BorderPane>

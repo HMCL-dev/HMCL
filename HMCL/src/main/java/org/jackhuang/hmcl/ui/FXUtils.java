@@ -44,10 +44,13 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -55,9 +58,17 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -65,6 +76,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
@@ -105,9 +117,9 @@ public final class FXUtils {
         value.addListener((a, b, c) -> consumer.accept(c));
     }
 
-    public static <T> WeakChangeListener<T> onWeakChange(ObservableValue<T> value, Consumer<T> consumer) {
-        WeakChangeListener<T> listener = new WeakChangeListener<>((a, b, c) -> consumer.accept(c));
-        value.addListener(listener);
+    public static <T> ChangeListener<T> onWeakChange(ObservableValue<T> value, Consumer<T> consumer) {
+        ChangeListener<T> listener = (a, b, c) -> consumer.accept(c);
+        value.addListener(new WeakChangeListener<>(listener));
         return listener;
     }
 
@@ -116,7 +128,7 @@ public final class FXUtils {
         onChange(value, consumer);
     }
 
-    public static <T> WeakChangeListener<T> onWeakChangeAndOperate(ObservableValue<T> value, Consumer<T> consumer) {
+    public static <T> ChangeListener<T> onWeakChangeAndOperate(ObservableValue<T> value, Consumer<T> consumer) {
         consumer.accept(value.getValue());
         return onWeakChange(value, consumer);
     }
@@ -687,4 +699,41 @@ public final class FXUtils {
 
         Controllers.showToast(i18n("message.copied"));
     }
+
+    public static TextFlow segmentToTextFlow(final String segment, Consumer<String> hyperlinkAction) {
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(new InputSource(new StringReader("<body>" + segment + "</body>")));
+            Element r = doc.getDocumentElement();
+
+            NodeList children = r.getChildNodes();
+            List<javafx.scene.Node> texts = new ArrayList<>();
+            for (int i = 0; i < children.getLength(); i++) {
+                org.w3c.dom.Node node = children.item(i);
+
+                if (node instanceof Element) {
+                    Element element = (Element) node;
+                    if ("a".equals(element.getTagName())) {
+                        String href = element.getAttribute("href");
+                        JFXHyperlink hyperlink = new JFXHyperlink(element.getTextContent());
+                        hyperlink.setOnAction(e -> hyperlinkAction.accept(href));
+                        texts.add(hyperlink);
+                    } else if ("br".equals(element.getTagName())) {
+                        texts.add(new Text("\n"));
+                    } else {
+                        throw new IllegalArgumentException("unsupported tag " + element.getTagName());
+                    }
+                } else {
+                    texts.add(new Text(node.getTextContent()));
+                }
+            }
+            final TextFlow tf = new TextFlow(texts.toArray(new javafx.scene.Node[0]));
+            return tf;
+        } catch (SAXException | ParserConfigurationException | IOException e) {
+            LOG.log(Level.WARNING, "Failed to parse xml", e);
+            return new TextFlow(new Text(segment));
+        }
+    }
+
 }

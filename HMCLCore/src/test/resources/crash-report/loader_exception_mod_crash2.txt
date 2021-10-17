@@ -1,0 +1,96 @@
+---- Minecraft Crash Report ----
+// On the bright side, I bought you a teddy bear!
+
+Time: 3/28/19 9:52 PM
+Description: There was a severe problem during mod loading that has caused the game to fail
+
+net.minecraftforge.fml.common.LoaderExceptionModCrash: Caught exception from Inventory Sort (invsort)
+Caused by: java.lang.IllegalAccessError: tried to access field net.minecraft.client.settings.KeyBinding.field_74512_d from class com.netease.invsort.InvTweaksObfuscation
+	at com.netease.invsort.InvTweaksObfuscation.getKeyBindingForwardKeyCode(InvTweaksObfuscation.java:272)
+	at com.netease.invsort.InvTweaksHandlerShortcuts.loadShortcuts(InvTweaksHandlerShortcuts.java:60)
+	at com.netease.invsort.InvTweaksConfigManager.loadConfig(InvTweaksConfigManager.java:177)
+	at com.netease.invsort.InvTweaksConfigManager.makeSureConfigurationIsLoaded(InvTweaksConfigManager.java:93)
+	at com.netease.invsort.InvTweaks.<init>(InvTweaks.java:116)
+	at com.netease.invsort.forge.ClientProxy.init(ClientProxy.java:52)
+	at com.netease.invsort.forge.InvTweaksMod.init(InvTweaksMod.java:49)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraftforge.fml.common.FMLModContainer.handleModStateEvent(FMLModContainer.java:627)
+	at sun.reflect.GeneratedMethodAccessor2.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at com.google.common.eventbus.Subscriber.invokeSubscriberMethod(Subscriber.java:91)
+	at com.google.common.eventbus.Subscriber$SynchronizedSubscriber.invokeSubscriberMethod(Subscriber.java:150)
+	at com.google.common.eventbus.Subscriber$1.run(Subscriber.java:76)
+	at com.google.common.util.concurrent.MoreExecutors$DirectExecutor.execute(MoreExecutors.java:399)
+	at com.google.common.eventbus.Subscriber.dispatchEvent(Subscriber.java:71)
+	at com.google.common.eventbus.Dispatcher$PerThreadQueuedDispatcher.dispatch(Dispatcher.java:116)
+	at com.google.common.eventbus.EventBus.post(EventBus.java:217)
+	at net.minecraftforge.fml.common.LoadController.sendEventToModContainer(LoadController.java:218)
+	at net.minecraftforge.fml.common.LoadController.propogateStateMessage(LoadController.java:196)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at com.google.common.eventbus.Subscriber.invokeSubscriberMethod(Subscriber.java:91)
+	at com.google.common.eventbus.Subscriber$SynchronizedSubscriber.invokeSubscriberMethod(Subscriber.java:150)
+	at com.google.common.eventbus.Subscriber$1.run(Subscriber.java:76)
+	at com.google.common.util.concurrent.MoreExecutors$DirectExecutor.execute(MoreExecutors.java:399)
+	at com.google.common.eventbus.Subscriber.dispatchEvent(Subscriber.java:71)
+	at com.google.common.eventbus.Dispatcher$PerThreadQueuedDispatcher.dispatch(Dispatcher.java:116)
+	at com.google.common.eventbus.EventBus.post(EventBus.java:217)
+	at net.minecraftforge.fml.common.LoadController.distributeStateMessage(LoadController.java:135)
+	at net.minecraftforge.fml.common.Loader.initializeMods(Loader.java:744)
+	at net.minecraftforge.fml.client.FMLClientHandler.finishMinecraftLoading(FMLClientHandler.java:329)
+	at net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:534)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:377)
+	at net.minecraft.client.main.Main.main(SourceFile:123)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:141)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:23)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- System Details --
+Details:
+	Minecraft Version: 1.12.2
+	Operating System: Windows 10 (amd64) version 10.0
+	Java Version: 1.8.0_60, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 145947240 bytes (139 MB) / 320770048 bytes (305 MB) up to 8576565248 bytes (8179 MB)
+	JVM Flags: 8 total; -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -Xmx8191M -Xmn128M -XX:PermSize=64M -XX:MaxPermSize=128M -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy
+	IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+	FML: MCP 9.42 Powered by Forge 14.23.4.2705 20 mods loaded, 20 mods active
+	States: 'U' = Unloaded 'L' = Loaded 'C' = Constructed 'H' = Pre-initialized 'I' = Initialized 'J' = Post-initialized 'A' = Available 'D' = Disabled 'E' = Errored
+
+	| State | ID                 | Version      | Source                        | Signature                                |
+	|:----- |:------------------ |:------------ |:----------------------------- |:---------------------------------------- |
+	| UCHI  | minecraft          | 1.12.2       | minecraft.jar                 | None                                     |
+	| UCHI  | mcp                | 9.42         | minecraft.jar                 | None                                     |
+	| UCHI  | FML                | 8.0.99.99    | forge-1.12.2-14.23.4.2705.jar | e3c3d50c7c986df74c645c0ac54639741c90a557 |
+	| UCHI  | forge              | 14.23.4.2705 | forge-1.12.2-14.23.4.2705.jar | e3c3d50c7c986df74c645c0ac54639741c90a557 |
+	| UCHI  | mercurius_updater  | 1.0          | MercuriusUpdater-1.12.2.jar   | None                                     |
+	| UCHI  | networkmod         | 1.11.2       | 4620273834451558259@3@0.jar   | None                                     |
+	| UCHI  | antimod            | 2.0          | 4620273834210283309@3@0.jar   | None                                     |
+	| UCHI  | filtermod          | 1.0          | 4620273834266845199@3@0.jar   | None                                     |
+	| UCHI  | friendplaymod      | 1.0          | 4620273834395780067@3@0.jar   | None                                     |
+	| UCHI  | updatecore         | 1.0          | 4620608844487847104@3@0.jar   | None                                     |
+	| UCHI  | playermanager      | 1.0          | 4620702976810361335@3@0.jar   | None                                     |
+	| UCHI  | mcbasemod          | 1.0          | 4621632218832071536@3@0.jar   | None                                     |
+	| UCHI  | opencommand        | 1.0          | 4624104029872303148@3@0.jar   | None                                     |
+	| UCHI  | fullscreenpopup    | 1.12.2.38000 | 4624104029891423116@3@0.jar   | None                                     |
+	| UCHI  | departmod          | 1.0          | 4625678897404525717@3@0.jar   | None                                     |
+	| UCHI  | skinmod            | 1.0          | 4626894585322620077@3@0.jar   | None                                     |
+	| UCHI  | gotcha             | 1.12         | 77135129230705664@3@15.jar    | None                                     |
+	| UCHEE | invsort            | 79317-1.8    | 77135129230705664@3@15.jar    | None                                     |
+	| UCH   | neteasemcassistant | 1.0.1        | 77135129230705664@3@15.jar    | None                                     |
+	| UCH   | minimap            | 2.1.12       | 77135129230705664@3@15.jar    | None                                     |
+
+	Loaded coremods (and transformers):

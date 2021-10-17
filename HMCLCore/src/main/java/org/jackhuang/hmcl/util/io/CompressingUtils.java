@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -89,7 +90,8 @@ public final class CompressingUtils {
 
     public static Charset findSuitableEncoding(Path zipFile, Collection<Charset> candidates) throws IOException {
         if (testEncoding(zipFile, StandardCharsets.UTF_8)) return StandardCharsets.UTF_8;
-        if (testEncoding(zipFile, Charset.defaultCharset())) return Charset.defaultCharset();
+        if (OperatingSystem.NATIVE_CHARSET != StandardCharsets.UTF_8 && testEncoding(zipFile, OperatingSystem.NATIVE_CHARSET))
+            return OperatingSystem.NATIVE_CHARSET;
 
         for (Charset charset : candidates)
             if (charset != null && testEncoding(zipFile, charset))

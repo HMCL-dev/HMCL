@@ -316,8 +316,72 @@ public final class Lang {
         };
     }
 
+    @SafeVarargs
+    public static <T> Consumer<T> compose(Consumer<T>... consumers) {
+        return t -> {
+            for (Consumer<T> consumer : consumers) {
+                consumer.accept(t);
+            }
+        };
+    }
+
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static <T> Stream<T> toStream(Optional<T> optional) {
         return optional.map(Stream::of).orElseGet(Stream::empty);
+    }
+
+    public static <T> Iterable<T> toIterable(Enumeration<T> enumeration) {
+        if (enumeration == null) {
+            throw new NullPointerException();
+        }
+        return () -> new Iterator<T>() {
+            public boolean hasNext() {
+                return enumeration.hasMoreElements();
+            }
+
+            public T next() {
+                return enumeration.nextElement();
+            }
+
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+    public static <T> Iterable<T> toIterable(Stream<T> stream) {
+        return stream::iterator;
+    }
+
+    public static <T> Iterable<T> toIterable(Iterator<T> iterator) {
+        return () -> iterator;
+    }
+
+    private static Timer timer;
+
+    public static synchronized Timer getTimer() {
+        if (timer == null) {
+            timer = new Timer();
+        }
+        return timer;
+    }
+
+    public static synchronized TimerTask setTimeout(Runnable runnable, long delayMs) {
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                runnable.run();
+            }
+        };
+        getTimer().schedule(task, delayMs);
+        return task;
+    }
+
+    public static Throwable resolveException(Throwable e) {
+        if (e instanceof ExecutionException || e instanceof CompletionException)
+            return resolveException(e.getCause());
+        else
+            return e;
     }
 
     /**
@@ -330,7 +394,8 @@ public final class Lang {
         return null;
     };
 
-    public static void handleUncaughtException(Throwable e) {
+    public static <R> R handleUncaughtException(Throwable e) {
         Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+        return null;
     }
 }

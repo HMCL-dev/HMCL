@@ -17,6 +17,10 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.task.Task;
+
+import java.io.File;
 import java.nio.charset.Charset;
 import java.util.List;
 
@@ -24,14 +28,14 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public final class Modpack {
-    private final String name;
-    private final String author;
-    private final String version;
-    private final String gameVersion;
-    private final String description;
-    private final transient Charset encoding;
-    private final Object manifest;
+public abstract class Modpack {
+    private String name;
+    private String author;
+    private String version;
+    private String gameVersion;
+    private String description;
+    private transient Charset encoding;
+    private Object manifest;
 
     public Modpack() {
         this("", null, null, null, null, null, null);
@@ -51,12 +55,27 @@ public final class Modpack {
         return name;
     }
 
+    public Modpack setName(String name) {
+        this.name = name;
+        return this;
+    }
+
     public String getAuthor() {
         return author;
     }
 
+    public Modpack setAuthor(String author) {
+        this.author = author;
+        return this;
+    }
+
     public String getVersion() {
         return version;
+    }
+
+    public Modpack setVersion(String version) {
+        this.version = version;
+        return this;
     }
 
     public String getGameVersion() {
@@ -64,11 +83,17 @@ public final class Modpack {
     }
 
     public Modpack setGameVersion(String gameVersion) {
-        return new Modpack(name, author, version, gameVersion, description, encoding, manifest);
+        this.gameVersion = gameVersion;
+        return this;
     }
 
     public String getDescription() {
         return description;
+    }
+
+    public Modpack setDescription(String description) {
+        this.description = description;
+        return this;
     }
 
     public Charset getEncoding() {
@@ -76,7 +101,8 @@ public final class Modpack {
     }
 
     public Modpack setEncoding(Charset encoding) {
-        return new Modpack(name, author, version, gameVersion, description, encoding, manifest);
+        this.encoding = encoding;
+        return this;
     }
 
     public Object getManifest() {
@@ -84,8 +110,11 @@ public final class Modpack {
     }
 
     public Modpack setManifest(Object manifest) {
-        return new Modpack(name, author, version, gameVersion, description, encoding, manifest);
+        this.manifest = manifest;
+        return this;
     }
+
+    public abstract Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name);
 
     public static boolean acceptFile(String path, List<String> blackList, List<String> whiteList) {
         if (path.isEmpty())

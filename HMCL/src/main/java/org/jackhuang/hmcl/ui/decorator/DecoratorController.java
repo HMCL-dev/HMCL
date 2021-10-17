@@ -74,6 +74,7 @@ public class DecoratorController {
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
         decorator.setOnCloseButtonAction(Launcher::stopApplication);
+        decorator.titleTransparentProperty().bind(config().titleTransparentProperty());
 
         navigator = new Navigator();
         navigator.setOnNavigated(this::onNavigated);
@@ -138,13 +139,19 @@ public class DecoratorController {
                                 image = tryLoadImage(Paths.get(config().getBackgroundImage()))
                                         .orElse(null);
                             }
+                            if (config().getBackgroundImageType() == EnumBackgroundImage.NETWORK) {
+                                image = new Image(config().getBackgroundImageUrl(), true);
+                            } else if (config().getBackgroundImageType() == EnumBackgroundImage.CLASSIC) {
+                                image = newImage("/assets/img/background-classic.jpg");
+                            }
                             if (image == null) {
                                 image = loadDefaultBackgroundImage();
                             }
                             return new Background(new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true)));
                         },
                         config().backgroundImageTypeProperty(),
-                        config().backgroundImageProperty()));
+                        config().backgroundImageProperty(),
+                        config().backgroundImageUrlProperty()));
     }
 
     private Image defaultBackground = newImage("/assets/img/background.jpg");
@@ -217,8 +224,10 @@ public class DecoratorController {
 
     // ==== Navigation ====
 
-    public Navigator getNavigator() {
-        return navigator;
+    private static final DecoratorAnimationProducer animation = new DecoratorAnimationProducer();
+
+    public void navigate(Node node) {
+        navigator.navigate(node, animation);
     }
 
     private void close() {
@@ -354,6 +363,10 @@ public class DecoratorController {
         if (dialog != null) {
             dialogPane.pop(node);
 
+            if (node instanceof DialogAware) {
+                ((DialogAware) node).onDialogClosed();
+            }
+
             if (dialogPane.getChildren().isEmpty()) {
                 dialog.close();
                 dialog = null;
@@ -379,7 +392,7 @@ public class DecoratorController {
     public void startWizard(WizardProvider wizardProvider, String category) {
         FXUtils.checkFxUserThread();
 
-        getNavigator().navigate(new DecoratorWizardDisplayer(wizardProvider, category), ContainerAnimations.FADE.getAnimationProducer());
+        navigator.navigate(new DecoratorWizardDisplayer(wizardProvider, category), ContainerAnimations.FADE.getAnimationProducer());
     }
 
     // ==== Authlib Injector DnD ====

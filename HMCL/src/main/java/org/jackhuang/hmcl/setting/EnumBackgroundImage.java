@@ -19,5 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 public enum EnumBackgroundImage {
     DEFAULT,
-    CUSTOM
+    CUSTOM,
+    CLASSIC,
+    NETWORK
 }
