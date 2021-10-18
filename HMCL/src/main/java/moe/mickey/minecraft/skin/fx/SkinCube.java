@@ -4,7 +4,7 @@ import javafx.scene.image.Image;
 import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
-import org.jackhuang.hmcl.util.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 
 public class SkinCube extends MeshView {
 
