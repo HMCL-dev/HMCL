@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.util.io;
 
-import java.io.IOException;
+import org.jackhuang.hmcl.download.ArtifactMalformedException;
 
-public class ChecksumMismatchException extends IOException {
+public class ChecksumMismatchException extends ArtifactMalformedException {
 
     private final String algorithm;
     private final String expectedChecksum;

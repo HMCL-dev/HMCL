@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXButton;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -99,7 +100,7 @@ public final class MessageDialogPane extends StackPane {
         });
     }
 
-    public void addButton(ButtonBase btn) {
+    public void addButton(Node btn) {
         btn.addEventHandler(ActionEvent.ACTION, e -> fireEvent(new DialogCloseEvent()));
         actions.getChildren().add(btn);
     }
@@ -117,6 +118,11 @@ public final class MessageDialogPane extends StackPane {
 
         public Builder(String text, String title, MessageType type) {
             this.dialog = new MessageDialogPane(text, title, type);
+        }
+
+        public Builder addAction(Node actionNode) {
+            dialog.addButton(actionNode);
+            return this;
         }
 
         public Builder ok(Runnable ok) {

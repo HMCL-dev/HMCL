@@ -17,13 +17,13 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
@@ -38,16 +38,14 @@ import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackCompletionTask;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackLocalInstallTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackLocalInstallTask;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
-import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
@@ -337,9 +335,28 @@ public final class LauncherHelper {
                 Runnable continueAction = () -> future.complete(JavaVersion.fromCurrentEnvironment());
 
                 if (setting.isJavaAutoSelected()) {
-//                    JavaVersionConstraint.VersionRange range = JavaVersionConstraint.findSuitableJavaVersionRange(gameVersion, version);
-                    // TODO: download java 16 if necessary!
-                    Controllers.dialog(i18n("launch.failed.no_accepted_java"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                    JavaVersionConstraint.VersionRanges range = JavaVersionConstraint.findSuitableJavaVersionRange(gameVersion, version);
+                    GameJavaVersion targetJavaVersion;
+
+                    if (range.getMandatory().contains(VersionNumber.asVersion("16"))) {
+                        targetJavaVersion = GameJavaVersion.JAVA_16;
+                    } else if (range.getMandatory().contains(VersionNumber.asVersion("1.8.0_51"))) {
+                        targetJavaVersion = GameJavaVersion.JAVA_8;
+                    } else {
+                        targetJavaVersion = null;
+                    }
+
+                    if (targetJavaVersion != null) {
+                        downloadJava(gameVersion.toString(), targetJavaVersion, profile)
+                                .thenAcceptAsync(downloadedJavaVersion -> {
+                                    future.complete(downloadedJavaVersion);
+                                })
+                                .exceptionally(throwable -> {
+                                    LOG.log(Level.WARNING, "Failed to download java", throwable);
+                                    Controllers.dialog(i18n("launch.failed.no_accepted_java"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                                    return null;
+                                });
+                    }
                 } else {
                     Controllers.dialog(i18n("launch.wrong_javadir"), i18n("message.warning"), MessageType.WARNING, continueAction);
 
@@ -391,47 +408,15 @@ public final class LauncherHelper {
                 } else {
                     switch (violatedMandatoryConstraint) {
                         case GAME_JSON:
-                            MessageDialogPane dialog = new MessageDialogPane(
-                                    i18n("launch.advice.require_newer_java_version",
-                                            gameVersion.toString(),
-                                            version.getJavaVersion().getMajorVersion()),
-                                    i18n("message.warning"),
-                                    MessageType.QUESTION);
-
-                            JFXButton linkButton = new JFXButton(i18n("download.external_link"));
-                            linkButton.setOnAction(e -> FXUtils.openLink("https://adoptium.net/?variant=openjdk17"));
-                            linkButton.getStyleClass().add("dialog-accept");
-                            dialog.addButton(linkButton);
-
-                            JFXButton yesButton = new JFXButton(i18n("button.ok"));
-                            yesButton.setOnAction(event -> {
-                                downloadJava(version.getJavaVersion(), profile)
-                                        .thenAcceptAsync(x -> {
-                                            try {
-                                                Optional<JavaVersion> newAcceptableJava = JavaVersion.getJavas().stream()
-                                                        .filter(newJava -> newJava.getParsedVersion() >= version.getJavaVersion().getMajorVersion())
-                                                        .max(Comparator.comparing(JavaVersion::getVersionNumber));
-                                                if (newAcceptableJava.isPresent()) {
-                                                    setting.setJavaVersion(newAcceptableJava.get());
-                                                    future.complete(newAcceptableJava.get());
-                                                    return;
-                                                }
-                                            } catch (InterruptedException e) {
-                                                LOG.log(Level.SEVERE, "Cannot list javas", e);
-                                            }
-                                            future.complete(javaVersion);
-                                        }, Platform::runLater)
-                                        .exceptionally(Lang.handleUncaught);
-                            });
-                            yesButton.getStyleClass().add("dialog-accept");
-                            dialog.addButton(yesButton);
-
-                            JFXButton noButton = new JFXButton(i18n("button.cancel"));
-                            noButton.getStyleClass().add("dialog-cancel");
-                            dialog.addButton(noButton);
-                            dialog.setCancelButton(noButton);
-
-                            Controllers.dialog(dialog);
+                            downloadJava(gameVersion.toString(), version.getJavaVersion(), profile)
+                                    .thenAcceptAsync(downloadedJavaVersion -> {
+                                        setting.setJavaVersion(downloadedJavaVersion);
+                                        future.complete(downloadedJavaVersion);
+                                    })
+                                    .exceptionally(throwable -> {
+                                        LOG.log(Level.WARNING, "Failed to download java", throwable);
+                                        return null;
+                                    });
                             return Task.fromCompletableFuture(future);
                         case VANILLA_JAVA_16:
                             Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 16), i18n("message.warning"), () -> {
@@ -539,32 +524,63 @@ public final class LauncherHelper {
         }).withStage("launch.state.java");
     }
 
-    private static CompletableFuture<Void> downloadJava(GameJavaVersion javaVersion, Profile profile) {
-        CompletableFuture<Void> future = new CompletableFuture<>();
+    private static CompletableFuture<JavaVersion> downloadJava(String gameVersion, GameJavaVersion javaVersion, Profile profile) {
+        CompletableFuture<JavaVersion> future = new CompletableFuture<>();
+
+        JFXHyperlink link = new JFXHyperlink(i18n("download.external_link"));
+        link.setOnAction(e -> FXUtils.openLink("https://adoptium.net/?variant=openjdk17"));
+
+        Controllers.dialog(new MessageDialogPane.Builder(
+                i18n("launch.advice.require_newer_java_version",
+                        gameVersion,
+                        javaVersion.getMajorVersion()),
+                i18n("message.warning"),
+                MessageType.QUESTION)
+                .addAction(link)
+                .yesOrNo(() -> {
+                    downloadJavaImpl(javaVersion, profile.getDependency().getDownloadProvider())
+                            .thenAcceptAsync(downloadedJava -> {
+                                future.complete(downloadedJava);
+                            })
+                    .exceptionally(throwable -> {
+                        LOG.log(Level.WARNING, "Failed to download java", throwable);
+                        Controllers.dialog(DownloadProviders.localizeErrorMessage(throwable), i18n("download.failed"));
+                        future.completeExceptionally(new CancellationException());
+                        return null;
+                    });
+                }, () -> {
+                    future.completeExceptionally(new CancellationException());
+                }).build());
+
+        return future;
+    }
+
+    /**
+     * Directly start java downloading.
+     *
+     * @param javaVersion target Java version
+     * @param downloadProvider download provider
+     * @return JavaVersion, null if we failed to download java, failed if an error occurred when downloading.
+     */
+    private static CompletableFuture<JavaVersion> downloadJavaImpl(GameJavaVersion javaVersion, DownloadProvider downloadProvider) {
+        CompletableFuture<JavaVersion> future = new CompletableFuture<>();
 
         TaskExecutorDialogPane javaDownloadingPane = new TaskExecutorDialogPane(it -> {
         });
 
-        TaskExecutor executor = JavaRepository.downloadJava(javaVersion,
-                profile.getDependency().getDownloadProvider()).executor(false);
-        executor.addTaskListener(new TaskListener() {
-            @Override
-            public void onStop(boolean success, TaskExecutor executor) {
-                super.onStop(success, executor);
-                Platform.runLater(() -> {
-                    if (!success) {
-                        future.completeExceptionally(Optional.ofNullable(executor.getException()).orElseGet(InterruptedException::new));
+        TaskExecutor executor = JavaRepository.downloadJava(javaVersion, downloadProvider)
+                .whenComplete(Schedulers.javafx(), (downloadedJava, exception) -> {
+                    if (exception != null) {
+                        future.completeExceptionally(exception);
                     } else {
-                        future.complete(null);
+                        future.complete(downloadedJava);
                     }
-                });
-            }
-        });
+                })
+                .executor(false);
 
         javaDownloadingPane.setExecutor(executor, true);
         Controllers.dialog(javaDownloadingPane);
         executor.start();
-
 
         return future;
     }

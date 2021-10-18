@@ -21,23 +21,25 @@ public final class JavaRepository {
     private JavaRepository() {
     }
 
-    public static Task<?> downloadJava(GameJavaVersion javaVersion, DownloadProvider downloadProvider) {
+    public static Task<JavaVersion> downloadJava(GameJavaVersion javaVersion, DownloadProvider downloadProvider) {
         return new JavaDownloadTask(javaVersion, getJavaStoragePath(), downloadProvider)
-                .thenRunAsync(() -> {
-                    Optional<String> platform = getSystemJavaPlatform();
-                    if (platform.isPresent()) {
-                        addJava(getJavaHome(javaVersion, platform.get()));
-                    }
+                .thenSupplyAsync(() -> {
+                    String platform = getSystemJavaPlatform().orElseThrow(JavaDownloadTask.UnsupportedPlatformException::new);
+                    return addJava(getJavaHome(javaVersion, platform));
                 });
     }
 
-    public static void addJava(Path javaHome) throws InterruptedException, IOException {
+    public static JavaVersion addJava(Path javaHome) throws InterruptedException, IOException {
         if (Files.isDirectory(javaHome)) {
             Path executable = JavaVersion.getExecutable(javaHome);
             if (Files.isRegularFile(executable)) {
-                JavaVersion.getJavas().add(JavaVersion.fromExecutable(executable));
+                JavaVersion javaVersion = JavaVersion.fromExecutable(executable);
+                JavaVersion.getJavas().add(javaVersion);
+                return javaVersion;
             }
         }
+
+        throw new IOException("Incorrect java home " + javaHome);
     }
 
     public static void initialize() throws IOException, InterruptedException {

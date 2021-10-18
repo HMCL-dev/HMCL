@@ -37,4 +37,7 @@ public class GameJavaVersion {
     public int getMajorVersion() {
         return majorVersion;
     }
+
+    public static final GameJavaVersion JAVA_16 = new GameJavaVersion("java-runtime-alpha", 16);
+    public static final GameJavaVersion JAVA_8 = new GameJavaVersion("jre-legacy", 8);
 }

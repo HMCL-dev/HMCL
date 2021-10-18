@@ -137,7 +137,7 @@ public final class DownloadProviders {
         return config().isAutoChooseDownloadType() ? currentDownloadProvider : fileDownloadProvider;
     }
 
-    public static String localizeErrorMessage(Exception exception) {
+    public static String localizeErrorMessage(Throwable exception) {
         if (exception instanceof DownloadException) {
             URL url = ((DownloadException) exception).getUrl();
             if (exception.getCause() instanceof SocketTimeoutException) {
@@ -153,9 +153,13 @@ public final class DownloadProviders {
                 return i18n("download.code.404", url);
             } else if (exception.getCause() instanceof AccessDeniedException) {
                 return i18n("install.failed.downloading.detail", url) + "\n" + i18n("exception.access_denied", ((AccessDeniedException) exception.getCause()).getFile());
+            } else if (exception.getCause() instanceof ArtifactMalformedException) {
+                return i18n("install.failed.downloading.detail", url) + "\n" + i18n("exception.artifact_malformed");
             } else {
                 return i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause());
             }
+        } else if (exception instanceof ArtifactMalformedException) {
+            return i18n("exception.artifact_malformed");
         }
         return StringUtils.getStackTrace(exception);
     }
