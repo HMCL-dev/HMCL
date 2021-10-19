@@ -158,6 +158,9 @@ public class GameCrashWindow extends Stage {
                                     translateFabricModId(result.getMatcher().group("mod")),
                                     result.getMatcher().group("version")));
                             break;
+                        case TWILIGHT_FOREST_OPTIFINE:
+                            reasonText.append(i18n("game.crash.reason.mod", "OptiFine"));
+                            break;
                         default:
                             reasonText.append(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     Arrays.stream(result.getRule().getGroupNames()).map(groupName -> result.getMatcher().group(groupName))

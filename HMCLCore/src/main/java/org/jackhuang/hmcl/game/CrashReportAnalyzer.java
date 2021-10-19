@@ -89,7 +89,13 @@ public final class CrashReportAnalyzer {
         // Game crashed when tesselating block model
         BLOCK(Pattern.compile("Block: (?<type>.*)[\\w\\W\\n\\r]*?Block location: (?<location>.*)"), "type", "location"),
         // Cannot find native libraries
-        UNSATISFIED_LINK_ERROR(Pattern.compile("java.lang.UnsatisfiedLinkError: Failed to locate library: (?<name>.*)"), "name");
+        UNSATISFIED_LINK_ERROR(Pattern.compile("java.lang.UnsatisfiedLinkError: Failed to locate library: (?<name>.*)"), "name"),
+
+
+
+        // Mod issues
+        // TwilightForest is not compatible with OptiFine on Minecraft 1.16.
+        TWILIGHT_FOREST_OPTIFINE(Pattern.compile("java.lang.IllegalArgumentException: (.*) outside of image bounds (.*)"));
 
         private final Pattern pattern;
         private final String[] groupNames;

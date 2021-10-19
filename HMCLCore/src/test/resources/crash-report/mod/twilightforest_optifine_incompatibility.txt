@@ -1,0 +1,131 @@
+---- Minecraft Crash Report ----
+// Everything's going to plan. No, really, that was supposed to happen.
+
+Time: 2021/10/18 下午9:15
+Description: Unexpected error
+
+java.lang.IllegalArgumentException: (256, 0) outside of image bounds (256, 8192)
+	at net.minecraft.client.renderer.texture.NativeImage.func_195709_a(NativeImage.java:261) ~[?:?] {re:computing_frames,xf:OptiFine:default,re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.renderer.texture.TextureAtlasSprite$InterpolationData.func_229259_a_(TextureAtlasSprite.java:687) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.renderer.texture.TextureAtlasSprite$InterpolationData.func_229257_a_(TextureAtlasSprite.java:672) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.renderer.texture.TextureAtlasSprite$InterpolationData.access$800(TextureAtlasSprite.java:623) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.renderer.texture.TextureAtlasSprite.func_94219_l(TextureAtlasSprite.java:532) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.renderer.texture.AtlasTexture.func_94248_c(AtlasTexture.java:522) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.renderer.texture.AtlasTexture.func_110550_d(AtlasTexture.java:635) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.renderer.texture.TextureManager.func_110550_d(TextureManager.java:214) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.Minecraft.func_71407_l(Minecraft.java:1431) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.Minecraft.func_195542_b(Minecraft.java:953) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:607) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.main.Main.main(Main.java:184) ~[1.16.5.jar:?] {re:classloading,pl:runtimedistcleaner:A}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?] {}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?] {}
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?] {}
+	at java.lang.reflect.Method.invoke(Method.java:568) ~[?:?] {}
+	at net.minecraftforge.fml.loading.FMLClientLaunchProvider.lambda$launchService$0(FMLClientLaunchProvider.java:51) ~[forge-1.16.5-36.2.8.jar:36.2] {}
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:37) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:54) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:72) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:82) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:66) [modlauncher-8.0.9.jar:?] {}
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Render thread
+Stacktrace:
+	at net.minecraft.client.renderer.texture.NativeImage.func_195709_a(NativeImage.java:261) ~[?:?] {re:computing_frames,xf:OptiFine:default,re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.renderer.texture.TextureAtlasSprite$InterpolationData.func_229259_a_(TextureAtlasSprite.java:687) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.renderer.texture.TextureAtlasSprite$InterpolationData.func_229257_a_(TextureAtlasSprite.java:672) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.renderer.texture.TextureAtlasSprite$InterpolationData.access$800(TextureAtlasSprite.java:623) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.renderer.texture.TextureAtlasSprite.func_94219_l(TextureAtlasSprite.java:532) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.renderer.texture.AtlasTexture.func_94248_c(AtlasTexture.java:522) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.renderer.texture.AtlasTexture.func_110550_d(AtlasTexture.java:635) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.renderer.texture.TextureManager.func_110550_d(TextureManager.java:214) ~[?:?] {re:classloading,xf:OptiFine:default}
+-- Affected level --
+Details:
+	All players: 1 total; [ClientPlayerEntity['Grumm'/237, l='ClientLevel', x=-1.50, y=64.00, z=51.50]]
+	Chunk stats: Client Chunk Cache: 441, 289
+	Level dimension: minecraft:overworld
+	Level spawn location: World: (-11,63,44), Chunk: (at 5,3,12 in -1,2; contains blocks -16,0,32 to -1,255,47), Region: (-1,0; contains chunks -32,0 to -1,31, blocks -512,0,0 to -1,255,511)
+	Level time: 83 game time, 83 day time
+	Server brand: forge
+	Server type: Integrated singleplayer server
+Stacktrace:
+	at net.minecraft.client.world.ClientWorld.func_72914_a(ClientWorld.java:617) ~[?:?] {re:classloading,pl:accesstransformer:B,xf:OptiFine:default}
+	at net.minecraft.client.Minecraft.func_71396_d(Minecraft.java:2029) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:628) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.main.Main.main(Main.java:184) ~[1.16.5.jar:?] {re:classloading,pl:runtimedistcleaner:A}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?] {}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?] {}
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?] {}
+	at java.lang.reflect.Method.invoke(Method.java:568) ~[?:?] {}
+	at net.minecraftforge.fml.loading.FMLClientLaunchProvider.lambda$launchService$0(FMLClientLaunchProvider.java:51) ~[forge-1.16.5-36.2.8.jar:36.2] {}
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:37) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:54) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:72) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:82) [modlauncher-8.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:66) [modlauncher-8.0.9.jar:?] {}
+
+
+-- System Details --
+Details:
+	Minecraft Version: 1.16.5
+	Minecraft Version ID: 1.16.5
+	Operating System: Windows 7 (amd64) version 6.1
+	Java Version: 17, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode, sharing), Oracle Corporation
+	Memory: 1812234600 bytes (1728 MB) / 2634022912 bytes (2512 MB) up to 3003121664 bytes (2864 MB)
+	CPUs: 4
+	JVM Flags: 13 total; -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=16m -XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -XX:-DontCompileHugeMethods -Xmn128m -Xmx2860m -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -XX:+IgnoreUnrecognizedVMOptions
+	ModLauncher: 8.0.9+86+master.3cf110c
+	ModLauncher launch target: fmlclient
+	ModLauncher naming: srg
+	ModLauncher services:
+		/mixin-0.8.4.jar mixin PLUGINSERVICE
+		/eventbus-4.0.0.jar eventbus PLUGINSERVICE
+		/forge-1.16.5-36.2.8.jar object_holder_definalize PLUGINSERVICE
+		/forge-1.16.5-36.2.8.jar runtime_enum_extender PLUGINSERVICE
+		/forge-1.16.5-36.2.8.jar capability_inject_definalize PLUGINSERVICE
+		/accesstransformers-3.0.1.jar accesstransformer PLUGINSERVICE
+		/forge-1.16.5-36.2.8.jar runtimedistcleaner PLUGINSERVICE
+		/mixin-0.8.4.jar mixin TRANSFORMATIONSERVICE
+		/OptiFine-1.16.5_HD_U_G8.jar OptiFine TRANSFORMATIONSERVICE
+		/forge-1.16.5-36.2.8.jar fml TRANSFORMATIONSERVICE
+	FML: 36.2
+	Forge: net.minecraftforge:36.2.8
+	FML Language Providers:
+		javafml@36.2
+		minecraft@1
+	Mod List:
+		forge-1.16.5-36.2.8-client.jar                    |Minecraft                     |minecraft                     |1.16.5              |DONE      |Manifest: NOSIGNATURE
+		forge-1.16.5-36.2.8-universal.jar                 |Forge                         |forge                         |36.2.8              |DONE      |Manifest: 22:af:21:d8:19:82:7f:93:94:fe:2b:ac:b7:e4:41:57:68:39:87:b1:a7:5c:c6:44:f9:25:74:21:14:f5:0d:90
+		twilightforest-1.16.5-4.0.546-universal.jar       |The Twilight Forest           |twilightforest                |NONE                |DONE      |Manifest: NOSIGNATURE
+		Patchouli-1.16.4-53.2.jar                         |Patchouli                     |patchouli                     |1.16.4-53.2         |DONE      |Manifest: NOSIGNATURE
+		CTM-MC1.16.1-1.1.2.6.jar                          |ConnectedTexturesMod          |ctm                           |MC1.16.1-1.1.2.6    |DONE      |Manifest: NOSIGNATURE
+	Crash Report UUID: 7d82c941-656a-4506-a362-3426ed4c15f8
+	Patchouli open book context: n/a
+	Launched Version: 1.16.5
+	Backend library: LWJGL version 3.2.2 build 10
+	Backend API: Intel(R) UHD Graphics 610 GL version 4.4.0 - Build 21.20.16.5164, Intel
+	GL Caps: Using framebuffer using OpenGL 3.0
+	Using VBOs: Yes
+	Is Modded: Definitely; Client brand changed to 'forge'
+	Type: Client (map_client.txt)
+	Graphics mode: fancy
+	Resource Packs: mod_resources, vanilla, programer_art, twilightforest:classic_textures, file/mcwzh-meme.f36647c.zip
+	Current Language: 梗体中文 (天朝)
+	CPU: 4x Intel(R) Pentium(R) Gold G5420 CPU @ 3.80GHz
+	OptiFine Version: OptiFine_1.16.5_HD_U_G8
+	OptiFine Build: 20210515-161946
+	Render Distance Chunks: 8
+	Mipmaps: 4
+	Anisotropic Filtering: 1
+	Antialiasing: 0
+	Multitexture: false
+	Shaders: (internal)
+	OpenGlVersion: 4.4.0 - Build 21.20.16.5164
+	OpenGlRenderer: Intel(R) UHD Graphics 610
+	OpenGlVendor: Intel
+	CpuCount: 4

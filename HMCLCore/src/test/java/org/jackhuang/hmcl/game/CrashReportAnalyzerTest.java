@@ -304,6 +304,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void twilightForestOptiFineIncompatible() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/twilightforest_optifine_incompatibility.txt")),
+                CrashReportAnalyzer.Rule.TWILIGHT_FOREST_OPTIFINE);
+    }
+
+    @Test
     public void fabricMissingMinecraft() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-minecraft.txt")),
