@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import org.apache.commons.lang3.Range;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
@@ -44,7 +45,8 @@ public enum JavaVersionConstraint {
         protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
                                                @Nullable JavaVersion javaVersion) {
             if (version == null) return false;
-            return LAUNCH_WRAPPER_MAIN.equals(version.getMainClass());
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
+            return analyzer.has(LibraryAnalyzer.LibraryType.FORGE);
         }
     },
     // LaunchWrapper<=1.12 will crash because of assuming the system class loader is an instance of URLClassLoader (Java 8)
