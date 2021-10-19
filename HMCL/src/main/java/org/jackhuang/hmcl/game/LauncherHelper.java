@@ -542,12 +542,12 @@ public final class LauncherHelper {
                             .thenAcceptAsync(downloadedJava -> {
                                 future.complete(downloadedJava);
                             })
-                    .exceptionally(throwable -> {
-                        LOG.log(Level.WARNING, "Failed to download java", throwable);
-                        Controllers.dialog(DownloadProviders.localizeErrorMessage(throwable), i18n("download.failed"));
-                        future.completeExceptionally(new CancellationException());
-                        return null;
-                    });
+                            .exceptionally(throwable -> {
+                                LOG.log(Level.WARNING, "Failed to download java", throwable);
+                                Controllers.dialog(DownloadProviders.localizeErrorMessage(throwable), i18n("download.failed"));
+                                future.completeExceptionally(new CancellationException());
+                                return null;
+                            });
                 }, () -> {
                     future.completeExceptionally(new CancellationException());
                 }).build());
