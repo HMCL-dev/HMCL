@@ -382,7 +382,7 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
-    public File getActualAssetDirectory(String version, String assetId) {
+    public Path getActualAssetDirectory(String version, String assetId) {
         try {
             return reconstructAssets(version, assetId);
         } catch (IOException | JsonParseException e) {
@@ -392,14 +392,16 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
-    public File getAssetDirectory(String version, String assetId) {
-        return new File(getBaseDirectory(), "assets");
+    public Path getAssetDirectory(String version, String assetId) {
+        return getBaseDirectory().toPath().resolve("assets");
     }
 
     @Override
-    public File getAssetObject(String version, String assetId, String name) throws IOException {
+    public Optional<Path> getAssetObject(String version, String assetId, String name) throws IOException {
         try {
-            return getAssetObject(version, assetId, getAssetIndex(version, assetId).getObjects().get(name));
+            AssetObject assetObject = getAssetIndex(version, assetId).getObjects().get(name);
+            if (assetObject == null) return Optional.empty();
+            return Optional.of(getAssetObject(version, assetId, assetObject));
         } catch (IOException e) {
             throw e;
         } catch (Exception e) {
@@ -408,30 +410,30 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
-    public File getAssetObject(String version, String assetId, AssetObject obj) {
+    public Path getAssetObject(String version, String assetId, AssetObject obj) {
         return getAssetObject(version, getAssetDirectory(version, assetId), obj);
     }
 
-    public File getAssetObject(String version, File assetDir, AssetObject obj) {
-        return new File(assetDir, "objects/" + obj.getLocation());
+    public Path getAssetObject(String version, Path assetDir, AssetObject obj) {
+        return assetDir.resolve("objects").resolve(obj.getLocation());
     }
 
     @Override
-    public File getIndexFile(String version, String assetId) {
-        return new File(getAssetDirectory(version, assetId), "indexes/" + assetId + ".json");
+    public Path getIndexFile(String version, String assetId) {
+        return getAssetDirectory(version, assetId).resolve("indexes").resolve(assetId + ".json");
     }
 
     @Override
-    public File getLoggingObject(String version, String assetId, LoggingInfo loggingInfo) {
-        return new File(getAssetDirectory(version, assetId), "log_configs/" + loggingInfo.getFile().getId());
+    public Path getLoggingObject(String version, String assetId, LoggingInfo loggingInfo) {
+        return getAssetDirectory(version, assetId).resolve("log_configs").resolve(loggingInfo.getFile().getId());
     }
 
-    protected File reconstructAssets(String version, String assetId) throws IOException, JsonParseException {
-        File assetsDir = getAssetDirectory(version, assetId);
-        File indexFile = getIndexFile(version, assetId);
-        File virtualRoot = new File(new File(assetsDir, "virtual"), assetId);
+    protected Path reconstructAssets(String version, String assetId) throws IOException, JsonParseException {
+        Path assetsDir = getAssetDirectory(version, assetId);
+        Path indexFile = getIndexFile(version, assetId);
+        Path virtualRoot = assetsDir.resolve("virtual").resolve(assetId);
 
-        if (!indexFile.isFile())
+        if (!Files.isRegularFile(indexFile))
             return assetsDir;
 
         String assetIndexContent = FileUtils.readText(indexFile);
@@ -444,11 +446,11 @@ public class DefaultGameRepository implements GameRepository {
             int cnt = 0;
             int tot = index.getObjects().entrySet().size();
             for (Map.Entry<String, AssetObject> entry : index.getObjects().entrySet()) {
-                File target = new File(virtualRoot, entry.getKey());
-                File original = getAssetObject(version, assetsDir, entry.getValue());
-                if (original.exists()) {
+                Path target = virtualRoot.resolve(entry.getKey());
+                Path original = getAssetObject(version, assetsDir, entry.getValue());
+                if (Files.exists(original)) {
                     cnt++;
-                    if (!target.isFile())
+                    if (!Files.isRegularFile(target))
                         FileUtils.copyFile(original, target);
                 }
             }

@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -190,7 +191,7 @@ public interface GameRepository extends VersionProvider {
      * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
      * @return the actual asset directory
      */
-    File getActualAssetDirectory(String version, String assetId);
+    Path getActualAssetDirectory(String version, String assetId);
 
     /**
      * Get the asset directory according to the asset id.
@@ -199,7 +200,7 @@ public interface GameRepository extends VersionProvider {
      * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
      * @return the asset directory
      */
-    File getAssetDirectory(String version, String assetId);
+    Path getAssetDirectory(String version, String assetId);
 
     /**
      * Get the file that given asset object refers to
@@ -210,7 +211,7 @@ public interface GameRepository extends VersionProvider {
      * @throws java.io.IOException if I/O operation fails.
      * @return the file that given asset object refers to
      */
-    File getAssetObject(String version, String assetId, String name) throws IOException;
+    Optional<Path> getAssetObject(String version, String assetId, String name) throws IOException;
 
     /**
      * Get the file that given asset object refers to
@@ -220,7 +221,7 @@ public interface GameRepository extends VersionProvider {
      * @param obj the asset object, you can find it in {@link AssetIndex#getObjects()}
      * @return the file that given asset object refers to
      */
-    File getAssetObject(String version, String assetId, AssetObject obj);
+    Path getAssetObject(String version, String assetId, AssetObject obj);
 
     /**
      * Get asset index that assetId represents
@@ -237,7 +238,7 @@ public interface GameRepository extends VersionProvider {
      * @param version the id of specific version that is relevant to {@code assetId}
      * @param assetId the asset id, you can find it in {@link AssetIndexInfo#getId()} {@link Version#getAssetIndex()}
      */
-    File getIndexFile(String version, String assetId);
+    Path getIndexFile(String version, String assetId);
 
     /**
      * Get logging object
@@ -247,7 +248,7 @@ public interface GameRepository extends VersionProvider {
      * @param loggingInfo the logging info
      * @return the file that loggingInfo refers to
      */
-    File getLoggingObject(String version, String assetId, LoggingInfo loggingInfo);
+    Path getLoggingObject(String version, String assetId, LoggingInfo loggingInfo);
 
     default List<String> getClasspath(Version version) {
         List<String> classpath = new ArrayList<>();

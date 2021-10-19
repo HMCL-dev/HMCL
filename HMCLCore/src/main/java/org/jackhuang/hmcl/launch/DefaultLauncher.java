@@ -44,6 +44,7 @@ import java.net.Proxy;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -120,7 +121,10 @@ public class DefaultLauncher extends Launcher {
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                 res.addDefault("-Xdock:name=", "Minecraft " + version.getId());
-                res.addDefault("-Xdock:icon=", repository.getAssetObject(version.getId(), version.getAssetIndex().getId(), "icons/minecraft.icns").getAbsolutePath());
+                repository.getAssetObject(version.getId(), version.getAssetIndex().getId(), "icons/minecraft.icns")
+                        .ifPresent(minecraftIcns -> {
+                            res.addDefault("-Xdock:icon=", minecraftIcns.toAbsolutePath().toString());
+                        });
             }
 
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
@@ -201,12 +205,12 @@ public class DefaultLauncher extends Launcher {
         classpath.add(jar.getAbsolutePath());
 
         // Provided Minecraft arguments
-        File gameAssets = repository.getActualAssetDirectory(version.getId(), version.getAssetIndex().getId());
+        Path gameAssets = repository.getActualAssetDirectory(version.getId(), version.getAssetIndex().getId());
         Map<String, String> configuration = getConfigurations();
         configuration.put("${classpath}", String.join(OperatingSystem.PATH_SEPARATOR, classpath));
         configuration.put("${natives_directory}", nativeFolder.getAbsolutePath());
-        configuration.put("${game_assets}", gameAssets.getAbsolutePath());
-        configuration.put("${assets_root}", gameAssets.getAbsolutePath());
+        configuration.put("${game_assets}", gameAssets.toAbsolutePath().toString());
+        configuration.put("${assets_root}", gameAssets.toAbsolutePath().toString());
 
         res.addAll(Arguments.parseArguments(version.getArguments().map(Arguments::getJvm).orElseGet(this::getDefaultJVMArguments), configuration));
         if (authInfo.getArguments() != null && authInfo.getArguments().getJvm() != null && !authInfo.getArguments().getJvm().isEmpty())
