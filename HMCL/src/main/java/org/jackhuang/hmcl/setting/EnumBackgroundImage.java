@@ -21,5 +21,6 @@ public enum EnumBackgroundImage {
     DEFAULT,
     CUSTOM,
     CLASSIC,
-    NETWORK
+    NETWORK,
+    TRANSLUCENT
 }
