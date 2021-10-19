@@ -87,10 +87,16 @@ public final class MultiplayerChannel {
     }
 
     public static class JoinResponse extends Response {
+        private final String sessionName;
         private final int port;
 
-        public JoinResponse(int port) {
+        public JoinResponse(String sessionName, int port) {
+            this.sessionName = sessionName;
             this.port = port;
+        }
+
+        public String getSessionName() {
+            return sessionName;
         }
 
         public int getPort() {
@@ -120,6 +126,10 @@ public final class MultiplayerChannel {
         public String getMsg() {
             return msg;
         }
+
+        public static final String VERSION_NOT_MATCHED = "version_not_matched";
+        public static final String KICKED = "kicked";
+        public static final String JOIN_ACEEPTANCE_TIMEOUT = "join_acceptance_timeout";
     }
 
     public static class CatoClient extends Event {

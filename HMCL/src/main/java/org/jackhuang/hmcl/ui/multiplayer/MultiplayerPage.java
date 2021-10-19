@@ -48,6 +48,7 @@ import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.ui.multiplayer.MultiplayerChannel.KickResponse.*;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -220,7 +221,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                         session.getServer().setOnClientAdding((client, resolveClient, rejectClient) -> {
                             runInFX(() -> {
                                 Controllers.dialog(new MessageDialogPane.Builder(i18n("multiplayer.session.create.join.prompt", client.getUsername()), i18n("multiplayer.session.create.join"), MessageDialogPane.MessageType.INFO)
-                                        .yesOrNo(resolveClient, () -> rejectClient.accept(i18n("multiplayer.session.join.wait_timeout")))
+                                        .yesOrNo(resolveClient, () -> rejectClient.accept(MultiplayerChannel.KickResponse.JOIN_ACEEPTANCE_TIMEOUT))
                                         .cancelOnTimeout(30 * 1000)
                                         .build());
                             });
@@ -278,8 +279,6 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
             try {
                 MultiplayerManager.joinSession(
                                 globalConfig().getMultiplayerToken(),
-                                invitation.getVersion(),
-                                invitation.getSessionName(),
                                 invitation.getId(),
                                 globalConfig().isMultiplayerRelay() && (StringUtils.isNotBlank(globalConfig().getMultiplayerToken()) || StringUtils.isNotBlank(System.getProperty("hmcl.multiplayer.relay")))
                                         ? MultiplayerManager.Mode.BRIDGE
@@ -307,10 +306,10 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                                 });
                             });
 
-                            session.getClient().onKicked().register(() -> {
+                            session.getClient().onKicked().register(kickedEvent -> {
                                 runInFX(() -> {
                                     kicked.set(true);
-                                    Controllers.dialog(i18n("multiplayer.session.join.kicked"));
+                                    Controllers.dialog(i18n("multiplayer.session.join.kicked", localizeKickMessage(kickedEvent.getReason())));
                                 });
                             });
 
@@ -328,6 +327,18 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         })
                 .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("multiplayer.session.join.hint")))
                 .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("multiplayer.session.join.invitation_code"), "", new RequiredValidator())));
+    }
+
+    private String localizeKickMessage(String message) {
+        if (VERSION_NOT_MATCHED.equals(message)) {
+            return i18n("multiplayer.session.join.kicked.version_not_matched");
+        } else if (KICKED.equals(message)) {
+            return i18n("multiplayer.session.join.kicked.kicked");
+        } else if (JOIN_ACEEPTANCE_TIMEOUT.equals(message)) {
+            return i18n("multiplayer.session.join.kicked.join_acceptance_timeout");
+        } else {
+            return message;
+        }
     }
 
     private String localizeErrorMessage(Throwable t, boolean isStaticToken, Function<Throwable, String> fallback) {

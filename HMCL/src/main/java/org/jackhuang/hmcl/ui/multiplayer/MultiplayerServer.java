@@ -29,6 +29,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
@@ -37,6 +38,7 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class MultiplayerServer extends Thread {
     private ServerSocket socket;
+    private final String sessionName;
     private final int gamePort;
     private final boolean allowAllJoinRequests;
 
@@ -49,7 +51,8 @@ public class MultiplayerServer extends Thread {
     private final Map<String, Endpoint> clients = new ConcurrentHashMap<>();
     private final Map<String, Endpoint> nameClientMap = new ConcurrentHashMap<>();
 
-    public MultiplayerServer(int gamePort, boolean allowAllJoinRequests) {
+    public MultiplayerServer(String sessionName, int gamePort, boolean allowAllJoinRequests) {
+        this.sessionName = sessionName;
         this.gamePort = gamePort;
         this.allowAllJoinRequests = allowAllJoinRequests;
 
@@ -117,7 +120,7 @@ public class MultiplayerServer extends Thread {
 
         try {
             if (client.socket.isConnected()) {
-                client.write(new KickResponse(""));
+                client.write(new KickResponse(KickResponse.KICKED));
                 client.socket.close();
             }
         } catch (IOException e) {
@@ -150,6 +153,17 @@ public class MultiplayerServer extends Thread {
                     LOG.info("Received join request with clientVersion=" + joinRequest.getClientVersion() + ", id=" + joinRequest.getUsername());
                     clientName = joinRequest.getUsername();
 
+                    if (!Objects.equals(MultiplayerManager.CATO_VERSION, joinRequest.getClientVersion())) {
+                        try {
+                            endpoint.write(new KickResponse(KickResponse.VERSION_NOT_MATCHED));
+                            LOG.info("Rejected join request from id=" + joinRequest.getUsername());
+                            socket.close();
+                        } catch (IOException e) {
+                            LOG.log(Level.WARNING, "Failed to send kick response.", e);
+                            return;
+                        }
+                    }
+
                     CatoClient catoClient = new CatoClient(this, clientName);
                     nameClientMap.put(clientName, endpoint);
                     onClientAdded.fireEvent(catoClient);
@@ -157,7 +171,7 @@ public class MultiplayerServer extends Thread {
                     if (onClientAdding != null && !allowAllJoinRequests) {
                         onClientAdding.call(catoClient, () -> {
                             try {
-                                endpoint.write(new JoinResponse(gamePort));
+                                endpoint.write(new JoinResponse(sessionName, gamePort));
                             } catch (IOException e) {
                                 LOG.log(Level.WARNING, "Failed to send join response.", e);
                                 try {
@@ -178,7 +192,7 @@ public class MultiplayerServer extends Thread {
                         });
                     } else {
                         // Allow all join requests.
-                        endpoint.write(new JoinResponse(gamePort));
+                        endpoint.write(new JoinResponse(sessionName, gamePort));
                     }
                 } else if (request instanceof KeepAliveRequest) {
                     endpoint.write(new KeepAliveResponse(System.currentTimeMillis()));

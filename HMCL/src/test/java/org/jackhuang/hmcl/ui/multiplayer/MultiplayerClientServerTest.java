@@ -31,7 +31,7 @@ public class MultiplayerClientServerTest {
     public void startServer() throws Exception {
         Logging.initForTest();
         int localPort = MultiplayerManager.findAvailablePort();
-        MultiplayerServer server = new MultiplayerServer(1000, true);
+        MultiplayerServer server = new MultiplayerServer("SessionName", 1000, true);
         server.startServer(localPort);
 
         MultiplayerClient client = new MultiplayerClient("username", localPort);

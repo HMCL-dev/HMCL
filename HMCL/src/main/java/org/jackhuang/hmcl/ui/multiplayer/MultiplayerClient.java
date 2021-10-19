@@ -43,7 +43,7 @@ public class MultiplayerClient extends Thread {
 
     private final EventManager<ConnectedEvent> onConnected = new EventManager<>();
     private final EventManager<Event> onDisconnected = new EventManager<>();
-    private final EventManager<Event> onKicked = new EventManager<>();
+    private final EventManager<KickEvent> onKicked = new EventManager<>();
     private final EventManager<Event> onHandshake = new EventManager<>();
 
     public MultiplayerClient(String id, int port) {
@@ -70,7 +70,7 @@ public class MultiplayerClient extends Thread {
         return onDisconnected;
     }
 
-    public EventManager<Event> onKicked() {
+    public EventManager<KickEvent> onKicked() {
         return onKicked;
     }
 
@@ -125,12 +125,12 @@ public class MultiplayerClient extends Thread {
 
                         connected = true;
 
-                        onConnected.fireEvent(new ConnectedEvent(this, joinResponse.getPort()));
+                        onConnected.fireEvent(new ConnectedEvent(this, joinResponse.getSessionName(), joinResponse.getPort()));
 
                         LOG.fine("Received join response with port " + joinResponse.getPort());
                     } else if (response instanceof KickResponse) {
                         LOG.fine("Kicked by the server");
-                        onKicked.fireEvent(new Event(this));
+                        onKicked.fireEvent(new KickEvent(this, ((KickResponse) response).getMsg()));
                         return;
                     } else if (response instanceof KeepAliveResponse) {
                     } else if (response instanceof HandshakeResponse) {
@@ -193,15 +193,34 @@ public class MultiplayerClient extends Thread {
     }
 
     public static class ConnectedEvent extends Event {
+        private final String sessionName;
         private final int port;
 
-        public ConnectedEvent(Object source, int port) {
+        public ConnectedEvent(Object source, String sessionName, int port) {
             super(source);
+            this.sessionName = sessionName;
             this.port = port;
+        }
+
+        public String getSessionName() {
+            return sessionName;
         }
 
         public int getPort() {
             return port;
+        }
+    }
+
+    public static class KickEvent extends Event {
+        private final String reason;
+
+        public KickEvent(Object source, String reason) {
+            super(source);
+            this.reason = reason;
+        }
+
+        public String getReason() {
+            return reason;
         }
     }
 }
