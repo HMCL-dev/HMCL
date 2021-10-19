@@ -420,6 +420,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void optifine() throws IOException {
+        Assert.assertEquals(
+                new HashSet<>(Collections.singletonList("OptiFine")),
+                CrashReportAnalyzer.findKeywordsFromCrashReport(loadLog("/crash-report/mod/twilightforest_optifine_incompatibility.txt")));
+    }
+
+    @Test
     public void wizardry() throws IOException {
         Assert.assertEquals(
                 new HashSet<>(Arrays.asList("wizardry", "electroblob", "projectile")),

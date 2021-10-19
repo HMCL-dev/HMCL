@@ -169,7 +169,8 @@ public final class CrashReportAnalyzer {
     }
 
     private static final Pattern CRASH_REPORT_STACK_TRACE_PATTERN = Pattern.compile("Description: (.*?)[\\n\\r]+(?<stacktrace>[\\w\\W\\n\\r]+)A detailed walkthrough of the error");
-    private static final Pattern STACK_TRACE_LINE_PATTERN = Pattern.compile("at (?<method>.*?)\\((.*?)\\)");
+    private static final Pattern STACK_TRACE_LINE_PATTERN = Pattern.compile("at (?<method>.*?)\\((?<sourcefile>.*?)\\)");
+    private static final Pattern STACK_TRACE_LINE_MODULE_PATTERN = Pattern.compile("\\{(?<tokens>.*)}");
     private static final Set<String> PACKAGE_KEYWORD_BLACK_LIST = new HashSet<>(Arrays.asList(
             "net", "minecraft", "item", "block", "player", "tileentity", "events", "common", "client", "entity", "mojang", "main", "gui", "world", "server", "dedicated", // minecraft
             "renderer", "chunk", "model", "loading", "color", "pipeline", "inventory", "launcher", "physics", "particle", "gen", "registry", "worldgen", "texture", "biomes", "biome",
@@ -197,6 +198,20 @@ public final class CrashReportAnalyzer {
                             continue;
                         }
                         result.add(method[i]);
+                    }
+
+                    Matcher moduleMatcher = STACK_TRACE_LINE_MODULE_PATTERN.matcher(line);
+                    if (moduleMatcher.find()) {
+                        for (String module : moduleMatcher.group("tokens").split(",")) {
+                            String[] split = module.split(":");
+                            if (split.length >= 2 && "xf".equals(split[0])) {
+                                if (PACKAGE_KEYWORD_BLACK_LIST.contains(split[1])) {
+                                    continue;
+                                }
+
+                                result.add(split[1]);
+                            }
+                        }
                     }
                 }
             }
