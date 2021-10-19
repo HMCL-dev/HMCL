@@ -39,7 +39,10 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.CommandBuilder;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.awt.*;
 import java.io.IOException;
@@ -78,9 +81,9 @@ public class GameCrashWindow extends Stage {
     private final LaunchOptions launchOptions;
     private final View view;
 
-    private final LinkedList<Pair<String, Log4jLevel>> logs;
+    private final List<Pair<String, Log4jLevel>> logs;
 
-    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, Version version, LaunchOptions launchOptions, LinkedList<Pair<String, Log4jLevel>> logs) {
+    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, Version version, LaunchOptions launchOptions, List<Pair<String, Log4jLevel>> logs) {
         this.managedProcess = managedProcess;
         this.exitType = exitType;
         this.repository = repository;
@@ -110,13 +113,17 @@ public class GameCrashWindow extends Stage {
         CompletableFuture.supplyAsync(() -> {
             String rawLog = logs.stream().map(Pair::getKey).collect(Collectors.joining("\n"));
             Set<String> keywords = Collections.emptySet();
+            String crashReport = null;
             try {
-                String crashReport = CrashReportAnalyzer.findCrashReport(rawLog);
-                if (crashReport != null) {
-                    keywords = CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport);
-                }
+                crashReport = CrashReportAnalyzer.findCrashReport(rawLog);
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "Failed to read crash report", e);
+            }
+            if (crashReport == null) {
+                crashReport = CrashReportAnalyzer.extractCrashReport(rawLog);
+            }
+            if (crashReport != null) {
+                keywords = CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport);
             }
             return pair(
                     CrashReportAnalyzer.anaylze(rawLog),

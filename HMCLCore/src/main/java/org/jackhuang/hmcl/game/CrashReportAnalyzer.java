@@ -155,6 +155,13 @@ public final class CrashReportAnalyzer {
         }
     }
 
+    public static String extractCrashReport(String rawLog) {
+        int begin = rawLog.lastIndexOf("---- Minecraft Crash Report ----");
+        int end = rawLog.lastIndexOf("#@!@# Game crashed! Crash report saved to");
+        if (begin == -1 || end == -1 || begin >= end) return null;
+        return rawLog.substring(begin, end);
+    }
+
     private static final Pattern CRASH_REPORT_STACK_TRACE_PATTERN = Pattern.compile("Description: (.*?)[\\n\\r]+(?<stacktrace>[\\w\\W\\n\\r]+)A detailed walkthrough of the error");
     private static final Pattern STACK_TRACE_LINE_PATTERN = Pattern.compile("at (?<method>.*?)\\((.*?)\\)");
     private static final Set<String> PACKAGE_KEYWORD_BLACK_LIST = new HashSet<>(Arrays.asList(
@@ -171,7 +178,7 @@ public final class CrashReportAnalyzer {
             "fabricmc", "loader", "game", "knot", "launch", "mixin" // fabric
     ));
 
-    public static Set<String> findKeywordsFromCrashReport(String crashReport) throws IOException, InvalidPathException {
+    public static Set<String> findKeywordsFromCrashReport(String crashReport) {
         Matcher matcher = CRASH_REPORT_STACK_TRACE_PATTERN.matcher(crashReport);
         Set<String> result = new HashSet<>();
         if (matcher.find()) {
