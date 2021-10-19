@@ -474,7 +474,7 @@ public final class LauncherHelper {
                 suggested = true;
                 switch (violatedSuggestedConstraint) {
                     case MODDED_JAVA_7:
-                        Controllers.dialog(i18n("launch.advice.java.modded_java_7"), i18n("message.error"), MessageType.ERROR, continueAction);
+                        Controllers.dialog(i18n("launch.advice.java.modded_java_7"), i18n("message.warning"), MessageType.WARNING, continueAction);
                         return null;
                     case MODDED_JAVA_8:
                         Controllers.dialog(i18n("launch.advice.newer_java"), i18n("message.warning"), MessageType.WARNING, continueAction);
