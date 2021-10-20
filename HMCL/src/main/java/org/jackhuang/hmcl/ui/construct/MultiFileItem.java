@@ -226,6 +226,11 @@ public class MultiFileItem<T> extends VBox {
 
             BorderPane.setAlignment(customField, Pos.CENTER_RIGHT);
             customField.disableProperty().bind(left.selectedProperty().not());
+
+            if (!customField.getValidators().isEmpty()) {
+                FXUtils.setValidateWhileTextChanged(customField, true);
+            }
+
             pane.setRight(customField);
 
             return pane;

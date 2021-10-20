@@ -107,6 +107,7 @@ public class PersonalizationPage extends StackPane {
                             .setChooserTitle(i18n("launcher.background.choose"))
                             .bindBidirectional(config().backgroundImageProperty()),
                     new MultiFileItem.StringOption<>(i18n("launcher.background.network"), EnumBackgroundImage.NETWORK)
+                            .setValidators(new URLValidator(true))
                             .bindBidirectional(config().backgroundImageUrlProperty())
             ));
             backgroundItem.selectedDataProperty().bindBidirectional(config().backgroundImageTypeProperty());
