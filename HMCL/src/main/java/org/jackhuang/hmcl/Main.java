@@ -61,10 +61,7 @@ public final class Main {
         checkDirectoryPath();
 
         // This environment check will take ~300ms
-        thread(() -> {
-            fixLetsEncrypt();
-//            checkDSTRootCAX3();
-        }, "CA Certificate Check", true);
+        thread(Main::fixLetsEncrypt, "CA Certificate Check", true);
 
         Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
 
@@ -106,30 +103,6 @@ public final class Main {
             System.exit(0);
         }
     }
-
-    // Lets Encrypt uses ISRG Root X1 as root certificate instead.
-
-//    private static void checkDSTRootCAX3() {
-//        TrustManagerFactory tmf;
-//        try {
-//            tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-//            tmf.init((KeyStore) null);
-//        } catch (NoSuchAlgorithmException | KeyStoreException e) {
-//            LOG.log(Level.WARNING, "Failed to init TrustManagerFactory", e);
-//            // don't know what to do here
-//            return;
-//        }
-//        for (TrustManager tm : tmf.getTrustManagers()) {
-//            if (tm instanceof X509TrustManager) {
-//                for (X509Certificate cert : ((X509TrustManager) tm).getAcceptedIssuers()) {
-//                    if ("CN=DST Root CA X3, O=Digital Signature Trust Co.".equals((cert.getSubjectDN().getName()))) {
-//                        return;
-//                    }
-//                }
-//            }
-//        }
-//        showWarningAndContinue(i18n("fatal.missing_dst_root_ca_x3"));
-//    }
 
     /**
      * Indicates that a fatal error has occurred, and that the application cannot start.
