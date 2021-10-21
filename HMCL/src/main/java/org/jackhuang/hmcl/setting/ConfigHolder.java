@@ -26,9 +26,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -37,7 +35,8 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class ConfigHolder {
 
-    private ConfigHolder() {}
+    private ConfigHolder() {
+    }
 
     public static final String CONFIG_FILENAME = "hmcl.json";
     public static final String CONFIG_FILENAME_LINUX = ".hmcl.json";
@@ -97,9 +96,16 @@ public final class ConfigHolder {
         }
 
         if (!Files.isWritable(configLocation)) {
-            // the config cannot be saved
-            // throw up the error now to prevent further data loss
-            throw new IOException("Config at " + configLocation + " is not writable");
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+                    && configLocation.getFileSystem() == FileSystems.getDefault()
+                    && configLocation.toFile().canWrite()) {
+                // There are some serious problems with the implementation of Samba or OpenJDK
+                throw new SambaException();
+            } else {
+                // the config cannot be saved
+                // throw up the error now to prevent further data loss
+                throw new IOException("Config at " + configLocation + " is not writable");
+            }
         }
     }
 
