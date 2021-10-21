@@ -36,8 +36,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.mod.DownloadManager;
 import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -69,16 +69,16 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
-    private final DownloadManager.Mod addon;
+    private final RemoteMod addon;
     private final ModTranslations.Mod mod;
     private final Profile.ProfileVersion version;
     private final DownloadCallback callback;
     private final DownloadListPage page;
 
-    private List<DownloadManager.Mod> dependencies;
-    private SimpleMultimap<String, DownloadManager.Version> versions;
+    private List<RemoteMod> dependencies;
+    private SimpleMultimap<String, RemoteMod.Version> versions;
 
-    public DownloadPage(DownloadListPage page, DownloadManager.Mod addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
+    public DownloadPage(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
         this.page = page;
         this.addon = addon;
         this.mod = ModTranslations.getModByCurseForgeId(addon.getSlug());
@@ -95,7 +95,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         Task.allOf(
                         Task.supplyAsync(() -> addon.getData().loadDependencies()),
                         Task.supplyAsync(() -> {
-                            Stream<DownloadManager.Version> versions = addon.getData().loadVersions();
+                            Stream<RemoteMod.Version> versions = addon.getData().loadVersions();
 //                            if (StringUtils.isNotBlank(version.getVersion())) {
 //                                Optional<String> gameVersion = GameVersion.minecraftVersion(versionJar);
 //                                if (gameVersion.isPresent()) {
@@ -108,9 +108,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
                         @SuppressWarnings("unchecked")
-                        List<DownloadManager.Mod> dependencies = (List<DownloadManager.Mod>) result.get(0);
+                        List<RemoteMod> dependencies = (List<RemoteMod>) result.get(0);
                         @SuppressWarnings("unchecked")
-                        SimpleMultimap<String, DownloadManager.Version> versions = (SimpleMultimap<String, DownloadManager.Version>) result.get(1);
+                        SimpleMultimap<String, RemoteMod.Version> versions = (SimpleMultimap<String, RemoteMod.Version>) result.get(1);
 
                         this.dependencies = dependencies;
                         this.versions = versions;
@@ -126,9 +126,9 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.state.set(State.fromTitle(addon.getTitle()));
     }
 
-    private SimpleMultimap<String, DownloadManager.Version> sortVersions(Stream<DownloadManager.Version> versions) {
-        SimpleMultimap<String, DownloadManager.Version> classifiedVersions
-                = new SimpleMultimap<String, DownloadManager.Version>(HashMap::new, ArrayList::new);
+    private SimpleMultimap<String, RemoteMod.Version> sortVersions(Stream<RemoteMod.Version> versions) {
+        SimpleMultimap<String, RemoteMod.Version> classifiedVersions
+                = new SimpleMultimap<String, RemoteMod.Version>(HashMap::new, ArrayList::new);
         versions.forEach(version -> {
             for (String gameVersion : version.getGameVersions()) {
                 classifiedVersions.put(gameVersion, version);
@@ -136,13 +136,13 @@ public class DownloadPage extends Control implements DecoratorPage {
         });
 
         for (String gameVersion : classifiedVersions.keys()) {
-            List<DownloadManager.Version> versionList = (List<DownloadManager.Version>) classifiedVersions.get(gameVersion);
-            versionList.sort(Comparator.comparing(DownloadManager.Version::getDatePublished).reversed());
+            List<RemoteMod.Version> versionList = (List<RemoteMod.Version>) classifiedVersions.get(gameVersion);
+            versionList.sort(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed());
         }
         return classifiedVersions;
     }
 
-    public DownloadManager.Mod getAddon() {
+    public RemoteMod getAddon() {
         return addon;
     }
 
@@ -174,7 +174,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.failed.set(failed);
     }
 
-    public void download(DownloadManager.Version file) {
+    public void download(RemoteMod.Version file) {
         if (this.callback == null) {
             saveAs(file);
         } else {
@@ -182,7 +182,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
-    public void saveAs(DownloadManager.Version file) {
+    public void saveAs(RemoteMod.Version file) {
         String extension = StringUtils.substringAfterLast(file.getFile().getFilename(), '.');
 
         FileChooser fileChooser = new FileChooser();
@@ -328,7 +328,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class DependencyModItem extends StackPane {
 
-        DependencyModItem(DownloadListPage page, DownloadManager.Mod addon, Profile.ProfileVersion version, DownloadCallback callback) {
+        DependencyModItem(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, DownloadCallback callback) {
             HBox pane = new HBox(8);
             pane.setPadding(new Insets(8));
             pane.setAlignment(Pos.CENTER_LEFT);
@@ -355,7 +355,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class ModItem extends StackPane {
-        ModItem(DownloadManager.Version dataItem, DownloadPage selfPage) {
+        ModItem(RemoteMod.Version dataItem, DownloadPage selfPage) {
             HBox pane = new HBox(8);
             pane.setPadding(new Insets(8));
             pane.setAlignment(Pos.CENTER_LEFT);
@@ -399,6 +399,6 @@ public class DownloadPage extends Control implements DecoratorPage {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault());
 
     public interface DownloadCallback {
-        void download(Profile profile, @Nullable String version, DownloadManager.Version file);
+        void download(Profile profile, @Nullable String version, RemoteMod.Version file);
     }
 }

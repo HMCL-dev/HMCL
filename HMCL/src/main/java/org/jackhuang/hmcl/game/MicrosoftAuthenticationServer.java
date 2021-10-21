@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -43,6 +44,8 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
     private final CompletableFuture<String> future = new CompletableFuture<>();
 
     public static String lastlyOpenedURL;
+
+    private String idToken;
 
     private MicrosoftAuthenticationServer(int port) {
         super(port);
@@ -61,14 +64,39 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
     }
 
     @Override
+    public String getIdToken() {
+        return idToken;
+    }
+
+    @Override
     public Response serve(IHTTPSession session) {
-        if (session.getMethod() != Method.GET || !"/auth-response".equals(session.getUri())) {
+        if (!"/auth-response".equals(session.getUri())) {
             return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_HTML, "");
         }
-        Map<String, String> query = mapOf(NetworkUtils.parseQuery(session.getQueryParameterString()));
+
+        if (session.getMethod() == Method.POST) {
+            Map<String, String> files = new HashMap<>();
+            try {
+                session.parseBody(files);
+            } catch (IOException e) {
+                Logging.LOG.log(Level.WARNING, "Failed to read post data", e);
+                return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_HTML, "");
+            } catch (ResponseException re) {
+                return newFixedLengthResponse(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
+            }
+        } else if (session.getMethod() == Method.GET) {
+            // do nothing
+        } else {
+            return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_HTML, "");
+        }
+        String parameters = session.getQueryParameterString();
+
+        Map<String, String> query = mapOf(NetworkUtils.parseQuery(parameters));
         if (query.containsKey("code")) {
+            idToken = query.get("id_token");
             future.complete(query.get("code"));
         } else {
+            Logging.LOG.warning("Error: " + parameters);
             future.completeExceptionally(new AuthenticationException("failed to authenticate"));
         }
 

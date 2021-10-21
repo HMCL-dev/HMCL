@@ -17,118 +17,202 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
-import static org.jackhuang.hmcl.util.platform.Platform.BIT_32;
-import static org.jackhuang.hmcl.util.platform.Platform.BIT_64;
+import static org.jackhuang.hmcl.util.platform.Bits.BIT_32;
+import static org.jackhuang.hmcl.util.platform.Bits.BIT_64;
 
 public enum Architecture {
-    X86(BIT_32),
-    X86_64(BIT_64),
-    IA32(BIT_32),
-    IA64(BIT_64),
-    SPARC32(BIT_32),
-    SPARC64(BIT_64),
-    ARM(BIT_32),
+    X86(BIT_32, "x86"),
+    X86_64(BIT_64, "x86-64"),
+    IA32(BIT_32, "IA-32"),
+    IA64(BIT_64, "IA-64"),
+    SPARC(BIT_32),
+    SPARCV9(BIT_64, "SPARC V9"),
+    ARM32(BIT_32),
     ARM64(BIT_64),
     MIPS(BIT_32),
     MIPS64(BIT_64),
-    MIPSEL32(BIT_32),
-    MIPSEL64(BIT_64),
-    PPC(BIT_32),
-    PPC64(BIT_64),
-    PPCLE(BIT_32),
-    PPCLE64(BIT_64),
+    MIPSEL(BIT_32, "MIPSel"),
+    MIPS64EL(BIT_64, "MIPS64el"),
+    PPC(BIT_32, "PowerPC"),
+    PPC64(BIT_64, "PowerPC-64"),
+    PPCLE(BIT_32, "PowerPC (Little-Endian)"),
+    PPC64LE(BIT_64, "PowerPC-64 (Little-Endian)"),
     S390(BIT_32),
-    S390X(BIT_64),
-    RISCV(BIT_64),
-    UNKNOWN(Platform.UNKNOWN);
+    S390X(BIT_64, "S390x"),
+    RISCV(BIT_64, "RISC-V"),
+    UNKNOWN(Bits.UNKNOWN, "Unknown");
 
-    private final Platform platform;
+    private final String checkedName;
+    private final String displayName;
+    private final Bits bits;
 
-    Architecture(Platform platform) {
-        this.platform = platform;
+    Architecture(Bits bits) {
+        this.checkedName = this.toString().toLowerCase(Locale.ROOT);
+        this.displayName = this.toString();
+        this.bits = bits;
     }
 
-    public Platform getPlatform() {
-        return platform;
+    Architecture(Bits bits, String displayName) {
+        this.checkedName = this.toString().toLowerCase(Locale.ROOT);
+        this.displayName = displayName;
+        this.bits = bits;
     }
 
-    public static final String SYSTEM_ARCHITECTURE;
-    public static final Architecture CURRENT;
-
-    private static Architecture normalizeArch(String value) {
-        value = normalize(value);
-        if (value.matches("^(x8664|amd64|ia32e|em64t|x64)$")) {
-            return X86_64;
-        }
-        if (value.matches("^(x8632|x86|i[3-6]86|ia32|x32)$")) {
-            return X86;
-        }
-        if (value.matches("^(ia64w?|itanium64)$")) {
-            return IA64;
-        }
-        if ("ia64n".equals(value)) {
-            return IA32;
-        }
-        if (value.matches("^(sparc|sparc32)$")) {
-            return SPARC32;
-        }
-        if (value.matches("^(sparcv9|sparc64)$")) {
-            return SPARC64;
-        }
-        if (value.matches("^(arm|arm32)$")) {
-            return ARM;
-        }
-        if ("aarch64".equals(value)) {
-            return ARM64;
-        }
-        if (value.matches("^(mips|mips32)$")) {
-            return MIPS;
-        }
-        if (value.matches("^(mipsel|mips32el)$")) {
-            return MIPSEL32;
-        }
-        if ("mips64".equals(value)) {
-            return MIPS64;
-        }
-        if ("mips64el".equals(value)) {
-            return MIPSEL64;
-        }
-        if (value.matches("^(ppc|ppc32)$")) {
-            return PPC;
-        }
-        if (value.matches("^(ppcle|ppc32le)$")) {
-            return PPCLE;
-        }
-        if ("ppc64".equals(value)) {
-            return PPC64;
-        }
-        if ("ppc64le".equals(value)) {
-            return PPCLE64;
-        }
-        if ("s390".equals(value)) {
-            return S390;
-        }
-        if ("s390x".equals(value)) {
-            return S390X;
-        }
-        if ("riscv".equals(value)) {
-            return RISCV;
-        }
-        return UNKNOWN;
+    Architecture(Bits bits, String displayName, String identifier) {
+        this.checkedName = identifier;
+        this.displayName = displayName;
+        this.bits = bits;
     }
 
-    private static String normalize(String value) {
+    public Bits getBits() {
+        return bits;
+    }
+
+    public String getCheckedName() {
+        return checkedName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public boolean isX86() {
+        return this == X86 || this == X86_64;
+    }
+
+    public static final String CURRENT_ARCH_NAME;
+    public static final String SYSTEM_ARCH_NAME;
+    public static final Architecture CURRENT_ARCH;
+    public static final Architecture SYSTEM_ARCH;
+
+    public static Architecture parseArchName(String value) {
         if (value == null) {
-            return "";
+            return UNKNOWN;
         }
-        return value.toLowerCase(Locale.US).replaceAll("[^a-z0-9]+", "");
+        value = value.trim().toLowerCase(Locale.ROOT);
+
+        switch (value) {
+            case "x8664":
+            case "x86-64":
+            case "x86_64":
+            case "amd64":
+            case "ia32e":
+            case "em64t":
+            case "x64":
+                return X86_64;
+            case "x8632":
+            case "x86-32":
+            case "x86_32":
+            case "x86":
+            case "i86pc":
+            case "i386":
+            case "i486":
+            case "i586":
+            case "i686":
+            case "ia32":
+            case "x32":
+                return X86;
+            case "arm64":
+            case "aarch64":
+                return ARM64;
+            case "arm":
+            case "arm32":
+                return ARM32;
+            case "mips64":
+                return MIPS64;
+            case "mips64el":
+                return MIPS64EL;
+            case "mips":
+            case "mips32":
+                return MIPS;
+            case "mipsel":
+            case "mips32el":
+                return MIPSEL;
+            case "riscv":
+            case "risc-v":
+                return RISCV;
+            case "ia64":
+            case "ia64w":
+            case "itanium64":
+                return IA64;
+            case "ia64n":
+                return IA32;
+            case "sparcv9":
+            case "sparc64":
+                return SPARCV9;
+            case "sparc":
+            case "sparc32":
+                return SPARC;
+            case "ppc64":
+            case "powerpc64":
+                return "little".equals(System.getProperty("sun.cpu.endian")) ? PPC64LE : PPC64;
+            case "ppc64le":
+            case "powerpc64le":
+                return PPC64LE;
+            case "ppc":
+            case "ppc32":
+            case "powerpc":
+            case "powerpc32":
+                return PPC;
+            case "ppcle":
+            case "ppc32le":
+            case "powerpcle":
+            case "powerpc32le":
+                return PPCLE;
+            case "s390":
+                return S390;
+            case "s390x":
+                return S390X;
+            default:
+                if (value.startsWith("armv7")) {
+                    return ARM32;
+                }
+                if (value.startsWith("armv8") || value.startsWith("armv9")) {
+                    return ARM64;
+                }
+                return UNKNOWN;
+        }
     }
 
     static {
-        SYSTEM_ARCHITECTURE = System.getProperty("os.arch");
+        CURRENT_ARCH_NAME = System.getProperty("os.arch");
+        CURRENT_ARCH = parseArchName(CURRENT_ARCH_NAME);
 
-        CURRENT = normalizeArch(SYSTEM_ARCHITECTURE);
+        String sysArchName = null;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            String processorIdentifier = System.getenv("PROCESSOR_IDENTIFIER");
+            if (processorIdentifier != null) {
+                int idx = processorIdentifier.indexOf(' ');
+                if (idx > 0) {
+                    sysArchName = processorIdentifier.substring(0, idx);
+                }
+            }
+        } else {
+            try {
+                Process process = Runtime.getRuntime().exec("/usr/bin/arch");
+                if (process.waitFor(3, TimeUnit.SECONDS)) {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
+                        sysArchName = reader.readLine().trim();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+
+        Architecture sysArch = parseArchName(sysArchName);
+        if (sysArch == UNKNOWN) {
+            SYSTEM_ARCH_NAME = CURRENT_ARCH_NAME;
+            SYSTEM_ARCH = CURRENT_ARCH;
+        } else {
+            SYSTEM_ARCH_NAME = sysArchName;
+            SYSTEM_ARCH = sysArch;
+        }
     }
 }

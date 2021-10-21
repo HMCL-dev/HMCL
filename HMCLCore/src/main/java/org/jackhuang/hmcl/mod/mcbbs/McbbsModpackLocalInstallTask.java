@@ -36,8 +36,6 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class McbbsModpackLocalInstallTask extends Task<Void> {
 
@@ -120,15 +118,7 @@ public class McbbsModpackLocalInstallTask extends Task<Void> {
             // TODO: maintain libraries.
         }
 
-        dependencies.add(new McbbsModpackCompletionTask(dependencyManager, name, instanceTask.getResult()).withStage("hmcl.modpack.download"));
-    }
-
-    @Override
-    public List<String> getStages() {
-        return Stream.concat(
-                dependents.stream().flatMap(task -> task.getStages().stream()),
-                Stream.of("hmcl.modpack")
-        ).collect(Collectors.toList());
+        dependencies.add(new McbbsModpackCompletionTask(dependencyManager, name, instanceTask.getResult()));
     }
 
     private static final String PATCH_NAME = "mcbbs";

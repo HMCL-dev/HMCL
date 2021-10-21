@@ -1,0 +1,4 @@
+Invalid initial heap size: -Xms4096M
+The specified size exceeds the maximum representable size.
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.

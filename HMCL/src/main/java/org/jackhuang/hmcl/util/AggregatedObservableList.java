@@ -43,7 +43,7 @@ public class AggregatedObservableList<T> {
      * @return an unmodifiable view of the aggregatedList
      */
     public ObservableList<T> getAggregatedList() {
-        return FXCollections.unmodifiableObservableList(aggregatedList);
+        return aggregatedList;
     }
 
     public void appendList(@NotNull ObservableList<T> list) {

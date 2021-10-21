@@ -63,6 +63,12 @@ public class TransitionPane extends StackPane implements AnimationHandler {
 
         updateContent(newView);
 
+        if (previousNode == EMPTY_PANE) {
+            setMouseTransparent(false);
+            getChildren().setAll(newView);
+            return;
+        }
+
         transition.init(this);
 
         // runLater or "init" will not work
@@ -95,5 +101,8 @@ public class TransitionPane extends StackPane implements AnimationHandler {
         getChildren().setAll(previousNode, currentNode);
     }
 
-    private final StackPane EMPTY_PANE = new StackPane();
+    private final EmptyPane EMPTY_PANE = new EmptyPane();
+
+    public static class EmptyPane extends StackPane {
+    }
 }

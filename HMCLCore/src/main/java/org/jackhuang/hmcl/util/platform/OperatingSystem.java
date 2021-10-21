@@ -17,9 +17,12 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -65,7 +68,7 @@ public enum OperatingSystem {
     /**
      * The current operating system.
      */
-    public static final OperatingSystem CURRENT_OS;
+    public static final OperatingSystem CURRENT_OS = parseOSName(System.getProperty("os.name"));
 
     /**
      * The total memory/MB this computer have.
@@ -82,31 +85,83 @@ public enum OperatingSystem {
     public static final String LINE_SEPARATOR = System.lineSeparator();
 
     /**
-     * The system default encoding.
+     * The system default charset.
      */
-    public static final String ENCODING = System.getProperty("sun.jnu.encoding", Charset.defaultCharset().name());
+    public static final Charset NATIVE_CHARSET;
+
+    /**
+     * Windows system build number.
+     * When the version number is not recognized or on another system, the value will be -1.
+     */
+    public static final int SYSTEM_BUILD_NUMBER;
+
+    /**
+     * The name of current operating system.
+     */
+    public static final String SYSTEM_NAME;
 
     /**
      * The version of current operating system.
      */
-    public static final String SYSTEM_VERSION = System.getProperty("os.version");
+    public static final String SYSTEM_VERSION;
 
     public static final Pattern INVALID_RESOURCE_CHARACTERS;
     private static final String[] INVALID_RESOURCE_BASENAMES;
     private static final String[] INVALID_RESOURCE_FULLNAMES;
 
     private static final Pattern MEMINFO_PATTERN = Pattern.compile("^(?<key>.*?):\\s+(?<value>\\d+) kB?$");
-    
+
     static {
-        String name = System.getProperty("os.name").toLowerCase(Locale.US);
-        if (name.contains("win"))
-            CURRENT_OS = WINDOWS;
-        else if (name.contains("mac"))
-            CURRENT_OS = OSX;
-        else if (name.contains("solaris") || name.contains("linux") || name.contains("unix") || name.contains("sunos"))
-            CURRENT_OS = LINUX;
-        else
-            CURRENT_OS = UNKNOWN;
+        String nativeEncoding = System.getProperty("native.encoding", System.getProperty("sun.jnu.encoding"));
+        Charset nativeCharset = Charset.defaultCharset();
+
+        if (nativeEncoding != null) {
+            try {
+                nativeCharset = Charset.forName(nativeEncoding);
+            } catch (UnsupportedCharsetException e) {
+                e.printStackTrace();
+            }
+        }
+        NATIVE_CHARSET = nativeCharset;
+
+        if (CURRENT_OS == WINDOWS) {
+            String versionNumber = null;
+            int buildNumber = -1;
+
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"cmd", "ver"});
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
+                    Matcher matcher = Pattern.compile("(?<version>[0-9]+\\.[0-9]+\\.(?<build>[0-9]+)(\\.[0-9]+)?)]$")
+                            .matcher(reader.readLine().trim());
+
+                    if (matcher.find()) {
+                        versionNumber = matcher.group("version");
+                        buildNumber = Integer.parseInt(matcher.group("build"));
+                    }
+                }
+                process.destroy();
+            } catch (Throwable ignored) {
+            }
+
+            if (versionNumber == null) {
+                versionNumber = System.getProperty("os.version");
+            }
+
+            String osName = System.getProperty("os.name");
+
+            // Java 17 or earlier recognizes Windows 11 as Windows 10
+            if (osName.equals("Windows 10") && buildNumber >= 22000) {
+                osName = "Windows 11";
+            }
+
+            SYSTEM_NAME = osName;
+            SYSTEM_VERSION = versionNumber;
+            SYSTEM_BUILD_NUMBER = buildNumber;
+        } else {
+            SYSTEM_NAME = System.getProperty("os.name");
+            SYSTEM_VERSION = System.getProperty("os.version");
+            SYSTEM_BUILD_NUMBER = -1;
+        }
 
         TOTAL_MEMORY = getPhysicalMemoryStatus()
                 .map(PhysicalMemoryStatus::getTotal)
@@ -132,6 +187,23 @@ public enum OperatingSystem {
             INVALID_RESOURCE_BASENAMES = null;
             INVALID_RESOURCE_FULLNAMES = null;
         }
+    }
+
+    public static OperatingSystem parseOSName(String name) {
+        if (name == null) {
+            return UNKNOWN;
+        }
+
+        name = name.trim().toLowerCase(Locale.ROOT);
+
+        if (name.contains("win"))
+            return WINDOWS;
+        else if (name.contains("mac"))
+            return OSX;
+        else if (name.contains("solaris") || name.contains("linux") || name.contains("unix") || name.contains("sunos"))
+            return LINUX;
+        else
+            return UNKNOWN;
     }
 
     public static Optional<PhysicalMemoryStatus> getPhysicalMemoryStatus() {
@@ -202,7 +274,7 @@ public enum OperatingSystem {
         if (name.isEmpty())
             return false;
         // . and .. have special meaning on all platforms
-        if (name.isEmpty() || name.equals("."))
+        if (name.equals("."))
             return false;
         // \0 and / are forbidden on all platforms
         if (name.indexOf('/') != -1 || name.indexOf('\0') != -1)

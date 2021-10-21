@@ -24,11 +24,13 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
@@ -43,6 +45,7 @@ import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.StackContainerPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -74,6 +77,7 @@ public class DecoratorController {
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
         decorator.setOnCloseButtonAction(Launcher::stopApplication);
+        decorator.titleTransparentProperty().bind(config().titleTransparentProperty());
 
         navigator = new Navigator();
         navigator.setOnNavigated(this::onNavigated);
@@ -139,9 +143,15 @@ public class DecoratorController {
                                         .orElse(null);
                             }
                             if (config().getBackgroundImageType() == EnumBackgroundImage.NETWORK) {
-                                image = new Image(config().getBackgroundImageUrl(), true);
+                                if (!NetworkUtils.isURL(config().getBackgroundImageUrl())) {
+                                    image = loadDefaultBackgroundImage();
+                                } else {
+                                    image = new Image(config().getBackgroundImageUrl(), true);
+                                }
                             } else if (config().getBackgroundImageType() == EnumBackgroundImage.CLASSIC) {
                                 image = newImage("/assets/img/background-classic.jpg");
+                            } else if (config().getBackgroundImageType() == EnumBackgroundImage.TRANSLUCENT) {
+                                return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
                             }
                             if (image == null) {
                                 image = loadDefaultBackgroundImage();
@@ -223,8 +233,10 @@ public class DecoratorController {
 
     // ==== Navigation ====
 
-    public Navigator getNavigator() {
-        return navigator;
+    private static final DecoratorAnimationProducer animation = new DecoratorAnimationProducer();
+
+    public void navigate(Node node) {
+        navigator.navigate(node, animation);
     }
 
     private void close() {
@@ -360,6 +372,10 @@ public class DecoratorController {
         if (dialog != null) {
             dialogPane.pop(node);
 
+            if (node instanceof DialogAware) {
+                ((DialogAware) node).onDialogClosed();
+            }
+
             if (dialogPane.getChildren().isEmpty()) {
                 dialog.close();
                 dialog = null;
@@ -385,7 +401,7 @@ public class DecoratorController {
     public void startWizard(WizardProvider wizardProvider, String category) {
         FXUtils.checkFxUserThread();
 
-        getNavigator().navigate(new DecoratorWizardDisplayer(wizardProvider, category), ContainerAnimations.FADE.getAnimationProducer());
+        navigator.navigate(new DecoratorWizardDisplayer(wizardProvider, category), ContainerAnimations.FADE.getAnimationProducer());
     }
 
     // ==== Authlib Injector DnD ====

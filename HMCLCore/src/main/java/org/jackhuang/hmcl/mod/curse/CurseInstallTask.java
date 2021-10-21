@@ -36,8 +36,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Install a downloaded CurseForge modpack.
@@ -111,7 +109,7 @@ public final class CurseInstallTask extends Task<Void> {
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), manifest.getOverrides(), any -> true, config).withStage("hmcl.modpack"));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), manifest.getOverrides(), manifest, MODPACK_TYPE, manifest.getName(), manifest.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
 
-        dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest).withStage("hmcl.modpack.download"));
+        dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest));
     }
 
     @Override
@@ -140,14 +138,6 @@ public final class CurseInstallTask extends Task<Void> {
 
         File root = repository.getVersionRoot(name);
         FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(manifest));
-    }
-
-    @Override
-    public List<String> getStages() {
-        return Stream.concat(
-                dependents.stream().flatMap(task -> task.getStages().stream()),
-                Stream.of("hmcl.modpack", "hmcl.modpack.download")
-        ).collect(Collectors.toList());
     }
 
     public static final String MODPACK_TYPE = "Curse";

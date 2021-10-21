@@ -114,7 +114,7 @@ public final class ConfigHolder {
         try {
             Path jarPath = Paths.get(ConfigHolder.class.getProtectionDomain().getCodeSource().getLocation()
                     .toURI()).toAbsolutePath();
-            if (Files.isRegularFile(jarPath)) {
+            if (Files.isRegularFile(jarPath) && Files.isWritable(jarPath)) {
                 jarPath = jarPath.getParent();
                 exePath = jarPath;
 

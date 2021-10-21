@@ -45,25 +45,23 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
     }
 
     public OfflineAccount create(String username, UUID uuid) {
-        return new OfflineAccount(downloader, username, uuid, null, null);
+        return new OfflineAccount(downloader, username, uuid, null);
     }
 
     @Override
     public OfflineAccount create(CharacterSelector selector, String username, String password, ProgressCallback progressCallback, Object additionalData) {
         AdditionalData data;
         UUID uuid;
-        String skin;
-        String cape;
+        Skin skin;
         if (additionalData != null) {
             data = (AdditionalData) additionalData;
             uuid = data.uuid == null ? getUUIDFromUserName(username) : data.uuid;
             skin = data.skin;
-            cape = data.cape;
         } else {
             uuid = getUUIDFromUserName(username);
-            skin = cape = null;
+            skin = null;
         }
-        return new OfflineAccount(downloader, username, uuid, skin, cape);
+        return new OfflineAccount(downloader, username, uuid, skin);
     }
 
     @Override
@@ -73,10 +71,9 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
         UUID uuid = tryCast(storage.get("uuid"), String.class)
                 .map(UUIDTypeAdapter::fromString)
                 .orElse(getUUIDFromUserName(username));
-        String skin = tryCast(storage.get("skin"), String.class).orElse(null);
-        String cape = tryCast(storage.get("cape"), String.class).orElse(null);
+        Skin skin = Skin.fromStorage(tryCast(storage.get("skin"), Map.class).orElse(null));
 
-        return new OfflineAccount(downloader, username, uuid, skin, cape);
+        return new OfflineAccount(downloader, username, uuid, skin);
     }
 
     public static UUID getUUIDFromUserName(String username) {
@@ -85,13 +82,11 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
 
     public static class AdditionalData {
         private final UUID uuid;
-        private final String skin;
-        private final String cape;
+        private final Skin skin;
 
-        public AdditionalData(UUID uuid, String skin, String cape) {
+        public AdditionalData(UUID uuid, Skin skin) {
             this.uuid = uuid;
             this.skin = skin;
-            this.cape = cape;
         }
     }
 

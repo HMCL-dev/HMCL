@@ -77,7 +77,7 @@ public class JavaDownloadTask extends Task<Void> {
 
     @Override
     public void preExecute() throws Exception {
-        this.platform = JavaRepository.getCurrentJavaPlatform().orElseThrow(UnsupportedPlatformException::new);
+        this.platform = JavaRepository.getSystemJavaPlatform().orElseThrow(UnsupportedPlatformException::new);
     }
 
     @Override
@@ -101,7 +101,7 @@ public class JavaDownloadTask extends Task<Void> {
                         try (LZMAInputStream input = new LZMAInputStream(new FileInputStream(tempFile))) {
                             Files.copy(input, dest);
                         } catch (IOException e) {
-                            throw new ArtifactMalformedException("File " + entry.getKey() + " is malformed");
+                            throw new ArtifactMalformedException("File " + entry.getKey() + " is malformed", e);
                         }
                     }));
                 } else if (file.getDownloads().containsKey("raw")) {

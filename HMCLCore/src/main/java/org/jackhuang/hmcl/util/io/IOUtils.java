@@ -65,7 +65,7 @@ public final class IOUtils {
     }
 
     public static String readFullyAsString(InputStream stream) throws IOException {
-        return readFully(stream).toString();
+        return readFully(stream).toString("UTF-8");
     }
 
     public static String readFullyAsString(InputStream stream, Charset charset) throws IOException {

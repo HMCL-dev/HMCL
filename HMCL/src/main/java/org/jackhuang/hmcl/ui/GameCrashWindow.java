@@ -29,16 +29,14 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import org.jackhuang.hmcl.game.CrashReportAnalyzer;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.LaunchOptions;
-import org.jackhuang.hmcl.game.LogExporter;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -56,6 +54,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -65,13 +65,15 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameCrashWindow extends Stage {
-    private final StringProperty version = new SimpleStringProperty();
-    private final StringProperty memory = new SimpleStringProperty();
-    private final StringProperty java = new SimpleStringProperty();
-    private final StringProperty os = new SimpleStringProperty(System.getProperty("os.name"));
-    private final StringProperty arch = new SimpleStringProperty(Architecture.SYSTEM_ARCHITECTURE);
+    private final Version version;
+    private final String memory;
+    private final String java;
+    private final LibraryAnalyzer analyzer;
+    private final StringProperty os = new SimpleStringProperty(OperatingSystem.SYSTEM_NAME);
+    private final StringProperty arch = new SimpleStringProperty(Architecture.SYSTEM_ARCH.getDisplayName());
     private final StringProperty reason = new SimpleStringProperty(i18n("game.crash.reason.unknown"));
     private final BooleanProperty loading = new SimpleBooleanProperty();
+    private final Label feedbackLabel = new Label(i18n("game.crash.feedback"));
 
     private final ManagedProcess managedProcess;
     private final DefaultGameRepository repository;
@@ -79,24 +81,29 @@ public class GameCrashWindow extends Stage {
     private final LaunchOptions launchOptions;
     private final View view;
 
-    private final LinkedList<Pair<String, Log4jLevel>> logs;
+    private final List<Pair<String, Log4jLevel>> logs;
 
-    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, LaunchOptions launchOptions, LinkedList<Pair<String, Log4jLevel>> logs) {
+    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, Version version, LaunchOptions launchOptions, List<Pair<String, Log4jLevel>> logs) {
         this.managedProcess = managedProcess;
         this.exitType = exitType;
         this.repository = repository;
+        this.version = version;
         this.launchOptions = launchOptions;
         this.logs = logs;
+        this.analyzer = LibraryAnalyzer.analyze(version);
+
+        memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-");
+
+        this.java = launchOptions.getJava().getArchitecture() == Architecture.SYSTEM_ARCH
+                ? launchOptions.getJava().getVersion()
+                : launchOptions.getJava().getVersion() + " (" + launchOptions.getJava().getArchitecture().getDisplayName() + ")";
+
         this.view = new View();
 
         setScene(new Scene(view, 800, 480));
         getScene().getStylesheets().addAll(config().getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("game.crash.title"));
         getIcons().add(newImage("/assets/img/icon.png"));
-
-        version.set(launchOptions.getVersionName());
-        memory.set(Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-"));
-        java.set(launchOptions.getJava().getVersion());
 
         analyzeCrashReport();
     }
@@ -106,13 +113,17 @@ public class GameCrashWindow extends Stage {
         CompletableFuture.supplyAsync(() -> {
             String rawLog = logs.stream().map(Pair::getKey).collect(Collectors.joining("\n"));
             Set<String> keywords = Collections.emptySet();
+            String crashReport = null;
             try {
-                String crashReport = CrashReportAnalyzer.findCrashReport(rawLog);
-                if (crashReport != null) {
-                    keywords = CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport);
-                }
+                crashReport = CrashReportAnalyzer.findCrashReport(rawLog);
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "Failed to read crash report", e);
+            }
+            if (crashReport == null) {
+                crashReport = CrashReportAnalyzer.extractCrashReport(rawLog);
+            }
+            if (crashReport != null) {
+                keywords = CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport);
             }
             return pair(
                     CrashReportAnalyzer.anaylze(rawLog),
@@ -134,6 +145,22 @@ public class GameCrashWindow extends Stage {
                                     CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.getMatcher().group("expected")))))
                                     .append("\n");
                             break;
+                        case MOD_RESOLUTION_CONFLICT:
+                        case MOD_RESOLUTION_MISSING:
+                        case MOD_RESOLUTION_COLLECTION:
+                            reasonText.append(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
+                                    translateFabricModId(result.getMatcher().group("sourcemod")),
+                                    parseFabricModId(result.getMatcher().group("destmod")),
+                                    parseFabricModId(result.getMatcher().group("destmod"))));
+                            break;
+                        case MOD_RESOLUTION_MISSING_MINECRAFT:
+                            reasonText.append(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
+                                    translateFabricModId(result.getMatcher().group("mod")),
+                                    result.getMatcher().group("version")));
+                            break;
+                        case TWILIGHT_FOREST_OPTIFINE:
+                            reasonText.append(i18n("game.crash.reason.mod", "OptiFine"));
+                            break;
                         default:
                             reasonText.append(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     Arrays.stream(result.getRule().getGroupNames()).map(groupName -> result.getMatcher().group(groupName))
@@ -148,17 +175,49 @@ public class GameCrashWindow extends Stage {
                     } else {
                         reason.set(i18n("game.crash.reason.unknown"));
                     }
+
+                    feedbackLabel.setVisible(true);
                 } else {
                     reason.set(reasonText.toString());
                 }
             }
-        }, Schedulers.javafx());
+        }, Schedulers.javafx()).exceptionally(Lang::handleUncaughtException);
+    }
+
+    private static final Pattern FABRIC_MOD_ID = Pattern.compile("\\{(?<modid>.*?) @ (?<version>.*?)}");
+
+    private String translateFabricModId(String modName) {
+        switch (modName) {
+            case "fabricloader":
+                return "Fabric";
+            case "fabric":
+                return "Fabric API";
+            case "minecraft":
+                return "Minecraft";
+            default:
+                return modName;
+        }
+    }
+
+    private String parseFabricModId(String modName) {
+        Matcher matcher = FABRIC_MOD_ID.matcher(modName);
+        if (matcher.find()) {
+            String modid = matcher.group("modid");
+            String version = matcher.group("version");
+            if ("[*]".equals(version)) {
+                return i18n("game.crash.reason.mod_resolution_mod_version.any", translateFabricModId(modid));
+            } else {
+                return i18n("game.crash.reason.mod_resolution_mod_version", translateFabricModId(modid), version);
+            }
+        }
+        return translateFabricModId(modName);
     }
 
     private void showLogWindow() {
         LogWindow logWindow = new LogWindow();
 
         logWindow.logLine("Command: " + new CommandBuilder().addAll(managedProcess.getCommands()).toString(), Log4jLevel.INFO);
+        logWindow.logLine("ClassPath: " + managedProcess.getClasspath(), Log4jLevel.INFO);
         for (Map.Entry<String, Log4jLevel> entry : logs)
             logWindow.logLine(entry.getKey(), entry.getValue());
 
@@ -213,40 +272,53 @@ public class GameCrashWindow extends Stage {
                 titlePane.getChildren().setAll(title);
             }
 
-            HBox infoPane = new HBox();
+            HBox infoPane = new HBox(8);
             {
+                infoPane.setPadding(new Insets(8));
+                infoPane.setAlignment(Pos.CENTER_LEFT);
+
                 TwoLineListItem version = new TwoLineListItem();
                 version.getStyleClass().setAll("two-line-item-second-large");
                 version.setTitle(i18n("archive.game_version"));
-                version.subtitleProperty().bind(GameCrashWindow.this.version);
-                StackPane versionCard = new StackPane(version);
+                version.setSubtitle(GameCrashWindow.this.version.getId());
 
                 TwoLineListItem memory = new TwoLineListItem();
                 memory.getStyleClass().setAll("two-line-item-second-large");
                 memory.setTitle(i18n("settings.memory"));
-                memory.subtitleProperty().bind(GameCrashWindow.this.memory);
-                StackPane memoryCard = new StackPane(memory);
+                memory.setSubtitle(GameCrashWindow.this.memory);
 
                 TwoLineListItem java = new TwoLineListItem();
                 java.getStyleClass().setAll("two-line-item-second-large");
                 java.setTitle("Java");
-                java.subtitleProperty().bind(GameCrashWindow.this.java);
-                StackPane javaCard = new StackPane(java);
+                java.setSubtitle(GameCrashWindow.this.java);
 
                 TwoLineListItem os = new TwoLineListItem();
                 os.getStyleClass().setAll("two-line-item-second-large");
                 os.setTitle(i18n("system.operating_system"));
                 os.subtitleProperty().bind(GameCrashWindow.this.os);
-                StackPane osCard = new StackPane(os);
 
                 TwoLineListItem arch = new TwoLineListItem();
                 arch.getStyleClass().setAll("two-line-item-second-large");
                 arch.setTitle(i18n("system.architecture"));
                 arch.subtitleProperty().bind(GameCrashWindow.this.arch);
-                StackPane archCard = new StackPane(arch);
 
-                infoPane.setPadding(new Insets(8));
-                infoPane.getChildren().setAll(versionCard, memoryCard, javaCard, osCard, archCard);
+                infoPane.getChildren().setAll(version, memory, java, os, arch);
+            }
+
+            HBox moddedPane = new HBox(8);
+            {
+                moddedPane.setPadding(new Insets(8));
+                moddedPane.setAlignment(Pos.CENTER_LEFT);
+
+                for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
+                    analyzer.getVersion(type).ifPresent(ver -> {
+                        TwoLineListItem item = new TwoLineListItem();
+                        item.getStyleClass().setAll("two-line-item-second-large");
+                        item.setTitle(i18n("install.installer." + type.getPatchId()));
+                        item.setSubtitle(ver);
+                        moddedPane.getChildren().add(item);
+                    });
+                }
             }
 
             VBox gameDirPane = new VBox(8);
@@ -286,10 +358,10 @@ public class GameCrashWindow extends Stage {
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);
                 toolBar.getStyleClass().add("jfx-tool-bar");
-                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton);
+                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton, feedbackLabel);
             }
 
-            getChildren().setAll(titlePane, infoPane, gameDirPane, toolBar);
+            getChildren().setAll(titlePane, infoPane, moddedPane, gameDirPane, toolBar);
         }
 
     }

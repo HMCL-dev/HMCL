@@ -81,6 +81,8 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
         this.version = version;
         this.configurationFile = repository.getModpackConfiguration(version);
         this.configuration = configuration;
+
+        setStage("hmcl.modpack.download");
     }
 
     @Override
@@ -253,13 +255,14 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                                         FileDownloadTask task = new FileDownloadTask(curseFile.getUrl(), modManager.getSimpleModPath(curseFile.getFileName()).toFile());
                                         task.setCacheRepository(dependency.getCacheRepository());
                                         task.setCaching(true);
-                                        dependencies.add(task.withCounter());
+                                        dependencies.add(task.withCounter("hmcl.modpack.download"));
                                     }
                                 }
                             }
 
                         if (!dependencies.isEmpty()) {
                             getProperties().put("total", dependencies.size());
+                            notifyPropertiesChanged();
                         }
 
                         return executor.all(dependencies);

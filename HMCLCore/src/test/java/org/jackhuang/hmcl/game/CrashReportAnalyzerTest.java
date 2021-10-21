@@ -52,15 +52,31 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void jvm32() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/jvm_32bit.txt")),
+                CrashReportAnalyzer.Rule.JVM_32BIT);
+    }
+
+    @Test
     public void modResolution() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/mod_resolution.txt")),
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION);
         Assert.assertEquals(("Errors were found!\n" +
-                " - Mod test depends on mod {fabricloader @ [>=0.11.3]}, which is missing!\n" +
-                " - Mod test depends on mod {fabric @ [*]}, which is missing!\n" +
-                " - Mod test depends on mod {java @ [>=16]}, which is missing!\n").replaceAll("\\s+", ""),
+                        " - Mod test depends on mod {fabricloader @ [>=0.11.3]}, which is missing!\n" +
+                        " - Mod test depends on mod {fabric @ [*]}, which is missing!\n" +
+                        " - Mod test depends on mod {java @ [>=16]}, which is missing!\n").replaceAll("\\s+", ""),
                 result.getMatcher().group("reason").replaceAll("\\s+", ""));
+    }
+
+    @Test
+    public void modResolutionCollection() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/mod_resolution_collection.txt")),
+                CrashReportAnalyzer.Rule.MOD_RESOLUTION_COLLECTION);
+        Assert.assertEquals("tabtps-fabric", result.getMatcher().group("sourcemod"));
+        Assert.assertEquals("{fabricloader @ [>=0.11.1]}", result.getMatcher().group("destmod"));
     }
 
     @Test
@@ -209,6 +225,14 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void unsatisfiedLinkError() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/unsatisfied_link_error.txt")),
+                CrashReportAnalyzer.Rule.UNSATISFIED_LINK_ERROR);
+        Assert.assertEquals("lwjgl.dll", result.getMatcher().group("name"));
+    }
+
+    @Test
     public void outOfMemoryMC() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/out_of_memory.txt")),
@@ -220,6 +244,13 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/out_of_memory.txt")),
                 CrashReportAnalyzer.Rule.OUT_OF_MEMORY);
+    }
+
+    @Test
+    public void memoryExceeded() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/memory_exceeded.txt")),
+                CrashReportAnalyzer.Rule.MEMORY_EXCEEDED);
     }
 
     @Test
@@ -245,6 +276,47 @@ public class CrashReportAnalyzerTest {
                         " - Conflicting versions found for fabric-screen-api-v1: used 1.0.4+155f865c18, also found 1.0.4+198a96213d\n" +
                         " - Conflicting versions found for fabric-key-binding-api-v1: used 1.0.4+a02b446318, also found 1.0.4+a02b44633d\n").replaceAll("\\s+", ""),
                 result.getMatcher().group("reason").replaceAll("\\s+", ""));
+    }
+
+    @Test
+    public void fabricConflicts() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-mod-conflict.txt")),
+                CrashReportAnalyzer.Rule.MOD_RESOLUTION_CONFLICT);
+        Assert.assertEquals("phosphor", result.getMatcher().group("sourcemod"));
+        Assert.assertEquals("{starlight @ [*]}", result.getMatcher().group("destmod"));
+    }
+
+    @Test
+    public void fabricMissing() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-mod-missing.txt")),
+                CrashReportAnalyzer.Rule.MOD_RESOLUTION_MISSING);
+        Assert.assertEquals("pca", result.getMatcher().group("sourcemod"));
+        Assert.assertEquals("{fabric @ [>=0.39.2]}", result.getMatcher().group("destmod"));
+    }
+
+    @Test
+    public void fabric0_12() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-version-0.12.txt")),
+                CrashReportAnalyzer.Rule.FABRIC_VERSION_0_12);
+    }
+
+    @Test
+    public void twilightForestOptiFineIncompatible() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/twilightforest_optifine_incompatibility.txt")),
+                CrashReportAnalyzer.Rule.TWILIGHT_FOREST_OPTIFINE);
+    }
+
+    @Test
+    public void fabricMissingMinecraft() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-minecraft.txt")),
+                CrashReportAnalyzer.Rule.MOD_RESOLUTION_MISSING_MINECRAFT);
+        Assert.assertEquals("fabric", result.getMatcher().group("mod"));
+        Assert.assertEquals("[~1.16.2-alpha.20.28.a]", result.getMatcher().group("version"));
     }
 
     @Test
@@ -345,6 +417,13 @@ public class CrashReportAnalyzerTest {
         Assert.assertEquals(
                 new HashSet<>(Collections.singletonList("twilightforest")),
                 CrashReportAnalyzer.findKeywordsFromCrashReport(loadLog("/crash-report/mod/twilightforest.txt")));
+    }
+
+    @Test
+    public void optifine() throws IOException {
+        Assert.assertEquals(
+                new HashSet<>(Collections.singletonList("OptiFine")),
+                CrashReportAnalyzer.findKeywordsFromCrashReport(loadLog("/crash-report/mod/twilightforest_optifine_incompatibility.txt")));
     }
 
     @Test

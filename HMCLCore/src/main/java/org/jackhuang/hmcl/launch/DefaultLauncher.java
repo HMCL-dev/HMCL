@@ -36,16 +36,15 @@ import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.Bits;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -122,7 +121,10 @@ public class DefaultLauncher extends Launcher {
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                 res.addDefault("-Xdock:name=", "Minecraft " + version.getId());
-                res.addDefault("-Xdock:icon=", repository.getAssetObject(version.getId(), version.getAssetIndex().getId(), "icons/minecraft.icns").getAbsolutePath());
+                repository.getAssetObject(version.getId(), version.getAssetIndex().getId(), "icons/minecraft.icns")
+                        .ifPresent(minecraftIcns -> {
+                            res.addDefault("-Xdock:icon=", minecraftIcns.toAbsolutePath().toString());
+                        });
             }
 
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
@@ -160,7 +162,7 @@ public class DefaultLauncher extends Launcher {
 
             // As 32-bit JVM allocate 320KB for stack by default rather than 64-bit version allocating 1MB,
             // causing Minecraft 1.13 crashed accounting for java.lang.StackOverflowError.
-            if (options.getJava().getPlatform() == Platform.BIT_32) {
+            if (options.getJava().getBits() == Bits.BIT_32) {
                 res.addDefault("-Xss", "1m");
             }
 
@@ -203,12 +205,12 @@ public class DefaultLauncher extends Launcher {
         classpath.add(jar.getAbsolutePath());
 
         // Provided Minecraft arguments
-        File gameAssets = repository.getActualAssetDirectory(version.getId(), version.getAssetIndex().getId());
+        Path gameAssets = repository.getActualAssetDirectory(version.getId(), version.getAssetIndex().getId());
         Map<String, String> configuration = getConfigurations();
         configuration.put("${classpath}", String.join(OperatingSystem.PATH_SEPARATOR, classpath));
         configuration.put("${natives_directory}", nativeFolder.getAbsolutePath());
-        configuration.put("${game_assets}", gameAssets.getAbsolutePath());
-        configuration.put("${assets_root}", gameAssets.getAbsolutePath());
+        configuration.put("${game_assets}", gameAssets.toAbsolutePath().toString());
+        configuration.put("${assets_root}", gameAssets.toAbsolutePath().toString());
 
         res.addAll(Arguments.parseArguments(version.getArguments().map(Arguments::getJvm).orElseGet(this::getDefaultJVMArguments), configuration));
         if (authInfo.getArguments() != null && authInfo.getArguments().getJvm() != null && !authInfo.getArguments().getJvm().isEmpty())
@@ -354,15 +356,23 @@ public class DefaultLauncher extends Launcher {
 
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        File nativeFolder = null;
+        File nativeFolder;
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            nativeFolder = repository.getNativeDirectory(version.getId());
+            nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
         } else {
             nativeFolder = new File(options.getNativesDir());
         }
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
-        List<String> rawCommandLine = generateCommandLine(nativeFolder).asList();
+        List<String> rawCommandLine = generateCommandLine(nativeFolder).asMutableList();
+
+        // Pass classpath using the environment variable, to reduce the command length
+        String classpath = null;
+        final int cpIndex = rawCommandLine.indexOf("-cp");
+        if (cpIndex >= 0 && cpIndex < rawCommandLine.size() - 1) {
+            rawCommandLine.remove(cpIndex); // remove "-cp"
+            classpath = rawCommandLine.remove(cpIndex);
+        }
 
         if (rawCommandLine.stream().anyMatch(StringUtils::isBlank)) {
             throw new IllegalStateException("Illegal command line " + rawCommandLine);
@@ -388,13 +398,14 @@ public class DefaultLauncher extends Launcher {
             }
             String appdata = options.getGameDir().getAbsoluteFile().getParent();
             if (appdata != null) builder.environment().put("APPDATA", appdata);
+            if (classpath != null) builder.environment().put("CLASSPATH", classpath);
             builder.environment().putAll(getEnvVars());
             process = builder.start();
         } catch (IOException e) {
             throw new ProcessCreationException(e);
         }
 
-        ManagedProcess p = new ManagedProcess(process, rawCommandLine);
+        ManagedProcess p = new ManagedProcess(process, rawCommandLine, classpath);
         if (listener != null)
             startMonitors(p, listener, daemon);
         return p;
@@ -429,9 +440,9 @@ public class DefaultLauncher extends Launcher {
     public void makeLaunchScript(File scriptFile) throws IOException {
         boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
 
-        File nativeFolder = null;
+        File nativeFolder;
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-            nativeFolder = repository.getNativeDirectory(version.getId());
+            nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
         } else {
             nativeFolder = new File(options.getNativesDir());
         }
@@ -440,54 +451,113 @@ public class DefaultLauncher extends Launcher {
             decompressNatives(nativeFolder);
         }
 
-        if (isWindows && !FileUtils.getExtension(scriptFile).equals("bat"))
-            throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' in Windows");
-        else if (!isWindows && !FileUtils.getExtension(scriptFile).equals("sh"))
-            throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh' in macOS/Linux");
+        String scriptExtension = FileUtils.getExtension(scriptFile);
+        boolean usePowerShell = "ps1".equals(scriptExtension);
+
+        if (!usePowerShell) {
+            if (isWindows && !scriptExtension.equals("bat"))
+                throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' or 'ps1' in Windows");
+            else if (!isWindows && !scriptExtension.equals("sh"))
+                throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh' or 'ps1' in macOS/Linux");
+        }
 
         if (!FileUtils.makeFile(scriptFile))
             throw new IOException("Script file: " + scriptFile + " cannot be created.");
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(scriptFile)))) {
-            if (isWindows) {
-                writer.write("@echo off");
-                writer.newLine();
-                writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
-                writer.newLine();
-                for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
-                    writer.write("set " + entry.getKey() + "=" + entry.getValue());
-                    writer.newLine();
-                }
-                writer.newLine();
-                writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
-                writer.newLine();
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX || OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                writer.write("#!/usr/bin/env bash");
-                writer.newLine();
-                for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
-                    writer.write("export " + entry.getKey() + "=" + entry.getValue());
-                    writer.newLine();
-                }
-                writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
-                writer.newLine();
-            }
-            if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-                writer.write(options.getPreLaunchCommand());
-                writer.newLine();
-            }
-            writer.write(generateCommandLine(nativeFolder).toString());
-            writer.newLine();
-            if (StringUtils.isNotBlank(options.getPostExitCommand())) {
-                writer.write(options.getPostExitCommand());
-                writer.newLine();
-            }
 
-            if (isWindows) {
-                writer.write("pause");
+        final CommandBuilder commandLine = generateCommandLine(nativeFolder);
+        final String command = usePowerShell ? null : commandLine.toString();
+
+        if (!usePowerShell && isWindows) {
+            if (command.length() > 8192) { // maximum length of the command in cmd
+                throw new CommandTooLongException();
+            }
+        }
+
+        OutputStream outputStream = new FileOutputStream(scriptFile);
+        Charset charset = StandardCharsets.UTF_8;
+
+        if (isWindows) {
+            if (usePowerShell) {
+                // Write UTF-8 BOM
+                try {
+                    outputStream.write(0xEF);
+                    outputStream.write(0xBB);
+                    outputStream.write(0xBF);
+                } catch (IOException e) {
+                    outputStream.close();
+                    throw e;
+                }
+            } else {
+                charset = OperatingSystem.NATIVE_CHARSET;
+            }
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, charset))) {
+            if (usePowerShell) {
+                if (isWindows) {
+                    writer.write("$Env:APPDATA=");
+                    writer.write(CommandBuilder.pwshString(options.getGameDir().getAbsoluteFile().getParent()));
+                    writer.newLine();
+                }
+                for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
+                    writer.write("$Env:" + entry.getKey() + "=");
+                    writer.write(CommandBuilder.pwshString(entry.getValue()));
+                    writer.newLine();
+                }
+                writer.write("Set-Location -Path ");
+                writer.write(CommandBuilder.pwshString(repository.getRunDirectory(version.getId()).getAbsolutePath()));
                 writer.newLine();
+
+                writer.write('&');
+                for (String rawCommand : commandLine.asList()) {
+                    writer.write(' ');
+                    writer.write(CommandBuilder.pwshString(rawCommand));
+                }
+                writer.newLine();
+            } else {
+                if (isWindows) {
+                    writer.write("@echo off");
+                    writer.newLine();
+                    writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
+                    writer.newLine();
+                    for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
+                        writer.write("set " + entry.getKey() + "=" + entry.getValue());
+                        writer.newLine();
+                    }
+                    writer.newLine();
+                    writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
+                } else {
+                    writer.write("#!/usr/bin/env bash");
+                    writer.newLine();
+                    for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
+                        writer.write("export " + entry.getKey() + "=" + entry.getValue());
+                        writer.newLine();
+                    }
+                    writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
+                }
+                writer.newLine();
+                if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
+                    writer.write(options.getPreLaunchCommand());
+                    writer.newLine();
+                }
+                writer.write(generateCommandLine(nativeFolder).toString());
+                writer.newLine();
+                if (StringUtils.isNotBlank(options.getPostExitCommand())) {
+                    writer.write(options.getPostExitCommand());
+                    writer.newLine();
+                }
+
+                if (isWindows) {
+                    writer.write("pause");
+                    writer.newLine();
+                }
             }
         }
         if (!scriptFile.setExecutable(true))
             throw new PermissionException();
+
+        if (usePowerShell && !CommandBuilder.hasExecutionPolicy())
+            throw new ExecutionPolicyLimitException();
     }
 
     private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon) {
@@ -495,12 +565,12 @@ public class DefaultLauncher extends Launcher {
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
             processListener.onLog(it, Optional.ofNullable(Log4jLevel.guessLevel(it)).orElse(Log4jLevel.INFO));
             managedProcess.addLine(it);
-        }), "stdout-pump", isDaemon);
+        }, OperatingSystem.NATIVE_CHARSET), "stdout-pump", isDaemon);
         managedProcess.addRelatedThread(stdout);
         Thread stderr = Lang.thread(new StreamPump(managedProcess.getProcess().getErrorStream(), it -> {
             processListener.onLog(it, Log4jLevel.ERROR);
             managedProcess.addLine(it);
-        }), "stderr-pump", isDaemon);
+        }, OperatingSystem.NATIVE_CHARSET), "stderr-pump", isDaemon);
         managedProcess.addRelatedThread(stderr);
         managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), processListener::onExit), "exit-waiter", isDaemon));
     }

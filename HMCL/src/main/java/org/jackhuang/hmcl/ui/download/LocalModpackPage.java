@@ -20,34 +20,41 @@ package org.jackhuang.hmcl.ui.download;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Level;
 
 import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class LocalModpackPage extends StackPane implements WizardPage {
@@ -79,6 +86,9 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
     @FXML
     private SpinnerPane spinnerPane;
 
+    private final BooleanProperty installAsVersion = new SimpleBooleanProperty(true);
+    private Charset charset;
+
     public LocalModpackPage(WizardController controller) {
         this.controller = controller;
 
@@ -93,10 +103,20 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
             txtModpackName.setText(name.get());
             txtModpackName.setDisable(true);
         } else {
-            txtModpackName.getValidators().addAll(
-                    new RequiredValidator(),
-                    new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().versionIdConflicts(str)),
-                    new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
+            FXUtils.onChangeAndOperate(installAsVersion, installAsVersion -> {
+                if (installAsVersion) {
+                    txtModpackName.getValidators().setAll(
+                            new RequiredValidator(),
+                            new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().versionIdConflicts(str)),
+                            new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
+                } else {
+                    txtModpackName.getValidators().setAll(
+                            new RequiredValidator(),
+                            new Validator(i18n("install.new_game.already_exists"), str -> !ModpackHelper.isExternalGameNameConflicts(str) && Profiles.getProfiles().stream().noneMatch(p -> p.getName().equals(str))),
+                            new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
+                }
+            });
+
             btnInstall.disableProperty().bind(
                     createBooleanBinding(txtModpackName::validate, txtModpackName.textProperty())
                             .not());
@@ -120,23 +140,46 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
 
         spinnerPane.showSpinner();
         Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(selectedFile.toPath()))
-                .thenApplyAsync(encoding -> manifest = ModpackHelper.readModpackManifest(selectedFile.toPath(), encoding))
-                .whenComplete(Schedulers.javafx(), manifest -> {
-                    spinnerPane.hideSpinner();
-                    controller.getSettings().put(MODPACK_MANIFEST, manifest);
-                    lblName.setText(manifest.getName());
-                    lblVersion.setText(manifest.getVersion());
-                    lblAuthor.setText(manifest.getAuthor());
+                .thenApplyAsync(encoding -> {
+                    charset = encoding;
+                    manifest = ModpackHelper.readModpackManifest(selectedFile.toPath(), encoding);
+                    return manifest;
+                })
+                .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
+                    if (exception instanceof ManuallyCreatedModpackException) {
+                        spinnerPane.hideSpinner();
+                        lblName.setText(selectedFile.getName());
+                        installAsVersion.set(false);
+                        lblModpackLocation.setText(selectedFile.getAbsolutePath());
 
-                    lblModpackLocation.setText(selectedFile.getAbsolutePath());
+                        if (!name.isPresent()) {
+                            // trim: https://github.com/huanghongxun/HMCL/issues/962
+                            txtModpackName.setText(FileUtils.getNameWithoutExtension(selectedFile));
+                        }
 
-                    if (!name.isPresent()) {
-                        // trim: https://github.com/huanghongxun/HMCL/issues/962
-                        txtModpackName.setText(manifest.getName().trim());
+                        Controllers.confirm(i18n("modpack.type.manual.warning"), i18n("install.modpack"), MessageDialogPane.MessageType.WARNING,
+                                () -> {},
+                                controller::onEnd);
+
+                        controller.getSettings().put(MODPACK_MANUALLY_CREATED, true);
+                    } else if (exception != null) {
+                        LOG.log(Level.WARNING, "Failed to read modpack manifest", exception);
+                        Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                        Platform.runLater(controller::onEnd);
+                    } else {
+                        spinnerPane.hideSpinner();
+                        controller.getSettings().put(MODPACK_MANIFEST, manifest);
+                        lblName.setText(manifest.getName());
+                        lblVersion.setText(manifest.getVersion());
+                        lblAuthor.setText(manifest.getAuthor());
+
+                        lblModpackLocation.setText(selectedFile.getAbsolutePath());
+
+                        if (!name.isPresent()) {
+                            // trim: https://github.com/huanghongxun/HMCL/issues/962
+                            txtModpackName.setText(manifest.getName().trim());
+                        }
                     }
-                }, e -> {
-                    Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageType.ERROR);
-                    Platform.runLater(controller::onEnd);
                 }).start();
     }
 
@@ -149,6 +192,7 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
     private void onInstall() {
         if (!txtModpackName.validate()) return;
         controller.getSettings().put(MODPACK_NAME, txtModpackName.getText());
+        controller.getSettings().put(MODPACK_CHARSET, charset);
         controller.onFinish();
     }
 
@@ -167,4 +211,6 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
     public static final String MODPACK_FILE = "MODPACK_FILE";
     public static final String MODPACK_NAME = "MODPACK_NAME";
     public static final String MODPACK_MANIFEST = "MODPACK_MANIFEST";
+    public static final String MODPACK_CHARSET = "MODPACK_CHARSET";
+    public static final String MODPACK_MANUALLY_CREATED = "MODPACK_MANUALLY_CREATED";
 }

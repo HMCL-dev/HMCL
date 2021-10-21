@@ -26,8 +26,7 @@ import java.util.Collections;
 import java.util.concurrent.*;
 import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.util.Lang.rethrow;
-import static org.jackhuang.hmcl.util.Lang.wrap;
+import static org.jackhuang.hmcl.util.Lang.*;
 
 /**
  *
@@ -97,7 +96,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         cancelled.set(true);
     }
 
-    private CompletableFuture<?> executeTasksExceptionally(Task<?> parentTask, Collection<Task<?>> tasks) {
+    private CompletableFuture<?> executeTasksExceptionally(Task<?> parentTask, Collection<? extends Task<?>> tasks) {
         if (tasks == null || tasks.isEmpty())
             return CompletableFuture.completedFuture(null);
 
@@ -105,8 +104,10 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                 .thenComposeAsync(unused -> {
                     totTask.addAndGet(tasks.size());
 
-                    if (isCancelled())
+                    if (isCancelled()) {
+                        for (Task<?> task : tasks) task.setException(new CancellationException());
                         return CompletableFuture.runAsync(this::checkCancellation);
+                    }
 
                     return CompletableFuture.allOf(tasks.stream()
                             .map(task -> CompletableFuture.completedFuture(null)
@@ -115,7 +116,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                 });
     }
 
-    private CompletableFuture<Exception> executeTasks(Task<?> parentTask, Collection<Task<?>> tasks) {
+    private CompletableFuture<Exception> executeTasks(Task<?> parentTask, Collection<? extends Task<?>> tasks) {
         return executeTasksExceptionally(parentTask, tasks)
                 .thenApplyAsync(unused -> (Exception) null)
                 .exceptionally(throwable -> {
@@ -130,8 +131,6 @@ public final class AsyncTaskExecutor extends TaskExecutor {
     }
 
     private <T> CompletableFuture<T> executeCompletableFutureTask(Task<?> parentTask, CompletableFutureTask<T> task) {
-        checkCancellation();
-
         return CompletableFuture.completedFuture(null)
                 .thenComposeAsync(unused -> {
                     checkCancellation();
@@ -202,16 +201,18 @@ public final class AsyncTaskExecutor extends TaskExecutor {
     }
 
     private <T> CompletableFuture<T> executeNormalTask(Task<?> parentTask, Task<T> task) {
-        checkCancellation();
-
         return CompletableFuture.completedFuture(null)
                 .thenComposeAsync(unused -> {
                     checkCancellation();
 
                     task.setCancelled(this::isCancelled);
                     task.setState(Task.TaskState.READY);
-                    if (parentTask != null && task.getStage() == null)
-                        task.setStage(parentTask.getStage());
+                    if (task.getStage() != null) {
+                        task.setInheritedStage(task.getStage());
+                    } else if (parentTask != null) {
+                        task.setInheritedStage(parentTask.getInheritedStage());
+                    }
+                    task.setNotifyPropertiesChanged(() -> taskListeners.forEach(it -> it.onPropertiesUpdate(task)));
 
                     if (task.getSignificance().shouldLog())
                         Logging.LOG.log(Level.FINE, "Executing task: " + task.getName());
@@ -316,13 +317,6 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         } else {
             return executeNormalTask(parentTask, task);
         }
-    }
-
-    private static Throwable resolveException(Throwable e) {
-        if (e instanceof ExecutionException || e instanceof CompletionException)
-            return resolveException(e.getCause());
-        else
-            return e;
     }
 
     private void checkCancellation() {

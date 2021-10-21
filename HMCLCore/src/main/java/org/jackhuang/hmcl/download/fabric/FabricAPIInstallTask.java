@@ -20,11 +20,13 @@ package org.jackhuang.hmcl.download.fabric;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -35,6 +37,7 @@ import java.util.List;
  */
 public final class FabricAPIInstallTask extends Task<Version> {
 
+    private GetTask dependent;
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
     private final FabricAPIRemoteVersion remote;
@@ -44,6 +47,22 @@ public final class FabricAPIInstallTask extends Task<Version> {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.remote = remoteVersion;
+
+    }
+
+    @Override
+    public boolean doPreExecute() {
+        return true;
+    }
+
+    @Override
+    public void preExecute() throws Exception {
+        this.dependent = new GetTask(new URL(remote.getUrls().get(0) + ".sha1"));
+    }
+
+    @Override
+    public Collection<? extends Task<?>> getDependents() {
+        return Collections.singleton(dependent);
     }
 
     @Override
@@ -60,6 +79,8 @@ public final class FabricAPIInstallTask extends Task<Version> {
     public void execute() throws IOException {
         dependencies.add(new FileDownloadTask(
                 new URL(remote.getUrls().get(0)),
-                dependencyManager.getGameRepository().getRunDirectory(version.getId()).toPath().resolve("mods").resolve("fabric-api-" + remote.getFullVersion() + ".jar").toFile()));
+                dependencyManager.getGameRepository().getRunDirectory(version.getId()).toPath().resolve("mods").resolve("fabric-api-" + remote.getFullVersion() + ".jar").toFile(),
+                new FileDownloadTask.IntegrityCheck("SHA-1", dependent.getResult().trim()))
+        );
     }
 }

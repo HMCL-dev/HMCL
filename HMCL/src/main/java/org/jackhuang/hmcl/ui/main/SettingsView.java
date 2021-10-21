@@ -48,6 +48,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public abstract class SettingsView extends StackPane {
     protected final JFXComboBox<SupportedLocale> cboLanguage;
     protected final MultiFileItem<EnumCommonDirectory> fileCommonLocation;
+    protected final ComponentSublist fileCommonLocationSublist;
     protected final Label lblUpdate;
     protected final Label lblUpdateSub;
     protected final JFXRadioButton chkUpdateStable;
@@ -144,8 +145,10 @@ public abstract class SettingsView extends StackPane {
 
                 {
                     fileCommonLocation = new MultiFileItem<>();
-                    fileCommonLocation.setTitle(i18n("launcher.cache_directory"));
-                    fileCommonLocation.setHasSubtitle(true);
+                    fileCommonLocationSublist = new ComponentSublist();
+                    fileCommonLocationSublist.getContent().add(fileCommonLocation);
+                    fileCommonLocationSublist.setTitle(i18n("launcher.cache_directory"));
+                    fileCommonLocationSublist.setHasSubtitle(true);
                     fileCommonLocation.loadChildren(Arrays.asList(
                             new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
                             new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM)
@@ -159,10 +162,10 @@ public abstract class SettingsView extends StackPane {
                         cleanButton.setOnMouseClicked(e -> clearCacheDirectory());
                         cleanButton.getStyleClass().add("jfx-button-border");
 
-                        fileCommonLocation.setHeaderRight(cleanButton);
+                        fileCommonLocationSublist.setHeaderRight(cleanButton);
                     }
 
-                    settingsPane.getContent().add(fileCommonLocation);
+                    settingsPane.getContent().add(fileCommonLocationSublist);
                 }
 
                 {

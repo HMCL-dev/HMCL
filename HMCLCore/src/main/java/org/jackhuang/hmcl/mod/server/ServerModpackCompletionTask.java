@@ -77,6 +77,8 @@ public class ServerModpackCompletionTask extends Task<Void> {
         } else {
             this.manifest = manifest;
         }
+
+        setStage("hmcl.modpack.download");
     }
 
     @Override
@@ -133,6 +135,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
         Set<String> remoteFiles = remoteManifest.getFiles().stream().map(ModpackConfiguration.FileInformation::getPath)
                 .collect(Collectors.toSet());
 
+        int total = 0;
         // for files in new modpack
         for (ModpackConfiguration.FileInformation file : remoteManifest.getFiles()) {
             Path actualPath = rootPath.resolve(file.getPath());
@@ -152,10 +155,12 @@ public class ServerModpackCompletionTask extends Task<Void> {
             }
 
             if (download) {
+                total++;
                 dependencies.add(new FileDownloadTask(
                         new URL(remoteManifest.getFileApi() + "/overrides/" + NetworkUtils.encodeLocation(file.getPath())),
                         actualPath.toFile(),
-                        new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash())));
+                        new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash()))
+                        .withCounter("hmcl.modpack.download"));
             }
         }
 
@@ -165,6 +170,9 @@ public class ServerModpackCompletionTask extends Task<Void> {
             if (Files.exists(actualPath) && !remoteFiles.contains(file.getPath()))
                 Files.deleteIfExists(actualPath);
         }
+
+        getProperties().put("total", dependencies.size());
+        notifyPropertiesChanged();
     }
 
     @Override

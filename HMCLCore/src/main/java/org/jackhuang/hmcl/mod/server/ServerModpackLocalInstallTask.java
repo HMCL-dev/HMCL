@@ -34,8 +34,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ServerModpackLocalInstallTask extends Task<Void> {
 
@@ -97,14 +95,6 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
-    }
-
-    @Override
-    public List<String> getStages() {
-        return Stream.concat(
-                dependents.stream().flatMap(task -> task.getStages().stream()),
-                Stream.of("hmcl.modpack")
-        ).collect(Collectors.toList());
     }
 
     public static final String MODPACK_TYPE = "Server";

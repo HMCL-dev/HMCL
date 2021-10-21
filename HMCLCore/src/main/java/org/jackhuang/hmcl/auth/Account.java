@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,11 +59,6 @@ public abstract class Account implements Observable {
      * @throws CredentialExpiredException when the stored credentials has expired, in which case a password login will be performed
      */
     public abstract AuthInfo logIn() throws AuthenticationException;
-
-    /**
-     * Login with specified password.
-     */
-    public abstract AuthInfo logInWithPassword(String password) throws AuthenticationException;
 
     /**
      * Play offline.

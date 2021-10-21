@@ -96,7 +96,7 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
     }
 
     public Task<Version> getInstallTask(DefaultDependencyManager dependencyManager, Version baseVersion) {
-        throw new UnsupportedOperationException(toString() + " cannot be installed yet");
+        throw new UnsupportedOperationException(this + " cannot be installed yet");
     }
 
     @Override

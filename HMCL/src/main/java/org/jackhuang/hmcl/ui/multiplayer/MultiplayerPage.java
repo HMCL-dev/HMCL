@@ -17,10 +17,15 @@
  */
 package org.jackhuang.hmcl.ui.multiplayer;
 
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialogLayout;
 import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
+import javafx.application.Platform;
 import javafx.beans.property.*;
-import javafx.scene.control.Control;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.DownloadProviders;
@@ -29,28 +34,34 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.NumberValidator;
-import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
-import org.jackhuang.hmcl.ui.construct.RequiredValidator;
+import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.HMCLService;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.ui.multiplayer.MultiplayerChannel.KickResponse.*;
+import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class MultiplayerPage extends Control implements DecoratorPage {
-    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("multiplayer"), -1));
+public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("multiplayer")));
 
     private final ObjectProperty<MultiplayerManager.State> multiplayerState = new SimpleObjectProperty<>(MultiplayerManager.State.DISCONNECTED);
     private final ReadOnlyStringWrapper token = new ReadOnlyStringWrapper();
     private final ReadOnlyObjectWrapper<DiscoveryInfo> natState = new ReadOnlyObjectWrapper<>();
-    private final ReadOnlyIntegerWrapper port = new ReadOnlyIntegerWrapper(-1);
+    private final ReadOnlyIntegerWrapper gamePort = new ReadOnlyIntegerWrapper(-1);
     private final ReadOnlyObjectWrapper<MultiplayerManager.CatoSession> session = new ReadOnlyObjectWrapper<>();
+    private final ObservableList<MultiplayerChannel.CatoClient> clients = FXCollections.observableArrayList();
 
     private Consumer<MultiplayerManager.CatoExitEvent> onExit;
     private Consumer<MultiplayerManager.CatoIdEvent> onIdGenerated;
@@ -58,12 +69,20 @@ public class MultiplayerPage extends Control implements DecoratorPage {
 
     public MultiplayerPage() {
         testNAT();
-        downloadCatoIfNecessary();
+    }
+
+    @Override
+    public void onPageShown() {
+        checkAgreement(this::downloadCatoIfNecessary);
     }
 
     @Override
     protected Skin<?> createDefaultSkin() {
         return new MultiplayerPageSkin(this);
+    }
+
+    public ObservableList<MultiplayerChannel.CatoClient> getClients() {
+        return clients;
     }
 
     public MultiplayerManager.State getMultiplayerState() {
@@ -94,12 +113,12 @@ public class MultiplayerPage extends Control implements DecoratorPage {
         return token.getReadOnlyProperty();
     }
 
-    public int getPort() {
-        return port.get();
+    public int getGamePort() {
+        return gamePort.get();
     }
 
-    public ReadOnlyIntegerProperty portProperty() {
-        return port.getReadOnlyProperty();
+    public ReadOnlyIntegerProperty gamePortProperty() {
+        return gamePort.getReadOnlyProperty();
     }
 
     public MultiplayerManager.CatoSession getSession() {
@@ -112,9 +131,10 @@ public class MultiplayerPage extends Control implements DecoratorPage {
 
     private void testNAT() {
         Task.supplyAsync(() -> {
-            DiscoveryTest tester = new DiscoveryTest(null, 0, "stun.qq.com", 3478);
+            DiscoveryTest tester = new DiscoveryTest(null, 0, "stun.stunprotocol.org", 3478);
             return tester.test();
         }).whenComplete(Schedulers.javafx(), (info, exception) -> {
+            LOG.log(Level.INFO, "Nat test result " + MultiplayerPageSkin.getNATType(info), exception);
             if (exception == null) {
                 natState.set(info);
             } else {
@@ -123,7 +143,40 @@ public class MultiplayerPage extends Control implements DecoratorPage {
         }).start();
     }
 
+    private void checkAgreement(Runnable runnable) {
+        if (globalConfig().getMultiplayerAgreementVersion() < MultiplayerManager.CATO_AGREEMENT_VERSION) {
+            JFXDialogLayout agreementPane = new JFXDialogLayout();
+            agreementPane.setHeading(new Label(i18n("launcher.agreement")));
+            agreementPane.setBody(new Label(i18n("multiplayer.agreement.prompt")));
+            JFXHyperlink agreementLink = new JFXHyperlink(i18n("launcher.agreement"));
+            agreementLink.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-agreement"));
+            JFXButton yesButton = new JFXButton(i18n("launcher.agreement.accept"));
+            yesButton.getStyleClass().add("dialog-accept");
+            yesButton.setOnAction(e -> {
+                globalConfig().setMultiplayerAgreementVersion(MultiplayerManager.CATO_AGREEMENT_VERSION);
+                runnable.run();
+                agreementPane.fireEvent(new DialogCloseEvent());
+            });
+            JFXButton noButton = new JFXButton(i18n("launcher.agreement.decline"));
+            noButton.getStyleClass().add("dialog-cancel");
+            noButton.setOnAction(e -> {
+                agreementPane.fireEvent(new DialogCloseEvent());
+                fireEvent(new PageCloseEvent());
+            });
+            agreementPane.setActions(agreementLink, yesButton, noButton);
+            Controllers.dialog(agreementPane);
+        } else {
+            runnable.run();
+        }
+    }
+
     private void downloadCatoIfNecessary() {
+        if (StringUtils.isBlank(MultiplayerManager.getCatoPath())) {
+            Controllers.dialog(i18n("multiplayer.download.unsupported"), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+            fireEvent(new PageCloseEvent());
+            return;
+        }
+
         if (!MultiplayerManager.getCatoExecutable().toFile().exists()) {
             setDisabled(true);
             TaskExecutor executor = MultiplayerManager.downloadCato()
@@ -134,6 +187,7 @@ public class MultiplayerPage extends Control implements DecoratorPage {
                                 Controllers.showToast(i18n("message.cancelled"));
                             } else {
                                 Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                                fireEvent(new PageCloseEvent());
                             }
                         } else {
                             Controllers.showToast(i18n("multiplayer.download.success"));
@@ -147,11 +201,11 @@ public class MultiplayerPage extends Control implements DecoratorPage {
     }
 
     public void copyInvitationCode() {
-        if (getSession() == null || !getSession().isReady() || port.get() < 0 || getMultiplayerState() != MultiplayerManager.State.MASTER) {
+        if (getSession() == null || !getSession().isReady() || gamePort.get() < 0 || getMultiplayerState() != MultiplayerManager.State.MASTER) {
             throw new IllegalStateException("CatoSession not ready");
         }
 
-        FXUtils.copyText(getSession().generateInvitationCode(port.get(), 0));
+        FXUtils.copyText(getSession().generateInvitationCode(getSession().getServer().getPort()));
     }
 
     public void createRoom() {
@@ -159,23 +213,40 @@ public class MultiplayerPage extends Control implements DecoratorPage {
             throw new IllegalStateException("CatoSession already ready");
         }
 
-        Controllers.prompt(new PromptDialogPane.Builder(i18n("multiplayer.session.create"), (result, resolve, reject) -> {
-            int port = Integer.parseInt(((PromptDialogPane.Builder.StringQuestion) result.get(2)).getValue());
-            try {
-                initCatoSession(MultiplayerManager.createSession(((PromptDialogPane.Builder.StringQuestion) result.get(1)).getValue(), port));
-            } catch (Exception e) {
-                LOG.log(Level.WARNING, "Failed to create session", e);
-                reject.accept(i18n("multiplayer.session.create.error"));
-                return;
-            }
+        Controllers.dialog(new CreateMultiplayerRoomDialog((result, resolve, reject) -> {
+            int gamePort = result.getServer().getAd();
+            boolean isStaticToken = StringUtils.isNotBlank(globalConfig().getMultiplayerToken());
+            MultiplayerManager.createSession(globalConfig().getMultiplayerToken(), result.getServer().getMotd(), gamePort, result.isAllowAllJoinRequests())
+                    .thenAcceptAsync(session -> {
+                        session.getServer().setOnClientAdding((client, resolveClient, rejectClient) -> {
+                            runInFX(() -> {
+                                Controllers.dialog(new MessageDialogPane.Builder(i18n("multiplayer.session.create.join.prompt", client.getUsername()), i18n("multiplayer.session.create.join"), MessageDialogPane.MessageType.INFO)
+                                        .yesOrNo(resolveClient, () -> rejectClient.accept(MultiplayerChannel.KickResponse.JOIN_ACEEPTANCE_TIMEOUT))
+                                        .cancelOnTimeout(30 * 1000)
+                                        .build());
+                            });
+                        });
+                        session.getServer().onClientAdded().register(event -> {
+                            runInFX(() -> {
+                                clients.add(event);
+                            });
+                        });
+                        session.getServer().onClientDisconnected().register(event -> {
+                            runInFX(() -> {
+                                clients.remove(event);
+                            });
+                        });
+                        initCatoSession(session);
 
-            this.port.set(port);
-            setMultiplayerState(MultiplayerManager.State.CONNECTING);
-            resolve.run();
-        })
-                .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("multiplayer.session.create.hint")))
-                .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("multiplayer.session.create.name"), "", new RequiredValidator()))
-                .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("multiplayer.session.create.port"), "", new NumberValidator())));
+                        this.gamePort.set(gamePort);
+                        setMultiplayerState(MultiplayerManager.State.MASTER);
+                        resolve.run();
+                    }, Platform::runLater)
+                    .exceptionally(throwable -> {
+                        reject.accept(localizeCreateErrorMessage(throwable, isStaticToken));
+                        return null;
+                    });
+        }));
     }
 
     public void joinRoom() {
@@ -184,6 +255,9 @@ public class MultiplayerPage extends Control implements DecoratorPage {
         }
 
         Controllers.prompt(new PromptDialogPane.Builder(i18n("multiplayer.session.join"), (result, resolve, reject) -> {
+            PromptDialogPane.Builder.HintQuestion hintQuestion = (PromptDialogPane.Builder.HintQuestion) result.get(0);
+            boolean isStaticToken = StringUtils.isNotBlank(globalConfig().getMultiplayerToken());
+
             String invitationCode = ((PromptDialogPane.Builder.StringQuestion) result.get(1)).getValue();
             MultiplayerManager.Invitation invitation;
             try {
@@ -194,7 +268,7 @@ public class MultiplayerPage extends Control implements DecoratorPage {
                 return;
             }
 
-            int localPort;
+            int localPort; // invitation channel
             try {
                 localPort = MultiplayerManager.findAvailablePort();
             } catch (Exception e) {
@@ -203,21 +277,133 @@ public class MultiplayerPage extends Control implements DecoratorPage {
             }
 
             try {
-                initCatoSession(MultiplayerManager.joinSession(invitation.getVersion(), invitation.getSessionName(), invitation.getId(), invitation.getGamePort(), localPort));
+                MultiplayerManager.joinSession(
+                                globalConfig().getMultiplayerToken(),
+                                invitation.getId(),
+                                globalConfig().isMultiplayerRelay() && (StringUtils.isNotBlank(globalConfig().getMultiplayerToken()) || StringUtils.isNotBlank(System.getProperty("hmcl.multiplayer.relay")))
+                                        ? MultiplayerManager.Mode.BRIDGE
+                                        : MultiplayerManager.Mode.P2P,
+                                invitation.getChannelPort(),
+                                localPort, new MultiplayerManager.JoinSessionHandler() {
+                                    @Override
+                                    public void onWaitingForJoinResponse() {
+                                        runInFX(() -> {
+                                            hintQuestion.setQuestion(i18n("multiplayer.session.join.wait"));
+                                        });
+                                    }
+                                })
+                        .thenAcceptAsync(session -> {
+                            initCatoSession(session);
+
+                            AtomicBoolean kicked = new AtomicBoolean();
+
+                            session.getClient().onDisconnected().register(() -> {
+                                runInFX(() -> {
+                                    stopCatoSession();
+                                    if (!kicked.get()) {
+                                        Controllers.dialog(i18n("multiplayer.session.join.lost_connection"));
+                                    }
+                                });
+                            });
+
+                            session.getClient().onKicked().register(kickedEvent -> {
+                                runInFX(() -> {
+                                    kicked.set(true);
+                                    Controllers.dialog(i18n("multiplayer.session.join.kicked", localizeKickMessage(kickedEvent.getReason())));
+                                });
+                            });
+
+                            gamePort.set(session.getClient().getGamePort());
+                            setMultiplayerState(MultiplayerManager.State.SLAVE);
+                            resolve.run();
+                        }, Platform::runLater)
+                        .exceptionally(throwable -> {
+                            reject.accept(localizeJoinErrorMessage(throwable, isStaticToken));
+                            return null;
+                        });
             } catch (MultiplayerManager.IncompatibleCatoVersionException e) {
                 reject.accept(i18n("multiplayer.session.join.invitation_code.version"));
-                return;
-            } catch (Exception e) {
-                reject.accept(i18n("multiplayer.session.error"));
-                return;
             }
-
-            port.set(localPort);
-            setMultiplayerState(MultiplayerManager.State.CONNECTING);
-            resolve.run();
         })
                 .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("multiplayer.session.join.hint")))
                 .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("multiplayer.session.join.invitation_code"), "", new RequiredValidator())));
+    }
+
+    private String localizeKickMessage(String message) {
+        if (VERSION_NOT_MATCHED.equals(message)) {
+            return i18n("multiplayer.session.join.kicked.version_not_matched");
+        } else if (KICKED.equals(message)) {
+            return i18n("multiplayer.session.join.kicked.kicked");
+        } else if (JOIN_ACEEPTANCE_TIMEOUT.equals(message)) {
+            return i18n("multiplayer.session.join.kicked.join_acceptance_timeout");
+        } else {
+            return message;
+        }
+    }
+
+    private String localizeErrorMessage(Throwable t, boolean isStaticToken, Function<Throwable, String> fallback) {
+        Throwable e = resolveException(t);
+        if (e instanceof CancellationException) {
+            LOG.info("Connection rejected by the server");
+            return i18n("multiplayer.session.join.rejected");
+        } else if (e instanceof MultiplayerManager.CatoAlreadyStartedException) {
+            LOG.info("Cato already started");
+            return i18n("multiplayer.session.error.already_started");
+        } else if (e instanceof MultiplayerManager.CatoNotExistsException) {
+            LOG.log(Level.WARNING, "Cato not found " + ((MultiplayerManager.CatoNotExistsException) e).getFile(), e);
+            return i18n("multiplayer.session.error.file_not_found");
+        } else if (e instanceof MultiplayerManager.JoinRequestTimeoutException) {
+            LOG.info("Cato already started");
+            return i18n("multiplayer.session.join.wait_timeout");
+        } else if (e instanceof MultiplayerManager.ConnectionErrorException) {
+            LOG.info("Failed to establish connection with server");
+            return i18n("multiplayer.session.join.error.connection");
+        } else if (e instanceof MultiplayerManager.CatoExitTimeoutException) {
+            LOG.info("Cato failed to connect to main net");
+            if (isStaticToken) {
+                return i18n("multiplayer.exit.timeout.static_token");
+            } else {
+                return i18n("multiplayer.exit.timeout.dynamic_token");
+            }
+        } else if (e instanceof MultiplayerManager.CatoExitException) {
+            LOG.info("Cato exited accidentally");
+            if (!((MultiplayerManager.CatoExitException) e).isReady()) {
+                return i18n("multiplayer.exit.before_ready");
+            } else {
+                return i18n("multiplayer.exit.after_ready");
+            }
+        } else {
+            return fallback.apply(e);
+        }
+    }
+
+    private String localizeCreateErrorMessage(Throwable t, boolean isStaticToken) {
+        return localizeErrorMessage(t, isStaticToken, e -> {
+            LOG.log(Level.WARNING, "Failed to create session", e);
+            if (isStaticToken) {
+                return i18n("multiplayer.session.create.error.static_token") + e.getLocalizedMessage();
+            } else {
+                return i18n("multiplayer.session.create.error.dynamic_token") + e.getLocalizedMessage();
+            }
+        });
+    }
+
+    private String localizeJoinErrorMessage(Throwable t, boolean isStaticToken) {
+        return localizeErrorMessage(t, isStaticToken, e -> {
+            LOG.log(Level.WARNING, "Failed to join session", e);
+            return i18n("multiplayer.session.join.error");
+        });
+    }
+
+    public void kickPlayer(MultiplayerChannel.CatoClient client) {
+        if (getSession() == null || !getSession().isReady() || getMultiplayerState() != MultiplayerManager.State.MASTER) {
+            throw new IllegalStateException("CatoSession not ready");
+        }
+
+        Controllers.confirm(i18n("multiplayer.session.create.members.kick.prompt"), i18n("multiplayer.session.create.members.kick"), MessageDialogPane.MessageType.WARNING,
+                () -> {
+                    getSession().getServer().kickPlayer(client);
+                }, null);
     }
 
     public void closeRoom() {
@@ -252,19 +438,22 @@ public class MultiplayerPage extends Control implements DecoratorPage {
             onIdGenerated = session.onIdGenerated().registerWeak(this::onCatoIdGenerated);
             onPeerConnected = session.onPeerConnected().registerWeak(this::onCatoPeerConnected);
 
+            this.clients.clear();
             this.session.set(session);
         });
     }
 
     private void stopCatoSession() {
-        getSession().stop();
+        if (getSession() != null) {
+            getSession().stop();
+        }
         clearCatoSession();
     }
 
     private void clearCatoSession() {
         this.session.set(null);
         this.token.set(null);
-        this.port.set(-1);
+        this.gamePort.set(-1);
         this.multiplayerState.set(MultiplayerManager.State.DISCONNECTED);
     }
 
@@ -281,6 +470,9 @@ public class MultiplayerPage extends Control implements DecoratorPage {
                     if (!ready) {
                         Controllers.dialog(i18n("multiplayer.exit.timeout"));
                     }
+                    break;
+                case -1:
+                    // do nothing
                     break;
                 default:
                     if (!((MultiplayerManager.CatoSession) event.getSource()).isReady()) {
@@ -303,7 +495,7 @@ public class MultiplayerPage extends Control implements DecoratorPage {
     private void onCatoIdGenerated(MultiplayerManager.CatoIdEvent event) {
         runInFX(() -> {
             token.set(event.getId());
-            multiplayerState.set(((MultiplayerManager.CatoSession) event.getSource()).getType());
+            setMultiplayerState(((MultiplayerManager.CatoSession) event.getSource()).getType());
         });
     }
 

@@ -75,6 +75,10 @@ public final class FileUtils {
         }
     }
 
+    public static String getNameWithoutExtension(String fileName) {
+        return StringUtils.substringBeforeLast(fileName, '.');
+    }
+
     public static String getNameWithoutExtension(File file) {
         return StringUtils.substringBeforeLast(file.getName(), '.');
     }
@@ -99,6 +103,7 @@ public final class FileUtils {
     }
 
     public static String getName(Path path) {
+        if (path.getFileName() == null) return "";
         return StringUtils.removeSuffix(path.getFileName().toString(), "/", "\\");
     }
 
@@ -413,6 +418,7 @@ public final class FileUtils {
     }
 
     public static Optional<Path> tryGetPath(String first, String... more) {
+        if (first == null) return Optional.empty();
         try {
             return Optional.of(Paths.get(first, more));
         } catch (InvalidPathException e) {

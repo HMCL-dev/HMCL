@@ -37,7 +37,7 @@ public final class CrashReportAnalyzer {
 
         OPENJ9(Pattern.compile("(Open J9 is not supported|OpenJ9 is incompatible)")),
         TOO_OLD_JAVA(Pattern.compile("java\\.lang\\.UnsupportedClassVersionError: (.*?) version (?<expected>\\d+)\\.0"), "expected"),
-        JVM_32BIT(Pattern.compile("Could not reserve enough space for 1048576KB object heap")),
+        JVM_32BIT(Pattern.compile("(Could not reserve enough space for (.*?) object heap|The specified size exceeds the maximum representable size)")),
 
         // Some mods/shader packs do incorrect GL operations.
         GL_OPERATION_FAILURE(Pattern.compile("1282: Invalid operation")),
@@ -47,6 +47,8 @@ public final class CrashReportAnalyzer {
         GRAPHICS_DRIVER(Pattern.compile("(Pixel format not accelerated|Couldn't set pixel format|net\\.minecraftforge\\.fml.client\\.SplashProgress|org\\.lwjgl\\.LWJGLException|EXCEPTION_ACCESS_VIOLATION(.|\\n|\\r)+# C {2}\\[(ig|atio|nvoglv))")),
         // Out of memory
         OUT_OF_MEMORY(Pattern.compile("(java\\.lang\\.OutOfMemoryError|The system is out of physical RAM or swap space)")),
+        // Memory exceeded
+        MEMORY_EXCEEDED(Pattern.compile("There is insufficient memory for the Java Runtime Environment to continue")),
         // Too high resolution
         RESOLUTION_TOO_HIGH(Pattern.compile("Maybe try a (lower resolution|lowerresolution) (resourcepack|texturepack)\\?")),
         // game can only run on Java 8. Version of uesr's JVM is too high.
@@ -61,7 +63,12 @@ public final class CrashReportAnalyzer {
         ILLEGAL_ACCESS_ERROR(Pattern.compile("java\\.lang\\.IllegalAccessError: tried to access class (.*?) from class (?<class>.*?)"), "class"),
         // Some mods duplicated
         DUPLICATED_MOD(Pattern.compile("Found a duplicate mod (?<name>.*) at (?<path>.*)"), "name", "path"),
+        // Fabric mod resolution
         MOD_RESOLUTION(Pattern.compile("ModResolutionException: (?<reason>(.*)[\\n\\r]*( - (.*)[\\n\\r]*)+)"), "reason"),
+        MOD_RESOLUTION_CONFLICT(Pattern.compile("ModResolutionException: Found conflicting mods: (?<sourcemod>.*) conflicts with (?<destmod>.*)"), "sourcemod", "destmod"),
+        MOD_RESOLUTION_MISSING(Pattern.compile("ModResolutionException: Could not find required mod: (?<sourcemod>.*) requires (?<destmod>.*)"), "sourcemod", "destmod"),
+        MOD_RESOLUTION_MISSING_MINECRAFT(Pattern.compile("ModResolutionException: Could not find required mod: (?<mod>.*) requires \\{minecraft @ (?<version>.*)}"), "mod", "version"),
+        MOD_RESOLUTION_COLLECTION(Pattern.compile("ModResolutionException: Could not resolve valid mod collection \\(at: (?<sourcemod>.*) requires (?<destmod>.*)\\)"), "sourcemod", "destmod"),
         // Some mods require a file not existing, asking user to manually delete it
         FILE_ALREADY_EXISTS(Pattern.compile("java\\.nio\\.file\\.FileAlreadyExistsException: (?<file>.*)"), "file"),
         // Forge found some mod crashed in game loading
@@ -69,6 +76,9 @@ public final class CrashReportAnalyzer {
         BOOTSTRAP_FAILED(Pattern.compile("Failed to create mod instance. ModID: (?<id>.*?),"), "id"),
         // Fabric found some mod crashed in game loading
         LOADING_CRASHED_FABRIC(Pattern.compile("Could not execute entrypoint stage '(.*?)' due to errors, provided by '(?<id>.*)'!"), "id"),
+        // Fabric may have breaking changes.
+        // https://github.com/FabricMC/fabric-loader/tree/master/src/main/legacyJava deprecated classes may be removed in the future.
+        FABRIC_VERSION_0_12(Pattern.compile("java\\.lang\\.NoClassDefFoundError: org/spongepowered/asm/mixin/transformer/FabricMixinTransformerProxy")),
         // Manually triggerd debug crash
         DEBUG_CRASH(Pattern.compile("Manually triggered debug crash")),
         CONFIG(Pattern.compile("Failed loading config file (?<file>.*?) of type SERVER for modid (?<id>.*)"), "id", "file"),
@@ -77,7 +87,15 @@ public final class CrashReportAnalyzer {
         // Game crashed when ticking entity
         ENTITY(Pattern.compile("Entity Type: (?<type>.*)[\\w\\W\\n\\r]*?Entity's Exact location: (?<location>.*)"), "type", "location"),
         // Game crashed when tesselating block model
-        BLOCK(Pattern.compile("Block: (?<type>.*)[\\w\\W\\n\\r]*?Block location: (?<location>.*)"), "type", "location");
+        BLOCK(Pattern.compile("Block: (?<type>.*)[\\w\\W\\n\\r]*?Block location: (?<location>.*)"), "type", "location"),
+        // Cannot find native libraries
+        UNSATISFIED_LINK_ERROR(Pattern.compile("java.lang.UnsatisfiedLinkError: Failed to locate library: (?<name>.*)"), "name"),
+
+
+
+        // Mod issues
+        // TwilightForest is not compatible with OptiFine on Minecraft 1.16.
+        TWILIGHT_FOREST_OPTIFINE(Pattern.compile("java.lang.IllegalArgumentException: (.*) outside of image bounds (.*)"));
 
         private final Pattern pattern;
         private final String[] groupNames;
@@ -143,8 +161,16 @@ public final class CrashReportAnalyzer {
         }
     }
 
+    public static String extractCrashReport(String rawLog) {
+        int begin = rawLog.lastIndexOf("---- Minecraft Crash Report ----");
+        int end = rawLog.lastIndexOf("#@!@# Game crashed! Crash report saved to");
+        if (begin == -1 || end == -1 || begin >= end) return null;
+        return rawLog.substring(begin, end);
+    }
+
     private static final Pattern CRASH_REPORT_STACK_TRACE_PATTERN = Pattern.compile("Description: (.*?)[\\n\\r]+(?<stacktrace>[\\w\\W\\n\\r]+)A detailed walkthrough of the error");
-    private static final Pattern STACK_TRACE_LINE_PATTERN = Pattern.compile("at (?<method>.*?)\\((.*?)\\)");
+    private static final Pattern STACK_TRACE_LINE_PATTERN = Pattern.compile("at (?<method>.*?)\\((?<sourcefile>.*?)\\)");
+    private static final Pattern STACK_TRACE_LINE_MODULE_PATTERN = Pattern.compile("\\{(?<tokens>.*)}");
     private static final Set<String> PACKAGE_KEYWORD_BLACK_LIST = new HashSet<>(Arrays.asList(
             "net", "minecraft", "item", "block", "player", "tileentity", "events", "common", "client", "entity", "mojang", "main", "gui", "world", "server", "dedicated", // minecraft
             "renderer", "chunk", "model", "loading", "color", "pipeline", "inventory", "launcher", "physics", "particle", "gen", "registry", "worldgen", "texture", "biomes", "biome",
@@ -159,7 +185,7 @@ public final class CrashReportAnalyzer {
             "fabricmc", "loader", "game", "knot", "launch", "mixin" // fabric
     ));
 
-    public static Set<String> findKeywordsFromCrashReport(String crashReport) throws IOException, InvalidPathException {
+    public static Set<String> findKeywordsFromCrashReport(String crashReport) {
         Matcher matcher = CRASH_REPORT_STACK_TRACE_PATTERN.matcher(crashReport);
         Set<String> result = new HashSet<>();
         if (matcher.find()) {
@@ -172,6 +198,20 @@ public final class CrashReportAnalyzer {
                             continue;
                         }
                         result.add(method[i]);
+                    }
+
+                    Matcher moduleMatcher = STACK_TRACE_LINE_MODULE_PATTERN.matcher(line);
+                    if (moduleMatcher.find()) {
+                        for (String module : moduleMatcher.group("tokens").split(",")) {
+                            String[] split = module.split(":");
+                            if (split.length >= 2 && "xf".equals(split[0])) {
+                                if (PACKAGE_KEYWORD_BLACK_LIST.contains(split[1])) {
+                                    continue;
+                                }
+
+                                result.add(split[1]);
+                            }
+                        }
                     }
                 }
             }

@@ -18,17 +18,22 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.google.gson.JsonParseException;
+import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import com.jfoenix.controls.*;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.MicrosoftAuthenticationServer;
+import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.setting.HMCLAccounts;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -36,13 +41,17 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
@@ -50,8 +59,7 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class FeedbackPage extends VBox {
-    private final ObjectProperty<HMCLAccount> account = new SimpleObjectProperty<>();
+public class FeedbackPage extends VBox implements PageAware {
     private final ObservableList<FeedbackResponse> feedbacks = FXCollections.observableArrayList();
     private final SpinnerPane spinnerPane = new SpinnerPane();
 
@@ -66,11 +74,14 @@ public class FeedbackPage extends VBox {
 
             TwoLineListItem accountInfo = new TwoLineListItem();
             HBox.setHgrow(accountInfo, Priority.ALWAYS);
-            accountInfo.titleProperty().bind(BindingMapping.of(account).map(account -> account == null ? i18n("account.not_logged_in") : account.getNickname()));
-            accountInfo.subtitleProperty().bind(BindingMapping.of(account).map(account -> account == null ? i18n("account.not_logged_in") : account.getEmail()));
+            accountInfo.titleProperty().bind(BindingMapping.of(HMCLAccounts.accountProperty())
+                    .map(account -> account == null ? i18n("account.not_logged_in") : account.getNickname()));
+            accountInfo.subtitleProperty().bind(BindingMapping.of(HMCLAccounts.accountProperty())
+                    .map(account -> account == null ? i18n("account.not_logged_in") : account.getEmail()));
 
             JFXButton logButton = new JFXButton();
-            logButton.textProperty().bind(BindingMapping.of(account).map(account -> account == null ? i18n("account.login") : i18n("account.logout")));
+            logButton.textProperty().bind(BindingMapping.of(HMCLAccounts.accountProperty())
+                    .map(account -> account == null ? i18n("account.login") : i18n("account.logout")));
             logButton.setOnAction(e -> log());
 
             loginPane.getChildren().setAll(accountInfo, logButton);
@@ -83,16 +94,21 @@ public class FeedbackPage extends VBox {
             getChildren().add(searchPane);
 
             JFXTextField searchField = new JFXTextField();
-            searchField.setOnAction(e -> search(searchField.getText()));
+            searchField.setOnAction(e -> search(searchField.getText(), "time", true));
             HBox.setHgrow(searchField, Priority.ALWAYS);
             searchField.setPromptText(i18n("search"));
 
             JFXButton searchButton = new JFXButton();
             searchButton.getStyleClass().add("toggle-icon4");
             searchButton.setGraphic(SVG.magnify(Theme.blackFillBinding(), -1, -1));
-            searchButton.setOnAction(e -> addFeedback());
+            searchButton.setOnAction(e -> search(searchField.getText(), "time", true));
 
-            searchPane.getChildren().setAll(searchField, searchButton);
+            JFXButton addButton = new JFXButton();
+            addButton.getStyleClass().add("toggle-icon4");
+            addButton.setGraphic(SVG.plus(Theme.blackFillBinding(), -1, -1));
+            addButton.setOnAction(e -> addFeedback());
+
+            searchPane.getChildren().setAll(searchField, searchButton, addButton);
         }
 
         {
@@ -105,9 +121,10 @@ public class FeedbackPage extends VBox {
                 private final TwoLineListItem content = new TwoLineListItem();
                 private final JFXButton likeButton = new JFXButton();
                 private final JFXButton unlikeButton = new JFXButton();
+                private final HBox container;
 
                 {
-                    HBox container = new HBox(8);
+                    container = new HBox(8);
                     container.setPickOnBounds(false);
                     container.setAlignment(Pos.CENTER_LEFT);
                     HBox.setHgrow(content, Priority.ALWAYS);
@@ -115,10 +132,10 @@ public class FeedbackPage extends VBox {
                     setSelectable();
 
                     likeButton.getStyleClass().add("toggle-icon4");
-                    likeButton.setGraphic(FXUtils.limitingSize(SVG.folderOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
+                    likeButton.setGraphic(FXUtils.limitingSize(SVG.thumbUpOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
 
                     unlikeButton.getStyleClass().add("toggle-icon4");
-                    unlikeButton.setGraphic(FXUtils.limitingSize(SVG.informationOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
+                    unlikeButton.setGraphic(FXUtils.limitingSize(SVG.thumbDownOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
 
                     container.getChildren().setAll(content, likeButton, unlikeButton);
 
@@ -128,31 +145,61 @@ public class FeedbackPage extends VBox {
 
                 @Override
                 protected void updateControl(FeedbackResponse feedback, boolean empty) {
+                    if (empty) return;
                     content.setTitle(feedback.getTitle());
-                    content.setSubtitle(feedback.getContent());
-                    content.getTags().add("#" + feedback.getId());
-                    content.getTags().add(feedback.getAuthor());
-                    content.getTags().add(feedback.getLauncherVersion());
-                    content.getTags().add(i18n("feedback.type." + feedback.getType().name().toLowerCase()));
+                    content.setSubtitle(feedback.getAuthor());
+                    content.getTags().setAll(
+                            "#" + feedback.getId(),
+                            i18n("feedback.state." + feedback.getState().name().toLowerCase(Locale.US)),
+                            i18n("feedback.type." + feedback.getType().name().toLowerCase(Locale.US)));
+                    container.setOnMouseClicked(e -> {
+                        getFeedback(feedback.getId())
+                                .thenAcceptAsync(Schedulers.javafx(), f -> {
+                                    Controllers.dialog(new ViewFeedbackDialog(f));
+                                })
+                                .start();
+                    });
                 }
-            });
-            listView.setOnMouseClicked(e -> {
-                if (listView.getSelectionModel().getSelectedIndex() < 0)
-                    return;
-                FeedbackResponse selectedItem = listView.getSelectionModel().getSelectedItem();
-                Controllers.dialog(new ViewFeedbackDialog(selectedItem));
             });
 
             getChildren().add(spinnerPane);
         }
     }
 
-    private void search(String keyword) {
+    @Override
+    public void onPageShown() {
+        search("", "time", false);
+    }
+
+    private void search(String keyword, String order, boolean showAll) {
+        HMCLAccounts.HMCLAccount account = HMCLAccounts.getAccount();
         Task.supplyAsync(() -> {
-            return HttpRequest.GET("https://hmcl.huangyuhui.net/api/feedback", pair("s", keyword)).<List<FeedbackResponse>>getJson(new TypeToken<List<FeedbackResponse>>(){}.getType());
-        }).whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
+            Map<String, String> query = mapOf(
+                    pair("keyword", keyword),
+                    pair("order", order)
+            );
+            if (showAll) {
+                query.put("showAll", "1");
+            }
+            HttpRequest req = HttpRequest.GET(NetworkUtils.withQuery("https://hmcl.huangyuhui.net/api/feedback", query));
+            if (account != null) {
+                req.authorization("Bearer", HMCLAccounts.getAccount().getIdToken())
+                        .header("Authorization-Provider", HMCLAccounts.getAccount().getProvider());
+            }
+            return req.<List<FeedbackResponse>>getJson(new TypeToken<List<FeedbackResponse>>(){}.getType());
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             spinnerPane.hideSpinner();
             if (exception != null) {
+                if (exception instanceof ResponseCodeException) {
+                    int responseCode = ((ResponseCodeException) exception).getResponseCode();
+                    if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                        spinnerPane.setFailedReason(i18n("feedback.failed.permission"));
+                        return;
+                    } else if (responseCode == 429) {
+                        spinnerPane.setFailedReason(i18n("feedback.failed.too_frequently"));
+                        return;
+                    }
+                }
                 spinnerPane.setFailedReason(i18n("feedback.failed"));
             } else {
                 feedbacks.setAll(result);
@@ -160,18 +207,22 @@ public class FeedbackPage extends VBox {
         }).start();
     }
 
+    private Task<FeedbackResponse> getFeedback(int id) {
+        return Task.supplyAsync(() -> HttpRequest.GET("https://hmcl.huangyuhui.net/api/feedback/" + id).getJson(FeedbackResponse.class));
+    }
+
     private void log() {
-        if (account.get() == null) {
+        if (HMCLAccounts.getAccount() == null) {
             // login
             Controllers.dialog(new LoginDialog());
         } else {
             // logout
-            account.set(null);
+            HMCLAccounts.setAccount(null);
         }
     }
 
     private void addFeedback() {
-        if (account.get() == null) {
+        if (HMCLAccounts.getAccount() == null) {
             Controllers.dialog(i18n("feedback.add.login"));
             return;
         }
@@ -179,143 +230,71 @@ public class FeedbackPage extends VBox {
         Controllers.dialog(new AddFeedbackDialog());
     }
 
-    private static class HMCLAccount {
-        private final String nickname;
-        private final String email;
-        private final String accessToken;
-
-        public HMCLAccount(String nickname, String email, String accessToken) {
-            this.nickname = nickname;
-            this.email = email;
-            this.accessToken = accessToken;
-        }
-
-        public String getNickname() {
-            return nickname;
-        }
-
-        public String getEmail() {
-            return email;
-        }
-
-        public String getAccessToken() {
-            return accessToken;
-        }
-    }
-
-    private static class HMCLLoginResponse {
-        private final int err;
-        private final String nickname;
-        private final String email;
-        private final String accessToken;
-
-        public HMCLLoginResponse(int err, String nickname, String email, String accessToken) {
-            this.err = err;
-            this.nickname = nickname;
-            this.email = email;
-            this.accessToken = accessToken;
-        }
-
-        public int getErr() {
-            return err;
-        }
-
-        public String getNickname() {
-            return nickname;
-        }
-
-        public String getEmail() {
-            return email;
-        }
-
-        public String getAccessToken() {
-            return accessToken;
-        }
-
-        public static final int ERR_OK = 0;
-        public static final int ERR_WRONG = 400;
-    }
-
     private class LoginDialog extends JFXDialogLayout {
         private final SpinnerPane spinnerPane = new SpinnerPane();
         private final Label errorLabel = new Label();
+        private final BooleanProperty logging = new SimpleBooleanProperty();
 
         public LoginDialog() {
             setHeading(new Label(i18n("feedback.login")));
 
-            GridPane body = new GridPane();
-            ColumnConstraints fieldColumn = new ColumnConstraints();
-            fieldColumn.setFillWidth(true);
-            body.getColumnConstraints().setAll(new ColumnConstraints(), fieldColumn);
-            body.setVgap(8);
-            body.setHgap(8);
-            setBody(body);
-
-            JFXTextField usernameField = new JFXTextField();
-            usernameField.setValidators(new RequiredValidator());
-            body.addRow(0, new Label(i18n("account.username")), usernameField);
-
-            JFXPasswordField passwordField = new JFXPasswordField();
-            passwordField.setValidators(new RequiredValidator());
-            body.addRow(1, new Label(i18n("account.password")), passwordField);
-
-            JFXButton registerButton = new JFXButton();
-            registerButton.setText(i18n("account.register"));
-            registerButton.setOnAction(e -> FXUtils.openLink("https://hmcl.huangyuhui.net/user/login"));
+            VBox vbox = new VBox(8);
+            setBody(vbox);
+            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+            hintPane.textProperty().bind(BindingMapping.of(logging).map(logging ->
+                    logging
+                            ? i18n("account.methods.microsoft.manual")
+                            : i18n("account.methods.microsoft.hint")));
+            hintPane.setOnMouseClicked(e -> {
+                if (logging.get() && MicrosoftAuthenticationServer.lastlyOpenedURL != null) {
+                    FXUtils.copyText(MicrosoftAuthenticationServer.lastlyOpenedURL);
+                }
+            });
+            vbox.getChildren().setAll(hintPane);
 
             JFXButton loginButton = new JFXButton();
             spinnerPane.setContent(loginButton);
             loginButton.setText(i18n("account.login"));
-            loginButton.setOnAction(e -> login(usernameField.getText(), passwordField.getText()));
+            loginButton.setOnAction(e -> login());
 
             JFXButton cancelButton = new JFXButton();
             cancelButton.setText(i18n("button.cancel"));
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
             onEscPressed(this, cancelButton::fire);
 
-            setActions(errorLabel, registerButton, spinnerPane, cancelButton);
+            setActions(errorLabel, spinnerPane, cancelButton);
         }
 
-        private void login(String username, String password) {
+        private void login() {
             spinnerPane.showSpinner();
             errorLabel.setText("");
-            Task.supplyAsync(() -> {
-                return HttpRequest.POST("https://hmcl.huangyuhui.net/api/user/login")
-                        .json(mapOf(
-                                pair("username", username),
-                                pair("password", password)
-                        )).getJson(HMCLLoginResponse.class);
-            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            logging.set(true);
+
+            HMCLAccounts.login().whenComplete(Schedulers.javafx(), (result, exception) -> {
+                logging.set(false);
                 if (exception != null) {
                     if (exception instanceof IOException) {
-                        if (exception instanceof ResponseCodeException && ((ResponseCodeException) exception).getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-                            errorLabel.setText(i18n("account.failed.invalid_password"));
-                        } else {
-                            errorLabel.setText(i18n("account.failed.connect_authentication_server"));
-                        }
+                        errorLabel.setText(i18n("account.failed.connect_authentication_server"));
                     } else if (exception instanceof JsonParseException) {
                         errorLabel.setText(i18n("account.failed.server_response_malformed"));
                     } else {
-                        errorLabel.setText(exception.getClass().getName() + ": " + exception.getLocalizedMessage());
+                        errorLabel.setText(Accounts.localizeErrorMessage(exception));
                     }
                 } else {
-                    if (result.err == HMCLLoginResponse.ERR_OK) {
-                        account.setValue(new HMCLAccount(result.getNickname(), result.getEmail(), result.getAccessToken()));
-                        fireEvent(new DialogCloseEvent());
-                    } else if (result.err == HMCLLoginResponse.ERR_WRONG) {
-                        errorLabel.setText(i18n("account.failed.invalid_password"));
-                    } else {
-                        errorLabel.setText(i18n("account.failed", result.err));
-                    }
+                    fireEvent(new DialogCloseEvent());
                 }
             }).start();
         }
     }
 
-    private static class AddFeedbackDialog extends JFXDialogLayout {
+    private static class AddFeedbackDialog extends DialogPane {
+
+        JFXTextField titleField = new JFXTextField();
+        JFXComboBox<FeedbackType> comboBox = new JFXComboBox<>();
+        JFXTextArea contentArea = new JFXTextArea();
 
         public AddFeedbackDialog() {
-            setHeading(new Label(i18n("feedback.add")));
+            setTitle(i18n("feedback.add"));
 
             GridPane body = new GridPane();
             body.setVgap(8);
@@ -326,16 +305,14 @@ public class FeedbackPage extends VBox {
             searchHintPane.setText(i18n("feedback.add.hint.search_before_add"));
             body.addRow(0, searchHintPane);
 
-            HintPane titleHintPane = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+            HintPane titleHintPane = new HintPane(MessageDialogPane.MessageType.INFO);
             GridPane.setColumnSpan(titleHintPane, 2);
             titleHintPane.setText(i18n("feedback.add.hint.title"));
             body.addRow(1, titleHintPane);
 
-            JFXTextField titleField = new JFXTextField();
             titleField.setValidators(new RequiredValidator());
             body.addRow(2, new Label(i18n("feedback.title")), titleField);
 
-            JFXComboBox<FeedbackType> comboBox = new JFXComboBox<>();
             comboBox.setMaxWidth(-1);
             comboBox.getItems().setAll(FeedbackType.values());
             comboBox.getSelectionModel().select(0);
@@ -346,29 +323,46 @@ public class FeedbackPage extends VBox {
             GridPane.setColumnSpan(contentLabel, 2);
             body.addRow(4, contentLabel);
 
-            JFXTextArea contentArea = new JFXTextArea();
             contentArea.setValidators(new RequiredValidator());
             contentArea.setPromptText(i18n("feedback.add.hint.content"));
             GridPane.setColumnSpan(contentArea, 2);
             body.addRow(5, contentArea);
 
+            validProperty().bind(Bindings.createBooleanBinding(() -> {
+                return titleField.validate() && contentArea.validate();
+            }, titleField.textProperty(), contentArea.textProperty()));
+
             setBody(body);
-
-            JFXButton okButton = new JFXButton();
-            okButton.setText(i18n("button.ok"));
-            okButton.setOnAction(e -> addFeedback(titleField.getText(), comboBox.getSelectionModel().getSelectedItem(), contentArea.getText()));
-
-            JFXButton cancelButton = new JFXButton();
-            cancelButton.setText(i18n("button.cancel"));
-            cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-            onEscPressed(this, cancelButton::fire);
-
-            setActions(okButton, cancelButton);
         }
 
-        private void addFeedback(String title, FeedbackType feedbackType, String content) {
-            fireEvent(new DialogCloseEvent());
-            // TODO
+        @Override
+        protected void onAccept() {
+            setLoading();
+
+            addFeedback(titleField.getText(), comboBox.getValue(), contentArea.getText())
+                    .whenComplete(Schedulers.javafx(), exception -> {
+                        if (exception != null) {
+                            onFailure(exception.getLocalizedMessage());
+                        } else {
+                            onSuccess();
+                        }
+                    })
+                    .start();
+        }
+
+        private Task<?> addFeedback(String title, FeedbackType feedbackType, String content) {
+            return Task.runAsync(() -> {
+                HttpRequest.POST("https://hmcl.huangyuhui.net/api/feedback")
+                        .json(mapOf(
+                                pair("title", title),
+                                pair("content", content),
+                                pair("type", feedbackType.name().toLowerCase(Locale.ROOT)),
+                                pair("launcher_version", Metadata.VERSION)
+                        ))
+                        .authorization("Bearer", HMCLAccounts.getAccount().getIdToken())
+                        .header("Authorization-Provider", HMCLAccounts.getAccount().getProvider())
+                        .getString();
+            });
         }
     }
 
@@ -377,9 +371,11 @@ public class FeedbackPage extends VBox {
         public ViewFeedbackDialog(FeedbackResponse feedback) {
             BorderPane heading = new BorderPane();
             TwoLineListItem left = new TwoLineListItem();
+            heading.setLeft(left);
             left.setTitle(feedback.getTitle());
             left.setSubtitle(feedback.getAuthor());
             left.getTags().add("#" + feedback.getId());
+            left.getTags().add(i18n("feedback.state." + feedback.getState().name().toLowerCase(Locale.US)));
             left.getTags().add(feedback.getLauncherVersion());
             left.getTags().add(i18n("feedback.type." + feedback.getType().name().toLowerCase()));
 
@@ -387,7 +383,17 @@ public class FeedbackPage extends VBox {
 
             Label content = new Label(feedback.getContent());
             content.setWrapText(true);
-            setBody(content);
+
+            TwoLineListItem response = new TwoLineListItem();
+            response.getStyleClass().setAll("two-line-item-second-large");
+            response.setTitle(i18n("feedback.response"));
+            response.setSubtitle(StringUtils.isBlank(feedback.getReason())
+                    ? i18n("feedback.response.empty")
+                    : feedback.getReason());
+
+            VBox body = new VBox(content, response);
+            body.setSpacing(8);
+            setBody(body);
 
             JFXButton okButton = new JFXButton();
             okButton.setText(i18n("button.ok"));
@@ -402,18 +408,21 @@ public class FeedbackPage extends VBox {
         private final String title;
         private final String content;
         private final String author;
+        @SerializedName("launcher_version")
         private final String launcherVersion;
-        private final String gameVersion;
         private final FeedbackType type;
+        private final FeedbackState state;
+        private final String reason;
 
-        public FeedbackResponse(int id, String title, String content, String author, String launcherVersion, String gameVersion, FeedbackType type) {
+        public FeedbackResponse(int id, String title, String content, String author, String launcherVersion, FeedbackType type, FeedbackState state, String reason) {
             this.id = id;
             this.title = title;
             this.content = content;
             this.author = author;
             this.launcherVersion = launcherVersion;
-            this.gameVersion = gameVersion;
             this.type = type;
+            this.state = state;
+            this.reason = reason;
         }
 
         public int getId() {
@@ -436,17 +445,27 @@ public class FeedbackPage extends VBox {
             return launcherVersion;
         }
 
-        public String getGameVersion() {
-            return gameVersion;
-        }
-
         public FeedbackType getType() {
             return type;
+        }
+
+        public FeedbackState getState() {
+            return state;
+        }
+
+        public String getReason() {
+            return reason;
         }
     }
 
     private enum FeedbackType {
-        FEATURE_REQUEST,
-        BUG_REPORT
+        FEATURE,
+        BUG
+    }
+
+    private enum FeedbackState {
+        OPEN,
+        REJECTED,
+        ACCEPTED
     }
 }

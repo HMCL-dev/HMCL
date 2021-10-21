@@ -261,7 +261,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
         if (factory == Accounts.FACTORY_MICROSOFT) {
             VBox vbox = new VBox(8);
-            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFORMATION);
+            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
             hintPane.textProperty().bind(BindingMapping.of(logging).map(logging ->
                     logging
                             ? i18n("account.methods.microsoft.manual")
@@ -523,7 +523,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 return getAuthServer();
             } else if (factory instanceof OfflineAccountFactory) {
                 UUID uuid = txtUUID == null ? null : StringUtils.isBlank(txtUUID.getText()) ? null : UUIDTypeAdapter.fromString(txtUUID.getText());
-                return new OfflineAccountFactory.AdditionalData(uuid, null, null);
+                return new OfflineAccountFactory.AdditionalData(uuid, null);
             } else {
                 return null;
             }

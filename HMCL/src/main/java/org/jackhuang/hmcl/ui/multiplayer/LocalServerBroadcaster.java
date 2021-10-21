@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 
@@ -44,9 +43,11 @@ public class LocalServerBroadcaster implements Runnable {
     @Override
     public void run() {
         DatagramSocket socket;
+        InetAddress broadcastAddress;
         try {
             socket = new DatagramSocket();
-        } catch (SocketException e) {
+            broadcastAddress = InetAddress.getByName("224.0.2.60");
+        } catch (IOException e) {
             LOG.log(Level.WARNING, "Failed to create datagram socket", e);
             return;
         }
@@ -54,8 +55,9 @@ public class LocalServerBroadcaster implements Runnable {
         while (session.isRunning()) {
             try {
                 byte[] data = String.format("[MOTD]%s[/MOTD][AD]%d[/AD]", i18n("multiplayer.session.name.motd", session.getName()), port).getBytes(StandardCharsets.UTF_8);
-                DatagramPacket packet = new DatagramPacket(data, 0, data.length, InetAddress.getByName("224.0.2.60"), 4445);
+                DatagramPacket packet = new DatagramPacket(data, 0, data.length, broadcastAddress, 4445);
                 socket.send(packet);
+                LOG.finest("Broadcast server 0.0.0.0:" + port);
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "Failed to send motd packet", e);
             }
@@ -66,5 +68,7 @@ public class LocalServerBroadcaster implements Runnable {
                 return;
             }
         }
+
+        socket.close();
     }
 }

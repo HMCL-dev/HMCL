@@ -17,11 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.property.*;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -29,40 +28,30 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.setting.Theme;
-import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
-public class MultiFileItem<T> extends ComponentSublist {
+public class MultiFileItem<T> extends VBox {
     private final ObjectProperty<T> selectedData = new SimpleObjectProperty<>(this, "selectedData");
     private final ObjectProperty<T> fallbackData = new SimpleObjectProperty<>(this, "fallbackData");
 
     private final ToggleGroup group = new ToggleGroup();
-    private final VBox pane = new VBox();
 
     private Consumer<Toggle> toggleSelectedListener;
 
     @SuppressWarnings("unchecked")
     public MultiFileItem() {
-        pane.setStyle("-fx-padding: 0 0 10 0;");
-        pane.setSpacing(8);
-
-        getContent().add(pane);
+        setPadding(new Insets(0, 0, 10, 0));
+        setSpacing(8);
 
         group.selectedToggleProperty().addListener((a, b, newValue) -> {
             if (toggleSelectedListener != null)
@@ -85,7 +74,7 @@ public class MultiFileItem<T> extends ComponentSublist {
     }
 
     public void loadChildren(Collection<Option<T>> options) {
-        pane.getChildren().setAll(options.stream()
+        getChildren().setAll(options.stream()
                 .map(option -> option.createItem(group))
                 .collect(Collectors.toList()));
     }
@@ -126,9 +115,12 @@ public class MultiFileItem<T> extends ComponentSublist {
         protected final String title;
         protected String subtitle;
         protected final T data;
+        protected final BooleanProperty selected = new SimpleBooleanProperty();
+        protected final JFXRadioButton left = new JFXRadioButton();
 
         public Option(String title, T data) {
-            this.title = title; this.data = data;
+            this.title = title;
+            this.data = data;
         }
 
         public T getData() {
@@ -148,19 +140,38 @@ public class MultiFileItem<T> extends ComponentSublist {
             return this;
         }
 
+        public boolean isSelected() {
+            return left.isSelected();
+        }
+
+        public BooleanProperty selectedProperty() {
+            return left.selectedProperty();
+        }
+
+        public void setSelected(boolean selected) {
+            left.setSelected(selected);
+        }
+
         protected Node createItem(ToggleGroup group) {
             BorderPane pane = new BorderPane();
             pane.setPadding(new Insets(3));
             FXUtils.setLimitHeight(pane, 30);
 
-            JFXRadioButton left = new JFXRadioButton(title);
+            left.setText(title);
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
             left.setToggleGroup(group);
             left.setUserData(data);
             pane.setLeft(left);
 
             if (StringUtils.isNotBlank(subtitle)) {
-                Label right = new Label(subtitle);
+                Optional<String> shortSubtitle = StringUtils.truncate(subtitle);
+                Label right;
+                if (shortSubtitle.isPresent()) {
+                    right = new Label(shortSubtitle.get());
+                    right.setTooltip(new Tooltip(subtitle));
+                } else {
+                    right = new Label(subtitle);
+                }
                 BorderPane.setAlignment(right, Pos.CENTER_RIGHT);
                 right.setWrapText(true);
                 right.getStyleClass().add("subtitle-label");
@@ -173,26 +184,31 @@ public class MultiFileItem<T> extends ComponentSublist {
     }
 
     public static class StringOption<T> extends Option<T> {
-        private StringProperty value = new SimpleStringProperty();
+        private JFXTextField customField = new JFXTextField();
 
         public StringOption(String title, T data) {
             super(title, data);
         }
 
         public String getValue() {
-            return value.get();
+            return customField.getText();
         }
 
         public StringProperty valueProperty() {
-            return value;
+            return customField.textProperty();
         }
 
         public void setValue(String value) {
-            this.value.set(value);
+            customField.setText(value);
         }
 
         public StringOption<T> bindBidirectional(Property<String> property) {
-            this.value.bindBidirectional(property);
+            customField.textProperty().bindBidirectional(property);
+            return this;
+        }
+
+        public StringOption<T> setValidators(ValidatorBase... validators) {
+            customField.setValidators(validators);
             return this;
         }
 
@@ -202,16 +218,19 @@ public class MultiFileItem<T> extends ComponentSublist {
             pane.setPadding(new Insets(3));
             FXUtils.setLimitHeight(pane, 30);
 
-            JFXRadioButton left = new JFXRadioButton(title);
+            left.setText(title);
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
             left.setToggleGroup(group);
             left.setUserData(data);
             pane.setLeft(left);
 
-            JFXTextField customField = new JFXTextField();
             BorderPane.setAlignment(customField, Pos.CENTER_RIGHT);
-            customField.textProperty().bindBidirectional(valueProperty());
             customField.disableProperty().bind(left.selectedProperty().not());
+
+            if (!customField.getValidators().isEmpty()) {
+                FXUtils.setValidateWhileTextChanged(customField, true);
+            }
+
             pane.setRight(customField);
 
             return pane;
@@ -219,44 +238,41 @@ public class MultiFileItem<T> extends ComponentSublist {
     }
 
     public static class FileOption<T> extends Option<T> {
-        private StringProperty value = new SimpleStringProperty();
-        private String chooserTitle = i18n("selector.choose_file");
-        private boolean directory = false;
-        private final ObservableList<FileChooser.ExtensionFilter> extensionFilters = FXCollections.observableArrayList();
+        private FileSelector selector = new FileSelector();
 
         public FileOption(String title, T data) {
             super(title, data);
         }
 
         public String getValue() {
-            return value.get();
+            return selector.getValue();
         }
 
         public StringProperty valueProperty() {
-            return value;
+            return selector.valueProperty();
         }
 
         public void setValue(String value) {
-            this.value.set(value);
+            selector.setValue(value);
         }
 
         public FileOption<T> setDirectory(boolean directory) {
-            this.directory = directory;
+            selector.setDirectory(directory);
             return this;
         }
 
         public FileOption<T> bindBidirectional(Property<String> property) {
-            this.value.bindBidirectional(property);
+            selector.valueProperty().bindBidirectional(property);
             return this;
         }
 
         public FileOption<T> setChooserTitle(String chooserTitle) {
-            this.chooserTitle = chooserTitle;
+            selector.setChooserTitle(chooserTitle);
             return this;
         }
 
         public ObservableList<FileChooser.ExtensionFilter> getExtensionFilters() {
-            return extensionFilters;
+            return selector.getExtensionFilters();
         }
 
         @Override
@@ -265,42 +281,15 @@ public class MultiFileItem<T> extends ComponentSublist {
             pane.setPadding(new Insets(3));
             FXUtils.setLimitHeight(pane, 30);
 
-            JFXRadioButton left = new JFXRadioButton(title);
+            left.setText(title);
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
             left.setToggleGroup(group);
             left.setUserData(data);
             pane.setLeft(left);
 
-            JFXTextField customField = new JFXTextField();
-            customField.textProperty().bindBidirectional(valueProperty());
-            customField.disableProperty().bind(left.selectedProperty().not());
-
-            JFXButton selectButton = new JFXButton();
-            selectButton.disableProperty().bind(left.selectedProperty().not());
-            selectButton.setGraphic(SVG.folderOpen(Theme.blackFillBinding(), 15, 15));
-            selectButton.setOnMouseClicked(e -> {
-                if (directory) {
-                    DirectoryChooser chooser = new DirectoryChooser();
-                    chooser.setTitle(chooserTitle);
-                    File dir = chooser.showDialog(Controllers.getStage());
-                    if (dir != null)
-                        customField.setText(dir.getAbsolutePath());
-                } else {
-                    FileChooser chooser = new FileChooser();
-                    chooser.getExtensionFilters().addAll(getExtensionFilters());
-                    chooser.setTitle(chooserTitle);
-                    File file = chooser.showOpenDialog(Controllers.getStage());
-                    if (file != null)
-                        customField.setText(file.getAbsolutePath());
-                }
-            });
-
-            HBox right = new HBox();
-            right.setAlignment(Pos.CENTER_RIGHT);
-            BorderPane.setAlignment(right, Pos.CENTER_RIGHT);
-            right.setSpacing(3);
-            right.getChildren().addAll(customField, selectButton);
-            pane.setRight(right);
+            selector.disableProperty().bind(left.selectedProperty().not());
+            BorderPane.setAlignment(selector, Pos.CENTER_RIGHT);
+            pane.setRight(selector);
             return pane;
         }
     }

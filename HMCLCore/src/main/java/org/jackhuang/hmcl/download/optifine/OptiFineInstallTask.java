@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download.optifine;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -28,6 +29,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jenkinsci.constant_pool_scanner.ConstantPool;
 import org.jenkinsci.constant_pool_scanner.ConstantPoolScanner;
 import org.jenkinsci.constant_pool_scanner.ConstantType;
@@ -39,6 +41,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+
 import static org.jackhuang.hmcl.util.Lang.getOrDefault;
 
 /**
@@ -122,8 +125,11 @@ public final class OptiFineInstallTask extends Task<Version> {
     @Override
     public void execute() throws Exception {
         String originalMainClass = version.resolve(dependencyManager.getGameRepository()).getMainClass();
-        if (!LibraryAnalyzer.VANILLA_MAIN.equals(originalMainClass) && !LibraryAnalyzer.LAUNCH_WRAPPER_MAIN.equals(originalMainClass) && !LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(originalMainClass))
-            throw new OptiFineInstallTask.UnsupportedOptiFineInstallationException();
+        if (!LibraryAnalyzer.VANILLA_MAIN.equals(originalMainClass) &&
+                !LibraryAnalyzer.LAUNCH_WRAPPER_MAIN.equals(originalMainClass) &&
+                !LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(originalMainClass) &&
+                !LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(originalMainClass))
+            throw new UnsupportedInstallationException(UnsupportedInstallationException.UNSUPPORTED_LAUNCH_WRAPPER);
 
         List<Library> libraries = new LinkedList<>();
         libraries.add(optiFineLibrary);
@@ -176,6 +182,19 @@ public final class OptiFineInstallTask extends Task<Version> {
                     libraries.add(launchWrapper);
                 }
             }
+
+            Path buildofText = fs.getPath("buildof.txt");
+            if (Files.exists(buildofText)) {
+                String buildof = FileUtils.readText(buildofText).trim();
+                VersionNumber buildofVer = VersionNumber.asVersion(buildof);
+
+                if (LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(originalMainClass)) {
+                    // OptiFine H1 Pre2+ is compatible with Forge 1.17
+                    if (buildofVer.compareTo(VersionNumber.asVersion("20210924-190833")) < 0) {
+                        throw new UnsupportedInstallationException(UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2);
+                    }
+                }
+            }
         }
 
         if (!hasLaunchWrapper) {
@@ -192,9 +211,6 @@ public final class OptiFineInstallTask extends Task<Version> {
         ));
 
         dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
-    }
-
-    public static class UnsupportedOptiFineInstallationException extends Exception {
     }
 
     /**

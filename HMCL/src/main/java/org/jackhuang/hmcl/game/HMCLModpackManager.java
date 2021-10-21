@@ -18,11 +18,14 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -45,15 +48,23 @@ public final class HMCLModpackManager {
      */
     public static Modpack readHMCLModpackManifest(Path file, Charset encoding) throws IOException, JsonParseException {
         String manifestJson = CompressingUtils.readTextZipEntry(file, "modpack.json", encoding);
-        Modpack manifest = JsonUtils.fromNonNullJson(manifestJson, Modpack.class).setEncoding(encoding);
+        Modpack manifest = JsonUtils.fromNonNullJson(manifestJson, HMCLModpack.class).setEncoding(encoding);
         String gameJson = CompressingUtils.readTextZipEntry(file, "minecraft/pack.json", encoding);
         Version game = JsonUtils.fromNonNullJson(gameJson, Version.class);
         if (game.getJar() == null)
             if (StringUtils.isBlank(manifest.getVersion()))
                 throw new JsonParseException("Cannot recognize the game version of modpack " + file + ".");
             else
-                return manifest.setManifest(HMCLModpackManifest.INSTANCE);
+                manifest.setManifest(HMCLModpackManifest.INSTANCE);
         else
-            return manifest.setManifest(HMCLModpackManifest.INSTANCE).setGameVersion(game.getJar());
+            manifest.setManifest(HMCLModpackManifest.INSTANCE).setGameVersion(game.getJar());
+        return manifest;
+    }
+
+    private static class HMCLModpack extends Modpack {
+        @Override
+        public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name) {
+            return new HMCLModpackInstallTask(((HMCLGameRepository) dependencyManager.getGameRepository()).getProfile(), zipFile, this, name);
+        }
     }
 }

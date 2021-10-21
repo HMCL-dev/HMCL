@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.ui.CrashWindow;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -109,11 +110,13 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             String text = "---- Hello Minecraft! Crash Report ----\n" +
                     "  Version: " + Metadata.VERSION + "\n" +
                     "  Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\n" +
-                    "  Thread: " + t.toString() + "\n" +
+                    "  Thread: " + t + "\n" +
                     "\n  Content: \n    " +
                     stackTrace + "\n\n" +
                     "-- System Details --\n" +
-                    "  Operating System: " + System.getProperty("os.name") + ' ' + OperatingSystem.SYSTEM_VERSION + "\n" +
+                    "  Operating System: " + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION + "\n" +
+                    "  System Architecture: " + Architecture.SYSTEM_ARCH_NAME + "\n" +
+                    "  Java Architecture: " + Architecture.CURRENT_ARCH_NAME + "\n" +
                     "  Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor") + "\n" +
                     "  Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor") + "\n" +
                     "  JVM Max Memory: " + Runtime.getRuntime().maxMemory() + "\n" +

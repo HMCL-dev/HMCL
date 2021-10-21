@@ -63,6 +63,14 @@ public abstract class HttpRequest {
         return header("Authorization", token);
     }
 
+    public HttpRequest authorization(String tokenType, String tokenString) {
+        return authorization(tokenType + " " + tokenString);
+    }
+
+    public HttpRequest authorization(Authorization authorization) {
+        return authorization(authorization.getTokenType(), authorization.getAccessToken());
+    }
+
     public HttpRequest header(String key, String value) {
         headers.put(key, value);
         return this;
@@ -189,4 +197,9 @@ public abstract class HttpRequest {
         return new HttpPostRequest(url);
     }
 
+    public interface Authorization {
+        String getTokenType();
+
+        String getAccessToken();
+    }
 }

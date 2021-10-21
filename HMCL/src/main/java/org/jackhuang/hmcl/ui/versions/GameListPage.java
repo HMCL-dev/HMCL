@@ -23,28 +23,22 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.SkinBase;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
+import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.profile.ProfileListItem;
 import org.jackhuang.hmcl.ui.profile.ProfilePage;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,8 +46,8 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
 
-public class GameListPage extends ListPageBase<GameListItem> implements DecoratorPage {
-    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("version.manage"), -1));
+public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage {
+    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("version.manage")));
     private final ListProperty<Profile> profiles = new SimpleListProperty<>(FXCollections.observableArrayList());
     @SuppressWarnings("FieldCanBeLocal")
     private final ObservableList<ProfileListItem> profileListItems;
@@ -62,16 +56,62 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
     private ToggleGroup toggleGroup;
 
     public GameListPage() {
-        EventBus.EVENT_BUS.channel(RefreshingVersionsEvent.class).register(event -> {
-            if (event.getSource() == Profiles.getSelectedProfile().getRepository())
-                runInFX(() -> setLoading(true));
-        });
         profileListItems = MappedObservableList.create(profilesProperty(), profile -> {
             ProfileListItem item = new ProfileListItem(profile);
             FXUtils.setLimitWidth(item, 200);
             return item;
         });
         selectedProfile = createSelectedItemPropertyFor(profileListItems, Profile.class);
+
+        GameList gameList = new GameList();
+
+        {
+            ScrollPane pane = new ScrollPane();
+            VBox.setVgrow(pane, Priority.ALWAYS);
+            {
+                AdvancedListItem addProfileItem = new AdvancedListItem();
+                addProfileItem.getStyleClass().add("navigation-drawer-item");
+                addProfileItem.setTitle(i18n("profile.new"));
+                addProfileItem.setActionButtonVisible(false);
+                addProfileItem.setLeftGraphic(VersionPage.wrap(SVG::plusCircleOutline));
+                addProfileItem.setOnAction(e -> Controllers.navigate(new ProfilePage(null)));
+
+                pane.setFitToWidth(true);
+                VBox wrapper = new VBox();
+                wrapper.getStyleClass().add("advanced-list-box-content");
+                VBox box = new VBox();
+                box.setFillWidth(true);
+                Bindings.bindContent(box.getChildren(), profileListItems);
+                wrapper.getChildren().setAll(box, addProfileItem);
+                pane.setContent(wrapper);
+            }
+
+            AdvancedListBox bottomLeftCornerList = new AdvancedListBox()
+                    .addNavigationDrawerItem(installNewGameItem -> {
+                        installNewGameItem.setTitle(i18n("install.new_game"));
+                        installNewGameItem.setLeftGraphic(VersionPage.wrap(SVG::plusCircleOutline));
+                        installNewGameItem.setOnAction(e -> Versions.addNewGame());
+                    })
+                    .addNavigationDrawerItem(installModpackItem -> {
+                        installModpackItem.setTitle(i18n("install.modpack"));
+                        installModpackItem.setLeftGraphic(VersionPage.wrap(SVG::pack));
+                        installModpackItem.setOnAction(e -> Versions.importModpack());
+                    })
+                    .addNavigationDrawerItem(refreshItem -> {
+                        refreshItem.setTitle(i18n("button.refresh"));
+                        refreshItem.setLeftGraphic(VersionPage.wrap(SVG::refresh));
+                        refreshItem.setOnAction(e -> gameList.refreshList());
+                    })
+                    .addNavigationDrawerItem(globalManageItem -> {
+                        globalManageItem.setTitle(i18n("settings.type.global.manage"));
+                        globalManageItem.setLeftGraphic(VersionPage.wrap(SVG::gearOutline));
+                        globalManageItem.setOnAction(e -> modifyGlobalGameSettings());
+                    });
+            FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 4 + 12 * 2);
+            setLeft(pane, bottomLeftCornerList);
+        }
+
+        setCenter(gameList);
     }
 
     public ObjectProperty<Profile> selectedProfileProperty() {
@@ -90,11 +130,6 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
         this.profiles.set(profiles);
     }
 
-    @Override
-    protected GameListPageSkin createDefaultSkin() {
-        return new GameListPageSkin();
-    }
-
     public void modifyGlobalGameSettings() {
         Versions.modifyGlobalSettings(Profiles.getSelectedProfile());
     }
@@ -102,76 +137,6 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state.getReadOnlyProperty();
-    }
-
-    private class GameListPageSkin extends SkinBase<GameListPage> {
-
-        protected GameListPageSkin() {
-            super(GameListPage.this);
-
-
-            BorderPane root = new BorderPane();
-            GameList gameList = new GameList();
-
-            {
-                BorderPane left = new BorderPane();
-                FXUtils.setLimitWidth(left, 200);
-                root.setLeft(left);
-
-                {
-                    AdvancedListItem addProfileItem = new AdvancedListItem();
-                    addProfileItem.getStyleClass().add("navigation-drawer-item");
-                    addProfileItem.setTitle(i18n("profile.new"));
-                    addProfileItem.setActionButtonVisible(false);
-                    addProfileItem.setLeftGraphic(VersionPage.wrap(SVG::plusCircleOutline));
-                    addProfileItem.setOnAction(e -> Controllers.navigate(new ProfilePage(null)));
-
-                    ScrollPane pane = new ScrollPane();
-                    pane.setFitToWidth(true);
-                    VBox wrapper = new VBox();
-                    wrapper.getStyleClass().add("advanced-list-box-content");
-                    VBox box = new VBox();
-                    box.setFillWidth(true);
-                    Bindings.bindContent(box.getChildren(), profileListItems);
-                    wrapper.getChildren().setAll(box, addProfileItem);
-                    pane.setContent(wrapper);
-                    left.setCenter(pane);
-                }
-
-                {
-                    AdvancedListItem installModpackItem = new AdvancedListItem();
-                    installModpackItem.getStyleClass().add("navigation-drawer-item");
-                    installModpackItem.setTitle(i18n("install.modpack"));
-                    installModpackItem.setActionButtonVisible(false);
-                    installModpackItem.setLeftGraphic(VersionPage.wrap(SVG::pack));
-                    installModpackItem.setOnAction(e -> Versions.importModpack());
-
-                    AdvancedListItem refreshItem = new AdvancedListItem();
-                    refreshItem.getStyleClass().add("navigation-drawer-item");
-                    refreshItem.setTitle(i18n("button.refresh"));
-                    refreshItem.setActionButtonVisible(false);
-                    refreshItem.setLeftGraphic(VersionPage.wrap(SVG::refresh));
-                    refreshItem.setOnAction(e -> gameList.refreshList());
-
-                    AdvancedListItem globalManageItem = new AdvancedListItem();
-                    globalManageItem.getStyleClass().add("navigation-drawer-item");
-                    globalManageItem.setTitle(i18n("settings.type.global.manage"));
-                    globalManageItem.setActionButtonVisible(false);
-                    globalManageItem.setLeftGraphic(VersionPage.wrap(SVG::gearOutline));
-                    globalManageItem.setOnAction(e -> modifyGlobalGameSettings());
-
-                    AdvancedListBox bottomLeftCornerList = new AdvancedListBox()
-                            .add(installModpackItem)
-                            .add(refreshItem)
-                            .add(globalManageItem);
-                    FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 3 + 12 * 2);
-                    left.setBottom(bottomLeftCornerList);
-                }
-            }
-
-            root.setCenter(gameList);
-            getChildren().setAll(root);
-        }
     }
 
     private class GameList extends ListPageBase<GameListItem> {
@@ -190,15 +155,12 @@ public class GameListPage extends ListPageBase<GameListItem> implements Decorato
             toggleGroup = new ToggleGroup();
             WeakListenerHolder listenerHolder = new WeakListenerHolder();
             toggleGroup.getProperties().put("ReferenceHolder", listenerHolder);
-            List<GameListItem> children = repository.getVersions().parallelStream()
-                    .filter(version -> !version.isHidden())
-                    .sorted(Comparator.comparing((Version version) -> version.getReleaseTime() == null ? new Date(0L) : version.getReleaseTime())
-                            .thenComparing(a -> VersionNumber.asVersion(a.getId())))
-                    .map(version -> new GameListItem(toggleGroup, profile, version.getId()))
-                    .collect(Collectors.toList());
             runInFX(() -> {
                 if (profile == Profiles.getSelectedProfile()) {
                     setLoading(false);
+                    List<GameListItem> children = repository.getDisplayVersions()
+                            .map(version -> new GameListItem(toggleGroup, profile, version.getId()))
+                            .collect(Collectors.toList());
                     itemsProperty().setAll(children);
                     children.forEach(GameListItem::checkSelection);
 

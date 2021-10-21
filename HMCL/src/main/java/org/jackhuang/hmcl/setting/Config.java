@@ -34,7 +34,6 @@ import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.util.gson.EnumOrdinalDeserializer;
 import org.jackhuang.hmcl.util.gson.FileTypeAdapter;
 import org.jackhuang.hmcl.util.i18n.Locales;
@@ -158,11 +157,11 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("logLines")
     private IntegerProperty logLines = new SimpleIntegerProperty(100);
 
+    @SerializedName("titleTransparent")
+    private BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
+
     @SerializedName("authlibInjectorServers")
     private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList(server -> new Observable[] { server });
-
-    @SerializedName("updateChannel")
-    private ObjectProperty<UpdateChannel> updateChannel = new SimpleObjectProperty<>(UpdateChannel.STABLE);
 
     @SerializedName("_version")
     private IntegerProperty configVersion = new SimpleIntegerProperty(0);
@@ -533,18 +532,6 @@ public final class Config implements Cloneable, Observable {
         return authlibInjectorServers;
     }
 
-    public UpdateChannel getUpdateChannel() {
-        return updateChannel.get();
-    }
-
-    public ObjectProperty<UpdateChannel> updateChannelProperty() {
-        return updateChannel;
-    }
-
-    public void setUpdateChannel(UpdateChannel updateChannel) {
-        this.updateChannel.set(updateChannel);
-    }
-
     public int getConfigVersion() {
         return configVersion.get();
     }
@@ -579,5 +566,17 @@ public final class Config implements Cloneable, Observable {
 
     public StringProperty preferredLoginTypeProperty() {
         return preferredLoginType;
+    }
+
+    public boolean isTitleTransparent() {
+        return titleTransparent.get();
+    }
+
+    public BooleanProperty titleTransparentProperty() {
+        return titleTransparent;
+    }
+
+    public void setTitleTransparent(boolean titleTransparent) {
+        this.titleTransparent.set(titleTransparent);
     }
 }

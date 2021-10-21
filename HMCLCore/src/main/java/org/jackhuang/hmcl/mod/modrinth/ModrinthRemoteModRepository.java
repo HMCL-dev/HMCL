@@ -19,51 +19,100 @@ package org.jackhuang.hmcl.mod.modrinth;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import org.jackhuang.hmcl.mod.DownloadManager;
+import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.ModLoaderType;
+import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.Hex;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.ResponseCodeException;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
-public final class Modrinth {
-    private Modrinth() {
+public final class ModrinthRemoteModRepository implements RemoteModRepository {
+    public static final ModrinthRemoteModRepository INSTANCE = new ModrinthRemoteModRepository();
+
+    private static final String PREFIX = "https://api.modrinth.com";
+
+    private ModrinthRemoteModRepository() {
     }
 
-    public static List<ModResult> searchPaginated(String gameVersion, int pageOffset, String searchFilter) throws IOException {
+    public List<ModResult> searchPaginated(String gameVersion, int pageOffset, int pageSize, String searchFilter) throws IOException {
         Map<String, String> query = mapOf(
                 pair("query", searchFilter),
                 pair("offset", Integer.toString(pageOffset)),
-                pair("limit", "50")
+                pair("limit", Integer.toString(pageSize))
         );
         if (StringUtils.isNotBlank(gameVersion)) {
             query.put("version", "versions=" + gameVersion);
         }
-        Response<ModResult> response = HttpRequest.GET(NetworkUtils.withQuery("https://api.modrinth.com/api/v1/mod", query))
+        Response<ModResult> response = HttpRequest.GET(NetworkUtils.withQuery(PREFIX + "/api/v1/mod", query))
                 .getJson(new TypeToken<Response<ModResult>>() {
                 }.getType());
         return response.getHits();
     }
 
-    public static List<ModVersion> getFiles(ModResult mod) throws IOException {
-        String id = StringUtils.removePrefix(mod.getModId(), "local-");
+    @Override
+    public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, int sort) throws IOException {
+        return searchPaginated(gameVersion, pageOffset, pageSize, searchFilter).stream()
+                .map(ModResult::toMod);
+    }
+
+    @Override
+    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
+        String sha1 = Hex.encodeHex(DigestUtils.digest("SHA-1", file));
+
+        try {
+            ModVersion mod = HttpRequest.GET(PREFIX + "/api/v1/version_file/" + sha1,
+                            pair("algorithm", "sha1"))
+                    .getJson(ModVersion.class);
+            return mod.toVersion();
+        } catch (ResponseCodeException e) {
+            if (e.getResponseCode() == 404) {
+                return Optional.empty();
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    @Override
+    public RemoteMod getModById(String id) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
+        id = StringUtils.removePrefix(id, "local-");
         List<ModVersion> versions = HttpRequest.GET("https://api.modrinth.com/api/v1/mod/" + id + "/version")
                 .getJson(new TypeToken<List<ModVersion>>() {
                 }.getType());
-        return versions;
+        return versions.stream().map(ModVersion::toVersion).flatMap(Lang::toStream);
     }
 
-    public static List<String> getCategories() throws IOException {
-        List<String> categories = HttpRequest.GET("https://api.modrinth.com/api/v1/tag/category").getJson(new TypeToken<List<String>>() {
+    public List<String> getCategoriesImpl() throws IOException {
+        return HttpRequest.GET("https://api.modrinth.com/api/v1/tag/category").getJson(new TypeToken<List<String>>() {
         }.getType());
-        return categories;
+    }
+
+    public Stream<Category> getCategories() throws IOException {
+        return getCategoriesImpl().stream()
+                .map(name -> new Category(null, name, Collections.emptyList()));
     }
 
     public static class Mod {
@@ -149,7 +198,7 @@ public final class Modrinth {
         }
     }
 
-    public static class ModVersion {
+    public static class ModVersion implements RemoteMod.IVersion {
         private final String id;
 
         @SerializedName("mod_id")
@@ -250,24 +299,30 @@ public final class Modrinth {
             return loaders;
         }
 
-        public Optional<DownloadManager.Version> toVersion() {
-            DownloadManager.VersionType type;
+        @Override
+        public RemoteMod.Type getType() {
+            return RemoteMod.Type.MODRINTH;
+        }
+
+        public Optional<RemoteMod.Version> toVersion() {
+            RemoteMod.VersionType type;
             if ("release".equals(versionType)) {
-                type = DownloadManager.VersionType.Release;
+                type = RemoteMod.VersionType.Release;
             } else if ("beta".equals(versionType)) {
-                type = DownloadManager.VersionType.Beta;
+                type = RemoteMod.VersionType.Beta;
             } else if ("alpha".equals(versionType)) {
-                type = DownloadManager.VersionType.Alpha;
+                type = RemoteMod.VersionType.Alpha;
             } else {
-                type = DownloadManager.VersionType.Release;
+                type = RemoteMod.VersionType.Release;
             }
 
             if (files.size() == 0) {
                 return Optional.empty();
             }
 
-            return Optional.of(new DownloadManager.Version(
+            return Optional.of(new RemoteMod.Version(
                     this,
+                    modId,
                     name,
                     versionNumber,
                     changelog,
@@ -276,7 +331,11 @@ public final class Modrinth {
                     files.get(0).toFile(),
                     dependencies,
                     gameVersions,
-                    loaders
+                    loaders.stream().flatMap(loader -> {
+                        if ("fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FABRIC);
+                        else if ("forge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FORGE);
+                        else return Stream.empty();
+                    }).collect(Collectors.toList())
             ));
         }
     }
@@ -304,12 +363,12 @@ public final class Modrinth {
             return filename;
         }
 
-        public DownloadManager.File toFile() {
-            return new DownloadManager.File(hashes, url, filename);
+        public RemoteMod.File toFile() {
+            return new RemoteMod.File(hashes, url, filename);
         }
     }
 
-    public static class ModResult implements DownloadManager.IMod {
+    public static class ModResult implements RemoteMod.IMod {
         @SerializedName("mod_id")
         private final String modId;
 
@@ -419,19 +478,17 @@ public final class Modrinth {
         }
 
         @Override
-        public List<DownloadManager.Mod> loadDependencies() throws IOException {
+        public List<RemoteMod> loadDependencies() throws IOException {
             return Collections.emptyList();
         }
 
         @Override
-        public Stream<DownloadManager.Version> loadVersions() throws IOException {
-            return Modrinth.getFiles(this).stream()
-                    .map(ModVersion::toVersion)
-                    .flatMap(Lang::toStream);
+        public Stream<RemoteMod.Version> loadVersions() throws IOException {
+            return ModrinthRemoteModRepository.INSTANCE.getRemoteVersionsById(getModId());
         }
 
-        public DownloadManager.Mod toMod() {
-            return new DownloadManager.Mod(
+        public RemoteMod toMod() {
+            return new RemoteMod(
                     slug,
                     author,
                     title,

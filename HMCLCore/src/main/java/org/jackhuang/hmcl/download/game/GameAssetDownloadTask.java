@@ -30,9 +30,10 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -47,7 +48,7 @@ public final class GameAssetDownloadTask extends Task<Void> {
     private final AbstractDependencyManager dependencyManager;
     private final Version version;
     private final AssetIndexInfo assetIndexInfo;
-    private final File assetIndexFile;
+    private final Path assetIndexFile;
     private final boolean integrityCheck;
     private final List<Task<?>> dependents = new LinkedList<>();
     private final List<Task<?>> dependencies = new LinkedList<>();
@@ -65,6 +66,7 @@ public final class GameAssetDownloadTask extends Task<Void> {
         this.assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
         this.integrityCheck = integrityCheck;
 
+        setStage("hmcl.install.assets");
         dependents.add(new GameAssetIndexDownloadTask(dependencyManager, this.version, forceDownloadingIndex));
     }
 
@@ -92,26 +94,26 @@ public final class GameAssetDownloadTask extends Task<Void> {
             if (isCancelled())
                 throw new InterruptedException();
 
-            File file = dependencyManager.getGameRepository().getAssetObject(version.getId(), assetIndexInfo.getId(), assetObject);
-            boolean download = !file.isFile();
+            Path file = dependencyManager.getGameRepository().getAssetObject(version.getId(), assetIndexInfo.getId(), assetObject);
+            boolean download = !Files.isRegularFile(file);
             try {
-                if (!download && integrityCheck && !assetObject.validateChecksum(file.toPath(), true))
+                if (!download && integrityCheck && !assetObject.validateChecksum(file, true))
                     download = true;
             } catch (IOException e) {
-                Logging.LOG.log(Level.WARNING, "Unable to calc hash value of file " + file.toPath(), e);
+                Logging.LOG.log(Level.WARNING, "Unable to calc hash value of file " + file, e);
             }
             if (download) {
                 List<URL> urls = dependencyManager.getDownloadProvider().getAssetObjectCandidates(assetObject.getLocation());
 
-                FileDownloadTask task = new FileDownloadTask(urls, file, new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.getHash()));
+                FileDownloadTask task = new FileDownloadTask(urls, file.toFile(), new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.getHash()));
                 task.setName(assetObject.getHash());
                 task.setCandidate(dependencyManager.getCacheRepository().getCommonDirectory()
                         .resolve("assets").resolve("objects").resolve(assetObject.getLocation()));
                 task.setCacheRepository(dependencyManager.getCacheRepository());
                 task.setCaching(true);
-                dependencies.add(task.withCounter());
+                dependencies.add(task.withCounter("hmcl.install.assets"));
             } else {
-                dependencyManager.getCacheRepository().tryCacheFile(file.toPath(), CacheRepository.SHA1, assetObject.getHash());
+                dependencyManager.getCacheRepository().tryCacheFile(file, CacheRepository.SHA1, assetObject.getHash());
             }
 
             updateProgress(++progress, index.getObjects().size());
@@ -119,6 +121,7 @@ public final class GameAssetDownloadTask extends Task<Void> {
 
         if (!dependencies.isEmpty()) {
             getProperties().put("total", dependencies.size());
+            notifyPropertiesChanged();
         }
     }
 

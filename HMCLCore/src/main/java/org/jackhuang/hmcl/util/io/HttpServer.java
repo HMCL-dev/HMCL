@@ -46,7 +46,7 @@ public class HttpServer extends NanoHTTPD {
     }
 
     public String getRootUrl() {
-        return "http://127.0.0.1:" + getListeningPort();
+        return "http://localhost:" + getListeningPort();
     }
 
     protected void addRoute(Method method, Pattern path, ExceptionalFunction<Request, Response, ?> server) {

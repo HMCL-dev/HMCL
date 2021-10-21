@@ -17,14 +17,11 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
-import com.google.gson.annotations.SerializedName;
+import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.*;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
@@ -39,8 +36,11 @@ import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.net.Proxy;
+import java.util.*;
 
+@JsonAdapter(GlobalConfig.Serializer.class)
 public class GlobalConfig implements Cloneable, Observable {
 
     private static final Gson CONFIG_GSON = new GsonBuilder()
@@ -62,11 +62,19 @@ public class GlobalConfig implements Cloneable, Observable {
         }
         GlobalConfig instance = new GlobalConfig();
         PropertyUtils.copyProperties(loaded, instance);
+        instance.unknownFields.putAll(loaded.unknownFields);
         return instance;
     }
 
-    @SerializedName("agreementVersion")
     private IntegerProperty agreementVersion = new SimpleIntegerProperty();
+
+    private StringProperty multiplayerToken = new SimpleStringProperty();
+
+    private BooleanProperty multiplayerRelay = new SimpleBooleanProperty();
+
+    private IntegerProperty multiplayerAgreementVersion = new SimpleIntegerProperty(0);
+
+    private final Map<String, Object> unknownFields = new HashMap<>();
 
     private transient ObservableHelper helper = new ObservableHelper(this);
 
@@ -103,5 +111,88 @@ public class GlobalConfig implements Cloneable, Observable {
 
     public void setAgreementVersion(int agreementVersion) {
         this.agreementVersion.set(agreementVersion);
+    }
+
+    public boolean isMultiplayerRelay() {
+        return multiplayerRelay.get();
+    }
+
+    public BooleanProperty multiplayerRelayProperty() {
+        return multiplayerRelay;
+    }
+
+    public void setMultiplayerRelay(boolean multiplayerRelay) {
+        this.multiplayerRelay.set(multiplayerRelay);
+    }
+
+    public int getMultiplayerAgreementVersion() {
+        return multiplayerAgreementVersion.get();
+    }
+
+    public IntegerProperty multiplayerAgreementVersionProperty() {
+        return multiplayerAgreementVersion;
+    }
+
+    public void setMultiplayerAgreementVersion(int multiplayerAgreementVersion) {
+        this.multiplayerAgreementVersion.set(multiplayerAgreementVersion);
+    }
+
+    public String getMultiplayerToken() {
+        return multiplayerToken.get();
+    }
+
+    public StringProperty multiplayerTokenProperty() {
+        return multiplayerToken;
+    }
+
+    public void setMultiplayerToken(String multiplayerToken) {
+        this.multiplayerToken.set(multiplayerToken);
+    }
+
+    public static class Serializer implements JsonSerializer<GlobalConfig>, JsonDeserializer<GlobalConfig> {
+        private static final Set<String> knownFields = new HashSet<>(Arrays.asList(
+                "agreementVersion",
+                "multiplayerToken",
+                "multiplayerAgreementVersion"
+        ));
+
+        @Override
+        public JsonElement serialize(GlobalConfig src, Type typeOfSrc, JsonSerializationContext context) {
+            if (src == null) {
+                return JsonNull.INSTANCE;
+            }
+
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.add("agreementVersion", context.serialize(src.getAgreementVersion()));
+            jsonObject.add("multiplayerToken", context.serialize(src.getMultiplayerToken()));
+            jsonObject.add("multiplayerRelay", context.serialize(src.isMultiplayerRelay()));
+            jsonObject.add("multiplayerAgreementVersion", context.serialize(src.getMultiplayerAgreementVersion()));
+            for (Map.Entry<String, Object> entry : src.unknownFields.entrySet()) {
+                jsonObject.add(entry.getKey(), context.serialize(entry.getValue()));
+            }
+
+            return jsonObject;
+        }
+
+        @Override
+        public GlobalConfig deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            if (!(json instanceof JsonObject)) return null;
+
+            JsonObject obj = (JsonObject) json;
+
+            GlobalConfig config = new GlobalConfig();
+            config.setAgreementVersion(Optional.ofNullable(obj.get("agreementVersion")).map(JsonElement::getAsInt).orElse(0));
+            config.setMultiplayerToken(Optional.ofNullable(obj.get("multiplayerToken")).map(JsonElement::getAsString).orElse(null));
+            config.setMultiplayerRelay(Optional.ofNullable(obj.get("multiplayerRelay")).map(JsonElement::getAsBoolean).orElse(false));
+            config.setMultiplayerAgreementVersion(Optional.ofNullable(obj.get("multiplayerAgreementVersion")).map(JsonElement::getAsInt).orElse(0));
+
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                if (!knownFields.contains(entry.getKey())) {
+                    config.unknownFields.put(entry.getKey(), context.deserialize(entry.getValue(), Object.class));
+                }
+            }
+
+            return config;
+        }
     }
 }

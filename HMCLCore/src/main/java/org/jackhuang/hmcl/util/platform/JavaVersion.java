@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -27,8 +28,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,12 +48,14 @@ public final class JavaVersion {
     private final String longVersion;
     private final Platform platform;
     private final int version;
+    private final VersionNumber versionNumber;
 
     public JavaVersion(Path binary, String longVersion, Platform platform) {
         this.binary = binary;
         this.longVersion = longVersion;
         this.platform = platform;
         version = parseVersion(longVersion);
+        versionNumber = VersionNumber.asVersion(longVersion);
     }
 
     public Path getBinary() {
@@ -68,8 +70,16 @@ public final class JavaVersion {
         return platform;
     }
 
+    public Architecture getArchitecture() {
+        return platform.getArchitecture();
+    }
+
+    public Bits getBits() {
+        return platform.getBits();
+    }
+
     public VersionNumber getVersionNumber() {
-        return VersionNumber.asVersion(longVersion);
+        return versionNumber;
     }
 
     /**
@@ -87,7 +97,11 @@ public final class JavaVersion {
     private static final Pattern REGEX = Pattern.compile("version \"(?<version>(.*?))\"");
     private static final Pattern VERSION = Pattern.compile("^(?<version>[0-9]+)");
 
+    private static final Pattern OS_ARCH = Pattern.compile("os\\.arch = (?<arch>.*)");
+    private static final Pattern JAVA_VERSION = Pattern.compile("java\\.version = (?<version>.*)");
+
     public static final int UNKNOWN = -1;
+    public static final int JAVA_6 = 6;
     public static final int JAVA_7 = 7;
     public static final int JAVA_8 = 8;
     public static final int JAVA_9 = 9;
@@ -103,6 +117,8 @@ public final class JavaVersion {
             return JAVA_8;
         else if (version.contains("1.7"))
             return JAVA_7;
+        else if (version.contains("1.6"))
+            return JAVA_6;
         else
             return UNKNOWN;
     }
@@ -115,26 +131,64 @@ public final class JavaVersion {
         if (cachedJavaVersion != null)
             return cachedJavaVersion;
 
-        Platform platform = Platform.BIT_32;
+        String osArch = null;
         String version = null;
 
-        Process process = new ProcessBuilder(executable.toString(), "-version").start();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-            for (String line; (line = reader.readLine()) != null;) {
-                Matcher m = REGEX.matcher(line);
-                if (m.find())
+        Platform platform = null;
+
+        Process process = new ProcessBuilder(executable.toString(), "-XshowSettings:properties", "-version").start();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream(), OperatingSystem.NATIVE_CHARSET))) {
+            for (String line; (line = reader.readLine()) != null; ) {
+                Matcher m;
+
+                m = OS_ARCH.matcher(line);
+                if (m.find()) {
+                    osArch = m.group("arch");
+                    if (version != null) {
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+
+                m = JAVA_VERSION.matcher(line);
+                if (m.find()) {
                     version = m.group("version");
-                if (line.contains("64-Bit"))
-                    platform = Platform.BIT_64;
+                    if (osArch != null) {
+                        break;
+                    } else {
+                        //noinspection UnnecessaryContinue
+                        continue;
+                    }
+                }
             }
         }
 
-        if (version == null)
-            throw new IOException("No Java version is matched");
+        if (osArch != null) {
+            platform = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.parseArchName(osArch));
+        }
 
-        if (parseVersion(version) == UNKNOWN)
-            throw new IOException("Unrecognized Java version " + version);
+        if (version == null) {
+            boolean is64Bit = false;
+            process = new ProcessBuilder(executable.toString(), "-version").start();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream(), OperatingSystem.NATIVE_CHARSET))) {
+                for (String line; (line = reader.readLine()) != null; ) {
+                    Matcher m = REGEX.matcher(line);
+                    if (m.find())
+                        version = m.group("version");
+                    if (line.contains("64-Bit"))
+                        is64Bit = true;
+                }
+            }
+
+            if (platform == null) {
+                platform = Platform.getPlatform(OperatingSystem.CURRENT_OS, is64Bit ? Architecture.X86_64 : Architecture.X86);
+            }
+        }
+
         JavaVersion javaVersion = new JavaVersion(executable, version, platform);
+        if (javaVersion.getParsedVersion() == UNKNOWN)
+            throw new IOException("Unrecognized Java version " + version);
         fromExecutableCache.put(executable, javaVersion);
         return javaVersion;
     }
@@ -163,7 +217,8 @@ public final class JavaVersion {
         CURRENT_JAVA = new JavaVersion(
                 currentExecutable,
                 System.getProperty("java.version"),
-                Platform.getPlatform());
+                Platform.CURRENT_PLATFORM
+        );
     }
 
     private static Collection<JavaVersion> JAVAS;
@@ -196,6 +251,9 @@ public final class JavaVersion {
 
         JAVAS = Collections.newSetFromMap(new ConcurrentHashMap<>());
         JAVAS.addAll(javaVersions);
+
+        LOG.log(Level.FINE, "Finished Java installation lookup, found " + JAVAS.size());
+
         LATCH.countDown();
     }
 
@@ -216,8 +274,12 @@ public final class JavaVersion {
                         return Stream.of(CURRENT_JAVA);
                     }
                     try {
-                        return Stream.of(fromExecutable(executable));
-                    } catch (IOException e) {
+                        LOG.log(Level.FINER, "Looking for Java:" + executable);
+                        Future<JavaVersion> future = Schedulers.io().submit(() -> fromExecutable(executable));
+                        JavaVersion javaVersion = future.get(5, TimeUnit.SECONDS);
+                        LOG.log(Level.FINE, "Found Java (" + javaVersion.getVersion() + ") " + javaVersion.getBinary().toString());
+                        return Stream.of(javaVersion);
+                    } catch (ExecutionException | InterruptedException | TimeoutException e) {
                         LOG.log(Level.WARNING, "Failed to determine Java at " + executable, e);
                         return Stream.empty();
                     }
@@ -246,7 +308,20 @@ public final class JavaVersion {
                         javaExecutables.add(listDirectory(programFiles.get().resolve("AdoptOpenJDK")).map(JavaVersion::getExecutable));
                         javaExecutables.add(listDirectory(programFiles.get().resolve("Zulu")).map(JavaVersion::getExecutable));
                         javaExecutables.add(listDirectory(programFiles.get().resolve("Microsoft")).map(JavaVersion::getExecutable));
+                        javaExecutables.add(listDirectory(programFiles.get().resolve("Eclipse Foundation")).map(JavaVersion::getExecutable));
+                        javaExecutables.add(listDirectory(programFiles.get().resolve("Semeru")).map(JavaVersion::getExecutable));
                     }
+                }
+
+                final Optional<Path> programFilesX86 = FileUtils.tryGetPath(Optional.ofNullable(System.getenv("ProgramFiles(x86)")).orElse("C:\\Program Files (x86)"));
+                if (programFilesX86.isPresent()) {
+                    final Path runtimeDir = programFilesX86.get().resolve("Minecraft Launcher").resolve("runtime");
+                    javaExecutables.add(Stream.of(
+                            runtimeDir.resolve("jre-legacy").resolve("windows-x64").resolve("jre-legacy"),
+                            runtimeDir.resolve("jre-legacy").resolve("windows-x86").resolve("jre-legacy"),
+                            runtimeDir.resolve("java-runtime-alpha").resolve("windows-x64").resolve("java-runtime-alpha"),
+                            runtimeDir.resolve("java-runtime-alpha").resolve("windows-x86").resolve("java-runtime-alpha")
+                    ).map(JavaVersion::getExecutable));
                 }
 
                 if (System.getenv("PATH") != null) {
@@ -267,6 +342,15 @@ public final class JavaVersion {
                 if (System.getenv("HMCL_JRES") != null) {
                     javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "bin", "java"))));
                 }
+
+                final Optional<Path> home = FileUtils.tryGetPath(System.getProperty("user.home", ""));
+                if (home.isPresent()) {
+                    final Path runtimeDir = home.get().resolve(".minecraft").resolve("runtime");
+                    javaExecutables.add(Stream.of(
+                            runtimeDir.resolve("jre-legacy").resolve("linux").resolve("jre-legacy"),
+                            runtimeDir.resolve("java-runtime-alpha").resolve("linux").resolve("java-runtime-alpha")
+                    ).map(JavaVersion::getExecutable));
+                }
                 break;
 
             case OSX:
@@ -278,6 +362,7 @@ public final class JavaVersion {
                         .map(JavaVersion::getExecutable));
                 javaExecutables.add(Stream.of(Paths.get("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin/java")));
                 javaExecutables.add(Stream.of(Paths.get("/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/MacOS/itms/java/bin/java")));
+                javaExecutables.add(Stream.of(Paths.get("/Library/Application Support/minecraft/runtime/jre-x64/jre.bundle/Contents/Home/bin/java")));
                 if (System.getenv("PATH") != null) {
                     javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "java"))));
                 }
@@ -289,7 +374,7 @@ public final class JavaVersion {
             default:
                 break;
         }
-        return javaExecutables.stream().flatMap(stream -> stream);
+        return javaExecutables.parallelStream().flatMap(stream -> stream);
     }
 
     private static Stream<Path> listDirectory(Path directory) throws IOException {
@@ -328,7 +413,7 @@ public final class JavaVersion {
         List<String> res = new ArrayList<>();
 
         Process process = Runtime.getRuntime().exec(new String[] { "cmd", "/c", "reg", "query", location });
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
             for (String line; (line = reader.readLine()) != null;) {
                 if (line.startsWith(location) && !line.equals(location)) {
                     res.add(line);
@@ -342,7 +427,7 @@ public final class JavaVersion {
         boolean last = false;
         Process process = Runtime.getRuntime().exec(new String[] { "cmd", "/c", "reg", "query", location, "/v", name });
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
             for (String line; (line = reader.readLine()) != null;) {
                 if (StringUtils.isNotBlank(line)) {
                     if (last && line.trim().startsWith(name)) {

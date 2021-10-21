@@ -17,12 +17,14 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
+import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactInfo;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactProvider;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -50,15 +52,13 @@ public class OfflineAccount extends Account {
     private final AuthlibInjectorArtifactProvider downloader;
     private final String username;
     private final UUID uuid;
-    private final String skin;
-    private final String cape;
+    private Skin skin;
 
-    protected OfflineAccount(AuthlibInjectorArtifactProvider downloader, String username, UUID uuid, String skin, String cape) {
+    protected OfflineAccount(AuthlibInjectorArtifactProvider downloader, String username, UUID uuid, Skin skin) {
         this.downloader = requireNonNull(downloader);
         this.username = requireNonNull(username);
         this.uuid = requireNonNull(uuid);
         this.skin = skin;
-        this.cape = cape;
 
         if (StringUtils.isBlank(username)) {
             throw new IllegalArgumentException("Username cannot be blank");
@@ -80,11 +80,20 @@ public class OfflineAccount extends Account {
         return username;
     }
 
+    public Skin getSkin() {
+        return skin;
+    }
+
+    public void setSkin(Skin skin) {
+        this.skin = skin;
+        invalidate();
+    }
+
     @Override
     public AuthInfo logIn() throws AuthenticationException {
         AuthInfo authInfo = new AuthInfo(username, uuid, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), "{}");
 
-        if (skin != null || cape != null) {
+        if (skin != null) {
             CompletableFuture<AuthlibInjectorArtifactInfo> artifactTask = CompletableFuture.supplyAsync(() -> {
                 try {
                     return downloader.getArtifactInfo();
@@ -110,28 +119,19 @@ public class OfflineAccount extends Account {
             try {
                 YggdrasilServer server = new YggdrasilServer(0);
                 server.start();
-                server.addCharacter(new YggdrasilServer.Character(uuid, username, YggdrasilServer.ModelType.STEVE,
-                        mapOf(
-                                pair(TextureType.SKIN, server.loadTexture(skin)),
-                                pair(TextureType.CAPE, server.loadTexture(cape))
-                        )));
+                server.addCharacter(new YggdrasilServer.Character(uuid, username, skin.load(username).run()));
 
                 return authInfo.withArguments(new Arguments().addJVMArguments(
-                                "-javaagent:" + artifact.getLocation().toString() + "=" + "http://127.0.0.1:" + server.getListeningPort(),
+                                "-javaagent:" + artifact.getLocation().toString() + "=" + "http://localhost:" + server.getListeningPort(),
                                 "-Dauthlibinjector.side=client"
                         ))
                         .withCloseable(server::stop);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 throw new AuthenticationException(e);
             }
         } else {
             return authInfo;
         }
-    }
-
-    @Override
-    public AuthInfo logInWithPassword(String password) throws AuthenticationException {
-        return logIn();
     }
 
     @Override
@@ -144,9 +144,13 @@ public class OfflineAccount extends Account {
         return mapOf(
                 pair("uuid", UUIDTypeAdapter.fromUUID(uuid)),
                 pair("username", username),
-                pair("skin", skin),
-                pair("cape", cape)
+                pair("skin", skin == null ? null : skin.toStorage())
         );
+    }
+
+    @Override
+    public ObjectBinding<Optional<Map<TextureType, Texture>>> getTextures() {
+        return super.getTextures();
     }
 
     @Override
@@ -154,8 +158,6 @@ public class OfflineAccount extends Account {
         return new ToStringBuilder(this)
                 .append("username", username)
                 .append("uuid", uuid)
-                .append("skin", skin)
-                .append("cape", cape)
                 .toString();
     }
 

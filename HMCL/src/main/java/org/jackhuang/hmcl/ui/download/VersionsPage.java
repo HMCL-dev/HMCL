@@ -48,6 +48,7 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
@@ -279,6 +280,6 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
     @FXML
     private void onSponsor() {
-        FXUtils.openLink("https://hmcl.huangyuhui.net/api/redirect/bmclapi_sponsor");
+        HMCLService.openRedirectLink("bmclapi_sponsor");
     }
 }

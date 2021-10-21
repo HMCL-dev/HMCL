@@ -21,6 +21,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.ObjectProperty;
 import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -64,7 +65,7 @@ public final class SettingsPage extends SettingsView {
         // ====
 
         fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
-        fileCommonLocation.subtitleProperty().bind(
+        fileCommonLocationSublist.subtitleProperty().bind(
                 Bindings.createObjectBinding(() -> Optional.ofNullable(Settings.instance().getCommonDirectory())
                                 .orElse(i18n("launcher.cache_directory.disabled")),
                         config().commonDirectoryProperty(), config().commonDirTypeProperty()));
@@ -104,7 +105,11 @@ public final class SettingsPage extends SettingsView {
         chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);
         chkUpdateStable.setToggleGroup(updateChannelGroup);
         chkUpdateStable.setUserData(UpdateChannel.STABLE);
-        selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class).bindBidirectional(config().updateChannelProperty());
+        ObjectProperty<UpdateChannel> updateChannel = selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class);
+        updateChannel.set(UpdateChannel.getChannel());
+        updateChannel.addListener((a, b, newValue) -> {
+            UpdateChecker.requestCheckUpdate(newValue);
+        });
         // ====
     }
 

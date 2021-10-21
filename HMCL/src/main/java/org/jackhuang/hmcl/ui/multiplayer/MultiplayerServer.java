@@ -18,30 +18,79 @@
 package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.gson.JsonSubtype;
-import org.jackhuang.hmcl.util.gson.JsonType;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 
-public class MultiplayerServer {
+import static org.jackhuang.hmcl.ui.multiplayer.MultiplayerChannel.*;
+import static org.jackhuang.hmcl.util.Logging.LOG;
+
+public class MultiplayerServer extends Thread {
     private ServerSocket socket;
+    private final String sessionName;
     private final int gamePort;
+    private final boolean allowAllJoinRequests;
 
-    public MultiplayerServer(int gamePort) {
+    private FutureCallback<CatoClient> onClientAdding;
+    private final EventManager<MultiplayerChannel.CatoClient> onClientAdded = new EventManager<>();
+    private final EventManager<MultiplayerChannel.CatoClient> onClientDisconnected = new EventManager<>();
+    private final EventManager<Event> onKeepAlive = new EventManager<>();
+    private final EventManager<Event> onHandshake = new EventManager<>();
+
+    private final Map<String, Endpoint> clients = new ConcurrentHashMap<>();
+    private final Map<String, Endpoint> nameClientMap = new ConcurrentHashMap<>();
+
+    public MultiplayerServer(String sessionName, int gamePort, boolean allowAllJoinRequests) {
+        this.sessionName = sessionName;
         this.gamePort = gamePort;
+        this.allowAllJoinRequests = allowAllJoinRequests;
+
+        setName("MultiplayerServer");
+        setDaemon(true);
     }
 
-    public void start() throws IOException {
+    public void setOnClientAdding(FutureCallback<CatoClient> callback) {
+        onClientAdding = callback;
+    }
+
+    public EventManager<MultiplayerChannel.CatoClient> onClientAdded() {
+        return onClientAdded;
+    }
+
+    public EventManager<MultiplayerChannel.CatoClient> onClientDisconnected() {
+        return onClientDisconnected;
+    }
+
+    public EventManager<Event> onKeepAlive() {
+        return onKeepAlive;
+    }
+
+    public EventManager<Event> onHandshake() {
+        return onHandshake;
+    }
+
+    public void startServer() throws IOException {
+        startServer(0);
+    }
+
+    public void startServer(int port) throws IOException {
         if (socket != null) {
             throw new IllegalStateException("MultiplayerServer already started");
         }
-        socket = new ServerSocket(0);
+        socket = new ServerSocket(port);
 
-        Lang.thread(this::run, "MultiplayerServer", true);
+        start();
     }
 
     public int getPort() {
@@ -52,83 +101,138 @@ public class MultiplayerServer {
         return socket.getLocalPort();
     }
 
-    private void run() {
+    @Override
+    public void run() {
+        LOG.info("Multiplayer Server listening 127.0.0.1:" + socket.getLocalPort());
         try {
-            while (true) {
+            while (!isInterrupted()) {
                 Socket clientSocket = socket.accept();
+                clientSocket.setSoTimeout(10000);
                 Lang.thread(() -> handleClient(clientSocket), "MultiplayerServerClientThread", true);
             }
         } catch (IOException ignored) {
         }
     }
 
+    public void kickPlayer(CatoClient player) {
+        Endpoint client = nameClientMap.get(player.getUsername());
+        if (client == null) return;
+
+        try {
+            if (client.socket.isConnected()) {
+                client.write(new KickResponse(KickResponse.KICKED));
+                client.socket.close();
+            }
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to kick player " + player.getUsername() + ". Maybe already disconnected?", e);
+        }
+    }
+
     private void handleClient(Socket targetSocket) {
+        String address = targetSocket.getRemoteSocketAddress().toString();
+        String clientName = null;
+        LOG.info("Accepted client " + address);
         try (Socket clientSocket = targetSocket;
-             BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()))) {
+             BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream(), StandardCharsets.UTF_8))) {
+            clientSocket.setKeepAlive(true);
+            Endpoint endpoint = new Endpoint(clientSocket, writer);
+            clients.put(address, endpoint);
+
             String line;
             while ((line = reader.readLine()) != null) {
-                Request request = JsonUtils.fromNonNullJson(line, Request.class);
-                request.process(this, writer);
+                if (isInterrupted()) {
+                    return;
+                }
+
+                LOG.fine("Message from client " + targetSocket.getRemoteSocketAddress() + ":" + line);
+                MultiplayerChannel.Request request = JsonUtils.fromNonNullJson(line, MultiplayerChannel.Request.class);
+
+                if (request instanceof JoinRequest) {
+                    JoinRequest joinRequest = (JoinRequest) request;
+                    LOG.info("Received join request with clientVersion=" + joinRequest.getClientVersion() + ", id=" + joinRequest.getUsername());
+                    clientName = joinRequest.getUsername();
+
+                    if (!Objects.equals(MultiplayerManager.CATO_VERSION, joinRequest.getClientVersion())) {
+                        try {
+                            endpoint.write(new KickResponse(KickResponse.VERSION_NOT_MATCHED));
+                            LOG.info("Rejected join request from id=" + joinRequest.getUsername());
+                            socket.close();
+                        } catch (IOException e) {
+                            LOG.log(Level.WARNING, "Failed to send kick response.", e);
+                            return;
+                        }
+                    }
+
+                    CatoClient catoClient = new CatoClient(this, clientName);
+                    nameClientMap.put(clientName, endpoint);
+                    onClientAdded.fireEvent(catoClient);
+
+                    if (onClientAdding != null && !allowAllJoinRequests) {
+                        onClientAdding.call(catoClient, () -> {
+                            try {
+                                endpoint.write(new JoinResponse(sessionName, gamePort));
+                            } catch (IOException e) {
+                                LOG.log(Level.WARNING, "Failed to send join response.", e);
+                                try {
+                                    socket.close();
+                                } catch (IOException ioException) {
+                                    LOG.log(Level.WARNING, "Failed to close socket caused by join response sending failure.", e);
+                                    this.interrupt();
+                                }
+                            }
+                        }, msg -> {
+                            try {
+                                endpoint.write(new KickResponse(msg));
+                                LOG.info("Rejected join request from id=" + joinRequest.getUsername());
+                                socket.close();
+                            } catch (IOException e) {
+                                LOG.log(Level.WARNING, "Failed to send kick response.", e);
+                            }
+                        });
+                    } else {
+                        // Allow all join requests.
+                        endpoint.write(new JoinResponse(sessionName, gamePort));
+                    }
+                } else if (request instanceof KeepAliveRequest) {
+                    endpoint.write(new KeepAliveResponse(System.currentTimeMillis()));
+
+                    onKeepAlive.fireEvent(new Event(this));
+                } else if (request instanceof HandshakeRequest) {
+                    endpoint.write(new HandshakeResponse());
+
+                    onHandshake.fireEvent(new Event(this));
+                } else {
+                    LOG.log(Level.WARNING, "Unrecognized packet from client " + targetSocket.getRemoteSocketAddress() + ":" + line);
+                }
             }
-        } catch (IOException | JsonParseException ignored) {
-        }
-    }
-
-    @JsonType(
-            property = "type",
-            subtypes = {
-                    @JsonSubtype(clazz = JoinRequest.class, name = "join")
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to handle client socket.", e);
+        } catch (JsonParseException e) {
+            LOG.log(Level.SEVERE, "Failed to parse client request. This should not happen.", e);
+        } finally {
+            if (clientName != null) {
+                onClientDisconnected.fireEvent(new CatoClient(this, clientName));
             }
-    )
-    public static class Request {
 
-        public void process(MultiplayerServer server, BufferedWriter writer) throws IOException, JsonParseException {
+            clients.remove(address);
+            if (clientName != null) nameClientMap.remove(clientName);
         }
     }
 
-    public static class JoinRequest extends Request {
-        private final String clientVersion;
-        private final String username;
+    public static class Endpoint {
+        public final Socket socket;
+        public final BufferedWriter writer;
 
-        public JoinRequest(String clientVersion, String username) {
-            this.clientVersion = clientVersion;
-            this.username = username;
+        public Endpoint(Socket socket, BufferedWriter writer) {
+            this.socket = socket;
+            this.writer = writer;
         }
 
-        public String getClientVersion() {
-            return clientVersion;
-        }
-
-        public String getUsername() {
-            return username;
-        }
-
-        @Override
-        public void process(MultiplayerServer server, BufferedWriter writer) throws IOException, JsonParseException {
-            writer.write(JsonUtils.GSON.toJson(new JoinResponse(server.gamePort)));
-        }
-    }
-
-    @JsonType(
-            property = "type",
-            subtypes = {
-                    @JsonSubtype(clazz = JoinResponse.class, name = "join")
-            }
-    )
-    public static class Response {
-
-    }
-
-    public static class JoinResponse extends Response {
-        private final int port;
-
-        public JoinResponse(int port) {
-            this.port = port;
-        }
-
-        public int getPort() {
-            return port;
+        public synchronized void write(Object object) throws IOException {
+            writer.write(verifyJson(JsonUtils.UGLY_GSON.toJson(object)));
+            writer.newLine();
+            writer.flush();
         }
     }
 }

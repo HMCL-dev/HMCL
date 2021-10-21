@@ -17,11 +17,7 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.DependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.download.VersionMismatchException;
-import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
+import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -39,6 +35,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.jackhuang.hmcl.download.UnsupportedInstallationException.UNSUPPORTED_LAUNCH_WRAPPER;
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 
@@ -101,12 +98,12 @@ public final class ForgeInstallTask extends Task<Version> {
     }
 
     @Override
-    public void execute() throws IOException, VersionMismatchException, OptiFineInstallTask.UnsupportedOptiFineInstallationException {
+    public void execute() throws IOException, VersionMismatchException, UnsupportedInstallationException {
         String originalMainClass = version.resolve(dependencyManager.getGameRepository()).getMainClass();
         if (VersionNumber.VERSION_COMPARATOR.compare("1.13", remote.getGameVersion()) <= 0) {
             // Forge 1.13 is not compatible with fabric.
             if (!LibraryAnalyzer.VANILLA_MAIN.equals(originalMainClass) && !LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(originalMainClass) && !LibraryAnalyzer.LAUNCH_WRAPPER_MAIN.equals(originalMainClass))
-                throw new OptiFineInstallTask.UnsupportedOptiFineInstallationException();
+                throw new UnsupportedInstallationException(UNSUPPORTED_LAUNCH_WRAPPER);
         } else {
             // Forge 1.12 and older versions is compatible with vanilla and launchwrapper.
             // if (!"net.minecraft.client.main.Main".equals(originalMainClass) && !"net.minecraft.launchwrapper.Launch".equals(originalMainClass))

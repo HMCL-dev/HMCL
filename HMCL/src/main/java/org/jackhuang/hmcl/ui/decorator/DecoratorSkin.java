@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.svg.SVGGlyph;
-import javafx.animation.Animation;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
@@ -38,7 +37,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -57,7 +55,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     private final StackPane titleContainer;
     private final Stage primaryStage;
     private final TransitionPane navBarPane;
-    private final StackPane leftPane;
 
     private double xOffset, yOffset, newX, newY, initX, initY;
     private boolean titleBarTransparent = true;
@@ -106,20 +103,9 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
         parent.getChildren().add(wrapper);
 
-        // center node with a animation layer at bottom, a container layer at middle and a "welcome" layer at top.
+        // center node with an animation layer at bottom, a container layer at middle and a "welcome" layer at top.
         StackPane container = new StackPane();
-        container.backgroundProperty().bind(skinnable.contentBackgroundProperty());
         FXUtils.setOverflowHidden(container);
-
-        // animation layer at bottom
-        {
-            HBox layer = new HBox();
-            leftPane = new StackPane();
-            leftPane.setPrefWidth(0);
-            leftPane.getStyleClass().add("jfx-decorator-drawer");
-            layer.getChildren().setAll(leftPane);
-            container.getChildren().add(layer);
-        }
 
         // content layer at middle
         {
@@ -153,7 +139,24 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
         titleContainer = new StackPane();
         titleContainer.setPickOnBounds(false);
-        titleContainer.getStyleClass().addAll("jfx-tool-bar", "background");
+        titleContainer.getStyleClass().addAll("jfx-tool-bar");
+
+        FXUtils.onChangeAndOperate(skinnable.titleTransparentProperty(), titleTransparent -> {
+            if (titleTransparent) {
+                wrapper.backgroundProperty().bind(skinnable.contentBackgroundProperty());
+                container.backgroundProperty().unbind();
+                container.setBackground(null);
+                titleContainer.getStyleClass().remove("background");
+                titleContainer.getStyleClass().add("gray-background");
+            } else {
+                container.backgroundProperty().bind(skinnable.contentBackgroundProperty());
+                wrapper.backgroundProperty().unbind();
+                wrapper.setBackground(null);
+                titleContainer.getStyleClass().add("background");
+                titleContainer.getStyleClass().remove("gray-background");
+            }
+        });
+
         control.capableDraggingWindow(titleContainer);
 
         BorderPane titleBar = new BorderPane();
@@ -162,6 +165,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         Rectangle buttonsContainerPlaceHolder = new Rectangle();
         {
             navBarPane = new TransitionPane();
+            navBarPane.setId("decoratorTitleTransitionPane");
             FXUtils.onChangeAndOperate(skinnable.stateProperty(), s -> {
                 if (s == null) return;
                 Node node = createNavBar(skinnable, s.getLeftPaneWidth(), s.isBackable(), skinnable.canCloseProperty().get(), skinnable.showCloseAsHomeProperty().get(), s.isRefreshable(), s.getTitle(), s.getTitleNode());
@@ -178,22 +182,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                     navBarPane.setContent(node, animation);
                 } else {
                     navBarPane.getChildren().setAll(node);
-                }
-
-                leftPane.prefWidthProperty().unbind();
-                if (s.getLeftPaneWidth() >= 0) {
-                    FXUtils.playAnimation(leftPane, "animation",
-                            s.isAnimate() ? Duration.millis(160) : null, leftPane.prefWidthProperty(), null, s.getLeftPaneWidth(), FXUtils.SINE);
-                } else {
-                    Animation animation = FXUtils.playAnimation(leftPane, "animation1",
-                            s.isAnimate() ? Duration.millis(160) : null, leftPane.prefWidthProperty(), null, container.getWidth(), FXUtils.SINE);
-                    if (animation != null) {
-                        animation.setOnFinished(action -> {
-                            if (animation.getStatus() != Animation.Status.STOPPED) {
-                                leftPane.prefWidthProperty().bind(container.widthProperty());
-                            }
-                        });
-                    }
                 }
             });
             titleBar.setCenter(navBarPane);

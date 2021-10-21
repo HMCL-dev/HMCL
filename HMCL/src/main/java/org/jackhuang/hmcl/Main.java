@@ -20,7 +20,9 @@ package org.jackhuang.hmcl;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 
-import javax.net.ssl.*;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
@@ -33,8 +35,8 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
@@ -61,7 +63,7 @@ public final class Main {
         // This environment check will take ~300ms
         thread(() -> {
             fixLetsEncrypt();
-            checkDSTRootCAX3();
+//            checkDSTRootCAX3();
         }, "CA Certificate Check", true);
 
         Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
@@ -99,30 +101,35 @@ public final class Main {
         } catch (SelfDependencyPatcher.IncompatibleVersionException e) {
             LOG.log(Level.SEVERE, "unable to patch JVM", e);
             showErrorAndExit(i18n("fatal.javafx.incompatible"));
+        } catch (CancellationException e) {
+            LOG.log(Level.SEVERE, "User cancels downloading JavaFX", e);
+            System.exit(0);
         }
     }
 
-    private static void checkDSTRootCAX3() {
-        TrustManagerFactory tmf;
-        try {
-            tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            tmf.init((KeyStore) null);
-        } catch (NoSuchAlgorithmException | KeyStoreException e) {
-            LOG.log(Level.WARNING, "Failed to init TrustManagerFactory", e);
-            // don't know what to do here
-            return;
-        }
-        for (TrustManager tm : tmf.getTrustManagers()) {
-            if (tm instanceof X509TrustManager) {
-                for (X509Certificate cert : ((X509TrustManager) tm).getAcceptedIssuers()) {
-                    if ("CN=DST Root CA X3, O=Digital Signature Trust Co.".equals((cert.getSubjectDN().getName()))) {
-                        return;
-                    }
-                }
-            }
-        }
-        showWarningAndContinue(i18n("fatal.missing_dst_root_ca_x3"));
-    }
+    // Lets Encrypt uses ISRG Root X1 as root certificate instead.
+
+//    private static void checkDSTRootCAX3() {
+//        TrustManagerFactory tmf;
+//        try {
+//            tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+//            tmf.init((KeyStore) null);
+//        } catch (NoSuchAlgorithmException | KeyStoreException e) {
+//            LOG.log(Level.WARNING, "Failed to init TrustManagerFactory", e);
+//            // don't know what to do here
+//            return;
+//        }
+//        for (TrustManager tm : tmf.getTrustManagers()) {
+//            if (tm instanceof X509TrustManager) {
+//                for (X509Certificate cert : ((X509TrustManager) tm).getAcceptedIssuers()) {
+//                    if ("CN=DST Root CA X3, O=Digital Signature Trust Co.".equals((cert.getSubjectDN().getName()))) {
+//                        return;
+//                    }
+//                }
+//            }
+//        }
+//        showWarningAndContinue(i18n("fatal.missing_dst_root_ca_x3"));
+//    }
 
     /**
      * Indicates that a fatal error has occurred, and that the application cannot start.

@@ -32,14 +32,12 @@ import javafx.stage.StageStyle;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.java.JavaRepository;
-import org.jackhuang.hmcl.mod.curse.CurseModManager;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
@@ -49,9 +47,7 @@ import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
 import org.jackhuang.hmcl.ui.multiplayer.MultiplayerPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
-import org.jackhuang.hmcl.ui.versions.DownloadListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
-import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.Logging;
@@ -87,13 +83,6 @@ public final class Controllers {
     });
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     private static DecoratorController decorator;
-    private static Lazy<DownloadListPage> modDownloadListPage = new Lazy<>(() -> {
-        return new DownloadListPage(CurseModManager.SECTION_MODPACK, Versions::downloadModpackImpl) {
-            {
-                state.set(State.fromTitle(i18n("modpack.download")));
-            }
-        };
-    });
     private static Lazy<DownloadPage> downloadPage = new Lazy<>(DownloadPage::new);
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
@@ -129,11 +118,6 @@ public final class Controllers {
     // FXThread
     public static RootPage getRootPage() {
         return rootPage.get();
-    }
-
-    // FXThread
-    public static DownloadListPage getModpackDownloadListPage() {
-        return modDownloadListPage.get();
     }
 
     // FXThread
@@ -235,7 +219,7 @@ public final class Controllers {
     }
 
     public static void dialog(String text, String title) {
-        dialog(text, title, MessageType.INFORMATION);
+        dialog(text, title, MessageType.INFO);
     }
 
     public static void dialog(String text, String title, MessageType type) {
@@ -243,7 +227,7 @@ public final class Controllers {
     }
 
     public static void dialog(String text, String title, MessageType type, Runnable ok) {
-        dialog(MessageDialogPane.ok(text, title, type, ok));
+        dialog(new MessageDialogPane.Builder(text, title, type).ok(ok).build());
     }
 
     public static void confirm(String text, String title, Runnable yes, Runnable no) {
@@ -251,15 +235,15 @@ public final class Controllers {
     }
 
     public static void confirm(String text, String title, MessageType type, Runnable yes, Runnable no) {
-        dialog(MessageDialogPane.yesOrNo(text, title, type, yes, no));
+        dialog(new MessageDialogPane.Builder(text, title, type).yesOrNo(yes, no).build());
     }
 
     public static void confirmAction(String text, String title, MessageType type, ButtonBase actionButton) {
-        dialog(MessageDialogPane.actionOrCancel(text, title, type, actionButton, null));
+        dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, null).build());
     }
 
     public static void confirmAction(String text, String title, MessageType type, ButtonBase actionButton, Runnable cancel) {
-        dialog(MessageDialogPane.actionOrCancel(text, title, type, actionButton, cancel));
+        dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, cancel).build());
     }
 
     public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {
@@ -290,12 +274,33 @@ public final class Controllers {
         return pane;
     }
 
+    public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, Consumer<Region> onCancel) {
+        TaskExecutor executor = task.executor();
+        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
+        pane.setTitle(title);
+        pane.setExecutor(executor);
+        dialog(pane);
+        executor.start();
+        return pane;
+    }
+
     public static void navigate(Node node) {
-        decorator.getNavigator().navigate(node, ContainerAnimations.FADE.getAnimationProducer());
+        decorator.navigate(node);
     }
 
     public static void showToast(String content) {
         decorator.showToast(content);
+    }
+
+    public static void onHyperlinkAction(String href) {
+        if (href.startsWith("hmcl://")) {
+            if ("hmcl://settings/feedback".equals(href)) {
+                Controllers.getSettingsPage().showFeedback();
+                Controllers.navigate(Controllers.getSettingsPage());
+            }
+        } else {
+            FXUtils.openLink(href);
+        }
     }
 
     public static boolean isStopped() {
@@ -307,7 +312,6 @@ public final class Controllers {
         versionPage = null;
         gameListPage = null;
         settingsPage = null;
-        modDownloadListPage = null;
         decorator = null;
         stage = null;
         scene = null;

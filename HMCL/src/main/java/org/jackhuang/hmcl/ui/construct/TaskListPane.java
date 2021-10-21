@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -96,7 +97,7 @@ public final class TaskListPane extends StackPane {
 
             @Override
             public void onReady(Task<?> task) {
-                if (task instanceof Task.StageTask) {
+                if (task.getStage() != null) {
                     Platform.runLater(() -> {
                         stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::begin);
                     });
@@ -143,14 +144,14 @@ public final class TaskListPane extends StackPane {
                 Platform.runLater(() -> {
                     ProgressListNode node = new ProgressListNode(task);
                     nodes.put(task, node);
-                    StageNode stageNode = stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().orElse(null);
+                    StageNode stageNode = stageNodes.stream().filter(x -> x.stage.equals(task.getInheritedStage())).findAny().orElse(null);
                     listBox.add(listBox.indexOf(stageNode) + 1, node);
                 });
             }
 
             @Override
             public void onFinished(Task<?> task) {
-                if (task instanceof Task.StageTask) {
+                if (task.getStage() != null) {
                     Platform.runLater(() -> {
                         stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::succeed);
                     });
@@ -167,7 +168,7 @@ public final class TaskListPane extends StackPane {
 
             @Override
             public void onFailed(Task<?> task, Throwable throwable) {
-                if (task instanceof Task.StageTask) {
+                if (task.getStage() != null) {
                     Platform.runLater(() -> {
                         stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::fail);
                     });
@@ -181,14 +182,29 @@ public final class TaskListPane extends StackPane {
             }
 
             @Override
-            public void onPropertiesUpdate(Map<String, Map<String, Object>> stageProperties) {
-                stageProperties.forEach((stage, properties) -> {
-                    int count = tryCast(properties.get("count"), Integer.class).orElse(0),
-                            total = tryCast(properties.get("total"), Integer.class).orElse(0);
-                    if (total > 0)
-                        Platform.runLater(() ->
-                                stageNodes.stream().filter(x -> x.stage.equals(stage)).findAny().ifPresent(stageNode -> stageNode.updateCounter(count, total)));
-                });
+            public void onPropertiesUpdate(Task<?> task) {
+                if (task instanceof Task.CountTask) {
+                    runInFX(() -> {
+                        stageNodes.stream()
+                                .filter(x -> x.stage.equals(((Task.CountTask) task).getCountStage()))
+                                .findAny()
+                                .ifPresent(StageNode::count);
+                    });
+
+                    return;
+                }
+
+                if (task.getStage() != null) {
+                    int total = tryCast(task.getProperties().get("total"), Integer.class).orElse(0);
+                    runInFX(() -> {
+                        stageNodes.stream()
+                                .filter(x -> x.stage.equals(task.getStage()))
+                                .findAny()
+                                .ifPresent(stageNode -> {
+                                    stageNode.setTotal(total);
+                                });
+                    });
+                }
             }
         });
     }
@@ -197,6 +213,8 @@ public final class TaskListPane extends StackPane {
         private final String stage;
         private final Label title = new Label();
         private final String message;
+        private int count = 0;
+        private int total = 0;
         private boolean started = false;
 
         public StageNode(String stage) {
@@ -240,6 +258,15 @@ public final class TaskListPane extends StackPane {
 
         public void succeed() {
             setLeft(FXUtils.limitingSize(SVG.check(Theme.blackFillBinding(), 14, 14), 14, 14));
+        }
+
+        public void count() {
+            updateCounter(++count, total);
+        }
+
+        public void setTotal(int total) {
+            this.total = total;
+            updateCounter(count, total);
         }
 
         public void updateCounter(int count, int total) {

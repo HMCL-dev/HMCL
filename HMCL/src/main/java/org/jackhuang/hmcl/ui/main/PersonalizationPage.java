@@ -59,10 +59,10 @@ public class PersonalizationPage extends StackPane {
         scrollPane.setFitToWidth(true);
         getChildren().setAll(scrollPane);
 
+        ComponentList themeList = new ComponentList();
         {
-            ComponentList themeList = new ComponentList();
             BorderPane themePane = new BorderPane();
-            themeList.getContent().setAll(themePane);
+            themeList.getContent().add(themePane);
 
             Label left = new Label(i18n("settings.launcher.theme"));
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
@@ -81,33 +81,42 @@ public class PersonalizationPage extends StackPane {
             });
             themeColorPickerContainer.getChildren().setAll(picker);
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
-
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
         }
+        {
+            OptionToggleButton titleTransparentButton = new OptionToggleButton();
+            themeList.getContent().add(titleTransparentButton);
+            titleTransparentButton.selectedProperty().bindBidirectional(config().titleTransparentProperty());
+            titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
+        }
+        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
 
         {
-            StackPane componentList = new StackPane();
+            ComponentList componentList = new ComponentList();
 
             MultiFileItem<EnumBackgroundImage> backgroundItem = new MultiFileItem<>();
-            backgroundItem.setTitle(i18n("launcher.background"));
-            backgroundItem.setHasSubtitle(true);
+            ComponentSublist backgroundSublist = new ComponentSublist();
+            backgroundSublist.getContent().add(backgroundItem);
+            backgroundSublist.setTitle(i18n("launcher.background"));
+            backgroundSublist.setHasSubtitle(true);
 
             backgroundItem.loadChildren(Arrays.asList(
                     new MultiFileItem.Option<>(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT),
                     new MultiFileItem.Option<>(i18n("launcher.background.classic"), EnumBackgroundImage.CLASSIC),
+                    new MultiFileItem.Option<>(i18n("launcher.background.translucent"), EnumBackgroundImage.TRANSLUCENT),
                     new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumBackgroundImage.CUSTOM)
                             .setChooserTitle(i18n("launcher.background.choose"))
                             .bindBidirectional(config().backgroundImageProperty()),
                     new MultiFileItem.StringOption<>(i18n("launcher.background.network"), EnumBackgroundImage.NETWORK)
+                            .setValidators(new URLValidator(true))
                             .bindBidirectional(config().backgroundImageUrlProperty())
             ));
             backgroundItem.selectedDataProperty().bindBidirectional(config().backgroundImageTypeProperty());
-            backgroundItem.subtitleProperty().bind(
+            backgroundSublist.subtitleProperty().bind(
                     new When(backgroundItem.selectedDataProperty().isEqualTo(EnumBackgroundImage.DEFAULT))
                             .then(i18n("launcher.background.default"))
                             .otherwise(config().backgroundImageProperty()));
 
-            componentList.getChildren().add(backgroundItem);
+            componentList.getContent().add(backgroundItem);
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("launcher.background")), componentList);
         }
 

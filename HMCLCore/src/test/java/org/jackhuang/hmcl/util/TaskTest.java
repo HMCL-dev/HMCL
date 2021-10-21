@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.JavaFXLauncher;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -25,9 +26,6 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -80,20 +78,7 @@ public class TaskTest {
     }
 
     public void testThenAccept() {
-        // init JavaFX Toolkit
-        try {
-            // Java 9 or Latter
-            final MethodHandle startup =
-                    MethodHandles.publicLookup().findStatic(
-                            javafx.application.Platform.class, "startup", MethodType.methodType(void.class, Runnable.class));
-            startup.invokeExact((Runnable) () -> {});
-        } catch (Throwable e) {
-            // Java 8
-            try {
-                Class.forName("javafx.embed.swing.JFXPanel").getDeclaredConstructor().newInstance();
-            } catch (Throwable ignored) {
-            }
-        }
+        JavaFXLauncher.start();
         AtomicBoolean flag = new AtomicBoolean();
         boolean result = Task.supplyAsync(JavaVersion::fromCurrentEnvironment)
                 .thenAcceptAsync(Schedulers.javafx(), javaVersion -> {

@@ -17,52 +17,46 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
-import javafx.fxml.FXML;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.StringUtils;
-
-import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class PromptDialogPane extends StackPane {
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+
+public class PromptDialogPane extends DialogPane {
     private final CompletableFuture<List<Builder.Question<?>>> future = new CompletableFuture<>();
 
-    @FXML
-    private JFXButton acceptButton;
-    @FXML
-    private JFXButton cancelButton;
-    @FXML
-    private VBox vbox;
-    @FXML
-    private Label title;
-    @FXML
-    private Label lblCreationWarning;
-    @FXML
-    private SpinnerPane acceptPane;
+    private final Builder builder;
 
     public PromptDialogPane(Builder builder) {
-        FXUtils.loadFXML(this, "/assets/fxml/input-dialog.fxml");
-        this.title.setText(builder.title);
+        this.builder = builder;
+        setTitle(builder.title);
 
+        GridPane body = new GridPane();
+        body.setVgap(8);
+        body.setHgap(16);
+        body.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
+        setBody(body);
         List<BooleanBinding> bindings = new ArrayList<>();
+        int rowIndex = 0;
         for (Builder.Question<?> question : builder.questions) {
             if (question instanceof Builder.StringQuestion) {
                 Builder.StringQuestion stringQuestion = (Builder.StringQuestion) question;
@@ -75,63 +69,59 @@ public class PromptDialogPane extends StackPane {
                 }
                 bindings.add(Bindings.createBooleanBinding(textField::validate, textField.textProperty()));
 
-                if (StringUtils.isNotBlank(question.question)) {
-                    vbox.getChildren().add(new Label(question.question));
+                if (StringUtils.isNotBlank(question.question.get())) {
+                    body.addRow(rowIndex++, new Label(question.question.get()), textField);
+                } else {
+                    GridPane.setColumnSpan(textField, 2);
+                    body.addRow(rowIndex++, textField);
                 }
-                VBox.setMargin(textField, new Insets(0, 0, 20, 0));
-                vbox.getChildren().add(textField);
+                GridPane.setMargin(textField, new Insets(0, 0, 20, 0));
             } else if (question instanceof Builder.BooleanQuestion) {
                 HBox hBox = new HBox();
+                GridPane.setColumnSpan(hBox, 2);
                 JFXCheckBox checkBox = new JFXCheckBox();
                 hBox.getChildren().setAll(checkBox);
                 HBox.setMargin(checkBox, new Insets(0, 0, 0, -10));
                 checkBox.setSelected(((Builder.BooleanQuestion) question).value);
                 checkBox.selectedProperty().addListener((a, b, newValue) -> ((Builder.BooleanQuestion) question).value = newValue);
-                checkBox.setText(question.question);
-                vbox.getChildren().add(hBox);
+                checkBox.setText(question.question.get());
+                body.addRow(rowIndex++, hBox);
             } else if (question instanceof Builder.CandidatesQuestion) {
-                HBox hBox = new HBox();
                 JFXComboBox<String> comboBox = new JFXComboBox<>();
-                hBox.getChildren().setAll(comboBox);
                 comboBox.getItems().setAll(((Builder.CandidatesQuestion) question).candidates);
                 comboBox.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) ->
                         ((Builder.CandidatesQuestion) question).value = newValue.intValue());
                 comboBox.getSelectionModel().select(0);
-                if (StringUtils.isNotBlank(question.question)) {
-                    vbox.getChildren().add(new Label(question.question));
+                if (StringUtils.isNotBlank(question.question.get())) {
+                    body.addRow(rowIndex++, new Label(question.question.get()), comboBox);
+                } else {
+                    GridPane.setColumnSpan(comboBox, 2);
+                    body.addRow(rowIndex++, comboBox);
                 }
-                vbox.getChildren().add(hBox);
             } else if (question instanceof Builder.HintQuestion) {
                 HintPane pane = new HintPane();
-                pane.setText(question.question);
-                vbox.getChildren().add(pane);
+                GridPane.setColumnSpan(pane, 2);
+                pane.textProperty().bind(question.question);
+                body.addRow(rowIndex++, pane);
             }
         }
 
-        cancelButton.setOnMouseClicked(e -> fireEvent(new DialogCloseEvent()));
-        acceptButton.disableProperty().bind(Bindings.createBooleanBinding(
-                () -> bindings.stream().map(BooleanBinding::get).anyMatch(x -> !x),
+        validProperty().bind(Bindings.createBooleanBinding(
+                () -> bindings.stream().allMatch(BooleanBinding::get),
                 bindings.toArray(new BooleanBinding[0])
         ));
+    }
 
-        acceptButton.setOnMouseClicked(e -> {
-            acceptPane.showSpinner();
+    @Override
+    protected void onAccept() {
+        setLoading();
 
-            builder.callback.call(builder.questions, () -> {
-                future.complete(builder.questions);
-                runInFX(() -> {
-                    acceptPane.hideSpinner();
-                    fireEvent(new DialogCloseEvent());
-                });
-            }, msg -> {
-                runInFX(() -> {
-                    acceptPane.hideSpinner();
-                    lblCreationWarning.setText(msg);
-                });
-            });
+        builder.callback.call(builder.questions, () -> {
+            future.complete(builder.questions);
+            runInFX(this::onSuccess);
+        }, msg -> {
+            runInFX(() -> onFailure(msg));
         });
-
-        onEscPressed(this, cancelButton::fire);
     }
 
     public CompletableFuture<List<Builder.Question<?>>> getCompletableFuture() {
@@ -154,15 +144,27 @@ public class PromptDialogPane extends StackPane {
         }
 
         public static class Question<T> {
-            public final String question;
+            public final StringProperty question = new SimpleStringProperty();
             protected T value;
 
             public Question(String question) {
-                this.question = question;
+                this.question.set(question);
             }
 
             public T getValue() {
                 return value;
+            }
+
+            public String getQuestion() {
+                return question.get();
+            }
+
+            public StringProperty questionProperty() {
+                return question;
+            }
+
+            public void setQuestion(String question) {
+                this.question.set(question);
             }
         }
 

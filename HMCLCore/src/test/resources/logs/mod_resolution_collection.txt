@@ -1,0 +1,17 @@
+[00:39:00] [main/INFO]: Loading for game Minecraft 1.17.1
+Exception in thread "main" java.lang.RuntimeException: Failed to resolve mods!
+	at net.fabricmc.loader.FabricLoader.load(FabricLoader.java:159)
+	at net.fabricmc.loader.launch.knot.Knot.init(Knot.java:122)
+	at net.fabricmc.loader.launch.knot.KnotClient.main(KnotClient.java:26)
+Caused by: net.fabricmc.loader.discovery.ModResolutionException: Could not resolve valid mod collection (at: tabtps-fabric requires {fabricloader @ [>=0.11.1]})
+	at net.fabricmc.loader.discovery.ModResolver.findCompatibleSet(ModResolver.java:184)
+	at net.fabricmc.loader.discovery.ModResolver.resolve(ModResolver.java:508)
+	at net.fabricmc.loader.FabricLoader.load(FabricLoader.java:157)
+	... 2 more
+Caused by: net.fabricmc.loader.util.sat4j.specs.ContradictionException: Creating Empty clause ?
+	at net.fabricmc.loader.util.sat4j.minisat.constraints.cnf.Clauses.propagationCheck(Clauses.java:117)
+	at net.fabricmc.loader.util.sat4j.minisat.constraints.cnf.Clauses.sanityCheck(Clauses.java:97)
+	at net.fabricmc.loader.util.sat4j.minisat.constraints.MixedDataStructureDanielWL.createClause(MixedDataStructureDanielWL.java:81)
+	at net.fabricmc.loader.util.sat4j.minisat.core.Solver.addClause(Solver.java:401)
+	at net.fabricmc.loader.discovery.ModResolver.findCompatibleSet(ModResolver.java:182)
+	... 4 more

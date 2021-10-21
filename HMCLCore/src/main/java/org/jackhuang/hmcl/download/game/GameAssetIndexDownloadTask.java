@@ -30,8 +30,9 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -71,14 +72,14 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
     @Override
     public void execute() {
         AssetIndexInfo assetIndexInfo = version.getAssetIndex();
-        File assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
+        Path assetIndexFile = dependencyManager.getGameRepository().getIndexFile(version.getId(), assetIndexInfo.getId());
         boolean verifyHashCode = StringUtils.isNotBlank(assetIndexInfo.getSha1()) && assetIndexInfo.getUrl().contains(assetIndexInfo.getSha1());
 
-        if (assetIndexFile.exists() && !forceDownloading) {
+        if (Files.exists(assetIndexFile) && !forceDownloading) {
             // verify correctness of file content
             if (verifyHashCode) {
                 try {
-                    String actualSum = Hex.encodeHex(DigestUtils.digest("SHA-1", assetIndexFile.toPath()));
+                    String actualSum = Hex.encodeHex(DigestUtils.digest("SHA-1", assetIndexFile));
                     if (actualSum.equalsIgnoreCase(assetIndexInfo.getSha1()))
                         return;
                 } catch (IOException e) {
@@ -98,7 +99,7 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
         // And Mojang will modify this file anytime. So assetIndex.hash might be outdated.
         FileDownloadTask task = new FileDownloadTask(
                 dependencyManager.getDownloadProvider().injectURLWithCandidates(assetIndexInfo.getUrl()),
-                assetIndexFile,
+                assetIndexFile.toFile(),
                 verifyHashCode ? new FileDownloadTask.IntegrityCheck("SHA-1", assetIndexInfo.getSha1()) : null
         );
         task.setCacheRepository(dependencyManager.getCacheRepository());
