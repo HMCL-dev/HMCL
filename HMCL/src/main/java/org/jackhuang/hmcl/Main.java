@@ -133,8 +133,9 @@ public final class Main {
             }
 
             KeyStore letsEncryptKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            InputStream letsEncryptFile = Main.class.getResourceAsStream("/assets/lekeystore.jks");
-            letsEncryptKeyStore.load(letsEncryptFile, "supersecretpassword".toCharArray());
+            try (InputStream letsEncryptFile = Main.class.getResourceAsStream("/assets/lekeystore.jks")) {
+                letsEncryptKeyStore.load(letsEncryptFile, "supersecretpassword".toCharArray());
+            }
 
             KeyStore merged = KeyStore.getInstance(KeyStore.getDefaultType());
             merged.load(null, new char[0]);
