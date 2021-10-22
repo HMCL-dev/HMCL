@@ -15,8 +15,10 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.ui.construct.DialogPane;
+import org.jackhuang.hmcl.ui.construct.HintPane;
+import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -43,10 +45,13 @@ public class OAuthAccountLoginDialog extends DialogPane {
         Label usernameLabel = new Label(account.getUsername());
 
         HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-        hintPane.textProperty().bind(BindingMapping.of(deviceCode).map(deviceCode ->
-                deviceCode != null
-                        ? i18n("account.methods.microsoft.manual", deviceCode.getUserCode())
-                        : i18n("account.methods.microsoft.hint")));
+        FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
+            if (deviceCode != null) {
+                hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getUserCode()));
+            } else {
+                hintPane.setSegment(i18n("account.methods.microsoft.hint"));
+            }
+        });
         hintPane.setOnMouseClicked(e -> {
             if (deviceCode.get() != null) {
                 FXUtils.copyText(deviceCode.get().getVerificationUri());
@@ -70,7 +75,9 @@ public class OAuthAccountLoginDialog extends DialogPane {
     }
 
     private void onGrantDeviceCode(OAuthServer.GrantDeviceCodeEvent event) {
-        deviceCode.set(event);
+        FXUtils.runInFX(() -> {
+            deviceCode.set(event);
+        });
     }
 
     @Override

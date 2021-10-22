@@ -27,6 +27,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
 public class HintPane extends VBox {
@@ -82,6 +84,10 @@ public class HintPane extends VBox {
 
     public void setText(String text) {
         this.text.set(text);
+    }
+
+    public void setSegment(String segment) {
+        flow.getChildren().setAll(FXUtils.parseSegment(segment, Controllers::onHyperlinkAction));
     }
 
     public void setChildren(Node... children) {

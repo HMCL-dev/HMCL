@@ -23,7 +23,9 @@ import javafx.application.Platform;
 import javafx.beans.NamedArg;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -53,6 +55,7 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
@@ -88,6 +91,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private final Pane detailsContainer;
 
     private final BooleanProperty logging = new SimpleBooleanProperty();
+    private final ObjectProperty<OAuthServer.GrantDeviceCodeEvent> deviceCode = new SimpleObjectProperty<>();
+    private final WeakListenerHolder holder = new WeakListenerHolder();
 
     private TaskExecutor loginTask;
 
@@ -217,6 +222,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
 
         logging.set(true);
+        deviceCode.set(null);
 
         loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
                 .whenComplete(Schedulers.javafx(), account -> {
@@ -262,15 +268,22 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         if (factory == Accounts.FACTORY_MICROSOFT) {
             VBox vbox = new VBox(8);
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-            hintPane.textProperty().bind(BindingMapping.of(logging).map(logging ->
-                    logging
-                            ? i18n("account.methods.microsoft.manual")
-                            : i18n("account.methods.microsoft.hint")));
-            hintPane.setOnMouseClicked(e -> {
-                if (logging.get() && OAuthServer.lastlyOpenedURL != null) {
-                    FXUtils.copyText(OAuthServer.lastlyOpenedURL);
+            FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
+                if (deviceCode != null) {
+                    hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getUserCode()));
+                } else {
+                    hintPane.setSegment(i18n("account.methods.microsoft.hint"));
                 }
             });
+            hintPane.setOnMouseClicked(e -> {
+                if (deviceCode.get() != null) {
+                    FXUtils.copyText(deviceCode.get().getVerificationUri());
+                }
+            });
+
+            holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
+                runInFX(() -> deviceCode.set(value));
+            }));
 
             HBox box = new HBox(8);
             JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));

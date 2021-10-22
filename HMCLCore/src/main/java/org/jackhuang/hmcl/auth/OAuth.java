@@ -98,8 +98,9 @@ public class OAuth {
                 .form(pair("client_id", options.callback.getClientId()), pair("scope", options.scope))
                 .ignoreHttpCode()
                 .getJson(DeviceTokenResponse.class);
+        handleErrorResponse(deviceTokenResponse);
 
-        options.callback.grantDeviceCode(deviceTokenResponse.deviceCode, deviceTokenResponse.verificationURI);
+        options.callback.grantDeviceCode(deviceTokenResponse.userCode, deviceTokenResponse.verificationURI);
 
         // Microsoft OAuth Flow
         options.callback.openBrowser(deviceTokenResponse.verificationURI);
@@ -112,7 +113,7 @@ public class OAuth {
 
             // We stop waiting if user does not respond our authentication request in 15 minutes.
             long estimatedTime = System.nanoTime() - startTime;
-            if (TimeUnit.MINUTES.convert(estimatedTime, TimeUnit.SECONDS) >= Math.min(deviceTokenResponse.expiresIn, 900)) {
+            if (TimeUnit.SECONDS.convert(estimatedTime, TimeUnit.NANOSECONDS) >= Math.min(deviceTokenResponse.expiresIn, 900)) {
                 throw new NoSelectedCharacterException();
             }
 
@@ -121,6 +122,7 @@ public class OAuth {
                             pair("grant_type", "urn:ietf:params:oauth:grant-type:device_code"),
                             pair("code", deviceTokenResponse.deviceCode),
                             pair("client_id", options.callback.getClientId()))
+                    .ignoreHttpCode()
                     .getJson(TokenResponse.class);
 
             if ("authorization_pending".equals(tokenResponse.error)) {
@@ -256,7 +258,7 @@ public class OAuth {
         }
     }
 
-    private static class DeviceTokenResponse {
+    private static class DeviceTokenResponse extends ErrorResponse {
         @SerializedName("user_code")
         public String userCode;
 

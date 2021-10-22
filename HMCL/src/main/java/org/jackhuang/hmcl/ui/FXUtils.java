@@ -77,6 +77,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
@@ -700,7 +701,7 @@ public final class FXUtils {
         Controllers.showToast(i18n("message.copied"));
     }
 
-    public static TextFlow segmentToTextFlow(final String segment, Consumer<String> hyperlinkAction) {
+    public static List<Node> parseSegment(String segment, Consumer<String> hyperlinkAction) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -719,6 +720,10 @@ public final class FXUtils {
                         JFXHyperlink hyperlink = new JFXHyperlink(element.getTextContent());
                         hyperlink.setOnAction(e -> hyperlinkAction.accept(href));
                         texts.add(hyperlink);
+                    } else if ("b".equals(element.getTagName())) {
+                        Text text = new Text(element.getTextContent());
+                        text.getStyleClass().add("bold");
+                        texts.add(text);
                     } else if ("br".equals(element.getTagName())) {
                         texts.add(new Text("\n"));
                     } else {
@@ -728,12 +733,17 @@ public final class FXUtils {
                     texts.add(new Text(node.getTextContent()));
                 }
             }
-            final TextFlow tf = new TextFlow(texts.toArray(new javafx.scene.Node[0]));
-            return tf;
+            return texts;
         } catch (SAXException | ParserConfigurationException | IOException e) {
             LOG.log(Level.WARNING, "Failed to parse xml", e);
-            return new TextFlow(new Text(segment));
+            return Collections.singletonList(new Text(segment));
         }
+    }
+
+    public static TextFlow segmentToTextFlow(final String segment, Consumer<String> hyperlinkAction) {
+        TextFlow tf = new TextFlow();
+        tf.getChildren().setAll(parseSegment(segment, hyperlinkAction));
+        return tf;
     }
 
 }

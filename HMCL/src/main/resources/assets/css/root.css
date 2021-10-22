@@ -95,6 +95,10 @@
     -fx-pref-width: 200;
 }
 
+.bold {
+    -fx-font-weight: bold;
+}
+
 .memory-label {
 }
 
