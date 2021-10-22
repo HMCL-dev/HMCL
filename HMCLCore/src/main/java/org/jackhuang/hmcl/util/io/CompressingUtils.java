@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNull;
 
@@ -197,7 +198,9 @@ public final class CompressingUtils {
      * @return the plain text content of given file.
      */
     public static String readTextZipEntry(File zipFile, String name) throws IOException {
-        return readTextZipEntry(zipFile.toPath(), name, null);
+        try (ZipFile s = new ZipFile(zipFile)) {
+            return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)), StandardCharsets.UTF_8);
+        }
     }
 
     /**
@@ -209,8 +212,8 @@ public final class CompressingUtils {
      * @return the plain text content of given file.
      */
     public static String readTextZipEntry(Path zipFile, String name, Charset encoding) throws IOException {
-        try (FileSystem fs = createReadOnlyZipFileSystem(zipFile, encoding)) {
-            return FileUtils.readText(fs.getPath(name));
+        try (ZipFile s = new ZipFile(zipFile.toFile(), encoding.name())) {
+            return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)), StandardCharsets.UTF_8);
         }
     }
 
