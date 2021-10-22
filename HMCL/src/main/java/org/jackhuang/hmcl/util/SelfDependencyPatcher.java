@@ -64,11 +64,11 @@ import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static java.lang.Class.forName;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
 import static org.jackhuang.hmcl.Metadata.HMCL_DIRECTORY;
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.SelfDependencyPatcher.DependencyDescriptor.JFX_DEPENDENCIES;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.platform.JavaVersion.CURRENT_JAVA;
 
@@ -81,6 +81,17 @@ public final class SelfDependencyPatcher {
 
         private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies");
         public static final String CURRENT_ARCH_CLASSIFIER = currentArchClassifier();
+        public static final List<DependencyDescriptor> JFX_DEPENDENCIES = readDependencies();
+
+        private static List<DependencyDescriptor> readDependencies() {
+            String content;
+            try (InputStream in = SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE)) {
+                content = IOUtils.readFullyAsString(in, UTF_8);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            return new Gson().fromJson(content, TypeToken.getParameterized(List.class, DependencyDescriptor.class).getType());
+        }
 
         private static String currentArchClassifier() {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
@@ -187,18 +198,6 @@ public final class SelfDependencyPatcher {
 
     private static final String DEPENDENCIES_LIST_FILE = "/assets/openjfx-dependencies.json";
 
-    private static List<DependencyDescriptor> readDependencies() {
-        String content;
-        try (InputStream in = SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE)) {
-            content = IOUtils.readFullyAsString(in, UTF_8);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        return new Gson().fromJson(content, TypeToken.getParameterized(List.class, DependencyDescriptor.class).getType());
-    }
-
-    private static final List<DependencyDescriptor> JFX_DEPENDENCIES = readDependencies();
-
     /**
      * Patch in any missing dependencies, if any.
      */
@@ -206,7 +205,7 @@ public final class SelfDependencyPatcher {
         // Do nothing if JavaFX is detected
         try {
             try {
-                forName("javafx.application.Application");
+                Class.forName("javafx.application.Application");
                 return;
             } catch (Exception ignored) {
             }
