@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Stream;
@@ -137,15 +138,26 @@ public class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public void duplicateVersion(String srcId, String dstId, boolean copySaves) throws IOException {
-        File srcDir = getVersionRoot(srcId);
-        File dstDir = getVersionRoot(dstId);
+        Path srcDir = getVersionRoot(srcId).toPath();
+        Path dstDir = getVersionRoot(dstId).toPath();
 
-        if (dstDir.exists()) throw new IOException("Version exists");
-        FileUtils.copyDirectory(srcDir.toPath(), dstDir.toPath());
-        if (Files.exists(dstDir.toPath().resolve(srcId + ".jar"))) {
-            Files.move(dstDir.toPath().resolve(srcId + ".jar"), dstDir.toPath().resolve(dstId + ".jar"));
+        Version fromVersion = getVersion(srcId);
+
+        if (Files.exists(dstDir)) throw new IOException("Version exists");
+        FileUtils.copyDirectory(srcDir, dstDir);
+
+        Path fromJson = dstDir.resolve(srcId + ".json");
+        Path fromJar = dstDir.resolve(srcId + ".jar");
+        Path toJson = dstDir.resolve(dstId + ".json");
+        Path toJar = dstDir.resolve(dstId + ".jar");
+
+        if (Files.exists(fromJar)) {
+            Files.move(fromJar, toJar);
         }
-        Files.move(dstDir.toPath().resolve(srcId + ".json"), dstDir.toPath().resolve(dstId + ".json"));
+        Files.move(fromJson, toJson);
+
+        FileUtils.writeText(toJson.toFile(), JsonUtils.GSON.toJson(fromVersion.setId(dstId)));
+        
         VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
         GameDirectoryType originalGameDirType = oldVersionSetting.getGameDirType();
         oldVersionSetting.setUsesGlobal(false);
