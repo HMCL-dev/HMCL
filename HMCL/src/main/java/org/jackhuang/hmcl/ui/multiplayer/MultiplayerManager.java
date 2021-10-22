@@ -58,9 +58,9 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  * Cato Management.
  */
 public final class MultiplayerManager {
-    static final String CATO_VERSION = "1.1.0";
+    static final String CATO_VERSION = "1.1.1-202110221044";
 //    private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/cato/cato/" + MultiplayerManager.CATO_VERSION;
-    private static final String CATO_DOWNLOAD_URL = "https://codechina.csdn.net/to/ioi_bin/-/raw/e2d1b04805764e77f7c17c2e5a64d0ccb1831e16/client/";
+    private static final String CATO_DOWNLOAD_URL = "https://codechina.csdn.net/to/ioi_bin/-/raw/e488f5781e3ac4adf998d45436f968e9f960b8bb/client/";
     private static final String CATO_PATH = getCatoPath();
     public static final int CATO_AGREEMENT_VERSION = 2;
     private static final String REMOTE_ADDRESS = "127.0.0.1";
