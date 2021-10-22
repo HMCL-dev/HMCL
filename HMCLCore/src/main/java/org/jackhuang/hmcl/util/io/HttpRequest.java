@@ -49,6 +49,7 @@ public abstract class HttpRequest {
     protected final Map<String, String> headers = new HashMap<>();
     protected ExceptionalBiConsumer<URL, Integer, IOException> responseCodeTester;
     protected final Set<Integer> toleratedHttpCodes = new HashSet<>();
+    protected boolean ignoreHttpCode;
 
     private HttpRequest(String url, String method) {
         this.url = url;
@@ -73,6 +74,11 @@ public abstract class HttpRequest {
 
     public HttpRequest header(String key, String value) {
         headers.put(key, value);
+        return this;
+    }
+
+    public HttpRequest ignoreHttpCode() {
+        ignoreHttpCode = true;
         return this;
     }
 
@@ -173,7 +179,7 @@ public abstract class HttpRequest {
                 responseCodeTester.accept(new URL(url), con.getResponseCode());
             } else {
                 if (con.getResponseCode() / 100 != 2) {
-                    if (!toleratedHttpCodes.contains(con.getResponseCode())) {
+                    if (!ignoreHttpCode && !toleratedHttpCodes.contains(con.getResponseCode())) {
                         String data = NetworkUtils.readData(con);
                         throw new ResponseCodeException(new URL(url), con.getResponseCode(), data);
                     }

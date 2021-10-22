@@ -22,6 +22,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.auth.OAuth;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
@@ -36,11 +37,9 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.regex.Pattern;
 
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.util.Objects.requireNonNull;
@@ -50,20 +49,15 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class MicrosoftService {
-    private static final String AUTHORIZATION_URL = "https://login.live.com/oauth20_authorize.srf";
-    private static final String ACCESS_TOKEN_URL = "https://login.live.com/oauth20_token.srf";
     private static final String SCOPE = "XboxLive.signin offline_access";
-    private static final int[] PORTS = {29111, 29112, 29113, 29114, 29115};
     private static final ThreadPoolExecutor POOL = threadPool("MicrosoftProfileProperties", true, 2, 10,
             TimeUnit.SECONDS);
-    private static final Pattern OAUTH_URL_PATTERN = Pattern
-            .compile("^https://login\\.live\\.com/oauth20_desktop\\.srf\\?code=(.*?)&lc=(.*?)$");
 
-    private final OAuthCallback callback;
+    private final OAuth.Callback callback;
 
     private final ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository;
 
-    public MicrosoftService(OAuthCallback callback) {
+    public MicrosoftService(OAuth.Callback callback) {
         this.callback = requireNonNull(callback);
         this.profileRepository = new ObservableOptionalCache<>(uuid -> {
             LOG.info("Fetching properties of " + uuid);
@@ -76,37 +70,11 @@ public class MicrosoftService {
     }
 
     public MicrosoftSession authenticate() throws AuthenticationException {
-        // Example URL:
-        // https://login.live.com/oauth20_authorize.srf?response_type=code&client_id=6a3728d6-27a3-4180-99bb-479895b8f88e&redirect_uri=http://localhost:29111/auth-response&scope=XboxLive.signin+offline_access&state=612fd24a2447427383e8b222b597db66&prompt=select_account
         try {
-            // Microsoft OAuth Flow
-            OAuthSession session = callback.startServer();
-            callback.openBrowser(NetworkUtils.withQuery(AUTHORIZATION_URL,
-                    mapOf(pair("client_id", callback.getClientId()), pair("response_type", "code"),
-                            pair("redirect_uri", session.getRedirectURI()), pair("scope", SCOPE),
-                            pair("prompt", "select_account"))));
-            String code = session.waitFor();
-
-            // Authorization Code -> Token
-            String responseText = HttpRequest.POST(ACCESS_TOKEN_URL)
-                    .form(mapOf(pair("client_id", callback.getClientId()), pair("code", code),
-                            pair("grant_type", "authorization_code"), pair("client_secret", callback.getClientSecret()),
-                            pair("redirect_uri", session.getRedirectURI()), pair("scope", SCOPE)))
-                    .getString();
-            LiveAuthorizationResponse response = JsonUtils.fromNonNullJson(responseText,
-                    LiveAuthorizationResponse.class);
-
-            return authenticateViaLiveAccessToken(response.accessToken, response.refreshToken);
+            OAuth.Result result = OAuth.MICROSOFT.authenticate(OAuth.GrantFlow.DEVICE, new OAuth.Options(SCOPE, callback));
+            return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
-        } catch (InterruptedException e) {
-            throw new NoSelectedCharacterException();
-        } catch (ExecutionException e) {
-            if (e.getCause() instanceof InterruptedException) {
-                throw new NoSelectedCharacterException();
-            } else {
-                throw new ServerDisconnectException(e);
-            }
         } catch (JsonParseException e) {
             throw new ServerResponseMalformedException(e);
         }
@@ -114,40 +82,13 @@ public class MicrosoftService {
 
     public MicrosoftSession refresh(MicrosoftSession oldSession) throws AuthenticationException {
         try {
-            LiveRefreshResponse response = HttpRequest.POST(ACCESS_TOKEN_URL)
-                    .form(pair("client_id", callback.getClientId()),
-                            pair("client_secret", callback.getClientSecret()),
-                            pair("refresh_token", oldSession.getRefreshToken()),
-                            pair("grant_type", "refresh_token"))
-                    .accept("application/json")
-                    .ignoreHttpErrorCode(400)
-                    .ignoreHttpErrorCode(401)
-                    .getJson(LiveRefreshResponse.class);
-
-            handleLiveErrorMessage(response);
-
-            return authenticateViaLiveAccessToken(response.accessToken, response.refreshToken);
+            OAuth.Result result = OAuth.MICROSOFT.refresh(oldSession.getRefreshToken(), new OAuth.Options(SCOPE, callback));
+            return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         } catch (JsonParseException e) {
             throw new ServerResponseMalformedException(e);
         }
-    }
-
-    private void handleLiveErrorMessage(LiveErrorResponse response) throws AuthenticationException {
-        if (response.error == null || response.errorDescription == null) {
-            return;
-        }
-
-        switch (response.error) {
-            case "invalid_grant":
-                if (response.errorDescription.contains("The user must sign in again and if needed grant the client application access to the requested scope")) {
-                    throw new CredentialExpiredException();
-                }
-                break;
-        }
-
-        throw new RemoteAuthenticationException(response.error, response.errorDescription, "");
     }
 
     private String getUhs(XBoxLiveAuthenticationResponse response, String existingUhs) throws AuthenticationException {
@@ -357,57 +298,6 @@ public class MicrosoftService {
     public static class NoXuiException extends AuthenticationException {
     }
 
-    public static class LiveErrorResponse {
-        @SerializedName("error")
-        public String error;
-
-        @SerializedName("error_description")
-        public String errorDescription;
-
-        @SerializedName("correlation_id")
-        public String correlationId;
-    }
-
-    /**
-     * Error response: {"error":"invalid_grant","error_description":"The provided
-     * value for the 'redirect_uri' is not valid. The value must exactly match the
-     * redirect URI used to obtain the authorization
-     * code.","correlation_id":"??????"}
-     */
-    public static class LiveAuthorizationResponse extends LiveErrorResponse {
-        @SerializedName("token_type")
-        public String tokenType;
-
-        @SerializedName("expires_in")
-        public int expiresIn;
-
-        @SerializedName("scope")
-        public String scope;
-
-        @SerializedName("access_token")
-        public String accessToken;
-
-        @SerializedName("refresh_token")
-        public String refreshToken;
-
-        @SerializedName("user_id")
-        public String userId;
-
-        @SerializedName("foci")
-        public String foci;
-    }
-
-    private static class LiveRefreshResponse extends LiveErrorResponse {
-        @SerializedName("expires_in")
-        int expiresIn;
-
-        @SerializedName("access_token")
-        String accessToken;
-
-        @SerializedName("refresh_token")
-        String refreshToken;
-    }
-
     private static class XBoxLiveAuthenticationResponseDisplayClaims {
         List<Map<Object, Object>> xui;
     }
@@ -528,44 +418,6 @@ public class MicrosoftService {
         public String error;
         public String errorMessage;
         public String developerMessage;
-    }
-
-    public interface OAuthCallback {
-        /**
-         * Start OAuth callback server at localhost.
-         *
-         * @throws IOException if an I/O error occurred.
-         */
-        OAuthSession startServer() throws IOException, AuthenticationException;
-
-        /**
-         * Open browser
-         *
-         * @param url OAuth url.
-         */
-        void openBrowser(String url) throws IOException;
-
-        String getClientId();
-
-        String getClientSecret();
-    }
-
-    public interface OAuthSession {
-
-        String getRedirectURI();
-
-        /**
-         * Wait for authentication
-         *
-         * @return authentication code
-         * @throws InterruptedException if interrupted
-         * @throws ExecutionException   if an I/O error occurred.
-         */
-        String waitFor() throws InterruptedException, ExecutionException;
-
-        default String getIdToken() {
-            return null;
-        }
     }
 
     private static final Gson GSON = new GsonBuilder()

@@ -19,7 +19,9 @@ package org.jackhuang.hmcl.game;
 
 import fi.iki.elonen.NanoHTTPD;
 import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
+import org.jackhuang.hmcl.auth.OAuth;
+import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -39,7 +41,7 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class MicrosoftAuthenticationServer extends NanoHTTPD implements MicrosoftService.OAuthSession {
+public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
     private final int port;
     private final CompletableFuture<String> future = new CompletableFuture<>();
 
@@ -47,7 +49,7 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
 
     private String idToken;
 
-    private MicrosoftAuthenticationServer(int port) {
+    private OAuthServer(int port) {
         super(port);
 
         this.port = port;
@@ -102,7 +104,7 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
 
         String html;
         try {
-            html = IOUtils.readFullyAsString(MicrosoftAuthenticationServer.class.getResourceAsStream("/assets/microsoft_auth.html"), StandardCharsets.UTF_8)
+            html = IOUtils.readFullyAsString(OAuthServer.class.getResourceAsStream("/assets/microsoft_auth.html"), StandardCharsets.UTF_8)
                     .replace("%close-page%", i18n("account.methods.microsoft.close_page"));
         } catch (IOException e) {
             Logging.LOG.log(Level.SEVERE, "Failed to load html");
@@ -119,10 +121,12 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
         return newFixedLengthResponse(Response.Status.OK, "text/html; charset=UTF-8", html);
     }
 
-    public static class Factory implements MicrosoftService.OAuthCallback {
+    public static class Factory implements OAuth.Callback {
+        public final EventManager<GrantDeviceCodeEvent> onGrantDeviceCode = new EventManager<>();
+        public final EventManager<OpenBrowserEvent> onOpenBrowser = new EventManager<>();
 
         @Override
-        public MicrosoftService.OAuthSession startServer() throws IOException, AuthenticationException {
+        public OAuth.Session startServer() throws IOException, AuthenticationException {
             if (StringUtils.isBlank(getClientId())) {
                 throw new MicrosoftAuthenticationNotSupportedException();
             }
@@ -130,7 +134,7 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
             IOException exception = null;
             for (int port : new int[]{29111, 29112, 29113, 29114, 29115}) {
                 try {
-                    MicrosoftAuthenticationServer server = new MicrosoftAuthenticationServer(port);
+                    OAuthServer server = new OAuthServer(port);
                     server.start(NanoHTTPD.SOCKET_READ_TIMEOUT, true);
                     return server;
                 } catch (IOException e) {
@@ -141,9 +145,16 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
         }
 
         @Override
+        public void grantDeviceCode(String userCode, String verificationURI) {
+            onGrantDeviceCode.fireEvent(new GrantDeviceCodeEvent(this, userCode, verificationURI));
+        }
+
+        @Override
         public void openBrowser(String url) throws IOException {
             lastlyOpenedURL = url;
             FXUtils.openLink(url);
+
+            onOpenBrowser.fireEvent(new OpenBrowserEvent(this, url));
         }
 
         @Override
@@ -158,6 +169,38 @@ public final class MicrosoftAuthenticationServer extends NanoHTTPD implements Mi
                     JarUtils.thisJar().flatMap(JarUtils::getManifest).map(manifest -> manifest.getMainAttributes().getValue("Microsoft-Auth-Secret")).orElse(""));
         }
 
+    }
+
+    public static class GrantDeviceCodeEvent extends Event {
+        private final String userCode;
+        private final String verificationUri;
+
+        public GrantDeviceCodeEvent(Object source, String userCode, String verificationUri) {
+            super(source);
+            this.userCode = userCode;
+            this.verificationUri = verificationUri;
+        }
+
+        public String getUserCode() {
+            return userCode;
+        }
+
+        public String getVerificationUri() {
+            return verificationUri;
+        }
+    }
+
+    public static class OpenBrowserEvent extends Event {
+        private final String url;
+
+        public OpenBrowserEvent(Object source, String url) {
+            super(source);
+            this.url = url;
+        }
+
+        public String getUrl() {
+            return url;
+        }
     }
 
     public static class MicrosoftAuthenticationNotSupportedException extends AuthenticationException {

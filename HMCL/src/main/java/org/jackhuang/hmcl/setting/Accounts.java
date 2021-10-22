@@ -34,7 +34,7 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
-import org.jackhuang.hmcl.game.MicrosoftAuthenticationServer;
+import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
@@ -75,12 +75,12 @@ public final class Accounts {
         }
     }
 
-    public static final MicrosoftService.OAuthCallback MICROSOFT_OAUTH_CALLBACK = new MicrosoftAuthenticationServer.Factory();
+    public static final OAuthServer.Factory OAUTH_CALLBACK = new OAuthServer.Factory();
 
     public static final OfflineAccountFactory FACTORY_OFFLINE = new OfflineAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER);
     public static final YggdrasilAccountFactory FACTORY_MOJANG = YggdrasilAccountFactory.MOJANG;
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
-    public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(MICROSOFT_OAUTH_CALLBACK));
+    public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(OAUTH_CALLBACK));
     public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MOJANG, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
 
     // ==== login type / account factory mapping ====
@@ -374,7 +374,7 @@ public final class Accounts {
             return i18n("account.methods.microsoft.error.no_character");
         } else if (exception instanceof MicrosoftService.NoXuiException) {
             return i18n("account.methods.microsoft.error.add_family_probably");
-        } else if (exception instanceof MicrosoftAuthenticationServer.MicrosoftAuthenticationNotSupportedException) {
+        } else if (exception instanceof OAuthServer.MicrosoftAuthenticationNotSupportedException) {
             return i18n("account.methods.microsoft.snapshot");
         } else if (exception instanceof OAuthAccount.WrongAccountException) {
             return i18n("account.failed.wrong_account");

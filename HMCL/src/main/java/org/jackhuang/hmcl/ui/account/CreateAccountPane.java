@@ -43,7 +43,7 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
-import org.jackhuang.hmcl.game.MicrosoftAuthenticationServer;
+import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Theme;
@@ -267,8 +267,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                             ? i18n("account.methods.microsoft.manual")
                             : i18n("account.methods.microsoft.hint")));
             hintPane.setOnMouseClicked(e -> {
-                if (logging.get() && MicrosoftAuthenticationServer.lastlyOpenedURL != null) {
-                    FXUtils.copyText(MicrosoftAuthenticationServer.lastlyOpenedURL);
+                if (logging.get() && OAuthServer.lastlyOpenedURL != null) {
+                    FXUtils.copyText(OAuthServer.lastlyOpenedURL);
                 }
             });
 

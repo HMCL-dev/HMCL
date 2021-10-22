@@ -31,7 +31,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.game.MicrosoftAuthenticationServer;
+import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.HMCLAccounts;
 import org.jackhuang.hmcl.setting.Theme;
@@ -246,8 +246,8 @@ public class FeedbackPage extends VBox implements PageAware {
                             ? i18n("account.methods.microsoft.manual")
                             : i18n("account.methods.microsoft.hint")));
             hintPane.setOnMouseClicked(e -> {
-                if (logging.get() && MicrosoftAuthenticationServer.lastlyOpenedURL != null) {
-                    FXUtils.copyText(MicrosoftAuthenticationServer.lastlyOpenedURL);
+                if (logging.get() && OAuthServer.lastlyOpenedURL != null) {
+                    FXUtils.copyText(OAuthServer.lastlyOpenedURL);
                 }
             });
             vbox.getChildren().setAll(hintPane);
