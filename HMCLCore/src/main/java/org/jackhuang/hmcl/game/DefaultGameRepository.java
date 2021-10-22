@@ -216,13 +216,15 @@ public class DefaultGameRepository implements GameRepository {
             Path toJson = toDir.resolve(to + ".json");
             Path toJar = toDir.resolve(to + ".jar");
 
+            boolean hasJarFile = Files.exists(fromJar);
+
             try {
                 Files.move(fromJson, toJson);
-                Files.move(fromJar, toJar);
+                if (hasJarFile) Files.move(fromJar, toJar);
             } catch (IOException e) {
                 // recovery
                 Lang.ignoringException(() -> Files.move(toJson, fromJson));
-                Lang.ignoringException(() -> Files.move(toJar, fromJar));
+                if (hasJarFile) Lang.ignoringException(() -> Files.move(toJar, fromJar));
                 Lang.ignoringException(() -> Files.move(toDir, fromDir));
                 throw e;
             }
