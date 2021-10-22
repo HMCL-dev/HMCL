@@ -85,13 +85,28 @@ public class RuledArgument implements Argument {
         @Override
         public RuledArgument deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             JsonObject obj = json.getAsJsonObject();
-            return new RuledArgument(
-                    context.deserialize(obj.get("rules"), new TypeToken<List<CompatibilityRule>>() {
-                    }.getType()),
-                    obj.get("value").isJsonPrimitive()
-                    ? Collections.singletonList(obj.get("value").getAsString())
-                    : context.deserialize(obj.get("value"), new TypeToken<List<String>>() {
-                    }.getType()));
+
+            List<CompatibilityRule> rules = context.deserialize(obj.get("rules"), new TypeToken<List<CompatibilityRule>>() {
+            }.getType());
+
+            JsonElement valuesElement;
+            if (obj.has("values")) {
+                valuesElement = obj.get("values");
+            } else if (obj.has("value")) {
+                valuesElement = obj.get("value");
+            } else {
+                throw new JsonParseException("RuledArguments instance does not have either value or values member.");
+            }
+
+            List<String> values;
+            if (valuesElement.isJsonPrimitive()) {
+                values = Collections.singletonList(valuesElement.getAsString());
+            } else {
+                values = context.deserialize(valuesElement, new TypeToken<List<String>>() {
+                }.getType());
+            }
+
+            return new RuledArgument(rules, values);
         }
 
     }

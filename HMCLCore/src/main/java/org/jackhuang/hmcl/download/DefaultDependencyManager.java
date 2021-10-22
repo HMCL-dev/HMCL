@@ -102,17 +102,25 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             if (!gameVersion.isPresent()) return null;
 
             LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version.resolvePreservingPatches(getGameRepository()));
-            version.resolve(getGameRepository()).getLibraries().stream().filter(Library::appliesToCurrentEnvironment).forEach(library -> {
-                Optional<String> libraryVersion = analyzer.getVersion(OPTIFINE);
-                if (OPTIFINE.matchLibrary(library) && libraryVersion.isPresent()) {
-                    if (GameLibrariesTask.shouldDownloadLibrary(repository, version, library, integrityCheck)) {
-                        tasks.add(installLibraryAsync(gameVersion.get(), version, OPTIFINE.getPatchId(), libraryVersion.get()));
-                    }
+            for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
+                Optional<Library> library = analyzer.getLibrary(type);
+                if (library.isPresent() && GameLibrariesTask.shouldDownloadLibrary(repository, version, library.get(), integrityCheck)) {
+                    tasks.add(downloadMissingLibraryAsync(gameVersion.get(), version, type, library.get()));
                 }
-            });
-
+            }
             return Task.allOf(tasks);
         });
+    }
+
+    private Task<?> downloadMissingLibraryAsync(String gameVersion, Version version, LibraryAnalyzer.LibraryType libraryType, Library library) {
+        switch (libraryType) {
+            case OPTIFINE:
+                if (library.hasDownloadURL())
+                    break;
+
+                return installLibraryAsync(gameVersion, version, libraryType.getPatchId(), library.getVersion());
+        }
+        return Task.completed(null);
     }
 
     @Override

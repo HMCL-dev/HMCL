@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.JsonParseException;
+import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Immutable;
@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -142,6 +143,12 @@ public class Library implements Comparable<Library>, Validation {
         );
     }
 
+    public boolean hasDownloadURL() {
+        LibraryDownloadInfo temp = getRawDownloadInfo();
+        if (temp != null) return temp.getUrl() != null;
+        else return url != null;
+    }
+
     public List<String> getChecksums() {
         return checksums;
     }
@@ -154,6 +161,7 @@ public class Library implements Comparable<Library>, Validation {
      * Hint for how to locate the library file.
      * @return null for default, "local" for location in version/&lt;version&gt;/libraries/filename
      */
+    @Nullable
     public String getHint() {
         return hint;
     }
@@ -162,6 +170,7 @@ public class Library implements Comparable<Library>, Validation {
      * Available when hint is "local"
      * @return the filename of the local library in version/&lt;version&gt;/libraries/$filename
      */
+    @Nullable
     public String getFileName() {
         return fileName;
     }

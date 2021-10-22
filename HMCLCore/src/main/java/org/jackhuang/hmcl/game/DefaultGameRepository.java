@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
 import org.jackhuang.hmcl.event.RemoveVersionEvent;
 import org.jackhuang.hmcl.event.RenameVersionEvent;
+import org.jackhuang.hmcl.game.tlauncher.TLauncherVersion;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
@@ -135,6 +136,10 @@ public class DefaultGameRepository implements GameRepository {
     @Override
     public File getVersionJar(Version version) {
         Version v = version.resolve(this);
+        File currentVersionJar = new File(getVersionRoot(v.getId()), v.getId() + ".jar");
+        if (currentVersionJar.exists()) {
+            return currentVersionJar;
+        }
         String id = Optional.ofNullable(v.getJar()).orElse(v.getId());
         return new File(getVersionRoot(id), id + ".jar");
     }
@@ -149,6 +154,11 @@ public class DefaultGameRepository implements GameRepository {
             return gameVersions.get(versionJar);
         } else {
             Optional<String> gameVersion = GameVersion.minecraftVersion(versionJar);
+
+            if (!gameVersion.isPresent()) {
+                LOG.warning("Cannot find out game version of " + version.getId() + ", primary jar: " + versionJar.toString() + ", jar exists: " + versionJar.exists());
+            }
+
             gameVersions.put(versionJar, gameVersion);
             return gameVersion;
         }
@@ -173,7 +183,21 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public Version readVersionJson(File file) throws IOException, JsonParseException {
-        return JsonUtils.fromNonNullJson(FileUtils.readText(file), Version.class);
+        String jsonText = FileUtils.readText(file);
+        try {
+            // Try TLauncher version json format
+            return JsonUtils.fromNonNullJson(jsonText, TLauncherVersion.class).toVersion();
+        } catch (JsonParseException ignored) {
+        }
+
+        try {
+            // Try official version json format
+            return JsonUtils.fromNonNullJson(jsonText, Version.class);
+        } catch (JsonParseException ignored) {
+        }
+
+        LOG.warning("Cannot parse version json + " + file.toString() + "\n" + jsonText);
+        throw new JsonParseException("Version json incorrect");
     }
 
     @Override

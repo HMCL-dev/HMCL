@@ -48,6 +48,10 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return Optional.ofNullable(libraries.get(type)).map(Pair::getValue);
     }
 
+    public Optional<Library> getLibrary(LibraryType type) {
+        return Optional.ofNullable(libraries.get(type.getPatchId())).map(Pair::getKey);
+    }
+
     @NotNull
     @Override
     public Iterator<LibraryMark> iterator() {
