@@ -418,11 +418,7 @@ public final class SelfDependencyPatcher {
     }
 
     private static void verifyChecksum(DependencyDescriptor dependency) throws IOException, ChecksumMismatchException {
-        String expectedHash = dependency.sha1();
-        String actualHash = Hex.encodeHex(DigestUtils.digest("SHA-1", dependency.localPath()));
-        if (!expectedHash.equalsIgnoreCase(actualHash)) {
-            throw new ChecksumMismatchException("SHA-1", expectedHash, actualHash);
-        }
+        ChecksumMismatchException.verifyChecksum(dependency.localPath(), "SHA-1", dependency.sha1());
     }
 
     public static class PatchException extends Exception {

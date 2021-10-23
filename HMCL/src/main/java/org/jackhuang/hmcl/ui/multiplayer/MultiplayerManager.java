@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
@@ -37,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.UncheckedIOException;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -51,20 +51,50 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.wrap;
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
  * Cato Management.
  */
 public final class MultiplayerManager {
-    static final String CATO_VERSION = "1.1.1-202110221044";
-//    private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/cato/cato/" + MultiplayerManager.CATO_VERSION;
-    private static final String CATO_DOWNLOAD_URL = "https://codechina.csdn.net/to/ioi_bin/-/raw/e488f5781e3ac4adf998d45436f968e9f960b8bb/client/";
+    static final String CATO_VERSION = "1.1.1-202110231414";
+    //    private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/cato/cato/" + MultiplayerManager.CATO_VERSION;
+    private static final String CATO_DOWNLOAD_URL = "https://codechina.csdn.net/to/ioi_bin/-/raw/acb0524bcad82a31fa5a09bf4c79248ebd674de1/client/";
     private static final String CATO_PATH = getCatoPath();
     public static final int CATO_AGREEMENT_VERSION = 2;
     private static final String REMOTE_ADDRESS = "127.0.0.1";
     private static final String LOCAL_ADDRESS = "0.0.0.0";
+
+    private static final Map<String, String> HASH = mapOf(
+            pair("cato-client-darwin-amd64", "6b7630f843d4b8f8e11feff4c1cb3dc1916d1fdb"),
+            pair("cato-client-darwin-arm64", "5f00153f0117eebb4209a4484152ec4077d34b34"),
+            pair("cato-client-freebsd-amd64", "ac401f51e69058696e342ddaa62968d21c8252e8"),
+            pair("cato-client-freebsd-arm7", "168dfdabc773ce87f0f1d901bee76f7ea3beacb3"),
+            pair("cato-client-freebsd-arm64", "08daef0f3acc279411ff39e8a22510a9876d06cb"),
+            pair("cato-client-freebsd-i386", "febdf99be30c671708dd80f8d3b48335a0d5920a"),
+            pair("cato-client-js.wasm", "0439d2a1cd8ee854ef6057a8ae6898db47aba2bd"),
+            pair("cato-client-linux-amd64", "816aecb116e2bc0727de9362e893bd9cefdf0485"),
+            pair("cato-client-linux-arm7", "710a047fdf528917d8a45ed0161ca155e2e05ff1"),
+            pair("cato-client-linux-arm64", "7a9a22d39f0ba200e1e4b2f6fca8cbe218a3eedf"),
+            pair("cato-client-linux-i386", "3eb0b37bdff8b9c8dc1e425b91ddb4d0a72a0da0"),
+            pair("cato-client-linux-mips", "8d2b383fcd4edb7903a14a93947ed5cb54838e60"),
+            pair("cato-client-linux-mips64", "248f1a3fe69ec97f6c095b63fa597ee099b4cb8c"),
+            pair("cato-client-linux-mips64le", "8d2f8d93ca582ab5f43dc4570a0d5b18dbe06df3"),
+            pair("cato-client-linux-mipsle", "f38bd14e6cdd6bfcd045ccd5a0a183bc8083c028"),
+            pair("cato-client-linux-ppc64", "db420847ed8e60a58a69b2e1cb55cf21b7b56e4b"),
+            pair("cato-client-linux-ppc64le", "717149f52a0808ee09cd5a7e89f8b9a6ed604cb0"),
+            pair("cato-client-openbsd-amd64", "248aaf3ca3bcaa18d4d1391325d171ef17e65244"),
+            pair("cato-client-openbsd-arm7", "1ab97264dba5d2b61388ee68e49f890c29c4e09f"),
+            pair("cato-client-openbsd-arm64", "5f28541ace9d298b816eb43963be8e4cd87bd0fd"),
+            pair("cato-client-openbsd-i386", "613b5c3fc0382815843a6e9b2a5281b05967bc1c"),
+            pair("cato-client-windows-amd64.exe", "64f19648d281882eefc5afaa3af347907af5cb23"),
+            pair("cato-client-windows-arm64.exe", "48a4bc5e18c35c93c9a3ecc500420d3abb5ae6f0"),
+            pair("cato-client-windows-i386.exe", "fcb4f245da2e293badb73fac04cf4e83fbd79b18")
+
+    );
 
     private MultiplayerManager() {
     }
@@ -72,7 +102,8 @@ public final class MultiplayerManager {
     public static Task<Void> downloadCato() {
         return new FileDownloadTask(
                 NetworkUtils.toURL(CATO_DOWNLOAD_URL + getCatoFileName()),
-                getCatoExecutable().toFile()
+                getCatoExecutable().toFile(),
+                new FileDownloadTask.IntegrityCheck("SHA-1", HASH.get(getCatoFileName()))
         ).thenRunAsync(() -> {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                 Set<PosixFilePermission> perm = Files.getPosixFilePermissions(getCatoExecutable());
@@ -87,7 +118,7 @@ public final class MultiplayerManager {
     }
 
     private static CompletableFuture<CatoSession> startCato(String token, State state) {
-        return CompletableFuture.completedFuture(null).thenApplyAsync(unused -> {
+        return CompletableFuture.completedFuture(null).thenApplyAsync(wrap(unused -> {
             Path exe = getCatoExecutable();
             if (!Files.isRegularFile(exe)) {
                 throw new CatoNotExistsException(exe);
@@ -97,18 +128,20 @@ public final class MultiplayerManager {
                 throw new CatoAlreadyStartedException();
             }
 
-            String[] commands = new String[]{exe.toString(), "--token", StringUtils.isBlank(token) ? "new" : token};
-            Process process;
             try {
-                process = new ProcessBuilder()
-                        .command(commands)
-                        .start();
+                ChecksumMismatchException.verifyChecksum(exe, "SHA-1", HASH.get(getCatoFileName()));
             } catch (IOException e) {
-                throw new UncheckedIOException(e);
+                Files.deleteIfExists(exe);
+                throw e;
             }
 
+            String[] commands = new String[]{exe.toString(), "--token", StringUtils.isBlank(token) ? "new" : token};
+            Process process = new ProcessBuilder()
+                    .command(commands)
+                    .start();
+
             return new CatoSession(state, process, Arrays.asList(commands));
-        });
+        }));
     }
 
     public static CompletableFuture<CatoSession> joinSession(String token, String peer, Mode mode, int remotePort, int localPort, JoinSessionHandler handler) throws IncompatibleCatoVersionException {
