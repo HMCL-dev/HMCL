@@ -54,8 +54,14 @@ public final class JavaVersion {
         this.binary = binary;
         this.longVersion = longVersion;
         this.platform = platform;
-        version = parseVersion(longVersion);
-        versionNumber = VersionNumber.asVersion(longVersion);
+
+        if (longVersion != null) {
+            version = parseVersion(longVersion);
+            versionNumber = VersionNumber.asVersion(longVersion);
+        } else {
+            version = UNKNOWN;
+            versionNumber = null;
+        }
     }
 
     public Path getBinary() {
