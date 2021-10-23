@@ -6,8 +6,6 @@ buildscript {
     dependencies {
         classpath 'org.tukaani:xz:1.8'
         classpath 'org.glavo:pack200:0.3.0'
-
-        classpath 'com.guardsquare:proguard-gradle:7.1.0'  // The ProGuard Gradle plugin.
     }
 }
 
@@ -118,8 +116,20 @@ compileJava11Java {
     targetCompatibility = 11
 }
 
+jar {
+    enabled = false
+    dependsOn shadowJar
+}
+
 shadowJar {
-    classifier = "shadow"
+    classifier = null
+
+
+    minimize {
+        exclude(dependency('com.google.code.gson:.*:.*'))
+        exclude(dependency('com.github.steveice10:.*:.*'))
+        exclude(project(":HMCLTransformerDiscoveryService"))
+    }
 
     manifest {
         attributes 'Created-By': 'Copyright(c) 2013-2021 huangyuhui.',
@@ -152,100 +162,12 @@ shadowJar {
                         'javafx.base/com.sun.javafx.event'
                 ].join(" ")
     }
-}
-
-task proguard(type: proguard.gradle.ProGuardTask) {
-    dependsOn shadowJar
-    injars shadowJar
-
-    outjars "${buildDir}/libs/${project.name}-${project.version}-proguard.jar"
-
-    dontobfuscate
-    dontoptimize
-
-    keep 'class org.jackhuang.** { *; }'
-    keep 'class com.jfoenix.** { *; }'
-    keep 'class com.google.gson.** { *; }'
-    keep 'class com.github.steveice10.opennbt.** { *; }' // TagRegistry use reflection to create object instance
-
-    keep 'class * extends com.google.gson.TypeAdapter'
-    keep 'class * implements com.google.gson.TypeAdapterFactory'
-    keep 'class * implements com.google.gson.JsonSerializer'
-    keep 'class * implements com.google.gson.JsonDeserializer'
-
-    printusage "${buildDir}/libs/proguard-shrinking-details.txt"
-
-    System.out.println(new File(".").absolutePath)
-
-    dontwarn 'com.nqzero.**'
-    dontwarn 'org.slf4j.**'
-    dontwarn 'org.jackhuang.hmcl.util.Pack200Utils'
-    dontwarn 'com.sun.javafx.**'
-    dontwarn 'com.jfoenix.**'
-    dontwarn 'org.apache.**'
-
-    adaptclassstrings
-
-    // next block taken verbatim from Proguard's documentation examples:
-
-    libraryjars files(configurations.compileClasspath.collect())
-
-    keepattributes 'SourceFile,LineNumberTable'
-    keepattributes '*Annotation*'
-    keepattributes 'Signature'
-
-    var javaHome = System.getProperty('java.home')
-
-    // Automatically handle the Java version of this build.
-    if (System.getProperty('java.version').startsWith('1.')) {
-        // Before Java 9, the runtime classes were packaged in a single jar file.
-        libraryjars "${javaHome}/lib/rt.jar"
-        libraryjars "${javaHome}/lib/ext/jfxrt.jar"
-    } else {
-        // As of Java 9, the runtime classes are packaged in modular jmod files.
-        libraryjars "${javaHome}/jmods/java.base.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-        libraryjars "${javaHome}/jmods/java.desktop.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-        libraryjars "${javaHome}/jmods/java.logging.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-        libraryjars "${javaHome}/jmods/java.management.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-        libraryjars "${javaHome}/jmods/java.sql.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-        libraryjars "${javaHome}/jmods/java.xml.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-
-        libraryjars "${javaHome}/jmods/jdk.management.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-        libraryjars "${javaHome}/jmods/jdk.unsupported.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-
-        if (new File("${javaHome}/jmods/javafx.base.jmod").exists()) {
-            libraryjars "${javaHome}/jmods/javafx.base.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-            libraryjars "${javaHome}/jmods/javafx.controls.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-            libraryjars "${javaHome}/jmods/javafx.graphics.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-            libraryjars "${javaHome}/jmods/javafx.media.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-            libraryjars "${javaHome}/jmods/javafx.fxml.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-            libraryjars "${javaHome}/jmods/javafx.web.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-        }
-    }
-}
-
-task finalJar(type: Jar) {
-    dependsOn proguard
-
-    manifest = shadowJar.manifest
-
-    from { proguard.outJarFiles.collect { zipTree(it)} }
-
-    into('/') {
-        from { shadowJar.outputs.files.collect { zipTree(it) } }
-        include("META-INF/versions/**")
-    }
 
     doLast {
         repack(jar.archivePath) // see repack()
         attachSignature(jar.archivePath)
         createChecksum(jar.archivePath)
     }
-}
-
-jar {
-    enabled = false
-    dependsOn finalJar
 }
 
 def createExecutable(String suffix, String header) {
