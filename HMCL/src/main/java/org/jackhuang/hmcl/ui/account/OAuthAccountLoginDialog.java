@@ -47,14 +47,15 @@ public class OAuthAccountLoginDialog extends DialogPane {
         HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
         FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
             if (deviceCode != null) {
-                hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getUserCode()));
+                FXUtils.copyText(deviceCode.getUserCode());
+                hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri()));
             } else {
                 hintPane.setSegment(i18n("account.methods.microsoft.hint"));
             }
         });
         hintPane.setOnMouseClicked(e -> {
             if (deviceCode.get() != null) {
-                FXUtils.copyText(deviceCode.get().getVerificationUri());
+                FXUtils.copyText(deviceCode.get().getUserCode());
             }
         });
 
