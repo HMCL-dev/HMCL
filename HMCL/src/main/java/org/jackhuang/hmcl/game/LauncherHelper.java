@@ -65,6 +65,7 @@ import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -415,6 +416,7 @@ public final class LauncherHelper {
                                     })
                                     .exceptionally(throwable -> {
                                         LOG.log(Level.WARNING, "Failed to download java", throwable);
+                                        breakAction.run();
                                         return null;
                                     });
                             return Task.fromCompletableFuture(future);
@@ -528,7 +530,10 @@ public final class LauncherHelper {
         CompletableFuture<JavaVersion> future = new CompletableFuture<>();
 
         JFXHyperlink link = new JFXHyperlink(i18n("download.external_link"));
-        link.setOnAction(e -> FXUtils.openLink("https://adoptium.net/?variant=openjdk17"));
+        link.setOnAction(e -> {
+            FXUtils.openLink("https://docs.microsoft.com/zh-cn/java/openjdk/download");
+            future.completeExceptionally(new CancellationException());
+        });
 
         Controllers.dialog(new MessageDialogPane.Builder(
                 i18n("launch.advice.require_newer_java_version",
@@ -543,8 +548,11 @@ public final class LauncherHelper {
                                 future.complete(downloadedJava);
                             })
                             .exceptionally(throwable -> {
+                                Throwable resolvedException = resolveException(throwable);
                                 LOG.log(Level.WARNING, "Failed to download java", throwable);
-                                Controllers.dialog(DownloadProviders.localizeErrorMessage(throwable), i18n("download.failed"));
+                                if (!(resolvedException instanceof CancellationException)) {
+                                    Controllers.dialog(DownloadProviders.localizeErrorMessage(resolvedException), i18n("install.failed"));
+                                }
                                 future.completeExceptionally(new CancellationException());
                                 return null;
                             });

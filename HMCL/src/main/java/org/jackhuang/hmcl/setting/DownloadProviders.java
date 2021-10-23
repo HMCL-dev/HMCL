@@ -33,6 +33,7 @@ import java.nio.file.AccessDeniedException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -160,6 +161,8 @@ public final class DownloadProviders {
             }
         } else if (exception instanceof ArtifactMalformedException) {
             return i18n("exception.artifact_malformed");
+        } else if (exception instanceof CancellationException) {
+            return i18n("message.cancelled");
         }
         return StringUtils.getStackTrace(exception);
     }
