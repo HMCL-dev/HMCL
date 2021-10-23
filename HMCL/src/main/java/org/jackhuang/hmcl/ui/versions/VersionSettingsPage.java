@@ -758,7 +758,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                         profile.getRepository().getVersion(versionId));
             }
         }).thenAcceptAsync(Schedulers.javafx(), javaVersion -> javaSublist.setSubtitle(Optional.ofNullable(javaVersion)
-                .map(JavaVersion::getBinary).map(Path::toString).orElse(i18n("settings.game.java_directory.invalid"))))
+                        .map(JavaVersion::getBinary).map(Path::toString).orElseGet(() ->
+                                autoSelected ? i18n("settings.game.java_directory.auto.not_found") : i18n("settings.game.java_directory.invalid"))))
                 .start();
     }
 
