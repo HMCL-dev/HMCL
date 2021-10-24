@@ -42,6 +42,7 @@ import java.util.zip.ZipException;
  * @author huangyuhui
  */
 public final class CompressingUtils {
+    private static final ZipFileSystemProvider MY_ZIPFS_PROVIDER = new ZipFileSystemProvider();
 
     private static final FileSystemProvider ZIPFS_PROVIDER = FileSystemProvider.installedProviders().stream()
             .filter(it -> "jar".equalsIgnoreCase(it.getScheme()))
@@ -153,12 +154,12 @@ public final class CompressingUtils {
         return new Builder(zipFile, true).setUseTempFile(true);
     }
 
-    public static FileSystem createReadOnlyZipFileSystem(Path zipFile) throws IOException {
-        return createReadOnlyZipFileSystem(zipFile, null);
+    public static ZipFileSystem createReadOnlyZipFileSystem(Path zipFile) throws IOException {
+        return new ZipFileSystem(MY_ZIPFS_PROVIDER, new ZipFile(zipFile.toFile()), true);
     }
 
-    public static FileSystem createReadOnlyZipFileSystem(Path zipFile, Charset charset) throws IOException {
-        return createZipFileSystem(zipFile, false, false, charset);
+    public static ZipFileSystem createReadOnlyZipFileSystem(Path zipFile, Charset charset) throws IOException {
+        return new ZipFileSystem(MY_ZIPFS_PROVIDER, new ZipFile(zipFile.toFile(), charset.name()), true);
     }
 
     public static FileSystem createWritableZipFileSystem(Path zipFile) throws IOException {
@@ -199,7 +200,7 @@ public final class CompressingUtils {
      */
     public static String readTextZipEntry(File zipFile, String name) throws IOException {
         try (ZipFile s = new ZipFile(zipFile)) {
-            return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)), StandardCharsets.UTF_8);
+            return readTextZipEntry(s, name);
         }
     }
 
@@ -208,13 +209,18 @@ public final class CompressingUtils {
      *
      * @param zipFile the zip file
      * @param name the location of the text in zip file, something like A/B/C/D.txt
+     * @param encoding encoding of zip file.
      * @throws IOException if the file is not a valid zip file.
      * @return the plain text content of given file.
      */
     public static String readTextZipEntry(Path zipFile, String name, Charset encoding) throws IOException {
         try (ZipFile s = new ZipFile(zipFile.toFile(), encoding.name())) {
-            return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)), StandardCharsets.UTF_8);
+            return readTextZipEntry(s, name);
         }
+    }
+
+    public static String readTextZipEntry(ZipFile s, String name) throws IOException {
+        return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)), StandardCharsets.UTF_8);
     }
 
     /**
@@ -224,7 +230,7 @@ public final class CompressingUtils {
      * @param name the location of the text in zip file, something like A/B/C/D.txt
      * @return the plain text content of given file.
      */
-    public static Optional<String> readTextZipEntryQuietly(File file, String name) {
+    public static Optional<String> readTextZipEntryQuietly(ZipFile file, String name) {
         try {
             return Optional.of(readTextZipEntry(file, name));
         } catch (IOException e) {

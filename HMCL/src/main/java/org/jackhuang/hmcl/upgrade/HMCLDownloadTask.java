@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.upgrade;
 
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.util.Pack200Utils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.tukaani.xz.XZInputStream;
 
@@ -49,7 +50,7 @@ class HMCLDownloadTask extends FileDownloadTask {
                     break;
 
                 case PACK_XZ:
-                    byte[] raw = Files.readAllBytes(target);
+                    byte[] raw = FileUtils.readAllBytes(target);
                     try (InputStream in = new XZInputStream(new ByteArrayInputStream(raw));
                             JarOutputStream out = new JarOutputStream(Files.newOutputStream(target))) {
                         Pack200Utils.unpack(in, out);

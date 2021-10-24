@@ -25,12 +25,12 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
+import java.nio.file.FileSystem;
 import java.util.Collections;
 import java.util.List;
 
@@ -129,13 +129,13 @@ public class ServerModpackManifest implements Validation {
     }
 
     /**
-     * @param zip the CurseForge modpack file.
-     * @throws IOException if the file is not a valid zip file.
-     * @throws JsonParseException if the server-manifest.json is missing or malformed.
+     * @param fs the CurseForge modpack file.
      * @return the manifest.
+     * @throws IOException        if the file is not a valid zip file.
+     * @throws JsonParseException if the server-manifest.json is missing or malformed.
      */
-    public static Modpack readManifest(Path zip, Charset encoding) throws IOException, JsonParseException {
-        String json = CompressingUtils.readTextZipEntry(zip, "server-manifest.json", encoding);
+    public static Modpack readManifest(FileSystem fs, Charset encoding) throws IOException, JsonParseException {
+        String json = FileUtils.readText(fs.getPath("server-manifest.json"));
         ServerModpackManifest manifest = JsonUtils.fromNonNullJson(json, ServerModpackManifest.class);
         return manifest.toModpack(encoding);
     }

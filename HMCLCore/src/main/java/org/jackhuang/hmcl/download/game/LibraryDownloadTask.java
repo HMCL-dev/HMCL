@@ -103,7 +103,7 @@ public class LibraryDownloadTask extends Task<Void> {
             else
                 throw new LibraryDownloadException(library, t);
         } else {
-            if (xz) unpackLibrary(jar, Files.readAllBytes(xzFile.toPath()));
+            if (xz) unpackLibrary(jar, FileUtils.readAllBytes(xzFile.toPath()));
         }
     }
 
@@ -180,7 +180,7 @@ public class LibraryDownloadTask extends Task<Void> {
             if (checksums == null || checksums.isEmpty()) {
                 return true;
             }
-            byte[] fileData = Files.readAllBytes(libPath.toPath());
+            byte[] fileData = FileUtils.readAllBytes(libPath.toPath());
             boolean valid = checksums.contains(encodeHex(digest("SHA-1", fileData)));
             if (!valid && libPath.getName().endsWith(".jar")) {
                 valid = validateJar(fileData, checksums);

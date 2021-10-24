@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.ZipFileSystem;
 
 import java.io.File;
 import java.io.IOException;
@@ -144,11 +145,11 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
     public void execute() throws Exception {
         Version version = repository.readVersionJson(name);
 
-        try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setAutoDetectEncoding(true).build()) {
+        try (ZipFileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(zipFile.toPath())) {
             Path root = MultiMCInstanceConfiguration.getRootPath(fs.getPath("/"));
             Path patches = root.resolve("patches");
 
-            if (Files.exists(patches)) {
+            if (Files.isDirectory(patches)) {
                 try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(patches)) {
                     for (Path patchJson : directoryStream) {
                         if (patchJson.toString().endsWith(".json")) {

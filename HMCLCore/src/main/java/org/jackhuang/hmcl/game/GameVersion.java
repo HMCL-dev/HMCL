@@ -104,13 +104,13 @@ public final class GameVersion {
 
             Path minecraft = gameJar.getPath("net/minecraft/client/Minecraft.class");
             if (Files.exists(minecraft)) {
-                Optional<String> result = getVersionOfClassMinecraft(Files.readAllBytes(minecraft));
+                Optional<String> result = getVersionOfClassMinecraft(FileUtils.readAllBytes(minecraft));
                 if (result.isPresent())
                     return result;
             }
             Path minecraftServer = gameJar.getPath("net/minecraft/server/MinecraftServer.class");
             if (Files.exists(minecraftServer))
-                return getVersionFromClassMinecraftServer(Files.readAllBytes(minecraftServer));
+                return getVersionFromClassMinecraftServer(FileUtils.readAllBytes(minecraftServer));
             return Optional.empty();
         } catch (IOException e) {
             return Optional.empty();

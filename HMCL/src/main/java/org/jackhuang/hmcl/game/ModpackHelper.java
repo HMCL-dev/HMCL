@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.ZipFileSystem;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -61,34 +62,38 @@ public final class ModpackHelper {
     private ModpackHelper() {}
 
     public static Modpack readModpackManifest(Path file, Charset charset) throws UnsupportedModpackException, ManuallyCreatedModpackException {
-        try {
-            return McbbsModpackManifest.readManifest(file, charset);
-        } catch (Exception ignored) {
-            // ignore it, not a valid MCBBS modpack.
-        }
+        try (ZipFileSystem zfs = CompressingUtils.createReadOnlyZipFileSystem(file, charset)) {
+            try {
+                return McbbsModpackManifest.readManifest(zfs, charset);
+            } catch (Exception ignored) {
+                // ignore it, not a valid MCBBS modpack.
+            }
 
-        try {
-            return CurseManifest.readCurseForgeModpackManifest(file, charset);
-        } catch (Exception e) {
-            // ignore it, not a valid CurseForge modpack.
-        }
+            try {
+                return CurseManifest.readCurseForgeModpackManifest(zfs, charset);
+            } catch (Exception e) {
+                // ignore it, not a valid CurseForge modpack.
+            }
 
-        try {
-            return HMCLModpackManager.readHMCLModpackManifest(file, charset);
-        } catch (Exception e) {
-            // ignore it, not a valid HMCL modpack.
-        }
+            try {
+                return HMCLModpackManager.readHMCLModpackManifest(zfs, charset);
+            } catch (Exception e) {
+                // ignore it, not a valid HMCL modpack.
+            }
 
-        try {
-            return MultiMCInstanceConfiguration.readMultiMCModpackManifest(file, charset);
-        } catch (Exception e) {
-            // ignore it, not a valid MultiMC modpack.
-        }
+            try {
+                return MultiMCInstanceConfiguration.readMultiMCModpackManifest(zfs, file, charset);
+            } catch (Exception e) {
+                // ignore it, not a valid MultiMC modpack.
+            }
 
-        try {
-            return ServerModpackManifest.readManifest(file, charset);
-        } catch (Exception e) {
-            // ignore it, not a valid Server modpack.
+            try {
+                return ServerModpackManifest.readManifest(zfs, charset);
+            } catch (Exception e) {
+                // ignore it, not a valid Server modpack.
+            }
+
+        } catch (IOException ignored) {
         }
 
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file, charset)) {

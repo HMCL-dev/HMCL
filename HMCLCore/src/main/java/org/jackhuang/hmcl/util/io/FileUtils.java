@@ -113,11 +113,11 @@ public final class FileUtils {
     }
 
     public static String readText(File file) throws IOException {
-        return readText(file, UTF_8);
+        return readText(file.toPath());
     }
 
     public static String readText(File file, Charset charset) throws IOException {
-        return new String(Files.readAllBytes(file.toPath()), charset);
+        return readText(file.toPath(), charset);
     }
 
     public static String readText(Path file) throws IOException {
@@ -125,7 +125,11 @@ public final class FileUtils {
     }
 
     public static String readText(Path file, Charset charset) throws IOException {
-        return new String(Files.readAllBytes(file), charset);
+        return IOUtils.readFullyAsString(Files.newInputStream(file), charset);
+    }
+
+    public static byte[] readAllBytes(Path file) throws IOException {
+        return IOUtils.readFullyAsByteArray(Files.newInputStream(file));
     }
 
     /**

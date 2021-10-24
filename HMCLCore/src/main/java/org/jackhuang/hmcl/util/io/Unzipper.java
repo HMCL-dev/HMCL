@@ -101,7 +101,7 @@ public class Unzipper {
      */
     public void unzip() throws IOException {
         Files.createDirectories(dest);
-        try (FileSystem fs = CompressingUtils.readonly(zipFile).setEncoding(encoding).setAutoDetectEncoding(true).build()) {
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(zipFile, encoding)) {
             Path root = fs.getPath(subDirectory);
             if (!root.isAbsolute() || (subDirectory.length() > 1 && subDirectory.endsWith("/")))
                 throw new IllegalArgumentException("Subdirectory for unzipper must be absolute");
