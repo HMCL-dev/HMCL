@@ -94,9 +94,16 @@ public class YggdrasilServer extends HttpServer {
         if (!request.getQuery().containsKey("username")) {
             return badRequest();
         }
-        return findCharacterByName(request.getQuery().get("username"))
-                .map(character -> ok(character.toCompleteResponse(getRootUrl())))
-                .orElseGet(HttpServer::noContent);
+
+        Optional<Character> character = findCharacterByName(request.getQuery().get("username"));
+
+        //Workaround for JDK-8138667
+        //noinspection OptionalIsPresent
+        if (character.isPresent()) {
+            return ok(character.get().toCompleteResponse(getRootUrl()));
+        } else {
+            return HttpServer.noContent();
+        }
     }
 
     private Response joinServer(Request request) {
@@ -106,9 +113,15 @@ public class YggdrasilServer extends HttpServer {
     private Response profile(Request request) {
         String uuid = request.getPathVariables().group("uuid");
 
-        return findCharacterByUuid(UUIDTypeAdapter.fromString(uuid))
-                .map(character -> ok(character.toCompleteResponse(getRootUrl())))
-                .orElseGet(HttpServer::noContent);
+        Optional<Character> character = findCharacterByUuid(UUIDTypeAdapter.fromString(uuid));
+
+        //Workaround for JDK-8138667
+        //noinspection OptionalIsPresent
+        if (character.isPresent()) {
+            return ok(character.get().toCompleteResponse(getRootUrl()));
+        } else {
+            return HttpServer.noContent();
+        }
     }
 
     private Response texture(Request request) {
