@@ -21,6 +21,7 @@ import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.countly.CrashReport;
 import org.jackhuang.hmcl.ui.CrashWindow;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
@@ -65,8 +66,6 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                 pair("com.sun.javafx.css.StyleManager.findMatchingStyles", i18n("launcher.update_java")),
                 pair("NoSuchAlgorithmException", "Has your operating system been installed completely or is a ghost system?")
         };
-
-        static final Set<String> CAUGHT_EXCEPTIONS = newSetFromMap(new ConcurrentHashMap<>());
     }
 
     private boolean checkThrowable(Throwable e) {
@@ -101,29 +100,11 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         LOG.log(Level.SEVERE, "Uncaught exception in thread " + t.getName(), e);
 
         try {
-            String stackTrace = StringUtils.getStackTrace(e);
-            if (!stackTrace.contains("org.jackhuang"))
+            CrashReport report = new CrashReport(t, e);
+            if (!report.shouldBeReport())
                 return;
 
-            if (Hole.CAUGHT_EXCEPTIONS.contains(stackTrace))
-                return;
-            Hole.CAUGHT_EXCEPTIONS.add(stackTrace);
-
-            String text = "---- Hello Minecraft! Crash Report ----\n" +
-                    "  Version: " + Metadata.VERSION + "\n" +
-                    "  Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\n" +
-                    "  Thread: " + t + "\n" +
-                    "\n  Content: \n    " +
-                    stackTrace + "\n\n" +
-                    "-- System Details --\n" +
-                    "  Operating System: " + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION + "\n" +
-                    "  System Architecture: " + Architecture.SYSTEM_ARCH_NAME + "\n" +
-                    "  Java Architecture: " + Architecture.CURRENT_ARCH_NAME + "\n" +
-                    "  Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor") + "\n" +
-                    "  Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor") + "\n" +
-                    "  JVM Max Memory: " + Runtime.getRuntime().maxMemory() + "\n" +
-                    "  JVM Total Memory: " + Runtime.getRuntime().totalMemory() + "\n" +
-                    "  JVM Free Memory: " + Runtime.getRuntime().freeMemory() + "\n";
+            String text = report.getDisplayText();
 
             LOG.log(Level.SEVERE, text);
             Platform.runLater(() -> {
@@ -132,7 +113,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                         new CrashWindow(text).show();
                     }
                     if (!UpdateChecker.isOutdated() && IntegrityChecker.isSelfVerified()) {
-                        reportToServer(text);
+                        reportToServer(report);
                     }
                 }
             });
@@ -141,10 +122,10 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
         }
     }
 
-    private void reportToServer(final String text) {
+    private void reportToServer(CrashReport crashReport) {
         Thread t = new Thread(() -> {
             HashMap<String, String> map = new HashMap<>();
-            map.put("crash_report", text);
+            map.put("crash_report", crashReport.getDisplayText());
             map.put("version", Metadata.VERSION);
             map.put("log", Logging.getLogs());
             try {
