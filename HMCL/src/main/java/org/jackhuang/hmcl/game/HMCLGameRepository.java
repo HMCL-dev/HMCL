@@ -24,12 +24,15 @@ import com.google.gson.reflect.TypeToken;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackLocalInstallTask;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.ProxyManager;
+import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -38,6 +41,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,6 +61,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
     // local version settings
     private final Map<String, VersionSetting> localVersionSettings = new HashMap<>();
     private final Set<String> beingModpackVersions = new HashSet<>();
+
+    public final EventManager<Event> onVersionIconChanged = new EventManager<>();
 
     public HMCLGameRepository(Profile profile, File baseDirectory) {
         super(baseDirectory);
@@ -231,6 +237,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
      *
      * @return corresponding version setting, null if the version has no its own version setting.
      */
+    @Nullable
     public VersionSetting getLocalVersionSetting(String id) {
         if (!localVersionSettings.containsKey(id))
             loadLocalVersionSetting(id);
@@ -238,6 +245,15 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (setting != null && isModpack(id))
             setting.setGameDirType(GameDirectoryType.VERSION_FOLDER);
         return setting;
+    }
+
+    @Nullable
+    public VersionSetting getLocalVersionSettingOrCreate(String id) {
+        VersionSetting vs = getLocalVersionSetting(id);
+        if (vs == null) {
+            vs = createLocalVersionSetting(id);
+        }
+        return vs;
     }
 
     public VersionSetting getVersionSetting(String id) {
@@ -258,14 +274,21 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (id == null || !isLoaded())
             return newImage("/assets/img/grass.png");
 
-        Version version = getVersion(id).resolve(this);
-        File iconFile = getVersionIconFile(id);
-        if (iconFile.exists())
-            return new Image("file:" + iconFile.getAbsolutePath());
-        else if (LibraryAnalyzer.isModded(this, version))
-            return newImage("/assets/img/furnace.png");
-        else
-            return newImage("/assets/img/grass.png");
+        VersionSetting vs = getLocalVersionSettingOrCreate(id);
+        VersionIconType iconType = Optional.ofNullable(vs).map(VersionSetting::getVersionIcon).orElse(VersionIconType.DEFAULT);
+
+        if (iconType == VersionIconType.DEFAULT) {
+            Version version = getVersion(id).resolve(this);
+            File iconFile = getVersionIconFile(id);
+            if (iconFile.exists())
+                return new Image("file:" + iconFile.getAbsolutePath());
+            else if (LibraryAnalyzer.isModded(this, version))
+                return newImage("/assets/img/furnace.png");
+            else
+                return newImage("/assets/img/grass.png");
+        } else {
+            return newImage(iconType.getResourceUrl());
+        }
     }
 
     public boolean saveVersionSetting(String id) {

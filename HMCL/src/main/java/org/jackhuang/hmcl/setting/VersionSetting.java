@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -568,6 +568,20 @@ public final class VersionSetting implements Cloneable {
         this.useNativeOpenAL.set(useNativeOpenAL);
     }
 
+    private final ObjectProperty<VersionIconType> versionIcon = new SimpleObjectProperty<>(this, "versionIcon", VersionIconType.DEFAULT);
+
+    public VersionIconType getVersionIcon() {
+        return versionIcon.get();
+    }
+
+    public ObjectProperty<VersionIconType> versionIconProperty() {
+        return versionIcon;
+    }
+
+    public void setVersionIcon(VersionIconType versionIcon) {
+        this.versionIcon.set(versionIcon);
+    }
+
     // launcher settings
 
     /**
@@ -670,6 +684,7 @@ public final class VersionSetting implements Cloneable {
         defaultJavaPathProperty.addListener(listener);
         nativesDirProperty.addListener(listener);
         nativesDirTypeProperty.addListener(listener);
+        versionIcon.addListener(listener);
     }
 
     @Override
@@ -703,6 +718,7 @@ public final class VersionSetting implements Cloneable {
         versionSetting.setUseNativeOpenAL(isUseNativeOpenAL());
         versionSetting.setLauncherVisibility(getLauncherVisibility());
         versionSetting.setNativesDir(getNativesDir());
+        versionSetting.setVersionIcon(getVersionIcon());
         return versionSetting;
     }
 
@@ -741,6 +757,7 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("defaultJavaPath", src.getDefaultJavaPath());
             obj.addProperty("nativesDir", src.getNativesDir());
             obj.addProperty("nativesDirType", src.getNativesDirType().ordinal());
+            obj.addProperty("versionIcon", src.getVersionIcon().ordinal());
 
             return obj;
         }
@@ -784,6 +801,7 @@ public final class VersionSetting implements Cloneable {
             vs.setGameDirType(GameDirectoryType.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(GameDirectoryType.ROOT_FOLDER.ordinal())]);
             vs.setDefaultJavaPath(Optional.ofNullable(obj.get("defaultJavaPath")).map(JsonElement::getAsString).orElse(null));
             vs.setNativesDirType(NativesDirectoryType.values()[Optional.ofNullable(obj.get("nativesDirType")).map(JsonElement::getAsInt).orElse(0)]);
+            vs.setVersionIcon(VersionIconType.values()[Optional.ofNullable(obj.get("versionIcon")).map(JsonElement::getAsInt).orElse(0)]);
 
             return vs;
         }

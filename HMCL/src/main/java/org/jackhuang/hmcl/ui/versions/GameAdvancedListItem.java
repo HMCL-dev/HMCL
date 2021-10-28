@@ -20,10 +20,15 @@ package org.jackhuang.hmcl.ui.versions;
 import javafx.scene.Node;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
+import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.util.Pair;
+
+import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -31,6 +36,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class GameAdvancedListItem extends AdvancedListItem {
     private final Tooltip tooltip;
     private final ImageView imageView;
+    private final WeakListenerHolder holder = new WeakListenerHolder();
+    private Profile profile;
+    private Consumer<Event> onVersionIconChangedListener;
 
     public GameAdvancedListItem() {
         tooltip = new Tooltip();
@@ -39,23 +47,31 @@ public class GameAdvancedListItem extends AdvancedListItem {
         setLeftGraphic(view.getKey());
         imageView = view.getValue();
 
-        FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), version -> {
-            if (version != null && Profiles.getSelectedProfile() != null &&
-                    Profiles.getSelectedProfile().getRepository().hasVersion(version)) {
-                FXUtils.installFastTooltip(this, tooltip);
-                setTitle(version);
-                setSubtitle(null);
-                imageView.setImage(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
-                tooltip.setText(version);
-            } else {
-                Tooltip.uninstall(this,tooltip);
-                setTitle(i18n("version.empty"));
-                setSubtitle(i18n("version.empty.add"));
-                imageView.setImage(newImage("/assets/img/grass.png"));
-                tooltip.setText("");
-            }
-        });
+        holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(), this::loadVersion));
 
         setActionButtonVisible(false);
+    }
+
+    private void loadVersion(String version) {
+        if (Profiles.getSelectedProfile() != profile) {
+            profile = Profiles.getSelectedProfile();
+            onVersionIconChangedListener = profile.getRepository().onVersionIconChanged.registerWeak(event -> {
+                this.loadVersion(Profiles.getSelectedVersion());
+            });
+        }
+        if (version != null && Profiles.getSelectedProfile() != null &&
+                Profiles.getSelectedProfile().getRepository().hasVersion(version)) {
+            FXUtils.installFastTooltip(this, tooltip);
+            setTitle(version);
+            setSubtitle(null);
+            imageView.setImage(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
+            tooltip.setText(version);
+        } else {
+            Tooltip.uninstall(this,tooltip);
+            setTitle(i18n("version.empty"));
+            setSubtitle(i18n("version.empty.add"));
+            imageView.setImage(newImage("/assets/img/grass.png"));
+            tooltip.setText("");
+        }
     }
 }

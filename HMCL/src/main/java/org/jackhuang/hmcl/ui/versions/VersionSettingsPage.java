@@ -32,10 +32,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.setting.LauncherVisibility;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -44,9 +41,7 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -55,17 +50,14 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -775,18 +767,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         if (versionId == null)
             return;
 
-        FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png"));
-        File selectedFile = chooser.showOpenDialog(Controllers.getStage());
-        if (selectedFile != null) {
-            File iconFile = profile.getRepository().getVersionIconFile(versionId);
-            try {
-                FileUtils.copyFile(selectedFile, iconFile);
-                loadIcon();
-            } catch (IOException e) {
-                Logging.LOG.log(Level.SEVERE, "Failed to copy icon file from " + selectedFile + " to " + iconFile, e);
-            }
-        }
+        Controllers.dialog(new VersionIconDialog(profile, versionId, this::loadIcon));
     }
 
     private void onDeleteIcon() {
@@ -796,6 +777,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         File iconFile = profile.getRepository().getVersionIconFile(versionId);
         if (iconFile.exists())
             iconFile.delete();
+        VersionSetting localVersionSetting = profile.getRepository().getLocalVersionSettingOrCreate(versionId);
+        if (localVersionSetting != null) {
+            localVersionSetting.setVersionIcon(VersionIconType.DEFAULT);
+        }
         loadIcon();
     }
 
@@ -804,11 +789,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             return;
         }
 
-        File iconFile = profile.getRepository().getVersionIconFile(versionId);
-        if (iconFile.exists())
-            iconPickerItem.setImage(new Image("file:" + iconFile.getAbsolutePath()));
-        else
-            iconPickerItem.setImage(newImage("/assets/img/grass.png"));
+        iconPickerItem.setImage(profile.getRepository().getVersionIconImage(versionId));
         FXUtils.limitSize(iconPickerItem.getImageView(), 32, 32);
     }
 
