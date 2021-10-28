@@ -163,6 +163,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("authlibInjectorServers")
     private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList(server -> new Observable[] { server });
 
+    @SerializedName("promptedVersion")
+    private StringProperty promptedVersion = new SimpleStringProperty();
+
     @SerializedName("_version")
     private IntegerProperty configVersion = new SimpleIntegerProperty(0);
 
@@ -578,5 +581,17 @@ public final class Config implements Cloneable, Observable {
 
     public void setTitleTransparent(boolean titleTransparent) {
         this.titleTransparent.set(titleTransparent);
+    }
+
+    public String getPromptedVersion() {
+        return promptedVersion.get();
+    }
+
+    public StringProperty promptedVersionProperty() {
+        return promptedVersion;
+    }
+
+    public void setPromptedVersion(String promptedVersion) {
+        this.promptedVersion.set(promptedVersion);
     }
 }

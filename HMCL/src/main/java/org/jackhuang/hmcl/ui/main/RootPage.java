@@ -42,7 +42,6 @@ import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
@@ -92,8 +91,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), mainPage::setCurrentGame);
             mainPage.showUpdateProperty().bind(UpdateChecker.outdatedProperty());
-            mainPage.latestVersionProperty().bind(BindingMapping.of(UpdateChecker.latestVersionProperty())
-                    .map(version -> version == null ? "" : i18n("update.bubble.title", version.getVersion())));
+            mainPage.latestVersionProperty().bind(UpdateChecker.latestVersionProperty());
 
             Profiles.registerVersionsListener(profile -> {
                 HMCLGameRepository repository = profile.getRepository();

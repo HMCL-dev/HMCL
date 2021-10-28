@@ -42,9 +42,11 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.AnnouncementCard;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -53,11 +55,14 @@ import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -69,7 +74,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private final StringProperty currentGame = new SimpleStringProperty(this, "currentGame");
     private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
-    private final StringProperty latestVersion = new SimpleStringProperty(this, "latestVersion");
+    private final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>(this, "latestVersion");
     private final ObservableList<Version> versions = FXCollections.observableArrayList();
     private final ObservableList<Node> versionNodes;
     private Profile profile;
@@ -103,7 +108,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.setLimitHeight(updatePane, 55);
         StackPane.setAlignment(updatePane, Pos.TOP_RIGHT);
         updatePane.setOnMouseClicked(e -> onUpgrade());
-        FXUtils.onChange(showUpdateProperty(), this::doAnimation);
+        FXUtils.onChange(showUpdateProperty(), this::showUpdate);
 
         {
             HBox hBox = new HBox();
@@ -118,7 +123,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 TwoLineListItem prompt = new TwoLineListItem();
                 prompt.setSubtitle(i18n("update.bubble.subtitle"));
                 prompt.setPickOnBounds(false);
-                prompt.titleProperty().bind(latestVersionProperty());
+                prompt.titleProperty().bind(BindingMapping.of(latestVersionProperty()).map(latestVersion ->
+                        latestVersion == null ? "" : i18n("update.bubble.title", latestVersion.getVersion())));
 
                 hBox.getChildren().setAll(lblIcon, prompt);
             }
@@ -224,6 +230,17 @@ public final class MainPage extends StackPane implements DecoratorPage {
         }
     }
 
+    private void showUpdate(boolean show) {
+        doAnimation(show);
+
+        if (show && getLatestVersion() != null && !Objects.equals(config().getPromptedVersion(), getLatestVersion().getVersion())) {
+            Controllers.dialog("",  i18n("update.bubble.title", getLatestVersion().getVersion()), MessageDialogPane.MessageType.INFO, () -> {
+                config().setPromptedVersion(getLatestVersion().getVersion());
+                onUpgrade();
+            });
+        }
+    }
+
     private void doAnimation(boolean show) {
         Duration duration = Duration.millis(320);
         Timeline nowAnimation = new Timeline();
@@ -289,15 +306,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
         this.showUpdate.set(showUpdate);
     }
 
-    public String getLatestVersion() {
+    public RemoteVersion getLatestVersion() {
         return latestVersion.get();
     }
 
-    public StringProperty latestVersionProperty() {
+    public ObjectProperty<RemoteVersion> latestVersionProperty() {
         return latestVersion;
     }
 
-    public void setLatestVersion(String latestVersion) {
+    public void setLatestVersion(RemoteVersion latestVersion) {
         this.latestVersion.set(latestVersion);
     }
 
