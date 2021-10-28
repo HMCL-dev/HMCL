@@ -52,6 +52,7 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
@@ -166,30 +167,40 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         if (version == null) version = profile.getSelectedVersion();
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version).toPath() : profile.getRepository().getBaseDirectory().toPath();
-        Path dest = runDirectory.resolve(subdirectoryName).resolve(file.getFile().getFilename());
 
-        TaskExecutorDialogPane downloadingPane = new TaskExecutorDialogPane(it -> {
-        });
-
-        TaskExecutor executor = Task.composeAsync(() -> {
-            FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(file.getFile().getUrl()), dest.toFile());
-            task.setName(file.getName());
-            return task;
-        }).whenComplete(Schedulers.javafx(), exception -> {
-            if (exception != null) {
-                if (exception instanceof CancellationException) {
-                    Controllers.showToast(i18n("message.cancelled"));
-                } else {
-                    Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
-                }
-            } else {
-                Controllers.showToast(i18n("install.success"));
+        Controllers.prompt(i18n("archive.name"), (result, resolve, reject) -> {
+            if (!OperatingSystem.isNameValid(result)) {
+                reject.accept(i18n("install.new_game.malformed"));
+                return;
             }
-        }).executor(false);
+            Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
 
-        downloadingPane.setExecutor(executor, true);
-        Controllers.dialog(downloadingPane);
-        executor.start();
+            TaskExecutorDialogPane downloadingPane = new TaskExecutorDialogPane(it -> {
+            });
+
+            TaskExecutor executor = Task.composeAsync(() -> {
+                FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(file.getFile().getUrl()), dest.toFile());
+                task.setName(file.getName());
+                return task;
+            }).whenComplete(Schedulers.javafx(), exception -> {
+                if (exception != null) {
+                    if (exception instanceof CancellationException) {
+                        Controllers.showToast(i18n("message.cancelled"));
+                    } else {
+                        Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                    }
+                } else {
+                    Controllers.showToast(i18n("install.success"));
+                }
+            }).executor(false);
+
+            downloadingPane.setExecutor(executor, true);
+            Controllers.dialog(downloadingPane);
+            executor.start();
+
+            resolve.run();
+        }, file.getFile().getFilename());
+
     }
 
     private void loadVersions(Profile profile) {
