@@ -22,6 +22,8 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -258,6 +260,10 @@ public final class StringUtils {
         return Optional.of(str.substring(0, halfLength) + " ... " + str.substring(str.length() - halfLength));
     }
 
+    public static boolean isASCII(CharSequence cs) {
+        return US_ASCII_ENCODER.canEncode(cs);
+    }
+
     /**
      * Class for computing the longest common subsequence between strings.
      */
@@ -295,4 +301,5 @@ public final class StringUtils {
 
     public static final Pattern CHINESE_PATTERN = Pattern.compile("[\\u4e00-\\u9fa5]");
 
+    public static final CharsetEncoder US_ASCII_ENCODER = StandardCharsets.US_ASCII.newEncoder();
 }

@@ -45,6 +45,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -68,7 +69,7 @@ public class DefaultLauncher extends Launcher {
         super(repository, version, authInfo, options, listener, daemon);
     }
 
-    private CommandBuilder generateCommandLine(File nativeFolder) throws IOException {
+    private Command generateCommandLine(File nativeFolder) throws IOException {
         CommandBuilder res = new CommandBuilder();
 
         switch (options.getProcessPriority()) {
@@ -208,9 +209,18 @@ public class DefaultLauncher extends Launcher {
         Path gameAssets = repository.getActualAssetDirectory(version.getId(), version.getAssetIndex().getId());
         Map<String, String> configuration = getConfigurations();
         configuration.put("${classpath}", String.join(OperatingSystem.PATH_SEPARATOR, classpath));
-        configuration.put("${natives_directory}", nativeFolder.getAbsolutePath());
         configuration.put("${game_assets}", gameAssets.toAbsolutePath().toString());
         configuration.put("${assets_root}", gameAssets.toAbsolutePath().toString());
+
+
+        String nativeFolderPath = nativeFolder.getAbsolutePath();
+        Path tempNativeFolder = null;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX
+                && !StringUtils.isASCII(nativeFolderPath)) {
+            tempNativeFolder = Paths.get("/", "tmp", "hmcl-natives-" + UUID.randomUUID());
+            nativeFolderPath = tempNativeFolder + File.pathSeparator + nativeFolderPath;
+        }
+        configuration.put("${natives_directory}", nativeFolderPath);
 
         res.addAll(Arguments.parseArguments(version.getArguments().map(Arguments::getJvm).orElseGet(this::getDefaultJVMArguments), configuration));
         if (authInfo.getArguments() != null && authInfo.getArguments().getJvm() != null && !authInfo.getArguments().getJvm().isEmpty())
@@ -258,7 +268,7 @@ public class DefaultLauncher extends Launcher {
         res.addAllWithoutParsing(Arguments.parseStringArguments(options.getGameArguments(), configuration));
 
         res.removeIf(it -> getForbiddens().containsKey(it) && getForbiddens().get(it).get());
-        return res;
+        return new Command(res, tempNativeFolder);
     }
 
     public Map<String, Boolean> getFeatures() {
@@ -363,8 +373,10 @@ public class DefaultLauncher extends Launcher {
             nativeFolder = new File(options.getNativesDir());
         }
 
+        final Command command = generateCommandLine(nativeFolder);
+
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
-        List<String> rawCommandLine = generateCommandLine(nativeFolder).asMutableList();
+        List<String> rawCommandLine = command.commandLine.asMutableList();
 
         // Pass classpath using the environment variable, to reduce the command length
         String classpath = null;
@@ -372,6 +384,12 @@ public class DefaultLauncher extends Launcher {
         if (cpIndex >= 0 && cpIndex < rawCommandLine.size() - 1) {
             rawCommandLine.remove(cpIndex); // remove "-cp"
             classpath = rawCommandLine.remove(cpIndex);
+        }
+
+        if (command.tempNativeFolder != null) {
+            Files.deleteIfExists(command.tempNativeFolder);
+            Files.createSymbolicLink(command.tempNativeFolder, nativeFolder.toPath().toAbsolutePath());
+            command.tempNativeFolder.toFile().deleteOnExit();
         }
 
         if (rawCommandLine.stream().anyMatch(StringUtils::isBlank)) {
@@ -464,8 +482,8 @@ public class DefaultLauncher extends Launcher {
         if (!FileUtils.makeFile(scriptFile))
             throw new IOException("Script file: " + scriptFile + " cannot be created.");
 
-        final CommandBuilder commandLine = generateCommandLine(nativeFolder);
-        final String command = usePowerShell ? null : commandLine.toString();
+        final Command commandLine = generateCommandLine(nativeFolder);
+        final String command = usePowerShell ? null : commandLine.commandLine.toString();
 
         if (!usePowerShell && isWindows) {
             if (command.length() > 8192) { // maximum length of the command in cmd
@@ -509,7 +527,7 @@ public class DefaultLauncher extends Launcher {
                 writer.newLine();
 
                 writer.write('&');
-                for (String rawCommand : commandLine.asList()) {
+                for (String rawCommand : commandLine.commandLine.asList()) {
                     writer.write(' ');
                     writer.write(CommandBuilder.pwshString(rawCommand));
                 }
@@ -533,6 +551,10 @@ public class DefaultLauncher extends Launcher {
                         writer.write("export " + entry.getKey() + "=" + entry.getValue());
                         writer.newLine();
                     }
+                    if (commandLine.tempNativeFolder != null) {
+                        writer.write(new CommandBuilder().add("ln", "-s", nativeFolder.getAbsolutePath(), commandLine.tempNativeFolder.toString()).toString());
+                        writer.newLine();
+                    }
                     writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
                 }
                 writer.newLine();
@@ -549,6 +571,10 @@ public class DefaultLauncher extends Launcher {
 
                 if (isWindows) {
                     writer.write("pause");
+                    writer.newLine();
+                }
+                if (commandLine.tempNativeFolder != null) {
+                    writer.write(new CommandBuilder().add("rm", commandLine.tempNativeFolder.toString()).toString());
                     writer.newLine();
                 }
             }
@@ -573,5 +599,15 @@ public class DefaultLauncher extends Launcher {
         }, OperatingSystem.NATIVE_CHARSET), "stderr-pump", isDaemon);
         managedProcess.addRelatedThread(stderr);
         managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), processListener::onExit), "exit-waiter", isDaemon));
+    }
+
+    private static final class Command {
+        final CommandBuilder commandLine;
+        final Path tempNativeFolder;
+
+        Command(CommandBuilder commandBuilder, Path tempNativeFolder) {
+            this.commandLine = commandBuilder;
+            this.tempNativeFolder = tempNativeFolder;
+        }
     }
 }
