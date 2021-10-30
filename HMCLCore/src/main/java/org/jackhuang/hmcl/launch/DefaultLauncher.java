@@ -540,7 +540,7 @@ public class DefaultLauncher extends Launcher {
                     writer.write(options.getPreLaunchCommand());
                     writer.newLine();
                 }
-                writer.write(generateCommandLine(nativeFolder).toString());
+                writer.write(command);
                 writer.newLine();
                 if (StringUtils.isNotBlank(options.getPostExitCommand())) {
                     writer.write(options.getPostExitCommand());
