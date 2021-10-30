@@ -87,6 +87,7 @@ public class MultiplayerClient extends Thread {
                  BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
                  BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8))) {
                 MultiplayerServer.Endpoint endpoint = new MultiplayerServer.Endpoint(socket, writer);
+                socket.setSoTimeout(30000);
                 LOG.info("Connected to 127.0.0.1:" + port);
 
                 endpoint.write(new HandshakeRequest());
@@ -107,7 +108,7 @@ public class MultiplayerClient extends Thread {
                     } catch (IOException e) {
                         LOG.log(Level.WARNING, "Failed to close socket", e);
                     }
-                }, 15 * 1000);
+                }, 25 * 1000);
 
                 String line;
                 while ((line = reader.readLine()) != null) {

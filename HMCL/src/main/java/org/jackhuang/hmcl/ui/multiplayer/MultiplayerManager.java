@@ -44,7 +44,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -198,7 +197,7 @@ public final class MultiplayerManager {
                     task.cancel();
                 });
                 client.onKicked().register(kickedEvent -> {
-                    future.completeExceptionally(new CancellationException());
+                    future.completeExceptionally(new KickedException(kickedEvent.getReason()));
                     session.stop();
                     task.cancel();
                 });
@@ -594,6 +593,18 @@ public final class MultiplayerManager {
     }
 
     public static class ConnectionErrorException extends RuntimeException {
+    }
+
+    public static class KickedException extends RuntimeException {
+        private final String reason;
+
+        public KickedException(String reason) {
+            this.reason = reason;
+        }
+
+        public String getReason() {
+            return reason;
+        }
     }
 
     public static class CatoNotExistsException extends RuntimeException {

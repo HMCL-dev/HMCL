@@ -345,7 +345,10 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         Throwable e = resolveException(t);
         if (e instanceof CancellationException) {
             LOG.info("Connection rejected by the server");
-            return i18n("multiplayer.session.join.rejected");
+            return i18n("message.cancelled");
+        } else if (e instanceof MultiplayerManager.KickedException) {
+            LOG.info("Kicked by server");
+            return i18n("multiplayer.session.join.kicked", localizeKickMessage(((MultiplayerManager.KickedException) e).getReason()));
         } else if (e instanceof MultiplayerManager.CatoAlreadyStartedException) {
             LOG.info("Cato already started");
             return i18n("multiplayer.session.error.already_started");
