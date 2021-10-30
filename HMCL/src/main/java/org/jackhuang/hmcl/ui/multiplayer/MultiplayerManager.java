@@ -229,6 +229,7 @@ public final class MultiplayerManager {
             MultiplayerServer server = new MultiplayerServer(sessionName, gamePort, allowAllJoinRequests);
             server.startServer();
 
+            session.setName(sessionName);
             session.allowForwardingAddress(REMOTE_ADDRESS, server.getPort());
             session.allowForwardingAddress(REMOTE_ADDRESS, gamePort);
             session.showAllowedAddress();
@@ -264,7 +265,7 @@ public final class MultiplayerManager {
         }));
     }
 
-    public static final Pattern INVITATION_CODE_PATTERN = Pattern.compile("^(?<id>(idx|mix)(.*?))#(?<port>\\d{2,5})$");
+    public static final Pattern INVITATION_CODE_PATTERN = Pattern.compile("^(?<id>.*?)#(?<port>\\d{2,5})$");
 
     public static Invitation parseInvitationCode(String invitationCode) throws JsonParseException {
         Matcher matcher = INVITATION_CODE_PATTERN.matcher(invitationCode);
