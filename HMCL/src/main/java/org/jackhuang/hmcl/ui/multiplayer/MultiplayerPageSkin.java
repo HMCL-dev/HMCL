@@ -41,8 +41,10 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.HMCLService;
+import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
@@ -295,22 +297,24 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
         }
     }
 
-    public static String getNATType(DiscoveryInfo info) {
+    public static String getNATType(@Nullable Result<DiscoveryInfo> info) {
         if (info == null) {
             return i18n("multiplayer.nat.testing");
-        } else if (info.isBlockedUDP()) {
+        } else if (info.isError()) {
+            return i18n("multiplayer.nat.failed");
+        } else if (info.get().isBlockedUDP()) {
             return i18n("multiplayer.nat.type.blocked_udp");
-        } else if (info.isFullCone()) {
+        } else if (info.get().isFullCone()) {
             return i18n("multiplayer.nat.type.full_cone");
-        } else if (info.isOpenAccess()) {
+        } else if (info.get().isOpenAccess()) {
             return i18n("multiplayer.nat.type.open_access");
-        } else if (info.isPortRestrictedCone()) {
+        } else if (info.get().isPortRestrictedCone()) {
             return i18n("multiplayer.nat.type.port_restricted_cone");
-        } else if (info.isRestrictedCone()) {
+        } else if (info.get().isRestrictedCone()) {
             return i18n("multiplayer.nat.type.restricted_cone");
-        } else if (info.isSymmetric()) {
+        } else if (info.get().isSymmetric()) {
             return i18n("multiplayer.nat.type.symmetric");
-        } else if (info.isSymmetricUDPFirewall()) {
+        } else if (info.get().isSymmetricUDPFirewall()) {
             return i18n("multiplayer.nat.type.symmetric_udp_firewall");
         } else {
             return i18n("multiplayer.nat.type.unknown");
