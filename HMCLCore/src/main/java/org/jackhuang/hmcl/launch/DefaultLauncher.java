@@ -389,7 +389,6 @@ public class DefaultLauncher extends Launcher {
         if (command.tempNativeFolder != null) {
             Files.deleteIfExists(command.tempNativeFolder);
             Files.createSymbolicLink(command.tempNativeFolder, nativeFolder.toPath().toAbsolutePath());
-            command.tempNativeFolder.toFile().deleteOnExit();
         }
 
         if (rawCommandLine.stream().anyMatch(StringUtils::isBlank)) {
