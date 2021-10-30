@@ -18,7 +18,7 @@
         <VBox fx:id="borderPane" alignment="CENTER" FXUtils.limitWidth="500">
             <ComponentList>
                 <BorderPane><left><Label text="%modpack.task.install.will" /></left><right><Label fx:id="lblModpackLocation" /></right></BorderPane>
-                <BorderPane><left><Label text="%modpack.enter_name" /></left><right><JFXTextField fx:id="txtModpackName" StackPane.margin="$insets" /></right></BorderPane>
+                <BorderPane><left><Label BorderPane.alignment="CENTER_LEFT" text="%archive.name" /></left><right><JFXTextField fx:id="txtModpackName" StackPane.margin="$insets" /></right></BorderPane>
 
                 <BorderPane><left><Label text="%modpack.name"/></left><right><Label fx:id="lblName" /></right></BorderPane>
                 <BorderPane><left><Label text="%archive.version"/></left><right><Label fx:id="lblVersion" /></right></BorderPane>

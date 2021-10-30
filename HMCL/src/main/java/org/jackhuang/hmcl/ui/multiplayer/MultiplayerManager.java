@@ -60,7 +60,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
  * Cato Management.
  */
 public final class MultiplayerManager {
-    static final String CATO_VERSION = "1.1.1-202110231414";
+    static final String CATO_VERSION = "1.1.1";
     //    private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/cato/cato/" + MultiplayerManager.CATO_VERSION;
     private static final String CATO_DOWNLOAD_URL = "https://codechina.csdn.net/to/ioi_bin/-/raw/acb0524bcad82a31fa5a09bf4c79248ebd674de1/client/";
     private static final String CATO_PATH = getCatoPath();
