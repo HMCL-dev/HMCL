@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.StringUtils;
 
+import javax.swing.text.html.Option;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.*;
@@ -138,6 +139,15 @@ public final class CommandBuilder {
 
     public boolean removeIf(Predicate<String> pred) {
         return raw.removeIf(i -> pred.test(i.arg));
+    }
+
+    public String find(Predicate<String> pred) {
+        for (Item item : raw) {
+            if (pred.test(item.arg)) {
+                return item.arg;
+            }
+        }
+        return null;
     }
 
     @Override

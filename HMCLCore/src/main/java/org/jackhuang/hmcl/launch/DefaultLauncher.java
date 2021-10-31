@@ -48,14 +48,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
  * @author huangyuhui
  */
 public class DefaultLauncher extends Launcher {
+
+    private static final String STDOUT_ENCODING = "-Dsun.stdout.encoding=";
+    private static final String STDERR_ENCODING = "-Dsun.stderr.encoding=";
+    private static final String FILE_ENCODING = "-Dfile.encoding=";
 
     public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
         this(repository, version, authInfo, options, null);
@@ -69,7 +75,7 @@ public class DefaultLauncher extends Launcher {
         super(repository, version, authInfo, options, listener, daemon);
     }
 
-    private Command generateCommandLine(File nativeFolder) throws IOException {
+    private Command generateCommandLine(File nativeFolder, boolean script) throws IOException {
         CommandBuilder res = new CommandBuilder();
 
         switch (options.getProcessPriority()) {
@@ -113,6 +119,62 @@ public class DefaultLauncher extends Launcher {
         res.add(options.getJava().getBinary().toString());
 
         res.addAllWithoutParsing(options.getJavaArguments());
+
+        Charset stdoutEncoding = null;
+        Charset stderrEncoding = null;
+
+        try {
+            String encoding = res.find(it -> it.startsWith(STDOUT_ENCODING));
+            if (encoding != null)
+                stdoutEncoding = Charset.forName(encoding.substring(STDOUT_ENCODING.length()));
+        } catch (Throwable ex) {
+            LOG.log(Level.WARNING, "Bad stdout encoding", ex);
+            if (!script && !options.isNoGeneratedJVMArgs()) {
+                stdoutEncoding = OperatingSystem.NATIVE_CHARSET;
+            }
+        }
+
+        try {
+            String encoding = res.find(it -> it.startsWith(STDERR_ENCODING));
+            if (encoding != null)
+                stderrEncoding = Charset.forName(encoding.substring(STDERR_ENCODING.length()));
+        } catch (Throwable ex) {
+            LOG.log(Level.WARNING, "Bad stderr encoding", ex);
+            if (!script && !options.isNoGeneratedJVMArgs()) {
+                stderrEncoding = OperatingSystem.NATIVE_CHARSET;
+            }
+        }
+
+        if (script || options.isNoGeneratedJVMArgs()) {
+            if (options.getJava().getParsedVersion() <= JavaVersion.JAVA_17) {
+                try {
+                    String encoding = res.find(it -> it.startsWith(FILE_ENCODING));
+                    if (encoding != null) {
+                        Charset fileEncoding = Charset.forName(encoding.substring(FILE_ENCODING.length()));
+                        if (stdoutEncoding == null)
+                            stdoutEncoding = fileEncoding;
+                        if (stderrEncoding == null)
+                            stderrEncoding = fileEncoding;
+                    }
+                } catch (Throwable ex) {
+                    LOG.log(Level.WARNING, "Bad file encoding", ex);
+                }
+            }
+
+            if (stdoutEncoding == null)
+                stdoutEncoding = OperatingSystem.NATIVE_CHARSET;
+            if (stderrEncoding == null)
+                stderrEncoding = OperatingSystem.NATIVE_CHARSET;
+        } else {
+            if (stdoutEncoding == null) {
+                res.add(STDOUT_ENCODING + "UTF-8");
+                stdoutEncoding = StandardCharsets.UTF_8;
+            }
+            if (stderrEncoding == null) {
+                res.add(STDERR_ENCODING + "UTF-8");
+                stderrEncoding = StandardCharsets.UTF_8;
+            }
+        }
 
         // JVM Args
         if (!options.isNoGeneratedJVMArgs()) {
@@ -269,7 +331,7 @@ public class DefaultLauncher extends Launcher {
         res.addAllWithoutParsing(Arguments.parseStringArguments(options.getGameArguments(), configuration));
 
         res.removeIf(it -> getForbiddens().containsKey(it) && getForbiddens().get(it).get());
-        return new Command(res, tempNativeFolder);
+        return new Command(res, tempNativeFolder, stdoutEncoding, stderrEncoding);
     }
 
     public Map<String, Boolean> getFeatures() {
@@ -374,7 +436,7 @@ public class DefaultLauncher extends Launcher {
             nativeFolder = new File(options.getNativesDir());
         }
 
-        final Command command = generateCommandLine(nativeFolder);
+        final Command command = generateCommandLine(nativeFolder, false);
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = command.commandLine.asMutableList();
@@ -425,7 +487,7 @@ public class DefaultLauncher extends Launcher {
 
         ManagedProcess p = new ManagedProcess(process, rawCommandLine, classpath);
         if (listener != null)
-            startMonitors(p, listener, daemon);
+            startMonitors(p, listener, daemon, command);
         return p;
     }
 
@@ -482,7 +544,7 @@ public class DefaultLauncher extends Launcher {
         if (!FileUtils.makeFile(scriptFile))
             throw new IOException("Script file: " + scriptFile + " cannot be created.");
 
-        final Command commandLine = generateCommandLine(nativeFolder);
+        final Command commandLine = generateCommandLine(nativeFolder, true);
         final String command = usePowerShell ? null : commandLine.commandLine.toString();
 
         if (!usePowerShell && isWindows) {
@@ -586,17 +648,17 @@ public class DefaultLauncher extends Launcher {
             throw new ExecutionPolicyLimitException();
     }
 
-    private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon) {
+    private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon, Command command) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
             processListener.onLog(it, Optional.ofNullable(Log4jLevel.guessLevel(it)).orElse(Log4jLevel.INFO));
             managedProcess.addLine(it);
-        }, OperatingSystem.NATIVE_CHARSET), "stdout-pump", isDaemon);
+        }, command.stdoutEncoding), "stdout-pump", isDaemon);
         managedProcess.addRelatedThread(stdout);
         Thread stderr = Lang.thread(new StreamPump(managedProcess.getProcess().getErrorStream(), it -> {
             processListener.onLog(it, Log4jLevel.ERROR);
             managedProcess.addLine(it);
-        }, OperatingSystem.NATIVE_CHARSET), "stderr-pump", isDaemon);
+        }, command.stderrEncoding), "stderr-pump", isDaemon);
         managedProcess.addRelatedThread(stderr);
         managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), processListener::onExit), "exit-waiter", isDaemon));
     }
@@ -604,10 +666,14 @@ public class DefaultLauncher extends Launcher {
     private static final class Command {
         final CommandBuilder commandLine;
         final Path tempNativeFolder;
+        final Charset stdoutEncoding;
+        final Charset stderrEncoding;
 
-        Command(CommandBuilder commandBuilder, Path tempNativeFolder) {
+        Command(CommandBuilder commandBuilder, Path tempNativeFolder, Charset stdoutEncoding, Charset stderrEncoding) {
             this.commandLine = commandBuilder;
             this.tempNativeFolder = tempNativeFolder;
+            this.stdoutEncoding = stdoutEncoding;
+            this.stderrEncoding = stderrEncoding;
         }
     }
 }
