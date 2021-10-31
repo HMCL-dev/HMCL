@@ -1,0 +1,14 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 开黑啦频道
+    url: https://kaihei.co/Kx7n3t
+    about: Hello Minecraft! Launcher 的官方开黑啦频道。
+  - name: Discord 频道
+    url: https://discord.gg/jVvC7HfM6U
+    about: Hello Minecraft! Launcher 的官方 Discord 频道。
+  - name: 赞助通道
+    url: https://afdian.net/@huanghongxun
+    about: 前往爱发电赞助 HMCL。赞助后可以申请加入官方 QQ 群反馈问题。
+  - name: 其他反馈
+    url: https://github.com/huanghongxun/HMCL/issues/new
+    about: 通过 Issue 反馈其他问题。
