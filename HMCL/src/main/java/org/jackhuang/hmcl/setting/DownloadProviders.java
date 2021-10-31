@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 
+import javax.net.ssl.SSLHandshakeException;
 import java.io.FileNotFoundException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -156,6 +157,8 @@ public final class DownloadProviders {
                 return i18n("install.failed.downloading.detail", url) + "\n" + i18n("exception.access_denied", ((AccessDeniedException) exception.getCause()).getFile());
             } else if (exception.getCause() instanceof ArtifactMalformedException) {
                 return i18n("install.failed.downloading.detail", url) + "\n" + i18n("exception.artifact_malformed");
+            } else if (exception.getCause() instanceof SSLHandshakeException) {
+                return i18n("install.failed.downloading.detail", url) + "\n" + i18n("exception.ssl_handshake");
             } else {
                 return i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause());
             }
