@@ -112,7 +112,7 @@ public enum OperatingSystem {
     private static final Pattern MEMINFO_PATTERN = Pattern.compile("^(?<key>.*?):\\s+(?<value>\\d+) kB?$");
 
     static {
-        String nativeEncoding = System.getProperty("native.encoding", System.getProperty("sun.jnu.encoding"));
+        String nativeEncoding = System.getProperty("native.encoding");
         Charset nativeCharset = Charset.defaultCharset();
 
         if (nativeEncoding != null) {
