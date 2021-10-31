@@ -22,6 +22,8 @@ subprojects {
     apply plugin: 'checkstyle'
 
     repositories {
+        flatDir name: 'libs', dirs: rootProject.file('lib')
+
         mavenCentral()
 
         maven { url 'https://jitpack.io' }

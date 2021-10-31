@@ -45,7 +45,7 @@ mainClassName = 'org.jackhuang.hmcl.Main'
 
 dependencies {
     implementation project(":HMCLCore")
-    implementation rootProject.files("lib/JFoenix.jar")
+    implementation 'libs:JFoenix'
 
     implementation group: 'de.javawi.jstun', name: 'jstun', version: '0.7.4'
 }
@@ -128,6 +128,7 @@ shadowJar {
     minimize {
         exclude(dependency('com.google.code.gson:.*:.*'))
         exclude(dependency('com.github.steveice10:.*:.*'))
+        exclude(dependency('libs:JFoenix:.*'))
         exclude(project(":HMCLTransformerDiscoveryService"))
     }
 
