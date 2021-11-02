@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.StringUtils;
 
-import javax.swing.text.html.Option;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.*;
