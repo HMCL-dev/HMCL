@@ -1,7 +1,6 @@
 package org.jackhuang.hmcl.countly;
 
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
