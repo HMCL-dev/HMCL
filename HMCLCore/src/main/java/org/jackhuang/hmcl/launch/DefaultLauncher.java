@@ -416,7 +416,12 @@ public class DefaultLauncher extends Launcher {
             }
             String appdata = options.getGameDir().getAbsoluteFile().getParent();
             if (appdata != null) builder.environment().put("APPDATA", appdata);
-            if (classpath != null) builder.environment().put("CLASSPATH", classpath);
+            if (classpath != null) {
+                builder.environment().put("CLASSPATH", classpath);
+                // Fix #1153: On Windows, the 'classpath' environment variable in the context overrides the 'CLASSPATH'
+                // Environment variables on Windows are not case-sensitive; The lowercase 'classpath' overwrites any other case.
+                builder.environment().put("classpath", classpath);
+            }
             builder.environment().putAll(getEnvVars());
             process = builder.start();
         } catch (IOException e) {
