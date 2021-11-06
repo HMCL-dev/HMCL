@@ -169,6 +169,10 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
                     JarUtils.thisJar().flatMap(JarUtils::getManifest).map(manifest -> manifest.getMainAttributes().getValue("Microsoft-Auth-Secret")).orElse(""));
         }
 
+        @Override
+        public boolean isPublicClient() {
+            return true; // We have turned on the device auth flow.
+        }
     }
 
     public static class GrantDeviceCodeEvent extends Event {

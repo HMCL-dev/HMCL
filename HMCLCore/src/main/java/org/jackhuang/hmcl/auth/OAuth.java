@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -144,11 +145,17 @@ public class OAuth {
 
     public Result refresh(String refreshToken, Options options) throws AuthenticationException {
         try {
-            RefreshResponse response = HttpRequest.POST(accessTokenURL)
-                    .form(pair("client_id", options.callback.getClientId()),
-                            pair("client_secret", options.callback.getClientSecret()),
-                            pair("refresh_token", refreshToken),
-                            pair("grant_type", "refresh_token"))
+            Map<String, String> query = mapOf(pair("client_id", options.callback.getClientId()),
+                    pair("refresh_token", refreshToken),
+                    pair("grant_type", "refresh_token")
+            );
+
+            if (!options.callback.isPublicClient()) {
+                query.put("client_secret", options.callback.getClientSecret());
+            }
+
+            RefreshResponse response = HttpRequest.POST(tokenURL)
+                    .form(query)
                     .accept("application/json")
                     .ignoreHttpCode()
                     .getJson(RefreshResponse.class);
@@ -233,6 +240,8 @@ public class OAuth {
         String getClientId();
 
         String getClientSecret();
+
+        boolean isPublicClient();
     }
 
     public enum GrantFlow {
