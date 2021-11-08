@@ -136,20 +136,6 @@ public class MicrosoftService {
 
         getUhs(minecraftXstsResponse, uhs);
 
-        // Authenticate XBox with XSTS
-        XBoxLiveAuthenticationResponse xboxXstsResponse = HttpRequest
-                .POST("https://xsts.auth.xboxlive.com/xsts/authorize")
-                .json(mapOf(
-                        pair("Properties",
-                                mapOf(pair("SandboxId", "RETAIL"),
-                                        pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
-                        pair("RelyingParty", "http://xboxlive.com"), pair("TokenType", "JWT")))
-                .getJson(XBoxLiveAuthenticationResponse.class);
-
-        getUhs(xboxXstsResponse, uhs);
-
-        getXBoxProfile(uhs, xboxXstsResponse.token);
-
         // Authenticate with Minecraft
         MinecraftLoginWithXBoxResponse minecraftResponse = HttpRequest
                 .POST("https://api.minecraftservices.com/authentication/login_with_xbox")
