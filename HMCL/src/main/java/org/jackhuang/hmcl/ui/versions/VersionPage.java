@@ -88,7 +88,11 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             if (this.version.get() == null) return;
             GameRepository repository = this.version.get().getProfile().getRepository();
             if (!repository.hasVersion(this.version.get().getVersion())) {
-                fireEvent(new PageCloseEvent());
+                if (preferredVersionName != null) {
+                    loadVersion(preferredVersionName, this.version.get().getProfile());
+                } else {
+                    fireEvent(new PageCloseEvent());
+                }
             }
         });
     }
