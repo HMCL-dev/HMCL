@@ -28,10 +28,15 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.event.EventBus;
+import org.jackhuang.hmcl.event.EventPriority;
+import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -43,6 +48,7 @@ import java.io.File;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage {
@@ -55,6 +61,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentVersionUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
     private String preferredVersionName = null;
 
@@ -71,6 +78,18 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         tab.select(versionSettingsTab);
         FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE.getAnimationProducer());
+        });
+
+        listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));
+    }
+
+    private void checkSelectedVersion() {
+        runInFX(() -> {
+            if (this.version.get() == null) return;
+            GameRepository repository = this.version.get().getProfile().getRepository();
+            if (!repository.hasVersion(this.version.get().getVersion())) {
+                fireEvent(new PageCloseEvent());
+            }
         });
     }
 
