@@ -59,7 +59,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
  * Cato Management.
  */
 public final class MultiplayerManager {
-    static final String CATO_VERSION = "1.1.1";
+    static final String CATO_VERSION = "1.1.1-3f36a56";
     //    private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/cato/cato/" + MultiplayerManager.CATO_VERSION;
     private static final String CATO_DOWNLOAD_URL = "https://codechina.csdn.net/huanghongxun1/ioi_bin/-/raw/3f36a567d9381e5fa404b96bcecd6d6a555f235c/client/";
     private static final String CATO_PATH = getCatoPath();
@@ -68,30 +68,30 @@ public final class MultiplayerManager {
     private static final String LOCAL_ADDRESS = "0.0.0.0";
 
     private static final Map<String, String> HASH = mapOf(
-            pair("cato-client-darwin-amd64", "85951cbae62f46d7011eceb18b5997fb"),
-            pair("cato-client-darwin-arm64", "421cb801dfcba614c4f14b7919e8e2a5"),
-            pair("cato-client-freebsd-amd64", "cd01352a0728d207975bb86d3da31013"),
-            pair("cato-client-freebsd-arm64", "b9e23809800cab9abc137cb72b0da357"),
-            pair("cato-client-freebsd-arm7", "b5f01984415dba54394848325cecb12d"),
-            pair("cato-client-freebsd-i386", "5895d27ed62d0db112ebbeb21986999a"),
-            pair("cato-client-js.wasm", "82db2736c458b5ad0d8c41d36f084631"),
-            pair("cato-client-linux-amd64", "3e8e87c7199f9e915c04adb075a137b0"),
-            pair("cato-client-linux-arm64", "cd6f9dda26985b590b9c9677ac77badf"),
-            pair("cato-client-linux-arm7", "03ce55bb35fff033a7aa79e4602b0a46"),
-            pair("cato-client-linux-i386", "8af4e4c016af60222812442a48c906b8"),
-            pair("cato-client-linux-mips", "ca698df658127c1f222701dd925c4ea8"),
-            pair("cato-client-linux-mips64", "7abe28e1b63b2d44cd85cc1ba6872db8"),
-            pair("cato-client-linux-mips64le", "f590b1258ec97ee304063a7058b9898d"),
-            pair("cato-client-linux-mipsle", "7bc49eed31b5f9185da490c77097f98a"),
-            pair("cato-client-linux-ppc64", "2e82979331635c05aecd6de975f6f38f"),
-            pair("cato-client-linux-ppc64le", "8631285fcd4e6a43221a2a52d07833da"),
-            pair("cato-client-openbsd-amd64", "8a10b9e4746e3ac83c92b0451bc0ee99"),
-            pair("cato-client-openbsd-arm64", "f4fabec0132b09324cd7512ab77969d0"),
-            pair("cato-client-openbsd-arm7", "66c43fb6b42dd71d15eb0328af0d1d3e"),
-            pair("cato-client-openbsd-i386", "a9f4d15135d9295ac96498e91182b124"),
-            pair("cato-client-windows-amd64.exe", "69638ed3d93251d8ad041ce453e375d7"),
-            pair("cato-client-windows-arm64.exe", "05c104b0e7568524ecdcb92b1c9318e5"),
-            pair("cato-client-windows-i386.exe", "6ef47ffde88a0d97425fbab67cb5c20e")
+            pair("cato-client-darwin-amd64", "e733fa4b72be24b99026249c31c4ae8b52ad3906"),
+            pair("cato-client-darwin-arm64", "19ab41b7f78263cad81009ae1a391b0d0367d95f"),
+            pair("cato-client-freebsd-amd64", "6de8439ab9267e444d45bb9f02394023ce0bfe5e"),
+            pair("cato-client-freebsd-arm64", "5cd8930e7cd17d72386b085950e63467e4ce72ef"),
+            pair("cato-client-freebsd-arm7", "d0e54a4a1b0f8c2f769d74a6a600eec4a9c4e0da"),
+            pair("cato-client-freebsd-i386", "d9d22faf85e01e77b18f28f1609e87623ac9b1a4"),
+            pair("cato-client-js.wasm", "acb366a4d6a3c6cd464ef5919ce7d2d58a52964e"),
+            pair("cato-client-linux-amd64", "04e94a3adff1e4d865dead2c6c5da584b74bff0a"),
+            pair("cato-client-linux-arm64", "ba662bc461995dae5e78d21b9fea35c2db81b652"),
+            pair("cato-client-linux-arm7", "28021eff56e1e273c051853808e70e7ab3af80d9"),
+            pair("cato-client-linux-i386", "4f524a9cfbcea560bdf07d3468b883f946c431ed"),
+            pair("cato-client-linux-mips", "91c3108b046511c2aafbe88f82b38a06c03d88e1"),
+            pair("cato-client-linux-mips64", "04d1b66494dbdb0443eaae85bda6b61408e300ed"),
+            pair("cato-client-linux-mips64le", "d838ac71052f7873b28f4b4a2f23470b918ef85d"),
+            pair("cato-client-linux-mipsle", "54918ed9cdbe48f7adf11680947281f5fc7c5a7d"),
+            pair("cato-client-linux-ppc64", "f2679259516b0db0422f85afcce35bfa6f7b3192"),
+            pair("cato-client-linux-ppc64le", "463d9b86316dfc83e668ddfae96e51181a9e3ffa"),
+            pair("cato-client-openbsd-amd64", "b776155e955340485faf62c3b2aad3a788c57e2b"),
+            pair("cato-client-openbsd-arm64", "fd6ec21248fd9c8be3d9d2876faf65b95c63b3a9"),
+            pair("cato-client-openbsd-arm7", "19eabe71530bb4eac7a32f6b8aeef72f6f9382e9"),
+            pair("cato-client-openbsd-i386", "3e755798628a379997dbc43dfd71765d62263ebe"),
+            pair("cato-client-windows-amd64.exe", "21a862f455c909c9fb786cd308e969629eb3c8d9"),
+            pair("cato-client-windows-arm64.exe", "7f2fe5d054ebc3265edb046badafdd6ac94bf7eb"),
+            pair("cato-client-windows-i386.exe", "4e03e640c6cabfd7e1ddf60bba1726353bc3afee")
     );
 
     private MultiplayerManager() {

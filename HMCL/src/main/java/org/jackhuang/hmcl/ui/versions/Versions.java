@@ -122,8 +122,8 @@ public final class Versions {
                 return;
             }
             if (profile.getRepository().renameVersion(version, newName)) {
-                profile.getRepository().refreshVersionsAsync().start();
                 resolve.run();
+                profile.getRepository().refreshVersionsAsync().start();
             } else {
                 reject.accept(i18n("version.manage.rename.fail"));
             }
