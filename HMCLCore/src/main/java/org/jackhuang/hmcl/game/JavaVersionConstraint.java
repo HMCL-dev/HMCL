@@ -35,6 +35,7 @@ public enum JavaVersionConstraint {
 
     // Minecraft>=1.17 requires Java 16
     VANILLA_JAVA_16(JavaVersionConstraint.RULE_MANDATORY, versionRange("1.17", JavaVersionConstraint.MAX), versionRange("16", JavaVersionConstraint.MAX)),
+    VANILLA_JAVA_17(JavaVersionConstraint.RULE_MANDATORY, versionRange("1.18", JavaVersionConstraint.MAX), versionRange("17", JavaVersionConstraint.MAX)),
     // Minecraft>=1.13 requires Java 8
     VANILLA_JAVA_8(JavaVersionConstraint.RULE_MANDATORY, versionRange("1.13", JavaVersionConstraint.MAX), versionRange("1.8", JavaVersionConstraint.MAX)),
     // Minecraft>=1.7.10+Forge accepts Java 8

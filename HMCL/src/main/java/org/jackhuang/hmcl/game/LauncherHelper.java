@@ -425,6 +425,11 @@ public final class LauncherHelper {
                                 FXUtils.openLink("https://adoptium.net/?variant=openjdk17");
                             }, breakAction);
                             return null;
+                        case VANILLA_JAVA_17:
+                            Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 17), i18n("message.warning"), () -> {
+                                FXUtils.openLink("https://adoptium.net/?variant=openjdk17");
+                            }, breakAction);
+                            return null;
                         case VANILLA_JAVA_8:
                             Controllers.dialog(i18n("launch.advice.java8_1_13"), i18n("message.error"), MessageType.ERROR, breakAction);
                             return null;
