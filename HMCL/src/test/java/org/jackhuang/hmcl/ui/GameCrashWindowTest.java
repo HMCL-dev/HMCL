@@ -46,7 +46,7 @@ public class GameCrashWindowTest {
 
         ManagedProcess process = new ManagedProcess(null, Arrays.asList("commands", "2"));
 
-        String logs = FileUtils.readText(new File("C:\\Users\\huang\\Downloads\\minecraft-exported-logs-2021-10-18T21-15-43.log"));
+        String logs = FileUtils.readText(new File("../HMCLCore/src/test/resources/logs/too_old_java.txt"));
 
         CountDownLatch latch = new CountDownLatch(1);
         FXUtils.runInFX(() -> {

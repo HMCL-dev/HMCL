@@ -24,12 +24,15 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
@@ -71,7 +74,7 @@ public class GameCrashWindow extends Stage {
     private final LibraryAnalyzer analyzer;
     private final StringProperty os = new SimpleStringProperty(OperatingSystem.SYSTEM_NAME);
     private final StringProperty arch = new SimpleStringProperty(Architecture.SYSTEM_ARCH.getDisplayName());
-    private final StringProperty reason = new SimpleStringProperty(i18n("game.crash.reason.unknown"));
+    private final TextFlow reasonTextFlow = new TextFlow(new Text(i18n("game.crash.reason.unknown")));
     private final BooleanProperty loading = new SimpleBooleanProperty();
     private final Label feedbackLabel = new Label(i18n("game.crash.feedback"));
 
@@ -133,52 +136,53 @@ public class GameCrashWindow extends Stage {
 
             if (exception != null) {
                 LOG.log(Level.WARNING, "Failed to analyze crash report", exception);
-                reason.set(i18n("game.crash.reason.unknown"));
+                reasonTextFlow.getChildren().setAll(new Text(i18n("game.crash.reason.unknown")));
             } else {
                 List<CrashReportAnalyzer.Result> results = pair.getKey();
                 Set<String> keywords = pair.getValue();
-                StringBuilder reasonText = new StringBuilder();
+
+                List<Node> segments = new ArrayList<>();
                 for (CrashReportAnalyzer.Result result : results) {
                     switch (result.getRule()) {
                         case TOO_OLD_JAVA:
-                            reasonText.append(i18n("game.crash.reason.too_old_java",
-                                    CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.getMatcher().group("expected")))))
-                                    .append("\n");
+                            segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.too_old_java",
+                                    CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.getMatcher().group("expected")))), Controllers::onHyperlinkAction));
                             break;
                         case MOD_RESOLUTION_CONFLICT:
                         case MOD_RESOLUTION_MISSING:
                         case MOD_RESOLUTION_COLLECTION:
-                            reasonText.append(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
+                            segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     translateFabricModId(result.getMatcher().group("sourcemod")),
                                     parseFabricModId(result.getMatcher().group("destmod")),
-                                    parseFabricModId(result.getMatcher().group("destmod"))));
+                                    parseFabricModId(result.getMatcher().group("destmod"))), Controllers::onHyperlinkAction));
                             break;
                         case MOD_RESOLUTION_MISSING_MINECRAFT:
-                            reasonText.append(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
+                            segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     translateFabricModId(result.getMatcher().group("mod")),
-                                    result.getMatcher().group("version")));
+                                    result.getMatcher().group("version")), Controllers::onHyperlinkAction));
                             break;
                         case TWILIGHT_FOREST_OPTIFINE:
-                            reasonText.append(i18n("game.crash.reason.mod", "OptiFine"));
+                            segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.mod", "OptiFine"), Controllers::onHyperlinkAction));
                             break;
                         default:
-                            reasonText.append(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
+                            segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     Arrays.stream(result.getRule().getGroupNames()).map(groupName -> result.getMatcher().group(groupName))
-                                            .toArray()))
-                                    .append("\n");
+                                            .toArray()), Controllers::onHyperlinkAction));
                             break;
                     }
+                    segments.add(new Text("\n"));
                 }
                 if (results.isEmpty()) {
                     if (!keywords.isEmpty()) {
-                        reason.set(i18n("game.crash.reason.stacktrace", String.join(", ", keywords)));
+                        reasonTextFlow.getChildren().setAll(new Text(i18n("game.crash.reason.stacktrace", String.join(", ", keywords))));
                     } else {
-                        reason.set(i18n("game.crash.reason.unknown"));
+                        reasonTextFlow.getChildren().setAll(new Text(i18n("game.crash.reason.unknown")));
                     }
 
                     feedbackLabel.setVisible(true);
                 } else {
-                    reason.set(reasonText.toString());
+                    feedbackLabel.setVisible(false);
+                    reasonTextFlow.getChildren().setAll(segments);
                 }
             }
         }, Schedulers.javafx()).exceptionally(Lang::handleUncaughtException);
@@ -333,14 +337,12 @@ public class GameCrashWindow extends Stage {
                 javaDir.setTitle(i18n("settings.game.java_directory"));
                 javaDir.setSubtitle(launchOptions.getJava().getBinary().toAbsolutePath().toString());
 
-                TwoLineListItem reason = new TwoLineListItem();
-                reason.getStyleClass().setAll("two-line-item-second-large", "wrap-text");
-                reason.setTitle(i18n("game.crash.reason"));
-                reason.subtitleProperty().bind(GameCrashWindow.this.reason);
+                Label reasonTitle = new Label(i18n("game.crash.reason"));
+                reasonTitle.getStyleClass().add("two-line-item-second-large-title");
 
                 gameDirPane.setPadding(new Insets(8));
                 VBox.setVgrow(gameDirPane, Priority.ALWAYS);
-                gameDirPane.getChildren().setAll(gameDir, javaDir, reason);
+                gameDirPane.getChildren().setAll(gameDir, javaDir, new VBox(reasonTitle, reasonTextFlow));
             }
 
             HBox toolBar = new HBox();
