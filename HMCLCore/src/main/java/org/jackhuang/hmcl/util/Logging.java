@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.io.IOUtils;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -34,7 +36,7 @@ public final class Logging {
     }
 
     public static final Logger LOG = Logger.getLogger("HMCL");
-    private static ByteArrayOutputStream storedLogs = new ByteArrayOutputStream();
+    private static final ByteArrayOutputStream storedLogs = new ByteArrayOutputStream(IOUtils.DEFAULT_BUFFER_SIZE);
 
     public static void start(Path logFolder) {
         LOG.setLevel(Level.ALL);
@@ -100,7 +102,7 @@ public final class Logging {
                     new Date(record.getMillis()),
                     record.getSourceClassName(), record.getSourceMethodName(), record.getLevel().getName(),
                     record.getMessage()
-            });
+            }, new StringBuffer(128), null).toString();
             if (record.getThrown() != null)
                 log += StringUtils.getStackTrace(record.getThrown());
 
