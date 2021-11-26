@@ -19,11 +19,10 @@ package org.jackhuang.hmcl.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.SimpleDateFormat;
+import java.text.MessageFormat;
 import java.util.Date;
 import java.util.logging.*;
 
@@ -93,21 +92,19 @@ public final class Logging {
     private static final class DefaultFormatter extends Formatter {
 
         static final DefaultFormatter INSTANCE = new DefaultFormatter();
-        private final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+        private static final MessageFormat format = new MessageFormat("[{0,date,HH:mm:ss}] [{1}.{2}/{3}] {4}\n");
 
         @Override
         public String format(LogRecord record) {
-            String date = format.format(new Date(record.getMillis()));
-            String log = String.format("[%s] [%s.%s/%s] %s%n",
-                    date, record.getSourceClassName(), record.getSourceMethodName(),
-                    record.getLevel().getName(), record.getMessage()
-            );
-            ByteArrayOutputStream builder = new ByteArrayOutputStream();
+            String log = format.format(new Object[]{
+                    new Date(record.getMillis()),
+                    record.getSourceClassName(), record.getSourceMethodName(), record.getLevel().getName(),
+                    record.getMessage()
+            });
             if (record.getThrown() != null)
-                try (PrintWriter writer = new PrintWriter(builder)) {
-                    record.getThrown().printStackTrace(writer);
-                }
-            return log + builder.toString();
+                log += StringUtils.getStackTrace(record.getThrown());
+
+            return log;
         }
 
     }
