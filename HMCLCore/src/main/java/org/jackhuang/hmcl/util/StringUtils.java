@@ -37,7 +37,7 @@ public final class StringUtils {
     }
 
     public static String getStackTrace(Throwable throwable) {
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        ByteArrayOutputStream stream = new ByteArrayOutputStream(512);
         try {
             throwable.printStackTrace(new PrintStream(stream, false, "UTF-8"));
             return stream.toString("UTF-8");
