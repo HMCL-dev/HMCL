@@ -80,7 +80,7 @@ public final class Zipper implements Closeable {
                 if (filter != null && !filter.test(relativePath.replace('\\', '/'))) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
-                Files.copy(file, root.resolve(relativePath));
+                Files.copy(file, root.resolve(relativePath), StandardCopyOption.COPY_ATTRIBUTES);
                 return FileVisitResult.CONTINUE;
             }
 
@@ -104,11 +104,11 @@ public final class Zipper implements Closeable {
     }
 
     public void putFile(Path file, String path) throws IOException {
-        Files.copy(file, fs.getPath(path));
+        Files.copy(file, fs.getPath(path), StandardCopyOption.COPY_ATTRIBUTES);
     }
 
     public void putStream(InputStream in, String path) throws IOException {
-        Files.copy(in, fs.getPath(path));
+        Files.copy(in, fs.getPath(path), StandardCopyOption.COPY_ATTRIBUTES);
     }
 
     public void putTextFile(String text, String path) throws IOException {
