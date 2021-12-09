@@ -178,6 +178,9 @@ public class DefaultLauncher extends Launcher {
 
             res.addDefault("-Dfml.ignoreInvalidMinecraftCertificates=", "true");
             res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
+
+            // Fix RCE vulnerability of log4j2
+            res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
         }
 
         Proxy proxy = options.getProxy();
