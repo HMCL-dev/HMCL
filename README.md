@@ -11,7 +11,9 @@ No plugin API is provided.
 ## Download
 Download the latest version [from the official website](https://hmcl.huangyuhui.net/download)
 
-Note: Github releases are outdated.
+Note: The recent versions in Github release is the beta version, which contains extra testing functions compared to the release versions on the official website. However, they may be unstable and you're more likely to encounter bugs or unexpected problems.
+
+If not necessary, it is recommended to download the ones from the official website.
 
 ## License
 The software is distributed under [GPL v3](https://www.gnu.org/licenses/gpl-3.0.html) with additional terms.
