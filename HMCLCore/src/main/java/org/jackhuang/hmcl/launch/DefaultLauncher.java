@@ -440,6 +440,7 @@ public class DefaultLauncher extends Launcher {
     private Map<String, String> getEnvVars() {
         String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
         Map<String, String> env = new HashMap<>();
+        env.put("FORMAT_MESSAGES_PATTERN_DISABLE_LOOKUPS", "true");
         env.put("INST_NAME", versionName);
         env.put("INST_ID", versionName);
         env.put("INST_DIR", repository.getVersionRoot(version.getId()).getAbsolutePath());
