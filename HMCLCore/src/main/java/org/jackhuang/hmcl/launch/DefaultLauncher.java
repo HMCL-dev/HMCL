@@ -31,12 +31,14 @@ import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Bits;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -184,6 +186,10 @@ public class DefaultLauncher extends Launcher {
             res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
             res.addDefault("-Dcom.sun.jndi.rmi.object.trustURLCodebase=", "false");
             res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
+        }
+
+        if (isUsingLog4j()) {
+            res.addDefault("-Dlog4j.configurationFile=", getLog4jConfigurationFile().getAbsolutePath());
         }
 
         Proxy proxy = options.getProxy();
@@ -339,6 +345,29 @@ public class DefaultLauncher extends Launcher {
         }
     }
 
+    private boolean isUsingLog4j() {
+        return VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("Unknown"), "1.7") >= 0;
+    }
+
+    public File getLog4jConfigurationFile() {
+        return new File(repository.getVersionRoot(version.getId()), "log4j2.xml");
+    }
+
+    public void extractLog4jConfigurationFile() throws IOException {
+        File targetFile = getLog4jConfigurationFile();
+        InputStream source;
+        if (VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("Unknown"), "1.12") < 0) {
+            source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.7.xml");
+        } else {
+            source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.12.xml");
+        }
+
+        try (InputStream input = source;
+             OutputStream output = new FileOutputStream(targetFile)) {
+            IOUtils.copyTo(input, output);
+        }
+    }
+
     protected Map<String, String> getConfigurations() {
         return mapOf(
                 // defined by Minecraft official launcher
@@ -404,6 +433,10 @@ public class DefaultLauncher extends Launcher {
 
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
             decompressNatives(nativeFolder);
+        }
+
+        if (isUsingLog4j()) {
+            extractLog4jConfigurationFile();
         }
 
         File runDirectory = repository.getRunDirectory(version.getId());
@@ -479,6 +512,10 @@ public class DefaultLauncher extends Launcher {
 
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
             decompressNatives(nativeFolder);
+        }
+
+        if (isUsingLog4j()) {
+            extractLog4jConfigurationFile();
         }
 
         String scriptExtension = FileUtils.getExtension(scriptFile);
