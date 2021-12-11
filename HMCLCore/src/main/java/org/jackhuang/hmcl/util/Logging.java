@@ -47,6 +47,7 @@ public final class Logging {
             FileHandler fileHandler = new FileHandler(logFolder.resolve("hmcl.log").toAbsolutePath().toString());
             fileHandler.setLevel(Level.FINEST);
             fileHandler.setFormatter(DefaultFormatter.INSTANCE);
+            fileHandler.setEncoding("UTF-8");
             LOG.addHandler(fileHandler);
         } catch (IOException e) {
             System.err.println("Unable to create hmcl.log, " + e.getMessage());
@@ -88,7 +89,11 @@ public final class Logging {
     }
 
     public static String getLogs() {
-        return storedLogs.toString();
+        try {
+            return storedLogs.toString("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new InternalError(e);
+        }
     }
 
     private static final class DefaultFormatter extends Formatter {
