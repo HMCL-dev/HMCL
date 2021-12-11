@@ -72,6 +72,11 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class LauncherHelper {
 
+    private static final Set<String> UNSAFE_CLIENT_1_7_XML_SHA1 =
+            Collections.unmodifiableSet(new HashSet<>(Collections.singletonList("6605d632a2399010c0085d3e4da58974d62ccdfe")));
+    private static final Set<String> UNSAFE_CLIENT_1_12_XML_SHA1 =
+            Collections.unmodifiableSet(new HashSet<>(Collections.singletonList("ef4f57b922df243d0cef096efe808c72db042149")));
+
     private final Profile profile;
     private final Account account;
     private final String selectedVersion;
@@ -522,6 +527,28 @@ public final class LauncherHelper {
                     suggested = true;
                 }
             }
+
+            // CVE-2021-44228 Remote code injection in Log4j
+            if (!suggested) {
+                if (gameVersion.compareTo(VersionNumber.asVersion("1.7")) >= 0 && gameVersion.compareTo(VersionNumber.asVersion("1.18")) <= 0) {
+                    String xmlSha1 = Optional.ofNullable(version.getLogging().get(DownloadType.CLIENT))
+                            .flatMap(loggingInfo -> Optional.of(loggingInfo.getFile()))
+                            .flatMap(idDownloadInfo -> Optional.ofNullable(idDownloadInfo.getSha1()))
+                            .orElse("");
+                    if (gameVersion.compareTo(VersionNumber.asVersion("1.12")) < 0) {
+                        if (UNSAFE_CLIENT_1_7_XML_SHA1.contains(xmlSha1)) {
+                            Controllers.confirm(i18n("launch.advice.log4j_cve_2021_44228"), i18n("message.warning"), continueAction, null);
+                            suggested = true;
+                        }
+                    } else {
+                        if (UNSAFE_CLIENT_1_12_XML_SHA1.contains(xmlSha1)) {
+                            Controllers.confirm(i18n("launch.advice.log4j_cve_2021_44228"), i18n("message.warning"), continueAction, null);
+                            suggested = true;
+                        }
+                    }
+                }
+            }
+
 
             if (!suggested) {
                 future.complete(javaVersion);
