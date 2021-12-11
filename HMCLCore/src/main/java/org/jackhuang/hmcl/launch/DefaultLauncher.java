@@ -181,6 +181,9 @@ public class DefaultLauncher extends Launcher {
 
             // Fix RCE vulnerability of log4j2
             res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
+            res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
+            res.addDefault("-Dcom.sun.jndi.rmi.object.trustURLCodebase=", "false");
+            res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
         }
 
         Proxy proxy = options.getProxy();
