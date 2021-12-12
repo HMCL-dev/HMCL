@@ -60,7 +60,7 @@ public final class VersionSetting implements Cloneable {
         this.global = global;
     }
 
-    private final BooleanProperty usesGlobalProperty = new SimpleBooleanProperty(this, "usesGlobal", false);
+    private final BooleanProperty usesGlobalProperty = new SimpleBooleanProperty(this, "usesGlobal", true);
 
     public BooleanProperty usesGlobalProperty() {
         return usesGlobalProperty;
