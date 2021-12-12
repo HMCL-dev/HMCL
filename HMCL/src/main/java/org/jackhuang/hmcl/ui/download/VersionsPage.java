@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.download;
 
+import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXSpinner;
@@ -39,7 +40,9 @@ import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
@@ -58,6 +61,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.wrap;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -83,6 +87,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     private JFXCheckBox chkSnapshot;
     @FXML
     private JFXCheckBox chkOld;
+    @FXML
+    private JFXButton btnRefresh;
     @FXML
     private HBox checkPane;
     @FXML
@@ -113,6 +119,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         chkRelease.selectedProperty().addListener(listener);
         chkSnapshot.selectedProperty().addListener(listener);
         chkOld.selectedProperty().addListener(listener);
+
+        btnRefresh.setGraphic(wrap(SVG.refresh(Theme.blackFillBinding(), -1, -1)));
 
         list.setCellFactory(listView -> new ListCell<RemoteVersion>() {
             IconedTwoLineListItem content = new IconedTwoLineListItem();
