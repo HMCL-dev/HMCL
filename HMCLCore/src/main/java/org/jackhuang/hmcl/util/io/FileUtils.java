@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.io;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -36,7 +37,6 @@ import java.util.function.Predicate;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- *
  * @author huang
  */
 public final class FileUtils {
@@ -424,5 +424,25 @@ public final class FileUtils {
         } catch (InvalidPathException e) {
             return Optional.empty();
         }
+    }
+
+    public static Path tmpSaveFile(Path file) {
+        return file.toAbsolutePath().resolveSibling("." + file.getFileName().toString() + ".tmp");
+    }
+
+    public static void saveSafely(Path file, String content) throws IOException {
+        Path tmpFile = tmpSaveFile(file);
+        try (BufferedWriter writer = Files.newBufferedWriter(tmpFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
+            writer.write(content);
+        }
+
+        try {
+            if (Files.exists(file) && Files.getAttribute(file, "dos:hidden") == Boolean.TRUE) {
+                Files.setAttribute(tmpFile, "dos:hidden", true);
+            }
+        } catch (Throwable ignored) {
+        }
+
+        Files.move(tmpFile, file, StandardCopyOption.REPLACE_EXISTING);
     }
 }
