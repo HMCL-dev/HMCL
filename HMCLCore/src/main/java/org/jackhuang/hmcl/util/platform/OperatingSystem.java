@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -112,15 +113,25 @@ public enum OperatingSystem {
     private static final Pattern MEMINFO_PATTERN = Pattern.compile("^(?<key>.*?):\\s+(?<value>\\d+) kB?$");
 
     static {
-        String nativeEncoding = System.getProperty("native.encoding", System.getProperty("sun.jnu.encoding"));
+        String nativeEncoding = System.getProperty("native.encoding");
+        String hmclNativeEncoding = System.getProperty("hmcl.native.encoding");
         Charset nativeCharset = Charset.defaultCharset();
 
-        if (nativeEncoding != null) {
-            try {
-                nativeCharset = Charset.forName(nativeEncoding);
-            } catch (UnsupportedCharsetException e) {
-                e.printStackTrace();
+        try {
+            if (hmclNativeEncoding != null) {
+                nativeCharset = Charset.forName(hmclNativeEncoding);
+            } else {
+                if (nativeEncoding != null && !nativeEncoding.equalsIgnoreCase(nativeCharset.name())) {
+                    nativeCharset = Charset.forName(nativeEncoding);
+                }
+                if (nativeCharset == StandardCharsets.UTF_8 || nativeCharset == StandardCharsets.US_ASCII) {
+                    nativeCharset = StandardCharsets.UTF_8;
+                } else if ("GBK".equalsIgnoreCase(nativeCharset.name())) {
+                    nativeCharset = Charset.forName("GB18030");
+                }
             }
+        } catch (UnsupportedCharsetException e) {
+            e.printStackTrace();
         }
         NATIVE_CHARSET = nativeCharset;
 
