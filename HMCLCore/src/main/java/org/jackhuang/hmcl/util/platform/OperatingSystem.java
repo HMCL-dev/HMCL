@@ -124,9 +124,10 @@ public enum OperatingSystem {
                 if (nativeEncoding != null && !nativeEncoding.equalsIgnoreCase(nativeCharset.name())) {
                     nativeCharset = Charset.forName(nativeEncoding);
                 }
+
                 if (nativeCharset == StandardCharsets.UTF_8 || nativeCharset == StandardCharsets.US_ASCII) {
                     nativeCharset = StandardCharsets.UTF_8;
-                } else if ("GBK".equalsIgnoreCase(nativeCharset.name())) {
+                } else if ("GBK".equalsIgnoreCase(nativeCharset.name()) || "GB2312".equalsIgnoreCase(nativeCharset.name())) {
                     nativeCharset = Charset.forName("GB18030");
                 }
             }
