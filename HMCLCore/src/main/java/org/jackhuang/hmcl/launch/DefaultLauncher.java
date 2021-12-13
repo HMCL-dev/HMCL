@@ -50,8 +50,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
@@ -115,6 +117,19 @@ public class DefaultLauncher extends Launcher {
         res.add(options.getJava().getBinary().toString());
 
         res.addAllWithoutParsing(options.getJavaArguments());
+
+        Charset encoding = OperatingSystem.NATIVE_CHARSET;
+
+        // After Java 17, file.encoding does not affect console encoding
+        if (options.getJava().getParsedVersion() <= JavaVersion.JAVA_17) {
+            try {
+                String fileEncoding = res.addDefault("-Dfile.encoding=", encoding.name());
+                if (fileEncoding != null)
+                    encoding = Charset.forName(fileEncoding.substring("-Dfile.encoding=".length()));
+            } catch (Throwable ex) {
+                LOG.log(Level.WARNING, "Bad file encoding", ex);
+            }
+        }
 
         // JVM Args
         if (!options.isNoGeneratedJVMArgs()) {
@@ -281,7 +296,7 @@ public class DefaultLauncher extends Launcher {
         res.addAllWithoutParsing(Arguments.parseStringArguments(options.getGameArguments(), configuration));
 
         res.removeIf(it -> getForbiddens().containsKey(it) && getForbiddens().get(it).get());
-        return new Command(res, tempNativeFolder);
+        return new Command(res, tempNativeFolder, encoding);
     }
 
     public Map<String, Boolean> getFeatures() {
@@ -469,7 +484,7 @@ public class DefaultLauncher extends Launcher {
 
         ManagedProcess p = new ManagedProcess(process, rawCommandLine, classpath);
         if (listener != null)
-            startMonitors(p, listener, daemon);
+            startMonitors(p, listener, command.encoding, daemon);
         return p;
     }
 
@@ -634,17 +649,17 @@ public class DefaultLauncher extends Launcher {
             throw new ExecutionPolicyLimitException();
     }
 
-    private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon) {
+    private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, Charset encoding, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
             processListener.onLog(it, Optional.ofNullable(Log4jLevel.guessLevel(it)).orElse(Log4jLevel.INFO));
             managedProcess.addLine(it);
-        }, OperatingSystem.NATIVE_CHARSET), "stdout-pump", isDaemon);
+        }, encoding), "stdout-pump", isDaemon);
         managedProcess.addRelatedThread(stdout);
         Thread stderr = Lang.thread(new StreamPump(managedProcess.getProcess().getErrorStream(), it -> {
             processListener.onLog(it, Log4jLevel.ERROR);
             managedProcess.addLine(it);
-        }, OperatingSystem.NATIVE_CHARSET), "stderr-pump", isDaemon);
+        }, encoding), "stderr-pump", isDaemon);
         managedProcess.addRelatedThread(stderr);
         managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), processListener::onExit), "exit-waiter", isDaemon));
     }
@@ -652,10 +667,12 @@ public class DefaultLauncher extends Launcher {
     private static final class Command {
         final CommandBuilder commandLine;
         final Path tempNativeFolder;
+        final Charset encoding;
 
-        Command(CommandBuilder commandBuilder, Path tempNativeFolder) {
+        Command(CommandBuilder commandBuilder, Path tempNativeFolder, Charset encoding) {
             this.commandLine = commandBuilder;
             this.tempNativeFolder = tempNativeFolder;
+            this.encoding = encoding;
         }
     }
 }
