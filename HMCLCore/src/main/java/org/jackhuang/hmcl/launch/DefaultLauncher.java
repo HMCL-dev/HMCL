@@ -180,15 +180,15 @@ public class DefaultLauncher extends Launcher {
 
             res.addDefault("-Dfml.ignoreInvalidMinecraftCertificates=", "true");
             res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
-
-            // Fix RCE vulnerability of log4j2
-            res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
-            res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
-            res.addDefault("-Dcom.sun.jndi.rmi.object.trustURLCodebase=", "false");
-            res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
         }
 
-        if (isUsingLog4j()) {
+        // Fix RCE vulnerability of log4j2
+        res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
+        res.addDefault("-Dcom.sun.jndi.rmi.object.trustURLCodebase=", "false");
+        res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
+
+        String formatMsgNoLookups = res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
+        if ((formatMsgNoLookups == null || !formatMsgNoLookups.endsWith("false")) && isUsingLog4j()) {
             res.addDefault("-Dlog4j.configurationFile=", getLog4jConfigurationFile().getAbsolutePath());
         }
 
