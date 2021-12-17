@@ -62,7 +62,6 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
     private final String version;
     private final File configurationFile;
     private ModpackConfiguration<McbbsModpackManifest> configuration;
-    private GetTask dependent;
     private McbbsModpackManifest manifest;
     private final List<Task<?>> dependencies = new LinkedList<>();
 
@@ -108,11 +107,11 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                 }
             })).thenComposeAsync(wrap(unused1 -> {
                 return executor.one(new GetTask(new URL(manifest.getFileApi() + "/manifest.json")));
-            })).thenComposeAsync(wrap(unused1 -> {
+            })).thenComposeAsync(wrap(remoteManifestJson -> {
                 McbbsModpackManifest remoteManifest;
                 // We needs to update modpack from online server.
                 try {
-                    remoteManifest = JsonUtils.fromNonNullJson(dependent.getResult(), McbbsModpackManifest.class);
+                    remoteManifest = JsonUtils.fromNonNullJson(remoteManifestJson, McbbsModpackManifest.class);
                 } catch (JsonParseException e) {
                     throw new IOException("Unable to parse server manifest.json from " + manifest.getFileApi(), e);
                 }
