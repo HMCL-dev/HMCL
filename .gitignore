@@ -17,20 +17,21 @@ NVIDIA
 /build/
 /HMCL/build/
 /HMCLCore/build/
-/HMCLTransformerDiscoveryService/build/
+/minecraft/libraries/HMCLTransformerDiscoveryService/build/
+/minecraft/libraries/log4j-patch/build/
 
 # idea
 .idea
 /out/
 /HMCL/out/
 /HMCLCore/out/
-/HMCLTransformerDiscoveryService/out/
+/minecraft/libraries/HMCLTransformerDiscoveryService/out/
 
 # eclipse
 /bin/
 /HMCL/bin/
 /HMCLCore/bin/
-/HMCLTransformerDiscoveryService/bin/
+/minecraft/libraries/HMCLTransformerDiscoveryService/bin/
 .classpath
 .project
 .settings
