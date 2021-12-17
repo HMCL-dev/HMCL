@@ -176,10 +176,9 @@ public class MaintainTask extends Task<Version> {
                 builder.addJvmArgument("-Dhmcl.transformer.candidates=${library_directory}/" + library.getPath());
                 if (!libraryExisting) builder.addLibrary(hmclTransformerDiscoveryService);
                 Path libraryPath = repository.getLibraryFile(version, hmclTransformerDiscoveryService).toPath();
-                try {
+                try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLTransformerDiscoveryService-1.0.jar")) {
                     Files.createDirectories(libraryPath.getParent());
-                    Files.copy(MaintainTask.class.getResourceAsStream("/assets/game/HMCLTransformerDiscoveryService-1.0.jar"),
-                            libraryPath, StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(input, libraryPath, StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException e) {
                     Logging.LOG.log(Level.WARNING, "Unable to unpack HMCLTransformerDiscoveryService", e);
                 }
