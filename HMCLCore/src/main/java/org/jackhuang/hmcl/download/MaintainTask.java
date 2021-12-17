@@ -40,6 +40,9 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 
 public class MaintainTask extends Task<Version> {
+    private static final Library LOG4J_PATCH = new Library(new Artifact("org.glavo", "log4j-patch", "1.0"));
+    private static final Library LOG4J_PATCH_BETA9 = new Library(new Artifact("org.glavo", "log4j-patch-beta9", "1.0"));
+
     private final GameRepository repository;
     private final Version version;
 
@@ -76,27 +79,40 @@ public class MaintainTask extends Task<Version> {
             version = maintainOptiFineLibrary(repository, unique(version), false);
         }
 
-        if (version.getLibraries().stream().filter(it -> it.is("org.apache.logging.log4j", "log4j-core"))
-                .anyMatch(it -> !it.getVersion().startsWith("2.0-beta")
-                        && VersionNumber.VERSION_COMPARATOR.compare(it.getVersion(), "2.16") < 0)) {
-            Library log4jPatch = new Library(new Artifact("org.glavo", "log4j-patch", "1.0"));
+        Library log4jPatch = null;
+        for (Library library : version.getLibraries()) {
+            if (library.is("org.apache.logging.log4j", "log4j-core")) {
+                if (library.getVersion().startsWith("2.0-beta")) {
+                    if ("2.0-beta9".equals(library.getVersion())) {
+                        log4jPatch = LOG4J_PATCH_BETA9;
+                    } else {
+                        Logging.LOG.warning("Log4j " + library.getVersion() + " cannot be patched");
+                    }
+                } else if (VersionNumber.VERSION_COMPARATOR.compare(library.getVersion(), "2.16") < 0) {
+                    log4jPatch = LOG4J_PATCH;
+                }
+                break;
+            }
+        }
 
+        if (log4jPatch != null) {
             ArrayList<Library> libraries = new ArrayList<>();
             libraries.add(log4jPatch);
             libraries.addAll(version.getLibraries());
             version = version.setLibraries(libraries);
 
             Path log4jPatchPath = repository.getLibraryFile(version, log4jPatch).toPath();
+            String patchName = log4jPatch.getArtifactId() + "-" + log4jPatch.getVersion();
             if (Files.notExists(log4jPatchPath)) {
-                try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/log4j-patch-1.0.jar")) {
+                try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/" + patchName + ".jar")) {
                     Files.createDirectories(log4jPatchPath.getParent());
                     Files.copy(input, log4jPatchPath, StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException e) {
-                    Logging.LOG.log(Level.WARNING, "Unable to unpack log4j-patch", e);
+                    Logging.LOG.log(Level.WARNING, "Unable to unpack " + patchName, e);
                 }
             }
+            Logging.LOG.info("Apply patch " + patchName + " to log4j");
         }
-
         return version;
     }
 
