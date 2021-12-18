@@ -129,7 +129,6 @@ shadowJar {
         exclude(dependency('com.google.code.gson:.*:.*'))
         exclude(dependency('com.github.steveice10:.*:.*'))
         exclude(dependency('libs:JFoenix:.*'))
-        exclude(project(":HMCLTransformerDiscoveryService"))
     }
 
     manifest {

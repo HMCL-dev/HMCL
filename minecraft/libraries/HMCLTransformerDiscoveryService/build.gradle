@@ -4,6 +4,11 @@ dependencies {
     compileOnly project.files("lib/modlauncher-4.1.0.jar")
 }
 
+compileJava {
+    sourceCompatibility = 8
+    targetCompatibility = 8
+}
+
 jar {
     manifest {
         attributes 'Created-By': 'Copyright(c) 2013-2020 huangyuhui.',

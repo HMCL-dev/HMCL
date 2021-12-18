@@ -17,3 +17,11 @@ dependencies {
     api group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
     compileOnlyApi group: 'org.jetbrains', name: 'annotations', version: '16.0.3'
 }
+
+tasks.processResources {
+    dependsOn ':log4j-patch:jar'
+
+    into('assets/game') {
+        from project(':log4j-patch').file("build/libs")
+    }
+}
