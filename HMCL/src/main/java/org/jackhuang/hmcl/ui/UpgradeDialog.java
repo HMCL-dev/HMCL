@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import javafx.concurrent.Worker;
 import javafx.scene.control.Label;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
@@ -41,23 +42,23 @@ public class UpgradeDialog extends JFXDialogLayout {
 
         {
             String url = CHANGELOG_URL + remoteVersion.getChannel().channelName + ".html";
-            WebView webView = new WebView();
-            webView.getEngine().setUserDataDirectory(Metadata.HMCL_DIRECTORY.toFile());
             try {
+                WebView webView = new WebView();
+                webView.getEngine().setUserDataDirectory(Metadata.HMCL_DIRECTORY.toFile());
                 WebEngine engine = webView.getEngine();
-                engine.load(CHANGELOG_URL + remoteVersion.getChannel().channelName);
+                engine.load(url);
                 engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
-                    String viewURL = engine.getLoadWorker().getMessage().trim();
-                    if (!viewURL.startsWith(CHANGELOG_URL)) {
-                        engine.getLoadWorker().cancel();
-                        FXUtils.openLink(viewURL);
+                    if (newValue == Worker.State.FAILED) {
+                        LOG.warning("Failed to load update log, trying to open it in browser");
+                        FXUtils.openLink(url);
+                        setBody();
                     }
                 });
+                setBody(webView);
             } catch (NoClassDefFoundError | UnsatisfiedLinkError e) {
                 LOG.log(Level.WARNING, "WebView is missing or initialization failed", e);
                 FXUtils.openLink(url);
             }
-            setBody(webView);
         }
 
         {
