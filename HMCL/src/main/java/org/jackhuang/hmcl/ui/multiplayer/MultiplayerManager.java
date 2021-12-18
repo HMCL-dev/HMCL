@@ -132,7 +132,7 @@ public final class MultiplayerManager {
                 throw e;
             }
 
-            String[] commands = new String[]{exe.toString(), "--token", StringUtils.isBlank(token) ? "new" : token};
+            String[] commands = new String[]{exe.toString(), "-client.token", StringUtils.isBlank(token) ? "new" : token};
             Process process = new ProcessBuilder()
                     .command(commands)
                     .start();
