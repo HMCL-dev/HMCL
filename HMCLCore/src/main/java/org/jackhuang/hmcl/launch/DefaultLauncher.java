@@ -180,15 +180,15 @@ public class DefaultLauncher extends Launcher {
 
             res.addDefault("-Dfml.ignoreInvalidMinecraftCertificates=", "true");
             res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
-
-            // Fix RCE vulnerability of log4j2
-            res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
-            res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
-            res.addDefault("-Dcom.sun.jndi.rmi.object.trustURLCodebase=", "false");
-            res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
         }
 
-        if (isUsingLog4j()) {
+        // Fix RCE vulnerability of log4j2
+        res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
+        res.addDefault("-Dcom.sun.jndi.rmi.object.trustURLCodebase=", "false");
+        res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
+
+        String formatMsgNoLookups = res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
+        if (!"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups) && isUsingLog4j()) {
             res.addDefault("-Dlog4j.configurationFile=", getLog4jConfigurationFile().getAbsolutePath());
         }
 
@@ -476,7 +476,6 @@ public class DefaultLauncher extends Launcher {
     private Map<String, String> getEnvVars() {
         String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
         Map<String, String> env = new HashMap<>();
-        env.put("LOG4J_FORMAT_MSG_NO_LOOKUPS", "true");
         env.put("INST_NAME", versionName);
         env.put("INST_ID", versionName);
         env.put("INST_DIR", repository.getVersionRoot(version.getId()).getAbsolutePath());
