@@ -1,0 +1,46 @@
+version '1.0'
+
+dependencies {
+    compileOnly group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.0-beta9'
+}
+
+tasks.compileJava {
+    sourceCompatibility = 8
+    targetCompatibility = 8
+
+    doLast {
+        FileTree tree = fileTree('build/classes/java/main')
+        tree.include '**/*.class'
+        tree.each {
+            RandomAccessFile rf = new RandomAccessFile(it, "rw")
+            rf.seek(7)   // major version
+            rf.write(50) // java 6
+            rf.close()
+        }
+    }
+}
+
+task patchJar(type: Jar) {
+    dependsOn(tasks.compileJava)
+
+    baseName = 'log4j-patch'
+
+    from(sourceSets.main.output) {
+        include('**/JndiLookup.class')
+    }
+}
+
+task patchBeta9Jar(type: Jar) {
+    dependsOn(tasks.compileJava)
+
+    baseName = 'log4j-patch-beta9'
+
+    from(sourceSets.main.output) {
+        include '**/Interpolator.class'
+    }
+}
+
+tasks.jar {
+    enabled = false
+    dependsOn patchJar, patchBeta9Jar
+}
