@@ -400,7 +400,8 @@ public final class MultiplayerManager {
                 onExit.fireEvent(new CatoExitEvent(this, CatoExitEvent.EXIT_CODE_INTERRUPTED));
             } finally {
                 try {
-                    writer.close();
+                    if (writer != null)
+                        writer.close();
                 } catch (IOException e) {
                     LOG.log(Level.WARNING, "Failed to close cato stdin writer", e);
                 }
