@@ -22,7 +22,6 @@
             </filters>
             <AppenderRef ref="SysOut"/>
             <AppenderRef ref="File"/>
-            <AppenderRef ref="ServerGuiConsole"/>
         </Root>
     </Loggers>
 </Configuration>
