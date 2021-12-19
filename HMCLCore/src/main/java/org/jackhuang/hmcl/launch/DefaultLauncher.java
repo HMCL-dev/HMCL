@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -391,8 +390,7 @@ public class DefaultLauncher extends Launcher {
             source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.12.xml");
         }
 
-        try (InputStream input = source;
-             OutputStream output = new FileOutputStream(targetFile)) {
+        try (InputStream input = source; OutputStream output = new FileOutputStream(targetFile)) {
             IOUtils.copyTo(input, output);
         }
     }
@@ -404,8 +402,6 @@ public class DefaultLauncher extends Launcher {
             try (InputStream input = DefaultLauncher.class.getResourceAsStream("/assets/game/" + patchName + ".jar")) {
                 Files.createDirectories(log4jPatchPath.getParent());
                 Files.copy(input, log4jPatchPath, StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                Logging.LOG.log(Level.WARNING, "Unable to unpack " + patchName, e);
             }
         }
     }
