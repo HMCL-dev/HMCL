@@ -255,8 +255,9 @@ public class DefaultLauncher extends Launcher {
         configuration.put("${natives_directory}", nativeFolderPath);
 
         res.addAll(Arguments.parseArguments(version.getArguments().map(Arguments::getJvm).orElseGet(this::getDefaultJVMArguments), configuration));
-        if (authInfo.getArguments() != null && authInfo.getArguments().getJvm() != null && !authInfo.getArguments().getJvm().isEmpty())
-            res.addAll(Arguments.parseArguments(authInfo.getArguments().getJvm(), configuration));
+        Arguments argumentsFromAuthInfo = authInfo.getLaunchArguments(options);
+        if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.getJvm() != null && !argumentsFromAuthInfo.getJvm().isEmpty())
+            res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getJvm(), configuration));
 
         res.add(version.getMainClass());
 
@@ -267,8 +268,8 @@ public class DefaultLauncher extends Launcher {
         if (version.getMinecraftArguments().isPresent()) {
             res.addAll(Arguments.parseArguments(this.getDefaultGameArguments(), configuration, features));
         }
-        if (authInfo.getArguments() != null && authInfo.getArguments().getGame() != null && !authInfo.getArguments().getGame().isEmpty())
-            res.addAll(Arguments.parseArguments(authInfo.getArguments().getGame(), configuration, features));
+        if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.getGame() != null && !argumentsFromAuthInfo.getGame().isEmpty())
+            res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getGame(), configuration, features));
 
         if (StringUtils.isNotBlank(options.getServerIp())) {
             String[] args = options.getServerIp().split(":");

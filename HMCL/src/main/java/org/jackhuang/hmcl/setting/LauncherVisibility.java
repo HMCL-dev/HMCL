@@ -43,5 +43,9 @@ public enum LauncherVisibility {
     /**
      * Hide the launcher and reopen it when game closes.
      */
-    HIDE_AND_REOPEN
+    HIDE_AND_REOPEN;
+
+    public boolean isDaemon() {
+        return this != CLOSE;
+    }
 }

@@ -172,7 +172,7 @@ public final class LauncherHelper {
                     }
                 }).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
-                    LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir());
+                    LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), scriptFile != null);
                     return new HMCLGameLauncher(
                             repository,
                             version,

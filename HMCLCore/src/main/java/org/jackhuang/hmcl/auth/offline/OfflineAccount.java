@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.game.Arguments;
+import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
@@ -129,20 +130,52 @@ public class OfflineAccount extends Account {
             }
 
             try {
-                YggdrasilServer server = new YggdrasilServer(0);
-                server.start();
-                server.addCharacter(new YggdrasilServer.Character(uuid, username, skin.load(username).run()));
-
-                return authInfo.withArguments(new Arguments().addJVMArguments(
-                                "-javaagent:" + artifact.getLocation().toString() + "=" + "http://localhost:" + server.getListeningPort(),
-                                "-Dauthlibinjector.side=client"
-                        ))
-                        .withCloseable(server::stop);
+                return new OfflineAuthInfo(authInfo, artifact);
             } catch (Exception e) {
                 throw new AuthenticationException(e);
             }
         } else {
             return authInfo;
+        }
+    }
+
+    private class OfflineAuthInfo extends AuthInfo {
+        private final AuthlibInjectorArtifactInfo artifact;
+        private YggdrasilServer server;
+
+        public OfflineAuthInfo(AuthInfo authInfo, AuthlibInjectorArtifactInfo artifact) {
+            super(authInfo.getUsername(), authInfo.getUUID(), authInfo.getAccessToken(), authInfo.getUserProperties());
+
+            this.artifact = artifact;
+        }
+
+        @Override
+        public Arguments getLaunchArguments(LaunchOptions options) throws IOException {
+            if (!options.isDaemon()) return null;
+
+            server = new YggdrasilServer(0);
+            server.start();
+
+            try {
+                server.addCharacter(new YggdrasilServer.Character(uuid, username, skin.load(username).run()));
+            } catch (IOException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+
+            return new Arguments().addJVMArguments(
+                    "-javaagent:" + artifact.getLocation().toString() + "=" + "http://localhost:" + server.getListeningPort(),
+                    "-Dauthlibinjector.side=client"
+            );
+        }
+
+        @Override
+        public void close() throws Exception {
+            super.close();
+
+            if (server != null)
+                server.stop();
         }
     }
 

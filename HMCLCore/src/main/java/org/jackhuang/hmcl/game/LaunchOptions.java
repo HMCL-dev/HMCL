@@ -59,6 +59,7 @@ public class LaunchOptions implements Serializable {
     private ProcessPriority processPriority = ProcessPriority.NORMAL;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
+    private boolean daemon;
 
     /**
      * The game directory
@@ -243,6 +244,13 @@ public class LaunchOptions implements Serializable {
         return useNativeOpenAL;
     }
 
+    /**
+     * Will launcher keeps alive after game launched or not.
+     */
+    public boolean isDaemon() {
+        return daemon;
+    }
+
     public static class Builder {
 
         private final LaunchOptions options = new LaunchOptions();
@@ -411,6 +419,10 @@ public class LaunchOptions implements Serializable {
             return options.useNativeOpenAL;
         }
 
+        public boolean isDaemon() {
+            return options.daemon;
+        }
+
         public Builder setGameDir(File gameDir) {
             options.gameDir = gameDir;
             return this;
@@ -540,6 +552,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setUseNativeOpenAL(boolean useNativeOpenAL) {
             options.useNativeOpenAL = useNativeOpenAL;
+            return this;
+        }
+
+        public Builder setDaemon(boolean daemon) {
+            options.daemon = daemon;
             return this;
         }
 

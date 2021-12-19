@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.game.Arguments;
+import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import java.io.IOException;
@@ -71,7 +72,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         Optional<String> prefetchedMeta = server.getMetadataResponse();
 
         if (auth.isPresent() && artifact.isPresent() && prefetchedMeta.isPresent()) {
-            return Optional.of(auth.get().withArguments(generateArguments(artifact.get(), server, prefetchedMeta.get())));
+            return Optional.of(new AuthlibInjectorAuthInfo(auth.get(), artifact.get(), server, prefetchedMeta.get()));
         } else {
             return Optional.empty();
         }
@@ -112,14 +113,30 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
             }
         }
 
-        return auth.withArguments(generateArguments(artifact, server, prefetchedMeta));
+        return new AuthlibInjectorAuthInfo(auth, artifact, server, prefetchedMeta);
     }
 
-    private static Arguments generateArguments(AuthlibInjectorArtifactInfo artifact, AuthlibInjectorServer server, String prefetchedMeta) {
-        return new Arguments().addJVMArguments(
-                "-javaagent:" + artifact.getLocation().toString() + "=" + server.getUrl(),
-                "-Dauthlibinjector.side=client",
-                "-Dauthlibinjector.yggdrasil.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta.getBytes(UTF_8)));
+    private static class AuthlibInjectorAuthInfo extends AuthInfo {
+
+        private final AuthlibInjectorArtifactInfo artifact;
+        private final AuthlibInjectorServer server;
+        private final String prefetchedMeta;
+
+        public AuthlibInjectorAuthInfo(AuthInfo authInfo, AuthlibInjectorArtifactInfo artifact, AuthlibInjectorServer server, String prefetchedMeta) {
+            super(authInfo.getUsername(), authInfo.getUUID(), authInfo.getAccessToken(), authInfo.getUserProperties());
+
+            this.artifact = artifact;
+            this.server = server;
+            this.prefetchedMeta = prefetchedMeta;
+        }
+
+        @Override
+        public Arguments getLaunchArguments(LaunchOptions options) {
+            return new Arguments().addJVMArguments(
+                    "-javaagent:" + artifact.getLocation().toString() + "=" + server.getUrl(),
+                    "-Dauthlibinjector.side=client",
+                    "-Dauthlibinjector.yggdrasil.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta.getBytes(UTF_8)));
+        }
     }
 
     @Override
