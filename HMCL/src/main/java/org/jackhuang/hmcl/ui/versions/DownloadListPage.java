@@ -88,6 +88,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private TaskExecutor executor;
     protected RemoteModRepository repository;
 
+    private Runnable retrySearch;
+
     public DownloadListPage(RemoteModRepository repository) {
         this(repository, null);
     }
@@ -151,6 +153,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     public void search(String userGameVersion, RemoteModRepository.Category category, int pageOffset, String searchFilter, int sort) {
+        retrySearch = null;
         setLoading(true);
         setFailed(false);
         File versionJar = StringUtils.isNotBlank(version.get().getVersion())
@@ -177,6 +180,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 failed.set(false);
             } else {
                 failed.set(true);
+                retrySearch = () -> search(userGameVersion, category, pageOffset, searchFilter, sort);
             }
         }).executor(true);
     }
@@ -360,6 +364,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         return null;
                     }
                 }, getSkinnable().failedProperty()));
+                spinnerPane.setOnFailedAction(e -> {
+                    if (getSkinnable().retrySearch != null) {
+                        getSkinnable().retrySearch.run();
+                    }
+                });
 
                 JFXListView<RemoteMod> listView = new JFXListView<>();
                 spinnerPane.setContent(listView);
