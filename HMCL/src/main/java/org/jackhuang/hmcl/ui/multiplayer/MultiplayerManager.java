@@ -25,9 +25,11 @@ import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.launch.StreamPump;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
@@ -60,54 +62,51 @@ import static org.jackhuang.hmcl.util.Pair.pair;
  */
 public final class MultiplayerManager {
     static final String CATO_VERSION = "1.2.0-202112171527";
-    private static final String CATO_DOWNLOAD_URL = "https://gitcode.net/huanghongxun1/ioi_bin/-/raw/c7b7d8c61b66c297a6460f744dc14487c3ec2289/client/";
+    private static final String CATO_DOWNLOAD_URL = "https://gitcode.net/huanghongxun1/ioi_bin/-/raw/3.5.3/client/";
+    private static final String CATO_HASH_URL = CATO_DOWNLOAD_URL + "cato-all-files.sha1";
     private static final String CATO_PATH = getCatoPath();
     public static final int CATO_AGREEMENT_VERSION = 2;
     private static final String REMOTE_ADDRESS = "127.0.0.1";
     private static final String LOCAL_ADDRESS = "0.0.0.0";
 
-    private static final Map<String, String> HASH = mapOf(
-            pair("cato-client-darwin-amd64", "03c22a68f37654fea60761a1fcb5deb122ea69b8"),
-            pair("cato-client-darwin-arm64", "f79b80437a4b13dde72718dacc80c0469491ad48"),
-            pair("cato-client-freebsd-amd64", "6b244259e3887f5878a87b0a3fcdd5eec9a90a46"),
-            pair("cato-client-freebsd-arm64", "5529f6eacc5a47f9b6e41841531b5bbd911f74e5"),
-            pair("cato-client-freebsd-arm7", "f4b32ecadf82538965f969306e783fa7a7ce86a9"),
-            pair("cato-client-freebsd-i386", "24e27e63e9efe657de23f36f5217232d3c704de3"),
-            pair("cato-client-js.wasm", "3f5d13513b97e750d6cabce9b0c418e7187ad5c7"),
-            pair("cato-client-linux-amd64", "a3f6611ca9e602821faf909d9c6ec243236fed47"),
-            pair("cato-client-linux-arm64", "d04602c1b041f727a2429530e102392f596cc458"),
-            pair("cato-client-linux-arm7", "0924b8d71e62cc80ff7c09a6e1c6aa5b5ea9d77f"),
-            pair("cato-client-linux-i386", "fa426104d4cb0f028bbde5b8e6dddfa9169befd3"),
-            pair("cato-client-linux-mips", "1d8f2710df9e708ef9cc422336cf3fe9e48674e9"),
-            pair("cato-client-linux-mips64", "73ceb1c4e5374766a358d09fcb82a799fb65e846"),
-            pair("cato-client-linux-mips64le", "9d3af8504d049cb502b85fb0d87b9919881e029f"),
-            pair("cato-client-linux-mipsle", "0e771bde5a16fb03c952c6de06e4a65efe23ce83"),
-            pair("cato-client-linux-ppc64", "1199b67ec24afdb4dee2fe4e5f4eeeef8ac3e1e3"),
-            pair("cato-client-linux-ppc64le", "107f6d23685eb98ea961c7e7556d1956c364da32"),
-            pair("cato-client-openbsd-amd64", "606493c36521996b1ce41cd980a775db791b783f"),
-            pair("cato-client-openbsd-arm64", "4c1b2d89e88669452d174607bc65ed3897420868"),
-            pair("cato-client-openbsd-arm7", "a51860b41c4d3634d84fcec578f6ed15f8a49401"),
-            pair("cato-client-openbsd-i386", "9ac8f86b7ceb15564424fbd578867fae93b5cb47"),
-            pair("cato-client-windows-amd64.exe", "57c5166b4c02046ea73d0321481f379db8b103d3"),
-            pair("cato-client-windows-arm64.exe", "d6b9025f1a2a1202256546cfb38ed7d863f5bb57"),
-            pair("cato-client-windows-i386.exe", "45959f36c061ae7cd4294575053920fc43a85516")
-    );
+    private static CompletableFuture<Map<String, String>> HASH;
 
     private MultiplayerManager() {
     }
 
+    private static CompletableFuture<Map<String, String>> getCatoHash() {
+        FXUtils.checkFxUserThread();
+        if (HASH == null) {
+            HASH = CompletableFuture.supplyAsync(wrap(() -> {
+                String hashList = HttpRequest.GET(CATO_HASH_URL).getString();
+                Map<String, String> hashes = new HashMap<>();
+                for (String line : hashList.split("\n")) {
+                    String[] items = line.trim().split("  ");
+                    if (items.length == 2 && items[0].length() == 40) {
+                        hashes.put(items[1], items[0]);
+                    } else {
+                        LOG.warning("Failed to parse cato hash file, hash line " + line);
+                    }
+                }
+                return hashes;
+            }));
+        }
+        return HASH;
+    }
+
     public static Task<Void> downloadCato() {
-        return new FileDownloadTask(
-                NetworkUtils.toURL(CATO_DOWNLOAD_URL + getCatoFileName()),
-                getCatoExecutable().toFile(),
-                new FileDownloadTask.IntegrityCheck("SHA-1", HASH.get(getCatoFileName()))
-        ).thenRunAsync(() -> {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-                Set<PosixFilePermission> perm = Files.getPosixFilePermissions(getCatoExecutable());
-                perm.add(PosixFilePermission.OWNER_EXECUTE);
-                Files.setPosixFilePermissions(getCatoExecutable(), perm);
-            }
-        });
+        return Task.fromCompletableFuture(getCatoHash()).thenComposeAsync(catoHashes ->
+                new FileDownloadTask(
+                        NetworkUtils.toURL(CATO_DOWNLOAD_URL + getCatoFileName()),
+                        getCatoExecutable().toFile(),
+                        catoHashes.get(getCatoFileName()) == null ? null : new FileDownloadTask.IntegrityCheck("SHA-1", catoHashes.get(getCatoFileName()))
+                ).thenRunAsync(() -> {
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                        Set<PosixFilePermission> perm = Files.getPosixFilePermissions(getCatoExecutable());
+                        perm.add(PosixFilePermission.OWNER_EXECUTE);
+                        Files.setPosixFilePermissions(getCatoExecutable(), perm);
+                    }
+                }));
     }
 
     public static Path getCatoExecutable() {
@@ -115,7 +114,7 @@ public final class MultiplayerManager {
     }
 
     private static CompletableFuture<CatoSession> startCato(String token, State state) {
-        return CompletableFuture.completedFuture(null).thenApplyAsync(wrap(unused -> {
+        return getCatoHash().thenApplyAsync(wrap(catoHashes -> {
             Path exe = getCatoExecutable();
             if (!Files.isRegularFile(exe)) {
                 throw new CatoNotExistsException(exe);
@@ -126,7 +125,10 @@ public final class MultiplayerManager {
             }
 
             try {
-                ChecksumMismatchException.verifyChecksum(exe, "SHA-1", HASH.get(getCatoFileName()));
+                String hash = catoHashes.get(getCatoFileName());
+                if (hash != null) {
+                    ChecksumMismatchException.verifyChecksum(exe, "SHA-1", hash);
+                }
             } catch (IOException e) {
                 Files.deleteIfExists(exe);
                 throw e;
