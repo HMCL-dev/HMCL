@@ -5,6 +5,7 @@ on:
 
 jobs:
   run:
+    if: ${{ github.repository_owner == 'huanghongxun' }}
     runs-on: ubuntu-latest
     steps:
       - name: Mirror Github to Gitee
