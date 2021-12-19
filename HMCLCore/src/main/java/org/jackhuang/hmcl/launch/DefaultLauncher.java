@@ -74,14 +74,14 @@ public class DefaultLauncher extends Launcher {
         switch (options.getProcessPriority()) {
             case HIGH:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    res.add("cmd", "/C", "start", "unused title", "/B", "/high");
+                    // res.add("cmd", "/C", "start", "unused title", "/B", "/high");
                 } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "-5");
                 }
                 break;
             case ABOVE_NORMAL:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    res.add("cmd", "/C", "start", "unused title", "/B", "/abovenormal");
+                    // res.add("cmd", "/C", "start", "unused title", "/B", "/abovenormal");
                 } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "-1");
                 }
@@ -91,14 +91,14 @@ public class DefaultLauncher extends Launcher {
                 break;
             case BELOW_NORMAL:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    res.add("cmd", "/C", "start", "unused title", "/B", "/belownormal");
+                    // res.add("cmd", "/C", "start", "unused title", "/B", "/belownormal");
                 } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "1");
                 }
                 break;
             case LOW:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    res.add("cmd", "/C", "start", "unused title", "/B", "/low");
+                    // res.add("cmd", "/C", "start", "unused title", "/B", "/low");
                 } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "5");
                 }
@@ -450,15 +450,7 @@ public class DefaultLauncher extends Launcher {
         final Command command = generateCommandLine(nativeFolder);
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
-        List<String> rawCommandLine = command.commandLine.asMutableList();
-
-        // Pass classpath using the environment variable, to reduce the command length
-        String classpath = null;
-        final int cpIndex = rawCommandLine.indexOf("-cp");
-        if (cpIndex >= 0 && cpIndex < rawCommandLine.size() - 1) {
-            rawCommandLine.remove(cpIndex); // remove "-cp"
-            classpath = rawCommandLine.remove(cpIndex);
-        }
+        List<String> rawCommandLine = command.commandLine.asList();
 
         if (command.tempNativeFolder != null) {
             Files.deleteIfExists(command.tempNativeFolder);
@@ -496,19 +488,14 @@ public class DefaultLauncher extends Launcher {
             }
             String appdata = options.getGameDir().getAbsoluteFile().getParent();
             if (appdata != null) builder.environment().put("APPDATA", appdata);
-            if (classpath != null) {
-                builder.environment().put("CLASSPATH", classpath);
-                // Fix #1153: On Windows, the 'classpath' environment variable in the context overrides the 'CLASSPATH'
-                // Environment variables on Windows are not case-sensitive; The lowercase 'classpath' overwrites any other case.
-                builder.environment().put("classpath", classpath);
-            }
+
             builder.environment().putAll(getEnvVars());
             process = builder.start();
         } catch (IOException e) {
             throw new ProcessCreationException(e);
         }
 
-        ManagedProcess p = new ManagedProcess(process, rawCommandLine, classpath);
+        ManagedProcess p = new ManagedProcess(process, rawCommandLine);
         if (listener != null)
             startMonitors(p, listener, command.encoding, daemon);
         return p;
