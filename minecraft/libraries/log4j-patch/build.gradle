@@ -1,15 +1,21 @@
 version '1.0'
 
+sourceSets.create("agent") {
+    java {
+        srcDir 'src/main/agent'
+    }
+}
+
 dependencies {
     compileOnly group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.0-beta9'
 }
 
-tasks.compileJava {
+tasks.withType(JavaCompile) {
     sourceCompatibility = 8
     targetCompatibility = 8
 
     doLast {
-        FileTree tree = fileTree('build/classes/java/main')
+        FileTree tree = fileTree('build/classes/java')
         tree.include '**/*.class'
         tree.each {
             RandomAccessFile rf = new RandomAccessFile(it, "rw")
@@ -20,27 +26,27 @@ tasks.compileJava {
     }
 }
 
-task patchJar(type: Jar) {
+task agentJar(type: Jar) {
     dependsOn(tasks.compileJava)
 
-    baseName = 'log4j-patch'
+    baseName = 'log4j-patch-agent'
 
-    from(sourceSets.main.output) {
-        include('**/JndiLookup.class')
+    manifest {
+        attributes 'Premain-Class': 'org.glavo.log4j.patch.agent.Log4jAgent'
     }
-}
 
-task patchBeta9Jar(type: Jar) {
-    dependsOn(tasks.compileJava)
-
-    baseName = 'log4j-patch-beta9'
-
+    from(sourceSets.agent.output)
     from(sourceSets.main.output) {
-        include '**/Interpolator.class'
+        includeEmptyDirs = false
+
+        eachFile {
+            it.path = "org/glavo/log4j/patch/agent/${it.name}.bin"
+        }
     }
 }
 
 tasks.jar {
     enabled = false
-    dependsOn patchJar, patchBeta9Jar
+    dependsOn agentJar
 }
+

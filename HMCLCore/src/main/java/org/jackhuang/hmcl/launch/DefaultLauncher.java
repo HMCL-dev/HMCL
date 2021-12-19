@@ -19,15 +19,10 @@ package org.jackhuang.hmcl.launch;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.Argument;
-import org.jackhuang.hmcl.game.Arguments;
-import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.LaunchOptions;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.NativesDirectoryType;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -48,6 +43,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -131,6 +127,8 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
+        Optional<Library> log4j = findLog4j();
+
         // JVM Args
         if (!options.isNoGeneratedJVMArgs()) {
             appendJvmArgs(res);
@@ -195,6 +193,13 @@ public class DefaultLauncher extends Launcher {
 
             res.addDefault("-Dfml.ignoreInvalidMinecraftCertificates=", "true");
             res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
+
+            if (log4j.isPresent()) {
+                String enableJndi = res.addDefault("-Dlog4j2.enableJndi=", "false");
+                if (!"-Dlog4j2.enableJndi=true".equals(enableJndi)) {
+                    res.add("-javaagent:" + repository.getLibraryFile(version, LOG4J_PATCH_AGENT).getAbsolutePath() + "=" + log4j.get().getVersion().startsWith("2.0-beta"));
+                }
+            }
         }
 
         // Fix RCE vulnerability of log4j2
@@ -203,7 +208,7 @@ public class DefaultLauncher extends Launcher {
         res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
 
         String formatMsgNoLookups = res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
-        if (!"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups) && isUsingLog4j()) {
+        if (!"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups) && log4j.isPresent()) {
             res.addDefault("-Dlog4j.configurationFile=", getLog4jConfigurationFile().getAbsolutePath());
         }
 
@@ -360,8 +365,17 @@ public class DefaultLauncher extends Launcher {
         }
     }
 
-    private boolean isUsingLog4j() {
-        return VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("Unknown"), "1.7") >= 0;
+    private static final Library LOG4J_PATCH_AGENT = new Library(new Artifact("org.glavo", "log4j-patch-agent", "1.0"));
+
+    private Optional<Library> findLog4j() {
+        return version.getLibraries().stream()
+                .filter(it -> it.is("org.apache.logging.log4j", "log4j-core")
+                        && (VersionNumber.VERSION_COMPARATOR.compare(it.getVersion(), "2.17") < 0 || "2.0-beta9".equals(it.getVersion())))
+                .findFirst();
+    }
+
+    private boolean isLog4jUnsafe(Library log4j) {
+        return VersionNumber.VERSION_COMPARATOR.compare(log4j.getVersion(), "2.17") < 0;
     }
 
     public File getLog4jConfigurationFile() {
@@ -371,7 +385,7 @@ public class DefaultLauncher extends Launcher {
     public void extractLog4jConfigurationFile() throws IOException {
         File targetFile = getLog4jConfigurationFile();
         InputStream source;
-        if (VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("Unknown"), "1.12") < 0) {
+        if (VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("0.0"), "1.12") < 0) {
             source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.7.xml");
         } else {
             source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.12.xml");
@@ -380,6 +394,19 @@ public class DefaultLauncher extends Launcher {
         try (InputStream input = source;
              OutputStream output = new FileOutputStream(targetFile)) {
             IOUtils.copyTo(input, output);
+        }
+    }
+
+    public void extractLog4jAgent() throws IOException {
+        Path log4jPatchPath = repository.getLibraryFile(version, LOG4J_PATCH_AGENT).toPath();
+        String patchName = LOG4J_PATCH_AGENT.getArtifactId() + "-" + LOG4J_PATCH_AGENT.getVersion();
+        if (Files.notExists(log4jPatchPath)) {
+            try (InputStream input = DefaultLauncher.class.getResourceAsStream("/assets/game/" + patchName + ".jar")) {
+                Files.createDirectories(log4jPatchPath.getParent());
+                Files.copy(input, log4jPatchPath, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                Logging.LOG.log(Level.WARNING, "Unable to unpack " + patchName, e);
+            }
         }
     }
 
@@ -450,8 +477,11 @@ public class DefaultLauncher extends Launcher {
             decompressNatives(nativeFolder);
         }
 
-        if (isUsingLog4j()) {
+        Optional<Library> log4j = findLog4j();
+        if (log4j.isPresent()) {
             extractLog4jConfigurationFile();
+            if (isLog4jUnsafe(log4j.get()))
+                extractLog4jAgent();
         }
 
         File runDirectory = repository.getRunDirectory(version.getId());
@@ -528,8 +558,11 @@ public class DefaultLauncher extends Launcher {
             decompressNatives(nativeFolder);
         }
 
-        if (isUsingLog4j()) {
+        Optional<Library> log4j = findLog4j();
+        if (log4j.isPresent()) {
             extractLog4jConfigurationFile();
+            if (isLog4jUnsafe(log4j.get()))
+                extractLog4jAgent();
         }
 
         String scriptExtension = FileUtils.getExtension(scriptFile);
