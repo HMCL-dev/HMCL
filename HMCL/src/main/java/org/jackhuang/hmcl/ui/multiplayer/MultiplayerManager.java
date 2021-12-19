@@ -52,10 +52,8 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.wrap;
 import static org.jackhuang.hmcl.util.Logging.LOG;
-import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
  * Cato Management.
