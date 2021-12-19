@@ -123,7 +123,12 @@ public final class Versions {
             }
             if (profile.getRepository().renameVersion(version, newName)) {
                 resolve.run();
-                profile.getRepository().refreshVersionsAsync().start();
+                profile.getRepository().refreshVersionsAsync()
+                        .thenRunAsync(Schedulers.javafx(), () -> {
+                            if (profile.getRepository().hasVersion(newName)) {
+                                profile.setSelectedVersion(newName);
+                            }
+                        }).start();
             } else {
                 reject.accept(i18n("version.manage.rename.fail"));
             }
