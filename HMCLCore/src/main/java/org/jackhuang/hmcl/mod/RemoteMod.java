@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import org.jackhuang.hmcl.task.FileDownloadTask;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
@@ -182,6 +184,18 @@ public class RemoteMod {
 
         public Map<String, String> getHashes() {
             return hashes;
+        }
+
+        public FileDownloadTask.IntegrityCheck getIntegrityCheck() {
+            if (hashes.containsKey("md5")) {
+                return new FileDownloadTask.IntegrityCheck("MD5", hashes.get("sha1"));
+            } else if (hashes.containsKey("sha1")) {
+                return new FileDownloadTask.IntegrityCheck("SHA-1", hashes.get("sha1"));
+            } else if (hashes.containsKey("sha512")) {
+                return new FileDownloadTask.IntegrityCheck("SHA-256", hashes.get("sha1"));
+            } else {
+                return null;
+            }
         }
 
         public String getUrl() {

@@ -198,7 +198,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
 
         Controllers.taskDialog(
-                new FileDownloadTask(NetworkUtils.toURL(file.getFile().getUrl()), dest).executor(true),
+                new FileDownloadTask(NetworkUtils.toURL(file.getFile().getUrl()), dest, file.getFile().getIntegrityCheck()).executor(true),
                 i18n("message.downloading")
         );
     }

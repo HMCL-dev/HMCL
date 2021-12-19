@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.download.fabric;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.util.Collection;
@@ -47,9 +47,9 @@ public class FabricAPIVersionList extends VersionList<FabricAPIRemoteVersion> {
     @Override
     public CompletableFuture<?> refreshAsync() {
         return CompletableFuture.runAsync(wrap(() -> {
-            for (RemoteMod.Version modVersion : Lang.toIterable(CurseForgeRemoteModRepository.MODS.getRemoteVersionsById("306612"))) {
+            for (RemoteMod.Version modVersion : Lang.toIterable(ModrinthRemoteModRepository.INSTANCE.getRemoteVersionsById("P7dR8mSH"))) {
                 for (String gameVersion : modVersion.getGameVersions()) {
-                    versions.put(gameVersion, new FabricAPIRemoteVersion(gameVersion, modVersion.getName(), modVersion.getName(), modVersion.getDatePublished(),
+                    versions.put(gameVersion, new FabricAPIRemoteVersion(gameVersion, modVersion.getVersion(), modVersion.getName(), modVersion.getDatePublished(), modVersion,
                             Collections.singletonList(modVersion.getFile().getUrl())));
                 }
             }
