@@ -315,13 +315,15 @@ public class GameCrashWindow extends Stage {
                 moddedPane.setAlignment(Pos.CENTER_LEFT);
 
                 for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
-                    analyzer.getVersion(type).ifPresent(ver -> {
-                        TwoLineListItem item = new TwoLineListItem();
-                        item.getStyleClass().setAll("two-line-item-second-large");
-                        item.setTitle(i18n("install.installer." + type.getPatchId()));
-                        item.setSubtitle(ver);
-                        moddedPane.getChildren().add(item);
-                    });
+                    if (!type.getPatchId().isEmpty()) {
+                        analyzer.getVersion(type).ifPresent(ver -> {
+                            TwoLineListItem item = new TwoLineListItem();
+                            item.getStyleClass().setAll("two-line-item-second-large");
+                            item.setTitle(i18n("install.installer." + type.getPatchId()));
+                            item.setSubtitle(ver);
+                            moddedPane.getChildren().add(item);
+                        });
+                    }
                 }
             }
 
