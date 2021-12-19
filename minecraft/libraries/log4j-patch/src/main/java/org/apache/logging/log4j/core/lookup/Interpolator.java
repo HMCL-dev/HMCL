@@ -65,7 +65,7 @@ public class Interpolator implements StrLookup {
         lookups.put("sys", new SystemPropertiesLookup());
         lookups.put("env", new EnvironmentLookup());
         // lookups.put("jndi", new JndiLookup());
-        LOGGER.warn("log4j-patch works, JNDI lookup is disabled");
+        LOGGER.warn("Log4j patch works, JNDI lookup is disabled. This message is not a warning, it represents the successful elimination of some security risks. You should be able to play safely.");
 
         try {
             if (Class.forName("javax.servlet.ServletContext") != null) {

@@ -8,6 +8,6 @@ package org.apache.logging.log4j.core.lookup;
 
 public class JndiLookup {
     public JndiLookup() {
-        throw new NoClassDefFoundError("JNDI lookup is disabled");
+        throw new NoClassDefFoundError("JNDI lookup is disabled. This is not an error. We are blocking some vulnerabilities through it. You should be able to play safely.");
     }
 }
