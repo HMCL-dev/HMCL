@@ -24,8 +24,8 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -35,8 +35,8 @@ import java.util.List;
 public final class VersionJsonDownloadTask extends Task<String> {
     private final String gameVersion;
     private final DefaultDependencyManager dependencyManager;
-    private final List<Task<?>> dependents = new LinkedList<>();
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new ArrayList<>(1);
+    private final List<Task<?>> dependencies = new ArrayList<>(1);
     private final VersionList<?> gameVersionList;
 
     public VersionJsonDownloadTask(String gameVersion, DefaultDependencyManager dependencyManager) {

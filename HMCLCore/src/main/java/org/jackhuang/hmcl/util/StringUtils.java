@@ -199,13 +199,13 @@ public final class StringUtils {
 
     public static List<String> tokenize(String str) {
         if (str == null)
-            return new LinkedList<>();
+            return new ArrayList<>();
         else
             return tokenize(str, " \t\n\r\f");
     }
 
     public static List<String> tokenize(String str, String delim) {
-        LinkedList<String> result = new LinkedList<>();
+        ArrayList<String> result = new ArrayList<>();
         StringTokenizer tokenizer = new StringTokenizer(str, delim);
         while (tokenizer.hasMoreTokens()) {
             delim = tokenizer.nextToken();

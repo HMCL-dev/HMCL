@@ -2,14 +2,15 @@ package moe.mickey.minecraft.skin.fx;
 
 import javafx.animation.AnimationTimer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 public class SkinAnimationPlayer {
 
     protected final Random random = new Random();
-    protected LinkedList<SkinAnimation> animations = new LinkedList<>();
+    protected List<SkinAnimation> animations = new ArrayList<>();
     protected SkinAnimation playing;
     protected boolean running;
     protected int weightedSum = 0;
@@ -28,7 +29,7 @@ public class SkinAnimationPlayer {
                 }
                 playing = tmp;
                 if (playing == null && animations.size() > 0)
-                    playing = animations.getLast();
+                    playing = animations.get(animations.size() - 1);
                 if (playing != null) {
                     playing.playFromStart();
                     lastPlayTime = now;

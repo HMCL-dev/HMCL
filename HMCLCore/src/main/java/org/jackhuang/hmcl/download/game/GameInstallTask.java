@@ -23,9 +23,9 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
@@ -37,7 +37,7 @@ public class GameInstallTask extends Task<Version> {
     private final Version version;
     private final GameRemoteVersion remote;
     private final VersionJsonDownloadTask downloadTask;
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     public GameInstallTask(DefaultDependencyManager dependencyManager, Version version, GameRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;

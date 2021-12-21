@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -45,7 +45,7 @@ public final class GameLibrariesTask extends Task<Void> {
     private final Version version;
     private final boolean integrityCheck;
     private final List<Library> libraries;
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>();
 
     /**
      * Constructor.

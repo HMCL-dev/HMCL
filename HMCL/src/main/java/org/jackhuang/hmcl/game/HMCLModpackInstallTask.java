@@ -33,7 +33,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public final class HMCLModpackInstallTask extends Task<Void> {
@@ -42,8 +42,8 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     private final HMCLGameRepository repository;
     private final DefaultDependencyManager dependency;
     private final Modpack modpack;
-    private final List<Task<?>> dependencies = new LinkedList<>();
-    private final List<Task<?>> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>(1);
+    private final List<Task<?>> dependents = new ArrayList<>(4);
 
     public HMCLModpackInstallTask(Profile profile, File zipFile, Modpack modpack, String name) {
         dependency = profile.getDependency();

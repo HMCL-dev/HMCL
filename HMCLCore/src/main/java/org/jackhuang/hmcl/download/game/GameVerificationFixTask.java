@@ -29,8 +29,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -41,7 +41,7 @@ public final class GameVerificationFixTask extends Task<Void> {
     private final DefaultDependencyManager dependencyManager;
     private final String gameVersion;
     private final Version version;
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>();
 
     public GameVerificationFixTask(DefaultDependencyManager dependencyManager, String gameVersion, Version version) {
         this.dependencyManager = dependencyManager;

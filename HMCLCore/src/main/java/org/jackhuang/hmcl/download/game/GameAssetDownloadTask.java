@@ -34,8 +34,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -50,8 +50,8 @@ public final class GameAssetDownloadTask extends Task<Void> {
     private final AssetIndexInfo assetIndexInfo;
     private final Path assetIndexFile;
     private final boolean integrityCheck;
-    private final List<Task<?>> dependents = new LinkedList<>();
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new ArrayList<>(1);
+    private final List<Task<?>> dependencies = new ArrayList<>();
 
     /**
      * Constructor.

@@ -28,7 +28,7 @@ import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -393,7 +393,7 @@ public final class FileUtils {
     }
 
     public static List<File> listFilesByExtension(File file, String extension) {
-        List<File> result = new LinkedList<>();
+        List<File> result = new ArrayList<>();
         File[] files = file.listFiles();
         if (files != null)
             for (File it : files)

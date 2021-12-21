@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.DigestUtils.digest;
@@ -57,7 +57,7 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
 
     @Override
     public void execute() throws Exception {
-        List<ModpackConfiguration.FileInformation> overrides = new LinkedList<>();
+        List<ModpackConfiguration.FileInformation> overrides = new ArrayList<>();
 
         try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setEncoding(encoding).build()) {
             Path root = fs.getPath(subDirectory);

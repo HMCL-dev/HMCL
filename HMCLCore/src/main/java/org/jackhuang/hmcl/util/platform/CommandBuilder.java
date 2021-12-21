@@ -35,7 +35,7 @@ public final class CommandBuilder {
     private static final Pattern UNSTABLE_BOOLEAN_OPTION_PATTERN = Pattern.compile("-XX:(?<value>[+\\-])(?<key>[a-zA-Z0-9]+)");
 
     private final OperatingSystem os;
-    private final List<Item> raw = new LinkedList<>();
+    private final List<Item> raw = new ArrayList<>();
 
     public CommandBuilder() {
         this(OperatingSystem.CURRENT_OS);

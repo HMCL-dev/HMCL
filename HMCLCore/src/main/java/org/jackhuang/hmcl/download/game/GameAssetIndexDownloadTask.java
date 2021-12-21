@@ -33,7 +33,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -49,7 +49,7 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
     private final AbstractDependencyManager dependencyManager;
     private final Version version;
     private final boolean forceDownloading;
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     /**
      * Constructor.

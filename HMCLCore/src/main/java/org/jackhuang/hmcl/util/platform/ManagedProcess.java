@@ -34,7 +34,7 @@ public class ManagedProcess {
     private final String classpath;
     private final Map<String, Object> properties = new HashMap<>();
     private final Queue<String> lines = new ConcurrentLinkedQueue<>();
-    private final List<Thread> relatedThreads = new LinkedList<>();
+    private final List<Thread> relatedThreads = new ArrayList<>();
 
     /**
      * Constructor.

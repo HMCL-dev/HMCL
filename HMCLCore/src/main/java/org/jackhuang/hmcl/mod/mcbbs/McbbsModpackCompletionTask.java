@@ -63,7 +63,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
     private final File configurationFile;
     private ModpackConfiguration<McbbsModpackManifest> configuration;
     private McbbsModpackManifest manifest;
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>();
 
     private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
     private final AtomicInteger finished = new AtomicInteger(0);

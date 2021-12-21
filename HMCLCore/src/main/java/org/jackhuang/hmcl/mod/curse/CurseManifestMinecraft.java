@@ -23,8 +23,8 @@ import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -47,7 +47,7 @@ public final class CurseManifestMinecraft implements Validation {
 
     public CurseManifestMinecraft(String gameVersion, List<CurseManifestModLoader> modLoaders) {
         this.gameVersion = gameVersion;
-        this.modLoaders = new LinkedList<>(modLoaders);
+        this.modLoaders = new ArrayList<>(modLoaders);
     }
 
     public String getGameVersion() {

@@ -32,8 +32,8 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,7 +52,7 @@ public final class CurseCompletionTask extends Task<Void> {
     private final ModManager modManager;
     private final String version;
     private CurseManifest manifest;
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>();
 
     private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
     private final AtomicInteger finished = new AtomicInteger(0);
