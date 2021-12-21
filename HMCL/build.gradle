@@ -35,7 +35,7 @@ if (shortcommit != null && !shortcommit.isEmpty()) dev = "dev-" + shortcommit
 def buildnumber = System.getenv("BUILD_NUMBER") ?: dev ?: "SNAPSHOT"
 if (System.getenv("BUILD_NUMBER") != null && System.getenv("BUILD_NUMBER_OFFSET") != null)
     buildnumber = (Integer.parseInt(System.getenv("BUILD_NUMBER")) - Integer.parseInt(System.getenv("BUILD_NUMBER_OFFSET"))).toString()
-def versionroot = System.getenv("VERSION_ROOT") ?: "3.4"
+def versionroot = System.getenv("VERSION_ROOT") ?: "3.5"
 def microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 def microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 def versionType = System.getenv("VERSION_TYPE") ?: "nightly"
