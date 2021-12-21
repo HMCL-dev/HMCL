@@ -95,7 +95,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 synchronized (ModListPage.this) {
                     runInFX(() -> loadingProperty().set(true));
                     modManager.refreshMods();
-                    return new LinkedList<>(modManager.getMods());
+                    return new ArrayList<>(modManager.getMods());
                 }
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
@@ -118,10 +118,12 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"));
         List<File> res = chooser.showOpenMultipleDialog(Controllers.getStage());
 
-        // It's guaranteed that succeeded and failed are thread safe here.
-        List<String> succeeded = new LinkedList<>();
-        List<String> failed = new LinkedList<>();
         if (res == null) return;
+
+        // It's guaranteed that succeeded and failed are thread safe here.
+        List<String> succeeded = new ArrayList<>(res.size());
+        List<String> failed = new ArrayList<>();
+
         Task.runAsync(() -> {
             for (File file : res) {
                 try {
@@ -135,7 +137,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 }
             }
         }).withRunAsync(Schedulers.javafx(), () -> {
-            List<String> prompt = new LinkedList<>();
+            List<String> prompt = new ArrayList<>(1);
             if (!succeeded.isEmpty())
                 prompt.add(i18n("mods.add.success", String.join(", ", succeeded)));
             if (!failed.isEmpty())

@@ -45,7 +45,7 @@ public final class FabricInstallTask extends Task<Version> {
     private final Version version;
     private final FabricRemoteVersion remote;
     private final GetTask launchMetaTask;
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     public FabricInstallTask(DefaultDependencyManager dependencyManager, Version version, FabricRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;

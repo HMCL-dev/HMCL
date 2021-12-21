@@ -53,7 +53,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
     private ModpackConfiguration<ServerModpackManifest> manifest;
     private GetTask dependent;
     private ServerModpackManifest remoteManifest;
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>();
 
     public ServerModpackCompletionTask(DefaultDependencyManager dependencyManager, String version) {
         this(dependencyManager, version, null);

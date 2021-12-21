@@ -23,9 +23,9 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -38,8 +38,8 @@ public final class LiteLoaderInstallTask extends Task<Version> {
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
     private final LiteLoaderRemoteVersion remote;
-    private final List<Task<?>> dependents = new LinkedList<>();
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new ArrayList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     public LiteLoaderInstallTask(DefaultDependencyManager dependencyManager, Version version, LiteLoaderRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;

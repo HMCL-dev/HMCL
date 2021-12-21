@@ -29,8 +29,8 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 public class ServerModpackRemoteInstallTask extends Task<Void> {
@@ -38,8 +38,8 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
     private final String name;
     private final DefaultDependencyManager dependency;
     private final DefaultGameRepository repository;
-    private final List<Task<?>> dependencies = new LinkedList<>();
-    private final List<Task<?>> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>(1);
+    private final List<Task<?>> dependents = new ArrayList<>(1);
     private final ServerModpackManifest manifest;
 
     public ServerModpackRemoteInstallTask(DefaultDependencyManager dependencyManager, ServerModpackManifest manifest, String name) {

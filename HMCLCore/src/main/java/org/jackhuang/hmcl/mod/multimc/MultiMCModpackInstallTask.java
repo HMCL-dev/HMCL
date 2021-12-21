@@ -40,7 +40,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,8 +54,8 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
     private final MultiMCInstanceConfiguration manifest;
     private final String name;
     private final DefaultGameRepository repository;
-    private final List<Task<?>> dependencies = new LinkedList<>();
-    private final List<Task<?>> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>(1);
+    private final List<Task<?>> dependents = new ArrayList<>(4);
 
     public MultiMCModpackInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, MultiMCInstanceConfiguration manifest, String name) {
         this.zipFile = zipFile;

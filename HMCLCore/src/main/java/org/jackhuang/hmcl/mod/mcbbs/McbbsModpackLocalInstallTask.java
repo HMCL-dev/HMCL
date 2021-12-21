@@ -33,7 +33,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,8 +47,8 @@ public class McbbsModpackLocalInstallTask extends Task<Void> {
     private final boolean update;
     private final DefaultGameRepository repository;
     private final MinecraftInstanceTask<McbbsModpackManifest> instanceTask;
-    private final List<Task<?>> dependencies = new LinkedList<>();
-    private final List<Task<?>> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>(2);
+    private final List<Task<?>> dependents = new ArrayList<>(4);
 
     public McbbsModpackLocalInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, McbbsModpackManifest manifest, String name) {
         this.dependencyManager = dependencyManager;

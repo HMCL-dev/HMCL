@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class TaskExecutor {
     protected final Task<?> firstTask;
-    protected final List<TaskListener> taskListeners = new LinkedList<>();
+    protected final List<TaskListener> taskListeners = new ArrayList<>();
     protected final AtomicInteger totTask = new AtomicInteger(0);
     protected final AtomicBoolean cancelled = new AtomicBoolean(false);
     protected Exception exception;

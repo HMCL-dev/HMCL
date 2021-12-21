@@ -24,8 +24,8 @@ import org.jackhuang.hmcl.task.Task;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -38,7 +38,7 @@ public final class FabricAPIInstallTask extends Task<Version> {
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
     private final FabricAPIRemoteVersion remote;
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     public FabricAPIInstallTask(DefaultDependencyManager dependencyManager, Version version, FabricAPIRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
