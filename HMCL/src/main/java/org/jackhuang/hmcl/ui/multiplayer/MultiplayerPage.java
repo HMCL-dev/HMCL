@@ -134,7 +134,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
 
     private void testNAT() {
         Task.supplyAsync(() -> {
-            DiscoveryTest tester = new DiscoveryTest(null, 0, "stun.stunprotocol.org", 3478);
+            DiscoveryTest tester = new DiscoveryTest(null, 0, "stun.miwifi.com", 3478);
             return tester.test();
         }).whenComplete(Schedulers.javafx(), (info, exception) -> {
             if (exception == null) {
