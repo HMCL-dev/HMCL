@@ -328,7 +328,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             vs.setUsesGlobal(true);
     }
 
-    public LaunchOptions getLaunchOptions(String version, JavaVersion javaVersion, File gameDir, boolean makeLaunchScript) {
+    public LaunchOptions getLaunchOptions(String version, JavaVersion javaVersion, File gameDir, List<String> javaAgents, boolean makeLaunchScript) {
         VersionSetting vs = getVersionSetting(version);
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
@@ -359,7 +359,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setProcessPriority(vs.getProcessPriority())
                 .setUseNativeGLFW(vs.isUseNativeGLFW())
                 .setUseNativeOpenAL(vs.isUseNativeOpenAL())
-                .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon());
+                .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon())
+                .setJavaAgents(javaAgents);
         if (config().hasProxy()) {
             builder.setProxy(ProxyManager.getProxy());
             if (config().hasProxyAuth()) {
