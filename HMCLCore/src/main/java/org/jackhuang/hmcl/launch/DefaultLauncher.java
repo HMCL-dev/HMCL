@@ -42,7 +42,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -126,8 +125,6 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        Optional<Library> log4j = findLog4j();
-
         // JVM Args
         if (!options.isNoGeneratedJVMArgs()) {
             appendJvmArgs(res);
@@ -192,13 +189,6 @@ public class DefaultLauncher extends Launcher {
 
             res.addDefault("-Dfml.ignoreInvalidMinecraftCertificates=", "true");
             res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
-
-            if (log4j.isPresent()) {
-                String enableJndi = res.addDefault("-Dlog4j2.enableJndi=", "false");
-                if (!"-Dlog4j2.enableJndi=true".equals(enableJndi)) {
-                    res.add("-javaagent:" + repository.getLibraryFile(version, LOG4J_PATCH_AGENT).getAbsolutePath() + "=" + log4j.get().getVersion().startsWith("2.0-beta"));
-                }
-            }
         }
 
         // Fix RCE vulnerability of log4j2
@@ -207,7 +197,7 @@ public class DefaultLauncher extends Launcher {
         res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
 
         String formatMsgNoLookups = res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
-        if (!"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups) && log4j.isPresent()) {
+        if (!"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups) && isUsingLog4j()) {
             res.addDefault("-Dlog4j.configurationFile=", getLog4jConfigurationFile().getAbsolutePath());
         }
 
@@ -369,17 +359,8 @@ public class DefaultLauncher extends Launcher {
         }
     }
 
-    private static final Library LOG4J_PATCH_AGENT = new Library(new Artifact("org.glavo", "log4j-patch-agent", "1.0"));
-
-    private Optional<Library> findLog4j() {
-        return version.getLibraries().stream()
-                .filter(it -> it.is("org.apache.logging.log4j", "log4j-core")
-                        && (VersionNumber.VERSION_COMPARATOR.compare(it.getVersion(), "2.17") < 0 || "2.0-beta9".equals(it.getVersion())))
-                .findFirst();
-    }
-
-    private boolean isLog4jUnsafe(Library log4j) {
-        return VersionNumber.VERSION_COMPARATOR.compare(log4j.getVersion(), "2.17") < 0;
+    private boolean isUsingLog4j() {
+        return VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("1.7"), "1.7") >= 0;
     }
 
     public File getLog4jConfigurationFile() {
@@ -397,17 +378,6 @@ public class DefaultLauncher extends Launcher {
 
         try (InputStream input = source; OutputStream output = new FileOutputStream(targetFile)) {
             IOUtils.copyTo(input, output);
-        }
-    }
-
-    public void extractLog4jAgent() throws IOException {
-        Path log4jPatchPath = repository.getLibraryFile(version, LOG4J_PATCH_AGENT).toPath();
-        String patchName = LOG4J_PATCH_AGENT.getArtifactId() + "-" + LOG4J_PATCH_AGENT.getVersion();
-        if (Files.notExists(log4jPatchPath)) {
-            try (InputStream input = DefaultLauncher.class.getResourceAsStream("/assets/game/" + patchName + ".jar")) {
-                Files.createDirectories(log4jPatchPath.getParent());
-                Files.copy(input, log4jPatchPath, StandardCopyOption.REPLACE_EXISTING);
-            }
         }
     }
 
@@ -470,12 +440,8 @@ public class DefaultLauncher extends Launcher {
             decompressNatives(nativeFolder);
         }
 
-        Optional<Library> log4j = findLog4j();
-        if (log4j.isPresent()) {
+        if (isUsingLog4j())
             extractLog4jConfigurationFile();
-            if (isLog4jUnsafe(log4j.get()))
-                extractLog4jAgent();
-        }
 
         File runDirectory = repository.getRunDirectory(version.getId());
 
@@ -546,12 +512,8 @@ public class DefaultLauncher extends Launcher {
             decompressNatives(nativeFolder);
         }
 
-        Optional<Library> log4j = findLog4j();
-        if (log4j.isPresent()) {
+        if (isUsingLog4j())
             extractLog4jConfigurationFile();
-            if (isLog4jUnsafe(log4j.get()))
-                extractLog4jAgent();
-        }
 
         String scriptExtension = FileUtils.getExtension(scriptFile);
         boolean usePowerShell = "ps1".equals(scriptExtension);
