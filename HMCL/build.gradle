@@ -55,9 +55,16 @@ def digest(String algorithm, byte[] bytes) {
 }
 
 def createChecksum(File file) {
-    def algorithm = "SHA-1"
-    def suffix = "sha1"
-    new File(file.parentFile, file.name + "." + suffix).text = digest(algorithm, file.bytes).encodeHex().toString() + "\n"
+    def algorithms = [
+            ["MD5",     "md5"],
+            ["SHA-1",   "sha1"],
+            ["SHA-256", "sha256"],
+            ["SHA-512", "sha512"]
+    ]
+
+    for (algorithm in algorithms) {
+        new File(file.parentFile, file.name + "." + algorithm[1]).text = digest(algorithm[0], file.bytes).encodeHex().toString() + "\n"
+    }
 }
 
 def attachSignature(File jar) {
