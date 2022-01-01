@@ -421,12 +421,11 @@ public final class LauncherHelper {
                                     .thenAcceptAsync(downloadedJavaVersion -> {
                                         setting.setJavaVersion(downloadedJavaVersion);
                                         future.complete(downloadedJavaVersion);
-                                    })
-                                    .exceptionally(throwable -> {
+                                    }, Schedulers.javafx())
+                                    .whenCompleteAsync((result, throwable) -> {
                                         LOG.log(Level.WARNING, "Failed to download java", throwable);
                                         breakAction.run();
-                                        return null;
-                                    });
+                                    }, Schedulers.javafx());
                             return Task.fromCompletableFuture(future);
                         case VANILLA_JAVA_16:
                             Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 16), i18n("message.warning"), () -> {
