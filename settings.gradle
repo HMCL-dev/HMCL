@@ -1,8 +1,0 @@
-rootProject.name = 'HMCL3'
-include ':HMCL'
-include ':HMCLCore'
-include ':HMCLTransformerDiscoveryService'
-include ':log4j-patch'
-
-project(':HMCLTransformerDiscoveryService').projectDir = file('minecraft/libraries/HMCLTransformerDiscoveryService')
-project(':log4j-patch').projectDir = file('minecraft/libraries/log4j-patch')
