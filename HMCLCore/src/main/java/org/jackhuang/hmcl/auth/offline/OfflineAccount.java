@@ -159,7 +159,7 @@ public class OfflineAccount extends Account {
             try {
                 server.addCharacter(new YggdrasilServer.Character(uuid, username, skin.load(username).run()));
             } catch (IOException e) {
-                throw e;
+                // ignore
             } catch (Exception e) {
                 throw new IOException(e);
             }
