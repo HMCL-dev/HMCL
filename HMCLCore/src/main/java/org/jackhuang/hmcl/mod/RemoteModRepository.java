@@ -25,7 +25,16 @@ import java.util.stream.Stream;
 
 public interface RemoteModRepository {
 
-    Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, int sort)
+    enum SortType {
+        DATE_CREATED,
+        POPULARITY,
+        LAST_UPDATED,
+        NAME,
+        AUTHOR,
+        TOTAL_DOWNLOADS
+    }
+
+    Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort)
             throws IOException;
 
     Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException;

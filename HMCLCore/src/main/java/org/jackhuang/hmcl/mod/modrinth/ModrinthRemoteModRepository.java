@@ -52,11 +52,29 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     private ModrinthRemoteModRepository() {
     }
 
-    public List<ModResult> searchPaginated(String gameVersion, int pageOffset, int pageSize, String searchFilter) throws IOException {
+    private static String convertSortType(SortType sortType) {
+        switch (sortType) {
+            case DATE_CREATED:
+                return "newest";
+            case POPULARITY:
+            case NAME:
+            case AUTHOR:
+                return "relevance";
+            case LAST_UPDATED:
+                return "updated";
+            case TOTAL_DOWNLOADS:
+                return "downloads";
+            default:
+                throw new IllegalArgumentException("Unsupported sort type " + sortType);
+        }
+    }
+
+    public List<ModResult> searchPaginated(String gameVersion, int pageOffset, int pageSize, String searchFilter, SortType sort) throws IOException {
         Map<String, String> query = mapOf(
                 pair("query", searchFilter),
                 pair("offset", Integer.toString(pageOffset)),
-                pair("limit", Integer.toString(pageSize))
+                pair("limit", Integer.toString(pageSize)),
+                pair("index", convertSortType(sort))
         );
         if (StringUtils.isNotBlank(gameVersion)) {
             query.put("version", "versions=" + gameVersion);
@@ -68,8 +86,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, int sort) throws IOException {
-        return searchPaginated(gameVersion, pageOffset, pageSize, searchFilter).stream()
+    public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort) throws IOException {
+        return searchPaginated(gameVersion, pageOffset, pageSize, searchFilter, sort).stream()
                 .map(ModResult::toMod);
     }
 
