@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import javafx.application.Platform;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
@@ -175,7 +176,7 @@ public final class MultiplayerManager {
                 session.setClient(client);
 
                 TimerTask task = Lang.setTimeout(() -> {
-                    future.completeExceptionally(new JoinRequestTimeoutException());
+                    Platform.runLater(() -> future.completeExceptionally(new JoinRequestTimeoutException()));
                     session.stop();
                 }, 30 * 1000);
 
@@ -186,24 +187,30 @@ public final class MultiplayerManager {
                         session.addRelatedThread(Lang.thread(new LocalServerBroadcaster(port, session), "LocalServerBroadcaster", true));
                         session.setName(connectedEvent.getSessionName());
                         client.setGamePort(port);
-                        session.onExit.unregister(onExit);
-                        future.complete(session);
+                        Platform.runLater(() -> {
+                            session.onExit.unregister(onExit);
+                            future.complete(session);
+                        });
                     } catch (IOException e) {
-                        future.completeExceptionally(e);
                         session.stop();
+                        Platform.runLater(() -> future.completeExceptionally(e));
                     }
                     task.cancel();
                 });
                 client.onKicked().register(kickedEvent -> {
-                    future.completeExceptionally(new KickedException(kickedEvent.getReason()));
                     session.stop();
                     task.cancel();
+                    Platform.runLater(() -> {
+                        future.completeExceptionally(new KickedException(kickedEvent.getReason()));
+                    });
                 });
                 client.onDisconnected().register(disconnectedEvent -> {
-                    if (!client.isConnected()) {
-                        // We fail to establish connection with server
-                        future.completeExceptionally(new ConnectionErrorException());
-                    }
+                    Platform.runLater(() -> {
+                        if (!client.isConnected()) {
+                            // We fail to establish connection with server
+                            future.completeExceptionally(new ConnectionErrorException());
+                        }
+                    });
                 });
                 client.onHandshake().register(handshakeEvent -> {
                     if (handler != null) {
@@ -253,9 +260,11 @@ public final class MultiplayerManager {
             }, 15 * 1000);
 
             session.onPeerConnected.register(event -> {
-                session.onExit.unregister(onExit);
-                future.complete(session);
                 peerConnectionTimeoutTask.cancel();
+                Platform.runLater(() -> {
+                    session.onExit.unregister(onExit);
+                    future.complete(session);
+                });
             });
 
             return future;
@@ -353,11 +362,11 @@ public final class MultiplayerManager {
             writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
         }
 
-        public MultiplayerClient getClient() {
+        public synchronized MultiplayerClient getClient() {
             return client;
         }
 
-        public CatoSession setClient(MultiplayerClient client) {
+        public synchronized CatoSession setClient(MultiplayerClient client) {
             this.client = client;
             return this;
         }
@@ -412,11 +421,11 @@ public final class MultiplayerManager {
             return id != null;
         }
 
-        public String getName() {
+        public synchronized String getName() {
             return name;
         }
 
-        public void setName(String name) {
+        public synchronized void setName(String name) {
             this.name = name;
         }
 

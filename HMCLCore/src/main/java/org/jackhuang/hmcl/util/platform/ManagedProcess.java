@@ -39,7 +39,7 @@ public class ManagedProcess {
     /**
      * Constructor.
      *
-     * @param process the raw system process that this instance manages.
+     * @param process  the raw system process that this instance manages.
      * @param commands the command line of {@code process}.
      */
     public ManagedProcess(Process process, List<String> commands) {
@@ -51,8 +51,8 @@ public class ManagedProcess {
     /**
      * Constructor.
      *
-     * @param process the raw system process that this instance manages.
-     * @param commands the command line of {@code process}.
+     * @param process   the raw system process that this instance manages.
+     * @param commands  the command line of {@code process}.
      * @param classpath the classpath of java process
      */
     public ManagedProcess(Process process, List<String> commands, String classpath) {
@@ -111,11 +111,11 @@ public class ManagedProcess {
 
     /**
      * Add related thread.
-     *
+     * <p>
      * If a thread is monitoring this raw process,
      * you are required to add the instance by this method.
      */
-    public void addRelatedThread(Thread thread) {
+    public synchronized void addRelatedThread(Thread thread) {
         relatedThreads.add(thread);
     }
 
@@ -146,7 +146,7 @@ public class ManagedProcess {
         destroyRelatedThreads();
     }
 
-    public void destroyRelatedThreads() {
+    public synchronized void destroyRelatedThreads() {
         relatedThreads.forEach(Thread::interrupt);
     }
 
