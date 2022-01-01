@@ -118,7 +118,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
         if (!searchInitialized) {
             searchInitialized = true;
-            search("", null, 0, "", 0);
+            search("", null, 0, "", RemoteModRepository.SortType.DATE_CREATED);
         }
 
         if (versionSelection) {

@@ -48,7 +48,7 @@ public class ModDownloadListPage extends DownloadListPage {
     private class Repository implements RemoteModRepository {
 
         @Override
-        public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, int sort) throws IOException {
+        public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort) throws IOException {
             String newSearchFilter;
             if (StringUtils.CHINESE_PATTERN.matcher(searchFilter).find()) {
                 List<ModTranslations.Mod> mods = ModTranslations.searchMod(searchFilter);

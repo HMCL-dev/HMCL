@@ -23,11 +23,8 @@ import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.util.Lang;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.Lang.wrap;
 
@@ -55,16 +52,4 @@ public class FabricAPIVersionList extends VersionList<FabricAPIRemoteVersion> {
             }
         }));
     }
-
-    @Override
-    protected Collection<FabricAPIRemoteVersion> getVersionsImpl(String gameVersion) {
-        Matcher matcher = GAME_VERSION_PATTERN.matcher(gameVersion);
-        if (matcher.find()) {
-            return super.getVersionsImpl(String.format("%s.%s", matcher.group("major"), matcher.group("minor")));
-        }
-        return super.getVersionsImpl(gameVersion);
-    }
-
-    private static final Pattern FABRIC_VERSION_PATTERN = Pattern.compile("^(?<version>[0-9.]+)\\+(build\\.(?<build>\\d+)-)?(?<mcversion>[0-9.]+)$");
-    private static final Pattern GAME_VERSION_PATTERN = Pattern.compile("^(?<major>[0-9]+)\\.(?<minor>[0-9]+)");
 }
