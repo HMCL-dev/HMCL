@@ -136,10 +136,6 @@ public class DefaultGameRepository implements GameRepository {
     @Override
     public File getVersionJar(Version version) {
         Version v = version.resolve(this);
-        File currentVersionJar = new File(getVersionRoot(v.getId()), v.getId() + ".jar");
-        if (currentVersionJar.exists()) {
-            return currentVersionJar;
-        }
         String id = Optional.ofNullable(v.getJar()).orElse(v.getId());
         return new File(getVersionRoot(id), id + ".jar");
     }
