@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
@@ -77,6 +76,6 @@ public final class LogExporter {
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
-        }, Schedulers.io());
+        });
     }
 }
