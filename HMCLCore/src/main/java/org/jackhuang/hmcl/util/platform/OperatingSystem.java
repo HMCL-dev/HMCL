@@ -258,8 +258,11 @@ public enum OperatingSystem {
 
     public static void forceGC() {
         System.gc();
-        System.runFinalization();
-        System.gc();
+        try {
+            System.runFinalization();
+            System.gc();
+        } catch (NoSuchMethodError ignored) {
+        }
     }
 
     public static Path getWorkingDirectory(String folder) {
