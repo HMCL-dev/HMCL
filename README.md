@@ -6,7 +6,7 @@ Join chat! [Discord](https://discord.gg/jVvC7HfM6U) [KaiHeiLa](https://kaihei.co
 
 ## Introduction
 
-HMCL is a Minecraft launcher which supports Mod management, game customizing, auto installing(Forge, LiteLoader and OptiFine), modpack creating, UI customizing and so on.
+HMCL is a Minecraft launcher which supports Mod management, game customizing, auto installing(Forge, Fabric, LiteLoader and OptiFine), modpack creating, UI customizing and so on.
 
 No plugin API is provided.
 
@@ -16,6 +16,12 @@ Download the latest version [from the official website](https://hmcl.huangyuhui.
 Note: The recent versions in Github release is the beta version, which contains extra testing functions compared to the release versions on the official website. However, they may be unstable and you're more likely to encounter bugs or unexpected problems.
 
 If not necessary, it is recommended to download the ones from the official website.
+
+## Sponsor
+
+Your sponsorship will help HMCL get better development, support stable and high-speed game installation and file download services.
+
+Visit the [Afdian](https://afdian.net/@huanghongxun) homepage for details
 
 ## License
 The software is distributed under [GPL v3](https://www.gnu.org/licenses/gpl-3.0.html) with additional terms.
