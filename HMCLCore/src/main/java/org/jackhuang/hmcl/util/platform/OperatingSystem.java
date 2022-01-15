@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -112,15 +113,26 @@ public enum OperatingSystem {
     private static final Pattern MEMINFO_PATTERN = Pattern.compile("^(?<key>.*?):\\s+(?<value>\\d+) kB?$");
 
     static {
-        String nativeEncoding = System.getProperty("native.encoding", System.getProperty("sun.jnu.encoding"));
+        String nativeEncoding = System.getProperty("native.encoding");
+        String hmclNativeEncoding = System.getProperty("hmcl.native.encoding");
         Charset nativeCharset = Charset.defaultCharset();
 
-        if (nativeEncoding != null) {
-            try {
-                nativeCharset = Charset.forName(nativeEncoding);
-            } catch (UnsupportedCharsetException e) {
-                e.printStackTrace();
+        try {
+            if (hmclNativeEncoding != null) {
+                nativeCharset = Charset.forName(hmclNativeEncoding);
+            } else {
+                if (nativeEncoding != null && !nativeEncoding.equalsIgnoreCase(nativeCharset.name())) {
+                    nativeCharset = Charset.forName(nativeEncoding);
+                }
+
+                if (nativeCharset == StandardCharsets.UTF_8 || nativeCharset == StandardCharsets.US_ASCII) {
+                    nativeCharset = StandardCharsets.UTF_8;
+                } else if ("GBK".equalsIgnoreCase(nativeCharset.name()) || "GB2312".equalsIgnoreCase(nativeCharset.name())) {
+                    nativeCharset = Charset.forName("GB18030");
+                }
             }
+        } catch (UnsupportedCharsetException e) {
+            e.printStackTrace();
         }
         NATIVE_CHARSET = nativeCharset;
 
@@ -168,7 +180,7 @@ public enum OperatingSystem {
                 .map(bytes -> (int) (bytes / 1024 / 1024))
                 .orElse(1024);
 
-        SUGGESTED_MEMORY = (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);
+        SUGGESTED_MEMORY = TOTAL_MEMORY >= 32768 ? 8192 : (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);
 
         // setup the invalid names
         if (CURRENT_OS == WINDOWS) {
@@ -246,8 +258,11 @@ public enum OperatingSystem {
 
     public static void forceGC() {
         System.gc();
-        System.runFinalization();
-        System.gc();
+        try {
+            System.runFinalization();
+            System.gc();
+        } catch (NoSuchMethodError ignored) {
+        }
     }
 
     public static Path getWorkingDirectory(String folder) {

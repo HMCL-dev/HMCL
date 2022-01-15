@@ -19,17 +19,12 @@ package org.jackhuang.hmcl.download.fabric;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.util.Lang;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.Lang.wrap;
 
@@ -49,38 +44,12 @@ public class FabricAPIVersionList extends VersionList<FabricAPIRemoteVersion> {
     @Override
     public CompletableFuture<?> refreshAsync() {
         return CompletableFuture.runAsync(wrap(() -> {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse("https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml");
-            Element r = doc.getDocumentElement();
-            NodeList versionElements = r.getElementsByTagName("version");
-            for (int i = 0; i < versionElements.getLength(); i++) {
-                String versionName = versionElements.item(i).getTextContent();
-
-                Matcher matcher = FABRIC_VERSION_PATTERN.matcher(versionName);
-                if (matcher.find()) {
-                    String fabricVersion = matcher.group("version");
-                    if (matcher.group("build") != null) {
-                        fabricVersion += "." + matcher.group("build");
-                    }
-                    String gameVersion = matcher.group("mcversion");
-                    versions.put(gameVersion, new FabricAPIRemoteVersion(gameVersion, fabricVersion, versionName,
-                            Collections.singletonList(String.format(
-                                    "https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/%1$s/fabric-api-%1$s.jar", versionName))));
+            for (RemoteMod.Version modVersion : Lang.toIterable(ModrinthRemoteModRepository.INSTANCE.getRemoteVersionsById("P7dR8mSH"))) {
+                for (String gameVersion : modVersion.getGameVersions()) {
+                    versions.put(gameVersion, new FabricAPIRemoteVersion(gameVersion, modVersion.getVersion(), modVersion.getName(), modVersion.getDatePublished(), modVersion,
+                            Collections.singletonList(modVersion.getFile().getUrl())));
                 }
             }
         }));
     }
-
-    @Override
-    protected Collection<FabricAPIRemoteVersion> getVersionsImpl(String gameVersion) {
-        Matcher matcher = GAME_VERSION_PATTERN.matcher(gameVersion);
-        if (matcher.find()) {
-            return super.getVersionsImpl(String.format("%s.%s", matcher.group("major"), matcher.group("minor")));
-        }
-        return super.getVersionsImpl(gameVersion);
-    }
-
-    private static final Pattern FABRIC_VERSION_PATTERN = Pattern.compile("^(?<version>[0-9.]+)\\+(build\\.(?<build>\\d+)-)?(?<mcversion>[0-9.]+)$");
-    private static final Pattern GAME_VERSION_PATTERN = Pattern.compile("^(?<major>[0-9]+)\\.(?<minor>[0-9]+)");
 }

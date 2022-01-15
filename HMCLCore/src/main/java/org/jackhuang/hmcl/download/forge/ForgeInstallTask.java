@@ -102,7 +102,10 @@ public final class ForgeInstallTask extends Task<Version> {
         String originalMainClass = version.resolve(dependencyManager.getGameRepository()).getMainClass();
         if (VersionNumber.VERSION_COMPARATOR.compare("1.13", remote.getGameVersion()) <= 0) {
             // Forge 1.13 is not compatible with fabric.
-            if (!LibraryAnalyzer.VANILLA_MAIN.equals(originalMainClass) && !LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(originalMainClass) && !LibraryAnalyzer.LAUNCH_WRAPPER_MAIN.equals(originalMainClass))
+            if (!LibraryAnalyzer.VANILLA_MAIN.equals(originalMainClass)
+                    && !LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(originalMainClass)
+                    && !LibraryAnalyzer.LAUNCH_WRAPPER_MAIN.equals(originalMainClass)
+                    && !LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(originalMainClass))
                 throw new UnsupportedInstallationException(UNSUPPORTED_LAUNCH_WRAPPER);
         } else {
             // Forge 1.12 and older versions is compatible with vanilla and launchwrapper.

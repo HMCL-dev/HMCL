@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.io;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -27,7 +28,7 @@ import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -36,7 +37,6 @@ import java.util.function.Predicate;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- *
  * @author huang
  */
 public final class FileUtils {
@@ -393,7 +393,7 @@ public final class FileUtils {
     }
 
     public static List<File> listFilesByExtension(File file, String extension) {
-        List<File> result = new LinkedList<>();
+        List<File> result = new ArrayList<>();
         File[] files = file.listFiles();
         if (files != null)
             for (File it : files)
@@ -424,5 +424,25 @@ public final class FileUtils {
         } catch (InvalidPathException e) {
             return Optional.empty();
         }
+    }
+
+    public static Path tmpSaveFile(Path file) {
+        return file.toAbsolutePath().resolveSibling("." + file.getFileName().toString() + ".tmp");
+    }
+
+    public static void saveSafely(Path file, String content) throws IOException {
+        Path tmpFile = tmpSaveFile(file);
+        try (BufferedWriter writer = Files.newBufferedWriter(tmpFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
+            writer.write(content);
+        }
+
+        try {
+            if (Files.exists(file) && Files.getAttribute(file, "dos:hidden") == Boolean.TRUE) {
+                Files.setAttribute(tmpFile, "dos:hidden", true);
+            }
+        } catch (Throwable ignored) {
+        }
+
+        Files.move(tmpFile, file, StandardCopyOption.REPLACE_EXISTING);
     }
 }

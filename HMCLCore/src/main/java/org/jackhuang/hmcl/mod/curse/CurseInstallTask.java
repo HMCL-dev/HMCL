@@ -33,8 +33,8 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -52,8 +52,8 @@ public final class CurseInstallTask extends Task<Void> {
     private final String name;
     private final File run;
     private final ModpackConfiguration<CurseManifest> config;
-    private final List<Task<?>> dependents = new LinkedList<>();
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new ArrayList<>(4);
+    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     /**
      * Constructor.

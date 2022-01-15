@@ -19,9 +19,7 @@ package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -37,13 +35,11 @@ public final class StringUtils {
     }
 
     public static String getStackTrace(Throwable throwable) {
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        try {
-            throwable.printStackTrace(new PrintStream(stream, false, "UTF-8"));
-            return stream.toString("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new InternalError(e);
+        StringWriter stringWriter = new StringWriter(512);
+        try (PrintWriter printWriter = new PrintWriter(stringWriter)) {
+            throwable.printStackTrace(printWriter);
         }
+        return stringWriter.toString();
     }
 
     public static String getStackTrace(StackTraceElement[] elements) {
@@ -203,13 +199,13 @@ public final class StringUtils {
 
     public static List<String> tokenize(String str) {
         if (str == null)
-            return new LinkedList<>();
+            return new ArrayList<>();
         else
             return tokenize(str, " \t\n\r\f");
     }
 
     public static List<String> tokenize(String str, String delim) {
-        LinkedList<String> result = new LinkedList<>();
+        ArrayList<String> result = new ArrayList<>();
         StringTokenizer tokenizer = new StringTokenizer(str, delim);
         while (tokenizer.hasMoreTokens()) {
             delim = tokenizer.nextToken();

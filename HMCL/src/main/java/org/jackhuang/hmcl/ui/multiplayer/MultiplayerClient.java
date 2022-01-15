@@ -54,11 +54,11 @@ public class MultiplayerClient extends Thread {
         setDaemon(true);
     }
 
-    public void setGamePort(int gamePort) {
+    public synchronized void setGamePort(int gamePort) {
         this.gamePort = gamePort;
     }
 
-    public int getGamePort() {
+    public synchronized int getGamePort() {
         return gamePort;
     }
 

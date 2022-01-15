@@ -1,0 +1,21 @@
+name: Sync to Gitee
+
+on:
+  push
+
+jobs:
+  run:
+    if: ${{ github.repository_owner == 'huanghongxun' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mirror Github to Gitee
+        uses: Yikun/hub-mirror-action@v1.1
+        with:
+          src: github/huanghongxun
+          dst: gitee/huanghongxun
+          static_list: 'HMCL'
+          force_update: true
+          debug: true
+          dst_key: ${{ secrets.GITEE_SYNC_BOT_PRIVATE_KEY }}
+          dst_token: ${{ secrets.GITEE_SYNC_BOT_TOKEN }}
+          cache_path: /github/workspace/hub-mirror-cache

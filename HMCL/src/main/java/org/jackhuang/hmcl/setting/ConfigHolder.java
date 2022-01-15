@@ -30,7 +30,6 @@ import java.nio.file.*;
 import java.util.Map;
 import java.util.logging.Level;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class ConfigHolder {
@@ -175,7 +174,7 @@ public final class ConfigHolder {
     private static void writeToConfig(String content) throws IOException {
         LOG.info("Saving config");
         synchronized (configLocation) {
-            Files.write(configLocation, content.getBytes(UTF_8));
+            FileUtils.saveSafely(configLocation, content);
         }
     }
 
@@ -219,7 +218,7 @@ public final class ConfigHolder {
     private static void writeToGlobalConfig(String content) throws IOException {
         LOG.info("Saving global config");
         synchronized (GLOBAL_CONFIG_PATH) {
-            Files.write(GLOBAL_CONFIG_PATH, content.getBytes(UTF_8));
+            FileUtils.saveSafely(GLOBAL_CONFIG_PATH, content);
         }
     }
 

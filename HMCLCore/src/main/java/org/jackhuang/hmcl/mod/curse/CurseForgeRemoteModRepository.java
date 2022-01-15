@@ -63,10 +63,10 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     @Override
-    public Stream<RemoteMod> search(String gameVersion, RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, int sort) throws IOException {
+    public Stream<RemoteMod> search(String gameVersion, RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort) throws IOException {
         int categoryId = 0;
         if (category != null) categoryId = ((Category) category.getSelf()).getId();
-        return searchPaginated(gameVersion, categoryId, pageOffset, pageSize, searchFilter, sort).stream()
+        return searchPaginated(gameVersion, categoryId, pageOffset, pageSize, searchFilter, sort.ordinal()).stream()
                 .map(CurseAddon::toMod);
     }
 

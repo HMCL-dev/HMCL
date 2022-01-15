@@ -32,7 +32,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ServerModpackLocalInstallTask extends Task<Void> {
@@ -42,8 +42,8 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
     private final ServerModpackManifest manifest;
     private final String name;
     private final DefaultGameRepository repository;
-    private final List<Task<?>> dependencies = new LinkedList<>();
-    private final List<Task<?>> dependents = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>();
+    private final List<Task<?>> dependents = new ArrayList<>(4);
 
     public ServerModpackLocalInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, ServerModpackManifest manifest, String name) {
         this.zipFile = zipFile;

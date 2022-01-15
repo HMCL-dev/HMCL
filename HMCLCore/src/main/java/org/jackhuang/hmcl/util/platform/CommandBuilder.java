@@ -35,7 +35,7 @@ public final class CommandBuilder {
     private static final Pattern UNSTABLE_BOOLEAN_OPTION_PATTERN = Pattern.compile("-XX:(?<value>[+\\-])(?<key>[a-zA-Z0-9]+)");
 
     private final OperatingSystem os;
-    private final List<Item> raw = new LinkedList<>();
+    private final List<Item> raw = new ArrayList<>();
 
     public CommandBuilder() {
         this(OperatingSystem.CURRENT_OS);
@@ -83,33 +83,33 @@ public final class CommandBuilder {
         return this;
     }
 
-    public CommandBuilder addDefault(String opt) {
+    public String addDefault(String opt) {
         for (Item item : raw) {
             if (item.arg.equals(opt)) {
-                return this;
+                return item.arg;
             }
         }
         raw.add(new Item(opt, true));
-        return this;
+        return null;
     }
 
-    public CommandBuilder addDefault(String opt, String value) {
+    public String addDefault(String opt, String value) {
         for (Item item : raw) {
             if (item.arg.startsWith(opt)) {
                 LOG.info("Default option '" + opt + value + "' is suppressed by '" + item.arg + "'");
-                return this;
+                return item.arg;
             }
         }
         raw.add(new Item(opt + value, true));
-        return this;
+        return null;
     }
 
-    public CommandBuilder addUnstableDefault(String opt, boolean value) {
+    public String addUnstableDefault(String opt, boolean value) {
         for (Item item : raw) {
             final Matcher matcher = UNSTABLE_BOOLEAN_OPTION_PATTERN.matcher(item.arg);
             if (matcher.matches()) {
                 if (matcher.group("key").equals(opt)) {
-                    return this;
+                    return item.arg;
                 }
             }
         }
@@ -119,21 +119,21 @@ public final class CommandBuilder {
         } else {
             raw.add(new Item("-XX:-" + opt, true));
         }
-        return this;
+        return null;
     }
 
-    public CommandBuilder addUnstableDefault(String opt, String value) {
+    public String addUnstableDefault(String opt, String value) {
         for (Item item : raw) {
             final Matcher matcher = UNSTABLE_OPTION_PATTERN.matcher(item.arg);
             if (matcher.matches()) {
                 if (matcher.group("key").equals(opt)) {
-                    return this;
+                    return item.arg;
                 }
             }
         }
 
         raw.add(new Item("-XX:" + opt + "=" + value, true));
-        return this;
+        return null;
     }
 
     public boolean removeIf(Predicate<String> pred) {

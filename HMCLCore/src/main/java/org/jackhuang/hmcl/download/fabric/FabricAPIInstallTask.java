@@ -20,14 +20,12 @@ package org.jackhuang.hmcl.download.fabric;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -37,32 +35,15 @@ import java.util.List;
  */
 public final class FabricAPIInstallTask extends Task<Version> {
 
-    private GetTask dependent;
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
     private final FabricAPIRemoteVersion remote;
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     public FabricAPIInstallTask(DefaultDependencyManager dependencyManager, Version version, FabricAPIRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.remote = remoteVersion;
-
-    }
-
-    @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    @Override
-    public void preExecute() throws Exception {
-        this.dependent = new GetTask(new URL(remote.getUrls().get(0) + ".sha1"));
-    }
-
-    @Override
-    public Collection<? extends Task<?>> getDependents() {
-        return Collections.singleton(dependent);
     }
 
     @Override
@@ -78,9 +59,9 @@ public final class FabricAPIInstallTask extends Task<Version> {
     @Override
     public void execute() throws IOException {
         dependencies.add(new FileDownloadTask(
-                new URL(remote.getUrls().get(0)),
-                dependencyManager.getGameRepository().getRunDirectory(version.getId()).toPath().resolve("mods").resolve("fabric-api-" + remote.getFullVersion() + ".jar").toFile(),
-                new FileDownloadTask.IntegrityCheck("SHA-1", dependent.getResult().trim()))
+                new URL(remote.getVersion().getFile().getUrl()),
+                dependencyManager.getGameRepository().getRunDirectory(version.getId()).toPath().resolve("mods").resolve("fabric-api-" + remote.getVersion().getVersion() + ".jar").toFile(),
+                remote.getVersion().getFile().getIntegrityCheck())
         );
     }
 }

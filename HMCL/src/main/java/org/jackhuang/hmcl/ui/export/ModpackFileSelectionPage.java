@@ -35,7 +35,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -147,7 +147,7 @@ public final class ModpackFileSelectionPage extends StackPane implements WizardP
 
     @FXML
     private void onNext() {
-        LinkedList<String> list = new LinkedList<>();
+        ArrayList<String> list = new ArrayList<>();
         getFilesNeeded(rootNode, "minecraft", list);
         controller.getSettings().put(MODPACK_FILE_SELECTION, list);
         controller.onFinish();

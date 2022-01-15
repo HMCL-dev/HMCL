@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -41,7 +41,7 @@ public class ForgeOldInstallTask extends Task<Version> {
     private final Version version;
     private final Path installer;
     private final String selfVersion;
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     ForgeOldInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;

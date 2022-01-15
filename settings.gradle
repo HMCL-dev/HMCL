@@ -1,4 +1,0 @@
-rootProject.name = 'HMCL3'
-include ':HMCL'
-include ':HMCLCore'
-include ':HMCLTransformerDiscoveryService'

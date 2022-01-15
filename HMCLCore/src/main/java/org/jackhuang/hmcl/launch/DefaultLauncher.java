@@ -19,24 +19,20 @@ package org.jackhuang.hmcl.launch;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.Argument;
-import org.jackhuang.hmcl.game.Arguments;
-import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.LaunchOptions;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.NativesDirectoryType;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Bits;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -48,8 +44,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
@@ -75,14 +73,14 @@ public class DefaultLauncher extends Launcher {
         switch (options.getProcessPriority()) {
             case HIGH:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    res.add("cmd", "/C", "start", "unused title", "/B", "/high");
+                    // res.add("cmd", "/C", "start", "unused title", "/B", "/high");
                 } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "-5");
                 }
                 break;
             case ABOVE_NORMAL:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    res.add("cmd", "/C", "start", "unused title", "/B", "/abovenormal");
+                    // res.add("cmd", "/C", "start", "unused title", "/B", "/abovenormal");
                 } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "-1");
                 }
@@ -92,14 +90,14 @@ public class DefaultLauncher extends Launcher {
                 break;
             case BELOW_NORMAL:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    res.add("cmd", "/C", "start", "unused title", "/B", "/belownormal");
+                    // res.add("cmd", "/C", "start", "unused title", "/B", "/belownormal");
                 } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "1");
                 }
                 break;
             case LOW:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    res.add("cmd", "/C", "start", "unused title", "/B", "/low");
+                    // res.add("cmd", "/C", "start", "unused title", "/B", "/low");
                 } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "5");
                 }
@@ -113,6 +111,19 @@ public class DefaultLauncher extends Launcher {
         res.add(options.getJava().getBinary().toString());
 
         res.addAllWithoutParsing(options.getJavaArguments());
+
+        Charset encoding = OperatingSystem.NATIVE_CHARSET;
+
+        // After Java 17, file.encoding does not affect console encoding
+        if (options.getJava().getParsedVersion() <= JavaVersion.JAVA_17) {
+            try {
+                String fileEncoding = res.addDefault("-Dfile.encoding=", encoding.name());
+                if (fileEncoding != null)
+                    encoding = Charset.forName(fileEncoding.substring("-Dfile.encoding=".length()));
+            } catch (Throwable ex) {
+                LOG.log(Level.WARNING, "Bad file encoding", ex);
+            }
+        }
 
         // JVM Args
         if (!options.isNoGeneratedJVMArgs()) {
@@ -180,6 +191,16 @@ public class DefaultLauncher extends Launcher {
             res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
         }
 
+        // Fix RCE vulnerability of log4j2
+        res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
+        res.addDefault("-Dcom.sun.jndi.rmi.object.trustURLCodebase=", "false");
+        res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
+
+        String formatMsgNoLookups = res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
+        if (!"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups) && isUsingLog4j()) {
+            res.addDefault("-Dlog4j.configurationFile=", getLog4jConfigurationFile().getAbsolutePath());
+        }
+
         Proxy proxy = options.getProxy();
         if (proxy != null && StringUtils.isBlank(options.getProxyUser()) && StringUtils.isBlank(options.getProxyPass())) {
             InetSocketAddress address = (InetSocketAddress) options.getProxy().address();
@@ -224,20 +245,25 @@ public class DefaultLauncher extends Launcher {
         configuration.put("${natives_directory}", nativeFolderPath);
 
         res.addAll(Arguments.parseArguments(version.getArguments().map(Arguments::getJvm).orElseGet(this::getDefaultJVMArguments), configuration));
-        if (authInfo.getArguments() != null && authInfo.getArguments().getJvm() != null && !authInfo.getArguments().getJvm().isEmpty())
-            res.addAll(Arguments.parseArguments(authInfo.getArguments().getJvm(), configuration));
+        Arguments argumentsFromAuthInfo = authInfo.getLaunchArguments(options);
+        if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.getJvm() != null && !argumentsFromAuthInfo.getJvm().isEmpty())
+            res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getJvm(), configuration));
+
+        for (String javaAgent : options.getJavaAgents()) {
+            res.add("-javaagent:" + javaAgent);
+        }
 
         res.add(version.getMainClass());
 
-        res.addAll(Arguments.parseStringArguments(version.getMinecraftArguments().map(StringUtils::tokenize).orElseGet(LinkedList::new), configuration));
+        res.addAll(Arguments.parseStringArguments(version.getMinecraftArguments().map(StringUtils::tokenize).orElseGet(ArrayList::new), configuration));
 
         Map<String, Boolean> features = getFeatures();
         version.getArguments().map(Arguments::getGame).ifPresent(arguments -> res.addAll(Arguments.parseArguments(arguments, configuration, features)));
         if (version.getMinecraftArguments().isPresent()) {
             res.addAll(Arguments.parseArguments(this.getDefaultGameArguments(), configuration, features));
         }
-        if (authInfo.getArguments() != null && authInfo.getArguments().getGame() != null && !authInfo.getArguments().getGame().isEmpty())
-            res.addAll(Arguments.parseArguments(authInfo.getArguments().getGame(), configuration, features));
+        if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.getGame() != null && !argumentsFromAuthInfo.getGame().isEmpty())
+            res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getGame(), configuration, features));
 
         if (StringUtils.isNotBlank(options.getServerIp())) {
             String[] args = options.getServerIp().split(":");
@@ -269,7 +295,7 @@ public class DefaultLauncher extends Launcher {
         res.addAllWithoutParsing(Arguments.parseStringArguments(options.getGameArguments(), configuration));
 
         res.removeIf(it -> getForbiddens().containsKey(it) && getForbiddens().get(it).get());
-        return new Command(res, tempNativeFolder);
+        return new Command(res, tempNativeFolder, encoding);
     }
 
     public Map<String, Boolean> getFeatures() {
@@ -333,6 +359,28 @@ public class DefaultLauncher extends Launcher {
         }
     }
 
+    private boolean isUsingLog4j() {
+        return VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("1.7"), "1.7") >= 0;
+    }
+
+    public File getLog4jConfigurationFile() {
+        return new File(repository.getVersionRoot(version.getId()), "log4j2.xml");
+    }
+
+    public void extractLog4jConfigurationFile() throws IOException {
+        File targetFile = getLog4jConfigurationFile();
+        InputStream source;
+        if (VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("0.0"), "1.12") < 0) {
+            source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.7.xml");
+        } else {
+            source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.12.xml");
+        }
+
+        try (InputStream input = source; OutputStream output = new FileOutputStream(targetFile)) {
+            IOUtils.copyTo(input, output);
+        }
+    }
+
     protected Map<String, String> getConfigurations() {
         return mapOf(
                 // defined by Minecraft official launcher
@@ -377,15 +425,7 @@ public class DefaultLauncher extends Launcher {
         final Command command = generateCommandLine(nativeFolder);
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
-        List<String> rawCommandLine = command.commandLine.asMutableList();
-
-        // Pass classpath using the environment variable, to reduce the command length
-        String classpath = null;
-        final int cpIndex = rawCommandLine.indexOf("-cp");
-        if (cpIndex >= 0 && cpIndex < rawCommandLine.size() - 1) {
-            rawCommandLine.remove(cpIndex); // remove "-cp"
-            classpath = rawCommandLine.remove(cpIndex);
-        }
+        List<String> rawCommandLine = command.commandLine.asList();
 
         if (command.tempNativeFolder != null) {
             Files.deleteIfExists(command.tempNativeFolder);
@@ -399,6 +439,9 @@ public class DefaultLauncher extends Launcher {
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
             decompressNatives(nativeFolder);
         }
+
+        if (isUsingLog4j())
+            extractLog4jConfigurationFile();
 
         File runDirectory = repository.getRunDirectory(version.getId());
 
@@ -416,21 +459,16 @@ public class DefaultLauncher extends Launcher {
             }
             String appdata = options.getGameDir().getAbsoluteFile().getParent();
             if (appdata != null) builder.environment().put("APPDATA", appdata);
-            if (classpath != null) {
-                builder.environment().put("CLASSPATH", classpath);
-                // Fix #1153: On Windows, the 'classpath' environment variable in the context overrides the 'CLASSPATH'
-                // Environment variables on Windows are not case-sensitive; The lowercase 'classpath' overwrites any other case.
-                builder.environment().put("classpath", classpath);
-            }
+
             builder.environment().putAll(getEnvVars());
             process = builder.start();
         } catch (IOException e) {
             throw new ProcessCreationException(e);
         }
 
-        ManagedProcess p = new ManagedProcess(process, rawCommandLine, classpath);
+        ManagedProcess p = new ManagedProcess(process, rawCommandLine);
         if (listener != null)
-            startMonitors(p, listener, daemon);
+            startMonitors(p, listener, command.encoding, daemon);
         return p;
     }
 
@@ -473,6 +511,9 @@ public class DefaultLauncher extends Launcher {
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
             decompressNatives(nativeFolder);
         }
+
+        if (isUsingLog4j())
+            extractLog4jConfigurationFile();
 
         String scriptExtension = FileUtils.getExtension(scriptFile);
         boolean usePowerShell = "ps1".equals(scriptExtension);
@@ -591,17 +632,17 @@ public class DefaultLauncher extends Launcher {
             throw new ExecutionPolicyLimitException();
     }
 
-    private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, boolean isDaemon) {
+    private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, Charset encoding, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
             processListener.onLog(it, Optional.ofNullable(Log4jLevel.guessLevel(it)).orElse(Log4jLevel.INFO));
             managedProcess.addLine(it);
-        }, OperatingSystem.NATIVE_CHARSET), "stdout-pump", isDaemon);
+        }, encoding), "stdout-pump", isDaemon);
         managedProcess.addRelatedThread(stdout);
         Thread stderr = Lang.thread(new StreamPump(managedProcess.getProcess().getErrorStream(), it -> {
             processListener.onLog(it, Log4jLevel.ERROR);
             managedProcess.addLine(it);
-        }, OperatingSystem.NATIVE_CHARSET), "stderr-pump", isDaemon);
+        }, encoding), "stderr-pump", isDaemon);
         managedProcess.addRelatedThread(stderr);
         managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), processListener::onExit), "exit-waiter", isDaemon));
     }
@@ -609,10 +650,12 @@ public class DefaultLauncher extends Launcher {
     private static final class Command {
         final CommandBuilder commandLine;
         final Path tempNativeFolder;
+        final Charset encoding;
 
-        Command(CommandBuilder commandBuilder, Path tempNativeFolder) {
+        Command(CommandBuilder commandBuilder, Path tempNativeFolder, Charset encoding) {
             this.commandLine = commandBuilder;
             this.tempNativeFolder = tempNativeFolder;
+            this.encoding = encoding;
         }
     }
 }

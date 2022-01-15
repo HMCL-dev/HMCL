@@ -26,8 +26,8 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -204,7 +204,7 @@ public final class Profiles {
         return selectedVersion.get();
     }
 
-    private static final List<Consumer<Profile>> versionsListeners = new LinkedList<>();
+    private static final List<Consumer<Profile>> versionsListeners = new ArrayList<>(4);
 
     public static void registerVersionsListener(Consumer<Profile> listener) {
         Profile profile = getSelectedProfile();

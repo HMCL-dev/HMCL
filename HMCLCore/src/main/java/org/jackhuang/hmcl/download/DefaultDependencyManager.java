@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -78,7 +79,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         Version version = original.resolve(repository);
         return Task.allOf(
                 Task.composeAsync(() -> {
-                    if (!repository.getVersionJar(version).exists())
+                    File versionJar = repository.getVersionJar(version);
+                    if (!versionJar.exists() || versionJar.length() == 0)
                         return new GameDownloadTask(this, null, version);
                     else
                         return null;

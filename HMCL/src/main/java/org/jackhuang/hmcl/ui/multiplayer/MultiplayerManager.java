@@ -19,15 +19,18 @@ package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import javafx.application.Platform;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.launch.StreamPump;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
@@ -50,65 +53,59 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.wrap;
 import static org.jackhuang.hmcl.util.Logging.LOG;
-import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
  * Cato Management.
  */
 public final class MultiplayerManager {
-    static final String CATO_VERSION = "1.1.1";
-    //    private static final String CATO_DOWNLOAD_URL = "https://files.huangyuhui.net/maven/cato/cato/" + MultiplayerManager.CATO_VERSION;
-    private static final String CATO_DOWNLOAD_URL = "https://codechina.csdn.net/huanghongxun1/ioi_bin/-/raw/3f36a567d9381e5fa404b96bcecd6d6a555f235c/client/";
+    static final String CATO_VERSION = "1.2.0-202112171527";
+    private static final String CATO_DOWNLOAD_URL = "https://gitcode.net/huanghongxun1/ioi_bin/-/raw/3.5.3/client/";
+    private static final String CATO_HASH_URL = CATO_DOWNLOAD_URL + "cato-all-files.sha1";
     private static final String CATO_PATH = getCatoPath();
     public static final int CATO_AGREEMENT_VERSION = 2;
     private static final String REMOTE_ADDRESS = "127.0.0.1";
     private static final String LOCAL_ADDRESS = "0.0.0.0";
 
-    private static final Map<String, String> HASH = mapOf(
-            pair("cato-client-darwin-amd64", "85951cbae62f46d7011eceb18b5997fb"),
-            pair("cato-client-darwin-arm64", "421cb801dfcba614c4f14b7919e8e2a5"),
-            pair("cato-client-freebsd-amd64", "cd01352a0728d207975bb86d3da31013"),
-            pair("cato-client-freebsd-arm64", "b9e23809800cab9abc137cb72b0da357"),
-            pair("cato-client-freebsd-arm7", "b5f01984415dba54394848325cecb12d"),
-            pair("cato-client-freebsd-i386", "5895d27ed62d0db112ebbeb21986999a"),
-            pair("cato-client-js.wasm", "82db2736c458b5ad0d8c41d36f084631"),
-            pair("cato-client-linux-amd64", "3e8e87c7199f9e915c04adb075a137b0"),
-            pair("cato-client-linux-arm64", "cd6f9dda26985b590b9c9677ac77badf"),
-            pair("cato-client-linux-arm7", "03ce55bb35fff033a7aa79e4602b0a46"),
-            pair("cato-client-linux-i386", "8af4e4c016af60222812442a48c906b8"),
-            pair("cato-client-linux-mips", "ca698df658127c1f222701dd925c4ea8"),
-            pair("cato-client-linux-mips64", "7abe28e1b63b2d44cd85cc1ba6872db8"),
-            pair("cato-client-linux-mips64le", "f590b1258ec97ee304063a7058b9898d"),
-            pair("cato-client-linux-mipsle", "7bc49eed31b5f9185da490c77097f98a"),
-            pair("cato-client-linux-ppc64", "2e82979331635c05aecd6de975f6f38f"),
-            pair("cato-client-linux-ppc64le", "8631285fcd4e6a43221a2a52d07833da"),
-            pair("cato-client-openbsd-amd64", "8a10b9e4746e3ac83c92b0451bc0ee99"),
-            pair("cato-client-openbsd-arm64", "f4fabec0132b09324cd7512ab77969d0"),
-            pair("cato-client-openbsd-arm7", "66c43fb6b42dd71d15eb0328af0d1d3e"),
-            pair("cato-client-openbsd-i386", "a9f4d15135d9295ac96498e91182b124"),
-            pair("cato-client-windows-amd64.exe", "69638ed3d93251d8ad041ce453e375d7"),
-            pair("cato-client-windows-arm64.exe", "05c104b0e7568524ecdcb92b1c9318e5"),
-            pair("cato-client-windows-i386.exe", "6ef47ffde88a0d97425fbab67cb5c20e")
-    );
+    private static CompletableFuture<Map<String, String>> HASH;
 
     private MultiplayerManager() {
     }
 
+    private static CompletableFuture<Map<String, String>> getCatoHash() {
+        FXUtils.checkFxUserThread();
+        if (HASH == null) {
+            HASH = CompletableFuture.supplyAsync(wrap(() -> {
+                String hashList = HttpRequest.GET(CATO_HASH_URL).getString();
+                Map<String, String> hashes = new HashMap<>();
+                for (String line : hashList.split("\n")) {
+                    String[] items = line.trim().split("  ");
+                    if (items.length == 2 && items[0].length() == 40) {
+                        hashes.put(items[1], items[0]);
+                    } else {
+                        LOG.warning("Failed to parse cato hash file, hash line " + line);
+                    }
+                }
+                return hashes;
+            }));
+        }
+        return HASH;
+    }
+
     public static Task<Void> downloadCato() {
-        return new FileDownloadTask(
-                NetworkUtils.toURL(CATO_DOWNLOAD_URL + getCatoFileName()),
-                getCatoExecutable().toFile(),
-                new FileDownloadTask.IntegrityCheck("SHA-1", HASH.get(getCatoFileName()))
-        ).thenRunAsync(() -> {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-                Set<PosixFilePermission> perm = Files.getPosixFilePermissions(getCatoExecutable());
-                perm.add(PosixFilePermission.OWNER_EXECUTE);
-                Files.setPosixFilePermissions(getCatoExecutable(), perm);
-            }
-        });
+        return Task.fromCompletableFuture(getCatoHash()).thenComposeAsync(catoHashes ->
+                new FileDownloadTask(
+                        NetworkUtils.toURL(CATO_DOWNLOAD_URL + getCatoFileName()),
+                        getCatoExecutable().toFile(),
+                        catoHashes.get(getCatoFileName()) == null ? null : new FileDownloadTask.IntegrityCheck("SHA-1", catoHashes.get(getCatoFileName()))
+                ).thenRunAsync(() -> {
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                        Set<PosixFilePermission> perm = Files.getPosixFilePermissions(getCatoExecutable());
+                        perm.add(PosixFilePermission.OWNER_EXECUTE);
+                        Files.setPosixFilePermissions(getCatoExecutable(), perm);
+                    }
+                }));
     }
 
     public static Path getCatoExecutable() {
@@ -116,7 +113,7 @@ public final class MultiplayerManager {
     }
 
     private static CompletableFuture<CatoSession> startCato(String token, State state) {
-        return CompletableFuture.completedFuture(null).thenApplyAsync(wrap(unused -> {
+        return getCatoHash().thenApplyAsync(wrap(catoHashes -> {
             Path exe = getCatoExecutable();
             if (!Files.isRegularFile(exe)) {
                 throw new CatoNotExistsException(exe);
@@ -127,13 +124,16 @@ public final class MultiplayerManager {
             }
 
             try {
-                ChecksumMismatchException.verifyChecksum(exe, "SHA-1", HASH.get(getCatoFileName()));
+                String hash = catoHashes.get(getCatoFileName());
+                if (hash != null) {
+                    ChecksumMismatchException.verifyChecksum(exe, "SHA-1", hash);
+                }
             } catch (IOException e) {
                 Files.deleteIfExists(exe);
                 throw e;
             }
 
-            String[] commands = new String[]{exe.toString(), "--token", StringUtils.isBlank(token) ? "new" : token};
+            String[] commands = new String[]{exe.toString(), "-client.token", StringUtils.isBlank(token) ? "new" : token};
             Process process = new ProcessBuilder()
                     .command(commands)
                     .start();
@@ -176,7 +176,7 @@ public final class MultiplayerManager {
                 session.setClient(client);
 
                 TimerTask task = Lang.setTimeout(() -> {
-                    future.completeExceptionally(new JoinRequestTimeoutException());
+                    Platform.runLater(() -> future.completeExceptionally(new JoinRequestTimeoutException()));
                     session.stop();
                 }, 30 * 1000);
 
@@ -187,24 +187,30 @@ public final class MultiplayerManager {
                         session.addRelatedThread(Lang.thread(new LocalServerBroadcaster(port, session), "LocalServerBroadcaster", true));
                         session.setName(connectedEvent.getSessionName());
                         client.setGamePort(port);
-                        session.onExit.unregister(onExit);
-                        future.complete(session);
+                        Platform.runLater(() -> {
+                            session.onExit.unregister(onExit);
+                            future.complete(session);
+                        });
                     } catch (IOException e) {
-                        future.completeExceptionally(e);
                         session.stop();
+                        Platform.runLater(() -> future.completeExceptionally(e));
                     }
                     task.cancel();
                 });
                 client.onKicked().register(kickedEvent -> {
-                    future.completeExceptionally(new KickedException(kickedEvent.getReason()));
                     session.stop();
                     task.cancel();
+                    Platform.runLater(() -> {
+                        future.completeExceptionally(new KickedException(kickedEvent.getReason()));
+                    });
                 });
                 client.onDisconnected().register(disconnectedEvent -> {
-                    if (!client.isConnected()) {
-                        // We fail to establish connection with server
-                        future.completeExceptionally(new ConnectionErrorException());
-                    }
+                    Platform.runLater(() -> {
+                        if (!client.isConnected()) {
+                            // We fail to establish connection with server
+                            future.completeExceptionally(new ConnectionErrorException());
+                        }
+                    });
                 });
                 client.onHandshake().register(handshakeEvent -> {
                     if (handler != null) {
@@ -254,9 +260,11 @@ public final class MultiplayerManager {
             }, 15 * 1000);
 
             session.onPeerConnected.register(event -> {
-                session.onExit.unregister(onExit);
-                future.complete(session);
                 peerConnectionTimeoutTask.cancel();
+                Platform.runLater(() -> {
+                    session.onExit.unregister(onExit);
+                    future.complete(session);
+                });
             });
 
             return future;
@@ -354,11 +362,11 @@ public final class MultiplayerManager {
             writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
         }
 
-        public MultiplayerClient getClient() {
+        public synchronized MultiplayerClient getClient() {
             return client;
         }
 
-        public CatoSession setClient(MultiplayerClient client) {
+        public synchronized CatoSession setClient(MultiplayerClient client) {
             this.client = client;
             return this;
         }
@@ -400,7 +408,8 @@ public final class MultiplayerManager {
                 onExit.fireEvent(new CatoExitEvent(this, CatoExitEvent.EXIT_CODE_INTERRUPTED));
             } finally {
                 try {
-                    writer.close();
+                    if (writer != null)
+                        writer.close();
                 } catch (IOException e) {
                     LOG.log(Level.WARNING, "Failed to close cato stdin writer", e);
                 }
@@ -412,11 +421,11 @@ public final class MultiplayerManager {
             return id != null;
         }
 
-        public String getName() {
+        public synchronized String getName() {
             return name;
         }
 
-        public void setName(String name) {
+        public synchronized void setName(String name) {
             this.name = name;
         }
 

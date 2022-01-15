@@ -182,8 +182,8 @@ public class ForgeNewInstallTask extends Task<Version> {
     private final DefaultGameRepository gameRepository;
     private final Version version;
     private final Path installer;
-    private final List<Task<?>> dependents = new LinkedList<>();
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new ArrayList<>(1);
+    private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     private ForgeNewInstallProfile profile;
     private List<Processor> processors;

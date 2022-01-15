@@ -70,6 +70,10 @@ public final class Launcher extends Application {
                 Main.showErrorAndExit(i18n("fatal.config_loading_failure", Paths.get("").toAbsolutePath().normalize()));
             }
 
+            if (Metadata.HMCL_DIRECTORY.toAbsolutePath().toString().indexOf('=') >= 0) {
+                Main.showWarningAndContinue(i18n("fatal.illegal_char"));
+            }
+
             // runLater to ensure ConfigHolder.init() finished initialization
             Platform.runLater(() -> {
                 // When launcher visibility is set to "hide and reopen" without Platform.implicitExit = false,

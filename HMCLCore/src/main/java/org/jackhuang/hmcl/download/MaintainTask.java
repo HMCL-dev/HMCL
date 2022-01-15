@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -62,18 +63,31 @@ public class MaintainTask extends Task<Version> {
         String mainClass = version.resolve(null).getMainClass();
 
         if (mainClass != null && mainClass.equals(LibraryAnalyzer.LAUNCH_WRAPPER_MAIN)) {
-            return maintainOptiFineLibrary(repository, maintainGameWithLaunchWrapper(unique(version), true), false);
+            version = maintainOptiFineLibrary(repository, maintainGameWithLaunchWrapper(unique(version), true), false);
         } else if (mainClass != null && mainClass.equals(LibraryAnalyzer.MOD_LAUNCHER_MAIN)) {
             // Forge 1.13 and OptiFine
-            return maintainOptiFineLibrary(repository, maintainGameWithCpwModLauncher(repository, unique(version)), true);
+            version = maintainOptiFineLibrary(repository, maintainGameWithCpwModLauncher(repository, unique(version)), true);
         } else if (mainClass != null && mainClass.equals(LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN)) {
             // Forge 1.17
-            return maintainGameWithCpwBoostrapLauncher(repository, unique(version));
+            version = maintainGameWithCpwBoostrapLauncher(repository, unique(version));
         } else {
             // Vanilla Minecraft does not need maintain
             // Fabric does not need maintain, nothing compatible with fabric now.
-            return maintainOptiFineLibrary(repository, unique(version), false);
+            version = maintainOptiFineLibrary(repository, unique(version), false);
         }
+
+        List<Library> libraries = version.getLibraries();
+        if (libraries.size() > 0) {
+            Library library = libraries.get(0);
+            if ("org.glavo".equals(library.getGroupId())
+                    && ("log4j-patch".equals(library.getArtifactId()) || "log4j-patch-beta9".equals(library.getArtifactId()))
+                    && "1.0".equals(library.getVersion())
+                    && library.getDownload() == null) {
+                version = version.setLibraries(libraries.subList(1, libraries.size()));
+            }
+        }
+
+        return version;
     }
 
     public static Version maintainPreservingPatches(GameRepository repository, Version version) {
@@ -136,10 +150,9 @@ public class MaintainTask extends Task<Version> {
                 builder.addJvmArgument("-Dhmcl.transformer.candidates=${library_directory}/" + library.getPath());
                 if (!libraryExisting) builder.addLibrary(hmclTransformerDiscoveryService);
                 Path libraryPath = repository.getLibraryFile(version, hmclTransformerDiscoveryService).toPath();
-                try {
+                try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLTransformerDiscoveryService-1.0.jar")) {
                     Files.createDirectories(libraryPath.getParent());
-                    Files.copy(MaintainTask.class.getResourceAsStream("/assets/game/HMCLTransformerDiscoveryService-1.0.jar"),
-                            libraryPath, StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(input, libraryPath, StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException e) {
                     Logging.LOG.log(Level.WARNING, "Unable to unpack HMCLTransformerDiscoveryService", e);
                 }
@@ -270,7 +283,7 @@ public class MaintainTask extends Task<Version> {
     public static Version unique(Version version) {
         List<Library> libraries = new ArrayList<>();
 
-        SimpleMultimap<String, Integer> multimap = new SimpleMultimap<String, Integer>(HashMap::new, LinkedList::new);
+        SimpleMultimap<String, Integer> multimap = new SimpleMultimap<String, Integer>(HashMap::new, ArrayList::new);
 
         for (Library library : version.getLibraries()) {
             String id = library.getGroupId() + ":" + library.getArtifactId();

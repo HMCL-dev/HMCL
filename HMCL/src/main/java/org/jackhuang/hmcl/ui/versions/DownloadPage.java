@@ -84,7 +84,12 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.mod = ModTranslations.getModByCurseForgeId(addon.getSlug());
         this.version = version;
         this.callback = callback;
+        loadModVersions();
 
+        this.state.set(State.fromTitle(addon.getTitle()));
+    }
+
+    private void loadModVersions() {
         File versionJar = StringUtils.isNotBlank(version.getVersion())
                 ? version.getProfile().getRepository().getVersionJar(version.getVersion())
                 : null;
@@ -93,9 +98,9 @@ public class DownloadPage extends Control implements DecoratorPage {
         setFailed(false);
 
         Task.allOf(
-                        Task.supplyAsync(() -> addon.getData().loadDependencies()),
-                        Task.supplyAsync(() -> {
-                            Stream<RemoteMod.Version> versions = addon.getData().loadVersions();
+                Task.supplyAsync(() -> addon.getData().loadDependencies()),
+                Task.supplyAsync(() -> {
+                    Stream<RemoteMod.Version> versions = addon.getData().loadVersions();
 //                            if (StringUtils.isNotBlank(version.getVersion())) {
 //                                Optional<String> gameVersion = GameVersion.minecraftVersion(versionJar);
 //                                if (gameVersion.isPresent()) {
@@ -103,8 +108,8 @@ public class DownloadPage extends Control implements DecoratorPage {
 //                                            .filter(file -> file.getGameVersions().contains(gameVersion.get())));
 //                                }
 //                            }
-                            return sortVersions(versions);
-                        }))
+                    return sortVersions(versions);
+                }))
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
                         @SuppressWarnings("unchecked")
@@ -122,8 +127,6 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
                     setLoading(false);
                 }).start();
-
-        this.state.set(State.fromTitle(addon.getTitle()));
     }
 
     private SimpleMultimap<String, RemoteMod.Version> sortVersions(Stream<RemoteMod.Version> versions) {
@@ -195,7 +198,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
 
         Controllers.taskDialog(
-                new FileDownloadTask(NetworkUtils.toURL(file.getFile().getUrl()), dest).executor(true),
+                new FileDownloadTask(NetworkUtils.toURL(file.getFile().getUrl()), dest, file.getFile().getIntegrityCheck()).executor(true),
                 i18n("message.downloading")
         );
     }
@@ -297,6 +300,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         return null;
                     }
                 }, getSkinnable().failedProperty()));
+                spinnerPane.setOnFailedAction(e -> getSkinnable().loadModVersions());
 
                 ComponentList list = new ComponentList();
                 StackPane.setAlignment(list, Pos.TOP_CENTER);

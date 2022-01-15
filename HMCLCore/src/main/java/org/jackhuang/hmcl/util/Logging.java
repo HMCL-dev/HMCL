@@ -17,13 +17,14 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.io.IOUtils;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.SimpleDateFormat;
+import java.text.MessageFormat;
 import java.util.Date;
 import java.util.logging.*;
 
@@ -35,7 +36,7 @@ public final class Logging {
     }
 
     public static final Logger LOG = Logger.getLogger("HMCL");
-    private static ByteArrayOutputStream storedLogs = new ByteArrayOutputStream();
+    private static final ByteArrayOutputStream storedLogs = new ByteArrayOutputStream(IOUtils.DEFAULT_BUFFER_SIZE);
 
     public static void start(Path logFolder) {
         LOG.setLevel(Level.ALL);
@@ -46,6 +47,7 @@ public final class Logging {
             FileHandler fileHandler = new FileHandler(logFolder.resolve("hmcl.log").toAbsolutePath().toString());
             fileHandler.setLevel(Level.FINEST);
             fileHandler.setFormatter(DefaultFormatter.INSTANCE);
+            fileHandler.setEncoding("UTF-8");
             LOG.addHandler(fileHandler);
         } catch (IOException e) {
             System.err.println("Unable to create hmcl.log, " + e.getMessage());
@@ -87,27 +89,29 @@ public final class Logging {
     }
 
     public static String getLogs() {
-        return storedLogs.toString();
+        try {
+            return storedLogs.toString("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new InternalError(e);
+        }
     }
 
     private static final class DefaultFormatter extends Formatter {
 
         static final DefaultFormatter INSTANCE = new DefaultFormatter();
-        private final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+        private static final MessageFormat format = new MessageFormat("[{0,date,HH:mm:ss}] [{1}.{2}/{3}] {4}\n");
 
         @Override
         public String format(LogRecord record) {
-            String date = format.format(new Date(record.getMillis()));
-            String log = String.format("[%s] [%s.%s/%s] %s%n",
-                    date, record.getSourceClassName(), record.getSourceMethodName(),
-                    record.getLevel().getName(), record.getMessage()
-            );
-            ByteArrayOutputStream builder = new ByteArrayOutputStream();
+            String log = format.format(new Object[]{
+                    new Date(record.getMillis()),
+                    record.getSourceClassName(), record.getSourceMethodName(), record.getLevel().getName(),
+                    record.getMessage()
+            }, new StringBuffer(128), null).toString();
             if (record.getThrown() != null)
-                try (PrintWriter writer = new PrintWriter(builder)) {
-                    record.getThrown().printStackTrace(writer);
-                }
-            return log + builder.toString();
+                log += StringUtils.getStackTrace(record.getThrown());
+
+            return log;
         }
 
     }

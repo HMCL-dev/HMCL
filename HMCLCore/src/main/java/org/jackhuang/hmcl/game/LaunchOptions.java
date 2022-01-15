@@ -40,6 +40,7 @@ public class LaunchOptions implements Serializable {
     private String profileName;
     private List<String> gameArguments = new ArrayList<>();
     private List<String> javaArguments = new ArrayList<>();
+    private List<String> javaAgents = new ArrayList<>(0);
     private Integer minMemory;
     private Integer maxMemory;
     private Integer metaspace;
@@ -59,6 +60,7 @@ public class LaunchOptions implements Serializable {
     private ProcessPriority processPriority = ProcessPriority.NORMAL;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
+    private boolean daemon;
 
     /**
      * The game directory
@@ -111,6 +113,11 @@ public class LaunchOptions implements Serializable {
     @NotNull
     public List<String> getJavaArguments() {
         return Collections.unmodifiableList(javaArguments);
+    }
+
+    @NotNull
+    public List<String> getJavaAgents() {
+        return Collections.unmodifiableList(javaAgents);
     }
 
     /**
@@ -243,6 +250,13 @@ public class LaunchOptions implements Serializable {
         return useNativeOpenAL;
     }
 
+    /**
+     * Will launcher keeps alive after game launched or not.
+     */
+    public boolean isDaemon() {
+        return daemon;
+    }
+
     public static class Builder {
 
         private final LaunchOptions options = new LaunchOptions();
@@ -300,6 +314,10 @@ public class LaunchOptions implements Serializable {
          */
         public List<String> getJavaArguments() {
             return options.javaArguments;
+        }
+
+        public List<String> getJavaAgents() {
+            return options.javaAgents;
         }
 
         /**
@@ -411,6 +429,10 @@ public class LaunchOptions implements Serializable {
             return options.useNativeOpenAL;
         }
 
+        public boolean isDaemon() {
+            return options.daemon;
+        }
+
         public Builder setGameDir(File gameDir) {
             options.gameDir = gameDir;
             return this;
@@ -445,6 +467,12 @@ public class LaunchOptions implements Serializable {
         public Builder setJavaArguments(List<String> javaArguments) {
             options.javaArguments.clear();
             options.javaArguments.addAll(javaArguments);
+            return this;
+        }
+
+        public Builder setJavaAgents(List<String> javaAgents) {
+            options.javaAgents.clear();
+            options.javaAgents.addAll(javaAgents);
             return this;
         }
 
@@ -540,6 +568,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setUseNativeOpenAL(boolean useNativeOpenAL) {
             options.useNativeOpenAL = useNativeOpenAL;
+            return this;
+        }
+
+        public Builder setDaemon(boolean daemon) {
+            options.daemon = daemon;
             return this;
         }
 

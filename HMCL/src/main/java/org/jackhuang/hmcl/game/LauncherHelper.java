@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
@@ -55,9 +56,13 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -124,8 +129,11 @@ public final class LauncherHelper {
         Optional<String> gameVersion = repository.getGameVersion(version);
         boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
         CountDownLatch launchingLatch = new CountDownLatch(1);
+        List<String> javaAgents = new ArrayList<>(0);
 
         AtomicReference<JavaVersion> javaVersionRef = new AtomicReference<>();
+
+        getLog4jPatch(version).ifPresent(javaAgents::add);
 
         TaskExecutor executor = checkGameState(profile, setting, version)
                 .thenComposeAsync(javaVersion -> {
@@ -172,7 +180,7 @@ public final class LauncherHelper {
                     }
                 }).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
-                    LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir());
+                    LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, scriptFile != null);
                     return new HMCLGameLauncher(
                             repository,
                             version,
@@ -413,15 +421,19 @@ public final class LauncherHelper {
                                     .thenAcceptAsync(downloadedJavaVersion -> {
                                         setting.setJavaVersion(downloadedJavaVersion);
                                         future.complete(downloadedJavaVersion);
-                                    })
-                                    .exceptionally(throwable -> {
+                                    }, Schedulers.javafx())
+                                    .whenCompleteAsync((result, throwable) -> {
                                         LOG.log(Level.WARNING, "Failed to download java", throwable);
                                         breakAction.run();
-                                        return null;
-                                    });
+                                    }, Schedulers.javafx());
                             return Task.fromCompletableFuture(future);
                         case VANILLA_JAVA_16:
                             Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 16), i18n("message.warning"), () -> {
+                                FXUtils.openLink("https://adoptium.net/?variant=openjdk17");
+                            }, breakAction);
+                            return null;
+                        case VANILLA_JAVA_17:
+                            Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 17), i18n("message.warning"), () -> {
                                 FXUtils.openLink("https://adoptium.net/?variant=openjdk17");
                             }, breakAction);
                             return null;
@@ -489,7 +501,7 @@ public final class LauncherHelper {
 
             // Cannot allocate too much memory exceeding free space.
             if (!suggested && OperatingSystem.TOTAL_MEMORY > 0 && OperatingSystem.TOTAL_MEMORY < setting.getMaxMemory()) {
-                Controllers.confirm(i18n("launch.advice.not_enough_space", OperatingSystem.TOTAL_MEMORY), i18n("message.error"), continueAction, null);
+                Controllers.confirm(i18n("launch.advice.not_enough_space", OperatingSystem.TOTAL_MEMORY), i18n("message.error"), continueAction, breakAction);
                 suggested = true;
             }
 
@@ -501,7 +513,7 @@ public final class LauncherHelper {
                                         VersionNumber.VERSION_COMPARATOR.compare(it.getVersion(), "1.12.2-14.23.5.2773") < 0);
                 boolean hasLiteLoader = version.getLibraries().stream().anyMatch(it -> it.is("com.mumfrey", "liteloader"));
                 if (hasForge2760 && hasLiteLoader && gameVersion.compareTo(VersionNumber.asVersion("1.12.2")) == 0) {
-                    Controllers.confirm(i18n("launch.advice.forge2760_liteloader"), i18n("message.error"), continueAction, null);
+                    Controllers.confirm(i18n("launch.advice.forge2760_liteloader"), i18n("message.error"), continueAction, breakAction);
                     suggested = true;
                 }
             }
@@ -513,12 +525,12 @@ public final class LauncherHelper {
                                 VersionNumber.VERSION_COMPARATOR.compare("1.14.4-28.2.2", it.getVersion()) <= 0);
                 boolean hasOptiFine = version.getLibraries().stream().anyMatch(it -> it.is("optifine", "OptiFine"));
                 if (hasForge28_2_2 && hasOptiFine && gameVersion.compareTo(VersionNumber.asVersion("1.14.4")) == 0) {
-                    Controllers.confirm(i18n("launch.advice.forge28_2_2_optifine"), i18n("message.error"), continueAction, null);
+                    Controllers.confirm(i18n("launch.advice.forge28_2_2_optifine"), i18n("message.error"), continueAction, breakAction);
                     suggested = true;
                 }
             }
 
-            if (!suggested) {
+            if (!future.isDone()) {
                 future.complete(javaVersion);
             }
 
@@ -591,6 +603,47 @@ public final class LauncherHelper {
         executor.start();
 
         return future;
+    }
+
+    private static Optional<String> getLog4jPatch(Version version) {
+        Optional<String> log4jVersion = version.getLibraries().stream()
+                .filter(it -> it.is("org.apache.logging.log4j", "log4j-core")
+                        && (VersionNumber.VERSION_COMPARATOR.compare(it.getVersion(), "2.17") < 0 || "2.0-beta9".equals(it.getVersion())))
+                .map(Library::getVersion)
+                .findFirst();
+
+        if (log4jVersion.isPresent()) {
+            final String agentFileName = "log4j-patch-agent-1.0.jar";
+
+            Path agentFile = Metadata.HMCL_DIRECTORY.resolve(agentFileName).toAbsolutePath();
+            String agentFilePath = agentFile.toString();
+            if (agentFilePath.indexOf('=') >= 0) {
+                LOG.warning("Invalid character '=' in the HMCL directory path, unable to attach log4j-patch");
+                return Optional.empty();
+            }
+
+            if (Files.notExists(agentFile)) {
+                try (InputStream input = DefaultLauncher.class.getResourceAsStream("/assets/game/" + agentFileName)) {
+                    LOG.info("Extract log4j patch to " + agentFilePath);
+                    Files.createDirectories(agentFile.getParent());
+                    Files.copy(input, agentFile, StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to extract log4j patch");
+                    try {
+                        Files.deleteIfExists(agentFile);
+                    } catch (IOException ex) {
+                        LOG.log(Level.WARNING, "Failed to delete incomplete log4j patch", ex);
+                    }
+                    return Optional.empty();
+                }
+            }
+
+            boolean isBeta = log4jVersion.get().startsWith("2.0-beta");
+            return Optional.of(agentFilePath + "=" + isBeta);
+        } else {
+            LOG.info("No log4j with security vulnerabilities found");
+            return Optional.empty();
+        }
     }
 
     private void checkExit() {

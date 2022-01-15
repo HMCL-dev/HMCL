@@ -112,7 +112,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
     private final StringProperty selectedVersion = new SimpleStringProperty();
     private final BooleanProperty navigateToSpecificSettings = new SimpleBooleanProperty(false);
-    private final BooleanProperty enableSpecificSettings = new SimpleBooleanProperty(true);
+    private final BooleanProperty enableSpecificSettings = new SimpleBooleanProperty(false);
     private final IntegerProperty maxMemory = new SimpleIntegerProperty();
     private final ObjectProperty<OperatingSystem.PhysicalMemoryStatus> memoryStatus = new SimpleObjectProperty<>(OperatingSystem.PhysicalMemoryStatus.INVALID);
     private final BooleanProperty modpack = new SimpleBooleanProperty();

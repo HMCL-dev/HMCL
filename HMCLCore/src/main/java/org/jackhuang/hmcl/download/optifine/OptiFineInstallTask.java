@@ -56,8 +56,8 @@ public final class OptiFineInstallTask extends Task<Version> {
     private final Version version;
     private final OptiFineRemoteVersion remote;
     private final Path installer;
-    private final List<Task<?>> dependents = new LinkedList<>();
-    private final List<Task<?>> dependencies = new LinkedList<>();
+    private final List<Task<?>> dependents = new ArrayList<>(0);
+    private final List<Task<?>> dependencies = new ArrayList<>(1);
     private Path dest;
 
     private final Library optiFineLibrary;
@@ -131,7 +131,7 @@ public final class OptiFineInstallTask extends Task<Version> {
                 !LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(originalMainClass))
             throw new UnsupportedInstallationException(UnsupportedInstallationException.UNSUPPORTED_LAUNCH_WRAPPER);
 
-        List<Library> libraries = new LinkedList<>();
+        List<Library> libraries = new ArrayList<>(4);
         libraries.add(optiFineLibrary);
 
         FileUtils.copyFile(dest, gameRepository.getLibraryFile(version, optiFineInstallerLibrary).toPath());
@@ -229,6 +229,7 @@ public final class OptiFineInstallTask extends Task<Version> {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             Path configClass = fs.getPath("Config.class");
             if (!Files.exists(configClass)) configClass = fs.getPath("net/optifine/Config.class");
+            if (!Files.exists(configClass)) configClass = fs.getPath("notch/net/optifine/Config.class");
             if (!Files.exists(configClass)) throw new IOException("Unrecognized installer");
             ConstantPool pool = ConstantPoolScanner.parse(Files.readAllBytes(configClass), ConstantType.UTF8);
             List<String> constants = new ArrayList<>();

@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.game;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -36,7 +36,7 @@ public final class ExtractRules {
     }
 
     public ExtractRules(List<String> exclude) {
-        this.exclude = new LinkedList<>(exclude);
+        this.exclude = new ArrayList<>(exclude);
     }
 
     public List<String> getExclude() {

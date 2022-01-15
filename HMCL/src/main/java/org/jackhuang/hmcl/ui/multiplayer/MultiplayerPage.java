@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CancellationException;
@@ -133,7 +134,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
 
     private void testNAT() {
         Task.supplyAsync(() -> {
-            DiscoveryTest tester = new DiscoveryTest(null, 0, "stun.stunprotocol.org", 3478);
+            DiscoveryTest tester = new DiscoveryTest(null, 0, "stun.miwifi.com", 3478);
             return tester.test();
         }).whenComplete(Schedulers.javafx(), (info, exception) -> {
             if (exception == null) {
@@ -377,6 +378,8 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
             } else {
                 return i18n("multiplayer.exit.after_ready");
             }
+        } else if (e instanceof ChecksumMismatchException) {
+            return i18n("exception.artifact_malformed");
         } else {
             return fallback.apply(e);
         }

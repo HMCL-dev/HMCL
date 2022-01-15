@@ -167,9 +167,9 @@ public class AboutPage extends StackPane {
             jstun.setExternalLink("https://github.com/tking/JSTUN");
 
             IconedTwoLineListItem minecraftJFXSkin = new IconedTwoLineListItem();
-            jstun.setTitle("minecraft-jfx-skin");
-            jstun.setSubtitle("Copyright (c) 2016 InfinityStudio.\nLicensed under the GPL 3.");
-            jstun.setExternalLink("https://github.com/InfinityStudio/minecraft-jfx-skin");
+            minecraftJFXSkin.setTitle("minecraft-jfx-skin");
+            minecraftJFXSkin.setSubtitle("Copyright (c) 2016 InfinityStudio.\nLicensed under the GPL 3.");
+            minecraftJFXSkin.setExternalLink("https://github.com/InfinityStudio/minecraft-jfx-skin");
 
             dep.getContent().setAll(javafx, jfoenix, gson, xz, fxgson, constantPoolScanner, openNBT, jstun, minecraftJFXSkin);
         }

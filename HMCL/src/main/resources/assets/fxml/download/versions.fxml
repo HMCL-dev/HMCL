@@ -23,10 +23,26 @@
             <JFXSpinner fx:id="spinner" styleClass="first-spinner" />
             <StackPane fx:id="center" style="-fx-padding: 10;">
                 <ComponentList fx:id="centrePane" styleClass="no-padding">
-                    <HBox fx:id="checkPane" spacing="10" style="-fx-padding: 10;">
-                        <JFXCheckBox fx:id="chkRelease" text="%version.game.releases" selected="true" />
-                        <JFXCheckBox fx:id="chkSnapshot" text="%version.game.snapshots" />
-                        <JFXCheckBox fx:id="chkOld" text="%version.game.old" />
+                    <HBox fx:id="checkPane" spacing="10">
+                        <JFXCheckBox fx:id="chkRelease" text="%version.game.releases" selected="true">
+                            <HBox.margin>
+                                <Insets top="10" bottom="10" />
+                            </HBox.margin>
+                        </JFXCheckBox>
+                        <JFXCheckBox fx:id="chkSnapshot" text="%version.game.snapshots">
+                            <HBox.margin>
+                                <Insets top="10" bottom="10" />
+                            </HBox.margin>
+                        </JFXCheckBox>
+                        <JFXCheckBox fx:id="chkOld" text="%version.game.old">
+                            <HBox.margin>
+                                <Insets top="10" bottom="10" />
+                            </HBox.margin>
+                        </JFXCheckBox>
+
+                        <HBox HBox.hgrow="ALWAYS" />
+
+                        <JFXButton fx:id="btnRefresh" styleClass="jfx-tool-bar-button" onMouseClicked="#onRefresh" text="%button.refresh" />
                     </HBox>
                     <JFXListView fx:id="list" styleClass="jfx-list-view-float" VBox.vgrow="ALWAYS">
                     </JFXListView>
