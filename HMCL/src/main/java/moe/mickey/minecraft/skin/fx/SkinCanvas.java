@@ -125,8 +125,7 @@ public class SkinCanvas extends Group {
             int multiple = Math.max((int) (1024 / skin.getWidth()), 1);
             if (multiple > 1)
                 this.skin = SkinHelper.enlarge(this.skin, multiple, multiple);
-            if (this.isSlim != isSlim)
-                updateSkinModel(isSlim, cape != null);
+            updateSkinModel(isSlim, cape != null);
             bindMaterial(root);
         }
     }
