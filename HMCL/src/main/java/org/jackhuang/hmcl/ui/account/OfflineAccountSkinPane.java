@@ -76,7 +76,7 @@ public class OfflineAccountSkinPane extends StackPane {
         canvasPane.setPrefWidth(300);
         canvasPane.setPrefHeight(300);
         pane.setCenter(canvas);
-        canvas.getAnimationplayer().addSkinAnimation(new SkinAniWavingArms(100, 2000, 7.5, canvas), new SkinAniRunning(100, 100, 30, canvas));
+        canvas.getAnimationPlayer().addSkinAnimation(new SkinAniWavingArms(100, 2000, 7.5, canvas), new SkinAniRunning(100, 100, 30, canvas));
         canvas.enableRotation(.5);
 
         canvas.addEventHandler(DragEvent.DRAG_OVER, e -> {
@@ -136,11 +136,14 @@ public class OfflineAccountSkinPane extends StackPane {
                             LOG.log(Level.WARNING, "Failed to load skin", exception);
                             Controllers.showToast(i18n("message.failed"));
                         } else {
-                            if (result == null || result.getSkin() == null) {
-                                canvas.updateSkin(getDefaultTexture(), isDefaultSlim());
+                            if (result == null || result.getSkin() == null && result.getCape() == null) {
+                                canvas.updateSkin(getDefaultTexture(), isDefaultSlim(), null);
                                 return;
                             }
-                            canvas.updateSkin(new Image(result.getSkin().getInputStream()), result.getModel() == TextureModel.ALEX);
+                            canvas.updateSkin(
+                                    result.getSkin() != null ? new Image(result.getSkin().getInputStream()) : getDefaultTexture(),
+                                    result.getModel() == TextureModel.ALEX,
+                                    result.getCape() != null ? new Image(result.getCape().getInputStream()) : null);
                         }
                     }).start();
         }, skinItem.selectedDataProperty(), cslApiField.textProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
