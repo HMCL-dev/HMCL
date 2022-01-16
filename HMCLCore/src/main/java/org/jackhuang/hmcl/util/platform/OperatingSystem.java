@@ -180,7 +180,7 @@ public enum OperatingSystem {
                 .map(bytes -> (int) (bytes / 1024 / 1024))
                 .orElse(1024);
 
-        SUGGESTED_MEMORY = (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);
+        SUGGESTED_MEMORY = TOTAL_MEMORY >= 32768 ? 8192 : (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);
 
         // setup the invalid names
         if (CURRENT_OS == WINDOWS) {
@@ -258,8 +258,11 @@ public enum OperatingSystem {
 
     public static void forceGC() {
         System.gc();
-        System.runFinalization();
-        System.gc();
+        try {
+            System.runFinalization();
+            System.gc();
+        } catch (NoSuchMethodError ignored) {
+        }
     }
 
     public static Path getWorkingDirectory(String folder) {
