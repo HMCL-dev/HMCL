@@ -12,7 +12,6 @@ public class SkinAnimation {
     protected int weight, left;
     protected List<SkinTransition> transitions;
 
-    @Deprecated
     public SkinAnimation() {
         this.transitions = new ArrayList<>();
     }
