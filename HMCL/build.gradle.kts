@@ -221,6 +221,11 @@ tasks.processResources {
         from(sourceSets["java11"].output)
     }
     dependsOn(tasks["java11Classes"])
+
+    into("assets") {
+        from(project.buildDir.resolve("openjfx-dependencies.json"))
+    }
+    dependsOn(rootProject.tasks["generateOpenJFXDependencies"])
 }
 
 val packFile = File(jarPath.parentFile, jarPath.nameWithoutExtension + ".pack")

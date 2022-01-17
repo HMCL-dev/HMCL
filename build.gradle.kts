@@ -112,7 +112,7 @@ val jfxClassifier = listOf(
 )
 val jfxVersion = "17"
 val jfxMirrorRepos = listOf("https://maven.aliyun.com/repository/central")
-val jfxDependenciesFile = rootProject.file("HMCL/src/main/resources/assets/openjfx-dependencies.json")
+val jfxDependenciesFile = project("HMCL").buildDir.resolve("openjfx-dependencies.json")
 val jfxUnsupported = mapOf(
     "linux-arm32-monocle" to listOf("media", "web")
 )
@@ -157,6 +157,8 @@ if (!jfxInClasspath && JavaVersion.current() >= JavaVersion.VERSION_11) {
 }
 
 rootProject.tasks.create("generateOpenJFXDependencies") {
+    outputs.file(jfxDependenciesFile)
+
     doLast {
         val jfxDependencies = jfxModules.map { module ->
             linkedMapOf(
@@ -172,6 +174,7 @@ rootProject.tasks.create("generateOpenJFXDependencies") {
             )
         }
 
+        jfxDependenciesFile.parentFile.mkdirs()
         jfxDependenciesFile.writeText(
             com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(jfxDependencies)
         )
