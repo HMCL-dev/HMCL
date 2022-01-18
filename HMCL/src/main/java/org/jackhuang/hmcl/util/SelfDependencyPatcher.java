@@ -45,17 +45,13 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,76 +76,36 @@ public final class SelfDependencyPatcher {
     static class DependencyDescriptor {
 
         private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies");
-        public static final String CURRENT_ARCH_CLASSIFIER = currentArchClassifier();
         public static final List<DependencyDescriptor> JFX_DEPENDENCIES = readDependencies();
 
         private static List<DependencyDescriptor> readDependencies() {
-            String content;
-            try (InputStream in = SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE)) {
-                content = IOUtils.readFullyAsString(in, UTF_8);
+            //noinspection ConstantConditions
+            try (Reader reader = new InputStreamReader(SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE), UTF_8)) {
+                Map<String, List<DependencyDescriptor>> allDependencies =
+                        new Gson().fromJson(reader, new TypeToken<Map<String, List<DependencyDescriptor>>>(){}.getType());
+                return allDependencies.get(Platform.getPlatform().toString());
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
-            return new Gson().fromJson(content, TypeToken.getParameterized(List.class, DependencyDescriptor.class).getType());
-        }
-
-        private static String currentArchClassifier() {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                switch (Architecture.CURRENT_ARCH) {
-                    case X86_64:
-                        return "linux";
-                    case ARM32:
-                        return "linux-arm32-monocle";
-                    case ARM64:
-                        return "linux-aarch64";
-                }
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-                switch (Architecture.CURRENT_ARCH) {
-                    case X86_64:
-                        return "mac";
-                    case ARM64:
-                        return "mac-aarch64";
-                }
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                switch (Architecture.CURRENT_ARCH) {
-                    case X86_64:
-                        return "win";
-                    case X86:
-                        return "win-x86";
-                }
-            }
-            return null;
         }
 
         public String module;
         public String groupId;
         public String artifactId;
         public String version;
-        public Map<String, String> sha1;
+        public String classifier;
+        public String sha1;
 
         public String filename() {
-            if (CURRENT_ARCH_CLASSIFIER == null) {
-                return null;
-            }
-            return artifactId + "-" + version + "-" + CURRENT_ARCH_CLASSIFIER + ".jar";
+            return artifactId + "-" + version + "-" + classifier + ".jar";
         }
 
         public String sha1() {
-            if (CURRENT_ARCH_CLASSIFIER == null) {
-                return null;
-            }
-            return sha1.get(CURRENT_ARCH_CLASSIFIER);
+            return sha1;
         }
 
         public Path localPath() {
-            if (CURRENT_ARCH_CLASSIFIER == null) {
-                return null;
-            }
             return DEPENDENCIES_DIR_PATH.resolve(filename());
-        }
-
-        public boolean isSupported() {
-            return CURRENT_ARCH_CLASSIFIER != null && sha1.containsKey(CURRENT_ARCH_CLASSIFIER);
         }
     }
 
@@ -222,7 +178,7 @@ public final class SelfDependencyPatcher {
         }
 
         // We can only self-patch JavaFX on specific platform.
-        if (DependencyDescriptor.CURRENT_ARCH_CLASSIFIER == null) {
+        if (JFX_DEPENDENCIES == null) {
             throw new IncompatibleVersionException();
         }
 
@@ -297,12 +253,10 @@ public final class SelfDependencyPatcher {
         LOG.info(" - Loading dependencies...");
 
         Set<String> modules = JFX_DEPENDENCIES.stream()
-                .filter(DependencyDescriptor::isSupported)
                 .map(it -> it.module)
                 .collect(toSet());
 
         Path[] jars = JFX_DEPENDENCIES.stream()
-                .filter(DependencyDescriptor::isSupported)
                 .map(DependencyDescriptor::localPath)
                 .toArray(Path[]::new);
 
@@ -396,9 +350,6 @@ public final class SelfDependencyPatcher {
         List<DependencyDescriptor> missing = new ArrayList<>();
 
         for (DependencyDescriptor dependency : JFX_DEPENDENCIES) {
-            if (!dependency.isSupported()) {
-                continue;
-            }
             if (!Files.exists(dependency.localPath())) {
                 missing.add(dependency);
                 continue;
