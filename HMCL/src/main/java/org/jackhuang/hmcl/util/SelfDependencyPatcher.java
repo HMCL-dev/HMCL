@@ -75,7 +75,7 @@ public final class SelfDependencyPatcher {
 
     static class DependencyDescriptor {
 
-        private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies");
+        private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies").resolve(Platform.getPlatform().toString()).resolve("openjfx");
         public static final List<DependencyDescriptor> JFX_DEPENDENCIES = readDependencies();
 
         private static List<DependencyDescriptor> readDependencies() {
