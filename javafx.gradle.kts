@@ -8,11 +8,13 @@ buildscript {
     }
 }
 
+val jfxVersion = "17"
 
 data class Platform(
     val name: String,
     val classifier: String,
     val groupId: String = "org.openjfx",
+    val version: String = jfxVersion,
     val unsupportedModules: List<String> = listOf()
 ) {
     val modules: List<String> = jfxModules.filter { it !in unsupportedModules }
@@ -22,12 +24,11 @@ data class Platform(
         repo: String = "https://repo1.maven.org/maven2"
     ): java.net.URL =
         java.net.URL(
-            "$repo/${groupId.replace('.', '/')}/javafx-$module/$jfxVersion/javafx-$module-$jfxVersion-$classifier.$ext"
+            "$repo/${groupId.replace('.', '/')}/javafx-$module/$version/javafx-$module-$version-$classifier.$ext"
         )
 }
 
 val jfxModules = listOf("base", "graphics", "controls", "fxml", "media", "web")
-val jfxVersion = "17"
 val jfxMirrorRepos = listOf("https://maven.aliyun.com/repository/central")
 val jfxDependenciesFile = project("HMCL").buildDir.resolve("openjfx-dependencies.json")
 val jfxPlatforms = listOf(
@@ -69,10 +70,11 @@ if (!jfxInClasspath && JavaVersion.current() >= JavaVersion.VERSION_11) {
         val platform = jfxPlatforms.find { it.name == "$os-arch" }
         if (platform != null) {
             val groupId = platform.groupId
+            val version = platform.version
             val classifier = platform.classifier
             rootProject.subprojects {
                 for (module in jfxModules) {
-                    dependencies.add("compileOnly", "$groupId:javafx-$module:$jfxVersion:$classifier")
+                    dependencies.add("compileOnly", "$groupId:javafx-$module:$version:$classifier")
                 }
             }
         }
@@ -89,7 +91,7 @@ rootProject.tasks.create("generateOpenJFXDependencies") {
                     "module" to "javafx.$module",
                     "groupId" to platform.groupId,
                     "artifactId" to "javafx-$module",
-                    "version" to jfxVersion,
+                    "version" to platform.version,
                     "classifier" to platform.classifier,
                     "sha1" to platform.fileUrl(module, platform.classifier, "jar.sha1").readText()
                 )
