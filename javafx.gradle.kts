@@ -8,7 +8,7 @@ buildscript {
     }
 }
 
-val jfxVersion = "17"
+val jfxVersion = "17.0.2"
 
 data class Platform(
     val name: String,
