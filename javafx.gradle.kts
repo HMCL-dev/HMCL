@@ -111,7 +111,8 @@ rootProject.tasks.create("preTouchOpenJFXDependencies") {
         for (repo in jfxMirrorRepos) {
             for (platform in jfxPlatforms) {
                 for (module in platform.modules) {
-                    val url = platform.fileUrl(module, platform.classifier, "jar")
+                    val url = platform.fileUrl(module, platform.classifier, "jar", repo = repo)
+                    logger.quiet("Getting $url")
                     try {
                         url.readBytes()
                     } catch (e: Throwable) {
