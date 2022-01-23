@@ -493,8 +493,14 @@ public final class LauncherHelper {
                     case MODDED_JAVA_8:
                         Controllers.dialog(i18n("launch.advice.newer_java"), i18n("message.warning"), MessageType.WARNING, continueAction);
                         break;
+                    case MODDED_JAVA_16:
+                        Controllers.dialog(i18n("launch.advice.forge37_0_60"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                        break;
                     case VANILLA_JAVA_8_51:
                         Controllers.dialog(i18n("launch.advice.java8_51_1_13"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                        break;
+                    case MODLAUNCHER_8:
+                        Controllers.dialog(i18n("launch.advice.modlauncher8"), i18n("message.warning"), MessageType.WARNING, continueAction);
                         break;
                 }
             }
