@@ -101,7 +101,7 @@ public abstract class SkinCanvasSupport implements Consumer<SkinCanvas> {
                             Stage stage = new Stage();
                             stage.setTitle(title);
                             SkinCanvas canvas = Test.createSkinCanvas();
-                            canvas.updateSkin(new Image(input), skin.getName().contains("[alex]"));
+                            canvas.updateSkin(new Image(input), skin.getName().contains("[alex]"), null);
                             Scene scene = new Scene(canvas);
                             stage.setScene(scene);
                             stage.show();
