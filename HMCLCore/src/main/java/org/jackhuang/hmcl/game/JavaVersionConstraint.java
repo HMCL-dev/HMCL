@@ -36,6 +36,20 @@ public enum JavaVersionConstraint {
     // Minecraft>=1.17 requires Java 16
     VANILLA_JAVA_16(JavaVersionConstraint.RULE_MANDATORY, versionRange("1.17", JavaVersionConstraint.MAX), versionRange("16", JavaVersionConstraint.MAX)),
     VANILLA_JAVA_17(JavaVersionConstraint.RULE_MANDATORY, versionRange("1.18", JavaVersionConstraint.MAX), versionRange("17", JavaVersionConstraint.MAX)),
+    // Minecraft<=1.17.1+Forge[37.0.0,37.0.60) not compatible with Java 17
+    MODDED_JAVA_16(JavaVersionConstraint.RULE_SUGGESTED, versionIs("1.17.1"), versionRange("16", "16.999")) {
+        @Override
+        protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
+                                               @Nullable JavaVersion javaVersion) {
+            if (version == null) return false;
+            VersionNumber forgePatchVersion = LibraryAnalyzer.analyze(version)
+                    .getVersion(LibraryAnalyzer.LibraryType.FORGE)
+                    .map(LibraryAnalyzer.LibraryType.FORGE::patchVersion)
+                    .map(VersionNumber::asVersion)
+                    .orElse(null);
+            return forgePatchVersion != null && forgePatchVersion.compareTo(VersionNumber.asVersion("37.0.60")) < 0;
+        }
+    },
     // Minecraft>=1.13 requires Java 8
     VANILLA_JAVA_8(JavaVersionConstraint.RULE_MANDATORY, versionRange("1.13", JavaVersionConstraint.MAX), versionRange("1.8", JavaVersionConstraint.MAX)),
     // Minecraft>=1.7.10+Forge accepts Java 8
@@ -113,7 +127,53 @@ public enum JavaVersionConstraint {
         public boolean checkJava(VersionNumber gameVersionNumber, Version version, JavaVersion javaVersion) {
             return javaVersion.getArchitecture().isX86();
         }
-    };
+    },
+    // Minecraft 1.16+Forge with crash because JDK-8273826
+    MODLAUNCHER_8(JavaVersionConstraint.RULE_SUGGESTED, versionRange("1.16.3", "1.17.1"), versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX)) {
+        @Override
+        protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
+                                               @Nullable JavaVersion javaVersion) {
+            if (version == null || javaVersion == null) return false;
+            VersionNumber forgePatchVersion = LibraryAnalyzer.analyze(version)
+                    .getVersion(LibraryAnalyzer.LibraryType.FORGE)
+                    .map(LibraryAnalyzer.LibraryType.FORGE::patchVersion)
+                    .map(VersionNumber::asVersion)
+                    .orElse(null);
+            if (forgePatchVersion == null) {
+                return false;
+            }
+            switch (gameVersionNumber.toString()) {
+                case "1.16.3":
+                    return forgePatchVersion.compareTo(VersionNumber.asVersion("34.1.27")) >= 0;
+                case "1.16.4":
+                    return true;
+                case "1.16.5":
+                    return forgePatchVersion.compareTo(VersionNumber.asVersion("36.2.23")) <= 0;
+                case "1.17.1":
+                    return versionRange("37.0.60", "37.0.75").contains(forgePatchVersion);
+                default:
+                    return false;
+            }
+        }
+
+        @Override
+        public boolean checkJava(VersionNumber gameVersionNumber, Version version, JavaVersion javaVersion) {
+            int parsedJavaVersion = javaVersion.getParsedVersion();
+            if (parsedJavaVersion > 17) {
+                return false;
+            } else if (parsedJavaVersion == 8) {
+                return javaVersion.getVersionNumber().compareTo(VersionNumber.asVersion("1.8.0_321")) < 0;
+            } else if (parsedJavaVersion == 11) {
+                return javaVersion.getVersionNumber().compareTo(VersionNumber.asVersion("11.0.14")) < 0;
+            } else if (parsedJavaVersion == 15) {
+                return javaVersion.getVersionNumber().compareTo(VersionNumber.asVersion("15.0.6")) < 0;
+            } else if (parsedJavaVersion == 17) {
+                return javaVersion.getVersionNumber().compareTo(VersionNumber.asVersion("17.0.2")) < 0;
+            } else {
+                return true;
+            }
+        }
+    };;
 
     private final int type;
     private final Range<VersionNumber> gameVersionRange;
@@ -225,6 +285,10 @@ public enum JavaVersionConstraint {
 
     private static Range<VersionNumber> versionRange(String fromInclusive, String toExclusive) {
         return Range.between(VersionNumber.asVersion(fromInclusive), VersionNumber.asVersion(toExclusive));
+    }
+
+    static Range<VersionNumber> versionIs(String version) {
+        return Range.is(VersionNumber.asVersion(version));
     }
 
     public static class VersionRanges {
