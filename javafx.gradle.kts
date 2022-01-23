@@ -52,7 +52,7 @@ val jfxInClasspath =
 if (!jfxInClasspath && JavaVersion.current() >= JavaVersion.VERSION_11) {
     val os = System.getProperty("os.name").toLowerCase().let { osName ->
         when {
-            osName.contains("win") -> "win"
+            osName.contains("win") -> "windows"
             osName.contains("mac") -> "osx"
             osName.contains("linux") || osName.contains("unix") -> "linux"
             else -> null
@@ -67,7 +67,7 @@ if (!jfxInClasspath && JavaVersion.current() >= JavaVersion.VERSION_11) {
     }
 
     if (os != null && arch != null) {
-        val platform = jfxPlatforms.find { it.name == "$os-arch" }
+        val platform = jfxPlatforms.find { it.name == "$os-$arch" }
         if (platform != null) {
             val groupId = platform.groupId
             val version = platform.version
