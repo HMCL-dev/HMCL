@@ -2,10 +2,6 @@ plugins {
     id("checkstyle")
 }
 
-apply {
-    from("javafx.gradle.kts")
-}
-
 group = "org.jackhuang"
 version = "3.0"
 
@@ -93,6 +89,10 @@ tasks.create("checkTranslations") {
             throw GradleException("Part of the translation is missing")
         }
     }
+}
+
+apply {
+    from("javafx.gradle.kts")
 }
 
 defaultTasks("clean", "build")
