@@ -26,6 +26,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.Lang;
@@ -55,7 +56,7 @@ public final class MessageDialogPane extends StackPane {
     }
 
     @FXML
-    private Label content;
+    private StackPane content;
     @FXML
     private Label graphic;
     @FXML
@@ -68,7 +69,7 @@ public final class MessageDialogPane extends StackPane {
     public MessageDialogPane(@NotNull String text, @Nullable String title, @NotNull MessageType type) {
         FXUtils.loadFXML(this, "/assets/fxml/message-dialog.fxml");
 
-        content.setText(text);
+        content.getChildren().setAll(FXUtils.segmentToTextFlow(text, Controllers::onHyperlinkAction));
 
         if (title != null)
             this.title.setText(title);
