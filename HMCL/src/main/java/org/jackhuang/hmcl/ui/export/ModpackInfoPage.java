@@ -29,7 +29,6 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -43,6 +42,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
@@ -96,8 +96,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         launchArguments.set(versionSetting.getMinecraftArgs());
         javaArguments.set(versionSetting.getJavaArgs());
 
-        List<File> launcherJar = Launcher.getCurrentJarFiles();
-        canIncludeLauncher = launcherJar != null;
+        canIncludeLauncher = JarUtils.thisJar().isPresent();
 
         next.set(e -> onNext());
     }
