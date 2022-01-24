@@ -31,19 +31,14 @@ import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.net.*;
 import java.nio.file.Paths;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -156,35 +151,6 @@ public final class Launcher extends Application {
             Controllers.shutdown();
             Lang.executeDelayed(OperatingSystem::forceGC, TimeUnit.SECONDS, 5, true);
         });
-    }
-
-    public static List<File> getCurrentJarFiles() {
-        List<File> result = new LinkedList<>();
-        if (Launcher.class.getClassLoader() instanceof URLClassLoader) {
-            URL[] urls = ((URLClassLoader) Launcher.class.getClassLoader()).getURLs();
-            for (URL u : urls)
-                try {
-                    File f = new File(u.toURI());
-                    if (f.isFile() && (f.getName().endsWith(".exe") || f.getName().endsWith(".jar")))
-                        result.add(f);
-                } catch (URISyntaxException e) {
-                    return null;
-                }
-        } else {
-            try {
-                File jarFile = new File(URLDecoder.decode(Launcher.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8"));
-                String ext = FileUtils.getExtension(jarFile);
-                if ("jar".equals(ext) || "exe".equals(ext))
-                    result.add(jarFile);
-            } catch (UnsupportedEncodingException e) {
-                LOG.log(Level.WARNING, "Failed to decode jar path", e);
-                return null;
-            }
-        }
-        if (result.isEmpty())
-            return null;
-        else
-            return result;
     }
 
     public static final CrashReporter CRASH_REPORTER = new CrashReporter(true);
