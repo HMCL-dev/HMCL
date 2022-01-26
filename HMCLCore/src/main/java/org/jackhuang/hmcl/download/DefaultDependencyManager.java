@@ -34,6 +34,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Note: This class has no state.
@@ -103,21 +105,36 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             Version original = repository.getVersion(version.getId());
             Version resolved = original.resolvePreservingPatches(repository);
 
-            // OptiFine
-            String optifineVersion = resolved.getPatches().stream()
-                    .filter(patch -> "optifine".equals(patch.getId()))
-                    .findAny()
-                    .filter(optifine -> optifine.getLibraries().stream()
-                            .anyMatch(library -> GameLibrariesTask.shouldDownloadLibrary(repository, version, library, integrityCheck)))
-                    .map(Version::getVersion)
-                    .orElse(null);
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved);
+            for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
+                if (!analyzer.has(type))
+                    continue;
 
-            if (optifineVersion != null) {
-                Library installer = new Library(new Artifact("optifine", "OptiFine", gameVersion + "_" + optifineVersion, "installer"));
-                if (GameLibrariesTask.shouldDownloadLibrary(repository, original, installer, integrityCheck)) {
-                    tasks.add(installLibraryAsync(gameVersion, original, "optifine", optifineVersion));
-                } else {
-                    tasks.add(OptiFineInstallTask.install(this, original, repository.getLibraryFile(version, installer).toPath()));
+                if (type == LibraryAnalyzer.LibraryType.OPTIFINE) {
+                    String optifinePatchVersion = analyzer.getVersion(type)
+                            .map(optifineVersion -> {
+                                Matcher matcher = Pattern.compile("^([0-9.]+)_(?<optifine>HD_.+)$").matcher(optifineVersion);
+                                return matcher.find() ? matcher.group("optifine") : optifineVersion;
+                            })
+                            .orElseGet(() -> resolved.getPatches().stream()
+                                    .filter(patch -> "optifine".equals(patch.getId()))
+                                    .findAny()
+                                    .map(Version::getVersion)
+                                    .orElse(null));
+
+                    boolean needsReInstallation = version.getLibraries().stream()
+                            .anyMatch(library -> !library.hasDownloadURL()
+                                    && "optifine".equals(library.getGroupId())
+                                    && GameLibrariesTask.shouldDownloadLibrary(repository, version, library, integrityCheck));
+
+                    if (needsReInstallation) {
+                        Library installer = new Library(new Artifact("optifine", "OptiFine", gameVersion + "_" + optifinePatchVersion, "installer"));
+                        if (GameLibrariesTask.shouldDownloadLibrary(repository, version, installer, integrityCheck)) {
+                            tasks.add(installLibraryAsync(gameVersion, original, "optifine", optifinePatchVersion));
+                        } else {
+                            tasks.add(OptiFineInstallTask.install(this, original, repository.getLibraryFile(version, installer).toPath()));
+                        }
+                    }
                 }
             }
 
