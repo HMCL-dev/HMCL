@@ -551,7 +551,7 @@ public final class LauncherHelper {
                 }
             }
 
-            if (!future.isDone()) {
+            if (!suggested && !future.isDone()) {
                 future.complete(javaVersion);
             }
 
