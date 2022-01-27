@@ -79,6 +79,9 @@ public final class CrashReportAnalyzer {
         // Fabric may have breaking changes.
         // https://github.com/FabricMC/fabric-loader/tree/master/src/main/legacyJava deprecated classes may be removed in the future.
         FABRIC_VERSION_0_12(Pattern.compile("java\\.lang\\.NoClassDefFoundError: org/spongepowered/asm/mixin/transformer/FabricMixinTransformerProxy")),
+        // Minecraft 1.16+Forge with crash because JDK-8273826
+        // https://github.com/McModLauncher/modlauncher/issues/91
+        MODLAUNCHER_8(Pattern.compile("java\\.lang\\.NoSuchMethodError: ('void sun\\.security\\.util\\.ManifestEntryVerifier\\.<init>\\(java\\.util\\.jar\\.Manifest\\)'|sun\\.security\\.util\\.ManifestEntryVerifier\\.<init>\\(Ljava/util/jar/Manifest;\\)V)")),
         // Manually triggerd debug crash
         DEBUG_CRASH(Pattern.compile("Manually triggered debug crash")),
         CONFIG(Pattern.compile("Failed loading config file (?<file>.*?) of type SERVER for modid (?<id>.*)"), "id", "file"),
