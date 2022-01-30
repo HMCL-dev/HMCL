@@ -1,68 +1,78 @@
-name: Bug 反馈
-description: 反馈一个 Bug。为了提高反馈效率，请优先在开黑啦或者或 Discord 频道中反馈。
+name: Bug Feedback
+description: |
+  反馈一个 Bug。为了提高反馈效率，请优先在开黑啦或者或 Discord 频道中反馈。若确认是 HMCL 问题，请发布 issue。
+  Report a bug. In order to improve the efficiency of feedback, please give priority to feedback in the Kaiheila or Discord channel. If it is confirmed to be an HMCL issue, please post an issue. 
 body:
   - type: markdown
     attributes:
       value: |
         提交前请确保你的启动器版本是**最新的开发版**，可以在启动器设置中更换更新通道至开发版获取更新。
-
+    
         我们发现，对于不经常检查邮箱的人来说，GitHub Issues 的反馈效率太低，时隔几个小时甚至一天的情况很多。
         为了改善反馈效率，并将积极为 HMCL 提供问题反馈和建议的人聚集起来，我们希望在这里反馈的人可以在 [开黑啦频道](https://kaihei.co/Kx7n3t)
         或 [Discord 频道](https://discord.gg/jVvC7HfM6U)中反馈信息，**而不在 GitHub Issues 中反馈问题**。
 
         如果你希望在 QQ 群中反馈问题，请[赞助 HMCL](https://afdian.net/@huanghongxun) 后申请加入群聊，也请将下面的信息表填好直接发在群中，加快我们的沟通速度。
+        
+        Before submitting, please make sure that your launcher version is the latest development version. You can change the update channel to the development version in the launcher settings to get the update.
+        
+        We found that GitHub Issues feedback was too inefficient for people who didn't check their mailboxes frequently, often within hours or even a day.
+         In order to improve the feedback efficiency and bring together people who actively provide feedback and suggestions for HMCL, we hope that those who give feedback here can open a black channel on [Kaiheila](https://kaihei.co/Kx7n3t)
+         or [Discord](https://discord.gg/jVvC7HfM6U) for feedback, **not in GitHub Issues**.
+
+         If you want to give feedback in the QQ group, please [Sponsor HMCL](https://afdian.net/@huanghongxun) and apply to join the group chat, and please fill out the following information form and send it directly to the group to speed up our efforts speed of communication. 
   - type: input
     id: hmcl-version
     attributes:
-      label: 启动器版本
-      description: 请输入您所使用的的 HMCL 启动器版本。
-      placeholder: 例如：3.3.188
+      label: 启动器版本 Launcher Version
+      description: 请输入您所使用的的 HMCL 启动器版本。 Please enter the HMCL launcher version you are using. 
+      placeholder: e.g. 3.5.2.218
     validations:
       required: true
   - type: input
     id: platform
     attributes:
-      label: 平台
-      description: 请输入您遇到 BUG 的平台。
-      placeholder: 例如：Windows 11
+      label: 平台 Platform 
+      description: 请输入您遇到 BUG 的平台。 Please enter the platform on which you encountered the bug. 
+      placeholder: e.g. Windows 11
     validations:
       required: true
   - type: input
     id: java-version
     attributes:
       label: Java
-      description: 请输入您所使用的 Java 的名称与版本。
-      placeholder: 例如：LibericaJDK Full JDK 17.0.1
+      description: 请输入您所使用的 Java 的名称与版本。 Please enter the name and version of Java you are using. 
+      placeholder: e.g. LibericaJDK Full JDK 17.0.1
   - type: input
     id: game-version
     attributes:
-      label: 游戏版本
-      description: 如果您是在启动通过 HMCL 启动器自动下载的游戏时遇到了问题，请输入您所启动的游戏版本。
-      placeholder: 例如：1.17.1
+      label: 游戏版本 Game Version
+      description: 如果您是在启动通过 HMCL 启动器自动下载的游戏时遇到了问题，请输入您所启动的游戏版本。If you are having trouble launching a game that was automatically downloaded through the HMCL launcher, please enter the version of the game you are launching.
+      placeholder: e.g. 1.17.1 
   - type: input
     id: game-modify
     attributes:
-      label: 对游戏所做的修改
-      description: 如果您为游戏安装了 OptiFine、Forge，或者是其他的 mod，请将您所做的修改填入下方。
-      placeholder: 例如：OptiFine HD_U_G9, Rift
+      label: 对游戏所做的修改 Modifications Made to the Game 
+      description: 如果您为游戏安装了 OptiFine、Forge，或者是其他的 mod，请将您所做的修改填入下方。 If you have OptiFine, Forge, or other mods installed for the game, please enter your modifications below.
+      placeholder: e.g. OptiFine HD_U_G9, Rift
   - type: textarea
     id: game-crash-report
     attributes:
-      label: 游戏崩溃报告
-      description: 如果有游戏崩溃报告的话，请填入（或将文件拖入）下方。
+      label: 游戏崩溃报告 Game Crash Report
+      description: 如果有游戏崩溃报告的话，请填入（或将文件拖入）下方。 If there is a game crash report, please fill in (or drag the file into) below.
   - type: textarea
     id: hmcl-crash-report
     attributes:
-      label: 启动器崩溃报告
-      description: 如果有启动器崩溃报告的话，请填入（或将文件拖入）下方。
+      label: 启动器崩溃报告 Launcher Crash Report
+      description: 如果有启动器崩溃报告的话，请填入（或将文件拖入）下方。 If there is a launcher crash report, please fill it in (or drag the file in) below.
   - type: textarea
     id: hmcl-logs
     attributes:
-      label: 启动器日志文件
-      description: 遇到问题后，请在启动器的【设置】>【通用】>【调试】一栏中点击“导出启动器日志”，并将导出的日志拖到下方的输入栏中。
+      label: 启动器日志文件 Launcher Log File
+      description: 遇到问题后，请在启动器的【设置】>【通用】>【调试】一栏中点击“导出启动器日志”，并将导出的日志拖到下方的输入栏中。 After encountering a problem, please click "Export Launcher Log" in the [Settings] > [General] > [Debug] column of the launcher, and drag the exported log to the input field below.
   - type: textarea
     id: bug-report
     attributes:
-      label: 问题描述
-      description: 请尽可能地详细描述问题，特别是您是怎么遇到这个 BUG 的。
+      label: 问题描述 Problem Description
+      description: 请尽可能地详细描述问题，特别是您是怎么遇到这个 BUG 的。 Please describe the problem in as much detail as possible, especially how you encountered this bug.
 
