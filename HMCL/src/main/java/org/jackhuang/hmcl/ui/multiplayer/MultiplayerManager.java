@@ -60,6 +60,7 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  * Cato Management.
  */
 public final class MultiplayerManager {
+    static final String CATO_VERSION = "test";
     private static final String CATO_DOWNLOAD_URL = "https://gitcode.net/to/cato/-/raw/master/client/";
     private static final String CATO_HASH_URL = CATO_DOWNLOAD_URL + "cato-all-files.sha1";
     private static final String CATO_PATH = getCatoPath();

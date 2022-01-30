@@ -278,7 +278,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                 HBox.setHgrow(placeholder, Priority.ALWAYS);
 
                 pane.getChildren().setAll(
-                        new Label("Based on Cato"),
+                        new Label("cato " + MultiplayerManager.CATO_VERSION),
                         aboutLink,
                         placeholder,
                         FXUtils.segmentToTextFlow(i18n("multiplayer.powered_by"), Controllers::onHyperlinkAction));
