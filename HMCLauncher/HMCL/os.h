@@ -24,6 +24,4 @@ bool MyCreateProcess(const std::wstring &command, const std::wstring &workdir);
 // Check if file lpPath exists.
 bool FindFirstFileExists(LPCWSTR lpPath, DWORD dwFilter);
 
-bool GetArch(bool &is64Bit);
-
 bool MyGetFileVersionInfo(const std::wstring &filePath, Version &version);
