@@ -100,6 +100,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   RawLaunchJVM(L"javaw", workdir, exeName);
 
   MessageBox(NULL, ERROR_PROMPT, L"Error", MB_ICONERROR | MB_OK);
-  ShellExecute(0, 0, L"https://java.com/", 0, 0, SW_SHOW);
+  ShellExecute(0, 0, L"https://www.microsoft.com/openjdk", 0, 0, SW_SHOW);
   return 1;
 }
