@@ -71,35 +71,6 @@ bool FindFirstFileExists(LPCWSTR lpPath, DWORD dwFilter) {
   return ret;
 }
 
-bool GetArch(bool &is64Bit) {
-#if _WIN64
-  is64Bit = true;
-  return true;
-#elif _WIN32
-  typedef BOOL(WINAPI * LPFN_ISWOW64PROCESS)(HANDLE, PBOOL);
-
-  BOOL isWow64 = FALSE;
-
-  // IsWow64Process is not available on all supported versions of Windows.
-  // Use GetModuleHandle to get a handle to the DLL that contains the function
-  // and GetProcAddress to get a pointer to the function if available.
-
-  LPFN_ISWOW64PROCESS fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(
-      GetModuleHandle(TEXT("kernel32")), "IsWow64Process");
-
-  if (fnIsWow64Process) {
-    if (!fnIsWow64Process(GetCurrentProcess(), &isWow64)) return false;
-
-    is64Bit = isWow64;
-    return true;
-  } else  // IsWow64Process is not supported, fail to detect.
-    return false;
-
-#else
-#error _WIN64 and _WIN32 are both undefined.
-#endif
-}
-
 bool MyGetFileVersionInfo(const std::wstring &filePath, Version &version) {
   DWORD verHandle = 0;
   UINT size = 0;

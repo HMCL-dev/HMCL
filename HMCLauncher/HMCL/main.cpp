@@ -48,11 +48,14 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   // TODO: check whether the bundled JRE is valid.
   // First try the Java packaged together.
-  bool is64Bit = false;
-  GetArch(is64Bit);  // if failed to determine architecture of operating system,
-                     // consider 32-bit.
+  bool isX64 = false;
 
-  if (is64Bit) {
+  SYSTEM_INFO systemInfo;
+  GetNativeSystemInfo(&systemInfo);
+
+  isX64 = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
+
+  if (isX64) {
     RawLaunchJVM(L"jre-x64\\bin\\javaw.exe", workdir, exeName);
   } else {
     RawLaunchJVM(L"jre-x86\\bin\\javaw.exe", workdir, exeName);
