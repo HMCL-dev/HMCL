@@ -46,14 +46,12 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     exeName = exeName.substr(last_slash + 1);
   }
 
-  // TODO: check whether the bundled JRE is valid.
-  // First try the Java packaged together.
-  bool isX64 = false;
-
   SYSTEM_INFO systemInfo;
   GetNativeSystemInfo(&systemInfo);
 
-  isX64 = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
+  // TODO: check whether the bundled JRE is valid.
+  // First try the Java packaged together.
+  bool isX64 = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
 
   if (isX64) {
     RawLaunchJVM(L"jre-x64\\bin\\javaw.exe", workdir, exeName);
@@ -100,6 +98,28 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   // Try java in PATH
   RawLaunchJVM(L"javaw", workdir, exeName);
+
+  if (isX64) {
+    OSVERSIONINFOEX osvi;
+    DWORDLONG dwlConditionMask = 0;
+    int op = VER_GREATER_EQUAL;
+
+    // Initialize the OSVERSIONINFOEX structure.
+    ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+    osvi.dwMajorVersion = 6;
+    osvi.dwMinorVersion = 1;
+
+    // Initialize the condition mask.
+    VER_SET_CONDITION(dwlConditionMask, VER_MAJORVERSION, op);
+    VER_SET_CONDITION(dwlConditionMask, VER_MINORVERSION, op);
+
+    // Try downloading Java on Windows 7 or later
+    if (VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask)) {
+        // TODO
+    }
+  }
+
 
   MessageBox(NULL, ERROR_PROMPT, L"Error", MB_ICONERROR | MB_OK);
   ShellExecute(0, 0, L"https://www.microsoft.com/openjdk", 0, 0, SW_SHOW);
