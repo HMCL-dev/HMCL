@@ -28,7 +28,6 @@ buildscript {
 }
 
 plugins {
-    application
     id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
@@ -47,10 +46,6 @@ val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 val versionType = System.getenv("VERSION_TYPE") ?: "nightly"
 
 version = "$versionRoot.$buildNumber"
-
-application {
-    mainClass.set("org.jackhuang.hmcl.Main")
-}
 
 dependencies {
     implementation(project(":HMCLCore"))
@@ -147,7 +142,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
     manifest {
         attributes(
             "Created-By" to "Copyright(c) 2013-2021 huangyuhui.",
-            "Main-Class" to application.mainClass.get(),
+            "Main-Class" to "org.jackhuang.hmcl.Main",
             "Multi-Release" to "true",
             "Implementation-Version" to project.version,
             "Microsoft-Auth-Id" to microsoftAuthId,
@@ -185,8 +180,6 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
     }
 }
 
-
-
 fun createExecutable(suffix: String, header: String) {
     val output = File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + suffix)
 
@@ -221,6 +214,11 @@ tasks.processResources {
         from(sourceSets["java11"].output)
     }
     dependsOn(tasks["java11Classes"])
+
+    into("assets") {
+        from(project.buildDir.resolve("openjfx-dependencies.json"))
+    }
+    dependsOn(rootProject.tasks["generateOpenJFXDependencies"])
 }
 
 val packFile = File(jarPath.parentFile, jarPath.nameWithoutExtension + ".pack")
@@ -270,4 +268,13 @@ val makeExecutables = tasks.create("makeExecutables") {
 
 tasks.build {
     dependsOn(makePackXz, makePackGz, makeExecutables)
+}
+
+tasks.create<JavaExec>("run") {
+    dependsOn(tasks.jar)
+
+    group = "application"
+
+    classpath = files(jarPath)
+    workingDir = rootProject.rootDir
 }

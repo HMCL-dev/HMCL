@@ -347,12 +347,27 @@ public final class LauncherHelper {
                     JavaVersionConstraint.VersionRanges range = JavaVersionConstraint.findSuitableJavaVersionRange(gameVersion, version);
                     GameJavaVersion targetJavaVersion;
 
-                    if (range.getMandatory().contains(VersionNumber.asVersion("16"))) {
+                    if (range.getMandatory().contains(VersionNumber.asVersion("17.0.1"))) {
+                        targetJavaVersion = GameJavaVersion.JAVA_17;
+                    } else if (range.getMandatory().contains(VersionNumber.asVersion("16.0.1"))) {
                         targetJavaVersion = GameJavaVersion.JAVA_16;
-                    } else if (range.getMandatory().contains(VersionNumber.asVersion("1.8.0_51"))) {
-                        targetJavaVersion = GameJavaVersion.JAVA_8;
                     } else {
-                        targetJavaVersion = null;
+                        String java8Version;
+
+                        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                            java8Version = "1.8.0_51";
+                        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+                            java8Version = "1.8.0_202";
+                        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                            java8Version = "1.8.0_74";
+                        } else {
+                            java8Version = null;
+                        }
+
+                        if (java8Version != null && range.getMandatory().contains(VersionNumber.asVersion(java8Version)))
+                            targetJavaVersion = GameJavaVersion.JAVA_8;
+                        else
+                            targetJavaVersion = null;
                     }
 
                     if (targetJavaVersion != null) {
@@ -493,8 +508,14 @@ public final class LauncherHelper {
                     case MODDED_JAVA_8:
                         Controllers.dialog(i18n("launch.advice.newer_java"), i18n("message.warning"), MessageType.WARNING, continueAction);
                         break;
+                    case MODDED_JAVA_16:
+                        Controllers.dialog(i18n("launch.advice.forge37_0_60"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                        break;
                     case VANILLA_JAVA_8_51:
                         Controllers.dialog(i18n("launch.advice.java8_51_1_13"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                        break;
+                    case MODLAUNCHER_8:
+                        Controllers.dialog(i18n("launch.advice.modlauncher8"), i18n("message.warning"), MessageType.WARNING, continueAction);
                         break;
                 }
             }
@@ -530,7 +551,7 @@ public final class LauncherHelper {
                 }
             }
 
-            if (!future.isDone()) {
+            if (!suggested && !future.isDone()) {
                 future.complete(javaVersion);
             }
 

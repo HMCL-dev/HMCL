@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.io;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,29 +33,21 @@ public final class JarUtils {
     private JarUtils() {
     }
 
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<Path> THIS_JAR =
+            Optional.ofNullable(JarUtils.class.getProtectionDomain().getCodeSource())
+                    .map(CodeSource::getLocation)
+                    .map(url -> {
+                        try {
+                            return Paths.get(url.toURI());
+                        } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException e) {
+                            return null;
+                        }
+                    })
+                    .filter(Files::isRegularFile);
+
     public static Optional<Path> thisJar() {
-        CodeSource codeSource = JarUtils.class.getProtectionDomain().getCodeSource();
-        if (codeSource == null) {
-            return Optional.empty();
-        }
-
-        URL url = codeSource.getLocation();
-        if (url == null) {
-            return Optional.empty();
-        }
-
-        Path path;
-        try {
-            path = Paths.get(url.toURI());
-        } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException e) {
-            return Optional.empty();
-        }
-
-        if (!Files.isRegularFile(path)) {
-            return Optional.empty();
-        }
-
-        return Optional.of(path);
+        return THIS_JAR;
     }
 
     public static Optional<Manifest> getManifest(Path jar) {

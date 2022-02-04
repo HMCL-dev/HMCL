@@ -116,6 +116,7 @@ public class JavaDownloadTask extends Task<Void> {
                 Files.createDirectories(dest);
             } else if (entry.getValue() instanceof RemoteFiles.RemoteLink) {
                 RemoteFiles.RemoteLink link = ((RemoteFiles.RemoteLink) entry.getValue());
+                Files.deleteIfExists(dest);
                 Files.createSymbolicLink(dest, Paths.get(link.getTarget()));
             }
         }

@@ -60,8 +60,8 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  * Cato Management.
  */
 public final class MultiplayerManager {
-    static final String CATO_VERSION = "1.2.0-202112171527";
-    private static final String CATO_DOWNLOAD_URL = "https://gitcode.net/huanghongxun1/ioi_bin/-/raw/3.5.3/client/";
+    static final String CATO_VERSION = "1.2.2";
+    private static final String CATO_DOWNLOAD_URL = "https://gitcode.net/to/cato/-/raw/master/client/";
     private static final String CATO_HASH_URL = CATO_DOWNLOAD_URL + "cato-all-files.sha1";
     private static final String CATO_PATH = getCatoPath();
     public static final int CATO_AGREEMENT_VERSION = 2;
@@ -133,7 +133,9 @@ public final class MultiplayerManager {
                 throw e;
             }
 
-            String[] commands = new String[]{exe.toString(), "-client.token", StringUtils.isBlank(token) ? "new" : token};
+            String[] commands = StringUtils.isBlank(token)
+                    ? new String[]{exe.toString()}
+                    : new String[]{exe.toString(), "-auth.token", token};
             Process process = new ProcessBuilder()
                     .command(commands)
                     .start();

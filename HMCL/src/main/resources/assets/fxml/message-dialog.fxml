@@ -17,8 +17,7 @@
                 </styleClass>
                 <Label fx:id="title" text="%message.info" />
             </StackPane>
-            <StackPane styleClass="jfx-layout-body">
-                <Label fx:id="content" wrapText="true" />
+            <StackPane fx:id="content" styleClass="jfx-layout-body">
             </StackPane>
             <HBox fx:id="actions" styleClass="jfx-layout-actions" />
         </VBox>

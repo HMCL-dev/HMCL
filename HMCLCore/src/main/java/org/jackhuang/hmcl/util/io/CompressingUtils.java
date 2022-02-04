@@ -227,7 +227,7 @@ public final class CompressingUtils {
     public static Optional<String> readTextZipEntryQuietly(File file, String name) {
         try {
             return Optional.of(readTextZipEntry(file, name));
-        } catch (IOException e) {
+        } catch (IOException | NullPointerException e) {
             return Optional.empty();
         }
     }
@@ -242,7 +242,7 @@ public final class CompressingUtils {
     public static Optional<String> readTextZipEntryQuietly(Path file, String name, Charset encoding) {
         try {
             return Optional.of(readTextZipEntry(file, name, encoding));
-        } catch (IOException e) {
+        } catch (IOException | NullPointerException e) {
             return Optional.empty();
         }
     }
