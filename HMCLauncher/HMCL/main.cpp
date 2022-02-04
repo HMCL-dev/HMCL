@@ -57,9 +57,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   if (isX64) {
     RawLaunchJVM(L"jre-x64\\bin\\javaw.exe", workdir, exeName);
-  } else {
-    RawLaunchJVM(L"jre-x86\\bin\\javaw.exe", workdir, exeName);
   }
+  RawLaunchJVM(L"jre-x86\\bin\\javaw.exe", workdir, exeName);
 
   if (FindJava(path)) LaunchJVM(path + L"\\bin\\javaw.exe", workdir, exeName);
 
