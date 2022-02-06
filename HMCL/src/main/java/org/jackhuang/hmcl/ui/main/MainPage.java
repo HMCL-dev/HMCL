@@ -224,7 +224,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     public MainPage() {
-        if(!globalConfig().getSponsorshipStatus().getValue()){
+        if (!globalConfig().getSponsorshipStatus().getValue()){
             if (Metadata.isNightly()) {
                 announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint")));
             } else if (Metadata.isDev()) {

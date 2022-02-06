@@ -163,7 +163,7 @@ public class GlobalConfig implements Cloneable, Observable {
         this.sponsorshipStatus.set(sponsorshipStatus);
     }
 
-    public Property<Boolean> getSponsorshipStatus() {return sponsorshipStatus;}
+    public Property<Boolean> getSponsorshipStatus() { return sponsorshipStatus; }
 
     public static class Serializer implements JsonSerializer<GlobalConfig>, JsonDeserializer<GlobalConfig> {
         private static final Set<String> knownFields = new HashSet<>(Arrays.asList(
