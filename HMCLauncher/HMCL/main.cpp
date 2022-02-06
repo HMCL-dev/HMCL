@@ -31,6 +31,23 @@ void LaunchJVM(const std::wstring &javaPath, const std::wstring &workdir,
   }
 }
 
+void FindJavaInDirAndLaunchJVM(const std::wstring &baseDir, const std::wstring &workdir, const std::wstring &jarPath) {
+  std::wstring pattern = baseDir + L"*";
+
+  WIN32_FIND_DATA data;
+  HANDLE hFind = FindFirstFile(pattern.c_str(), &data);  // Search all subdirectory
+
+  if (hFind != INVALID_HANDLE_VALUE) {
+    do {
+      std::wstring javaw = baseDir + data.cFileName + std::wstring(L"\\bin\\javaw.exe");
+      if (FindFirstFileExists(javaw.c_str(), 0)) {
+        LaunchJVM(javaw, workdir, jarPath);
+      }
+    } while (FindNextFile(hFind, &data));
+    FindClose(hFind);
+  }
+}
+
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                       LPWSTR lpCmdLine, int nCmdShow) {
   std::wstring path, exeName;
@@ -60,41 +77,11 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   if (FindJava(path)) LaunchJVM(path + L"\\bin\\javaw.exe", workdir, exeName);
 
-  // Or we try to search Java in C:\Program Files.
-  {
-    WIN32_FIND_DATA data;
-    HANDLE hFind = FindFirstFile(L"C:\\Program Files\\Java\\*",
-                                 &data);  // Search all subdirectory
-
-    if (hFind != INVALID_HANDLE_VALUE) {
-      do {
-        std::wstring javaw = std::wstring(L"C:\\Program Files\\Java\\") +
-                             data.cFileName + std::wstring(L"\\bin\\javaw.exe");
-        if (FindFirstFileExists(javaw.c_str(), 0)) {
-          LaunchJVM(javaw, workdir, exeName);
-        }
-      } while (FindNextFile(hFind, &data));
-      FindClose(hFind);
-    }
-  }
+  // Or we try to search Java in C:\Program Files\Java.
+  FindJavaInDirAndLaunchJVM(L"C:\\Program Files\\Java\\", workdir, exeName);
 
   // Consider C:\Program Files (x86)\Java
-  {
-    WIN32_FIND_DATA data;
-    HANDLE hFind = FindFirstFile(L"C:\\Program Files (x86)\\Java\\*",
-                                 &data);  // Search all subdirectory
-
-    if (hFind != INVALID_HANDLE_VALUE) {
-      do {
-        std::wstring javaw = std::wstring(L"C:\\Program Files (x86)\\Java\\") +
-                             data.cFileName + L"\\bin\\javaw.exe";
-        if (FindFirstFileExists(javaw.c_str(), 0)) {
-          LaunchJVM(javaw, workdir, exeName);
-        }
-      } while (FindNextFile(hFind, &data));
-      FindClose(hFind);
-    }
-  }
+  FindJavaInDirAndLaunchJVM(L"C:\\Program Files (x86)\\Java\\", workdir, exeName);
 
   // Try java in PATH
   RawLaunchJVM(L"javaw", workdir, exeName);
