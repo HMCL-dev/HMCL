@@ -1,7 +1,6 @@
 name: Bug Feedback
-description: |
+description: 
   反馈一个 Bug。为了提高反馈效率，请优先在开黑啦或者或 Discord 频道中反馈。若确认是 HMCL 问题，请发布 issue。
-  Report a bug. In order to improve the efficiency of feedback, please give priority to feedback in the Kaiheila or Discord channel. If it is confirmed to be an HMCL issue, please post an issue. 
 body:
   - type: markdown
     attributes:
@@ -13,14 +12,6 @@ body:
         或 [Discord 频道](https://discord.gg/jVvC7HfM6U)中反馈信息，**而不在 GitHub Issues 中反馈问题**。
 
         如果你希望在 QQ 群中反馈问题，请[赞助 HMCL](https://afdian.net/@huanghongxun) 后申请加入群聊，也请将下面的信息表填好直接发在群中，加快我们的沟通速度。
-        
-        Before submitting, please make sure that your launcher version is the latest development version. You can change the update channel to the development version in the launcher settings to get the update.
-        
-        We found that GitHub Issues feedback was too inefficient for people who didn't check their mailboxes frequently, often within hours or even a day.
-         In order to improve the feedback efficiency and bring together people who actively provide feedback and suggestions for HMCL, we hope that those who give feedback here can open a black channel on [Kaiheila](https://kaihei.co/Kx7n3t)
-         or [Discord](https://discord.gg/jVvC7HfM6U) for feedback, **not in GitHub Issues**.
-
-         If you want to give feedback in the QQ group, please [Sponsor HMCL](https://afdian.net/@huanghongxun) and apply to join the group chat, and please fill out the following information form and send it directly to the group to speed up our efforts speed of communication. 
   - type: input
     id: hmcl-version
     attributes:
