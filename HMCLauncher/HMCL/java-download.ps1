@@ -3,7 +3,7 @@
 )
 
 $url = 'https://aka.ms/download-jdk/microsoft-jdk-17-windows-x64.zip'
-$chinese = (Get-WinSystemLocale).Name -eq 'zh-CN'
+$chinese = [System.Globalization.CultureInfo]::CurrentCulture.Name -eq 'zh-CN'
 
 [Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms")
 
@@ -26,16 +26,17 @@ $form = New-Object System.Windows.Forms.Form
 $form.AutoSize = $true
 $form.AutoSizeMode = [System.Windows.Forms.AutoSizeMode]::GrowAndShrink
 if ($chinese) {
-    $form.Text = '正在下载 Java。这需要一段时间，请耐心等待。'
+    $form.Text = '正在下载 Java 中'
 } else {
-    $form.Text = 'Downloading Java. Please wait patiently for the download to complete.'
+    $form.Text = 'Downloading Java'
 }
 
 $tip = New-Object System.Windows.Forms.Label
+$tip.AutoSize = $true
 if ($chinese) {
-    $tip.Text = '正在下载 Java 中'
+    $tip.Text = '正在下载 Java。这需要一段时间，请耐心等待。'
 } else {
-    $tip.Text = 'Downloading Java'
+    $tip.Text = 'Downloading Java. Please wait patiently for the download to complete.'
 }
 
 $layout = New-Object System.Windows.Forms.FlowLayoutPanel
@@ -48,6 +49,12 @@ $progressBar.Maximum = 100
 
 $label = New-Object System.Windows.Forms.Label
 $label.Anchor = [System.Windows.Forms.AnchorStyles]::Bottom
+
+if ($chinese) {
+    $label.Text = '准备下载'
+} else {
+    $label.Text = 'In preparation'
+}
 
 $box = New-Object System.Windows.Forms.FlowLayoutPanel
 $box.AutoSize = $true
@@ -96,6 +103,7 @@ $client.add_DownloadFileCompleted($downloadFileCompletedEventHandler)
 $client.DownloadFileAsync($url, $script:tempFile)
 
 $result = $form.ShowDialog()
+$client.CancelAsync()
 $form.Dispose()
 
 if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
@@ -107,7 +115,6 @@ if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
     }
 }
 
-$client.CancelAsync()
 if ([System.IO.File]::Exists($script:tempFile)) {
     try {
         [System.IO.File]::Delete($script:tempFile)
