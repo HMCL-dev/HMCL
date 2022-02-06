@@ -63,6 +63,7 @@ import java.util.Objects;
 import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -223,10 +224,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     public MainPage() {
-        if (Metadata.isNightly()) {
-            announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint")));
-        } else if (Metadata.isDev()) {
-            announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint")));
+        if(!globalConfig().getSponsorshipStatus().getValue()){
+            if (Metadata.isNightly()) {
+                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint")));
+            } else if (Metadata.isDev()) {
+                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint")));
+            }
         }
     }
 

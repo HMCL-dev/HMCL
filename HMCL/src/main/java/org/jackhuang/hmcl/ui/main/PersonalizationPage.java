@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import java.util.Arrays;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class PersonalizationPage extends StackPane {
@@ -87,6 +88,12 @@ public class PersonalizationPage extends StackPane {
             themeList.getContent().add(titleTransparentButton);
             titleTransparentButton.selectedProperty().bindBidirectional(config().titleTransparentProperty());
             titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
+        }
+        {
+            OptionToggleButton hideSponsorship = new OptionToggleButton();
+            themeList.getContent().add(hideSponsorship);
+            hideSponsorship.selectedProperty().bindBidirectional(globalConfig().getSponsorshipStatus());
+            hideSponsorship.setTitle(i18n("settings.launcher.hideSponsorship"));
         }
         content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
 

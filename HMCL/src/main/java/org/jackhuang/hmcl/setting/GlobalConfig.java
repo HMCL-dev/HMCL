@@ -74,6 +74,8 @@ public class GlobalConfig implements Cloneable, Observable {
 
     private IntegerProperty multiplayerAgreementVersion = new SimpleIntegerProperty(0);
 
+    private BooleanProperty sponsorshipStatus = new SimpleBooleanProperty();
+
     private final Map<String, Object> unknownFields = new HashMap<>();
 
     private transient ObservableHelper helper = new ObservableHelper(this);
@@ -149,11 +151,26 @@ public class GlobalConfig implements Cloneable, Observable {
         this.multiplayerToken.set(multiplayerToken);
     }
 
+    public boolean isSponsorshipStatus() {
+        return sponsorshipStatus.get();
+    }
+
+    public BooleanProperty sponsorshipStatusProperty() {
+        return sponsorshipStatus;
+    }
+
+    public void setSponsorshipStatus(boolean sponsorshipStatus) {
+        this.sponsorshipStatus.set(sponsorshipStatus);
+    }
+
+    public Property<Boolean> getSponsorshipStatus() {return sponsorshipStatus;}
+
     public static class Serializer implements JsonSerializer<GlobalConfig>, JsonDeserializer<GlobalConfig> {
         private static final Set<String> knownFields = new HashSet<>(Arrays.asList(
                 "agreementVersion",
                 "multiplayerToken",
-                "multiplayerAgreementVersion"
+                "multiplayerAgreementVersion",
+                "sponsorshipStatus"
         ));
 
         @Override
@@ -167,6 +184,7 @@ public class GlobalConfig implements Cloneable, Observable {
             jsonObject.add("multiplayerToken", context.serialize(src.getMultiplayerToken()));
             jsonObject.add("multiplayerRelay", context.serialize(src.isMultiplayerRelay()));
             jsonObject.add("multiplayerAgreementVersion", context.serialize(src.getMultiplayerAgreementVersion()));
+            jsonObject.add("sponsorshipStatus", context.serialize(src.isSponsorshipStatus()));
             for (Map.Entry<String, Object> entry : src.unknownFields.entrySet()) {
                 jsonObject.add(entry.getKey(), context.serialize(entry.getValue()));
             }
@@ -185,6 +203,7 @@ public class GlobalConfig implements Cloneable, Observable {
             config.setMultiplayerToken(Optional.ofNullable(obj.get("multiplayerToken")).map(JsonElement::getAsString).orElse(null));
             config.setMultiplayerRelay(Optional.ofNullable(obj.get("multiplayerRelay")).map(JsonElement::getAsBoolean).orElse(false));
             config.setMultiplayerAgreementVersion(Optional.ofNullable(obj.get("multiplayerAgreementVersion")).map(JsonElement::getAsInt).orElse(0));
+            config.setSponsorshipStatus(Optional.ofNullable(obj.get("sponsorshipStatus")).map(JsonElement::getAsBoolean).orElse(false));
 
             for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
                 if (!knownFields.contains(entry.getKey())) {
