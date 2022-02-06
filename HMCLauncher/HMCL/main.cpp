@@ -86,27 +86,46 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   // Try java in PATH
   RawLaunchJVM(L"javaw", workdir, exeName);
 
-  if (isX64) {
-    OSVERSIONINFOEX osvi;
-    DWORDLONG dwlConditionMask = 0;
-    int op = VER_GREATER_EQUAL;
-
-    // Initialize the OSVERSIONINFOEX structure.
-    ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    osvi.dwMajorVersion = 6;
-    osvi.dwMinorVersion = 1;
-
-    // Initialize the condition mask.
-    VER_SET_CONDITION(dwlConditionMask, VER_MAJORVERSION, op);
-    VER_SET_CONDITION(dwlConditionMask, VER_MINORVERSION, op);
-
-    // Try downloading Java on Windows 7 or later
-    if (VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask)) {
-        // TODO
+  std::wstring hmclJavaDir;
+  {
+    WCHAR buffer[MAX_PATH];
+    if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, buffer))
+        || SUCCEEDED(SHGetFolderPath(NULL, CSIDL_PROFILE, NULL, 0, buffer))) {
+        PathAppend(buffer, L".hmcl");
+        PathAppend(buffer, L"java");
+        if (isX64) {
+            PathAppend(buffer, L"windows-x86_64");
+        } else {
+            PathAppend(buffer, L"windows-x86");
+        }
+        PathAddBackslash(buffer);
+        hmclJavaDir = std::wstring(buffer);
     }
   }
 
+  if (!hmclJavaDir.empty()) {
+    FindJavaInDirAndLaunchJVM(hmclJavaDir, workdir, exeName);
+    if (isX64) {
+      OSVERSIONINFOEX osvi;
+      DWORDLONG dwlConditionMask = 0;
+      int op = VER_GREATER_EQUAL;
+
+      // Initialize the OSVERSIONINFOEX structure.
+      ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+      osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+      osvi.dwMajorVersion = 6;
+      osvi.dwMinorVersion = 1;
+
+      // Initialize the condition mask.
+      VER_SET_CONDITION(dwlConditionMask, VER_MAJORVERSION, op);
+      VER_SET_CONDITION(dwlConditionMask, VER_MINORVERSION, op);
+
+      // Try downloading Java on Windows 7 or later
+      if (VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask)) {
+        // TODO
+      }
+    }
+  }
 
   MessageBox(NULL, ERROR_PROMPT, L"Error", MB_ICONERROR | MB_OK);
   ShellExecute(0, 0, L"https://www.microsoft.com/openjdk", 0, 0, SW_SHOW);
