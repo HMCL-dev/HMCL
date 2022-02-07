@@ -67,14 +67,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     exeName = exeName.substr(last_slash + 1);
   }
 
-  bool useChinese;
-  {
-    LCID lcid = GetUserDefaultUILanguage();
-    WCHAR nameBuffer[LOCALE_NAME_MAX_LENGTH];
-    useChinese = (LCIDToLocaleName(lcid, nameBuffer, LOCALE_NAME_MAX_LENGTH, 0) != 0)
-            && (lstrcmp(nameBuffer, L"zh-CN") == 0);
-  }
-
+  bool useChinese = GetUserDefaultUILanguage() == 2052; // zh-CN
 
   OSVERSIONINFOEX osvi;
   DWORDLONG dwlConditionMask = 0;
