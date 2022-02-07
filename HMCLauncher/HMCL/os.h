@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <windows.h>
+#include <shlobj.h>
 #include "Version.h"
 
 const int MAX_KEY_LENGTH = 255;
@@ -25,3 +26,9 @@ bool MyCreateProcess(const std::wstring &command, const std::wstring &workdir);
 bool FindFirstFileExists(LPCWSTR lpPath, DWORD dwFilter);
 
 bool MyGetFileVersionInfo(const std::wstring &filePath, Version &version);
+
+HRESULT MySHGetFolderPath(int csidl, std::wstring &out);
+
+void MyPathAppend(std::wstring &filePath, const std::wstring &more);
+
+void MyPathAddBackslash(std::wstring &filePath);

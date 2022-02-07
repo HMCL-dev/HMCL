@@ -97,3 +97,30 @@ bool MyGetFileVersionInfo(const std::wstring &filePath, Version &version) {
                     (pFileInfo->dwFileVersionLS >> 0) & 0xFFFF};
   return true;
 }
+
+HRESULT MySHGetFolderPath(int csidl, std::wstring &out) {
+  out = std::wstring();
+  out.resize(MAX_PATH);
+
+  HRESULT res = SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, &out[0]);
+  if (SUCCEEDED(res)) {
+    out.resize(wcslen(&out[0]));
+  } else {
+    out.resize(0);
+  }
+  return res;
+}
+
+void MyPathAppend(std::wstring &filePath, const std::wstring &more) {
+  if (filePath.back() != L'\\') {
+    filePath += L'\\';
+  }
+
+  filePath += more;
+}
+
+void MyPathAddBackslash(std::wstring &filePath) {
+  if (filePath.back() != L'\\') {
+    filePath += L'\\';
+  }
+}
