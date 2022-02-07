@@ -97,7 +97,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   GetNativeSystemInfo(&systemInfo);
   // TODO: check whether the bundled JRE is valid.
   // First try the Java packaged together.
-  bool isX64 = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
+  bool isX64   = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
   bool isARM64 = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
 
   if (isARM64) {
@@ -141,9 +141,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     if (SUCCEEDED(MySHGetFolderPath(CSIDL_APPDATA, buffer)) || SUCCEEDED(MySHGetFolderPath(CSIDL_PROFILE, buffer))) {
       MyPathAppend(buffer, L".hmcl");
       MyPathAppend(buffer, L"java");
-      if (isARM64) {
-        MyPathAppend(buffer, L"windows-arm64");
-      } else if (isX64) {
+      if (isX64) {
         MyPathAppend(buffer, L"windows-x86_64");
       } else {
         MyPathAppend(buffer, L"windows-x86");
@@ -155,7 +153,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   if (!hmclJavaDir.empty()) {
     FindJavaInDirAndLaunchJVM(hmclJavaDir, workdir, exeName);
-    if (isX64 && isWin7OrLater) {
+    if (isWin7OrLater) {
       HRSRC scriptFileResource = FindResource(NULL, MAKEINTRESOURCE(ID_SCRIPT_DOWNLOAD_JAVA), RT_RCDATA);
       if (!scriptFileResource) goto error;
 
@@ -184,6 +182,12 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
       MyAppendPathToCommandLine(commandLineBuffer, tempScriptPath);
       commandLineBuffer += L" -JavaDir ";
       MyAppendPathToCommandLine(commandLineBuffer, hmclJavaDir);
+      commandLineBuffer += L" -Arch ";
+      if (isX64) {
+        commandLineBuffer += L"x86-64";
+      } else {
+        commandLineBuffer += L"x86";
+      }
 
       STARTUPINFO si;
       PROCESS_INFORMATION pi;
