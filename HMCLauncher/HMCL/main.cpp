@@ -88,18 +88,17 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   std::wstring hmclJavaDir;
   {
-    WCHAR buffer[MAX_PATH];
-    if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, buffer))
-        || SUCCEEDED(SHGetFolderPath(NULL, CSIDL_PROFILE, NULL, 0, buffer))) {
-        PathAppend(buffer, L".hmcl");
-        PathAppend(buffer, L"java");
+    std::wstring buffer;
+    if (SUCCEEDED(MySHGetFolderPath(CSIDL_APPDATA, buffer)) || SUCCEEDED(MySHGetFolderPath(CSIDL_PROFILE, buffer))) {
+        MyPathAppend(buffer, L".hmcl");
+        MyPathAppend(buffer, L"java");
         if (isX64) {
-            PathAppend(buffer, L"windows-x86_64");
+            MyPathAppend(buffer, L"windows-x86_64");
         } else {
-            PathAppend(buffer, L"windows-x86");
+            MyPathAppend(buffer, L"windows-x86");
         }
-        PathAddBackslash(buffer);
-        hmclJavaDir = std::wstring(buffer);
+        MyPathAddBackslash(buffer);
+        hmclJavaDir = buffer;
     }
   }
 
@@ -122,7 +121,12 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
       // Try downloading Java on Windows 7 or later
       if (VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask)) {
-        // TODO
+        HRSRC scriptFileResource = FindResource(NULL, MAKEINTRESOURCE(ID_SCRIPT_DOWNLOAD_JAVA), RT_RCDATA);
+        if (scriptFileResource) {
+            HGLOBAL scriptHandle = LoadResource(NULL, scriptFileResource);
+            DWORD dataSize = SizeofResource(NULL, scriptFileResource);
+            void *data = LockResource(scriptHandle);
+        }
       }
     }
   }
