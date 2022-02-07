@@ -102,7 +102,7 @@ HRESULT MySHGetFolderPath(int csidl, std::wstring &out) {
   out = std::wstring();
   out.resize(MAX_PATH);
 
-  HRESULT res = SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, &out[0]);
+  HRESULT res = SHGetFolderPath(NULL, csidl, NULL, 0, &out[0]);
   if (SUCCEEDED(res)) {
     out.resize(wcslen(&out[0]));
   } else {
