@@ -8,9 +8,9 @@ $chinese = [System.Globalization.CultureInfo]::CurrentCulture.Name -eq 'zh-CN'
 [Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms")
 
 $result = if ($chinese) {
-    [System.Windows.Forms.MessageBox]::Show('HMCL 需要 Java 运行时环境才能正常运行，是否自动下载安装 Java？', 'HMCL', [System.Windows.Forms.MessageBoxButtons]::YesNo)
+    [System.Windows.Forms.MessageBox]::Show("HMCL 需要 Java 运行时环境才能正常运行，是否自动下载安装 Java？", '未能在这台电脑上找到 Java', [System.Windows.Forms.MessageBoxButtons]::YesNo)
 } else {
-    [System.Windows.Forms.MessageBox]::Show('Running HMCL requires a Java runtime environment. Do you want to download and install Java automatically?', 'HMCL', [System.Windows.Forms.MessageBoxButtons]::YesNo)
+    [System.Windows.Forms.MessageBox]::Show("Running HMCL requires a Java runtime environment. `nDo you want to download and install Java automatically?", 'Java not found', [System.Windows.Forms.MessageBoxButtons]::YesNo)
 }
 
 if ($result -ne [System.Windows.Forms.DialogResult]::Yes) {
@@ -92,7 +92,18 @@ $form.Controls.Add($layout)
 [System.ComponentModel.AsyncCompletedEventHandler]$downloadFileCompletedEventHandler = {
     param($sender, [System.ComponentModel.AsyncCompletedEventArgs]$CompletedEventArgs)
     if (!$form.IsDisposed) {
-        $form.DialogResult = [System.Windows.Forms.DialogResult]::OK
+        if ($CompletedEventArgs.Cancelled) {
+            $form.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+        } elseif ($CompletedEventArgs.Error -ne $null) {
+            if ($chinese) {
+                [System.Windows.Forms.MessageBox]::Show($CompletedEventArgs.Error.Message, '下载失败', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Exclamation)
+            } else {
+                [System.Windows.Forms.MessageBox]::Show($CompletedEventArgs.Error.Message, 'Download failed', [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Exclamation)
+            }
+            $form.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+        } else {
+            $form.DialogResult = [System.Windows.Forms.DialogResult]::OK
+        }
     }
 }
 
