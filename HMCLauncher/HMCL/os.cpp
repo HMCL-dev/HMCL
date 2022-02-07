@@ -125,34 +125,38 @@ void MyPathAddBackslash(std::wstring &filePath) {
   }
 }
 
-LSTATUS MyGetTempPath(std::wstring &out) {
-  out = std::wstring();
+LSTATUS MyGetTempFile(const std::wstring &prefixString, const std::wstring &ext, std::wstring &out) {
   out.resize(MAX_PATH);
-
   DWORD res = GetTempPath(MAX_PATH, &out[0]);
   if (res == 0) {
     return GetLastError();
   }
+
   out.resize(res);
-  return ERROR_SUCCESS;
-}
 
-LSTATUS MyGetTempFileName(const std::wstring &pathName, const std::wstring &prefixString, std::wstring &out) {
-  out = std::wstring();
-  out.resize(MAX_PATH);
+  GUID guid;
+  CoCreateGuid(&guid);
 
-  if (GetTempFileName(pathName.c_str(), prefixString.c_str(), 0, &out[0]) == 0) {
-    out.resize(0);
-    return GetLastError();
+  WCHAR buffer[MAX_PATH];
+  int n = StringFromGUID2(guid, buffer, MAX_PATH);
+  if (n == 0) {
+      return CO_E_PATHTOOLONG;
   }
-  out.resize(wcslen(&out[0]));
+
+  MyPathAddBackslash(out);
+  out += prefixString;
+  out += buffer;
+  out += L'.';
+  out += ext;
+
   return ERROR_SUCCESS;
 }
 
 void MyAppendPathToCommandLine(std::wstring &commandLine, const std::wstring &path) {
   commandLine += L'"';
-  for (WCHAR ch : path) {
-    if (ch == L'\\') {
+  for (size_t i = 0; i < path.size(); i++) {
+    WCHAR ch = path[i];
+    if (ch == L'\\' && (i + 1 == path.size() || path[i + 1] == L'"')) {
       commandLine += L"\\\\";
     } else if (ch == L'"') {
       commandLine += L"\\\"";

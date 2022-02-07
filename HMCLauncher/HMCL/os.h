@@ -2,6 +2,7 @@
 #include <string>
 #include <windows.h>
 #include <shlobj.h>
+#include <Objbase.h>
 #include "Version.h"
 
 const int MAX_KEY_LENGTH = 255;
@@ -33,8 +34,6 @@ void MyPathAppend(std::wstring &filePath, const std::wstring &more);
 
 void MyPathAddBackslash(std::wstring &filePath);
 
-LSTATUS MyGetTempPath(std::wstring &out);
-
-LSTATUS MyGetTempFileName(const std::wstring &pathName, const std::wstring &prefixString, std::wstring &out);
+LSTATUS MyGetTempFile(const std::wstring &prefixString, const std::wstring &ext, std::wstring &out);
 
 void MyAppendPathToCommandLine(std::wstring &commandLine, const std::wstring &path);
