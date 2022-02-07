@@ -67,6 +67,15 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     exeName = exeName.substr(last_slash + 1);
   }
 
+  bool useChinese;
+  {
+    LCID lcid = GetUserDefaultUILanguage();
+    WCHAR nameBuffer[LOCALE_NAME_MAX_LENGTH];
+    useChinese = (LCIDToLocaleName(lcid, nameBuffer, LOCALE_NAME_MAX_LENGTH, 0) != 0)
+            && (lstrcmp(nameBuffer, L"zh-CN") == 0);
+  }
+
+
   OSVERSIONINFOEX osvi;
   DWORDLONG dwlConditionMask = 0;
   int op = VER_GREATER_EQUAL;
@@ -191,7 +200,16 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   }
 
 error:
-  MessageBox(NULL, ERROR_PROMPT, L"Error", MB_ICONERROR | MB_OK);
-  ShellExecute(0, 0, L"https://www.microsoft.com/openjdk", 0, 0, SW_SHOW);
+  LPCWSTR downloadLink = isWin7OrLater && (isX64 || isARM64) ? L"https://www.microsoft.com/openjdk" : L"https://java.com";
+
+  WCHAR errorPrompt[180];
+  {
+    LPCWSTR errorPromptFormat = useChinese ? ERROR_PROMPT_ZH : ERROR_PROMPT;
+    wsprintf(errorPrompt, errorPromptFormat, downloadLink);
+  }
+
+  if (IDOK == MessageBox(NULL, errorPrompt, L"Error", MB_ICONERROR | MB_OKCANCEL)) {
+    ShellExecute(0, 0, downloadLink, 0, 0, SW_SHOW);
+  }
   return 1;
 }
