@@ -11,6 +11,10 @@ _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
 _declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001;
 }
 
+LPCWSTR VENDOR_DIRS[] = {
+  L"Java", L"Microsoft", L"BellSoft", L"Zulu", L"Eclipse Foundation", L"AdoptOpenJDK", L"Semeru"
+};
+
 void RawLaunchJVM(const std::wstring &javaPath, const std::wstring &workdir,
                   const std::wstring &jarPath) {
   if (MyCreateProcess(
@@ -63,13 +67,33 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     exeName = exeName.substr(last_slash + 1);
   }
 
+  OSVERSIONINFOEX osvi;
+  DWORDLONG dwlConditionMask = 0;
+  int op = VER_GREATER_EQUAL;
+
+  // Initialize the OSVERSIONINFOEX structure.
+  ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+  osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+  osvi.dwMajorVersion = 6;
+  osvi.dwMinorVersion = 1;
+
+  // Initialize the condition mask.
+  VER_SET_CONDITION(dwlConditionMask, VER_MAJORVERSION, op);
+  VER_SET_CONDITION(dwlConditionMask, VER_MINORVERSION, op);
+
+  // Try downloading Java on Windows 7 or later
+  bool isWin7OrLater = VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+
   SYSTEM_INFO systemInfo;
   GetNativeSystemInfo(&systemInfo);
-
   // TODO: check whether the bundled JRE is valid.
   // First try the Java packaged together.
   bool isX64 = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
+  bool isARM64 = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
 
+  if (isARM64) {
+    RawLaunchJVM(L"jre-arm64\\bin\\javaw.exe", workdir, exeName);
+  }
   if (isX64) {
     RawLaunchJVM(L"jre-x64\\bin\\javaw.exe", workdir, exeName);
   }
@@ -77,11 +101,27 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   if (FindJava(path)) LaunchJVM(path + L"\\bin\\javaw.exe", workdir, exeName);
 
-  // Or we try to search Java in C:\Program Files\Java.
-  FindJavaInDirAndLaunchJVM(L"C:\\Program Files\\Java\\", workdir, exeName);
+  std::wstring programFiles;
 
-  // Consider C:\Program Files (x86)\Java
-  FindJavaInDirAndLaunchJVM(L"C:\\Program Files (x86)\\Java\\", workdir, exeName);
+  // Or we try to search Java in C:\Program Files
+  if (!SUCCEEDED(MySHGetFolderPath(CSIDL_PROGRAM_FILES, programFiles))) programFiles = L"C:\\Program Files\\";
+  for (LPCWSTR vendorDir : VENDOR_DIRS) {
+    std::wstring dir = programFiles;
+    MyPathAppend(dir, vendorDir);
+    MyPathAddBackslash(dir);
+
+    FindJavaInDirAndLaunchJVM(dir, workdir, exeName);
+  }
+
+  // Consider C:\Program Files (x86)
+  if (!SUCCEEDED(MySHGetFolderPath(CSIDL_PROGRAM_FILESX86, programFiles))) programFiles = L"C:\\Program Files (x86)\\";
+  for (LPCWSTR vendorDir : VENDOR_DIRS) {
+    std::wstring dir = programFiles;
+    MyPathAppend(dir, vendorDir);
+    MyPathAddBackslash(dir);
+
+    FindJavaInDirAndLaunchJVM(dir, workdir, exeName);
+  }
 
   // Try java in PATH
   RawLaunchJVM(L"javaw", workdir, exeName);
@@ -90,38 +130,23 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   {
     std::wstring buffer;
     if (SUCCEEDED(MySHGetFolderPath(CSIDL_APPDATA, buffer)) || SUCCEEDED(MySHGetFolderPath(CSIDL_PROFILE, buffer))) {
-        MyPathAppend(buffer, L".hmcl");
-        MyPathAppend(buffer, L"java");
-        if (isX64) {
-            MyPathAppend(buffer, L"windows-x86_64");
-        } else {
-            MyPathAppend(buffer, L"windows-x86");
-        }
-        MyPathAddBackslash(buffer);
-        hmclJavaDir = buffer;
+      MyPathAppend(buffer, L".hmcl");
+      MyPathAppend(buffer, L"java");
+      if (isARM64) {
+        MyPathAppend(buffer, L"windows-arm64");
+      } else if (isX64) {
+        MyPathAppend(buffer, L"windows-x86_64");
+      } else {
+        MyPathAppend(buffer, L"windows-x86");
+      }
+      MyPathAddBackslash(buffer);
+      hmclJavaDir = buffer;
     }
   }
 
   if (!hmclJavaDir.empty()) {
     FindJavaInDirAndLaunchJVM(hmclJavaDir, workdir, exeName);
-    if (isX64) {
-      OSVERSIONINFOEX osvi;
-      DWORDLONG dwlConditionMask = 0;
-      int op = VER_GREATER_EQUAL;
-
-      // Initialize the OSVERSIONINFOEX structure.
-      ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
-      osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-      osvi.dwMajorVersion = 6;
-      osvi.dwMinorVersion = 1;
-
-      // Initialize the condition mask.
-      VER_SET_CONDITION(dwlConditionMask, VER_MAJORVERSION, op);
-      VER_SET_CONDITION(dwlConditionMask, VER_MINORVERSION, op);
-
-      // Try downloading Java on Windows 7 or later
-      if (!VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask)) goto error;
-
+    if (isX64 && isWin7OrLater) {
       HRSRC scriptFileResource = FindResource(NULL, MAKEINTRESOURCE(ID_SCRIPT_DOWNLOAD_JAVA), RT_RCDATA);
       if (!scriptFileResource) goto error;
 
