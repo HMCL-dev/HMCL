@@ -1,21 +1,105 @@
 ﻿param(
-    [string]$JavaDir
+    [string]$JavaDir,
+    [string]$Arch
 )
 
-$url = 'https://aka.ms/download-jdk/microsoft-jdk-17-windows-x64.zip'
 $chinese = [System.Globalization.CultureInfo]::CurrentCulture.Name -eq 'zh-CN'
 
 [Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms")
 
-$result = if ($chinese) {
-    [System.Windows.Forms.MessageBox]::Show("HMCL 需要 Java 运行时环境才能正常运行，是否自动下载安装 Java？", '未能在这台电脑上找到 Java', [System.Windows.Forms.MessageBoxButtons]::YesNo)
+# Choose Source Dialog
+
+$dialog = New-Object System.Windows.Forms.Form
+$dialog.AutoSize = $true
+$dialog.AutoSizeMode = [System.Windows.Forms.AutoSizeMode]::GrowAndShrink
+if ($chinese) {
+    $dialog.Text = '未能在这台电脑上找到 Java'
 } else {
-    [System.Windows.Forms.MessageBox]::Show("Running HMCL requires a Java runtime environment. `nDo you want to download and install Java automatically?", 'Java not found', [System.Windows.Forms.MessageBoxButtons]::YesNo)
+    $dialog.Text = 'Java not found'
 }
+
+$dialogLayout = New-Object System.Windows.Forms.FlowLayoutPanel
+$dialogLayout.AutoSize = $true
+$dialogLayout.FlowDirection = [System.Windows.Forms.FlowDirection]::TopDown
+$dialogLayout.AutoSizeMode = [System.Windows.Forms.AutoSizeMode]::GrowAndShrink
+
+$messageLabel = New-Object System.Windows.Forms.Label
+$messageLabel.AutoSize = $true
+$messageLabel.Anchor = [System.Windows.Forms.AnchorStyles]::Bottom
+if ($chinese) {
+    $messageLabel.Text = "HMCL 需要 Java 运行时环境才能正常运行，是否自动下载安装 Java？"
+} else {
+    $messageLabel.Text = "Running HMCL requires a Java runtime environment. `nDo you want to download and install Java automatically?"
+}
+
+$useMirrorCheckBox = New-Object System.Windows.Forms.CheckBox
+$useMirrorCheckBox.AutoSize = $true
+$useMirrorCheckBox.Anchor = [System.Windows.Forms.AnchorStyles]::Right
+if ($chinese) {
+    $useMirrorCheckBox.Text = '启用中国大陆下载加速'
+    $useMirrorCheckBox.Checked = $true
+} else {
+    $useMirrorCheckBox.Text = 'Enable download acceleration for Chinese mainland'
+    $useMirrorCheckBox.Checked = $false
+}
+
+$selectButtonPanel = New-Object System.Windows.Forms.FlowLayoutPanel
+$selectButtonPanel.AutoSize = $true
+$selectButtonPanel.Anchor = [System.Windows.Forms.AnchorStyles]::Right
+$selectButtonPanel.FlowDirection = [System.Windows.Forms.FlowDirection]::LeftToRight
+$selectButtonPanel.AutoSizeMode = [System.Windows.Forms.AutoSizeMode]::GrowAndShrink
+
+$yesButton = New-Object System.Windows.Forms.Button
+$noButton  = New-Object System.Windows.Forms.Button
+$yesButton.DialogResult = [System.Windows.Forms.DialogResult]::Yes
+$noButton.DialogResult  = [System.Windows.Forms.DialogResult]::No
+
+if ($chinese) {
+    $yesButton.Text = '是'
+    $noButton.Text  = '否'
+} else {
+    $yesButton.Text = 'Yes'
+    $noButton.Text  = 'No'
+}
+$selectButtonPanel.Controls.Add($yesButton)
+$selectButtonPanel.Controls.Add($noButton)
+
+$dialogLayout.Controls.Add($messageLabel)
+$dialogLayout.Controls.Add($useMirrorCheckBox)
+$dialogLayout.Controls.Add($selectButtonPanel)
+
+$dialog.Controls.Add($dialogLayout)
+
+$result = $dialog.ShowDialog()
 
 if ($result -ne [System.Windows.Forms.DialogResult]::Yes) {
     exit 0
 }
+
+if ($useMirrorCheckBox.Checked) {
+  switch ($Arch) {
+      'x86-64' {
+          $script:url = 'https://mirrors.tuna.tsinghua.edu.cn/AdoptOpenJDK/17/jre/x64/windows/OpenJDK17U-jre_x64_windows_hotspot_17.0.2_8.zip'
+      }
+      'x86' {
+          $script:url = 'https://mirrors.tuna.tsinghua.edu.cn/AdoptOpenJDK/17/jre/x32/windows/OpenJDK17U-jre_x86-32_windows_hotspot_17.0.1_12.zip'
+      }
+      default { exit 1 }
+  }
+} else {
+    switch ($Arch) {
+        'x86-64' {
+            $script:url = 'https://download.bell-sw.com/java/17.0.2+9/bellsoft-jre17.0.2+9-windows-amd64-full.zip'
+        }
+        'x86' {
+            $script:url = 'https://download.bell-sw.com/java/17.0.2+9/bellsoft-jre17.0.2+9-windows-i586-full.zip'
+        }
+        default { exit 1 }
+    }
+}
+
+
+# Download Winodw
 
 do {
     $tempFileName = "hmcl-java-$(Get-Random).zip"
@@ -87,6 +171,7 @@ $form.Controls.Add($layout)
 
     $progressBar.Value = [int][System.Math]::Truncate($percentage)
     $label.Text = [string]::Format("{0:0.00}%", $percentage)
+    $label.Refresh()
 }
 
 [System.ComponentModel.AsyncCompletedEventHandler]$downloadFileCompletedEventHandler = {
@@ -108,10 +193,11 @@ $form.Controls.Add($layout)
 }
 
 $client = New-Object System.Net.WebClient
+$client.Headers.Add('User-Agent', 'Wget/1.20.3 (linux-gnu)')
 $client.add_DownloadProgressChanged($progressChangedEventHandler)
 $client.add_DownloadFileCompleted($downloadFileCompletedEventHandler)
 
-$client.DownloadFileAsync($url, $script:tempFile)
+$client.DownloadFileAsync($script:url, $script:tempFile)
 
 $result = $form.ShowDialog()
 $client.CancelAsync()
