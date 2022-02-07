@@ -124,3 +124,41 @@ void MyPathAddBackslash(std::wstring &filePath) {
     filePath += L'\\';
   }
 }
+
+LSTATUS MyGetTempPath(std::wstring &out) {
+  out = std::wstring();
+  out.resize(MAX_PATH);
+
+  DWORD res = GetTempPath(MAX_PATH, &out[0]);
+  if (res == 0) {
+    return GetLastError();
+  }
+  out.resize(res);
+  return ERROR_SUCCESS;
+}
+
+LSTATUS MyGetTempFileName(const std::wstring &pathName, const std::wstring &prefixString, std::wstring &out) {
+  out = std::wstring();
+  out.resize(MAX_PATH);
+
+  if (GetTempFileName(pathName.c_str(), prefixString.c_str(), 0, &out[0]) == 0) {
+    out.resize(0);
+    return GetLastError();
+  }
+  out.resize(wcslen(&out[0]));
+  return ERROR_SUCCESS;
+}
+
+void MyAppendPathToCommandLine(std::wstring &commandLine, const std::wstring &path) {
+  commandLine += L'"';
+  for (WCHAR ch : path) {
+    if (ch == L'\\') {
+      commandLine += L"\\\\";
+    } else if (ch == L'"') {
+      commandLine += L"\\\"";
+    } else {
+      commandLine += ch;
+    }
+  }
+  commandLine += L'"';
+}

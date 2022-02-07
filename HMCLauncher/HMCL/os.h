@@ -32,3 +32,9 @@ HRESULT MySHGetFolderPath(int csidl, std::wstring &out);
 void MyPathAppend(std::wstring &filePath, const std::wstring &more);
 
 void MyPathAddBackslash(std::wstring &filePath);
+
+LSTATUS MyGetTempPath(std::wstring &out);
+
+LSTATUS MyGetTempFileName(const std::wstring &pathName, const std::wstring &prefixString, std::wstring &out);
+
+void MyAppendPathToCommandLine(std::wstring &commandLine, const std::wstring &path);

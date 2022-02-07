@@ -120,17 +120,47 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
       VER_SET_CONDITION(dwlConditionMask, VER_MINORVERSION, op);
 
       // Try downloading Java on Windows 7 or later
-      if (VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask)) {
-        HRSRC scriptFileResource = FindResource(NULL, MAKEINTRESOURCE(ID_SCRIPT_DOWNLOAD_JAVA), RT_RCDATA);
-        if (scriptFileResource) {
-            HGLOBAL scriptHandle = LoadResource(NULL, scriptFileResource);
-            DWORD dataSize = SizeofResource(NULL, scriptFileResource);
-            void *data = LockResource(scriptHandle);
-        }
-      }
+      if (!VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask)) goto error;
+
+      HRSRC scriptFileResource = FindResource(NULL, MAKEINTRESOURCE(ID_SCRIPT_DOWNLOAD_JAVA), RT_RCDATA);
+      if (!scriptFileResource) goto error;
+
+      HGLOBAL scriptHandle = LoadResource(NULL, scriptFileResource);
+      DWORD dataSize = SizeofResource(NULL, scriptFileResource);
+      void *data = LockResource(scriptHandle);
+
+      std::wstring tempPath;
+      if (ERROR_SUCCESS != MyGetTempPath(tempPath)) goto error;
+
+      std::wstring tempScriptPath;
+      if (ERROR_SUCCESS != MyGetTempFileName(tempPath, L"hmcl", tempScriptPath)) goto error;
+
+      HANDLE hFile;
+      DWORD dwBytesWritten = 0;
+      BOOL bErrorFlag = FALSE;
+
+      hFile = CreateFile(tempScriptPath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+      if (hFile == INVALID_HANDLE_VALUE) goto error;
+
+      bErrorFlag  = WriteFile(hFile, data, dataSize, &dwBytesWritten, NULL);
+      if (FALSE == bErrorFlag || dwBytesWritten != dataSize) goto error;
+
+      CloseHandle(hFile);
+
+      std::wstring commandLineBuffer;
+
+      commandLineBuffer += L"powershell.exe -ExecutionPolicy Bypass ";
+      MyAppendPathToCommandLine(commandLineBuffer, tempScriptPath);
+      commandLineBuffer += L" -JavaDir ";
+      MyAppendPathToCommandLine(commandLineBuffer, hmclJavaDir);
+
+      MyCreateProcess(commandLineBuffer, workdir);
+      // Try starting again after installing Java
+      FindJavaInDirAndLaunchJVM(hmclJavaDir, workdir, exeName);
     }
   }
 
+error:
   MessageBox(NULL, ERROR_PROMPT, L"Error", MB_ICONERROR | MB_OK);
   ShellExecute(0, 0, L"https://www.microsoft.com/openjdk", 0, 0, SW_SHOW);
   return 1;
