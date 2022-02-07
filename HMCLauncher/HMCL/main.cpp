@@ -129,11 +129,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
       DWORD dataSize = SizeofResource(NULL, scriptFileResource);
       void *data = LockResource(scriptHandle);
 
-      std::wstring tempPath;
-      if (ERROR_SUCCESS != MyGetTempPath(tempPath)) goto error;
-
       std::wstring tempScriptPath;
-      if (ERROR_SUCCESS != MyGetTempFileName(tempPath, L"hmcl", tempScriptPath)) goto error;
+      if (ERROR_SUCCESS != MyGetTempFile(L"hmcl-download-java-", L"ps1", tempScriptPath)) goto error;
 
       HANDLE hFile;
       DWORD dwBytesWritten = 0;
@@ -149,12 +146,20 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
       std::wstring commandLineBuffer;
 
-      commandLineBuffer += L"powershell.exe -ExecutionPolicy Bypass ";
+      commandLineBuffer += L"powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File ";
       MyAppendPathToCommandLine(commandLineBuffer, tempScriptPath);
       commandLineBuffer += L" -JavaDir ";
       MyAppendPathToCommandLine(commandLineBuffer, hmclJavaDir);
 
-      MyCreateProcess(commandLineBuffer, workdir);
+      STARTUPINFO si;
+      PROCESS_INFORMATION pi;
+      si.cb = sizeof(si);
+      ZeroMemory(&si, sizeof(si));
+      ZeroMemory(&pi, sizeof(pi));
+      if (!CreateProcess(NULL, &commandLineBuffer[0], NULL, NULL, false, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi)) goto error;
+      WaitForSingleObject(pi.hProcess, INFINITE);
+      DeleteFile(tempScriptPath.c_str());
+
       // Try starting again after installing Java
       FindJavaInDirAndLaunchJVM(hmclJavaDir, workdir, exeName);
     }
