@@ -6,6 +6,7 @@
 $chinese = [System.Globalization.CultureInfo]::CurrentCulture.Name -eq 'zh-CN'
 
 [Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms")
+[System.Windows.Forms.Application]::EnableVisualStyles()
 
 # Choose Source Dialog
 
