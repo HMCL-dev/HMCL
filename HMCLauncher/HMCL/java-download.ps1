@@ -171,12 +171,12 @@ $form.Controls.Add($layout)
 
     $progressBar.Value = [int][System.Math]::Truncate($percentage)
     $label.Text = [string]::Format("{0:0.00}%", $percentage)
-    $label.Refresh()
 }
 
 [System.ComponentModel.AsyncCompletedEventHandler]$downloadFileCompletedEventHandler = {
     param($sender, [System.ComponentModel.AsyncCompletedEventArgs]$CompletedEventArgs)
     if (!$form.IsDisposed) {
+        $label.Refresh()
         if ($CompletedEventArgs.Cancelled) {
             $form.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
         } elseif ($CompletedEventArgs.Error -ne $null) {
