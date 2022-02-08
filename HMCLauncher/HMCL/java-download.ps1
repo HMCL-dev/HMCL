@@ -90,15 +90,19 @@ if ($useMirrorCheckBox.Checked) {
 } else {
     switch ($Arch) {
         'x86-64' {
-            $script:url = 'https://download.bell-sw.com/java/17.0.2+9/bellsoft-jre17.0.2+9-windows-amd64-full.zip'
+            $script:url = 'https://cdn.azul.com/zulu/bin/zulu17.32.13-ca-fx-jre17.0.2-win_x64.zip'
         }
         'x86' {
-            $script:url = 'https://download.bell-sw.com/java/17.0.2+9/bellsoft-jre17.0.2+9-windows-i586-full.zip'
+            $script:url = 'https://cdn.azul.com/zulu/bin/zulu17.32.13-ca-fx-jre17.0.2-win_i686.zip'
         }
         default { exit 1 }
     }
 }
 
+$securityProtocol = [System.Net.ServicePointManager]::SecurityProtocol.value__
+if (($securityProtocol -ne 0) -and (($securityProtocol -band 0x00000C00) -eq 0)) { # Try using HTTP when the platform does not support TLS 1.2
+    $script:url = $script:url -replace '^https:', 'http:'
+}
 
 # Download Winodw
 
