@@ -36,12 +36,11 @@ if ($chinese) {
 $useMirrorCheckBox = New-Object System.Windows.Forms.CheckBox
 $useMirrorCheckBox.AutoSize = $true
 $useMirrorCheckBox.Anchor = [System.Windows.Forms.AnchorStyles]::Right
+$useMirrorCheckBox.Checked = $false
 if ($chinese) {
-    $useMirrorCheckBox.Text = '启用中国大陆下载加速'
-    $useMirrorCheckBox.Checked = $true
+    $useMirrorCheckBox.Text = '启用中国大陆下载加速（无法正常下载时尝试这个选项）'
 } else {
     $useMirrorCheckBox.Text = 'Enable download acceleration for Chinese mainland'
-    $useMirrorCheckBox.Checked = $false
 }
 
 $selectButtonPanel = New-Object System.Windows.Forms.FlowLayoutPanel
