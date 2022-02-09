@@ -154,6 +154,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         }
 
         if (!globalSetting) {
+            HintPane gameDirHint = new HintPane(MessageDialogPane.MessageType.INFO);
+            gameDirHint.setText(i18n("settings.game.working_directory.hint"));
+            rootPane.getChildren().add(gameDirHint);
+
             ComponentList iconPickerItemWrapper = new ComponentList();
             rootPane.getChildren().add(iconPickerItemWrapper);
 
