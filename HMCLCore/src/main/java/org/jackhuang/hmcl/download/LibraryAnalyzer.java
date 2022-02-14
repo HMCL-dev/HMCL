@@ -237,4 +237,15 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     public static final String LAUNCH_WRAPPER_MAIN = "net.minecraft.launchwrapper.Launch";
     public static final String MOD_LAUNCHER_MAIN = "cpw.mods.modlauncher.Launcher";
     public static final String BOOTSTRAP_LAUNCHER_MAIN = "cpw.mods.bootstraplauncher.BootstrapLauncher";
+
+    public static final String[] FORGE_TWEAKERS = new String[] {
+        "net.minecraftforge.legacy._1_5_2.LibraryFixerTweaker", // 1.5.2
+        "cpw.mods.fml.common.launcher.FMLTweaker", // 1.6.1 ~ 1.7.10
+        "net.minecraftforge.fml.common.launcher.FMLTweaker" // 1.8 ~ 1.12.2
+    };
+    public static final String[] OPTIFINE_TWEAKERS = new String[] {
+        "optifine.OptiFineTweaker",
+        "optifine.OptiFineForgeTweaker"
+    };
+    public static final String LITELOADER_TWEAKER = "com.mumfrey.liteloader.launch.LiteLoaderTweaker";
 }
