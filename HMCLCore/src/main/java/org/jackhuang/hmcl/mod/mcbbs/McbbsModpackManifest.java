@@ -19,24 +19,21 @@ package org.jackhuang.hmcl.mod.mcbbs;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.*;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -434,8 +431,7 @@ public class McbbsModpackManifest implements Validation {
         launchOptions.getJavaArguments().addAll(launchInfo.getJavaArguments());
     }
 
-    private static Modpack fromManifestFile(Path manifestFile, Charset encoding) throws IOException, JsonParseException {
-        String json = FileUtils.readText(manifestFile, StandardCharsets.UTF_8);
+    private static Modpack fromManifestFile(String json, Charset encoding) throws IOException, JsonParseException {
         McbbsModpackManifest manifest = JsonUtils.fromNonNullJson(json, McbbsModpackManifest.class);
         return manifest.toModpack(encoding);
     }
@@ -447,17 +443,15 @@ public class McbbsModpackManifest implements Validation {
      * @throws JsonParseException if the server-manifest.json is missing or malformed.
      * @return the manifest.
      */
-    public static Modpack readManifest(Path zip, Charset encoding) throws IOException, JsonParseException {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(zip, encoding)) {
-            Path mcbbsPackMeta = fs.getPath("mcbbs.packmeta");
-            if (Files.exists(mcbbsPackMeta)) {
-                return fromManifestFile(mcbbsPackMeta, encoding);
-            }
-            Path manifestJson = fs.getPath("manifest.json");
-            if (Files.exists(manifestJson)) {
-                return fromManifestFile(manifestJson, encoding);
-            }
-            throw new IOException("`mcbbs.packmeta` or `manifest.json` cannot be found");
+    public static Modpack readManifest(ZipFile zip, Charset encoding) throws IOException, JsonParseException {
+        ZipArchiveEntry mcbbsPackMeta = zip.getEntry("mcbbs.packmeta");
+        if (mcbbsPackMeta != null) {
+            return fromManifestFile(IOUtils.readFullyAsString(zip.getInputStream(mcbbsPackMeta)), encoding);
         }
+        ZipArchiveEntry manifestJson = zip.getEntry("manifest.json");
+        if (manifestJson != null) {
+            return fromManifestFile(IOUtils.readFullyAsString(zip.getInputStream(manifestJson)), encoding);
+        }
+        throw new IOException("`mcbbs.packmeta` or `manifest.json` cannot be found");
     }
 }

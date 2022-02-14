@@ -217,8 +217,20 @@ public final class CompressingUtils {
      */
     public static String readTextZipEntry(File zipFile, String name) throws IOException {
         try (ZipFile s = new ZipFile(zipFile)) {
-            return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)), StandardCharsets.UTF_8);
+            return readTextZipEntry(s, name);
         }
+    }
+
+    /**
+     * Read the text content of a file in zip.
+     *
+     * @param zipFile the zip file
+     * @param name the location of the text in zip file, something like A/B/C/D.txt
+     * @throws IOException if the file is not a valid zip file.
+     * @return the plain text content of given file.
+     */
+    public static String readTextZipEntry(ZipFile zipFile, String name) throws IOException {
+        return IOUtils.readFullyAsString(zipFile.getInputStream(zipFile.getEntry(name)), StandardCharsets.UTF_8);
     }
 
     /**
