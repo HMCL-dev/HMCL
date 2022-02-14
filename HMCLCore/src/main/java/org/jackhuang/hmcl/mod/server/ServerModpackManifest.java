@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.mod.server;
 
 import com.google.gson.JsonParseException;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
@@ -30,7 +31,6 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -134,8 +134,8 @@ public class ServerModpackManifest implements Validation {
      * @throws JsonParseException if the server-manifest.json is missing or malformed.
      * @return the manifest.
      */
-    public static Modpack readManifest(Path zip, Charset encoding) throws IOException, JsonParseException {
-        String json = CompressingUtils.readTextZipEntry(zip, "server-manifest.json", encoding);
+    public static Modpack readManifest(ZipFile zip, Charset encoding) throws IOException, JsonParseException {
+        String json = CompressingUtils.readTextZipEntry(zip, "server-manifest.json");
         ServerModpackManifest manifest = JsonUtils.fromNonNullJson(json, ServerModpackManifest.class);
         return manifest.toModpack(encoding);
     }
