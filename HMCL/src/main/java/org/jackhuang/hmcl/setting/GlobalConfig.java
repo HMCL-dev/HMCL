@@ -22,41 +22,19 @@ import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
-import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
-import javafx.collections.ObservableSet;
-import org.hildan.fxgson.creators.ObservableListCreator;
-import org.hildan.fxgson.creators.ObservableMapCreator;
-import org.hildan.fxgson.creators.ObservableSetCreator;
-import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
-import org.jackhuang.hmcl.util.gson.EnumOrdinalDeserializer;
-import org.jackhuang.hmcl.util.gson.FileTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.lang.reflect.Type;
-import java.net.Proxy;
 import java.util.*;
 
 @JsonAdapter(GlobalConfig.Serializer.class)
 public class GlobalConfig implements Cloneable, Observable {
 
-    private static final Gson CONFIG_GSON = new GsonBuilder()
-            .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
-            .registerTypeAdapter(ObservableList.class, new ObservableListCreator())
-            .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
-            .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
-            .registerTypeAdapterFactory(new JavaFxPropertyTypeAdapterFactory(true, true))
-            .registerTypeAdapter(EnumBackgroundImage.class, new EnumOrdinalDeserializer<>(EnumBackgroundImage.class)) // backward compatibility for backgroundType
-            .registerTypeAdapter(Proxy.Type.class, new EnumOrdinalDeserializer<>(Proxy.Type.class)) // backward compatibility for hasProxy
-            .setPrettyPrinting()
-            .create();
-
     @Nullable
     public static GlobalConfig fromJson(String json) throws JsonParseException {
-        GlobalConfig loaded = CONFIG_GSON.fromJson(json, GlobalConfig.class);
+        GlobalConfig loaded = Config.CONFIG_GSON.fromJson(json, GlobalConfig.class);
         if (loaded == null) {
             return null;
         }
@@ -93,7 +71,7 @@ public class GlobalConfig implements Cloneable, Observable {
     }
 
     public String toJson() {
-        return CONFIG_GSON.toJson(this);
+        return Config.CONFIG_GSON.toJson(this);
     }
 
     @Override

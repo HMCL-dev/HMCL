@@ -51,7 +51,7 @@ public final class Config implements Cloneable, Observable {
 
     public static final int CURRENT_UI_VERSION = 0;
 
-    private static final Gson CONFIG_GSON = new GsonBuilder()
+    static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
             .registerTypeAdapter(ObservableList.class, new ObservableListCreator())
             .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
