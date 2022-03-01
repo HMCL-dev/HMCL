@@ -19,6 +19,10 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
+import javafx.beans.Observable;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Lang;
@@ -27,6 +31,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -40,10 +45,12 @@ public final class ConfigHolder {
     public static final String CONFIG_FILENAME = "hmcl.json";
     public static final String CONFIG_FILENAME_LINUX = ".hmcl.json";
     public static final Path GLOBAL_CONFIG_PATH = Metadata.HMCL_DIRECTORY.resolve("config.json");
+    public static final Path GLOBAL_ACCOUNTS_PATH = Metadata.HMCL_DIRECTORY.resolve("accounts.json");
 
     private static Path configLocation;
     private static Config configInstance;
     private static GlobalConfig globalConfigInstance;
+    private static ObservableList<Map<Object, Object>> globalAccountStorages;
     private static boolean newlyCreated;
 
     public static Config config() {
@@ -58,6 +65,13 @@ public final class ConfigHolder {
             throw new IllegalStateException("Configuration hasn't been loaded");
         }
         return globalConfigInstance;
+    }
+
+    public static ObservableList<Map<Object, Object>> globalAccountStorages() {
+        if (globalAccountStorages == null) {
+            throw new IllegalStateException("Configuration hasn't been loaded");
+        }
+        return globalAccountStorages;
     }
 
     public static boolean isNewlyCreated() {
@@ -78,6 +92,9 @@ public final class ConfigHolder {
 
         globalConfigInstance = loadGlobalConfig();
         globalConfigInstance.addListener(source -> markGlobalConfigDirty());
+
+        globalAccountStorages = loadGlobalAccounts();
+        globalAccountStorages.addListener((Observable source) -> markGlobalAccountsDirty());
 
         Settings.init();
 
@@ -229,4 +246,50 @@ public final class ConfigHolder {
     private static void saveGlobalConfigSync() throws IOException {
         writeToConfig(globalConfigInstance.toJson());
     }
+
+    // Global Accounts
+
+    private static ObservableList<Map<Object, Object>> loadGlobalAccounts() throws IOException {
+        if (Files.exists(GLOBAL_ACCOUNTS_PATH)) {
+            try {
+                String content = FileUtils.readText(GLOBAL_ACCOUNTS_PATH);
+                List<Map<Object, Object>> deserialized = Config.CONFIG_GSON.fromJson(content, new TypeToken<List<Map<Object, Object>>>(){}.getType());
+                if (deserialized == null) {
+                    LOG.info("Global accounts is empty");
+                } else {
+                    return FXCollections.observableList(deserialized);
+                }
+            } catch (JsonParseException e) {
+                LOG.log(Level.WARNING, "Malformed global accounts.", e);
+            }
+
+        }
+
+        LOG.info("Creating an empty global accounts");
+        return FXCollections.observableArrayList();
+    }
+
+    private static final InvocationDispatcher<String> globalAccountsWriter = InvocationDispatcher.runOn(Lang::thread, content -> {
+        try {
+            writeToGlobalAccounts(content);
+        } catch (IOException e) {
+            LOG.log(Level.SEVERE, "Failed to save global accounts", e);
+        }
+    });
+
+    private static void writeToGlobalAccounts(String content) throws IOException {
+        LOG.info("Saving global accounts");
+        synchronized (GLOBAL_ACCOUNTS_PATH) {
+            FileUtils.saveSafely(GLOBAL_ACCOUNTS_PATH, content);
+        }
+    }
+
+    static void markGlobalAccountsDirty() {
+        globalAccountsWriter.accept(Config.CONFIG_GSON.toJson(globalAccountStorages));
+    }
+
+    private static void saveGlobalAccountsSync() throws IOException {
+        writeToGlobalAccounts(Config.CONFIG_GSON.toJson(globalAccountStorages));
+    }
+
 }
