@@ -82,7 +82,6 @@ class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
                 {
                     Region clippedContainer = (Region)listView.lookup(".clipped-container");
-                    setPrefWidth(0);
                     HBox container = new HBox(8);
                     container.setPadding(new Insets(0, 0, 0, 6));
                     container.setAlignment(Pos.CENTER_LEFT);
