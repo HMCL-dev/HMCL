@@ -38,6 +38,16 @@ import java.util.UUID;
  */
 public abstract class Account implements Observable {
 
+    private boolean isGlobal;
+
+    public boolean isGlobal() {
+        return isGlobal;
+    }
+
+    public void setIsGlobal(boolean isGlobal) {
+        this.isGlobal = isGlobal;
+    }
+
     /**
      * @return the name of the account who owns the character
      */

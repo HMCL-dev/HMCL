@@ -142,6 +142,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("configurations")
     private ObservableMap<String, Profile> configurations = FXCollections.observableMap(new TreeMap<>());
 
+    @SerializedName("selectedAccount")
+    private ObjectProperty<AccountReference> selectedAccountReference = new SimpleObjectProperty<>();
+
     @SerializedName("accounts")
     private ObservableList<Map<Object, Object>> accountStorages = FXCollections.observableArrayList();
 
@@ -477,6 +480,18 @@ public final class Config implements Cloneable, Observable {
 
     public ObservableMap<String, Profile> getConfigurations() {
         return configurations;
+    }
+
+    public AccountReference getSelectedAccountReference() {
+        return selectedAccountReference.get();
+    }
+
+    public void setSelectedAccountReference(AccountReference selectedAccountReference) {
+        this.selectedAccountReference.set(selectedAccountReference);
+    }
+
+    public ObjectProperty<AccountReference> selectedAccountReferenceProperty() {
+        return selectedAccountReference;
     }
 
     public ObservableList<Map<Object, Object>> getAccountStorages() {

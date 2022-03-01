@@ -40,15 +40,13 @@ import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Level;
 
 import static java.util.stream.Collectors.toList;
 import static javafx.collections.FXCollections.observableArrayList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalAccountStorages;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.immutableListOf;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -150,10 +148,11 @@ public final class Accounts {
                     return;
                 }
             }
-            // selection is valid, store it
+
             if (!initialized)
                 return;
-            updateAccountStorages();
+
+            config().setSelectedAccountReference(AccountReference.ofAccount(selected));
         }
     };
 
@@ -169,9 +168,6 @@ public final class Accounts {
     private static Map<Object, Object> getAccountStorage(Account account) {
         Map<Object, Object> storage = account.toStorage();
         storage.put("type", getLoginType(getAccountFactory(account)));
-        if (account == selectedAccount.get()) {
-            storage.put("selected", true);
-        }
         return storage;
     }
 
@@ -180,8 +176,48 @@ public final class Accounts {
         // otherwise it might cause data loss
         if (!initialized)
             return;
+
         // update storage
-        config().getAccountStorages().setAll(accounts.stream().map(Accounts::getAccountStorage).collect(toList()));
+        ArrayList<Map<Object, Object>> globalAccountStorages = new ArrayList<>();
+        ArrayList<Map<Object, Object>> localAccountStorages = new ArrayList<>();
+
+        for (Account account : accounts) {
+            Map<Object, Object> accountStorage = Accounts.getAccountStorage(account);
+
+            if (account.isGlobal()) {
+                globalAccountStorages.add(accountStorage);
+            } else {
+                localAccountStorages.add(accountStorage);
+            }
+
+        }
+
+        globalAccountStorages().setAll(globalAccountStorages);
+        config().getAccountStorages().setAll(localAccountStorages);
+    }
+
+    private static void loadFromStorage(Map<Object, Object> storage) {
+        AccountReference selectedAccountReference = config().getSelectedAccountReference();
+
+        Object type = storage.get("type");
+        AccountFactory<?> factory = type2factory.get(type);
+        if (factory == null) {
+            LOG.warning("Unrecognized account type: " + storage);
+            return;
+        }
+        Account account;
+        try {
+            account = factory.fromStorage(storage);
+        } catch (Exception e) {
+            LOG.log(Level.WARNING, "Failed to load account: " + storage, e);
+            return;
+        }
+        accounts.add(account);
+
+        if ((selectedAccountReference == null && Boolean.TRUE.equals(storage.get("selected")))
+                || (selectedAccountReference != null && selectedAccountReference.isReferenceTo(account))) {
+            selectedAccount.set(account);
+        }
     }
 
     /**
@@ -192,25 +228,7 @@ public final class Accounts {
             throw new IllegalStateException("Already initialized");
 
         // load accounts
-        config().getAccountStorages().forEach(storage -> {
-            AccountFactory<?> factory = type2factory.get(storage.get("type"));
-            if (factory == null) {
-                LOG.warning("Unrecognized account type: " + storage);
-                return;
-            }
-            Account account;
-            try {
-                account = factory.fromStorage(storage);
-            } catch (Exception e) {
-                LOG.log(Level.WARNING, "Failed to load account: " + storage, e);
-                return;
-            }
-            accounts.add(account);
-
-            if (Boolean.TRUE.equals(storage.get("selected"))) {
-                selectedAccount.set(account);
-            }
-        });
+        config().getAccountStorages().forEach(Accounts::loadFromStorage);
 
         initialized = true;
 
