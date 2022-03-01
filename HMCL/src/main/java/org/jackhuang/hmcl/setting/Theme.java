@@ -83,14 +83,7 @@ public class Theme {
     public String[] getStylesheets(String overrideFontFamily) {
         Color textFill = getForegroundColor();
 
-        String fontFamily;
-        if (System.getProperty("hmcl.font.override") != null) {
-            fontFamily = System.getProperty("hmcl.font.override");
-        } else if (overrideFontFamily != null) {
-            fontFamily = overrideFontFamily;
-        } else {
-            fontFamily = null;
-        }
+        String fontFamily = System.getProperty("hmcl.font.override", overrideFontFamily);
 
         String css;
         try {
@@ -104,6 +97,7 @@ public class Theme {
                     .replace("%disabled-font-color%", String.format("rgba(%d, %d, %d, 0.7)", (int) Math.ceil(textFill.getRed() * 256), (int) Math.ceil(textFill.getGreen() * 256), (int) Math.ceil(textFill.getBlue() * 256)))
                     .replace("%font-color%", getColorDisplayName(getForegroundColor()))
                     .replace("%font%", Optional.ofNullable(fontFamily).map(f -> "-fx-font-family: \"" + f + "\";").orElse("")));
+            temp.deleteOnExit();
             css = temp.toURI().toString();
         } catch (IOException | NullPointerException e) {
             Logging.LOG.log(Level.SEVERE, "Unable to create theme stylesheet. Fallback to blue theme.", e);
