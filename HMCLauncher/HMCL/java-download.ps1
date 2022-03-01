@@ -38,9 +38,9 @@ $useMirrorCheckBox.AutoSize = $true
 $useMirrorCheckBox.Anchor = [System.Windows.Forms.AnchorStyles]::Right
 $useMirrorCheckBox.Checked = $false
 if ($chinese) {
-    $useMirrorCheckBox.Text = '启用中国大陆下载加速（无法正常下载时尝试这个选项）'
+    $useMirrorCheckBox.Text = '使用备用下载源（如果无法正常下载，请打开它再试一次）'
 } else {
-    $useMirrorCheckBox.Text = 'Enable download acceleration for Chinese mainland'
+    $useMirrorCheckBox.Text = 'Use the alternate download source'
 }
 
 $selectButtonPanel = New-Object System.Windows.Forms.FlowLayoutPanel
@@ -79,10 +79,10 @@ if ($result -ne [System.Windows.Forms.DialogResult]::Yes) {
 if ($useMirrorCheckBox.Checked) {
   switch ($Arch) {
       'x86-64' {
-          $script:url = 'https://mirrors.tuna.tsinghua.edu.cn/AdoptOpenJDK/17/jre/x64/windows/OpenJDK17U-jre_x64_windows_hotspot_17.0.2_8.zip'
+          $script:url = 'https://download.bell-sw.com/java/17.0.2+9/bellsoft-jre17.0.2+9-windows-amd64-full.zip'
       }
       'x86' {
-          $script:url = 'https://mirrors.tuna.tsinghua.edu.cn/AdoptOpenJDK/17/jre/x32/windows/OpenJDK17U-jre_x86-32_windows_hotspot_17.0.1_12.zip'
+          $script:url = 'https://download.bell-sw.com/java/17.0.2+9/bellsoft-jre17.0.2+9-windows-i586-full.zip'
       }
       default { exit 1 }
   }
