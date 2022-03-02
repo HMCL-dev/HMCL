@@ -79,10 +79,10 @@ if ($result -ne [System.Windows.Forms.DialogResult]::Yes) {
 if ($useMirrorCheckBox.Checked) {
   switch ($Arch) {
       'x86-64' {
-          $script:url = 'https://download.bell-sw.com/java/17.0.2+9/bellsoft-jre17.0.2+9-windows-amd64-full.zip'
+          $script:url = 'https://gitcode.net/chearlai/hmcl-java/-/raw/master/java/win_x64.zip'
       }
       'x86' {
-          $script:url = 'https://download.bell-sw.com/java/17.0.2+9/bellsoft-jre17.0.2+9-windows-i586-full.zip'
+          $script:url = 'https://gitcode.net/chearlai/hmcl-java/-/raw/master/java/win_i686.zip'
       }
       default { exit 1 }
   }
