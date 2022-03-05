@@ -291,7 +291,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
             profileLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/editprof.aspx"));
             JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
-            birthLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A"));
+            deauthorizeLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A"));
             JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
             purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
             box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink);
