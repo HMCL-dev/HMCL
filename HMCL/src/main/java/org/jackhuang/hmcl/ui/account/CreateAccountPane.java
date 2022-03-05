@@ -285,15 +285,16 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
                 runInFX(() -> deviceCode.set(value));
             }));
-
             HBox box = new HBox(8);
             JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
-            birthLink.setOnAction(e -> FXUtils.openLink("https://support.microsoft.com/zh-cn/account-billing/如何更改-microsoft-帐户上的出生日期-837badbc-999e-54d2-2617-d19206b9540a"));
+            birthLink.setOnAction(e -> FXUtils.openLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a"));
             JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
             profileLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/editprof.aspx"));
             JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
+            birthLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A"));
+            JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
             purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
-            box.getChildren().setAll(profileLink, birthLink, purchaseLink);
+            box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink);
             GridPane.setColumnSpan(box, 2);
 
             vbox.getChildren().setAll(hintPane, box);
@@ -671,5 +672,5 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
     }
 
-    private static final String MICROSOFT_ACCOUNT_EDIT_PROFILE_URL = "https://support.microsoft.com/zh-cn/account-billing/%E5%A6%82%E4%BD%95%E6%9B%B4%E6%94%B9-microsoft-%E5%B8%90%E6%88%B7%E4%B8%8A%E7%9A%84%E5%87%BA%E7%94%9F%E6%97%A5%E6%9C%9F-837badbc-999e-54d2-2617-d19206b9540a";
+    private static final String MICROSOFT_ACCOUNT_EDIT_PROFILE_URL = "https://support.microsoft.com/account-billing/%E5%A6%82%E4%BD%95%E6%9B%B4%E6%94%B9-microsoft-%E5%B8%90%E6%88%B7%E4%B8%8A%E7%9A%84%E5%87%BA%E7%94%9F%E6%97%A5%E6%9C%9F-837badbc-999e-54d2-2617-d19206b9540a";
 }
