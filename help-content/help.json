@@ -1,7 +1,12 @@
 [
     {
-        "title": "启动器",
+        "title": "文章最终来源：https://github.com/huanghongxun/HMCL-docs",
         "items": [
+            {
+                "title":"新手问题",
+                "subtitle":"这是一个提供给新手及小白的阅读文档",
+                "url":"https://wifi-left.github.io/HMCL-docs-website/about-questions.html"
+            }
             {
                 "title": "HMCL 的自动安装使用教程",
                 "subtitle": "他将告诉你如何用 HMCL 安装 Forge、Fabric、Fabric API、LiteLoader、Optifine 以及 Mod 等",
@@ -46,6 +51,14 @@
                 "title": "服务端自动更新整合包制作教程",
                 "subtitle": "服务端自动更新整合包允许启动器根据服主配置强制更新玩家游戏客户端",
                 "url": "https://hmcl.huangyuhui.net/help/launcher/serverpack.html"
+            },
+            {
+                "title":"为 HMCL 帮助文档出一份力",
+                "url":"https://wifi-left.github.io/HMCL-docs-website/help/contribution.html"
+            },
+            {
+                "title":"更多文章访问",
+                "url":"https://wifi-left.github.io/HMCL-docs-website/index-help.html"
             }
                 
         ]
