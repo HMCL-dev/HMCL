@@ -1,43 +1,37 @@
 [
     {
-        "title": "对于使用者",
+        "title": "启动器",
         "items": [
             {
-                "title":"HMCL 的自动安装使用教程"
-                "subtitle":"他将告诉你如何用 HMCL 安装 Forge、Fabric、Fabric API、LiteLoader、Optifine 以及 Mod 等。"
-                "url":"https://wifi-left.github.io/HMCL-docs-website/help/launcher/auto-installing.html"
-
+                "title": "HMCL 的自动安装使用教程",
+                "subtitle": "他将告诉你如何用 HMCL 安装 Forge、Fabric、Fabric API、LiteLoader、Optifine 以及 Mod 等",
+                "url": "https://wifi-left.github.io/HMCL-docs-website/help/launcher/auto-installing.html"
             },
             {
-                "title":"安装 Optifine / 光影"
-                "subtitle":"他将告诉你如何安装 Optifine 来使用光影"
-                "url":"https://wifi-left.github.io/HMCL-docs-website/install_optifine.html"
-            }
+                "title":"安装 Optifine / 光影",
+                "subtitle":"他将告诉你如何安装 Optifine 来使用光影",
+                "url": "https://wifi-left.github.io/HMCL-docs-website/install_optifine.html"
+            },
             {
-                "title":"设置离线皮肤"
-                "subtitle":"他将告诉你如何设置一个属于自己的离线皮肤"
+                "title":"设置离线皮肤",
+                "subtitle":"他将告诉你如何设置一个属于自己的离线皮肤",
                 "url":"https://wifi-left.github.io/HMCL-docs-website/help/launcher/offline-skin.html"
             },
             {
-                "title":"排错指南"
-                "subtitle":"他将告诉你游戏中一些简单报错的修复方法"
+                "title":"排错指南",
+                "subtitle":"他将告诉你游戏中一些简单报错的修复方法",
                 "url":"https://wifi-left.github.io/HMCL-docs-website/debug.html"
             },
             {
-                "title":"多人联机帮助"
-                "subtitle":"他将告诉你如何进行多人联机，以及一些问题"
+                "title":"多人联机帮助",
+                "subtitle":"他将告诉你如何进行多人联机，以及一些问题",
                 "url":"https://wifi-left.github.io/HMCL-docs-website/help/launcher/multiplayer.html"
             },
             {
-                "title":"版本隔离"
-                "subtitle":"它可以帮助你更好的分离地图、模组等"
+                "title":"版本隔离",
+                "subtitle":"它可以帮助你更好的分离地图、模组等",
                 "url":"https://wifi-left.github.io/HMCL-docs-website/help/launcher/isolation.html"
             },
-                
-        ]
-
-        "title": "对于开发者",
-        "items": [
             {
                 "title": "Authlib-Injector 服务器设置指南",
                 "subtitle": "手动打包整合包后，启动游戏时直接弹出对应的账号登录页",
@@ -53,9 +47,7 @@
                 "subtitle": "服务端自动更新整合包允许启动器根据服主配置强制更新玩家游戏客户端",
                 "url": "https://hmcl.huangyuhui.net/help/launcher/serverpack.html"
             }
-            {
-                "title":""
-            },
+                
         ]
     }
 ]
