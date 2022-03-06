@@ -243,8 +243,8 @@ public class FeedbackPage extends VBox implements PageAware {
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
             hintPane.textProperty().bind(BindingMapping.of(logging).map(logging ->
                     logging
-                            ? i18n("account.methods.microsoft.manual")
-                            : i18n("account.methods.microsoft.hint")));
+                            ? i18n("account.hmcl.hint")
+                            : i18n("account.hmcl.hint")));
             hintPane.setOnMouseClicked(e -> {
                 if (logging.get() && OAuthServer.lastlyOpenedURL != null) {
                     FXUtils.copyText(OAuthServer.lastlyOpenedURL);
