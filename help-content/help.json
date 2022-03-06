@@ -39,28 +39,32 @@
             },
             {
                 "title": "Authlib-Injector 服务器设置指南",
-                "subtitle": "手动打包整合包后，启动游戏时直接弹出对应的账号登录页",
+                "subtitle": "手动打包整合包后，启动游戏时直接弹出对应的账号登录页（对于开发者）",
                 "url": "https://hmcl.huangyuhui.net/help/launcher/authlib-injector.html"
             },
             {
                 "title": "数据包制作指南",
-                "subtitle": "制作可以由 HMCL 导入的数据包",
+                "subtitle": "制作可以由 HMCL 导入的数据包（对于开发者）",
                 "url": "https://hmcl.huangyuhui.net/help/launcher/datapack.html"
             },
             {
                 "title": "服务端自动更新整合包制作教程",
-                "subtitle": "服务端自动更新整合包允许启动器根据服主配置强制更新玩家游戏客户端",
-                "url": "https://hmcl.huangyuhui.net/help/launcher/serverpack.html"
+                "subtitle": "服务端自动更新整合包允许启动器根据服主配置强制更新玩家游戏客户端（对于开发者）",
+                "url": "https://wifi-left.github.io/HMCL-docs-website/help/launcher/serverpack.html"
             },
             {
-                "title":"为 HMCL 帮助文档出一份力",
-                "url":"https://wifi-left.github.io/HMCL-docs-website/help/contribution.html"
+                "title":"整合包自带 Java",
+                "subtitle":"他将告诉你如何在整合包中包含 Java（对于开发者）",
+                "url":"https://wifi-left.github.io/HMCL-docs-website/modpack-in-java.html"
             },
             {
                 "title":"更多文章访问",
                 "url":"https://wifi-left.github.io/HMCL-docs-website/index-help.html"
+            },
+            {
+                "title":"为 HMCL 帮助文档出一份力",
+                "url":"https://wifi-left.github.io/HMCL-docs-website/help/contribution.html"
             }
-                
         ]
     }
 ]
