@@ -300,6 +300,24 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             detailsPane = vbox;
             btnAccept.setDisable(false);
+        } else if (factory == Accounts.FACTORY_MOJANG) {
+            VBox vbox = new VBox(8);
+            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+            hintPane.setText(i18n("account.methods.yggdrasil.migration.hint"));
+
+            HBox linkPane = new HBox(8);
+
+            JFXHyperlink migrationLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration"));
+            migrationLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PROFILE_URL));
+
+            JFXHyperlink migrationHowLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration.how"));
+            migrationHowLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.MIGRATION_FAQ_URL));
+
+            linkPane.getChildren().setAll(migrationLink, migrationHowLink);
+
+            vbox.getChildren().setAll(hintPane, linkPane);
+            detailsPane = vbox;
+            btnAccept.setDisable(true);
         } else {
             detailsPane = new AccountDetailsInputPane(factory, btnAccept::fire);
             btnAccept.disableProperty().bind(((AccountDetailsInputPane) detailsPane).validProperty().not());
