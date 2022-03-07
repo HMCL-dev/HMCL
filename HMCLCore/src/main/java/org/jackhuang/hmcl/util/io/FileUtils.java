@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -28,6 +29,7 @@ import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -100,6 +102,19 @@ public final class FileUtils {
      */
     public static String normalizePath(String path) {
         return StringUtils.addPrefix(StringUtils.removeSuffix(path, "/", "\\"), "/");
+    }
+
+    public static boolean isReadonly(Path path) {
+        FileSystem fileSystem = path.getFileSystem();
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS || Files.notExists(path) || fileSystem != FileSystems.getDefault()) {
+            return fileSystem.isReadOnly();
+        }
+
+        try {
+            return Files.readAttributes(path, DosFileAttributes.class).isReadOnly();
+        } catch (IOException | UnsupportedOperationException ignored) {
+            return false;
+        }
     }
 
     public static String getName(Path path) {
@@ -372,7 +387,7 @@ public final class FileUtils {
             throw new IOException("Source '" + srcFile + "' exists but is a directory");
         Path parentFile = destFile.getParent();
         Files.createDirectories(parentFile);
-        if (Files.exists(destFile) && !Files.isWritable(destFile))
+        if (Files.exists(destFile) && isReadonly(destFile))
             throw new IOException("Destination '" + destFile + "' exists but is read-only");
 
         Files.copy(srcFile, destFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
