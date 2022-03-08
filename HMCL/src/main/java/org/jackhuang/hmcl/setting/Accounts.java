@@ -184,39 +184,40 @@ public final class Accounts {
         for (Account account : accounts) {
             Map<Object, Object> accountStorage = Accounts.getAccountStorage(account);
 
-            if (account.isGlobal()) {
-                globalAccountStorages.add(accountStorage);
-            } else {
+            if (account.isPortable()) {
                 localAccountStorages.add(accountStorage);
+            } else {
+                globalAccountStorages.add(accountStorage);
             }
-
         }
 
         globalAccountStorages().setAll(globalAccountStorages);
         config().getAccountStorages().setAll(localAccountStorages);
     }
 
-    private static void loadFromStorage(Map<Object, Object> storage) {
+    private static void loadFromStorage(List<Map<Object, Object>> storages, boolean isPortable) {
         AccountReference selectedAccountReference = config().getSelectedAccountReference();
+        for (Map<Object, Object> storage : storages) {
+            Object type = storage.get("type");
+            AccountFactory<?> factory = type2factory.get(type);
+            if (factory == null) {
+                LOG.warning("Unrecognized account type: " + storage);
+                return;
+            }
+            Account account;
+            try {
+                account = factory.fromStorage(storage);
+            } catch (Exception e) {
+                LOG.log(Level.WARNING, "Failed to load account: " + storage, e);
+                return;
+            }
+            account.setPortable(isPortable);
+            accounts.add(account);
 
-        Object type = storage.get("type");
-        AccountFactory<?> factory = type2factory.get(type);
-        if (factory == null) {
-            LOG.warning("Unrecognized account type: " + storage);
-            return;
-        }
-        Account account;
-        try {
-            account = factory.fromStorage(storage);
-        } catch (Exception e) {
-            LOG.log(Level.WARNING, "Failed to load account: " + storage, e);
-            return;
-        }
-        accounts.add(account);
-
-        if ((selectedAccountReference == null && Boolean.TRUE.equals(storage.get("selected")))
-                || (selectedAccountReference != null && selectedAccountReference.isReferenceTo(account))) {
-            selectedAccount.set(account);
+            if ((selectedAccountReference == null && Boolean.TRUE.equals(storage.get("selected")))
+                    || (selectedAccountReference != null && selectedAccountReference.isReferenceTo(account))) {
+                selectedAccount.set(account);
+            }
         }
     }
 
@@ -228,7 +229,8 @@ public final class Accounts {
             throw new IllegalStateException("Already initialized");
 
         // load accounts
-        config().getAccountStorages().forEach(Accounts::loadFromStorage);
+        loadFromStorage(config().getAccountStorages(), true);
+        loadFromStorage(ConfigHolder.globalAccountStorages(), false);
 
         initialized = true;
 

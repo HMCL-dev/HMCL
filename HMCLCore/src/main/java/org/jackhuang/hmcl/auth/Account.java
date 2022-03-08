@@ -23,6 +23,8 @@ import javafx.beans.Observable;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.ToStringBuilder;
@@ -38,16 +40,6 @@ import java.util.UUID;
  */
 public abstract class Account implements Observable {
 
-    private boolean isGlobal;
-
-    public boolean isGlobal() {
-        return isGlobal;
-    }
-
-    public void setIsGlobal(boolean isGlobal) {
-        this.isGlobal = isGlobal;
-    }
-
     /**
      * @return the name of the account who owns the character
      */
@@ -62,6 +54,20 @@ public abstract class Account implements Observable {
      * @return the character UUID
      */
     public abstract UUID getUUID();
+
+    private final BooleanProperty isPortableProperty = new SimpleBooleanProperty(true);
+
+    public boolean isPortable() {
+        return isPortableProperty.get();
+    }
+
+    public void setPortable(boolean isPortable) {
+        isPortableProperty.set(isPortable);
+    }
+
+    public BooleanProperty isPortableProperty() {
+        return isPortableProperty;
+    }
 
     /**
      * Login with stored credentials.
