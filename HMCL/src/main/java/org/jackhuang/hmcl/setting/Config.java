@@ -125,7 +125,7 @@ public final class Config implements Cloneable, Observable {
     private ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
 
     @SerializedName("autoDownloadThreads")
-    private BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(false);
+    private BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(true);
 
     @SerializedName("downloadThreads")
     private IntegerProperty downloadThreads = new SimpleIntegerProperty(64);
