@@ -436,10 +436,10 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 GridPane.setColumnSpan(box, 2);
 
                 JFXHyperlink migrationLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration"));
-                migrationLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PROFILE_URL));
+                migrationLink.setOnAction(e -> FXUtils.openLink("https://aka.ms/MinecraftMigration"));
 
                 JFXHyperlink migrationHowLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration.how"));
-                migrationHowLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.MIGRATION_FAQ_URL));
+                migrationHowLink.setOnAction(e -> FXUtils.openLink("https://help.minecraft.net/hc/articles/4411173197709"));
 
                 JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
                 purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
@@ -672,5 +672,5 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
     }
 
-    private static final String MICROSOFT_ACCOUNT_EDIT_PROFILE_URL = "https://support.microsoft.com/account-billing/%E5%A6%82%E4%BD%95%E6%9B%B4%E6%94%B9-microsoft-%E5%B8%90%E6%88%B7%E4%B8%8A%E7%9A%84%E5%87%BA%E7%94%9F%E6%97%A5%E6%9C%9F-837badbc-999e-54d2-2617-d19206b9540a";
+    private static final String MICROSOFT_ACCOUNT_EDIT_PROFILE_URL = "https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a";
 }
