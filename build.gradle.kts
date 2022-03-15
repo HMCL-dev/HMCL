@@ -85,6 +85,13 @@ tasks.create("checkTranslations") {
             }
         }
 
+        zh_CN.forEach {
+            if (it.value.toString().contains("帐户")) {
+                project.logger.warn("The misspelled '帐户' in '${it.key}' should be replaced by '账户'")
+                success = false
+            }
+        }
+
         if (!success) {
             throw GradleException("Part of the translation is missing")
         }
