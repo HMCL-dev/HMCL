@@ -56,7 +56,7 @@ public class DownloadSettingsPage extends StackPane {
             ComponentList downloadSource = new ComponentList();
 
             {
-                VBox pane = new VBox(8);
+                VBox pane = new VBox(32);
 
                 VBox chooseWrapper = new VBox();
                 chooseWrapper.setPadding(new Insets(8, 0, 8, 0));
@@ -109,7 +109,7 @@ public class DownloadSettingsPage extends StackPane {
             ComponentList downloadThreads = new ComponentList();
 
             {
-                VBox pane = new VBox(16);
+                VBox pane = new VBox(64);
                 pane.setPadding(new Insets(8, 0, 8, 0));
 
                 {
