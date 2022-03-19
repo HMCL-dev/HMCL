@@ -50,14 +50,6 @@ public class HelpPage extends SpinnerPane {
         JFXScrollPane.smoothScrolling(scrollPane);
         setContent(scrollPane);
 
-        IconedTwoLineListItem docPane = new IconedTwoLineListItem();
-        docPane.setTitle(i18n("help.doc"));
-        docPane.setSubtitle(i18n("help.detail"));
-        docPane.setExternalLink(Metadata.HELP_URL);
-        ComponentList doc = new ComponentList();
-        doc.getContent().setAll(docPane);
-        content.getChildren().add(doc);
-
         loadHelp();
     }
 
