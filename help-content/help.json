@@ -79,11 +79,11 @@
             },
             {
                 "title":"设置游戏内存大小\n",
-                "subtitle":"答：只需进入要调整内存大小的游戏版本的游戏管理或进入 设置-全局游戏设置 ,\n 在 游戏内存 中调整即可 "
+                "subtitle":"答：只需进入要调整内存大小的游戏版本的游戏管理或进入 设置-全局游戏设置 , 在 游戏内存 \n中调整即可 "
             },
             {
                 "title":"手动选择 Java",
-                "subtitle":"答：只需进入要调整 Java 的游戏版本的游戏管理或进入 设置-全局游戏设置 ,\n 点击 Java 路径-自定义 并选择要使用的 Java 即可"
+                "subtitle":"答：只需进入要调整 Java 的游戏版本的游戏管理或进入 设置-全局游戏设置 , 点击 Java 路径-自定义 \n并选择要使用的 Java 即可"
             },
             {
                 "title":"添加 / 使用微软账户的一些问题解答",
@@ -132,6 +132,41 @@
                 "title":"整合包自带 Java",
                 "subtitle":"他将告诉你如何在整合包中包含 Java",
                 "url":"https://wifi-left.github.io/HMCL-docs-website/?pg=modpack-in-java.md"
+            }
+        ]
+    },
+    {
+        "title":"Minecraft Java 版相关网站",
+        "items":[
+            {
+                "title":"Mod 百科",
+                "subtitle":"MC百科 (mcmod.cn)， 是一个非营利性的知识共享平台，包含大量 Minecraft Mod \n信息的中文百科",
+                "url":"https://www.mcmod.cn/"
+            },
+            {
+                "title":"原版百科",
+                "subtitle":"Minecraft Wiki（中文）致力于收集一切和 Minecraft 有关的信息",
+                "url":"https://minecraft.fandom.com/zh/wiki/Minecraft_Wiki"
+            },
+            {
+                "title":"中文论坛",
+                "subtitle":"Minecraft 中文论坛,你可以在这找到非常多 Minecraft 的资源、新闻，以及允许向他人提问等",
+                "url":"https://www.mcbbs.net/"
+            },
+            {
+                "title":"百度贴吧",
+                "subtitle":"Minecraft Baidu tieba，允许向他人提问或寻求帮助等",
+                "url":"https://tieba.baidu.com/f?kw=minecraft"
+            },
+            {
+                "title":"插件百科",
+                "subtitle":"Minecraft Plugin Wiki，致力于帮助插件使用者更加深入地了解服务端的各种插件",
+                "url":"https://mineplugin.org/"
+            },
+            {
+                "title":"资源分发网站",
+                "subtitle":"CurseForge，全球最大的 Minecraft 资源分发网站，你所知道的 Minecraft 资源\n大部分都来自她",
+                "url":"https://www.curseforge.com/minecraft"
             }
         ]
     },
