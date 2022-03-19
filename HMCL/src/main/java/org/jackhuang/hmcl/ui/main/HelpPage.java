@@ -50,7 +50,6 @@ public class HelpPage extends SpinnerPane {
         JFXScrollPane.smoothScrolling(scrollPane);
         setContent(scrollPane);
 
-        loadHelp();
     }
 
     private void loadHelp() {
