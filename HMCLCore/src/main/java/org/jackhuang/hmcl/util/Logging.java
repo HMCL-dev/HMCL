@@ -47,6 +47,10 @@ public final class Logging {
         forbiddenTokens.put(token, replacement);
     }
 
+    public static void registerAccessToken(String accessToken) {
+        registerForbiddenToken(accessToken, "<access token>");
+    }
+
     public static String filterForbiddenToken(String message) {
         for (Map.Entry<String, String> entry : forbiddenTokens.entrySet()) {
             message = message.replace(entry.getKey(), entry.getValue());

@@ -69,7 +69,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -700,7 +699,6 @@ public final class LauncherHelper {
 
         private final HMCLGameRepository repository;
         private final Version version;
-        private final Map<String, String> forbiddenTokens;
         private final LaunchOptions launchOptions;
         private ManagedProcess process;
         private boolean lwjgl;
@@ -717,13 +715,6 @@ public final class LauncherHelper {
             this.launchingLatch = launchingLatch;
             this.detectWindow = detectWindow;
 
-            if (authInfo == null)
-                forbiddenTokens = Collections.emptyMap();
-            else
-                forbiddenTokens = mapOf(
-                        pair(authInfo.getAccessToken(), "<access token>")
-                );
-
             logs = new LinkedList<>();
         }
 
@@ -732,8 +723,6 @@ public final class LauncherHelper {
             this.process = process;
 
             String command = new CommandBuilder().addAll(process.getCommands()).toString();
-            for (Map.Entry<String, String> entry : forbiddenTokens.entrySet())
-                command = command.replace(entry.getKey(), entry.getValue());
 
             LOG.info("Launched process: " + command);
 
@@ -785,10 +774,7 @@ public final class LauncherHelper {
 
         @Override
         public synchronized void onLog(String log, Log4jLevel level) {
-            String newLog = log;
-            for (Map.Entry<String, String> entry : forbiddenTokens.entrySet())
-                newLog = newLog.replace(entry.getKey(), entry.getValue());
-            String filteredLog = newLog;
+            String filteredLog = Logging.filterForbiddenToken(log);
 
             if (level.lessOrEqual(Log4jLevel.ERROR))
                 System.err.println(filteredLog);
