@@ -23,8 +23,10 @@ import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
-import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
-import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
@@ -59,30 +61,18 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  */
 public final class TexturesLoader {
 
-    private TexturesLoader() {
-    }
-
-    // ==== Texture Loading ====
-    public static class LoadedTexture {
-        private final BufferedImage image;
-        private final Map<String, String> metadata;
-
-        public LoadedTexture(BufferedImage image, Map<String, String> metadata) {
-            this.image = requireNonNull(image);
-            this.metadata = requireNonNull(metadata);
-        }
-
-        public BufferedImage getImage() {
-            return image;
-        }
-
-        public Map<String, String> getMetadata() {
-            return metadata;
-        }
-    }
-
     private static final ThreadPoolExecutor POOL = threadPool("TexturesDownload", true, 2, 10, TimeUnit.SECONDS);
     private static final Path TEXTURES_DIR = Metadata.MINECRAFT_DIRECTORY.resolve("assets").resolve("skins");
+    // ==== Skins ====
+    private final static Map<TextureModel, LoadedTexture> DEFAULT_SKINS = new EnumMap<>(TextureModel.class);
+
+    static {
+        loadDefaultSkin("/assets/img/steve.png", TextureModel.STEVE);
+        loadDefaultSkin("/assets/img/alex.png", TextureModel.ALEX);
+    }
+
+    private TexturesLoader() {
+    }
 
     private static Path getTexturePath(Texture texture) {
         String url = texture.getUrl();
@@ -95,6 +85,7 @@ public final class TexturesLoader {
         String prefix = hash.length() > 2 ? hash.substring(0, 2) : "xx";
         return TEXTURES_DIR.resolve(prefix).resolve(hash);
     }
+    // ====
 
     public static LoadedTexture loadTexture(Texture texture) throws IOException {
         if (StringUtils.isBlank(texture.getUrl())) {
@@ -129,15 +120,6 @@ public final class TexturesLoader {
             metadata = emptyMap();
         }
         return new LoadedTexture(img, metadata);
-    }
-    // ====
-
-    // ==== Skins ====
-    private final static Map<TextureModel, LoadedTexture> DEFAULT_SKINS = new EnumMap<>(TextureModel.class);
-
-    static {
-        loadDefaultSkin("/assets/img/steve.png", TextureModel.STEVE);
-        loadDefaultSkin("/assets/img/alex.png", TextureModel.ALEX);
     }
 
     private static void loadDefaultSkin(String path, TextureModel model) {
@@ -206,8 +188,6 @@ public final class TexturesLoader {
                 }, uuidFallback);
     }
 
-    // ====
-
     // ==== Avatar ====
     public static BufferedImage toAvatar(BufferedImage skin, int size) {
         BufferedImage avatar = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
@@ -227,6 +207,8 @@ public final class TexturesLoader {
         return avatar;
     }
 
+    // ====
+
     public static ObjectBinding<Image> fxAvatarBinding(YggdrasilService service, UUID uuid, int size) {
         return BindingMapping.of(skinBinding(service, uuid))
                 .map(it -> toAvatar(it.image, size))
@@ -234,13 +216,26 @@ public final class TexturesLoader {
     }
 
     public static ObjectBinding<Image> fxAvatarBinding(Account account, int size) {
-        if (account instanceof YggdrasilAccount || account instanceof MicrosoftAccount) {
-            return BindingMapping.of(skinBinding(account))
-                    .map(it -> toAvatar(it.image, size))
-                    .map(FXUtils::toFXImage);
-        } else {
-            return Bindings.createObjectBinding(
-                    () -> FXUtils.toFXImage(toAvatar(getDefaultSkin(TextureModel.detectUUID(account.getUUID())).image, size)));
+        return Bindings.createObjectBinding(
+                () -> FXUtils.toFXImage(toAvatar(getDefaultSkin(TextureModel.detectUUID(account.getUUID())).image, size)));
+    }
+
+    // ==== Texture Loading ====
+    public static class LoadedTexture {
+        private final BufferedImage image;
+        private final Map<String, String> metadata;
+
+        public LoadedTexture(BufferedImage image, Map<String, String> metadata) {
+            this.image = requireNonNull(image);
+            this.metadata = requireNonNull(metadata);
+        }
+
+        public BufferedImage getImage() {
+            return image;
+        }
+
+        public Map<String, String> getMetadata() {
+            return metadata;
         }
     }
     // ====
