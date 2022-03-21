@@ -50,7 +50,7 @@ public class HelpPage extends SpinnerPane {
         JFXScrollPane.smoothScrolling(scrollPane);
         setContent(scrollPane);
 
-        IconedTwoLineListItem docPane = new IconedTwoLineListItem();
+        ComponentList doc = new ComponentList();
         doc.getContent().setAll(docPane);
         content.getChildren().add(doc);
 
