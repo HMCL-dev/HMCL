@@ -111,12 +111,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         this.factory = factory;
 
         {
-            String title;
-            if (showMethodSwitcher) {
-                title = "account.create";
-            } else {
-                title = "account.create." + Accounts.getLoginType(factory);
-            }
+            String title = "account.create";
             setHeading(new Label(i18n(title)));
         }
 
@@ -336,14 +331,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 onChangeAndOperate(cboServers.valueProperty(), server -> linksContainer.getChildren().setAll(createHyperlinks(server)));
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
-                JFXButton btnAddServer = new JFXButton();
-                btnAddServer.setGraphic(SVG.plus(Theme.blackFillBinding(), 20, 20));
-                btnAddServer.getStyleClass().add("toggle-icon4");
-                btnAddServer.setOnAction(e -> {
-                    Controllers.dialog(new AddAuthlibInjectorServerPane());
-                });
-
-                HBox boxServers = new HBox(cboServers, linksContainer, btnAddServer);
+                HBox boxServers = new HBox(cboServers, linksContainer);
                 add(boxServers, 1, rowIndex);
 
                 rowIndex++;
