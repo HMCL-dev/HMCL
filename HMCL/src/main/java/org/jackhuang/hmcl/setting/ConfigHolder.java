@@ -37,9 +37,9 @@ public final class ConfigHolder {
     private ConfigHolder() {
     }
 
-    public static final String CONFIG_FILENAME = "hmcl.json";
-    public static final String CONFIG_FILENAME_LINUX = ".hmcl.json";
-    public static final Path GLOBAL_CONFIG_PATH = Metadata.HMCL_DIRECTORY.resolve("config.json");
+    public static final String CONFIG_FILENAME = "ptlauncher.json";
+    public static final String CONFIG_FILENAME_LINUX = ".ptlauncher.json";
+    public static final Path GLOBAL_CONFIG_PATH = Metadata.PTL_DIRECTORY.resolve("config.json");
 
     private static Path configLocation;
     private static Config configInstance;

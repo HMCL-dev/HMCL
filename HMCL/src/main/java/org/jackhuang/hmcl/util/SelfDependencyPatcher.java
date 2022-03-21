@@ -62,7 +62,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
-import static org.jackhuang.hmcl.Metadata.HMCL_DIRECTORY;
+import static org.jackhuang.hmcl.Metadata.PTL_DIRECTORY;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.platform.JavaVersion.CURRENT_JAVA;
@@ -95,7 +95,7 @@ public final class SelfDependencyPatcher {
 
     private static final class DependencyDescriptor {
         private static final String DEPENDENCIES_LIST_FILE = "/assets/openjfx-dependencies.json";
-        private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies").resolve(Platform.getPlatform().toString()).resolve("openjfx");
+        private static final Path DEPENDENCIES_DIR_PATH = PTL_DIRECTORY.resolve("dependencies").resolve(Platform.getPlatform().toString()).resolve("openjfx");
 
         static List<DependencyDescriptor> readDependencies() {
             //noinspection ConstantConditions

@@ -109,7 +109,7 @@ public final class MultiplayerManager {
     }
 
     public static Path getCatoExecutable() {
-        return Metadata.HMCL_DIRECTORY.resolve("libraries").resolve(CATO_PATH);
+        return Metadata.PTL_DIRECTORY.resolve("libraries").resolve(CATO_PATH);
     }
 
     private static CompletableFuture<CatoSession> startCato(String token, State state) {
