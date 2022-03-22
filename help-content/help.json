@@ -16,7 +16,6 @@
                 "title":"HMCL 的自动安装使用教程",
                 "subtitle":"他将告诉你如何用 HMCL 安装 Forge、Fabric、Fabric API、LiteLoader、Optifine \n以及 Mod 等",
                 "url":"https://wifi-left.github.io/HMCL-docs-website/?pg=auto-installing.md"
-
             },
             {
                 "title":"安装 Optifine / 光影",
@@ -112,6 +111,17 @@
                 "title":"整合包自带 Java",
                 "subtitle":"他将告诉你如何在整合包中包含 Java",
                 "url":"https://wifi-left.github.io/HMCL-docs-website/?pg=modpack-in-java.md"
+            },
+            {
+                "title":"HMCL 的自动安装使用教程",
+                "subtitle":"他将告诉你如何用 HMCL 安装 Forge、Fabric、Fabric API、LiteLoader、Optifine \n以及 Mod 等",
+                "url":"https://wifi-left.github.io/HMCL-docs-website/?pg=auto-installing.md"
+
+            },
+            {
+                "title":"安装 Optifine / 光影",
+                "subtitle":"他将告诉你如何安装 Optifine 来使用光影",
+                "url":"https://wifi-left.github.io/HMCL-docs-website/?pg=install_optifine.md"
             }
         ]
     },
