@@ -23,7 +23,6 @@ import com.jfoenix.controls.JFXScrollPane;
 import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
@@ -33,8 +32,6 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.util.Collections;
 import java.util.List;
-
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class HelpPage extends SpinnerPane {
 
@@ -51,19 +48,16 @@ public class HelpPage extends SpinnerPane {
         setContent(scrollPane);
 
         IconedTwoLineListItem docPane = new IconedTwoLineListItem();
-        docPane.setTitle(i18n("help.doc"));
-        docPane.setSubtitle(i18n("help.detail"));
-        docPane.setExternalLink(Metadata.HELP_URL);
         ComponentList doc = new ComponentList();
-        doc.getContent().setAll(docPane);
         content.getChildren().add(doc);
 
         loadHelp();
+        
     }
 
     private void loadHelp() {
         showSpinner();
-        Task.<List<HelpCategory>>supplyAsync(() -> HttpRequest.GET("https://hmcl.huangyuhui.net/api/help/").getJson(new TypeToken<List<HelpCategory>>() {
+        Task.<List<HelpCategory>>supplyAsync(() -> HttpRequest.GET("https://gitee.com/huanghongxun/HMCL/raw/master/help-content/help.json").getJson(new TypeToken<List<HelpCategory>>() {
         }.getType()))
                 .thenAcceptAsync(Schedulers.javafx(), helpCategories -> {
                     for (HelpCategory category : helpCategories) {
