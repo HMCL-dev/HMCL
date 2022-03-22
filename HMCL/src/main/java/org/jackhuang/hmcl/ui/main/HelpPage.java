@@ -23,7 +23,6 @@ import com.jfoenix.controls.JFXScrollPane;
 import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
@@ -33,8 +32,6 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.util.Collections;
 import java.util.List;
-
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class HelpPage extends SpinnerPane {
 
