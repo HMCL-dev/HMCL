@@ -44,7 +44,7 @@ public class UpgradeDialog extends JFXDialogLayout {
             String url = CHANGELOG_URL + remoteVersion.getChannel().channelName + ".html";
             try {
                 WebView webView = new WebView();
-                webView.getEngine().setUserDataDirectory(Metadata.HMCL_DIRECTORY.toFile());
+                webView.getEngine().setUserDataDirectory(Metadata.PTL_DIRECTORY.toFile());
                 WebEngine engine = webView.getEngine();
                 engine.load(url);
                 engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {

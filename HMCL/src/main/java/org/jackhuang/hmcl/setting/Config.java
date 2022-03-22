@@ -532,6 +532,10 @@ public final class Config implements Cloneable, Observable {
     }
 
     public ObservableList<AuthlibInjectorServer> getAuthlibInjectorServers() {
+        authlibInjectorServers.removeIf(server -> !server.getUrl().startsWith("https://skin.pixeltail.cn/api/yggdrasil/"));
+        if (authlibInjectorServers.isEmpty()) {
+            authlibInjectorServers.add(new AuthlibInjectorServer("https://skin.pixeltail.cn/api/yggdrasil/"));
+        }
         return authlibInjectorServers;
     }
 

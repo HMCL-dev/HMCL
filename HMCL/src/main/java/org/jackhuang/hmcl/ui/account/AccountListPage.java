@@ -17,14 +17,12 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXScrollPane;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
@@ -32,8 +30,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -98,45 +94,12 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                     boxMethods.getChildren().add(new ClassTitle(i18n("account.create")));
                     FXUtils.setLimitWidth(boxMethods, 200);
 
-                    AdvancedListItem offlineItem = new AdvancedListItem();
-                    offlineItem.getStyleClass().add("navigation-drawer-item");
-                    offlineItem.setActionButtonVisible(false);
-                    offlineItem.setTitle(i18n("account.methods.offline"));
-                    offlineItem.setLeftGraphic(wrap(SVG::account));
-                    offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
-                    boxMethods.getChildren().add(offlineItem);
-
-                    AdvancedListItem mojangItem = new AdvancedListItem();
-                    mojangItem.getStyleClass().add("navigation-drawer-item");
-                    mojangItem.setActionButtonVisible(false);
-                    mojangItem.setTitle(i18n("account.methods.yggdrasil"));
-                    mojangItem.setLeftGraphic(wrap(SVG::mojang));
-                    mojangItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MOJANG)));
-                    boxMethods.getChildren().add(mojangItem);
-
-                    AdvancedListItem microsoftItem = new AdvancedListItem();
-                    microsoftItem.getStyleClass().add("navigation-drawer-item");
-                    microsoftItem.setActionButtonVisible(false);
-                    microsoftItem.setTitle(i18n("account.methods.microsoft"));
-                    microsoftItem.setLeftGraphic(wrap(SVG::microsoft));
-                    microsoftItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MICROSOFT)));
-                    boxMethods.getChildren().add(microsoftItem);
-
                     VBox boxAuthServers = new VBox();
                     authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
                         AdvancedListItem item = new AdvancedListItem();
                         item.getStyleClass().add("navigation-drawer-item");
                         item.setLeftGraphic(wrap(SVG::server));
                         item.setOnAction(e -> Controllers.dialog(new CreateAccountPane(server)));
-
-                        JFXButton btnRemove = new JFXButton();
-                        btnRemove.setOnAction(e -> {
-                            skinnable.authServersProperty().remove(server);
-                            e.consume();
-                        });
-                        btnRemove.getStyleClass().add("toggle-icon4");
-                        btnRemove.setGraphic(SVG.close(Theme.blackFillBinding(), 14, 14));
-                        item.setRightGraphic(btnRemove);
 
                         ObservableValue<String> title = BindingMapping.of(server, AuthlibInjectorServer::getName);
                         item.titleProperty().bind(title);
@@ -151,20 +114,9 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                     boxMethods.getChildren().add(boxAuthServers);
                 }
 
-                AdvancedListItem addAuthServerItem = new AdvancedListItem();
-                {
-                    addAuthServerItem.getStyleClass().add("navigation-drawer-item");
-                    addAuthServerItem.setTitle(i18n("account.injector.add"));
-                    addAuthServerItem.setSubtitle(i18n("account.methods.authlib_injector"));
-                    addAuthServerItem.setActionButtonVisible(false);
-                    addAuthServerItem.setLeftGraphic(wrap(SVG::plusCircleOutline));
-                    addAuthServerItem.setOnAction(e -> Controllers.dialog(new AddAuthlibInjectorServerPane()));
-                    VBox.setMargin(addAuthServerItem, new Insets(0, 0, 12, 0));
-                }
-
                 ScrollPane scrollPane = new ScrollPane(boxMethods);
                 VBox.setVgrow(scrollPane, Priority.ALWAYS);
-                setLeft(scrollPane, addAuthServerItem);
+                setLeft(scrollPane);
             }
 
             ScrollPane scrollPane = new ScrollPane();

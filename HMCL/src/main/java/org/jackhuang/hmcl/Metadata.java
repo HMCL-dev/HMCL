@@ -30,8 +30,8 @@ import java.nio.file.Paths;
 public final class Metadata {
     private Metadata() {}
 
-    public static final String NAME = "HMCL";
-    public static final String FULL_NAME = "Hello Minecraft! Launcher";
+    public static final String NAME = "PTL";
+    public static final String FULL_NAME = "PixelTail Launcher";
     public static final String VERSION = System.getProperty("hmcl.version.override", JarUtils.thisJar().flatMap(JarUtils::getImplementationVersion).orElse("@develop@"));
 
     public static final String TITLE = NAME + " " + VERSION;
@@ -47,19 +47,19 @@ public final class Metadata {
     public static final String BUILD_CHANNEL = JarUtils.thisJar().flatMap(JarUtils::getManifest).map(manifest -> manifest.getMainAttributes().getValue("Build-Channel")).orElse("nightly");
 
     public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
-    public static final Path HMCL_DIRECTORY = getHMCLDirectory();
+    public static final Path PTL_DIRECTORY = getPTLDirectory();
 
-    private static Path getHMCLDirectory() {
+    private static Path getPTLDirectory() {
         String home = System.getProperty("user.home", ".");
         if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
             // to fulfill XDG standard.
             String xdgCache = System.getenv("XDG_CACHE_HOME");
             if (StringUtils.isNotBlank(xdgCache)) {
-                return Paths.get(xdgCache, "hmcl");
+                return Paths.get(xdgCache, "ptlauncher");
             }
-            return Paths.get(home, ".cache", "hmcl");
+            return Paths.get(home, ".cache", "ptlauncher");
         }
-        return OperatingSystem.getWorkingDirectory("hmcl");
+        return OperatingSystem.getWorkingDirectory("ptlauncher");
     }
 
     public static boolean isStable() {

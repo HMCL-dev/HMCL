@@ -63,7 +63,7 @@ public final class Main {
         // This environment check will take ~300ms
         thread(Main::fixLetsEncrypt, "CA Certificate Check", true);
 
-        Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
+        Logging.start(Metadata.PTL_DIRECTORY.resolve("logs"));
 
         checkJavaFX();
 

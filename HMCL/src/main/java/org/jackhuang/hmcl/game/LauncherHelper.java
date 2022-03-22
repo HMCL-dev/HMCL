@@ -635,7 +635,7 @@ public final class LauncherHelper {
         if (log4jVersion.isPresent()) {
             final String agentFileName = "log4j-patch-agent-1.0.jar";
 
-            Path agentFile = Metadata.HMCL_DIRECTORY.resolve(agentFileName).toAbsolutePath();
+            Path agentFile = Metadata.PTL_DIRECTORY.resolve(agentFileName).toAbsolutePath();
             String agentFilePath = agentFile.toString();
             if (agentFilePath.indexOf('=') >= 0) {
                 LOG.warning("Invalid character '=' in the HMCL directory path, unable to attach log4j-patch");
