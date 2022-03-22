@@ -16,6 +16,7 @@
                 "title":"HMCL 的自动安装使用教程",
                 "subtitle":"他将告诉你如何用 HMCL 安装 Forge、Fabric、Fabric API、LiteLoader、Optifine \n以及 Mod 等",
                 "url":"https://wifi-left.github.io/HMCL-docs-website/?pg=auto-installing.md"
+
             },
             {
                 "title":"安装 Optifine / 光影",
@@ -77,7 +78,7 @@
                 "url":"https://wifi-left.github.io/HMCL-docs-website/?pg=isolation.md"
             },
             {
-                "title":"设置游戏内存大小\n",
+                "title":"设置游戏内存大小",
                 "subtitle":"答：只需进入要调整内存大小的游戏版本的游戏管理或进入 设置-全局游戏设置 , 在 游戏内存 \n中调整即可 "
             },
             {
@@ -136,12 +137,12 @@
             {
                 "title": "服务端自动更新整合包制作教程",
                 "subtitle": "服务端自动更新整合包允许启动器根据服主配置强制更新玩家游戏客户端",
-                "url": "https://wifi-left.github.io/HMCL-docs-website/?pg=serverpack.md"
+                "url": "https://zkitefly.github.io/hmcl-d/help/launcher/serverpack.html"
             },
             {
                 "title":"整合包自带 Java",
                 "subtitle":"他将告诉你如何在整合包中包含 Java",
-                "url":"https://wifi-left.github.io/HMCL-docs-website/?pg=modpack-in-java.md"
+                "url":"https://zkitefly.github.io/hmcl-d/modpack-in-java.html"
             }
         ]
     },
