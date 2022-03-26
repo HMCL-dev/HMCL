@@ -129,7 +129,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("help"));
                         item.setLeftGraphic(wrap(SVG::helpCircleOutline));
-                        item.setOnAction(e -> FXUtils.openLink("https://wifi-left.github.io/HMCL-docs-website/help/launcher/multiplayer.html"));
+                        item.setOnAction(e -> FXUtils.openLink("https://wifi-left.github.io/HMCL-docs-website/?pg=multiplayer.md"));
                     })
                     .addNavigationDrawerItem(report -> {
                         report.setTitle(i18n("feedback"));
