@@ -258,7 +258,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                 tokenField.setPromptText(i18n("multiplayer.session.create.token.prompt"));
 
                 JFXHyperlink applyLink = new JFXHyperlink(i18n("multiplayer.session.create.token.apply"));
-                applyLink.setOnAction(e -> HMCLService.openRedirectLink("https://cdn.jsdelivr.net/gh/zkitefly/myphoto/%E8%8E%B7%E5%BE%97%E5%8A%A0%E5%85%A5Cato%E7%A4%BE%E5%8C%BA%E7%BD%91%E7%BB%9C%E8%BA%AB%E4%BB%BD%E5%87%AD%E8%AF%81%E7%9A%84%E6%96%B9%E6%B3%95.txt"));
+                applyLink.setOnAction(e -> HMCLService.openLink("https://cdn.jsdelivr.net/gh/zkitefly/myphoto/%E8%8E%B7%E5%BE%97%E5%8A%A0%E5%85%A5Cato%E7%A4%BE%E5%8C%BA%E7%BD%91%E7%BB%9C%E8%BA%AB%E4%BB%BD%E5%87%AD%E8%AF%81%E7%9A%84%E6%96%B9%E6%B3%95.txt"));
 
                 gridPane.addRow(0, new Label(i18n("multiplayer.session.create.token")), tokenField, applyLink);
 
