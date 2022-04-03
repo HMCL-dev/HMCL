@@ -125,10 +125,6 @@ public class SponsorPage extends StackPane {
 
         public Sponsor(String name, Date createTime, BigDecimal money, String contact, String afdianId) {
             this.name = name;
-            this.createTime = createTime;
-            this.money = money;
-            this.contact = contact;
-            this.afdianId = afdianId;
         }
 
         public String getName() {
