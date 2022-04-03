@@ -88,10 +88,6 @@ public class SponsorPage extends StackPane {
                 @Override
                 public void updateItem(Sponsor item, boolean empty) {
                     super.updateItem(item, empty);
-                    if (!empty) {
-                        setText(item.getName());
-                        setGraphic(null);
-                    }
                 }
             });
             VBox.setVgrow(pane, Priority.ALWAYS);
