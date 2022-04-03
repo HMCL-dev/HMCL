@@ -132,7 +132,7 @@ public class SponsorPage extends StackPane {
             this("", new Date(), BigDecimal.ZERO, "", "");
         }
 
-        public Sponsor(String name, BigDecimal money, String contact, String afdianId) {
+        public Sponsor(String name, Date createTime, BigDecimal money, String contact, String afdianId) {
             this.name = name;
             this.money = money;
             this.contact = contact;
