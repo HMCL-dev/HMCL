@@ -119,9 +119,6 @@ public class SponsorPage extends StackPane {
         @SerializedName("name")
         private final String name;
         
-        @SerializedName("money")
-        private final BigDecimal money;
-        
         @SerializedName("contact")
         private final String contact;
         
@@ -134,17 +131,12 @@ public class SponsorPage extends StackPane {
 
         public Sponsor(String name, Date createTime, BigDecimal money, String contact, String afdianId) {
             this.name = name;
-            this.money = money;
             this.contact = contact;
             this.afdianId = afdianId;
         }
 
         public String getName() {
-            return name;
-        }
-        
-        public BigDecimal getMoney() {
-            return money;
+            return name
         }
         
         public String getContact() {
