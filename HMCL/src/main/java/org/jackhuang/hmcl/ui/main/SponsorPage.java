@@ -119,18 +119,6 @@ public class SponsorPage extends StackPane {
         @SerializedName("name")
         private final String name;
 
-        @SerializedName("create_time")
-        private final Date createTime;
-
-        @SerializedName("money")
-        private final BigDecimal money;
-
-        @SerializedName("contact")
-        private final String contact;
-
-        @SerializedName("afdian_id")
-        private final String afdianId;
-
         public Sponsor() {
             this("", new Date(), BigDecimal.ZERO, "", "");
         }
@@ -145,22 +133,6 @@ public class SponsorPage extends StackPane {
 
         public String getName() {
             return name;
-        }
-
-        public Date getCreateTime() {
-            return createTime;
-        }
-
-        public BigDecimal getMoney() {
-            return money;
-        }
-
-        public String getContact() {
-            return contact;
-        }
-
-        public String getAfdianId() {
-            return afdianId;
         }
     }
 }
