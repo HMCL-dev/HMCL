@@ -136,7 +136,7 @@ public class SponsorPage extends StackPane {
         }
 
         public String getName() {
-            return name
+            return name;
         }
         
         public String getContact() {
