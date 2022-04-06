@@ -107,7 +107,7 @@ public final class UpdateChecker {
                 RemoteVersion result = null;
                 try {
                     result = checkUpdate(channel);
-                    LOG.info("Latest version (" + channel + ") is " + result);
+                    LOG.info("(" + channel + ") is " + result);
                 } catch (IOException e) {
                     LOG.log(Level.WARNING, "Failed to check for update", e);
                 }
