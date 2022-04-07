@@ -62,7 +62,13 @@ public class AboutPage extends StackPane {
             bangbang93.setTitle("bangbang93");
             bangbang93.setSubtitle(i18n("about.thanks_to.bangbang93.statement"));
             bangbang93.setExternalLink("https://bmclapi2.bangbang93.com/");
-
+            
+            IconedTwoLineListItem glavo = new IconedTwoLineListItem();
+            glavo.setImage(new Image("/assets/img/galvo.jpg", 32, 32, false, true));
+            glavo.setTitle("Glavo");
+            glavo.setSubtitle(i18n("about.thanks_to.glavo.statement"));
+            bangbang93.setExternalLink("https://github.com/Glavo");
+            
             IconedTwoLineListItem gamerteam = new IconedTwoLineListItem();
             gamerteam.setTitle("gamerteam");
             gamerteam.setImage(new Image("/assets/img/gamerteam.jpg", 32, 32, false, true));
