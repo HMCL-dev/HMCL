@@ -86,7 +86,6 @@ public final class UpdateChecker {
         }
 
         String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
-                pair("version", Metadata.VERSION),
                 pair("channel", channel.channelName)));
 
         return RemoteVersion.fetch(channel, url);
@@ -107,7 +106,7 @@ public final class UpdateChecker {
                 RemoteVersion result = null;
                 try {
                     result = checkUpdate(channel);
-                    LOG.info("(" + channel + ") is " + result);
+                    LOG.info("Latest version (" + channel + ") is " + result);
                 } catch (IOException e) {
                     LOG.log(Level.WARNING, "Failed to check for update", e);
                 }
