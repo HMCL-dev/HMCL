@@ -67,7 +67,7 @@ public class AboutPage extends StackPane {
             glavo.setImage(new Image("/assets/img/galvo.jpg", 32, 32, false, true));
             glavo.setTitle("Glavo");
             glavo.setSubtitle(i18n("about.thanks_to.glavo.statement"));
-            bangbang93.setExternalLink("https://github.com/Glavo");
+            glavo.setExternalLink("https://github.com/Glavo");
             
             IconedTwoLineListItem gamerteam = new IconedTwoLineListItem();
             gamerteam.setTitle("gamerteam");
@@ -104,7 +104,7 @@ public class AboutPage extends StackPane {
             contributors.setSubtitle(i18n("about.thanks_to.contributors.statement"));
             contributors.setExternalLink("https://github.com/huanghongxun/HMCL/graphs/contributors");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, mcbbs, mcmod, noin, gamerteam, redLnn, contributors);
+            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, mcbbs, mcmod, noin, gamerteam, redLnn, contributors);
         }
 
         ComponentList community = new ComponentList();
