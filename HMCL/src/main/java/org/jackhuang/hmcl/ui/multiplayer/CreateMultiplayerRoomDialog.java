@@ -82,8 +82,8 @@ public class CreateMultiplayerRoomDialog extends DialogPane implements DialogAwa
         setValid(false);
 
         JFXHyperlink noinLink = new JFXHyperlink();
-        noinLink.setText("noin.cn");
-        noinLink.setOnAction(e -> FXUtils.openLink("https://noin.cn"));
+        noinLink.setText("mcer.cn");
+        noinLink.setOnAction(e -> FXUtils.openLink("https://mcer.cn/circle/cato"));
 
         setActions(warningLabel, noinLink, acceptPane, cancelButton);
 
