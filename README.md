@@ -1,4 +1,4 @@
-[![HMCL](C:\Users\austi\HMCL\HMCL\⛏_Hello_Minecraft!_Launcher_💎.png)]
+# ⛏ Hello Minecraft! Launcher 💎
 [![Build Status](https://ci.huangyuhui.net/job/HMCL/badge/icon?.svg)](https://ci.huangyuhui.net/job/HMCL)
 
 Join chat! ![Discord](https://img.shields.io/discord/879708313435123742?style=plastic) [Discord](https://discord.gg/jVvC7HfM6U)  [KaiHeiLa](https://kaihei.co/Kx7n3t)
