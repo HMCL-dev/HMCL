@@ -4,12 +4,15 @@ import javafx.scene.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.Material;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Shape3D;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
+
+import org.jetbrains.annotations.Nullable;
 
 public class SkinCanvas extends Group {
 
@@ -22,7 +25,7 @@ public class SkinCanvas extends Group {
     public static final SkinCube STEVEN_LARM = new SkinCube(4, 12, 4, 16F / 64F, 16F / 64F, 32F / 64F, 48F / 64F, 0F, false);
     public static final SkinCube STEVEN_RARM = new SkinCube(4, 12, 4, 16F / 64F, 16F / 64F, 40F / 64F, 16F / 64F, 0F, false);
 
-    protected Image srcSkin, skin;
+    protected Image srcSkin, skin, srcCape, cape;
     protected boolean isSlim;
 
     protected double preW, preH;
@@ -44,6 +47,8 @@ public class SkinCanvas extends Group {
     public final SkinCube rarmInside = new SkinCube(4, 12, 4, 16F / 64F, 16F / 64F, 40F / 64F, 16F / 64F, 0F, false);
     public final SkinCube llegInside = new SkinCube(4, 12, 4, 16F / 64F, 16F / 64F, 16F / 64F, 48F / 64F, 0F, false);
     public final SkinCube rlegInside = new SkinCube(4, 12, 4, 16F / 64F, 16F / 64F, 0F, 16F / 64F, 0F, false);
+
+    public final SkinCube capeCube = new SkinCube(10, 16, 1, 22F / 64F, 17F / 32F, 0F, 0F, 0F, false);
 
     public final SkinGroup head = new SkinGroup(
             new Rotate(0, 0, headInside.getHeight() / 2, 0, Rotate.X_AXIS),
@@ -82,6 +87,13 @@ public class SkinCanvas extends Group {
             rlegOuter, rlegInside
     );
 
+    public final SkinGroup capeGroup = new SkinGroup(
+            new Rotate(0, 0, -capeCube.getHeight() / 2, 0, Rotate.X_AXIS),
+            new Rotate(0, Rotate.Y_AXIS),
+            new Rotate(0, Rotate.Z_AXIS),
+            capeCube
+    );
+
     protected PerspectiveCamera camera = new PerspectiveCamera(true);
 
     protected Rotate xRotate = new Rotate(0, Rotate.X_AXIS);
@@ -90,10 +102,10 @@ public class SkinCanvas extends Group {
     protected Translate translate = new Translate(0, 0, -80);
     protected Scale scale = new Scale(1, 1);
 
-    protected SkinAnimationPlayer animationplayer = new SkinAnimationPlayer();
+    protected SkinAnimationPlayer animationPlayer = new SkinAnimationPlayer();
 
-    public SkinAnimationPlayer getAnimationplayer() {
-        return animationplayer;
+    public SkinAnimationPlayer getAnimationPlayer() {
+        return animationPlayer;
     }
 
     public Image getSrcSkin() {
@@ -104,20 +116,21 @@ public class SkinCanvas extends Group {
         return skin;
     }
 
-    public void updateSkin(Image skin, boolean isSlim) {
+    public void updateSkin(Image skin, boolean isSlim, final @Nullable Image cape) {
         if (SkinHelper.isNoRequest(skin) && SkinHelper.isSkin(skin)) {
             this.srcSkin = skin;
             this.skin = SkinHelper.x32Tox64(skin);
+            this.srcCape = cape;
+            this.cape = cape == null ? null : cape.getWidth() < 256 ? SkinHelper.enlarge(cape, 4, 8) : cape;
             int multiple = Math.max((int) (1024 / skin.getWidth()), 1);
             if (multiple > 1)
-                this.skin = SkinHelper.enlarge(this.skin, multiple);
-            if (this.isSlim != isSlim)
-                updateSkinModel(isSlim);
+                this.skin = SkinHelper.enlarge(this.skin, multiple, multiple);
+            updateSkinModel(isSlim, cape != null);
             bindMaterial(root);
         }
     }
 
-    protected void updateSkinModel(boolean isSlim) {
+    protected void updateSkinModel(boolean isSlim, boolean hasCape) {
         this.isSlim = isSlim;
         FunctionHelper.alwaysB(SkinMultipleCubes::setWidth, isSlim ? 3 : 4, larmOuter, rarmOuter);
         FunctionHelper.alwaysB(SkinCube::setWidth, isSlim ? 3D : 4D, larmInside, rarmInside);
@@ -134,6 +147,8 @@ public class SkinCanvas extends Group {
 
         larm.getZRotate().setPivotX(-larmInside.getWidth() / 2);
         rarm.getZRotate().setPivotX(+rarmInside.getWidth() / 2);
+
+        capeGroup.setVisible(hasCape);
     }
 
     public SkinCanvas(double preW, double preH) {
@@ -149,17 +164,17 @@ public class SkinCanvas extends Group {
         init();
     }
 
-    protected Material createMaterial() {
+    protected Material createMaterial(final Image image) {
         PhongMaterial material = new PhongMaterial();
-        material.setDiffuseMap(skin);
+        material.setDiffuseMap(image);
         return material;
     }
 
     protected void bindMaterial(Group group) {
-        Material material = createMaterial();
+        Material material = createMaterial(skin);
         for (Node node : group.getChildren())
             if (node instanceof Shape3D)
-                ((Shape3D) node).setMaterial(material);
+                ((Shape3D) node).setMaterial(node == capeCube ? createMaterial(cape) : material);
             else if (node instanceof SkinMultipleCubes)
                 ((SkinMultipleCubes) node).updateSkin(skin);
             else if (node instanceof Group)
@@ -178,6 +193,11 @@ public class SkinCanvas extends Group {
         lleg.setTranslateY(+(bodyInside.getHeight() + llegInside.getHeight()) / 2);
         rleg.setTranslateY(+(bodyInside.getHeight() + rlegInside.getHeight()) / 2);
 
+        capeGroup.setTranslateY(+(capeCube.getHeight() - bodyOuter.getHeight()) / 2);
+        capeGroup.setTranslateZ(-(bodyInside.getDepth() + bodyOuter.getDepth()) / 2);
+
+        capeGroup.getTransforms().addAll(new Rotate(180, Rotate.Y_AXIS), new Rotate(10, Rotate.X_AXIS));
+
         root.getTransforms().addAll(xRotate);
 
         root.getChildren().addAll(
@@ -186,15 +206,20 @@ public class SkinCanvas extends Group {
                 larm,
                 rarm,
                 lleg,
-                rleg
+                rleg,
+                capeGroup
         );
-        updateSkin(skin, false);
+        updateSkin(skin, false, null);
 
         return root;
     }
 
     protected SubScene createSubScene() {
         Group group = new Group();
+
+        AmbientLight light = new AmbientLight(Color.WHITE);
+        group.getChildren().add(light);
+
         group.getChildren().add(createPlayerModel());
         group.getTransforms().add(zRotate);
 

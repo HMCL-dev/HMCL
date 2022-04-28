@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import javafx.application.Platform;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
@@ -59,8 +60,8 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  * Cato Management.
  */
 public final class MultiplayerManager {
-    static final String CATO_VERSION = "1.2.0-202112171527";
-    private static final String CATO_DOWNLOAD_URL = "https://gitcode.net/huanghongxun1/ioi_bin/-/raw/3.5.3/client/";
+    static final String CATO_VERSION = "1.2.2";
+    private static final String CATO_DOWNLOAD_URL = "https://gitcode.net/to/cato/-/raw/master/client/";
     private static final String CATO_HASH_URL = CATO_DOWNLOAD_URL + "cato-all-files.sha1";
     private static final String CATO_PATH = getCatoPath();
     public static final int CATO_AGREEMENT_VERSION = 2;
@@ -132,7 +133,9 @@ public final class MultiplayerManager {
                 throw e;
             }
 
-            String[] commands = new String[]{exe.toString(), "-client.token", StringUtils.isBlank(token) ? "new" : token};
+            String[] commands = StringUtils.isBlank(token)
+                    ? new String[]{exe.toString()}
+                    : new String[]{exe.toString(), "-auth.token", token};
             Process process = new ProcessBuilder()
                     .command(commands)
                     .start();
@@ -175,7 +178,7 @@ public final class MultiplayerManager {
                 session.setClient(client);
 
                 TimerTask task = Lang.setTimeout(() -> {
-                    future.completeExceptionally(new JoinRequestTimeoutException());
+                    Platform.runLater(() -> future.completeExceptionally(new JoinRequestTimeoutException()));
                     session.stop();
                 }, 30 * 1000);
 
@@ -186,24 +189,30 @@ public final class MultiplayerManager {
                         session.addRelatedThread(Lang.thread(new LocalServerBroadcaster(port, session), "LocalServerBroadcaster", true));
                         session.setName(connectedEvent.getSessionName());
                         client.setGamePort(port);
-                        session.onExit.unregister(onExit);
-                        future.complete(session);
+                        Platform.runLater(() -> {
+                            session.onExit.unregister(onExit);
+                            future.complete(session);
+                        });
                     } catch (IOException e) {
-                        future.completeExceptionally(e);
                         session.stop();
+                        Platform.runLater(() -> future.completeExceptionally(e));
                     }
                     task.cancel();
                 });
                 client.onKicked().register(kickedEvent -> {
-                    future.completeExceptionally(new KickedException(kickedEvent.getReason()));
                     session.stop();
                     task.cancel();
+                    Platform.runLater(() -> {
+                        future.completeExceptionally(new KickedException(kickedEvent.getReason()));
+                    });
                 });
                 client.onDisconnected().register(disconnectedEvent -> {
-                    if (!client.isConnected()) {
-                        // We fail to establish connection with server
-                        future.completeExceptionally(new ConnectionErrorException());
-                    }
+                    Platform.runLater(() -> {
+                        if (!client.isConnected()) {
+                            // We fail to establish connection with server
+                            future.completeExceptionally(new ConnectionErrorException());
+                        }
+                    });
                 });
                 client.onHandshake().register(handshakeEvent -> {
                     if (handler != null) {
@@ -253,9 +262,11 @@ public final class MultiplayerManager {
             }, 15 * 1000);
 
             session.onPeerConnected.register(event -> {
-                session.onExit.unregister(onExit);
-                future.complete(session);
                 peerConnectionTimeoutTask.cancel();
+                Platform.runLater(() -> {
+                    session.onExit.unregister(onExit);
+                    future.complete(session);
+                });
             });
 
             return future;
@@ -353,11 +364,11 @@ public final class MultiplayerManager {
             writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
         }
 
-        public MultiplayerClient getClient() {
+        public synchronized MultiplayerClient getClient() {
             return client;
         }
 
-        public CatoSession setClient(MultiplayerClient client) {
+        public synchronized CatoSession setClient(MultiplayerClient client) {
             this.client = client;
             return this;
         }
@@ -412,11 +423,11 @@ public final class MultiplayerManager {
             return id != null;
         }
 
-        public String getName() {
+        public synchronized String getName() {
             return name;
         }
 
-        public void setName(String name) {
+        public synchronized void setName(String name) {
             this.name = name;
         }
 

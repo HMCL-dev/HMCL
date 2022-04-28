@@ -41,6 +41,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.zip.ZipException;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -173,6 +174,8 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         } else if (exception instanceof VersionMismatchException) {
             VersionMismatchException e = ((VersionMismatchException) exception);
             Controllers.dialog(i18n("install.failed.version_mismatch", e.getExpect(), e.getActual()), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+        } else if (exception instanceof CancellationException) {
+            // Ignore cancel
         } else {
             Controllers.dialog(StringUtils.getStackTrace(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
         }

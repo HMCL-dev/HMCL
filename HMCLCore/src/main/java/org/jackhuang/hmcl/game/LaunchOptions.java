@@ -40,6 +40,7 @@ public class LaunchOptions implements Serializable {
     private String profileName;
     private List<String> gameArguments = new ArrayList<>();
     private List<String> javaArguments = new ArrayList<>();
+    private List<String> javaAgents = new ArrayList<>(0);
     private Integer minMemory;
     private Integer maxMemory;
     private Integer metaspace;
@@ -112,6 +113,11 @@ public class LaunchOptions implements Serializable {
     @NotNull
     public List<String> getJavaArguments() {
         return Collections.unmodifiableList(javaArguments);
+    }
+
+    @NotNull
+    public List<String> getJavaAgents() {
+        return Collections.unmodifiableList(javaAgents);
     }
 
     /**
@@ -310,6 +316,10 @@ public class LaunchOptions implements Serializable {
             return options.javaArguments;
         }
 
+        public List<String> getJavaAgents() {
+            return options.javaAgents;
+        }
+
         /**
          * The minimum memory that the JVM can allocate.
          */
@@ -457,6 +467,12 @@ public class LaunchOptions implements Serializable {
         public Builder setJavaArguments(List<String> javaArguments) {
             options.javaArguments.clear();
             options.javaArguments.addAll(javaArguments);
+            return this;
+        }
+
+        public Builder setJavaAgents(List<String> javaAgents) {
+            options.javaAgents.clear();
+            options.javaAgents.addAll(javaAgents);
             return this;
         }
 

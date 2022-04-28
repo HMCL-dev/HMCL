@@ -62,6 +62,7 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -117,7 +118,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
         if (!searchInitialized) {
             searchInitialized = true;
-            search("", null, 0, "", 0);
+            search("", null, 0, "", RemoteModRepository.SortType.DATE_CREATED);
         }
 
         if (versionSelection) {
@@ -152,7 +153,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         this.loading.set(loading);
     }
 
-    public void search(String userGameVersion, RemoteModRepository.Category category, int pageOffset, String searchFilter, int sort) {
+    public void search(String userGameVersion, RemoteModRepository.Category category, int pageOffset, String searchFilter, RemoteModRepository.SortType sort) {
         retrySearch = null;
         setLoading(true);
         setFailed(false);
@@ -311,17 +312,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         }).start();
 
                 StackPane sortStackPane = new StackPane();
-                JFXComboBox<String> sortComboBox = new JFXComboBox<>();
+                JFXComboBox<RemoteModRepository.SortType> sortComboBox = new JFXComboBox<>();
                 sortStackPane.getChildren().setAll(sortComboBox);
                 sortComboBox.prefWidthProperty().bind(sortStackPane.widthProperty());
                 sortComboBox.getStyleClass().add("fit-width");
-                sortComboBox.getItems().setAll(
-                        i18n("curse.sort.date_created"),
-                        i18n("curse.sort.popularity"),
-                        i18n("curse.sort.last_updated"),
-                        i18n("curse.sort.name"),
-                        i18n("curse.sort.author"),
-                        i18n("curse.sort.total_downloads"));
+                sortComboBox.setConverter(stringConverter(sortType -> i18n("curse.sort." + sortType.name().toLowerCase(Locale.ROOT))));
+                sortComboBox.getItems().setAll(RemoteModRepository.SortType.values());
                 sortComboBox.getSelectionModel().select(0);
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.category")), categoryStackPane, new Label(i18n("search.sort")), sortStackPane);
 
@@ -345,7 +341,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                         .orElse(null),
                                 0,
                                 nameField.getText(),
-                                sortComboBox.getSelectionModel().getSelectedIndex());
+                                sortComboBox.getSelectionModel().getSelectedItem());
                 searchButton.setOnAction(searchAction);
                 nameField.setOnAction(searchAction);
                 gameVersionField.setOnAction(searchAction);

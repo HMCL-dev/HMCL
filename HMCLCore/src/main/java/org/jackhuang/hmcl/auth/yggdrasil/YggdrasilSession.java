@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 import com.google.gson.Gson;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,8 @@ public class YggdrasilSession {
         this.selectedProfile = selectedProfile;
         this.availableProfiles = availableProfiles;
         this.userProperties = userProperties;
+
+        if (accessToken != null) Logging.registerAccessToken(accessToken);
     }
 
     public String getClientToken() {

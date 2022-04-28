@@ -103,12 +103,20 @@ public class JavaDownloadTask extends Task<Void> {
                         } catch (IOException e) {
                             throw new ArtifactMalformedException("File " + entry.getKey() + " is malformed", e);
                         }
+
+                        if (file.isExecutable()) {
+                            dest.toFile().setExecutable(true);
+                        }
                     }));
                 } else if (file.getDownloads().containsKey("raw")) {
                     DownloadInfo download = file.getDownloads().get("raw");
                     FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(download.getUrl()), dest.toFile(), new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
-                    dependencies.add(task);
+                    if (file.isExecutable()) {
+                        dependencies.add(task.thenRunAsync(() -> dest.toFile().setExecutable(true)));
+                    } else {
+                        dependencies.add(task);
+                    }
                 } else {
                     continue;
                 }
@@ -116,6 +124,7 @@ public class JavaDownloadTask extends Task<Void> {
                 Files.createDirectories(dest);
             } else if (entry.getValue() instanceof RemoteFiles.RemoteLink) {
                 RemoteFiles.RemoteLink link = ((RemoteFiles.RemoteLink) entry.getValue());
+                Files.deleteIfExists(dest);
                 Files.createSymbolicLink(dest, Paths.get(link.getTarget()));
             }
         }

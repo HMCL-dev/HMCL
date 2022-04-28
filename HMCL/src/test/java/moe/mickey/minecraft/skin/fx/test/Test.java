@@ -17,7 +17,7 @@ public class Test extends Application {
 
     public static SkinCanvas createSkinCanvas() {
         SkinCanvas canvas = new SkinCanvas(SkinCanvas.STEVE, 400, 400, true);
-        canvas.getAnimationplayer().addSkinAnimation(new SkinAniWavingArms(100, 2000, 7.5, canvas), new SkinAniRunning(100, 100, 30, canvas));
+        canvas.getAnimationPlayer().addSkinAnimation(new SkinAniWavingArms(100, 2000, 7.5, canvas), new SkinAniRunning(100, 100, 30, canvas));
         FunctionHelper.alwaysB(Consumer<SkinCanvas>::accept, canvas, new SkinCanvasSupport.Mouse(.5), new SkinCanvasSupport.Drag(TITLE));
         return canvas;
     }

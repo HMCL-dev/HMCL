@@ -45,17 +45,13 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -68,116 +64,73 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
 import static org.jackhuang.hmcl.Metadata.HMCL_DIRECTORY;
 import static org.jackhuang.hmcl.util.Logging.LOG;
-import static org.jackhuang.hmcl.util.SelfDependencyPatcher.DependencyDescriptor.JFX_DEPENDENCIES;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.platform.JavaVersion.CURRENT_JAVA;
 
 // From: https://github.com/Col-E/Recaf/blob/7378b397cee664ae81b7963b0355ef8ff013c3a7/src/main/java/me/coley/recaf/util/self/SelfDependencyPatcher.java
 public final class SelfDependencyPatcher {
-    private SelfDependencyPatcher() {
+    private final List<DependencyDescriptor> dependencies = DependencyDescriptor.readDependencies();
+    private final List<Repository> repositories;
+    private final Repository defaultRepository;
+
+    private SelfDependencyPatcher() throws IncompatibleVersionException {
+        // We can only self-patch JavaFX on specific platform.
+        if (dependencies == null) {
+            throw new IncompatibleVersionException();
+        }
+
+        final String customUrl = System.getProperty("hmcl.openjfx.repo");
+        if (customUrl == null) {
+            if (System.getProperty("user.country", "").equalsIgnoreCase("CN")) {
+                defaultRepository = Repository.ALIYUN_MIRROR;
+            } else {
+                defaultRepository = Repository.MAVEN_CENTRAL;
+            }
+            repositories = Collections.unmodifiableList(Arrays.asList(Repository.MAVEN_CENTRAL, Repository.ALIYUN_MIRROR));
+        } else {
+            defaultRepository = new Repository(String.format(i18n("repositories.custom"), customUrl), customUrl);
+            repositories = Collections.unmodifiableList(Arrays.asList(Repository.MAVEN_CENTRAL, Repository.ALIYUN_MIRROR, defaultRepository));
+        }
     }
 
-    static class DependencyDescriptor {
+    private static final class DependencyDescriptor {
+        private static final String DEPENDENCIES_LIST_FILE = "/assets/openjfx-dependencies.json";
+        private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies").resolve(Platform.getPlatform().toString()).resolve("openjfx");
 
-        private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies");
-        public static final String CURRENT_ARCH_CLASSIFIER = currentArchClassifier();
-        public static final List<DependencyDescriptor> JFX_DEPENDENCIES = readDependencies();
-
-        private static List<DependencyDescriptor> readDependencies() {
-            String content;
-            try (InputStream in = SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE)) {
-                content = IOUtils.readFullyAsString(in, UTF_8);
+        static List<DependencyDescriptor> readDependencies() {
+            //noinspection ConstantConditions
+            try (Reader reader = new InputStreamReader(SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE), UTF_8)) {
+                Map<String, List<DependencyDescriptor>> allDependencies =
+                        new Gson().fromJson(reader, new TypeToken<Map<String, List<DependencyDescriptor>>>(){}.getType());
+                return allDependencies.get(Platform.getPlatform().toString());
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
-            return new Gson().fromJson(content, TypeToken.getParameterized(List.class, DependencyDescriptor.class).getType());
-        }
-
-        private static String currentArchClassifier() {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                switch (Architecture.CURRENT_ARCH) {
-                    case X86_64:
-                        return "linux";
-                    case ARM32:
-                        return "linux-arm32-monocle";
-                    case ARM64:
-                        return "linux-aarch64";
-                }
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-                switch (Architecture.CURRENT_ARCH) {
-                    case X86_64:
-                        return "mac";
-                    case ARM64:
-                        return "mac-aarch64";
-                }
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                switch (Architecture.CURRENT_ARCH) {
-                    case X86_64:
-                        return "win";
-                    case X86:
-                        return "win-x86";
-                }
-            }
-            return null;
         }
 
         public String module;
         public String groupId;
         public String artifactId;
         public String version;
-        public Map<String, String> sha1;
+        public String classifier;
+        public String sha1;
 
         public String filename() {
-            if (CURRENT_ARCH_CLASSIFIER == null) {
-                return null;
-            }
-            return artifactId + "-" + version + "-" + CURRENT_ARCH_CLASSIFIER + ".jar";
+            return artifactId + "-" + version + "-" + classifier + ".jar";
         }
 
         public String sha1() {
-            if (CURRENT_ARCH_CLASSIFIER == null) {
-                return null;
-            }
-            return sha1.get(CURRENT_ARCH_CLASSIFIER);
+            return sha1;
         }
 
         public Path localPath() {
-            if (CURRENT_ARCH_CLASSIFIER == null) {
-                return null;
-            }
             return DEPENDENCIES_DIR_PATH.resolve(filename());
-        }
-
-        public boolean isSupported() {
-            return CURRENT_ARCH_CLASSIFIER != null && sha1.containsKey(CURRENT_ARCH_CLASSIFIER);
         }
     }
 
-    static final class Repository {
-        public static final List<Repository> REPOSITORIES;
-
-        public static final Repository CUSTOM;
+    private static final class Repository {
         public static final Repository MAVEN_CENTRAL = new Repository(i18n("repositories.maven_central"), "https://repo1.maven.org/maven2");
         public static final Repository ALIYUN_MIRROR = new Repository(i18n("repositories.aliyun_mirror"), "https://maven.aliyun.com/repository/central");
-
-        public static final Repository DEFAULT;
-
-        static {
-            final String customUrl = System.getProperty("hmcl.openjfx.repo");
-            if (customUrl == null) {
-                CUSTOM = null;
-                if (System.getProperty("user.country", "").equalsIgnoreCase("CN")) {
-                    DEFAULT = Repository.ALIYUN_MIRROR;
-                } else {
-                    DEFAULT = Repository.MAVEN_CENTRAL;
-                }
-                REPOSITORIES = Collections.unmodifiableList(Arrays.asList(MAVEN_CENTRAL, ALIYUN_MIRROR));
-            } else {
-                CUSTOM = new Repository(String.format(i18n("repositories.custom"), customUrl), customUrl);
-                DEFAULT = CUSTOM;
-                REPOSITORIES = Collections.unmodifiableList(Arrays.asList(MAVEN_CENTRAL, ALIYUN_MIRROR, CUSTOM));
-            }
-        }
 
         private final String name;
         private final String url;
@@ -195,8 +148,6 @@ public final class SelfDependencyPatcher {
                     descriptor.filename());
         }
     }
-
-    private static final String DEPENDENCIES_LIST_FILE = "/assets/openjfx-dependencies.json";
 
     /**
      * Patch in any missing dependencies, if any.
@@ -221,19 +172,16 @@ public final class SelfDependencyPatcher {
             throw new IncompatibleVersionException();
         }
 
-        // We can only self-patch JavaFX on specific platform.
-        if (DependencyDescriptor.CURRENT_ARCH_CLASSIFIER == null) {
-            throw new IncompatibleVersionException();
-        }
+        SelfDependencyPatcher patcher = new SelfDependencyPatcher();
 
         // Otherwise we're free to download in Java 11+
         LOG.info("Missing JavaFX dependencies, attempting to patch in missing classes");
 
         // Download missing dependencies
-        List<DependencyDescriptor> missingDependencies = checkMissingDependencies();
+        List<DependencyDescriptor> missingDependencies = patcher.checkMissingDependencies();
         if (!missingDependencies.isEmpty()) {
             try {
-                fetchDependencies(missingDependencies);
+                patcher.fetchDependencies(missingDependencies);
             } catch (IOException e) {
                 throw new PatchException("Failed to download dependencies", e);
             }
@@ -241,7 +189,7 @@ public final class SelfDependencyPatcher {
 
         // Add the dependencies
         try {
-            loadFromCache();
+            patcher.loadFromCache();
         } catch (IOException ex) {
             throw new PatchException("Failed to load JavaFX cache", ex);
         } catch (ReflectiveOperationException | NoClassDefFoundError ex) {
@@ -250,7 +198,7 @@ public final class SelfDependencyPatcher {
         LOG.info(" - Done!");
     }
 
-    private static Repository showChooseRepositoryDialog() {
+    private Repository showChooseRepositoryDialog() {
         final JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
@@ -260,12 +208,12 @@ public final class SelfDependencyPatcher {
 
         final ButtonGroup buttonGroup = new ButtonGroup();
 
-        for (Repository repository : Repository.REPOSITORIES) {
+        for (Repository repository : repositories) {
             final JRadioButton button = new JRadioButton(repository.name);
             button.putClientProperty("repository", repository);
             buttonGroup.add(button);
             panel.add(button);
-            if (repository == Repository.DEFAULT) {
+            if (repository == defaultRepository) {
                 button.setSelected(true);
             }
         }
@@ -293,16 +241,14 @@ public final class SelfDependencyPatcher {
      * @throws IOException                  When the locally cached dependency urls cannot be resolved.
      * @throws ReflectiveOperationException When the call to add these urls to the system classpath failed.
      */
-    private static void loadFromCache() throws IOException, ReflectiveOperationException {
+    private void loadFromCache() throws IOException, ReflectiveOperationException {
         LOG.info(" - Loading dependencies...");
 
-        Set<String> modules = JFX_DEPENDENCIES.stream()
-                .filter(DependencyDescriptor::isSupported)
+        Set<String> modules = dependencies.stream()
                 .map(it -> it.module)
                 .collect(toSet());
 
-        Path[] jars = JFX_DEPENDENCIES.stream()
-                .filter(DependencyDescriptor::isSupported)
+        Path[] jars = dependencies.stream()
                 .map(DependencyDescriptor::localPath)
                 .toArray(Path[]::new);
 
@@ -314,11 +260,11 @@ public final class SelfDependencyPatcher {
      *
      * @throws IOException When the files cannot be fetched or saved.
      */
-    private static void fetchDependencies(List<DependencyDescriptor> dependencies) throws IOException {
+    private void fetchDependencies(List<DependencyDescriptor> dependencies) throws IOException {
         boolean isFirstTime = true;
 
         byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
-        Repository repository = Repository.DEFAULT;
+        Repository repository = defaultRepository;
 
         int count = 0;
         while (true) {
@@ -392,13 +338,10 @@ public final class SelfDependencyPatcher {
         }
     }
 
-    private static List<DependencyDescriptor> checkMissingDependencies() {
+    private List<DependencyDescriptor> checkMissingDependencies() {
         List<DependencyDescriptor> missing = new ArrayList<>();
 
-        for (DependencyDescriptor dependency : JFX_DEPENDENCIES) {
-            if (!dependency.isSupported()) {
-                continue;
-            }
+        for (DependencyDescriptor dependency : dependencies) {
             if (!Files.exists(dependency.localPath())) {
                 missing.add(dependency);
                 continue;

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2022  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,7 +62,13 @@ public class AboutPage extends StackPane {
             bangbang93.setTitle("bangbang93");
             bangbang93.setSubtitle(i18n("about.thanks_to.bangbang93.statement"));
             bangbang93.setExternalLink("https://bmclapi2.bangbang93.com/");
-
+            
+            IconedTwoLineListItem glavo = new IconedTwoLineListItem();
+            glavo.setImage(new Image("/assets/img/glavo.jpg", 32, 32, false, true));
+            glavo.setTitle("Glavo");
+            glavo.setSubtitle(i18n("about.thanks_to.glavo.statement"));
+            glavo.setExternalLink("https://github.com/Glavo");
+            
             IconedTwoLineListItem gamerteam = new IconedTwoLineListItem();
             gamerteam.setTitle("gamerteam");
             gamerteam.setImage(new Image("/assets/img/gamerteam.jpg", 32, 32, false, true));
@@ -90,7 +96,7 @@ public class AboutPage extends StackPane {
             noin.setImage(new Image("/assets/img/noin.png", 32, 32, false, true));
             noin.setTitle(i18n("about.thanks_to.noin"));
             noin.setSubtitle(i18n("about.thanks_to.noin.statement"));
-            noin.setExternalLink("https://noin.cn/");
+            noin.setExternalLink("https://s.mcer.cn/");
 
             IconedTwoLineListItem contributors = new IconedTwoLineListItem();
             contributors.setImage(new Image("/assets/img/github.png", 32, 32, false, true));
@@ -98,7 +104,7 @@ public class AboutPage extends StackPane {
             contributors.setSubtitle(i18n("about.thanks_to.contributors.statement"));
             contributors.setExternalLink("https://github.com/huanghongxun/HMCL/graphs/contributors");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, mcbbs, mcmod, noin, gamerteam, redLnn, contributors);
+            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, mcbbs, mcmod, noin, gamerteam, redLnn, contributors);
         }
 
         ComponentList community = new ComponentList();

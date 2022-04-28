@@ -1,10 +1,16 @@
 #pragma once
 #include <string>
 #include <windows.h>
+#include <shlobj.h>
+#include <Objbase.h>
 #include "Version.h"
 
 const int MAX_KEY_LENGTH = 255;
 const int MAX_VALUE_NAME = 16383;
+
+#ifndef PROCESSOR_ARCHITECTURE_ARM64
+    #define PROCESSOR_ARCHITECTURE_ARM64 12
+#endif
 
 // Query registry value of class root hKey, key path subKey, stores result in
 // parameter out.
@@ -24,6 +30,14 @@ bool MyCreateProcess(const std::wstring &command, const std::wstring &workdir);
 // Check if file lpPath exists.
 bool FindFirstFileExists(LPCWSTR lpPath, DWORD dwFilter);
 
-bool GetArch(bool &is64Bit);
-
 bool MyGetFileVersionInfo(const std::wstring &filePath, Version &version);
+
+HRESULT MySHGetFolderPath(int csidl, std::wstring &out);
+
+void MyPathAppend(std::wstring &filePath, const std::wstring &more);
+
+void MyPathAddBackslash(std::wstring &filePath);
+
+LSTATUS MyGetTempFile(const std::wstring &prefixString, const std::wstring &ext, std::wstring &out);
+
+void MyAppendPathToCommandLine(std::wstring &commandLine, const std::wstring &path);

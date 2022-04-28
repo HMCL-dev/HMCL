@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
@@ -55,16 +56,19 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -124,8 +128,11 @@ public final class LauncherHelper {
         Optional<String> gameVersion = repository.getGameVersion(version);
         boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
         CountDownLatch launchingLatch = new CountDownLatch(1);
+        List<String> javaAgents = new ArrayList<>(0);
 
         AtomicReference<JavaVersion> javaVersionRef = new AtomicReference<>();
+
+        getLog4jPatch(version).ifPresent(javaAgents::add);
 
         TaskExecutor executor = checkGameState(profile, setting, version)
                 .thenComposeAsync(javaVersion -> {
@@ -172,7 +179,7 @@ public final class LauncherHelper {
                     }
                 }).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
-                    LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), scriptFile != null);
+                    LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, scriptFile != null);
                     return new HMCLGameLauncher(
                             repository,
                             version,
@@ -339,12 +346,27 @@ public final class LauncherHelper {
                     JavaVersionConstraint.VersionRanges range = JavaVersionConstraint.findSuitableJavaVersionRange(gameVersion, version);
                     GameJavaVersion targetJavaVersion;
 
-                    if (range.getMandatory().contains(VersionNumber.asVersion("16"))) {
+                    if (range.getMandatory().contains(VersionNumber.asVersion("17.0.1"))) {
+                        targetJavaVersion = GameJavaVersion.JAVA_17;
+                    } else if (range.getMandatory().contains(VersionNumber.asVersion("16.0.1"))) {
                         targetJavaVersion = GameJavaVersion.JAVA_16;
-                    } else if (range.getMandatory().contains(VersionNumber.asVersion("1.8.0_51"))) {
-                        targetJavaVersion = GameJavaVersion.JAVA_8;
                     } else {
-                        targetJavaVersion = null;
+                        String java8Version;
+
+                        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                            java8Version = "1.8.0_51";
+                        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+                            java8Version = "1.8.0_202";
+                        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                            java8Version = "1.8.0_74";
+                        } else {
+                            java8Version = null;
+                        }
+
+                        if (java8Version != null && range.getMandatory().contains(VersionNumber.asVersion(java8Version)))
+                            targetJavaVersion = GameJavaVersion.JAVA_8;
+                        else
+                            targetJavaVersion = null;
                     }
 
                     if (targetJavaVersion != null) {
@@ -413,12 +435,11 @@ public final class LauncherHelper {
                                     .thenAcceptAsync(downloadedJavaVersion -> {
                                         setting.setJavaVersion(downloadedJavaVersion);
                                         future.complete(downloadedJavaVersion);
-                                    })
-                                    .exceptionally(throwable -> {
+                                    }, Schedulers.javafx())
+                                    .whenCompleteAsync((result, throwable) -> {
                                         LOG.log(Level.WARNING, "Failed to download java", throwable);
                                         breakAction.run();
-                                        return null;
-                                    });
+                                    }, Schedulers.javafx());
                             return Task.fromCompletableFuture(future);
                         case VANILLA_JAVA_16:
                             Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 16), i18n("message.warning"), () -> {
@@ -486,8 +507,14 @@ public final class LauncherHelper {
                     case MODDED_JAVA_8:
                         Controllers.dialog(i18n("launch.advice.newer_java"), i18n("message.warning"), MessageType.WARNING, continueAction);
                         break;
+                    case MODDED_JAVA_16:
+                        Controllers.dialog(i18n("launch.advice.forge37_0_60"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                        break;
                     case VANILLA_JAVA_8_51:
                         Controllers.dialog(i18n("launch.advice.java8_51_1_13"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                        break;
+                    case MODLAUNCHER_8:
+                        Controllers.dialog(i18n("launch.advice.modlauncher8"), i18n("message.warning"), MessageType.WARNING, continueAction);
                         break;
                 }
             }
@@ -523,7 +550,7 @@ public final class LauncherHelper {
                 }
             }
 
-            if (!future.isDone()) {
+            if (!suggested && !future.isDone()) {
                 future.complete(javaVersion);
             }
 
@@ -598,6 +625,47 @@ public final class LauncherHelper {
         return future;
     }
 
+    private static Optional<String> getLog4jPatch(Version version) {
+        Optional<String> log4jVersion = version.getLibraries().stream()
+                .filter(it -> it.is("org.apache.logging.log4j", "log4j-core")
+                        && (VersionNumber.VERSION_COMPARATOR.compare(it.getVersion(), "2.17") < 0 || "2.0-beta9".equals(it.getVersion())))
+                .map(Library::getVersion)
+                .findFirst();
+
+        if (log4jVersion.isPresent()) {
+            final String agentFileName = "log4j-patch-agent-1.0.jar";
+
+            Path agentFile = Metadata.HMCL_DIRECTORY.resolve(agentFileName).toAbsolutePath();
+            String agentFilePath = agentFile.toString();
+            if (agentFilePath.indexOf('=') >= 0) {
+                LOG.warning("Invalid character '=' in the HMCL directory path, unable to attach log4j-patch");
+                return Optional.empty();
+            }
+
+            if (Files.notExists(agentFile)) {
+                try (InputStream input = DefaultLauncher.class.getResourceAsStream("/assets/game/" + agentFileName)) {
+                    LOG.info("Extract log4j patch to " + agentFilePath);
+                    Files.createDirectories(agentFile.getParent());
+                    Files.copy(input, agentFile, StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to extract log4j patch");
+                    try {
+                        Files.deleteIfExists(agentFile);
+                    } catch (IOException ex) {
+                        LOG.log(Level.WARNING, "Failed to delete incomplete log4j patch", ex);
+                    }
+                    return Optional.empty();
+                }
+            }
+
+            boolean isBeta = log4jVersion.get().startsWith("2.0-beta");
+            return Optional.of(agentFilePath + "=" + isBeta);
+        } else {
+            LOG.info("No log4j with security vulnerabilities found");
+            return Optional.empty();
+        }
+    }
+
     private void checkExit() {
         switch (launcherVisibility) {
             case HIDE_AND_REOPEN:
@@ -631,7 +699,6 @@ public final class LauncherHelper {
 
         private final HMCLGameRepository repository;
         private final Version version;
-        private final Map<String, String> forbiddenTokens;
         private final LaunchOptions launchOptions;
         private ManagedProcess process;
         private boolean lwjgl;
@@ -648,13 +715,6 @@ public final class LauncherHelper {
             this.launchingLatch = launchingLatch;
             this.detectWindow = detectWindow;
 
-            if (authInfo == null)
-                forbiddenTokens = Collections.emptyMap();
-            else
-                forbiddenTokens = mapOf(
-                        pair(authInfo.getAccessToken(), "<access token>")
-                );
-
             logs = new LinkedList<>();
         }
 
@@ -663,8 +723,6 @@ public final class LauncherHelper {
             this.process = process;
 
             String command = new CommandBuilder().addAll(process.getCommands()).toString();
-            for (Map.Entry<String, String> entry : forbiddenTokens.entrySet())
-                command = command.replace(entry.getKey(), entry.getValue());
 
             LOG.info("Launched process: " + command);
 
@@ -716,10 +774,7 @@ public final class LauncherHelper {
 
         @Override
         public synchronized void onLog(String log, Log4jLevel level) {
-            String newLog = log;
-            for (Map.Entry<String, String> entry : forbiddenTokens.entrySet())
-                newLog = newLog.replace(entry.getKey(), entry.getValue());
-            String filteredLog = newLog;
+            String filteredLog = Logging.filterForbiddenToken(log);
 
             if (level.lessOrEqual(Log4jLevel.ERROR))
                 System.err.println(filteredLog);

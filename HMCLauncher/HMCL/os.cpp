@@ -71,35 +71,6 @@ bool FindFirstFileExists(LPCWSTR lpPath, DWORD dwFilter) {
   return ret;
 }
 
-bool GetArch(bool &is64Bit) {
-#if _WIN64
-  is64Bit = true;
-  return true;
-#elif _WIN32
-  typedef BOOL(WINAPI * LPFN_ISWOW64PROCESS)(HANDLE, PBOOL);
-
-  BOOL isWow64 = FALSE;
-
-  // IsWow64Process is not available on all supported versions of Windows.
-  // Use GetModuleHandle to get a handle to the DLL that contains the function
-  // and GetProcAddress to get a pointer to the function if available.
-
-  LPFN_ISWOW64PROCESS fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(
-      GetModuleHandle(TEXT("kernel32")), "IsWow64Process");
-
-  if (fnIsWow64Process) {
-    if (!fnIsWow64Process(GetCurrentProcess(), &isWow64)) return false;
-
-    is64Bit = isWow64;
-    return true;
-  } else  // IsWow64Process is not supported, fail to detect.
-    return false;
-
-#else
-#error _WIN64 and _WIN32 are both undefined.
-#endif
-}
-
 bool MyGetFileVersionInfo(const std::wstring &filePath, Version &version) {
   DWORD verHandle = 0;
   UINT size = 0;
@@ -125,4 +96,73 @@ bool MyGetFileVersionInfo(const std::wstring &filePath, Version &version) {
                     (pFileInfo->dwFileVersionLS >> 16) & 0xFFFF,
                     (pFileInfo->dwFileVersionLS >> 0) & 0xFFFF};
   return true;
+}
+
+HRESULT MySHGetFolderPath(int csidl, std::wstring &out) {
+  out = std::wstring();
+  out.resize(MAX_PATH);
+
+  HRESULT res = SHGetFolderPath(NULL, csidl, NULL, 0, &out[0]);
+  if (SUCCEEDED(res)) {
+    out.resize(wcslen(&out[0]));
+  } else {
+    out.resize(0);
+  }
+  return res;
+}
+
+void MyPathAppend(std::wstring &filePath, const std::wstring &more) {
+  if (filePath.back() != L'\\') {
+    filePath += L'\\';
+  }
+
+  filePath += more;
+}
+
+void MyPathAddBackslash(std::wstring &filePath) {
+  if (filePath.back() != L'\\') {
+    filePath += L'\\';
+  }
+}
+
+LSTATUS MyGetTempFile(const std::wstring &prefixString, const std::wstring &ext, std::wstring &out) {
+  out.resize(MAX_PATH);
+  DWORD res = GetTempPath(MAX_PATH, &out[0]);
+  if (res == 0) {
+    return GetLastError();
+  }
+
+  out.resize(res);
+
+  GUID guid;
+  CoCreateGuid(&guid);
+
+  WCHAR buffer[MAX_PATH];
+  int n = StringFromGUID2(guid, buffer, MAX_PATH);
+  if (n == 0) {
+      return CO_E_PATHTOOLONG;
+  }
+
+  MyPathAddBackslash(out);
+  out += prefixString;
+  out += buffer;
+  out += L'.';
+  out += ext;
+
+  return ERROR_SUCCESS;
+}
+
+void MyAppendPathToCommandLine(std::wstring &commandLine, const std::wstring &path) {
+  commandLine += L'"';
+  for (size_t i = 0; i < path.size(); i++) {
+    WCHAR ch = path[i];
+    if (ch == L'\\' && (i + 1 == path.size() || path[i + 1] == L'"')) {
+      commandLine += L"\\\\";
+    } else if (ch == L'"') {
+      commandLine += L"\\\"";
+    } else {
+      commandLine += ch;
+    }
+  }
+  commandLine += L'"';
 }

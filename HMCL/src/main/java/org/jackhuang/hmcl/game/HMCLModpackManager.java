@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.task.Task;
@@ -28,7 +29,6 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
 
 /**
  * @author huangyuhui
@@ -46,10 +46,10 @@ public final class HMCLModpackManager {
      * @throws IOException        if the file is not a valid zip file.
      * @throws JsonParseException if the manifest.json is missing or malformed.
      */
-    public static Modpack readHMCLModpackManifest(Path file, Charset encoding) throws IOException, JsonParseException {
-        String manifestJson = CompressingUtils.readTextZipEntry(file, "modpack.json", encoding);
+    public static Modpack readHMCLModpackManifest(ZipFile file, Charset encoding) throws IOException, JsonParseException {
+        String manifestJson = CompressingUtils.readTextZipEntry(file, "modpack.json");
         Modpack manifest = JsonUtils.fromNonNullJson(manifestJson, HMCLModpack.class).setEncoding(encoding);
-        String gameJson = CompressingUtils.readTextZipEntry(file, "minecraft/pack.json", encoding);
+        String gameJson = CompressingUtils.readTextZipEntry(file, "minecraft/pack.json");
         Version game = JsonUtils.fromNonNullJson(gameJson, Version.class);
         if (game.getJar() == null)
             if (StringUtils.isBlank(manifest.getVersion()))
