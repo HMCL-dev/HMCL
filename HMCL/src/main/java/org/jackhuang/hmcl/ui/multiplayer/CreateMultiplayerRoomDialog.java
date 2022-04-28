@@ -81,11 +81,11 @@ public class CreateMultiplayerRoomDialog extends DialogPane implements DialogAwa
 
         setValid(false);
 
-        JFXHyperlink noinLink = new JFXHyperlink();
-        noinLink.setText("noin.cn");
-        noinLink.setOnAction(e -> FXUtils.openLink("https://noin.cn"));
+        JFXHyperlink mcerLink = new JFXHyperlink();
+        mcerLink.setText("mcer.cn");
+        mcerLink.setOnAction(e -> FXUtils.openLink("https://mcer.cn"));
 
-        setActions(warningLabel, noinLink, acceptPane, cancelButton);
+        setActions(warningLabel, mcerLink, acceptPane, cancelButton);
 
         lanServerDetectorThread = new LocalServerDetector(3);
         lanServerDetectorThread.onDetectedLanServer().register(event -> {
