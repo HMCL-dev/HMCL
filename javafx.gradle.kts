@@ -75,6 +75,7 @@ if (!jfxInClasspath && JavaVersion.current() >= JavaVersion.VERSION_11) {
             rootProject.subprojects {
                 for (module in jfxModules) {
                     dependencies.add("compileOnly", "$groupId:javafx-$module:$version:$classifier")
+                    dependencies.add("testImplementation", "$groupId:javafx-$module:$version:$classifier")
                 }
             }
         }
