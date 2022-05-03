@@ -79,10 +79,10 @@ if ($result -ne [System.Windows.Forms.DialogResult]::Yes) {
 if ($useMirrorCheckBox.Checked) {
   switch ($Arch) {
       'x86-64' {
-          $script:url = 'https://download.bell-sw.com/java/17.0.2+9/bellsoft-jre17.0.2+9-windows-amd64-full.zip'
+          $script:url = 'http://link.jscdn.cn/lanzou/aHR0cHM6Ly96a2l0ZWZseS5sYW56b3VtLmNvbS9pM0l0YTA0N3ppemEmcGFzc0NvZGU9MDA.zip'
       }
       'x86' {
-          $script:url = 'https://download.bell-sw.com/java/17.0.2+9/bellsoft-jre17.0.2+9-windows-i586-full.zip'
+          $script:url = 'http://link.jscdn.cn/lanzou/aHR0cHM6Ly96a2l0ZWZseS5sYW56b3VtLmNvbS9pZnkzRDA0N3poOGgmcGFzc0NvZGU9MDA.zip'
       }
       default { exit 1 }
   }
