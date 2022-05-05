@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2022  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.IOException;
@@ -33,30 +32,28 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ModDownloadListPage extends DownloadListPage {
-    public ModDownloadListPage(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+public class ModpackDownloadListPage extends DownloadListPage {
+    public ModpackDownloadListPage(DownloadPage.DownloadCallback callback, boolean versionSelection) {
         super(null, callback, versionSelection);
 
         repository = new Repository();
 
 
         supportChinese.set(true);
-        downloadSources.get().setAll("mods.curseforge", "mods.modrinth");
-        downloadSource.set("mods.curseforge");
     }
 
     private class Repository implements RemoteModRepository {
 
         @Override
         public Type getType() {
-            return Type.MOD;
+            return Type.MODPACK;
         }
 
         @Override
         public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort) throws IOException {
             String newSearchFilter;
             if (StringUtils.CHINESE_PATTERN.matcher(searchFilter).find()) {
-                List<ModTranslations.Mod> mods = ModTranslations.MOD.searchMod(searchFilter);
+                List<ModTranslations.Mod> mods = ModTranslations.MODPACK.searchMod(searchFilter);
                 List<String> searchFilters = new ArrayList<>();
                 int count = 0;
                 for (ModTranslations.Mod mod : mods) {
@@ -75,20 +72,12 @@ public class ModDownloadListPage extends DownloadListPage {
                 newSearchFilter = searchFilter;
             }
 
-            if ("mods.modrinth".equals(downloadSource.get())) {
-                return ModrinthRemoteModRepository.INSTANCE.search(gameVersion, category, pageOffset, pageSize, newSearchFilter, sort);
-            } else {
-                return CurseForgeRemoteModRepository.MODS.search(gameVersion, category, pageOffset, pageSize, newSearchFilter, sort);
-            }
+            return CurseForgeRemoteModRepository.MODPACKS.search(gameVersion, category, pageOffset, pageSize, newSearchFilter, sort);
         }
 
         @Override
         public Stream<Category> getCategories() throws IOException {
-            if ("mods.modrinth".equals(downloadSource.get())) {
-                return ModrinthRemoteModRepository.INSTANCE.getCategories();
-            } else {
-                return CurseForgeRemoteModRepository.MODS.getCategories();
-            }
+            return CurseForgeRemoteModRepository.MODPACKS.getCategories();
         }
 
         @Override
@@ -109,19 +98,11 @@ public class ModDownloadListPage extends DownloadListPage {
 
     @Override
     protected String getLocalizedCategory(String category) {
-        if ("mods.modrinth".equals(downloadSource.get())) {
-            return i18n("modrinth.category." + category);
-        } else {
-            return i18n("curse.category." + category);
-        }
+        return i18n("curse.category." + category);
     }
 
     @Override
     protected String getLocalizedOfficialPage() {
-        if ("mods.modrinth".equals(downloadSource.get())) {
-            return i18n("mods.modrinth");
-        } else {
-            return i18n("mods.curseforge");
-        }
+        return i18n("mods.curseforge");
     }
 }

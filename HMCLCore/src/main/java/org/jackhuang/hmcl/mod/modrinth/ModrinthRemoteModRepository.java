@@ -52,6 +52,11 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     private ModrinthRemoteModRepository() {
     }
 
+    @Override
+    public Type getType() {
+        return Type.MOD;
+    }
+
     private static String convertSortType(SortType sortType) {
         switch (sortType) {
             case DATE_CREATED:

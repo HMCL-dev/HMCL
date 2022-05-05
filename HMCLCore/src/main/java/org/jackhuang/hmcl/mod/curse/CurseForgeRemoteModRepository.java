@@ -40,11 +40,18 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 public final class CurseForgeRemoteModRepository implements RemoteModRepository {
 
     private static final String PREFIX = "https://addons-ecs.forgesvc.net";
-    
+
+    private final Type type;
     private final int section;
 
-    public CurseForgeRemoteModRepository(int section) {
+    private CurseForgeRemoteModRepository(Type type, int section) {
+        this.type = type;
         this.section = section;
+    }
+
+    @Override
+    public Type getType() {
+        return type;
     }
 
     public List<CurseAddon> searchPaginated(String gameVersion, int category, int pageOffset, int pageSize, String searchFilter, int sort) throws IOException {
@@ -158,11 +165,11 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public static final int SECTION_UNKNOWN2 = 4979;
     public static final int SECTION_UNKNOWN3 = 4984;
 
-    public static final CurseForgeRemoteModRepository MODS = new CurseForgeRemoteModRepository(SECTION_MOD);
-    public static final CurseForgeRemoteModRepository MODPACKS = new CurseForgeRemoteModRepository(SECTION_MODPACK);
-    public static final CurseForgeRemoteModRepository RESOURCE_PACKS = new CurseForgeRemoteModRepository(SECTION_RESOURCE_PACK);
-    public static final CurseForgeRemoteModRepository WORLDS = new CurseForgeRemoteModRepository(SECTION_WORLD);
-    public static final CurseForgeRemoteModRepository CUSTOMIZATIONS = new CurseForgeRemoteModRepository(SECTION_CUSTOMIZATION);
+    public static final CurseForgeRemoteModRepository MODS = new CurseForgeRemoteModRepository(Type.MOD, SECTION_MOD);
+    public static final CurseForgeRemoteModRepository MODPACKS = new CurseForgeRemoteModRepository(Type.MODPACK, SECTION_MODPACK);
+    public static final CurseForgeRemoteModRepository RESOURCE_PACKS = new CurseForgeRemoteModRepository(Type.RESOURCE_PACK, SECTION_RESOURCE_PACK);
+    public static final CurseForgeRemoteModRepository WORLDS = new CurseForgeRemoteModRepository(Type.WORLD, SECTION_WORLD);
+    public static final CurseForgeRemoteModRepository CUSTOMIZATIONS = new CurseForgeRemoteModRepository(Type.CUSTOMIZATION, SECTION_CUSTOMIZATION);
 
     public static class Category {
         private final int id;

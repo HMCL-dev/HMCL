@@ -1,9 +1,9 @@
 #
 # Hello Minecraft! Launcher
-# Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+# Copyright (C) 2022  huangyuhui <huanghongxun2008@126.com> and contributors
 #
-# This file is licensed under CC BY-NC-SA 3.0.
-# Thanks to mcmod.cn and all contributors.
+# mcmod.cn
+# Copyright (C) 2022. All Rights Reserved.
 #
 industrial-craft;2;515771;IC2,ic2;工业时代2;Industrial Craft 2;IC2
 ;3;71843;RedPowerCore,RedPowerBase;红石力量2;RedPower2;RP2

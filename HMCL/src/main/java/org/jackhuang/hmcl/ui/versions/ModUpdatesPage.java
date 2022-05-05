@@ -165,7 +165,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         @Override
         protected void updateControl(LocalModFile.ModUpdate item, boolean empty) {
             if (empty) return;
-            ModTranslations.Mod mod = ModTranslations.getModById(item.getLocalMod().getId());
+            ModTranslations.Mod mod = ModTranslations.MOD.getModById(item.getLocalMod().getId());
             content.setTitle(mod != null ? mod.getDisplayName() : item.getCurrentVersion().getName());
             content.setSubtitle(item.getLocalMod().getFileName());
             content.getTags().setAll();

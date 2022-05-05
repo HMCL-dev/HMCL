@@ -25,6 +25,16 @@ import java.util.stream.Stream;
 
 public interface RemoteModRepository {
 
+    enum Type {
+        MOD,
+        MODPACK,
+        RESOURCE_PACK,
+        WORLD,
+        CUSTOMIZATION
+    }
+
+    Type getType();
+
     enum SortType {
         DATE_CREATED,
         POPULARITY,

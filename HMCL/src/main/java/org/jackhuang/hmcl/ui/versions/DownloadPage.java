@@ -38,6 +38,7 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -69,6 +70,8 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
+    private final RemoteModRepository repository;
+    private final ModTranslations translations;
     private final RemoteMod addon;
     private final ModTranslations.Mod mod;
     private final Profile.ProfileVersion version;
@@ -80,8 +83,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     public DownloadPage(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
         this.page = page;
+        this.repository = page.repository;
         this.addon = addon;
-        this.mod = ModTranslations.getModByCurseForgeId(addon.getSlug());
+        this.translations = ModTranslations.getTranslationsByRepositoryType(repository.getType());
+        this.mod = translations.getModByCurseForgeId(addon.getSlug());
         this.version = version;
         this.callback = callback;
         loadModVersions();
@@ -240,7 +245,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 TwoLineListItem content = new TwoLineListItem();
                 HBox.setHgrow(content, Priority.ALWAYS);
-                ModTranslations.Mod mod = ModTranslations.getModByCurseForgeId(getSkinnable().addon.getSlug());
+                ModTranslations.Mod mod = getSkinnable().translations.getModByCurseForgeId(getSkinnable().addon.getSlug());
                 content.setTitle(mod != null ? mod.getDisplayName() : getSkinnable().addon.getTitle());
                 content.setSubtitle(getSkinnable().addon.getDescription());
                 content.getTags().setAll(getSkinnable().addon.getCategories().stream()
@@ -345,7 +350,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             container.setOnMouseClicked(e -> Controllers.navigate(new DownloadPage(page, addon, version, callback)));
             getChildren().setAll(container);
 
-            ModTranslations.Mod mod = ModTranslations.getModByCurseForgeId(addon.getSlug());
+            ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(page.repository.getType()).getModByCurseForgeId(addon.getSlug());
             content.setTitle(mod != null ? mod.getDisplayName() : addon.getTitle());
             content.setSubtitle(addon.getDescription());
             content.getTags().setAll(addon.getCategories().stream()

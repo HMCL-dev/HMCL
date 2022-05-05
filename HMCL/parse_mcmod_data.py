@@ -27,7 +27,7 @@ S = ';'
 MOD_SEPARATOR = ','
 
 CURSEFORGE_PATTERN1 = re.compile(
-    r'^/minecraft/(mc-mods|customization|mc-addons|customization/configuration)/+(?P<modid>[\w-]+)(/(.*?))?$')
+    r'^/minecraft/(mc-mods|modpacks|customization|mc-addons|customization/configuration)/+(?P<modid>[\w-]+)(/(.*?))?$')
 CURSEFORGE_PATTERN2 = re.compile(
     r'^/projects/(?P<modid>[\w-]+)(/(.*?))?$')
 CURSEFORGE_PATTERN3 = re.compile(
@@ -49,7 +49,7 @@ def parseCurseforge(url):
 
 
 MCMOD_PATTERN = re.compile(
-    r'^http(s)?://www\.mcmod\.cn/class/(?P<modid>\d+)\.html$')
+    r'^http(s)?://www\.mcmod\.cn/(class|modpack)/(?P<modid>\d+)\.html$')
 
 
 def parseMcmod(url):
@@ -138,7 +138,7 @@ if __name__ == '__main__':
                     exit(1)
 
             mod_id = []
-            if 'list' in mod['modid']:
+            if 'modid' in mod and 'list' in mod['modid']:
                 for id in mod['modid']['list']:
                     if MOD_SEPARATOR in id:
                         print('Error mod id!' + id)
