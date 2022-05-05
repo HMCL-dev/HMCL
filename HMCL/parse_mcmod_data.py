@@ -19,6 +19,7 @@
 import json
 import codecs
 import re
+import sys
 from urllib.parse import urlparse, parse_qs
 
 S = ';'
@@ -26,18 +27,21 @@ S = ';'
 MOD_SEPARATOR = ','
 
 CURSEFORGE_PATTERN1 = re.compile(
-    r'^/minecraft/(mc-mods|customization|mc-addons|customization/configuration)/(?P<modid>[\w-]+)(/(.*?))?$')
+    r'^/minecraft/(mc-mods|customization|mc-addons|customization/configuration)/+(?P<modid>[\w-]+)(/(.*?))?$')
 CURSEFORGE_PATTERN2 = re.compile(
     r'^/projects/(?P<modid>[\w-]+)(/(.*?))?$')
 CURSEFORGE_PATTERN3 = re.compile(
     r'^/mc-mods/minecraft/(?P<modid>[\w-]+)(/(.*?))?$')
+CURSEFORGE_PATTERN4 = re.compile(
+    r'^/legacy/mc-mods/minecraft/(\d+)-(?P<modid>[\w-]+)'
+)
 
 
 def parseCurseforge(url):
     res = urlparse(url)
     if res.scheme not in ['http', 'https']:
         return ''
-    for pattern in [CURSEFORGE_PATTERN1, CURSEFORGE_PATTERN2, CURSEFORGE_PATTERN3]:
+    for pattern in [CURSEFORGE_PATTERN1, CURSEFORGE_PATTERN2, CURSEFORGE_PATTERN3, CURSEFORGE_PATTERN4]:
         match = pattern.match(res.path)
         if match:
             return match.group('modid')
@@ -55,7 +59,7 @@ def parseMcmod(url):
     return ''
 
 
-MCBBS_HTML_PATTERN = re.compile(r'/thread-(?P<modid>\d+)-(\d+)-(\d+).html')
+MCBBS_HTML_PATTERN = re.compile(r'/+thread-(?P<modid>\d+)-(\d+)-(\d+).html')
 MCBBS_PHP_PATTERN = re.compile(r'')
 
 
@@ -78,14 +82,25 @@ def parseMcbbs(url):
     return ''
 
 
+skip = [
+    'Minecraft',
+    'The Building Game'
+]
+
+
 if __name__ == '__main__':
-    with codecs.open('data.json', mode='r', encoding='utf-8-sig') as jsonfile, codecs.open('data.csv', mode='w', encoding='utf-8') as outfile:
+    json_name = sys.argv[1] or 'data.json'
+
+    with codecs.open(json_name, mode='r', encoding='utf-8-sig') as jsonfile, codecs.open('data.csv', mode='w', encoding='utf-8') as outfile:
         data = json.load(jsonfile)
 
         for mod in data:
             chinese_name = mod['name']['main']
             sub_name = mod['name']['sub']
             abbr = mod['name']['abbr']
+
+            if sub_name in skip:
+                continue
 
             if S in chinese_name:
                 print('Error! ' + chinese_name)
