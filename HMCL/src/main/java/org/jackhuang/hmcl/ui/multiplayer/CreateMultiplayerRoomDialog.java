@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2022  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -82,8 +82,8 @@ public class CreateMultiplayerRoomDialog extends DialogPane implements DialogAwa
         setValid(false);
 
         JFXHyperlink noinLink = new JFXHyperlink();
-        noinLink.setText("noin.cn");
-        noinLink.setOnAction(e -> FXUtils.openLink("https://noin.cn"));
+        noinLink.setText("mcer.cn");
+        noinLink.setOnAction(e -> FXUtils.openLink("https://mcer.cn/circle/cato"));
 
         setActions(warningLabel, noinLink, acceptPane, cancelButton);
 
