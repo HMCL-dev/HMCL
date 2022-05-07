@@ -128,8 +128,8 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     .startCategory(i18n("help"))
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("help"));
-                        item.setLeftGraphic(wrap(SVG::gamepad));
-                        item.setOnAction(e -> FXUtils.openLink("https://hmcl.huangyuhui.net/help/launcher/multiplayer.html"));
+                        item.setLeftGraphic(wrap(SVG::helpCircleOutline));
+                        item.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/multiplayer"));
                     })
                     .addNavigationDrawerItem(report -> {
                         report.setTitle(i18n("feedback"));
