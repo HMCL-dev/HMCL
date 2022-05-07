@@ -96,7 +96,7 @@ public class AboutPage extends StackPane {
             noin.setImage(new Image("/assets/img/noin.png", 32, 32, false, true));
             noin.setTitle(i18n("about.thanks_to.noin"));
             noin.setSubtitle(i18n("about.thanks_to.noin.statement"));
-            noin.setExternalLink("https://s.mcer.cn/");
+            noin.setExternalLink("https://mcer.cn/");
 
             IconedTwoLineListItem contributors = new IconedTwoLineListItem();
             contributors.setImage(new Image("/assets/img/github.png", 32, 32, false, true));
