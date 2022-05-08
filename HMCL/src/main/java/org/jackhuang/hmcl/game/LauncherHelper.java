@@ -443,12 +443,12 @@ public final class LauncherHelper {
                             return Task.fromCompletableFuture(future);
                         case VANILLA_JAVA_16:
                             Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 16), i18n("message.warning"), () -> {
-                                FXUtils.openLink("https://adoptium.net/?variant=openjdk17");
+                                FXUtils.openLink("https://bell-sw.com/pages/downloads/?version=java-17-lts&package=jre-full");
                             }, breakAction);
                             return null;
                         case VANILLA_JAVA_17:
                             Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 17), i18n("message.warning"), () -> {
-                                FXUtils.openLink("https://adoptium.net/?variant=openjdk17");
+                                FXUtils.openLink("https://bell-sw.com/pages/downloads/?version=java-17-lts&package=jre-full");
                             }, breakAction);
                             return null;
                         case VANILLA_JAVA_8:
@@ -563,7 +563,7 @@ public final class LauncherHelper {
 
         JFXHyperlink link = new JFXHyperlink(i18n("download.external_link"));
         link.setOnAction(e -> {
-            FXUtils.openLink("https://docs.microsoft.com/zh-cn/java/openjdk/download");
+            FXUtils.openLink("https://bell-sw.com/pages/downloads/?package=jre-full");
             future.completeExceptionally(new CancellationException());
         });
 
