@@ -190,7 +190,7 @@ public final class Config implements Cloneable, Observable {
     public Config() {
         // Default override for better-looking logs on Windows
         if (System.getProperty("os.name").startsWith("Windows")) {
-            this.fontFamily = new SimpleStringProperty("Consolas");
+            this.fontFamily.setValue("Consolas");
         }
         PropertyUtils.attachListener(this, helper);
     }
