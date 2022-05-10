@@ -146,7 +146,7 @@ public final class Config implements Cloneable, Observable {
     private ObservableList<Map<Object, Object>> accountStorages = FXCollections.observableArrayList();
 
     @SerializedName("fontFamily")
-    private StringProperty fontFamily = new SimpleStringProperty("Consolas");
+    private StringProperty fontFamily = new SimpleStringProperty("Monospace");
 
     @SerializedName("fontSize")
     private DoubleProperty fontSize = new SimpleDoubleProperty(12);
@@ -188,6 +188,10 @@ public final class Config implements Cloneable, Observable {
     private transient ObservableHelper helper = new ObservableHelper(this);
 
     public Config() {
+        // Default override for better-looking logs on Windows
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            this.fontFamily = new SimpleStringProperty("Consolas");
+        }
         PropertyUtils.attachListener(this, helper);
     }
 
