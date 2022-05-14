@@ -375,9 +375,9 @@ public final class JavaVersion {
             
             for (String osArch : runtimeOSArch) {
                 javaExecutables.add(Stream.of(
-                    runtimeDir.resolve("jre-legacy").resolve(osArch).resolve("jre-legacy")),
-                    runtimeDir.resolve("java-runtime-alpha").resolve(osArch).resolve("jre-runtime-alpha"),
-                    runtimeDir.resolve("java-runtime-beta").resolve(osArch).resolve("jre-runtime-beta")
+                    runtimeDir.get().resolve("jre-legacy").resolve(osArch).resolve("jre-legacy")),
+                    runtimeDir.get().resolve("java-runtime-alpha").resolve(osArch).resolve("jre-runtime-alpha"),
+                    runtimeDir.get().resolve("java-runtime-beta").resolve(osArch).resolve("jre-runtime-beta")
                 ).map(JavaVersion::getExecutable);
             }
         }
