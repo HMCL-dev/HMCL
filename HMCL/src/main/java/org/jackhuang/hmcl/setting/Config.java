@@ -43,7 +43,6 @@ import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
-
 import java.io.File;
 import java.net.Proxy;
 import java.util.Map;
