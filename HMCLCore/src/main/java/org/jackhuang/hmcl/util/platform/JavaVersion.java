@@ -301,7 +301,7 @@ public final class JavaVersion {
         // 3. PATH
         List<Stream<Path>> javaExecutables = new ArrayList<>();
         // Can be not present -- we check at the last part
-        List<Path> runtimeDirs = new ArrayList<>();
+        List<Optional<Path>> runtimeDirs = new ArrayList<>();
         // Is this necessary? Can't we just do listDirectory(...).map(x -> x.resolve(...))?
         // lookupJavas() should take care of it... 
         List<String> runtimeOSArch = new ArrayList<>();
