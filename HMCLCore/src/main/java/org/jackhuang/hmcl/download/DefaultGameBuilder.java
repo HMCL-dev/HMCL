@@ -54,8 +54,11 @@ public class DefaultGameBuilder extends GameBuilder {
             libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, entry.getKey(), entry.getValue()));
             stages.add(String.format("hmcl.install.%s:%s", entry.getKey(), entry.getValue()));
         }
+		
+        List<RemoteVersion>sortedRemoteVersions=new ArrayList<>(remoteVersions);
+        sortedRemoteVersions.sort((o1, o2) -> "optifine".equals(o1.getLibraryId())?1:-1);//Anyway, put OptiFine installation at the end, solved issue #1486
 
-        for (RemoteVersion remoteVersion : remoteVersions) {
+        for (RemoteVersion remoteVersion : sortedRemoteVersions) {
             libraryTask = libraryTask.thenComposeAsync(version -> dependencyManager.installLibraryAsync(version, remoteVersion));
             stages.add(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion()));
         }
