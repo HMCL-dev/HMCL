@@ -208,6 +208,16 @@ public final class JavaVersion {
         }
     }
 
+    public static Path exploreBundle(Path bundleRoot) {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+            Path home = bundleRoot.resolve("Contents").resolve("Home");
+            Path jre = home.resolve("jre");
+            return Files.exists(jre) ? jre : home;
+        } else {
+            return bundleRoot;
+        }
+    }
+
     public static JavaVersion fromCurrentEnvironment() {
         return CURRENT_JAVA;
     }
@@ -375,10 +385,10 @@ public final class JavaVersion {
             
             for (String osArch : runtimeOSArch) {
                 javaExecutables.add(Stream.of(
-                    runtimeDir.get().resolve("jre-legacy").resolve(osArch).resolve("jre-legacy")),
-                    runtimeDir.get().resolve("java-runtime-alpha").resolve(osArch).resolve("jre-runtime-alpha"),
-                    runtimeDir.get().resolve("java-runtime-beta").resolve(osArch).resolve("jre-runtime-beta")
-                ).map(JavaVersion::getExecutable);
+                        runtimeDir.get().resolve("jre-legacy").resolve(osArch).resolve("jre-legacy"),
+                        runtimeDir.get().resolve("java-runtime-alpha").resolve(osArch).resolve("jre-runtime-alpha"),
+                        runtimeDir.get().resolve("java-runtime-beta").resolve(osArch).resolve("jre-runtime-beta"))
+                        .map(JavaVersion::exploreBundle).map(JavaVersion::getExecutable));
             }
         }
 
