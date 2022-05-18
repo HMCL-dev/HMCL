@@ -32,6 +32,7 @@ import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -62,6 +63,10 @@ public final class JavaVersion {
             version = UNKNOWN;
             versionNumber = null;
         }
+    }
+
+    public String toString() {
+        return "JavaVersion {" + binary + ", " + longVersion + "(" + version + ")" + ", " + platform + "}";
     }
 
     public Path getBinary() {
@@ -376,8 +381,8 @@ public final class JavaVersion {
             for (String osArch : runtimeOSArch) {
                 javaExecutables.add(Stream.of(
                         runtimeDir.get().resolve("jre-legacy").resolve(osArch).resolve("jre-legacy"),
-                        runtimeDir.get().resolve("java-runtime-alpha").resolve(osArch).resolve("jre-runtime-alpha"),
-                        runtimeDir.get().resolve("java-runtime-beta").resolve(osArch).resolve("jre-runtime-beta"))
+                        runtimeDir.get().resolve("java-runtime-alpha").resolve(osArch).resolve("java-runtime-alpha"),
+                        runtimeDir.get().resolve("java-runtime-beta").resolve(osArch).resolve("java-runtime-beta"))
                         .map(x -> OperatingSystem.CURRENT_OS == OperatingSystem.OSX ? x.resolve("jre.bundle/Contents/Home") : x)
                         .map(JavaVersion::getExecutable));
             }
@@ -467,4 +472,14 @@ public final class JavaVersion {
         return null;
     }
     // ====
+
+    public static void main(String[] args) {
+        try {
+            LOG.setLevel(Level.ALL);
+            initialize();
+            LOG.info(JAVAS.toString());
+        } catch (Throwable e) {
+            LOG.log(Level.WARNING, "Oops:", e);
+        }
+    }
 }
