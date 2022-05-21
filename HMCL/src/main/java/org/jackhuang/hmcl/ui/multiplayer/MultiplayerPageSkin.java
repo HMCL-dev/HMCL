@@ -258,7 +258,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                 tokenField.setPromptText(i18n("multiplayer.session.create.token.prompt"));
 
                 JFXHyperlink applyLink = new JFXHyperlink(i18n("multiplayer.session.create.token.apply"));
-                applyLink.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-static-token"));
+                applyLink.setOnAction(e -> FXUtils.openLink("https://mcer.cn/66.html"));
 
                 gridPane.addRow(0, new Label(i18n("multiplayer.session.create.token")), tokenField, applyLink);
 
