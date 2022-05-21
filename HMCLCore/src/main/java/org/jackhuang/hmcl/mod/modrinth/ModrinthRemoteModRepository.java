@@ -111,8 +111,10 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public RemoteMod getModById(String id) {
-        throw new UnsupportedOperationException();
+    public RemoteMod getModById(String id) throws IOException {
+        id = StringUtils.removePrefix(id, "local-");
+        Project project = HttpRequest.GET(PREFIX + "/v2/project/" + id).getJson(Project.class);
+        return project.toMod();
     }
 
     @Override
@@ -139,7 +141,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                 .map(name -> new Category(null, name, Collections.emptyList()));
     }
 
-    public static class Project {
+    public static class Project implements RemoteMod.IMod {
         private final String slug;
 
         private final String title;
@@ -237,6 +239,39 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         public List<String> getVersions() {
             return versions;
+        }
+
+
+        @Override
+        public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
+            Set<String> dependencies = modRepository.getRemoteVersionsById(getId())
+                    .flatMap(version -> version.getDependencies().stream())
+                    .collect(Collectors.toSet());
+            List<RemoteMod> mods = new ArrayList<>();
+            for (String dependencyId : dependencies) {
+                if (StringUtils.isNotBlank(dependencyId)) {
+                    mods.add(modRepository.getModById(dependencyId));
+                }
+            }
+            return mods;
+        }
+
+        @Override
+        public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
+            return modRepository.getRemoteVersionsById(getId());
+        }
+
+        public RemoteMod toMod() {
+            return new RemoteMod(
+                    slug,
+                    "",
+                    title,
+                    description,
+                    categories,
+                    null,
+                    iconUrl,
+                    (RemoteMod.IMod) this
+            );
         }
     }
 
@@ -416,7 +451,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     datePublished,
                     type,
                     files.get(0).toFile(),
-                    dependencies.stream().map(Dependency::getProjectId).collect(Collectors.toList()),
+                    dependencies.stream().map(Dependency::getProjectId).filter(Objects::nonNull).collect(Collectors.toList()),
                     gameVersions,
                     loaders.stream().flatMap(loader -> {
                         if ("fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FABRIC);
@@ -570,7 +605,16 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         @Override
         public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
-            return Collections.emptyList();
+            Set<String> dependencies = modRepository.getRemoteVersionsById(getProjectId())
+                    .flatMap(version -> version.getDependencies().stream())
+                    .collect(Collectors.toSet());
+            List<RemoteMod> mods = new ArrayList<>();
+            for (String dependencyId : dependencies) {
+                if (StringUtils.isNotBlank(dependencyId)) {
+                    mods.add(modRepository.getModById(dependencyId));
+                }
+            }
+            return mods;
         }
 
         @Override
