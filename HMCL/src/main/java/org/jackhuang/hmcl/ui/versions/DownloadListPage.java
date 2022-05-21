@@ -399,7 +399,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     protected void updateControl(RemoteMod dataItem, boolean empty) {
                         if (empty) return;
                         ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(dataItem.getSlug());
-                        content.setTitle(mod != null ? mod.getDisplayName() : dataItem.getTitle());
+                        content.setTitle(mod != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA ? mod.getDisplayName() : dataItem.getTitle());
                         content.setSubtitle(dataItem.getDescription());
                         content.getTags().setAll(dataItem.getCategories().stream()
                                 .map(category -> getSkinnable().getLocalizedCategory(category))
