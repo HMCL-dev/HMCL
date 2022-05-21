@@ -195,7 +195,7 @@ public final class JavaVersion {
 
         JavaVersion javaVersion = new JavaVersion(executable, version, platform);
         if (javaVersion.getParsedVersion() == UNKNOWN)
-            throw new IOException("Unrecognized Java version " + version);
+            throw new IOException("Unrecognized Java version " + version + " at " + executable);
         fromExecutableCache.put(executable, javaVersion);
         return javaVersion;
     }

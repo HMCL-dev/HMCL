@@ -22,6 +22,7 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 import java.util.Objects;
@@ -82,9 +83,17 @@ public final class CurseManifestFile implements Validation {
             throw new JsonParseException("Missing Project ID or File ID.");
     }
 
+    @Nullable
     public URL getUrl() {
-        return url == null ? NetworkUtils.toURL("https://www.curseforge.com/minecraft/mc-mods/" + projectID + "/download/" + fileID + "/file")
-                : NetworkUtils.toURL(NetworkUtils.encodeLocation(url));
+        if (url == null) {
+            if (fileName != null) {
+                return NetworkUtils.toURL(NetworkUtils.encodeLocation(String.format("https://edge.forgecdn.net/files/%d/%d/%s", fileID / 1000, fileID % 1000, fileName)));
+            } else {
+                return null;
+            }
+        } else {
+            return NetworkUtils.toURL(NetworkUtils.encodeLocation(url));
+        }
     }
 
     public CurseManifestFile withFileName(String fileName) {

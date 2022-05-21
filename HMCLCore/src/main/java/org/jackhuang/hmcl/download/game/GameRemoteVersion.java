@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
 
-import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -37,7 +37,7 @@ public final class GameRemoteVersion extends RemoteVersion {
 
     private final ReleaseType type;
 
-    public GameRemoteVersion(String gameVersion, String selfVersion, List<String> url, ReleaseType type, Instant releaseDate) {
+    public GameRemoteVersion(String gameVersion, String selfVersion, List<String> url, ReleaseType type, Date releaseDate) {
         super(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion, selfVersion, releaseDate, getReleaseType(type), url);
         this.type = type;
     }

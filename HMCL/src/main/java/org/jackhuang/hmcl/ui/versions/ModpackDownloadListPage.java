@@ -50,7 +50,7 @@ public class ModpackDownloadListPage extends DownloadListPage {
         }
 
         @Override
-        public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort) throws IOException {
+        public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
             String newSearchFilter;
             if (StringUtils.CHINESE_PATTERN.matcher(searchFilter).find()) {
                 List<ModTranslations.Mod> mods = ModTranslations.MODPACK.searchMod(searchFilter);
@@ -72,7 +72,7 @@ public class ModpackDownloadListPage extends DownloadListPage {
                 newSearchFilter = searchFilter;
             }
 
-            return CurseForgeRemoteModRepository.MODPACKS.search(gameVersion, category, pageOffset, pageSize, newSearchFilter, sort);
+            return CurseForgeRemoteModRepository.MODPACKS.search(gameVersion, category, pageOffset, pageSize, newSearchFilter, sort, sortOrder);
         }
 
         @Override
@@ -81,18 +81,23 @@ public class ModpackDownloadListPage extends DownloadListPage {
         }
 
         @Override
-        public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) {
-            throw new UnsupportedOperationException();
+        public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
+            return CurseForgeRemoteModRepository.MODPACKS.getRemoteVersionByLocalFile(localModFile, file);
         }
 
         @Override
-        public RemoteMod getModById(String id) {
-            throw new UnsupportedOperationException();
+        public RemoteMod getModById(String id) throws IOException {
+            return CurseForgeRemoteModRepository.MODPACKS.getModById(id);
+        }
+
+        @Override
+        public RemoteMod.File getModFile(String modId, String fileId) throws IOException {
+            return CurseForgeRemoteModRepository.MODPACKS.getModFile(modId, fileId);
         }
 
         @Override
         public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
-            throw new UnsupportedOperationException();
+            return CurseForgeRemoteModRepository.MODPACKS.getRemoteVersionsById(id);
         }
     }
 

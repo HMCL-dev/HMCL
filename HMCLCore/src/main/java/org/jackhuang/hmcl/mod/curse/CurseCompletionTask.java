@@ -21,13 +21,13 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -117,35 +117,18 @@ public final class CurseCompletionTask extends Task<Void> {
                 manifest.getFiles().parallelStream()
                         .map(file -> {
                             updateProgress(finished.incrementAndGet(), manifest.getFiles().size());
-                            if (StringUtils.isBlank(file.getFileName())) {
+                            if (StringUtils.isBlank(file.getFileName()) || file.getUrl() == null) {
                                 try {
-                                    return file.withFileName(NetworkUtils.detectFileName(file.getUrl()));
-                                } catch (IOException e) {
-                                    try {
-                                        String result = NetworkUtils.doGet(NetworkUtils.toURL(String.format("https://cursemeta.dries007.net/%d/%d.json", file.getProjectID(), file.getFileID())));
-                                        CurseMetaMod mod = JsonUtils.fromNonNullJson(result, CurseMetaMod.class);
-                                        return file.withFileName(mod.getFileNameOnDisk()).withURL(mod.getDownloadURL());
-                                    } catch (FileNotFoundException fof) {
-                                        Logging.LOG.log(Level.WARNING, "Could not query cursemeta for deleted mods: " + file.getUrl(), fof);
-                                        notFound.set(true);
-                                        return file;
-                                    } catch (IOException | JsonParseException e2) {
-                                        try {
-                                            String result = NetworkUtils.doGet(NetworkUtils.toURL(String.format("https://addons-ecs.forgesvc.net/api/v2/addon/%d/file/%d", file.getProjectID(), file.getFileID())));
-                                            CurseMetaMod mod = JsonUtils.fromNonNullJson(result, CurseMetaMod.class);
-                                            return file.withFileName(mod.getFileName()).withURL(mod.getDownloadURL());
-                                        } catch (FileNotFoundException fof) {
-                                            Logging.LOG.log(Level.WARNING, "Could not query forgesvc for deleted mods: " + file.getUrl(), fof);
-                                            notFound.set(true);
-                                            return file;
-                                        } catch (IOException | JsonParseException e3) {
-                                            Logging.LOG.log(Level.WARNING, "Unable to fetch the file name of URL: " + file.getUrl(), e);
-                                            Logging.LOG.log(Level.WARNING, "Unable to fetch the file name of URL: " + file.getUrl(), e2);
-                                            Logging.LOG.log(Level.WARNING, "Unable to fetch the file name of URL: " + file.getUrl(), e3);
-                                            allNameKnown.set(false);
-                                            return file;
-                                        }
-                                    }
+                                    RemoteMod.File remoteFile = CurseForgeRemoteModRepository.MODS.getModFile(Integer.toString(file.getProjectID()), Integer.toString(file.getFileID()));
+                                    return file.withFileName(remoteFile.getFilename()).withURL(remoteFile.getUrl());
+                                } catch (FileNotFoundException fof) {
+                                    Logging.LOG.log(Level.WARNING, "Could not query api.curseforge.com for deleted mods: " + file.getProjectID() + ", " +file.getFileID(), fof);
+                                    notFound.set(true);
+                                    return file;
+                                } catch (IOException | JsonParseException e) {
+                                    Logging.LOG.log(Level.WARNING, "Unable to fetch the file name projectID=" + file.getProjectID() + ", fileID=" +file.getFileID(), e);
+                                    allNameKnown.set(false);
+                                    return file;
                                 }
                             } else {
                                 return file;

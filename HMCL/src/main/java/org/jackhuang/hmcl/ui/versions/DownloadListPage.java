@@ -173,7 +173,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             }
             return gameVersion;
         }).thenApplyAsync(gameVersion -> {
-            return repository.search(gameVersion, category, pageOffset, 50, searchFilter, sort);
+            return repository.search(gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             setLoading(false);
             if (exception == null) {

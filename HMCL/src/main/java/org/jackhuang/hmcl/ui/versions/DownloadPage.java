@@ -103,9 +103,9 @@ public class DownloadPage extends Control implements DecoratorPage {
         setFailed(false);
 
         Task.allOf(
-                Task.supplyAsync(() -> addon.getData().loadDependencies()),
+                Task.supplyAsync(() -> addon.getData().loadDependencies(repository)),
                 Task.supplyAsync(() -> {
-                    Stream<RemoteMod.Version> versions = addon.getData().loadVersions();
+                    Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
 //                            if (StringUtils.isNotBlank(version.getVersion())) {
 //                                Optional<String> gameVersion = GameVersion.minecraftVersion(versionJar);
 //                                if (gameVersion.isPresent()) {
@@ -284,7 +284,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 Node title = ComponentList.createComponentListTitle(i18n("mods.dependencies"));
 
-                BooleanBinding show = Bindings.createBooleanBinding(() -> !control.dependencies.isEmpty(), control.loaded);
+                BooleanBinding show = Bindings.createBooleanBinding(() -> control.loaded.get() && !control.dependencies.isEmpty(), control.loaded);
                 title.managedProperty().bind(show);
                 title.visibleProperty().bind(show);
                 dependencyPane.managedProperty().bind(show);
@@ -385,7 +385,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.getChildren().setAll(graphicPane, content, saveAsButton);
 
             content.setTitle(dataItem.getName());
-            content.setSubtitle(FORMATTER.format(dataItem.getDatePublished()));
+            content.setSubtitle(FORMATTER.format(dataItem.getDatePublished().toInstant()));
             saveAsButton.setOnMouseClicked(e -> selfPage.saveAs(dataItem));
 
             switch (dataItem.getVersionType()) {

@@ -96,7 +96,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     @FXML
     private StackPane center;
 
-    private VersionList<?> versionList;
+    private final VersionList<?> versionList;
     private CompletableFuture<?> executor;
 
     public VersionsPage(Navigation navigation, String title, String gameVersion, DownloadProvider downloadProvider, String libraryId, Runnable callback) {
@@ -144,7 +144,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
                 content.setTitle(remoteVersion.getSelfVersion());
                 if (remoteVersion.getReleaseDate() != null) {
-                    content.setSubtitle(Locales.DATE_TIME_FORMATTER.get().format(remoteVersion.getReleaseDate()));
+                    content.setSubtitle(Locales.DATE_TIME_FORMATTER.get().format(remoteVersion.getReleaseDate().toInstant()));
                 } else {
                     content.setSubtitle("");
                 }

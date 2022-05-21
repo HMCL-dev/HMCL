@@ -34,10 +34,7 @@ import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -74,7 +71,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
     }
 
-    public List<ModResult> searchPaginated(String gameVersion, int pageOffset, int pageSize, String searchFilter, SortType sort) throws IOException {
+    @Override
+    public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
         Map<String, String> query = mapOf(
                 pair("query", searchFilter),
                 pair("offset", Integer.toString(pageOffset)),
@@ -87,13 +85,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         Response<ModResult> response = HttpRequest.GET(NetworkUtils.withQuery(PREFIX + "/api/v1/mod", query))
                 .getJson(new TypeToken<Response<ModResult>>() {
                 }.getType());
-        return response.getHits();
-    }
-
-    @Override
-    public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort) throws IOException {
-        return searchPaginated(gameVersion, pageOffset, pageSize, searchFilter, sort).stream()
-                .map(ModResult::toMod);
+        return response.getHits().stream().map(ModResult::toMod);
     }
 
     @Override
@@ -116,6 +108,11 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
     @Override
     public RemoteMod getModById(String id) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public RemoteMod.File getModFile(String modId, String fileId) throws IOException {
         throw new UnsupportedOperationException();
     }
 
@@ -238,7 +235,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         private final String changelog;
 
         @SerializedName("date_published")
-        private final Instant datePublished;
+        private final Date datePublished;
 
         private final int downloads;
 
@@ -254,7 +251,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         private final List<String> loaders;
 
-        public ModVersion(String id, String modId, String authorId, String name, String versionNumber, String changelog, Instant datePublished, int downloads, String versionType, List<ModVersionFile> files, List<String> dependencies, List<String> gameVersions, List<String> loaders) {
+        public ModVersion(String id, String modId, String authorId, String name, String versionNumber, String changelog, Date datePublished, int downloads, String versionType, List<ModVersionFile> files, List<String> dependencies, List<String> gameVersions, List<String> loaders) {
             this.id = id;
             this.modId = modId;
             this.authorId = authorId;
@@ -294,7 +291,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return changelog;
         }
 
-        public Instant getDatePublished() {
+        public Date getDatePublished() {
             return datePublished;
         }
 
@@ -501,13 +498,13 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         @Override
-        public List<RemoteMod> loadDependencies() throws IOException {
+        public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
             return Collections.emptyList();
         }
 
         @Override
-        public Stream<RemoteMod.Version> loadVersions() throws IOException {
-            return ModrinthRemoteModRepository.INSTANCE.getRemoteVersionsById(getModId());
+        public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
+            return modRepository.getRemoteVersionsById(getModId());
         }
 
         public RemoteMod toMod() {

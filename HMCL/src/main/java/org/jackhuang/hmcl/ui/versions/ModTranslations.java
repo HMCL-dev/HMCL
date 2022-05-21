@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -38,7 +39,9 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 public final class ModTranslations {
     public static ModTranslations MOD = new ModTranslations("/assets/mod_data.txt");
     public static ModTranslations MODPACK = new ModTranslations("/assets/modpack_data.txt");
+    public static ModTranslations EMPTY = new ModTranslations("");
 
+    @Nullable
     public static ModTranslations getTranslationsByRepositoryType(RemoteModRepository.Type type) {
         switch (type) {
             case MOD:
@@ -46,7 +49,7 @@ public final class ModTranslations {
             case MODPACK:
                 return MODPACK;
             default:
-                throw new IllegalArgumentException();
+                return EMPTY;
         }
     }
 
@@ -61,12 +64,14 @@ public final class ModTranslations {
         this.resourceName = resourceName;
     }
 
+    @Nullable
     public Mod getModByCurseForgeId(String id) {
         if (StringUtils.isBlank(id) || !loadCurseForgeMap()) return null;
 
         return curseForgeMap.get(id);
     }
 
+    @Nullable
     public Mod getModById(String id) {
         if (StringUtils.isBlank(id) || !loadModIdMap()) return null;
 
@@ -96,7 +101,7 @@ public final class ModTranslations {
     }
 
     private boolean loadFromResource() {
-        if (mods != null) return true;
+        if (mods != null || StringUtils.isBlank(resourceName)) return true;
         try {
             String modData = IOUtils.readFullyAsString(ModTranslations.class.getResourceAsStream(resourceName), StandardCharsets.UTF_8);
             mods = Arrays.stream(modData.split("\n")).filter(line -> !line.startsWith("#")).map(Mod::new).collect(Collectors.toList());

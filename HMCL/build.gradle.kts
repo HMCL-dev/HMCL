@@ -41,9 +41,11 @@ val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
     }
 }
 val versionRoot = System.getenv("VERSION_ROOT") ?: "3.5"
+val versionType = System.getenv("VERSION_TYPE") ?: "nightly"
+
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
-val versionType = System.getenv("VERSION_TYPE") ?: "nightly"
+val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
 
 version = "$versionRoot.$buildNumber"
 
@@ -147,6 +149,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
             "Implementation-Version" to project.version,
             "Microsoft-Auth-Id" to microsoftAuthId,
             "Microsoft-Auth-Secret" to microsoftAuthSecret,
+            "CurseForge-Api-Key" to curseForgeApiKey,
             "Build-Channel" to versionType,
             "Class-Path" to "pack200.jar",
             "Add-Opens" to listOf(

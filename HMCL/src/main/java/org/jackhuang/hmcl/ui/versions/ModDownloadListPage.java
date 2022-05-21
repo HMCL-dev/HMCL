@@ -47,13 +47,21 @@ public class ModDownloadListPage extends DownloadListPage {
 
     private class Repository implements RemoteModRepository {
 
+        private RemoteModRepository getBackedRemoteModRepository() {
+            if ("mods.modrinth".equals(downloadSource.get())) {
+                return ModrinthRemoteModRepository.INSTANCE;
+            } else {
+                return CurseForgeRemoteModRepository.MODS;
+            }
+        }
+
         @Override
         public Type getType() {
             return Type.MOD;
         }
 
         @Override
-        public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort) throws IOException {
+        public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
             String newSearchFilter;
             if (StringUtils.CHINESE_PATTERN.matcher(searchFilter).find()) {
                 List<ModTranslations.Mod> mods = ModTranslations.MOD.searchMod(searchFilter);
@@ -75,35 +83,32 @@ public class ModDownloadListPage extends DownloadListPage {
                 newSearchFilter = searchFilter;
             }
 
-            if ("mods.modrinth".equals(downloadSource.get())) {
-                return ModrinthRemoteModRepository.INSTANCE.search(gameVersion, category, pageOffset, pageSize, newSearchFilter, sort);
-            } else {
-                return CurseForgeRemoteModRepository.MODS.search(gameVersion, category, pageOffset, pageSize, newSearchFilter, sort);
-            }
+            return getBackedRemoteModRepository().search(gameVersion, category, pageOffset, pageSize, newSearchFilter, sort, sortOrder);
         }
 
         @Override
         public Stream<Category> getCategories() throws IOException {
-            if ("mods.modrinth".equals(downloadSource.get())) {
-                return ModrinthRemoteModRepository.INSTANCE.getCategories();
-            } else {
-                return CurseForgeRemoteModRepository.MODS.getCategories();
-            }
+            return getBackedRemoteModRepository().getCategories();
         }
 
         @Override
-        public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) {
-            throw new UnsupportedOperationException();
+        public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
+            return getBackedRemoteModRepository().getRemoteVersionByLocalFile(localModFile, file);
         }
 
         @Override
-        public RemoteMod getModById(String id) {
-            throw new UnsupportedOperationException();
+        public RemoteMod getModById(String id) throws IOException {
+            return getBackedRemoteModRepository().getModById(id);
+        }
+
+        @Override
+        public RemoteMod.File getModFile(String modId, String fileId) throws IOException {
+            return getBackedRemoteModRepository().getModFile(modId, fileId);
         }
 
         @Override
         public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
-            throw new UnsupportedOperationException();
+            return getBackedRemoteModRepository().getRemoteVersionsById(id);
         }
     }
 
