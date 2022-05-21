@@ -186,7 +186,7 @@ public class OfflineAccountSkinPane extends StackPane {
         });
 
         JFXHyperlink littleSkinLink = new JFXHyperlink(i18n("account.skin.type.little_skin"));
-        littleSkinLink.setOnAction(e -> FXUtils.openLink("https://mcskin.littleservice.cn/"));
+        littleSkinLink.setOnAction(e -> FXUtils.openLink("https://littleskin.cn/"));
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("dialog-cancel");
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
