@@ -179,7 +179,7 @@ public class CurseAddon implements RemoteMod.IMod {
     }
 
     @Override
-    public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
+    public List<RemoteMod> loadDependencies(RemoteModRepository modRepository, List<RemoteMod.Version> versions) throws IOException {
         Set<Integer> dependencies = latestFiles.stream()
                 .flatMap(latestFile -> latestFile.getDependencies().stream())
                 .filter(dep -> dep.getType() == 3)
