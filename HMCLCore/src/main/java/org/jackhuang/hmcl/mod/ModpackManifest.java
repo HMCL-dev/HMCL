@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2022  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,21 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.mod.curse;
+package org.jackhuang.hmcl.mod;
 
-public class CurseCompletionException extends Exception {
-    public CurseCompletionException() {
-    }
-
-    public CurseCompletionException(String message) {
-        super(message);
-    }
-
-    public CurseCompletionException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public CurseCompletionException(Throwable cause) {
-        super(cause);
-    }
+public interface ModpackManifest {
+    ModpackProvider getProvider();
 }

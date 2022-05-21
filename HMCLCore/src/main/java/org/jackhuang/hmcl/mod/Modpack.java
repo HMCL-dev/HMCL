@@ -35,13 +35,13 @@ public abstract class Modpack {
     private String gameVersion;
     private String description;
     private transient Charset encoding;
-    private Object manifest;
+    private ModpackManifest manifest;
 
     public Modpack() {
         this("", null, null, null, null, null, null);
     }
 
-    public Modpack(String name, String author, String version, String gameVersion, String description, Charset encoding, Object manifest) {
+    public Modpack(String name, String author, String version, String gameVersion, String description, Charset encoding, ModpackManifest manifest) {
         this.name = name;
         this.author = author;
         this.version = version;
@@ -105,11 +105,11 @@ public abstract class Modpack {
         return this;
     }
 
-    public Object getManifest() {
+    public ModpackManifest getManifest() {
         return manifest;
     }
 
-    public Modpack setManifest(Object manifest) {
+    public Modpack setManifest(ModpackManifest manifest) {
         this.manifest = manifest;
         return this;
     }

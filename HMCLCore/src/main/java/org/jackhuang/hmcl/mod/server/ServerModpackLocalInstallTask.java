@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ServerModpackLocalInstallTask extends Task<Void> {
@@ -74,13 +75,13 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
                 config = JsonUtils.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<ServerModpackManifest>>() {
                 }.getType());
 
-                if (!MODPACK_TYPE.equals(config.getType()))
+                if (!ServerModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Server modpack. Cannot update this version.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
-        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/overrides", any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/overrides", manifest, MODPACK_TYPE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
     }
 
     @Override
@@ -96,6 +97,4 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
     @Override
     public void execute() throws Exception {
     }
-
-    public static final String MODPACK_TYPE = "Server";
 }

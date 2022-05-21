@@ -15,18 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.game;
+package org.jackhuang.hmcl.mod;
 
-import org.jackhuang.hmcl.mod.ModpackManifest;
-import org.jackhuang.hmcl.mod.ModpackProvider;
+public class ModpackCompletionException extends Exception {
+    public ModpackCompletionException() {
+    }
 
-public final class HMCLModpackManifest implements ModpackManifest {
-    public static final HMCLModpackManifest INSTANCE = new HMCLModpackManifest();
+    public ModpackCompletionException(String message) {
+        super(message);
+    }
 
-    private HMCLModpackManifest() {}
+    public ModpackCompletionException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    @Override
-    public ModpackProvider getProvider() {
-        return HMCLModpackProvider.INSTANCE;
+    public ModpackCompletionException(Throwable cause) {
+        super(cause);
     }
 }

@@ -31,14 +31,9 @@ import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.download.java.JavaRepository;
 import org.jackhuang.hmcl.launch.*;
+import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
-import org.jackhuang.hmcl.mod.curse.CurseCompletionException;
-import org.jackhuang.hmcl.mod.curse.CurseCompletionTask;
-import org.jackhuang.hmcl.mod.curse.CurseInstallTask;
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackCompletionTask;
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackLocalInstallTask;
-import org.jackhuang.hmcl.mod.server.ServerModpackCompletionTask;
-import org.jackhuang.hmcl.mod.server.ServerModpackLocalInstallTask;
+import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.setting.Profile;
@@ -64,7 +59,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
@@ -151,14 +149,9 @@ public final class LauncherHelper {
                             } else {
                                 try {
                                     ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
-                                    if (CurseInstallTask.MODPACK_TYPE.equals(configuration.getType()))
-                                        return new CurseCompletionTask(dependencyManager, selectedVersion);
-                                    else if (ServerModpackLocalInstallTask.MODPACK_TYPE.equals(configuration.getType()))
-                                        return new ServerModpackCompletionTask(dependencyManager, selectedVersion);
-                                    else if (McbbsModpackLocalInstallTask.MODPACK_TYPE.equals(configuration.getType()))
-                                        return new McbbsModpackCompletionTask(dependencyManager, selectedVersion);
-                                    else
-                                        return null;
+                                    ModpackProvider provider = ModpackHelper.getProviderByType(configuration.getType());
+                                    if (provider == null) return null;
+                                    else return provider.createCompletionTask(dependencyManager, selectedVersion);
                                 } catch (IOException e) {
                                     return null;
                                 }
@@ -237,7 +230,7 @@ public final class LauncherHelper {
                             Exception ex = executor.getException();
                             if (!(ex instanceof CancellationException)) {
                                 String message;
-                                if (ex instanceof CurseCompletionException) {
+                                if (ex instanceof ModpackCompletionException) {
                                     if (ex.getCause() instanceof FileNotFoundException)
                                         message = i18n("modpack.type.curse.not_found");
                                     else

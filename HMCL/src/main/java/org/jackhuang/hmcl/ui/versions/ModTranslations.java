@@ -41,7 +41,6 @@ public final class ModTranslations {
     public static ModTranslations MODPACK = new ModTranslations("/assets/modpack_data.txt");
     public static ModTranslations EMPTY = new ModTranslations("");
 
-    @Nullable
     public static ModTranslations getTranslationsByRepositoryType(RemoteModRepository.Type type) {
         switch (type) {
             case MOD:
@@ -101,7 +100,11 @@ public final class ModTranslations {
     }
 
     private boolean loadFromResource() {
-        if (mods != null || StringUtils.isBlank(resourceName)) return true;
+        if (mods != null) return true;
+        if (StringUtils.isBlank(resourceName)) {
+            mods = Collections.emptyList();
+            return true;
+        }
         try {
             String modData = IOUtils.readFullyAsString(ModTranslations.class.getResourceAsStream(resourceName), StandardCharsets.UTF_8);
             mods = Arrays.stream(modData.split("\n")).filter(line -> !line.startsWith("#")).map(Mod::new).collect(Collectors.toList());

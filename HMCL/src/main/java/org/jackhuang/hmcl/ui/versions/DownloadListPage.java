@@ -243,13 +243,19 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             {
                 int rowIndex = 0;
 
-                if (control.versionSelection) {
-                    JFXComboBox<String> versionsComboBox = new JFXComboBox<>();
-                    versionsComboBox.setMaxWidth(Double.MAX_VALUE);
-                    Bindings.bindContent(versionsComboBox.getItems(), control.versions);
-                    selectedItemPropertyFor(versionsComboBox).bindBidirectional(control.selectedVersion);
+                if (control.versionSelection || !control.downloadSources.isEmpty()) {
+                    searchPane.addRow(rowIndex);
+                    int columns = 0;
+                    Node lastNode = null;
+                    if (control.versionSelection) {
+                        JFXComboBox<String> versionsComboBox = new JFXComboBox<>();
+                        versionsComboBox.setMaxWidth(Double.MAX_VALUE);
+                        Bindings.bindContent(versionsComboBox.getItems(), control.versions);
+                        selectedItemPropertyFor(versionsComboBox).bindBidirectional(control.selectedVersion);
 
-                    searchPane.addRow(rowIndex, new Label(i18n("version")), versionsComboBox);
+                        searchPane.add(new Label(i18n("version")), columns++, rowIndex);
+                        searchPane.add(lastNode = versionsComboBox, columns++, rowIndex);
+                    }
 
                     if (control.downloadSources.getSize() > 1) {
                         JFXComboBox<String> downloadSourceComboBox = new JFXComboBox<>();
@@ -258,10 +264,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         downloadSourceComboBox.setConverter(stringConverter(I18n::i18n));
                         selectedItemPropertyFor(downloadSourceComboBox).bindBidirectional(control.downloadSource);
 
-                        searchPane.add(new Label(i18n("settings.launcher.download_source")), 2, rowIndex);
-                        searchPane.add(downloadSourceComboBox, 3, rowIndex);
-                    } else {
-                        GridPane.setColumnSpan(versionsComboBox, 3);
+                        searchPane.add(new Label(i18n("settings.launcher.download_source")), columns++, rowIndex);
+                        searchPane.add(lastNode = downloadSourceComboBox, columns++, rowIndex);
+                    }
+
+                    if (columns == 2) {
+                        GridPane.setColumnSpan(lastNode, 3);
                     }
 
                     rowIndex++;

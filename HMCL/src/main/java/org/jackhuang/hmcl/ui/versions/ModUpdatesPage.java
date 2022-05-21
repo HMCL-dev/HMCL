@@ -172,7 +172,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
             if (item.getCurrentVersion().getSelf() instanceof CurseAddon.LatestFile) {
                 content.getTags().add("Curseforge");
-            } else if (item.getCurrentVersion().getSelf() instanceof ModrinthRemoteModRepository.ModVersion) {
+            } else if (item.getCurrentVersion().getSelf() instanceof ModrinthRemoteModRepository.ProjectVersion) {
                 content.getTags().add("Modrinth");
             }
         }

@@ -17,18 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.game.LocalizedRemoteModRepository;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.util.StringUtils;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -38,76 +30,43 @@ public class ModpackDownloadListPage extends DownloadListPage {
 
         repository = new Repository();
 
-
         supportChinese.set(true);
+        downloadSources.get().setAll("mods.curseforge", "mods.modrinth");
+        downloadSource.set("mods.curseforge");
     }
 
-    private class Repository implements RemoteModRepository {
+    private class Repository extends LocalizedRemoteModRepository {
+
+        @Override
+        protected RemoteModRepository getBackedRemoteModRepository() {
+            if ("mods.modrinth".equals(downloadSource.get())) {
+                return ModrinthRemoteModRepository.MODPACKS;
+            } else {
+                return CurseForgeRemoteModRepository.MODPACKS;
+            }
+        }
 
         @Override
         public Type getType() {
             return Type.MODPACK;
         }
-
-        @Override
-        public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
-            String newSearchFilter;
-            if (StringUtils.CHINESE_PATTERN.matcher(searchFilter).find()) {
-                List<ModTranslations.Mod> mods = ModTranslations.MODPACK.searchMod(searchFilter);
-                List<String> searchFilters = new ArrayList<>();
-                int count = 0;
-                for (ModTranslations.Mod mod : mods) {
-                    String englishName = mod.getName();
-                    if (StringUtils.isNotBlank(mod.getSubname())) {
-                        englishName = mod.getSubname();
-                    }
-
-                    searchFilters.add(englishName);
-
-                    count++;
-                    if (count >= 3) break;
-                }
-                newSearchFilter = String.join(" ", searchFilters);
-            } else {
-                newSearchFilter = searchFilter;
-            }
-
-            return CurseForgeRemoteModRepository.MODPACKS.search(gameVersion, category, pageOffset, pageSize, newSearchFilter, sort, sortOrder);
-        }
-
-        @Override
-        public Stream<Category> getCategories() throws IOException {
-            return CurseForgeRemoteModRepository.MODPACKS.getCategories();
-        }
-
-        @Override
-        public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
-            return CurseForgeRemoteModRepository.MODPACKS.getRemoteVersionByLocalFile(localModFile, file);
-        }
-
-        @Override
-        public RemoteMod getModById(String id) throws IOException {
-            return CurseForgeRemoteModRepository.MODPACKS.getModById(id);
-        }
-
-        @Override
-        public RemoteMod.File getModFile(String modId, String fileId) throws IOException {
-            return CurseForgeRemoteModRepository.MODPACKS.getModFile(modId, fileId);
-        }
-
-        @Override
-        public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
-            return CurseForgeRemoteModRepository.MODPACKS.getRemoteVersionsById(id);
-        }
     }
 
     @Override
     protected String getLocalizedCategory(String category) {
-        return i18n("curse.category." + category);
+        if ("mods.modrinth".equals(downloadSource.get())) {
+            return i18n("modrinth.category." + category);
+        } else {
+            return i18n("curse.category." + category);
+        }
     }
 
     @Override
     protected String getLocalizedOfficialPage() {
-        return i18n("mods.curseforge");
+        if ("mods.modrinth".equals(downloadSource.get())) {
+            return i18n("mods.modrinth");
+        } else {
+            return i18n("mods.curseforge");
+        }
     }
 }

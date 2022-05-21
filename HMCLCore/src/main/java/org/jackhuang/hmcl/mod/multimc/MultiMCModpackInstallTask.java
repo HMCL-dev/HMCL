@@ -40,6 +40,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -118,20 +119,26 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                 config = JsonUtils.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<MultiMCInstanceConfiguration>>() {
                 }.getType());
 
-                if (!MODPACK_TYPE.equals(config.getType()))
+                if (!MultiMCModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a MultiMC modpack. Cannot update this version.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
 
+        String subDirectory;
+
         try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setEncoding(modpack.getEncoding()).build()) {
-            if (Files.exists(fs.getPath("/" + manifest.getName() + "/.minecraft")))
-                dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/" + manifest.getName() + "/.minecraft", any -> true, config).withStage("hmcl.modpack"));
-            else if (Files.exists(fs.getPath("/" + manifest.getName() + "/minecraft")))
-                dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), "/" + manifest.getName() + "/minecraft", any -> true, config).withStage("hmcl.modpack"));
+            if (Files.exists(fs.getPath("/" + manifest.getName() + "/.minecraft"))) {
+                subDirectory = "/" + manifest.getName() + "/.minecraft";
+            } else if (Files.exists(fs.getPath("/" + manifest.getName() + "/minecraft"))) {
+                subDirectory = "/" + manifest.getName() + "/minecraft";
+            } else {
+                subDirectory = "/" + manifest.getName() + "/minecraft";
+            }
         }
 
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), "/" + manifest.getName() + "/minecraft", manifest, MODPACK_TYPE, manifest.getName(), null, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(subDirectory), any -> true, config).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(subDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
     }
 
     @Override
@@ -144,7 +151,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
         Version version = repository.readVersionJson(name);
 
         try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setAutoDetectEncoding(true).build()) {
-            Path root = MultiMCInstanceConfiguration.getRootPath(fs.getPath("/"));
+            Path root = MultiMCModpackProvider.getRootPath(fs.getPath("/"));
             Path patches = root.resolve("patches");
 
             if (Files.exists(patches)) {
@@ -178,6 +185,4 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
 
         dependencies.add(repository.saveAsync(version));
     }
-
-    public static final String MODPACK_TYPE = "MultiMC";
 }

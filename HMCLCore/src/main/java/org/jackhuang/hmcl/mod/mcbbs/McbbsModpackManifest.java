@@ -19,15 +19,14 @@ package org.jackhuang.hmcl.mod.mcbbs;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.ModpackManifest;
+import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.*;
-import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +40,7 @@ import java.util.Optional;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 
-public class McbbsModpackManifest implements Validation {
+public class McbbsModpackManifest implements ModpackManifest, Validation {
     public static final String MANIFEST_TYPE = "minecraftModpack";
 
     private final String manifestType;
@@ -148,6 +147,11 @@ public class McbbsModpackManifest implements Validation {
 
     public McbbsModpackManifest setFiles(List<File> files) {
         return new McbbsModpackManifest(manifestType, manifestVersion, name, version, author, description, fileApi, url, forceUpdate, origins, addons, libraries, files, settings, launchInfo);
+    }
+
+    @Override
+    public ModpackProvider getProvider() {
+        return McbbsModpackProvider.INSTANCE;
     }
 
     @Override
@@ -431,27 +435,4 @@ public class McbbsModpackManifest implements Validation {
         launchOptions.getJavaArguments().addAll(launchInfo.getJavaArguments());
     }
 
-    private static Modpack fromManifestFile(String json, Charset encoding) throws IOException, JsonParseException {
-        McbbsModpackManifest manifest = JsonUtils.fromNonNullJson(json, McbbsModpackManifest.class);
-        return manifest.toModpack(encoding);
-    }
-
-    /**
-     * @param zip the MCBBS modpack file.
-     * @param encoding the modpack zip file encoding.
-     * @throws IOException if the file is not a valid zip file.
-     * @throws JsonParseException if the server-manifest.json is missing or malformed.
-     * @return the manifest.
-     */
-    public static Modpack readManifest(ZipFile zip, Charset encoding) throws IOException, JsonParseException {
-        ZipArchiveEntry mcbbsPackMeta = zip.getEntry("mcbbs.packmeta");
-        if (mcbbsPackMeta != null) {
-            return fromManifestFile(IOUtils.readFullyAsString(zip.getInputStream(mcbbsPackMeta)), encoding);
-        }
-        ZipArchiveEntry manifestJson = zip.getEntry("manifest.json");
-        if (manifestJson != null) {
-            return fromManifestFile(IOUtils.readFullyAsString(zip.getInputStream(manifestJson)), encoding);
-        }
-        throw new IOException("`mcbbs.packmeta` or `manifest.json` cannot be found");
-    }
 }
