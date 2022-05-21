@@ -241,7 +241,6 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return versions;
         }
 
-
         @Override
         public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
             Set<String> dependencies = modRepository.getRemoteVersionsById(getId())
