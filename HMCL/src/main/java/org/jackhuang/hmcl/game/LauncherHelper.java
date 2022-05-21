@@ -436,12 +436,12 @@ public final class LauncherHelper {
                             return Task.fromCompletableFuture(future);
                         case VANILLA_JAVA_16:
                             Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 16), i18n("message.warning"), () -> {
-                                FXUtils.openLink("https://adoptium.net/?variant=openjdk17");
+                                FXUtils.openLink(OPENJDK_DOWNLOAD_LINK);
                             }, breakAction);
                             return null;
                         case VANILLA_JAVA_17:
                             Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 17), i18n("message.warning"), () -> {
-                                FXUtils.openLink("https://adoptium.net/?variant=openjdk17");
+                                FXUtils.openLink(OPENJDK_DOWNLOAD_LINK);
                             }, breakAction);
                             return null;
                         case VANILLA_JAVA_8:
@@ -556,7 +556,7 @@ public final class LauncherHelper {
 
         JFXHyperlink link = new JFXHyperlink(i18n("download.external_link"));
         link.setOnAction(e -> {
-            FXUtils.openLink("https://docs.microsoft.com/zh-cn/java/openjdk/download");
+            FXUtils.openLink(OPENJDK_DOWNLOAD_LINK);
             future.completeExceptionally(new CancellationException());
         });
 
@@ -814,6 +814,8 @@ public final class LauncherHelper {
         }
 
     }
+
+    private static final String OPENJDK_DOWNLOAD_LINK = "https://docs.microsoft.com/zh-cn/java/openjdk/download";
 
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
 
