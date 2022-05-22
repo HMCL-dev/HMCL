@@ -160,7 +160,8 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
     @Override
     public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
-        Response<List<CurseAddon.LatestFile>> response = HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files")
+        Response<List<CurseAddon.LatestFile>> response = HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
+                        pair("pageSize", "10000"))
                 .header("X-API-KEY", apiKey)
                 .getJson(new TypeToken<Response<List<CurseAddon.LatestFile>>>() {
                 }.getType());
