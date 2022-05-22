@@ -18,9 +18,10 @@
 package org.jackhuang.hmcl.util.platform;
 
 import java.io.IOException;
-import java.lang.ProcessBuilder.Redirect;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class SystemUtils {
     private SystemUtils() {}
@@ -30,10 +31,14 @@ public final class SystemUtils {
     }
 
     public static int callExternalProcess(List<String> command) throws IOException, InterruptedException {
-        Process process = new ProcessBuilder(command)
-                .redirectOutput(Redirect.INHERIT)
-                .redirectError(Redirect.INHERIT)
-                .start();
-        return process.waitFor();
+        ManagedProcess managedProcess = new ManagedProcess(new ProcessBuilder(command));
+        managedProcess.pumpInputStream(SystemUtils::onLogLine);
+        managedProcess.pumpErrorStream(SystemUtils::onLogLine);
+        return managedProcess.getProcess().waitFor();
     }
+
+    private static void onLogLine(String log) {
+        LOG.info(log);
+    }
+
 }
