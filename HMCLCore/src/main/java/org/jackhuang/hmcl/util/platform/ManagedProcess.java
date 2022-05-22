@@ -17,8 +17,13 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.launch.StreamPump;
+import org.jackhuang.hmcl.util.Lang;
+
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 
 /**
  * The managed process.
@@ -35,6 +40,12 @@ public class ManagedProcess {
     private final Map<String, Object> properties = new HashMap<>();
     private final Queue<String> lines = new ConcurrentLinkedQueue<>();
     private final List<Thread> relatedThreads = new ArrayList<>();
+
+    public ManagedProcess(ProcessBuilder processBuilder) throws IOException {
+        this.process = processBuilder.start();
+        this.commands = processBuilder.command();
+        this.classpath = null;
+    }
 
     /**
      * Constructor.
@@ -117,6 +128,14 @@ public class ManagedProcess {
      */
     public synchronized void addRelatedThread(Thread thread) {
         relatedThreads.add(thread);
+    }
+
+    public synchronized void pumpInputStream(Consumer<String> onLogLine) {
+        addRelatedThread(Lang.thread(new StreamPump(process.getInputStream(), onLogLine), "ProcessInputStreamPump", true));
+    }
+
+    public synchronized void pumpErrorStream(Consumer<String> onLogLine) {
+        addRelatedThread(Lang.thread(new StreamPump(process.getErrorStream(), onLogLine), "ProcessErrorStreamPump", true));
     }
 
     /**
