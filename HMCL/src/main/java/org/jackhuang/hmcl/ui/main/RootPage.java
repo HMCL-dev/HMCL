@@ -41,7 +41,6 @@ import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
@@ -82,7 +81,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
     private MainPage getMainPage() {
         if (mainPage == null) {
             MainPage mainPage = new MainPage();
-            FXUtils.applyDragListener(mainPage, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
+            FXUtils.applyDragListener(mainPage, ModpackHelper::isFileModpackByExtension, modpacks -> {
                 File modpack = modpacks.get(0);
                 Controllers.getDecorator().startWizard(
                         new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack),
