@@ -30,10 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
@@ -112,7 +109,7 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                             }
 
                             versions.put(gameVersion, new ForgeRemoteVersion(
-                                    version.getGameVersion(), version.getVersion(), releaseDate, urls));
+                                    version.getGameVersion(), version.getVersion(), releaseDate == null ? null : Date.from(releaseDate), urls));
                         }
                     } finally {
                         lock.writeLock().unlock();

@@ -1,0 +1,437 @@
+#
+# Hello Minecraft! Launcher
+# Copyright (C) 2022  huangyuhui <huanghongxun2008@126.com> and contributors
+#
+# mcmod.cn
+# Copyright (C) 2022. All Rights Reserved.
+#
+gt-new-horizons;1;818239;;格雷科技：新视野;GT:New Horizons;GTNH
+enigtech-2;2;920201;;玄理2;EnigTech 2;ET2
+;3;808284;;飞翔之路3;Flying Road 3;
+dungeons-dragons-and-space-shuttles;4;;;龙与地下城和太空飞船;Dungeons, Dragons and Space Shuttles;DDSS
+skyfactory-4;5;1173025;;天空工厂4;SkyFactory 4;SF4
+life-in-the-village;6;;;Life in the village;;LitV
+expedition-in-the-sky;7;;;Expedition In The Sky/Journey Across The Void;;JATV
+levitated;8;1101021;;失重;Levitated;LTT
+all-the-mods-3;9;;;All The Mods 3;;ATM3
+create101;10;1085589;;Create 101;;C101
+ftb-interactions;11;;;FTB Interactions;;
+material-energy-5-entity;12;;;Material Energy^5: Entity;;ME5
+minecraft-eternal;13;;;永恒的MC;MC Eternal;MCE
+mc-eternal-lite;14;;;永恒的MC精简版;MC Eternal Lite;
+mc-eternal-hardcore;15;;;永恒的MC 硬核版;MC Eternal Hardcore;
+rlcraft;16;927630;;超现实 x 虚拟生存;RLCraft;RLC
+the-trial-of-god;17;858670;;神之试炼;The Trial of God;TIMW4
+project-ozone-3-a-new-way-forward;18;;;臭氧计划3;Project Ozone 3 A New Way Forward;PO3
+equivalent-skies;19;;;等价空岛;Equivalent Skies;
+ftb-continuum;20;;;FTB Continuum;;
+enigmatica;21;;;Enigmatica;;E
+enigmatica2;22;;;Enigmatica 2;;E2
+enigmatica2expert;23;;;Enigmatica 2: Expert;;E2E
+enigmatica2light;24;;;Enigmatica 2: Light;;E2L
+enigmatica4;25;;;Enigmatica 4;;E4
+enigmatica5;26;;;Enigmatica 5;;E5
+enigmatica6;27;;;Enigmatica 6;;E6
+roguelike-adventures-and-dungeons;28;816228;;Roguelike冒险与地牢;Roguelike Adventures and Dungeons;R.A.D
+farming-valley;29;;;农场物语;Farming Valley;
+compact-claustrophobia;30;1062339;;幽恐噩梦;Compact Claustrophobia;
+modern-skyblock-3-departed;31;;;现代空岛3;Modern Skyblock 3: Departed;
+gregblock;32;;;格雷空岛;Gregblock;
+sevtech-ages;33;;;赛文科技;SevTech: Ages;STA
+;34;870716;;伊卡洛斯号迫降;Icarus Landing;IL
+greedycraft;35;1089190;;贪婪整合包;GreedyCraft;
+stoneblock;36;;;StoneBlock;;
+ftb-presents-skyfactory-3;37;;;天空工厂3;FTB Presents SkyFactory 3;SF3
+space-astronomy;38;;;Space Astronomy;;
+world-of-dragons;39;;;World of Dragons;;
+modern-skyblock-2;40;;;现代空岛2;Modern Skyblock 2;
+all-the-mods-2;41;;;All the Mods 2;;ATM2
+automaton;42;;;Automaton;;
+botania-skyblock-the-modpack-the-mod-the-modpack;43;;;Botania Skyblock;;
+farming-valley-lite;44;;;Farming Valley - Lite;;
+atm-all-the-magic;45;;;All the Mods: All the Magic;;
+hr-new-beginnings;46;;;HR: New Beginnings;;
+valhelsia-2;47;;;Valhelsia 2;;
+ftb-presents-stoneblock-2;48;;;FTB Presents Stoneblock 2;;
+ftb-sky-odyssey;49;;;天空奥德赛;FTB Sky Odyssey;
+all-of-fabric-3;50;;;All of Fabric 3;;AOF3
+terrafirma-rescue;51;977365;;群峦：救援;Terrafirma:Rescue;TFR
+antimatter-chemistry;52;;;Antimatter Chemistry;;
+re-build;53;;;RE-BUILD;;
+integration-by-parts;54;;;Integration By Parts;;IBP
+crafttoexiledissonance;55;;;放逐之路;Craft to Exile [Dissonance];CTE
+crafttoexileharmony;56;;;放逐之路;Craft to Exile [Harmony];CTE
+exoria;57;;;艾柯索瑞亚;Exoria;
+age-of-engineering;58;;;时代工业;Age of Engineering;AOE
+amnesia;60;;;Amnesia;;
+the-vanilla-experience;61;;;The Vanilla Experience;;
+gregicality-skyblock-edition;62;;;Gregicality Skyblock Edition;;
+TownCraft;63;;;TownCraft;;
+ftb-revelation;64;;;FTB Revelation;;
+ftb-infinity-evolved;65;;;FTB Infinity Evolved 1.7;;
+ftb-beyond;66;;;FTB Beyond;;
+ftb-infinity-evolved-skyblock;67;;;FTB Infinity Evolved Skyblock;;
+ftb-ultimate-reloaded;68;;;FTB Ultimate Reloaded;;
+ftb-ultimate;69;;;FTB Ultimate;;
+ftb-academy;70;;;FTB Academy 1.12;;
+;71;;;FTB University 1.12;;
+ftb-presents-direwolf20;72;;;FTB Presents Direwolf20;;
+ftb-presents-direwolf20-1-10;73;;;FTB Presents Direwolf20 1.10;;
+ftb-presents-direwolf20-1-12;74;;;FTB Presents Direwolf20 1.12;;
+direwolf20-1-4-7;75;;;Direwolf20 1.4.7;;
+direwolf20-1-5-2;76;;;Direwolf20 - 1.5.2;;
+direwolf20-1-6-4;77;;;Direwolf20 - 1.6.4;;
+ftb-unstable-1-12;78;;;FTB Unstable 1.12;;
+ftb-unstable-1-14;79;;;FTB Unstable 1.14;;
+ftb-unstable-1-10;80;;;FTB Unstable 1.10;;
+;81;;;FTB Unstable 1.16;;
+ftb-presents-skyfactory-2-5;82;;;天空工厂2.5;FTB Presents SkyFactory 2.5;SF2.5
+ftb-skyfactory-challenges;83;;;FTB Skyfactory Challenges;;
+ftb-sky-adventures;84;;;FTB Sky Adventures;;
+volcano-block;85;;;Volcano Block;;VB
+chemical-exchange;86;;;Chemical Exchange;;
+ftb-builders-paradise;87;;;FTB Builders Paradise;;
+ftb-pyramid-reborn;88;;;FTB Pyramid Reborn 3.0;;
+feed-the-beast-egg-hunt;89;;;FTB Egg Hunt;;
+ftb-presents-cloud-9;90;;;FTB Presents Cloud 9;;
+ftb-retro-smp;91;;;FTB Retro SMP;;
+ftb-horizons-iii;92;;;FTB Horizons III;;
+ftb-infinity-lite-1-10;93;;;FTB Infinity Lite 1.10;;
+ftb-presents-hermitpack;94;;;FTB Presents HermitPack;;
+yogcraft-modpack;95;;;YogCraft Modpack;;
+tech-world;96;;;Tech World;;
+mindcrack;97;;;MindCrack Pack;;
+magic-world-1-4-7;98;;;Magic World - 1.4.7;;
+ftb-lite;99;;;FTB Lite;;
+ftb-inventions;100;;;FTB Inventions;;
+ftb-presents-crackpack;101;;;FTB Presents Crackpack;;
+ftb-vanilla;102;;;FTB Vanilla +;;
+ftb-lite-3;103;;;FTB Lite 3;;
+ftb-departed;104;;;FTB Departed;;
+ftb-trident;105;;;FTB Trident;;
+ftb-mage-quest;106;;;FTB Mage Quest;;
+ftb-retro-ssp;107;;;FTB Retro SSP;;
+ftb-resurrection;108;;;FTB Resurrection;;
+ftb-monster;109;;;FTB Monster;;
+ftb-horizons;110;;;FTB Horizons;;
+tech-world-2;111;;;FTB Tech World 2;;
+magic-world-2;112;;;FTB Magic World 2;;
+ftb-unleashed;113;;;FTB Unleashed;;
+ftb-lite-2;114;;;FTB Lite 2;;
+unstable-1-7-x-public-beta-test-pack;115;;;Unstable 1.7.x;;
+pax-prime-2014-challenge;116;;;PAX Prime 2014 Challenge;;
+ftb-unhinged;117;;;FTB Unhinged;;
+slows-stream-pack;118;;;Slow's Stream Pack;;
+feed-the-beast-beta-pack;119;;;Feed The Beast Beta Pack;;
+pax-prime-2015-challenge;120;;;PAX Prime 2015 Challenge;;
+pax-south-2015-challenge;121;;;PAX South 2015 Challenge;;
+pax-east-2014-challenge;122;;;PAX East 2014 Challenge;;
+pax-east-2013-challenge;123;;;FTB Pax Challenge Pack 2013;;
+ftb-terra;124;;;FTB Terra;;
+ftb-horizons-daybreaker;125;;;FTB Horizons: Daybreaker;;
+omnifactory;126;924850;;全能工厂;Omnifactory;
+;127;;;IMPACT;;
+kinda-crazy-craft;128;;;Kinda Crazy Craft;;KCC
+kinda-crazy-craft-2-0;129;;;Kinda Crazy Craft 2.0;;KCC2
+sevtech-ages-of-the-sky;130;;;SevTech: Ages of the Sky;;
+one-hundred-years-after-the-apocalypse;131;;;One Hundred Years After the Apocalypse;;
+staged-learning;132;;;Staged Learning;;
+technocratica;133;;;Technocratica;;
+journey-beyond-the-abyss;134;;;超越深渊之旅;Journey Beyond the Abyss;JBtA
+awakening-sky-of-diamonds;135;;;Awakening - Sky of Diamonds;;
+ragnamod-v;136;;;Ragnamod V;;
+all-the-mods-3-expert;137;;;All the Mods 3 专家版;All the Mods 3 Expert;ATM3E
+seablock-rustic-waters;138;994352;;乡村水域;Seablock: Rustic Waters;
+engineers-life;139;;;Engineer's Life;;
+star-factory;140;;;Star Factory;;
+lunar-laboratory;141;;;Lunar Laboratory;;
+glacial-awakening;142;;;Glacial Awakening;;
+project-equivalence;143;;;Project Equivalence;;
+breakout;144;;;Break Out;;
+scientists-dream;145;;;Scientific Dreams;;
+abandend;146;;;AbandEnd;;
+tech-expansion;147;;;Tech Expansion;;
+minefanstasyworld;148;967574;;我的幻想世界;MineFantasyWorld;
+slightly-vanilla-flavoured;149;;;Slightly Vanilla Flavoured;;
+all-the-mods;150;;;All the Mods;;ATM1
+crackpack-3;151;;;Crackpack 3;;
+valhelsia-3;152;;;Valhelsia 3;;
+cortex-3;153;;;Cortex 3;;
+techblock-caveblock;154;;;TechBlock: CaveBlock;;
+;155;;;星空;Galaxy Space Integration;GSI
+valhelsia;156;;;Valhelsia 1;;
+valhelsia-origins;157;;;Valhelsia: Origins;;
+galactic-science;159;;;Galactic Science;;
+space-astronomy-2;160;;;Space Astronomy 2;;
+;161;959784;;匠魂的生存;Tinker's Survival;
+life-in-the-village-2;162;;;Life in the village 2;;LitV2
+;163;;;魔法与工业;Magic And Creat;MAC
+all-the-mods-6;164;;;All the Mods 6;;ATM6
+garden-of-glass-questbook-edition;165;;;Garden of Glass (Questbook Edition);;
+;166;;;圣剑传奇;Sword Legendary;
+;167;;;FTB Presents Direwolf20 1.16;;
+team-rustic;168;;;Team Rustic;;
+enigmatica2expertskyblock;169;;;Enigmatica 2: Expert Skyblock;;E2ES
+;170;;;休闲-生存-2021版;Leisure Survival-2021;ls21
+hexxit-updated;171;;;Hexxit Updated;;
+create-101-season-2;172;1172401;;Create 101 第二季;Create 101 Season 2;C101 S2
+forever-stranded;173;;;Forever Stranded;;
+minecraft-ultimato;174;;;MC Ultimato;;
+lapitos-galacticraft;175;;;Lapito's Galacticraft;;
+material-energy-4;176;;;Material Energy^4;;
+material-energy-classic;177;;;Material Energy^3;;
+slashaoa3;178;;;SlashAoA3;;
+popularmmos-epic-proportions-season-10;179;;;PopularMMOS Epic Proportions Season 10;;
+mcmod-testpack;180;;;MC百科-测试包;MCMOD-TestPack;
+;181;;;FTB Endeavour;;
+;182;1173278;;铅笔空岛;How are you block;HB
+;183;;;花鸟旅途;Hananichi On The Road;HOTR
+sky-bees;184;;;Sky Bees;;
+rebirth-of-the-night;185;;;Rebirth of the Night;;RotN
+zombie-apocalypse-slow-zombies-by-forge-labs;186;;;僵尸启示录;Zombie Apocalypse / Mustard Virus;
+star-wars-conquest;187;;;Star Wars Conquest;;
+tekkit-classic-reloaded;188;;;Tekkit Classic Reloaded;;TCR
+mineshafts-monsters;189;1193321;;矿井与怪物;Mineshafts & Monsters;
+crazy-craft-remastered;190;;;Crazy Craft Remastered;;
+engineers-life-2;191;;;Engineer's Life 2;;EL2
+hr-new-beginnings-2;192;;;HR: New Beginnings 2;;
+minecolonies-testpack;193;;;模拟殖民地;MineColonies Official;
+tnp-limitless;194;;;TNP Limitless;;
+tnp-limitless-2;195;;;TNP Limitless 2;;
+tnp-limitless-3;196;;;TNP Limitless 3;;
+all-in-one-modded-one-block;197;;;All in One;;
+all-the-mods-6-to-the-sky-atm6s;198;;;All the Mods 6 - To the Sky;;ATM6S
+all-the-mods-4;199;;;All the Mods 4;;ATM4
+all-the-mods-5;200;;;All the Mods 5;;ATM5
+atm-3-lite;201;;;All the Mods 3: Lite;;ATM3L
+;202;914868;;伪装者;The Disguiser;
+createch-1165;203;;;科瑞亚科技;CreaTech;CT
+reboot;204;;;重启;Reboot;
+better-minecraft-fabric;205;;;更好的我的世界;Better Minecraft;
+crucial-2;206;;;Crucial 2;;
+better-minecraft-plus;207;;;Better Minecraft [PLUS];;
+parasites-by-forge-labs;208;;;Parasites by Forge Labs;;
+create-live;209;;;Create Live;;
+;210;1198408;;穿越航班;;CYH
+airaka-tech;211;;;艾瑞卡科技;Airaka Tech;
+;212;;;TeaCon;;
+originssmp;213;;;起源SMP;OriginsSMP;
+create-live-2;214;;;Create Live 2;;
+origin-smp-copy;215;;;Origin - SMP;;
+;216;1133826;;逆迫降;INUERSE FORCED LANDING;
+avatar-the-four-elements;217;;;Avatar: The Four Elements;;
+seaopolis;218;;;海之都;Seaopolis;
+zombie-apocalypse-remastered;219;;;僵尸启示录：重制;Zombie Apocalypse Remastered;ZAR
+stablejava;220;;;StableJava;;SJ
+technodefirmacraft;221;;;TechnodeFirmaCraft;;TNFC
+agrarian-skies;222;;;Agrarian Skies;;
+agrarian-skies-2;223;;;Agrarian Skies 2;;
+;224;1172950;;交汇;interactions;IA
+skyexchange;225;;;Skyexchange;;
+project-ozone;226;;;臭氧计划;Project Ozone;PO
+project-ozone-2-reloaded;227;;;臭氧计划2;Project Ozone 2: Reloaded;PO2
+ocean-outlast;228;;;Ocean Outlast;;
+fabric-adventure-pack;229;;;Adventure Pack;;AP
+crash-landing;230;;;Crash Landing;;
+invasion;231;;;Invasion;;
+;232;;;FTB Cotton;;
+chroma-sky;233;;;色度空岛;Chroma Sky;
+astroblock;234;;;AstroBlock;;
+;235;1188038;;群峦：核工程师;;TFAE
+;236;;;北极星;Borealis;
+multiblock-madness;237;;;Multiblock Madness;;
+happy-bat;238;;;Happy Bat;;HB
+;239;1212452;;氮元素;;N
+fictioncraft-atomic-space;240;1149410;;合虚为实：原子空间;FictionCraft: Atomic Space;
+stacia-expert;241;;;Stacia Expert;;
+mind;242;1212987;;思维;Mind;
+all-the-tinkers-construct;243;1196264;;最全的匠魂;All The Tinker's Construct;ATTC
+;244;;;秋水;;
+stay-true;246;;;Stay True;;
+all-of-fabric-4;247;;;All of Fabric 4;;AOF4
+fabulously-optimized;248;;;难以置信的优化;Fabulously Optimized;FO
+better-minecraft-otv-edition;249;;;Better Minecraft (OfflineTV Edition);;
+evolution-reset;250;1029654;;进化：重启;Evolution: Reset;EVOR
+the-nuclear-wasteland;251;;;核荒原;The Nuclear Wasteland;
+blessed-or-cursed-expedition-to-infinite-force;252;1225741;;祝福或诅咒：无限力量之征;Blessed or Cursed: Expedition to Infinite Force;BOC
+;253;1051281;;边界生存;Border Survival;BSV
+;254;970470;;冒险者的世界;Adventurer's world;
+medieval-minecraft-fabric;255;;;Medieval Minecraft;;
+heavens-of-sorcery;256;;;巫术天堂;Heavens of Sorcery;
+;257;1299458;;希罗多德;Herodotus;HDS
+;258;1235662;;重生世界;Rebirth world;RW
+permafrost-eots;259;;;永久冻土：风暴之眼;Permafrost - Eyes of the Storm;
+ultimate-alchemy;260;;;终极炼金;Ultimate Alchemy;
+virtual-survival-and-climate-control;261;;;虚拟生存·文明时代;virtual survival and climate control Remastered;VSACCR
+;262;;;超级英雄无限;Superheroes Unlimited;SU
+;263;1332500;;植物大战僵尸：沉浸动力;Create in PVZ;CIP
+sky-high;264;;;Sky High;;
+createtogether;265;;;CreateTogether;;
+;266;;;FTB Academy 1.16;;
+the-kingdom-of-daldar-forge-labs;267;;;The Kingdom of Daldar - Forge Labs;;
+demon-slayers-unleashed;268;;;Demon Slayers Unleashed;;
+valhelsia-fabric;269;;;Valhelsia: Enhanced Vanilla;;
+;270;;;FTB University 1.16;;
+;271;1067214;;神秘复兴;Thaumic Renaissance;
+the-winter-rescue;273;1227167;;冬季救援;The Winter Rescue;TWR
+;274;620632;;飞翔之路;;
+forever-stranded-lost-souls;275;;;Forever Stranded Lost Souls;;
+regrowth-an-hqm-pack;276;;;Regrowth;;
+roguelike-adventures-and-dungeons-tic-edition;277;;;RAD匠魂版;Roguelike Adventures and Dungeons TiC Edition;
+vanilla-forge-essentials;279;;;Vanilla Forge Essentials;;VFE
+rad-pack-lite;280;;;RAD pack(LITE);;
+manufactio;281;;;Manufactio;;
+world-of-dragons-ii;282;;;World of Dragons II;;
+tensura-unleashed;283;;;Tensura Unleashed;;
+skyopolis-4;284;;;Skyopolis 4;;
+;286;;;FTB OceanBlock;;
+tolkiencraft-iii-return-to-middle-earth;287;;;TolkienCraft III - Return to Middle-earth;;
+delivery-inc;288;;;Delivery Inc.;;
+poetica;289;;;Poetica;;
+divine-journey-2;290;;;Divine Journey 2;;DJ2
+all-the-mods-7;291;;;All the Mods 7;;ATM7
+skyfactory-one;292;;;SkyFactory One;;
+feed-the-singularity;293;;;喂养奇点生存;Feed the Singularity;
+crucial;294;;;Crucial;;C
+;295;1245996;;废土文明;Wasteland civilization;
+;296;;;SkyFactory 2;;
+a-bit-of-everything-official;297;;;A Bit Of Everything;;ABOE
+resonantrise-5;298;;;Resonant Rise 5;;
+fabric-exploration;299;;;Fabric Exploration;;
+into-the-betweenlands;300;;;Into The Betweenlands;;ITB
+annals-mechanizac;301;998400;;尘烬:消失世界;Annals:Mechanizac;ANS
+techopolis;302;;;科技之都;Techopolis;
+another-quality-modpack-2;303;;;Another Quality Modpack 2;;AQM2
+go-create;304;;;Go Create;;
+rlcraft-remastered;305;;;RLCraft Recrafted;;RLCR
+cave-factory;306;;;洞穴工厂;Cave Factory;
+naruto-modpack-reforged;307;;;Naruto Modpack Reforged;;
+euphoriccuriosity;308;;;Euphoric Curiosity;;
+beyond-the-void-2;309;;;Beyond The Void 2;;
+journey-in-the-sky;310;;;Journey In The Sky;;
+winter-regrowth;311;;;Winter Regrowth;;
+create-above-and-beyond;312;;;机械动力：永无止境;Create: Above and Beyond;CAB
+monumental-experience;313;;;Monumental Experience;;
+chroma-technology-2;314;;;Chroma Technology 2;;
+huntingmonstersmodpack;315;;;Hunting Monsters The Witcher Modpack;;
+cuboid-outpost;316;;;Cuboid Outpost;;
+ragnamod-vi;317;;;Ragnamod VI;;
+crundee-craft;318;;;Crundee Craft;;
+;319;;;Yogscast Complete Pack;;
+insanecraft-modpack;320;;;InsaneCraft Modpack;;
+all-the-magic-spellbound;321;;;All the Magic Spellbound;;ATMS
+odyssey-space-a-new-beginning;322;;;Odyssey: Space - A New Beginning;;
+nuts-and-bolts;323;;;Nuts and Bolts;;
+vault-hunters-official-modpack;324;;;Vault Hunters;;
+;325;;;FTB Ultimate: Anniversary Edition;;
+enigmatica8;326;;;Enigmatica 8;;E8
+all-of-fabric-5;327;;;All of Fabric 5;;AOF5
+last-days-of-humanity;328;;;人类末日;Last Days of Humanity;LDH
+underdog;329;;;弱者;Underdog;
+mc-dripcraft;330;;;DripCraft;;
+atr1;331;;;All the RPMTW 1;;ATR1
+techno-ages;332;;;技术时代;Techno Ages;
+expert-creation;333;;;Expert Creation;;
+spookyjam-2021-forge-edition;334;;;SpookyJam 2021 - Forge Edition;;
+digsite;335;;;DigSite;;
+dark-souls-simulator;336;;;Dark Souls Simulator;;
+advent-of-ascension-plus;337;;;Advent of Ascension Plus;;
+bounds;338;;;Bounds;;
+reimagined-rlcraft;339;;;RLCraft - Reimagined (not official);;
+;340;;;大轩整合包;Biggest Xuan Pack;BxP
+plunger;341;;;Plunger;;
+foolcraft-3;342;;;FoolCraft 3;;
+;343;1301641;;命定之旅;Deep To Destiny;DTD
+one-thousand-years-after-the-apocalypse;344;;;One Thousand Years After the Apocalypse;;
+all-the-mods-3-remix;345;;;All the Mods 3 - Remix;;ATM3R
+ultimate-progression;346;;;Ultimate Progression;;
+benchmark-ii;347;;;Benchmark II;;
+ragnamod-ii-reborn;348;;;Ragnamod II Reborn;;
+ragnamod-iii;349;;;Ragnamod III;;
+ragnamod-iv;350;;;Ragnamod IV;;
+pokehaan-craft;351;;;Pokehaan Craft;;
+all-the-sky;352;;;All The Sky;;
+all-the-mods-expert;353;;;All the Mods Expert;;ATM1E
+all-the-mods-lite;354;;;All the Mods Lite;;ATM1L
+all-the-mods-expert-remastered;355;;;All The Mods Expert: Remastered;;
+all-the-mods-0;356;;;All the Mods 0;;ATM0
+all-the-mods-fabric;357;;;All the Mods Fabric;;ATMF
+the-pixelmon-modpack;358;;;The Pixelmon Modpack;;
+better-minecraft-skyblock;359;;;更好的我的世界：空岛;Better Minecraft Skyblock;
+age-of-fate;360;;;Age of Fate;;
+deathdusk;361;;;Deathdusk;;
+;362;;;幻想旅程;Imaginary Journey;
+moonlitmyths;363;;;月耀神话;Moonlit Myths;
+;364;1283063;;晴天整合;Sunny Modpack;
+valhelsia-4;365;;;Valhelsia 4;;
+another-quality-modpack-3;366;;;Another Quality Modpack 3;;
+nomifactory;367;;;Nomifactory;;
+allusiveness;368;;;Allusiveness;;
+;370;1246147;;转生之路;The way of reincarnation;
+sky-friends;371;;;Sky Friends;;
+;372;;;魔法包裹;Magic Pouch;
+magica-infinitum-iii;373;;;Magica Infinitum III;;
+ardentcraft-the-beginning;374;;;ArdentCraft: The Beginning;;
+;375;;;神秘启示录2：梦魇般的回忆;Nightmare Memories Pack;
+jurassic-world-reborn;376;;;Jurassic World Reborn;;
+;377;;;FTB Omnia;;
+fantazy-tech-expert-mode;378;;;幻想科技;Fantazy Tech;
+crainer-craft-2;379;;;Crainer Craft 2;;
+;380;;;All The Forge 8;;
+colony-space-modpack;381;;;KN: Colony New Worlds;;
+skyopolis-3;382;;;Skyopolis 3;;
+;383;;;A Bit of Everything 3;;
+sky-alchemist;384;;;天空炼金术士;Sky Alchemist;
+;385;1186932;;奥德赛;OdysseyCraft;OC
+;386;;;字字落实;;
+nuclear-earth-reirradiated;387;;;核地球：再辐照;Nuclear Earth: Reirradiated;
+god-block;388;;;God Block;;
+faruk-v;389;;;Faruk V;;
+kreezcraft-presents-cobbleblock;390;;;Cobbleblock;;
+;391;1304828;;寄生虫：血染黎明;Parasites: Blood Dawn;PBD
+minecraft-trillionaire;392;;;亿万富翁;Minecraft Trillionaire;
+gregtech-community-pack;393;;;GregTech Community Pack;;GCP
+;394;1206714;;诸神匠心;Tinkers Heartwork and Deities;THD
+create-yourself;395;;;Create Yourself;;
+starrynight-pray-stp;397;1323610;;星夜祈临;StarryNight Pray;StP
+rustic-waters-ii;398;;;乡村水域2;Rustic Waters II;
+enigmatica6expert;399;;;Enigmatica 6 Expert;;E6E
+celestial-journey;400;;;Celestial Journey;;
+;401;;;天空舞台;Skyblock Create Show;
+project-architect;402;;;Project Architect;;
+greed-the-resource-3-factory;403;;;Greed the Resource 3: Factory;;
+f-o-g-of-magic;404;;;F.O.G. of Magic;;
+;405;;;僵尸生存;Mike's Zombie Survival;MZS
+darkrpg;406;;;DarkRPG;;
+;407;;;征途;Conquest journey;CJ
+;408;;;创生银莲;Create Anemone;
+kimetsu-no-yaiba-demon-slayer-mod-pack;409;;;鬼灭之刃;Kimetsu no Yaiba;
+;410;991420;;七曜之际;FOR A WEEK;
+not-too-complicated;411;;;Not Too Complicated;;NTC
+fiefdom;412;;;列土封疆;Fiefdom;
+reinforce-reality;413;1325523;;死亡工艺&重生;Deathcraft & Rebirth;
+afterlife;414;;;The Afterlife;;
+create-skyblock;415;;;CREATE Skyblock;;
+lightcraftproject;416;;;Light Craft;;
+epoch-runner-formerly-nuclear-beyond-modpack;417;;;时代领跑人;Epoch Runner;
+;418;;;无尽星河;Endless Galaxy;EG
+roguelike-adventures-and-dungeons-2;419;;;冒险与地牢2;Roguelike Adventures and Dungeons 2;RAD2
+multiskyblock;420;;;MultiSkyBlock;;
+;421;;;人性化;Humanized;H
+create-live-3;422;;;Create Live 3;;
+magnificia;423;;;Magnificia;;
+;424;1328128;;魔法金属-新手向导;ManaMetalMod - WithNewbHelper;
+;425;;;奇美拉;Chimera;CMA
+chroma-sky-2;426;;;色度空岛2;Chroma Sky 2;
+infinity-fabric;427;1298525;;无限;Infinity;IF
+enigmatica-2-expert-extended;428;;;Enigmatica 2: Expert - Extended;;E2E-E
+;429;1097781;;水星迫降重制版;Mercury landing;
+magic-sky;430;;;Magic Sky;;
+;431;;;科技飞升;Rise of Tech;RoT
+not-too-complicated-2;432;;;Not Too Complicated 2;;
+low-res-trailer-recreation;433;;;Low Res Trailer Recreation;;
+shattered-ring;434;;;Shattered Ring;;
+;435;;;FTB Chocolate;;
+;436;;;Intergalactical Modpack;;
+dude-wheres-my-blocks;437;;;谁动了我的合成表;Dude where's my blocks;
+;438;;;我的原神：自然;mineshin impact:nature;MSIPN

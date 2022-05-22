@@ -130,7 +130,7 @@ public class Skin {
                 });
             case LITTLE_SKIN:
             case CUSTOM_SKIN_LOADER_API:
-                String realCslApi = type == Type.LITTLE_SKIN ? "http://mcskin.littleservice.cn" : StringUtils.removeSuffix(cslApi, "/");
+                String realCslApi = type == Type.LITTLE_SKIN ? "https://littleskin.cn" : StringUtils.removeSuffix(cslApi, "/");
                 return Task.composeAsync(() -> new GetTask(new URL(String.format("%s/%s.json", realCslApi, username))))
                         .thenComposeAsync(json -> {
                             SkinJson result = JsonUtils.GSON.fromJson(json, SkinJson.class);

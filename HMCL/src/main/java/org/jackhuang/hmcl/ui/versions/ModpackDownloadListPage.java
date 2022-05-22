@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2022  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@ import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ModDownloadListPage extends DownloadListPage {
-    public ModDownloadListPage(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+public class ModpackDownloadListPage extends DownloadListPage {
+    public ModpackDownloadListPage(DownloadPage.DownloadCallback callback, boolean versionSelection) {
         super(null, callback, versionSelection);
 
         repository = new Repository();
@@ -40,15 +40,15 @@ public class ModDownloadListPage extends DownloadListPage {
         @Override
         protected RemoteModRepository getBackedRemoteModRepository() {
             if ("mods.modrinth".equals(downloadSource.get())) {
-                return ModrinthRemoteModRepository.MODS;
+                return ModrinthRemoteModRepository.MODPACKS;
             } else {
-                return CurseForgeRemoteModRepository.MODS;
+                return CurseForgeRemoteModRepository.MODPACKS;
             }
         }
 
         @Override
         public Type getType() {
-            return Type.MOD;
+            return Type.MODPACK;
         }
     }
 

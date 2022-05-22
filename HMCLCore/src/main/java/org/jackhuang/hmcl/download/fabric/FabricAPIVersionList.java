@@ -44,7 +44,7 @@ public class FabricAPIVersionList extends VersionList<FabricAPIRemoteVersion> {
     @Override
     public CompletableFuture<?> refreshAsync() {
         return CompletableFuture.runAsync(wrap(() -> {
-            for (RemoteMod.Version modVersion : Lang.toIterable(ModrinthRemoteModRepository.INSTANCE.getRemoteVersionsById("P7dR8mSH"))) {
+            for (RemoteMod.Version modVersion : Lang.toIterable(ModrinthRemoteModRepository.MODS.getRemoteVersionsById("P7dR8mSH"))) {
                 for (String gameVersion : modVersion.getGameVersions()) {
                     versions.put(gameVersion, new FabricAPIRemoteVersion(gameVersion, modVersion.getVersion(), modVersion.getName(), modVersion.getDatePublished(), modVersion,
                             Collections.singletonList(modVersion.getFile().getUrl())));

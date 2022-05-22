@@ -18,15 +18,14 @@
 package org.jackhuang.hmcl.mod.server;
 
 import com.google.gson.JsonParseException;
-import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
+import org.jackhuang.hmcl.mod.ModpackManifest;
+import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +35,7 @@ import java.util.List;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 
-public class ServerModpackManifest implements Validation {
+public class ServerModpackManifest implements ModpackManifest, Validation {
     private final String name;
     private final String author;
     private final String version;
@@ -88,6 +87,11 @@ public class ServerModpackManifest implements Validation {
     }
 
     @Override
+    public ModpackProvider getProvider() {
+        return ServerModpackProvider.INSTANCE;
+    }
+
+    @Override
     public void validate() throws JsonParseException, TolerableValidationException {
         if (fileApi == null)
             throw new JsonParseException("ServerModpackManifest.fileApi cannot be blank");
@@ -128,15 +132,4 @@ public class ServerModpackManifest implements Validation {
         };
     }
 
-    /**
-     * @param zip the CurseForge modpack file.
-     * @throws IOException if the file is not a valid zip file.
-     * @throws JsonParseException if the server-manifest.json is missing or malformed.
-     * @return the manifest.
-     */
-    public static Modpack readManifest(ZipFile zip, Charset encoding) throws IOException, JsonParseException {
-        String json = CompressingUtils.readTextZipEntry(zip, "server-manifest.json");
-        ServerModpackManifest manifest = JsonUtils.fromNonNullJson(json, ServerModpackManifest.class);
-        return manifest.toModpack(encoding);
-    }
 }

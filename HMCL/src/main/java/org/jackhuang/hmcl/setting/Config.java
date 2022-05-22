@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jackhuang.hmcl.util.javafx.PropertyUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -146,7 +147,7 @@ public final class Config implements Cloneable, Observable {
     private ObservableList<Map<Object, Object>> accountStorages = FXCollections.observableArrayList();
 
     @SerializedName("fontFamily")
-    private StringProperty fontFamily = new SimpleStringProperty("Consolas");
+    private StringProperty fontFamily = new SimpleStringProperty(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace");
 
     @SerializedName("fontSize")
     private DoubleProperty fontSize = new SimpleDoubleProperty(12);

@@ -21,15 +21,14 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.mod.*;
-import org.jackhuang.hmcl.mod.curse.CurseCompletionException;
-import org.jackhuang.hmcl.mod.curse.CurseInstallTask;
-import org.jackhuang.hmcl.mod.curse.CurseManifest;
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackLocalInstallTask;
+import org.jackhuang.hmcl.mod.curse.CurseModpackProvider;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
+import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackProvider;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackProvider;
 import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
-import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
-import org.jackhuang.hmcl.mod.server.ServerModpackLocalInstallTask;
+import org.jackhuang.hmcl.mod.multimc.MultiMCModpackProvider;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
+import org.jackhuang.hmcl.mod.server.ServerModpackProvider;
 import org.jackhuang.hmcl.mod.server.ServerModpackRemoteInstallTask;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -42,6 +41,7 @@ import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -52,47 +52,53 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.toIterable;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class ModpackHelper {
     private ModpackHelper() {}
 
+    private static final Map<String, ModpackProvider> providers = mapOf(
+            pair(CurseModpackProvider.INSTANCE.getName(), CurseModpackProvider.INSTANCE),
+            pair(McbbsModpackProvider.INSTANCE.getName(), McbbsModpackProvider.INSTANCE),
+            pair(ModrinthModpackProvider.INSTANCE.getName(), ModrinthModpackProvider.INSTANCE),
+            pair(MultiMCModpackProvider.INSTANCE.getName(), MultiMCModpackProvider.INSTANCE),
+            pair(ServerModpackProvider.INSTANCE.getName(), ServerModpackProvider.INSTANCE),
+            pair(HMCLModpackProvider.INSTANCE.getName(), HMCLModpackProvider.INSTANCE)
+    );
+
+    @Nullable
+    public static ModpackProvider getProviderByType(String type) {
+        return providers.get(type);
+    }
+
+    public static boolean isFileModpackByExtension(File file) {
+        String ext = FileUtils.getExtension(file);
+        return "zip".equals(ext) || "mrpack".equals(ext);
+    }
+
     public static Modpack readModpackManifest(Path file, Charset charset) throws UnsupportedModpackException, ManuallyCreatedModpackException {
         try (ZipFile zipFile = CompressingUtils.openZipFile(file, charset)) {
-            try {
-                return McbbsModpackManifest.readManifest(zipFile, charset);
-            } catch (Exception ignored) {
-                // ignore it, not a valid MCBBS modpack.
+            // Order for trying detecting manifest is necessary here.
+            // Do not change to iterating providers.
+            for (ModpackProvider provider : new ModpackProvider[]{
+                    McbbsModpackProvider.INSTANCE,
+                    CurseModpackProvider.INSTANCE,
+                    ModrinthModpackProvider.INSTANCE,
+                    HMCLModpackProvider.INSTANCE,
+                    MultiMCModpackProvider.INSTANCE,
+                    ServerModpackProvider.INSTANCE}) {
+                try {
+                    return provider.readManifest(zipFile, file, charset);
+                } catch (Exception ignored) {
+                }
             }
-
-            try {
-                return CurseManifest.readCurseForgeModpackManifest(zipFile, charset);
-            } catch (Exception e) {
-                // ignore it, not a valid CurseForge modpack.
-            }
-
-            try {
-                return HMCLModpackManager.readHMCLModpackManifest(zipFile, charset);
-            } catch (Exception e) {
-                // ignore it, not a valid HMCL modpack.
-            }
-
-            try {
-                return MultiMCInstanceConfiguration.readMultiMCModpackManifest(zipFile, file, charset);
-            } catch (Exception e) {
-                // ignore it, not a valid MultiMC modpack.
-            }
-
-            try {
-                return ServerModpackManifest.readManifest(zipFile, charset);
-            } catch (Exception e) {
-                // ignore it, not a valid Server modpack.
-            }
-
         } catch (IOException ignored) {
         }
 
@@ -142,17 +148,6 @@ public final class ModpackHelper {
             }
     }
 
-    private static String getManifestType(Object manifest) throws UnsupportedModpackException {
-        if (manifest instanceof HMCLModpackManifest)
-            return HMCLModpackInstallTask.MODPACK_TYPE;
-        else if (manifest instanceof MultiMCInstanceConfiguration)
-            return MultiMCModpackInstallTask.MODPACK_TYPE;
-        else if (manifest instanceof CurseManifest)
-            return CurseInstallTask.MODPACK_TYPE;
-        else
-            throw new UnsupportedModpackException();
-    }
-
     public static Task<?> getInstallTask(Profile profile, ServerModpackManifest manifest, String name, Modpack modpack) {
         profile.getRepository().markVersionAsModpack(name);
 
@@ -166,7 +161,7 @@ public final class ModpackHelper {
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {
-            if (ex instanceof CurseCompletionException && !(ex.getCause() instanceof FileNotFoundException)) {
+            if (ex instanceof ModpackCompletionException && !(ex.getCause() instanceof FileNotFoundException)) {
                 success.run();
                 // This is tolerable and we will not delete the game
             }
@@ -208,7 +203,7 @@ public final class ModpackHelper {
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {
-            if (ex instanceof CurseCompletionException && !(ex.getCause() instanceof FileNotFoundException)) {
+            if (ex instanceof ModpackCompletionException && !(ex.getCause() instanceof FileNotFoundException)) {
                 success.run();
                 // This is tolerable and we will not delete the game
             }
@@ -237,38 +232,13 @@ public final class ModpackHelper {
         }
     }
 
-    public static Task<Void> getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
+    public static Task<?> getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile.toPath(), charset);
-
-        switch (configuration.getType()) {
-            case CurseInstallTask.MODPACK_TYPE:
-                if (!(modpack.getManifest() instanceof CurseManifest))
-                    throw new MismatchedModpackTypeException(CurseInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
-
-                return new ModpackUpdateTask(profile.getRepository(), name, new CurseInstallTask(profile.getDependency(), zipFile, modpack, (CurseManifest) modpack.getManifest(), name));
-            case MultiMCModpackInstallTask.MODPACK_TYPE:
-                if (!(modpack.getManifest() instanceof MultiMCInstanceConfiguration))
-                    throw new MismatchedModpackTypeException(MultiMCModpackInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
-
-                return new ModpackUpdateTask(profile.getRepository(), name, new MultiMCModpackInstallTask(profile.getDependency(), zipFile, modpack, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
-            case HMCLModpackInstallTask.MODPACK_TYPE:
-                if (!(modpack.getManifest() instanceof HMCLModpackManifest))
-                    throw new MismatchedModpackTypeException(HMCLModpackInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
-
-                return new ModpackUpdateTask(profile.getRepository(), name, new HMCLModpackInstallTask(profile, zipFile, modpack, name));
-            case McbbsModpackLocalInstallTask.MODPACK_TYPE:
-                if (!(modpack.getManifest() instanceof McbbsModpackManifest))
-                    throw new MismatchedModpackTypeException(McbbsModpackLocalInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
-
-                return new ModpackUpdateTask(profile.getRepository(), name, new McbbsModpackLocalInstallTask(profile.getDependency(), zipFile, modpack, (McbbsModpackManifest) modpack.getManifest(), name));
-            case ServerModpackLocalInstallTask.MODPACK_TYPE:
-                if (!(modpack.getManifest() instanceof ServerModpackManifest))
-                    throw new MismatchedModpackTypeException(ServerModpackLocalInstallTask.MODPACK_TYPE, getManifestType(modpack.getManifest()));
-
-                return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackLocalInstallTask(profile.getDependency(), zipFile, modpack, (ServerModpackManifest) modpack.getManifest(), name));
-            default:
-                throw new UnsupportedModpackException();
+        ModpackProvider provider = getProviderByType(configuration.getType());
+        if (provider == null) {
+            throw new UnsupportedModpackException();
         }
+        return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack);
     }
 
     public static void toVersionSetting(MultiMCInstanceConfiguration c, VersionSetting vs) {

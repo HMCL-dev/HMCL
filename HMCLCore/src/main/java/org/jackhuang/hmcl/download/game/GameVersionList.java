@@ -59,7 +59,7 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
                                     remoteVersion.getGameVersion(),
                                     remoteVersion.getGameVersion(),
                                     Collections.singletonList(remoteVersion.getUrl()),
-                                    remoteVersion.getType(), remoteVersion.getReleaseTime().toInstant()));
+                                    remoteVersion.getType(), remoteVersion.getReleaseTime()));
                         }
                     } finally {
                         lock.writeLock().unlock();

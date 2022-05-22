@@ -38,6 +38,7 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -50,6 +51,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +71,8 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
+    private final RemoteModRepository repository;
+    private final ModTranslations translations;
     private final RemoteMod addon;
     private final ModTranslations.Mod mod;
     private final Profile.ProfileVersion version;
@@ -80,8 +84,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     public DownloadPage(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
         this.page = page;
+        this.repository = page.repository;
         this.addon = addon;
-        this.mod = ModTranslations.getModByCurseForgeId(addon.getSlug());
+        this.translations = ModTranslations.getTranslationsByRepositoryType(repository.getType());
+        this.mod = translations.getModByCurseForgeId(addon.getSlug());
         this.version = version;
         this.callback = callback;
         loadModVersions();
@@ -98,9 +104,9 @@ public class DownloadPage extends Control implements DecoratorPage {
         setFailed(false);
 
         Task.allOf(
-                Task.supplyAsync(() -> addon.getData().loadDependencies()),
+                Task.supplyAsync(() -> addon.getData().loadDependencies(repository)),
                 Task.supplyAsync(() -> {
-                    Stream<RemoteMod.Version> versions = addon.getData().loadVersions();
+                    Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
 //                            if (StringUtils.isNotBlank(version.getVersion())) {
 //                                Optional<String> gameVersion = GameVersion.minecraftVersion(versionJar);
 //                                if (gameVersion.isPresent()) {
@@ -240,8 +246,8 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 TwoLineListItem content = new TwoLineListItem();
                 HBox.setHgrow(content, Priority.ALWAYS);
-                ModTranslations.Mod mod = ModTranslations.getModByCurseForgeId(getSkinnable().addon.getSlug());
-                content.setTitle(mod != null ? mod.getDisplayName() : getSkinnable().addon.getTitle());
+                ModTranslations.Mod mod = getSkinnable().translations.getModByCurseForgeId(getSkinnable().addon.getSlug());
+                content.setTitle(mod != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA ? mod.getDisplayName() : getSkinnable().addon.getTitle());
                 content.setSubtitle(getSkinnable().addon.getDescription());
                 content.getTags().setAll(getSkinnable().addon.getCategories().stream()
                         .map(category -> getSkinnable().page.getLocalizedCategory(category))
@@ -279,7 +285,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 Node title = ComponentList.createComponentListTitle(i18n("mods.dependencies"));
 
-                BooleanBinding show = Bindings.createBooleanBinding(() -> !control.dependencies.isEmpty(), control.loaded);
+                BooleanBinding show = Bindings.createBooleanBinding(() -> control.loaded.get() && !control.dependencies.isEmpty(), control.loaded);
                 title.managedProperty().bind(show);
                 title.visibleProperty().bind(show);
                 dependencyPane.managedProperty().bind(show);
@@ -345,8 +351,8 @@ public class DownloadPage extends Control implements DecoratorPage {
             container.setOnMouseClicked(e -> Controllers.navigate(new DownloadPage(page, addon, version, callback)));
             getChildren().setAll(container);
 
-            ModTranslations.Mod mod = ModTranslations.getModByCurseForgeId(addon.getSlug());
-            content.setTitle(mod != null ? mod.getDisplayName() : addon.getTitle());
+            ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(page.repository.getType()).getModByCurseForgeId(addon.getSlug());
+            content.setTitle(mod != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA ? mod.getDisplayName() : addon.getTitle());
             content.setSubtitle(addon.getDescription());
             content.getTags().setAll(addon.getCategories().stream()
                     .map(page::getLocalizedCategory)
@@ -380,7 +386,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.getChildren().setAll(graphicPane, content, saveAsButton);
 
             content.setTitle(dataItem.getName());
-            content.setSubtitle(FORMATTER.format(dataItem.getDatePublished()));
+            content.setSubtitle(FORMATTER.format(dataItem.getDatePublished().toInstant()));
             saveAsButton.setOnMouseClicked(e -> selfPage.saveAs(dataItem));
 
             switch (dataItem.getVersionType()) {

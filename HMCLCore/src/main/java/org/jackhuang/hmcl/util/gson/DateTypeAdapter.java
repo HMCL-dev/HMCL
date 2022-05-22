@@ -23,6 +23,11 @@ import java.lang.reflect.Type;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.Locale;
 
@@ -66,14 +71,14 @@ public final class DateTypeAdapter implements JsonSerializer<Date>, JsonDeserial
                 return EN_US_FORMAT.parse(string);
             } catch (ParseException ex1) {
                 try {
-                    return ISO_8601_FORMAT.parse(string);
-                } catch (ParseException ex2) {
+                    ZonedDateTime zonedDateTime = ZonedDateTime.parse(string, DateTimeFormatter.ISO_DATE_TIME);
+                    return Date.from(zonedDateTime.toInstant());
+                } catch (DateTimeParseException e) {
                     try {
-                        String cleaned = string.replace("Z", "+00:00");
-                        cleaned = cleaned.substring(0, 22) + cleaned.substring(23);
-                        return ISO_8601_FORMAT.parse(cleaned);
-                    } catch (Exception e) {
-                        throw new JsonParseException("Invalid date: " + string, e);
+                        LocalDateTime localDateTime = LocalDateTime.parse(string, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+                    } catch (DateTimeParseException e2) {
+                        throw new JsonParseException("Invalid date: " + string, e2);
                     }
                 }
             }

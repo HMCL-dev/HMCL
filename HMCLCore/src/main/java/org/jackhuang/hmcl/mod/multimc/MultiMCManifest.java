@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
 
 @Immutable
 public final class MultiMCManifest {

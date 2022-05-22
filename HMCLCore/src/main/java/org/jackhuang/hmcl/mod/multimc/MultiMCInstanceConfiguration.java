@@ -17,32 +17,22 @@
  */
 package org.jackhuang.hmcl.mod.multimc;
 
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.mod.ModpackManifest;
+import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Enumeration;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.stream.Stream;
 
 /**
  *
  * @author huangyuhui
  */
-public final class MultiMCInstanceConfiguration {
+public final class MultiMCInstanceConfiguration implements ModpackManifest {
 
     private final String instanceType; // InstanceType
     private final String name; // name
@@ -71,7 +61,7 @@ public final class MultiMCInstanceConfiguration {
 
     private final MultiMCManifest mmcPack;
 
-    private MultiMCInstanceConfiguration(String defaultName, InputStream contentStream, MultiMCManifest mmcPack) throws IOException {
+    MultiMCInstanceConfiguration(String defaultName, InputStream contentStream, MultiMCManifest mmcPack) throws IOException {
         Properties p = new Properties();
         p.load(new InputStreamReader(contentStream, StandardCharsets.UTF_8));
 
@@ -335,58 +325,9 @@ public final class MultiMCInstanceConfiguration {
         return mmcPack;
     }
 
-    private static boolean testPath(Path root) {
-        return Files.exists(root.resolve("instance.cfg"));
-    }
-
-    public static Path getRootPath(Path root) throws IOException {
-        if (testPath(root)) return root;
-        try (Stream<Path> stream = Files.list(root)) {
-            Path candidate = stream.filter(Files::isDirectory).findAny()
-                    .orElseThrow(() -> new IOException("Not a valid MultiMC modpack"));
-            if (testPath(candidate)) return candidate;
-            throw new IOException("Not a valid MultiMC modpack");
-        }
-    }
-
-    public static String getRootEntryName(ZipFile file) throws IOException {
-        final String instanceFileName = "instance.cfg";
-
-        if (file.getEntry(instanceFileName) != null) return "";
-
-        Enumeration<ZipArchiveEntry> entries = file.getEntries();
-        while (entries.hasMoreElements()) {
-            ZipArchiveEntry entry = entries.nextElement();
-            String entryName = entry.getName();
-
-            int idx = entryName.indexOf('/');
-            if (idx >= 0
-                    && entryName.length() == idx + instanceFileName.length() + 1
-                    && entryName.startsWith(instanceFileName, idx + 1))
-                return entryName.substring(0, idx + 1);
-        }
-
-        throw new IOException("Not a valid MultiMC modpack");
-    }
-
-    public static Modpack readMultiMCModpackManifest(ZipFile modpackFile, Path modpackPath, Charset encoding) throws IOException {
-        String rootEntryName = getRootEntryName(modpackFile);
-        MultiMCManifest manifest = MultiMCManifest.readMultiMCModpackManifest(modpackFile, rootEntryName);
-
-        String name = rootEntryName.isEmpty() ? FileUtils.getNameWithoutExtension(modpackPath) : rootEntryName.substring(0, rootEntryName.length() - 1);
-        ZipArchiveEntry instanceEntry = modpackFile.getEntry(rootEntryName + "instance.cfg");
-
-        if (instanceEntry == null)
-            throw new IOException("`instance.cfg` not found, " + modpackFile + " is not a valid MultiMC modpack.");
-        try (InputStream instanceStream = modpackFile.getInputStream(instanceEntry)) {
-            MultiMCInstanceConfiguration cfg = new MultiMCInstanceConfiguration(name, instanceStream, manifest);
-            return new Modpack(cfg.getName(), "", "", cfg.getGameVersion(), cfg.getNotes(), encoding, cfg) {
-                @Override
-                public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name) {
-                    return new MultiMCModpackInstallTask(dependencyManager, zipFile, this, cfg, name);
-                }
-            };
-        }
+    @Override
+    public ModpackProvider getProvider() {
+        return MultiMCModpackProvider.INSTANCE;
     }
 
 }

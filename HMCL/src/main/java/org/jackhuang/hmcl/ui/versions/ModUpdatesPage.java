@@ -39,11 +39,13 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -165,14 +167,14 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         @Override
         protected void updateControl(LocalModFile.ModUpdate item, boolean empty) {
             if (empty) return;
-            ModTranslations.Mod mod = ModTranslations.getModById(item.getLocalMod().getId());
-            content.setTitle(mod != null ? mod.getDisplayName() : item.getCurrentVersion().getName());
+            ModTranslations.Mod mod = ModTranslations.MOD.getModById(item.getLocalMod().getId());
+            content.setTitle(mod != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA ? mod.getDisplayName() : item.getCurrentVersion().getName());
             content.setSubtitle(item.getLocalMod().getFileName());
             content.getTags().setAll();
 
             if (item.getCurrentVersion().getSelf() instanceof CurseAddon.LatestFile) {
                 content.getTags().add("Curseforge");
-            } else if (item.getCurrentVersion().getSelf() instanceof ModrinthRemoteModRepository.ModVersion) {
+            } else if (item.getCurrentVersion().getSelf() instanceof ModrinthRemoteModRepository.ProjectVersion) {
                 content.getTags().add("Modrinth");
             }
         }

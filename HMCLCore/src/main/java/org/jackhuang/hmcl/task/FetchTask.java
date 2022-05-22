@@ -38,6 +38,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 
@@ -48,11 +49,13 @@ public abstract class FetchTask<T> extends Task<T> {
     protected CacheRepository repository = CacheRepository.getInstance();
 
     public FetchTask(List<URL> urls, int retry) {
-        if (urls == null || urls.isEmpty())
-            throw new IllegalArgumentException("At least one URL is required");
+        Objects.requireNonNull(urls);
 
-        this.urls = new ArrayList<>(urls);
+        this.urls = urls.stream().filter(Objects::nonNull).collect(Collectors.toList());
         this.retry = retry;
+
+        if (this.urls.isEmpty())
+            throw new IllegalArgumentException("At least one URL is required");
 
         setExecutor(download());
     }
