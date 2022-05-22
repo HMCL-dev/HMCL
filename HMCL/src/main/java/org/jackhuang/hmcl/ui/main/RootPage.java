@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -198,7 +199,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                                                 modpack)
                                         .executor())
                                 .thenAcceptAsync(Schedulers.javafx(), executor -> {
-                                    Controllers.taskDialog(executor, i18n("modpack.installing"));
+                                    Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);
                                     executor.start();
                                 }).start();
                     }

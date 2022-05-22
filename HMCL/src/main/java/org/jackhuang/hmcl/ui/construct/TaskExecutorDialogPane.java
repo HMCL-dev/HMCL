@@ -22,12 +22,13 @@ import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -37,7 +38,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 
 public class TaskExecutorDialogPane extends StackPane {
     private TaskExecutor executor;
-    private Consumer<Region> onCancel;
+    private TaskCancellationAction onCancel;
     private final Consumer<FileDownloadTask.SpeedEvent> speedEventHandler;
 
     @FXML
@@ -49,14 +50,14 @@ public class TaskExecutorDialogPane extends StackPane {
     @FXML
     private TaskListPane taskListPane;
 
-    public TaskExecutorDialogPane(Consumer<Region> cancel) {
+    public TaskExecutorDialogPane(@NotNull TaskCancellationAction cancel) {
         FXUtils.loadFXML(this, "/assets/fxml/task-dialog.fxml");
 
         setCancel(cancel);
 
         btnCancel.setOnAction(e -> {
             Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
-            onCancel.accept(this);
+            onCancel.getCancellationAction().accept(this);
         });
 
         speedEventHandler = speedEvent -> {
@@ -113,7 +114,7 @@ public class TaskExecutorDialogPane extends StackPane {
         lblTitle.setText(currentState);
     }
 
-    public void setCancel(Consumer<Region> onCancel) {
+    public void setCancel(TaskCancellationAction onCancel) {
         this.onCancel = onCancel;
 
         runInFX(() -> btnCancel.setDisable(onCancel == null));

@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -203,9 +204,13 @@ public class DownloadPage extends Control implements DecoratorPage {
             return;
         }
 
-        Controllers.taskDialog(
-                new FileDownloadTask(NetworkUtils.toURL(file.getFile().getUrl()), dest, file.getFile().getIntegrityCheck()).executor(true),
-                i18n("message.downloading")
+        Controllers.taskDialog(Task.composeAsync(() -> {
+                    FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(file.getFile().getUrl()), dest, file.getFile().getIntegrityCheck());
+                    task.setName(file.getName());
+                    return task;
+                }),
+                i18n("message.downloading"),
+                TaskCancellationAction.NORMAL
         );
     }
 

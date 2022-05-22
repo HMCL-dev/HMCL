@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 
 import java.util.Map;
 import java.util.Queue;
@@ -41,10 +42,10 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
 
     @Override
     public void handleTask(Map<String, Object> settings, Task<?> task) {
-        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(it -> {
+        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(new TaskCancellationAction(it -> {
             it.fireEvent(new DialogCloseEvent());
             onEnd();
-        });
+        }));
 
         pane.setTitle(i18n("message.doing"));
         if (settings.containsKey("title")) {

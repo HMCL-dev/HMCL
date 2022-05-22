@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -106,7 +107,7 @@ public final class ModpackSelectionPage extends StackPane implements WizardPage 
                         } else {
                             reject.accept(e.getMessage());
                         }
-                    }).executor(true), i18n("message.downloading"));
+                    }).executor(true), i18n("message.downloading"), TaskCancellationAction.NORMAL);
                 } else {
                     // otherwise we still consider the file as modpack zip file
                     // since casually the url may not ends with ".zip"
@@ -124,7 +125,8 @@ public final class ModpackSelectionPage extends StackPane implements WizardPage 
                                             reject.accept(e.getMessage());
                                         }
                                     }).executor(true),
-                            i18n("message.downloading")
+                            i18n("message.downloading"),
+                            TaskCancellationAction.NORMAL
                     );
                 }
             } catch (IOException e) {
