@@ -90,7 +90,7 @@ public class RemoteMod {
     }
 
     public interface IMod {
-        List<RemoteMod> loadDependencies(RemoteModRepository modRepository, List<RemoteMod.Version> versions) throws IOException;
+        List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException;
 
         Stream<Version> loadVersions(RemoteModRepository modRepository) throws IOException;
     }

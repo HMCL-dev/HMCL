@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXScrollPane;
-import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
@@ -52,7 +51,6 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -105,8 +103,9 @@ public class DownloadPage extends Control implements DecoratorPage {
         setFailed(false);
 
         Task.allOf(
-                        Task.supplyAsync(() -> {
-                            Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
+                Task.supplyAsync(() -> addon.getData().loadDependencies(repository)),
+                Task.supplyAsync(() -> {
+                    Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
 //                            if (StringUtils.isNotBlank(version.getVersion())) {
 //                                Optional<String> gameVersion = GameVersion.minecraftVersion(versionJar);
 //                                if (gameVersion.isPresent()) {
@@ -114,38 +113,24 @@ public class DownloadPage extends Control implements DecoratorPage {
 //                                            .filter(file -> file.getGameVersions().contains(gameVersion.get())));
 //                                }
 //                            }
-                            return sortVersions(versions);
-                        }))
+                    return sortVersions(versions);
+                }))
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
-
                         @SuppressWarnings("unchecked")
-                        SimpleMultimap<String, RemoteMod.Version> versions = (SimpleMultimap<String, RemoteMod.Version>) result.get(0);
+                        List<RemoteMod> dependencies = (List<RemoteMod>) result.get(0);
+                        @SuppressWarnings("unchecked")
+                        SimpleMultimap<String, RemoteMod.Version> versions = (SimpleMultimap<String, RemoteMod.Version>) result.get(1);
 
+                        this.dependencies = dependencies;
                         this.versions = versions;
 
-                        ArrayList<RemoteMod.Version> allVersions = new ArrayList<>();
-                        for (String s : versions.keys()) {
-                            allVersions.addAll(versions.get(s));
-                        }
-                        Task.supplyAsync(() -> addon.getData().loadDependencies(repository,allVersions)).thenAcceptAsync((ExceptionalConsumer<List<RemoteMod>, Exception>) remoteMods -> {
-                            this.dependencies = remoteMods;
-                        }).whenComplete(exception1 -> {
-                            Platform.runLater(() -> {
-                                if (exception1 == null) {
-                                    loaded.set(true);
-                                    setFailed(false);
-                                }
-                                else {
-                                    setFailed(true);
-                                }
-                                setLoading(false);
-                            });
-                        }).start();
-
+                        loaded.set(true);
+                        setFailed(false);
                     } else {
                         setFailed(true);
                     }
+                    setLoading(false);
                 }).start();
     }
 
