@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -28,8 +27,7 @@ import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackLocalInstallTask;
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
+import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.ProxyManager;
 import org.jackhuang.hmcl.setting.VersionIconType;
@@ -374,11 +372,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
             try {
                 String jsonText = FileUtils.readText(json);
                 ModpackConfiguration<?> modpackConfiguration = JsonUtils.GSON.fromJson(jsonText, ModpackConfiguration.class);
-                if (McbbsModpackLocalInstallTask.MODPACK_TYPE.equals(modpackConfiguration.getType())) {
-                    ModpackConfiguration<McbbsModpackManifest> config = JsonUtils.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<McbbsModpackManifest>>() {
-                    }.getType());
-                    config.getManifest().injectLaunchOptions(builder);
-                }
+                ModpackProvider provider = ModpackHelper.getProviderByType(modpackConfiguration.getType());
+                if (provider != null) provider.injectLaunchOptions(jsonText, builder);
             } catch (IOException | JsonParseException e) {
                 e.printStackTrace();
             }

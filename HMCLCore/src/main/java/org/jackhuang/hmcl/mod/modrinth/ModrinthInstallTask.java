@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2022  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.mod.curse;
+package org.jackhuang.hmcl.mod.modrinth;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
@@ -23,46 +23,31 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.*;
+import org.jackhuang.hmcl.mod.curse.CurseManifest;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
-/**
- * Install a downloaded CurseForge modpack.
- *
- * @author huangyuhui
- */
-public final class CurseInstallTask extends Task<Void> {
+public class ModrinthInstallTask extends Task<Void> {
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
     private final File zipFile;
     private final Modpack modpack;
-    private final CurseManifest manifest;
+    private final ModrinthManifest manifest;
     private final String name;
     private final File run;
-    private final ModpackConfiguration<CurseManifest> config;
+    private final ModpackConfiguration<ModrinthManifest> config;
     private final List<Task<?>> dependents = new ArrayList<>(4);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    /**
-     * Constructor.
-     *
-     * @param dependencyManager the dependency manager.
-     * @param zipFile the CurseForge modpack file.
-     * @param manifest The manifest content of given CurseForge modpack.
-     * @param name the new version name
-     * @see CurseManifest#readCurseForgeModpackManifest
-     */
-    public CurseInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, CurseManifest manifest, String name) {
+    public ModrinthInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, ModrinthManifest manifest, String name) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
@@ -75,12 +60,21 @@ public final class CurseInstallTask extends Task<Void> {
         if (repository.hasVersion(name) && !json.exists())
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
-        GameBuilder builder = dependencyManager.gameBuilder().name(name).gameVersion(manifest.getMinecraft().getGameVersion());
-        for (CurseManifestModLoader modLoader : manifest.getMinecraft().getModLoaders()) {
-            if (modLoader.getId().startsWith("forge-")) {
-                builder.version("forge", modLoader.getId().substring("forge-".length()));
-            } else if (modLoader.getId().startsWith("fabric-")) {
-                builder.version("fabric", modLoader.getId().substring("fabric-".length()));
+        GameBuilder builder = dependencyManager.gameBuilder().name(name).gameVersion(manifest.getGameVersion());
+        for (Map.Entry<String, String> modLoader : manifest.getDependencies().entrySet()) {
+            switch (modLoader.getKey()) {
+                case "minecraft":
+                    break;
+                case "forge":
+                    builder.version("forge", modLoader.getValue());
+                    break;
+                case "fabric-loader":
+                    builder.version("fabric", modLoader.getValue());
+                    break;
+                case "quilt-loader":
+                    throw new IllegalStateException("Quilt Modloader is not supported");
+                default:
+                    throw new IllegalStateException("Unsupported mod loader " + modLoader.getKey());
             }
         }
         dependents.add(builder.buildAsync());
@@ -94,22 +88,24 @@ public final class CurseInstallTask extends Task<Void> {
             }
         });
 
-        ModpackConfiguration<CurseManifest> config = null;
+        ModpackConfiguration<ModrinthManifest> config = null;
         try {
             if (json.exists()) {
                 config = JsonUtils.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<CurseManifest>>() {
                 }.getType());
 
-                if (!CurseModpackProvider.INSTANCE.getName().equals(config.getType()))
-                    throw new IllegalArgumentException("Version " + name + " is not a Curse modpack. Cannot update this version.");
+                if (!ModrinthModpackProvider.INSTANCE.getName().equals(config.getType()))
+                    throw new IllegalArgumentException("Version " + name + " is not a Modrinth modpack. Cannot update this version.");
             }
         } catch (JsonParseException | IOException ignore) {
         }
-        this.config = config;
-        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(manifest.getOverrides()), any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(manifest.getOverrides()), manifest, CurseModpackProvider.INSTANCE, manifest.getName(), manifest.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
 
-        dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest));
+        this.config = config;
+        List<String> subDirectories = Arrays.asList("/client-overrides", "/overrides");
+        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+
+        dependencies.add(new ModrinthCompletionTask(dependencyManager, name, manifest));
     }
 
     @Override
@@ -126,17 +122,16 @@ public final class CurseInstallTask extends Task<Void> {
     public void execute() throws Exception {
         if (config != null) {
             // For update, remove mods not listed in new manifest
-            for (CurseManifestFile oldCurseManifestFile : config.getManifest().getFiles()) {
-                if (StringUtils.isBlank(oldCurseManifestFile.getFileName())) continue;
-                File oldFile = new File(run, "mods/" + oldCurseManifestFile.getFileName());
-                if (!oldFile.exists()) continue;
-                if (manifest.getFiles().stream().noneMatch(oldCurseManifestFile::equals))
-                    if (!oldFile.delete())
-                        throw new IOException("Unable to delete mod file " + oldFile);
+            for (ModrinthManifest.File oldManifestFile : config.getManifest().getFiles()) {
+                Path oldFile = run.toPath().resolve(oldManifestFile.getPath());
+                if (!Files.exists(oldFile)) continue;
+                if (manifest.getFiles().stream().noneMatch(oldManifestFile::equals)) {
+                    Files.deleteIfExists(oldFile);
+                }
             }
         }
 
         File root = repository.getVersionRoot(name);
-        FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(manifest));
+        FileUtils.writeText(new File(root, "modrinth.index.json"), JsonUtils.GSON.toJson(manifest));
     }
 }

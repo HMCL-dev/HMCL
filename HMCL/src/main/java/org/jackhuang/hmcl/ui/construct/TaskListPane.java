@@ -42,10 +42,15 @@ import org.jackhuang.hmcl.mod.ModpackInstallTask;
 import org.jackhuang.hmcl.mod.ModpackUpdateTask;
 import org.jackhuang.hmcl.mod.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.mod.curse.CurseInstallTask;
+import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackCompletionTask;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthCompletionTask;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthInstallTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
+import org.jackhuang.hmcl.mod.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
+import org.jackhuang.hmcl.mod.server.ServerModpackLocalInstallTask;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -123,8 +128,8 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("install.installer.install", i18n("install.installer.fabric")));
                 } else if (task instanceof FabricAPIInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.fabric-api")));
-                } else if (task instanceof CurseCompletionTask) {
-                    task.setName(i18n("modpack.type.curse.completion"));
+                } else if (task instanceof CurseCompletionTask || task instanceof ModrinthCompletionTask || task instanceof ServerModpackCompletionTask || task instanceof McbbsModpackCompletionTask) {
+                    task.setName(i18n("modpack.completion"));
                 } else if (task instanceof ModpackInstallTask) {
                     task.setName(i18n("modpack.installing"));
                 } else if (task instanceof ModpackUpdateTask) {
@@ -133,6 +138,10 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("modpack.install", i18n("modpack.type.curse")));
                 } else if (task instanceof MultiMCModpackInstallTask) {
                     task.setName(i18n("modpack.install", i18n("modpack.type.multimc")));
+                } else if (task instanceof ModrinthInstallTask) {
+                    task.setName(i18n("modpack.install", i18n("modpack.type.modrinth")));
+                } else if (task instanceof ServerModpackLocalInstallTask) {
+                    task.setName(i18n("modpack.install", i18n("modpack.type.server")));
                 } else if (task instanceof HMCLModpackInstallTask) {
                     task.setName(i18n("modpack.install", i18n("modpack.type.hmcl")));
                 } else if (task instanceof McbbsModpackExportTask || task instanceof MultiMCModpackExportTask || task instanceof ServerModpackExportTask) {

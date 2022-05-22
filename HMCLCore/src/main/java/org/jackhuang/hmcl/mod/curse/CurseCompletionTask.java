@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -122,11 +123,11 @@ public final class CurseCompletionTask extends Task<Void> {
                                     RemoteMod.File remoteFile = CurseForgeRemoteModRepository.MODS.getModFile(Integer.toString(file.getProjectID()), Integer.toString(file.getFileID()));
                                     return file.withFileName(remoteFile.getFilename()).withURL(remoteFile.getUrl());
                                 } catch (FileNotFoundException fof) {
-                                    Logging.LOG.log(Level.WARNING, "Could not query api.curseforge.com for deleted mods: " + file.getProjectID() + ", " +file.getFileID(), fof);
+                                    Logging.LOG.log(Level.WARNING, "Could not query api.curseforge.com for deleted mods: " + file.getProjectID() + ", " + file.getFileID(), fof);
                                     notFound.set(true);
                                     return file;
                                 } catch (IOException | JsonParseException e) {
-                                    Logging.LOG.log(Level.WARNING, "Unable to fetch the file name projectID=" + file.getProjectID() + ", fileID=" +file.getFileID(), e);
+                                    Logging.LOG.log(Level.WARNING, "Unable to fetch the file name projectID=" + file.getProjectID() + ", fileID=" + file.getFileID(), e);
                                     allNameKnown.set(false);
                                     return file;
                                 }
@@ -163,8 +164,8 @@ public final class CurseCompletionTask extends Task<Void> {
         // Let this task fail if the curse manifest has not been completed.
         // But continue other downloads.
         if (notFound.get())
-            throw new CurseCompletionException(new FileNotFoundException());
+            throw new ModpackCompletionException(new FileNotFoundException());
         if (!allNameKnown.get() || !isDependenciesSucceeded())
-            throw new CurseCompletionException();
+            throw new ModpackCompletionException();
     }
 }

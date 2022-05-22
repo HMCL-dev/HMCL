@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -246,7 +247,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 TwoLineListItem content = new TwoLineListItem();
                 HBox.setHgrow(content, Priority.ALWAYS);
                 ModTranslations.Mod mod = getSkinnable().translations.getModByCurseForgeId(getSkinnable().addon.getSlug());
-                content.setTitle(mod != null ? mod.getDisplayName() : getSkinnable().addon.getTitle());
+                content.setTitle(mod != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA ? mod.getDisplayName() : getSkinnable().addon.getTitle());
                 content.setSubtitle(getSkinnable().addon.getDescription());
                 content.getTags().setAll(getSkinnable().addon.getCategories().stream()
                         .map(category -> getSkinnable().page.getLocalizedCategory(category))
@@ -351,7 +352,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             getChildren().setAll(container);
 
             ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(page.repository.getType()).getModByCurseForgeId(addon.getSlug());
-            content.setTitle(mod != null ? mod.getDisplayName() : addon.getTitle());
+            content.setTitle(mod != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA ? mod.getDisplayName() : addon.getTitle());
             content.setSubtitle(addon.getDescription());
             content.getTags().setAll(addon.getCategories().stream()
                     .map(page::getLocalizedCategory)

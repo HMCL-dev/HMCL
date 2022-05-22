@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
-import org.jackhuang.hmcl.mod.curse.CurseCompletionException;
+import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.curse.CurseMetaMod;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.util.Logging;
@@ -269,9 +269,9 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                         // Let this task fail if the curse manifest has not been completed.
                         // But continue other downloads.
                         if (notFound.get())
-                            throw new CurseCompletionException(new FileNotFoundException());
+                            throw new ModpackCompletionException(new FileNotFoundException());
                         if (!allNameKnown.get() || ex != null)
-                            throw new CurseCompletionException();
+                            throw new ModpackCompletionException();
                     })));
         }));
     }

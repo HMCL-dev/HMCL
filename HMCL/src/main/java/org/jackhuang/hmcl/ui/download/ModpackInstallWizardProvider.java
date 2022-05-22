@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.ui.download;
 import javafx.scene.Node;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
-import org.jackhuang.hmcl.mod.curse.CurseCompletionException;
+import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
@@ -125,7 +125,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
         settings.put("failure_callback", new FailureCallback() {
             @Override
             public void onFail(Map<String, Object> settings, Exception exception, Runnable next) {
-                if (exception instanceof CurseCompletionException) {
+                if (exception instanceof ModpackCompletionException) {
                     if (exception.getCause() instanceof FileNotFoundException) {
                         Controllers.dialog(i18n("modpack.type.curse.not_found"), i18n("install.failed"), MessageType.ERROR, next);
                     } else {

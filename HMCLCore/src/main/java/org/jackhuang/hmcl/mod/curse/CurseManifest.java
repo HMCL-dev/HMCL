@@ -17,21 +17,11 @@
  */
 package org.jackhuang.hmcl.mod.curse;
 
-import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.mod.ModpackManifest;
+import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,7 +30,7 @@ import java.util.List;
  * @author huangyuhui
  */
 @Immutable
-public final class CurseManifest {
+public final class CurseManifest implements ModpackManifest {
 
     @SerializedName("manifestType")
     private final String manifestType;
@@ -117,28 +107,9 @@ public final class CurseManifest {
         return new CurseManifest(manifestType, manifestVersion, name, version, author, overrides, minecraft, files);
     }
 
-    /**
-     * @param zip the CurseForge modpack file.
-     * @throws IOException if the file is not a valid zip file.
-     * @throws JsonParseException if the manifest.json is missing or malformed.
-     * @return the manifest.
-     */
-    public static Modpack readCurseForgeModpackManifest(ZipFile zip, Charset encoding) throws IOException, JsonParseException {
-        CurseManifest manifest = JsonUtils.fromNonNullJson(CompressingUtils.readTextZipEntry(zip, "manifest.json"), CurseManifest.class);
-        String description = "No description";
-        try {
-            ZipArchiveEntry modlist = zip.getEntry("modlist.html");
-            if (modlist != null)
-                description = IOUtils.readFullyAsString(zip.getInputStream(modlist));
-        } catch (Throwable ignored) {
-        }
-
-        return new Modpack(manifest.getName(), manifest.getAuthor(), manifest.getVersion(), manifest.getMinecraft().getGameVersion(), description, encoding, manifest) {
-            @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name) {
-                return new CurseInstallTask(dependencyManager, zipFile, this, manifest, name);
-            }
-        };
+    @Override
+    public ModpackProvider getProvider() {
+        return CurseModpackProvider.INSTANCE;
     }
 
     public static final String MINECRAFT_MODPACK = "minecraftModpack";

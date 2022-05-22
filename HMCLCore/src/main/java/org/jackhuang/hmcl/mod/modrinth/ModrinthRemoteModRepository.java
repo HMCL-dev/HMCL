@@ -23,17 +23,14 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Hex;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -42,11 +39,15 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class ModrinthRemoteModRepository implements RemoteModRepository {
-    public static final ModrinthRemoteModRepository INSTANCE = new ModrinthRemoteModRepository();
+    public static final ModrinthRemoteModRepository MODS = new ModrinthRemoteModRepository("mod");
+    public static final ModrinthRemoteModRepository MODPACKS = new ModrinthRemoteModRepository("modpack");
 
     private static final String PREFIX = "https://api.modrinth.com";
 
-    private ModrinthRemoteModRepository() {
+    private final String projectType;
+
+    private ModrinthRemoteModRepository(String projectType) {
+        this.projectType = projectType;
     }
 
     @Override
@@ -73,19 +74,22 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
     @Override
     public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
+        List<List<String>> facets = new ArrayList<>();
+        facets.add(Collections.singletonList("project_type:" + projectType));
+        if (StringUtils.isNotBlank(gameVersion)) {
+            facets.add(Collections.singletonList("versions:" + gameVersion));
+        }
         Map<String, String> query = mapOf(
                 pair("query", searchFilter),
+                pair("facets", JsonUtils.UGLY_GSON.toJson(facets)),
                 pair("offset", Integer.toString(pageOffset)),
                 pair("limit", Integer.toString(pageSize)),
                 pair("index", convertSortType(sort))
         );
-        if (StringUtils.isNotBlank(gameVersion)) {
-            query.put("version", "versions=" + gameVersion);
-        }
-        Response<ModResult> response = HttpRequest.GET(NetworkUtils.withQuery(PREFIX + "/api/v1/mod", query))
-                .getJson(new TypeToken<Response<ModResult>>() {
+        Response<ProjectSearchResult> response = HttpRequest.GET(NetworkUtils.withQuery(PREFIX + "/v2/search", query))
+                .getJson(new TypeToken<Response<ProjectSearchResult>>() {
                 }.getType());
-        return response.getHits().stream().map(ModResult::toMod);
+        return response.getHits().stream().map(ProjectSearchResult::toMod);
     }
 
     @Override
@@ -93,9 +97,9 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         String sha1 = Hex.encodeHex(DigestUtils.digest("SHA-1", file));
 
         try {
-            ModVersion mod = HttpRequest.GET(PREFIX + "/api/v1/version_file/" + sha1,
+            ProjectVersion mod = HttpRequest.GET(PREFIX + "/v2/version_file/" + sha1,
                             pair("algorithm", "sha1"))
-                    .getJson(ModVersion.class);
+                    .getJson(ProjectVersion.class);
             return mod.toVersion();
         } catch (ResponseCodeException e) {
             if (e.getResponseCode() == 404) {
@@ -107,8 +111,10 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public RemoteMod getModById(String id) {
-        throw new UnsupportedOperationException();
+    public RemoteMod getModById(String id) throws IOException {
+        id = StringUtils.removePrefix(id, "local-");
+        Project project = HttpRequest.GET(PREFIX + "/v2/project/" + id).getJson(Project.class);
+        return project.toMod();
     }
 
     @Override
@@ -119,14 +125,14 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     @Override
     public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
         id = StringUtils.removePrefix(id, "local-");
-        List<ModVersion> versions = HttpRequest.GET("https://api.modrinth.com/api/v1/mod/" + id + "/version")
-                .getJson(new TypeToken<List<ModVersion>>() {
+        List<ProjectVersion> versions = HttpRequest.GET(PREFIX + "/v2/project/" + id + "/version")
+                .getJson(new TypeToken<List<ProjectVersion>>() {
                 }.getType());
-        return versions.stream().map(ModVersion::toVersion).flatMap(Lang::toStream);
+        return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
     }
 
     public List<String> getCategoriesImpl() throws IOException {
-        return HttpRequest.GET("https://api.modrinth.com/api/v1/tag/category").getJson(new TypeToken<List<String>>() {
+        return HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(new TypeToken<List<String>>() {
         }.getType());
     }
 
@@ -135,54 +141,56 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                 .map(name -> new Category(null, name, Collections.emptyList()));
     }
 
-    public static class Mod {
-        private final String id;
-
+    public static class Project implements RemoteMod.IMod {
         private final String slug;
-
-        private final String team;
 
         private final String title;
 
         private final String description;
 
-        private final Instant published;
-
-        private final Instant updated;
-
         private final List<String> categories;
 
-        private final List<String> versions;
+        /**
+         * A long body describing project in detail.
+         */
+        private final String body;
+
+        @SerializedName("project_type")
+        private final String projectType;
 
         private final int downloads;
 
         @SerializedName("icon_url")
         private final String iconUrl;
 
-        public Mod(String id, String slug, String team, String title, String description, Instant published, Instant updated, List<String> categories, List<String> versions, int downloads, String iconUrl) {
-            this.id = id;
+        private final String id;
+
+        private final String team;
+
+        private final Date published;
+
+        private final Date updated;
+
+        private final List<String> versions;
+
+        public Project(String slug, String title, String description, List<String> categories, String body, String projectType, int downloads, String iconUrl, String id, String team, Date published, Date updated, List<String> versions) {
             this.slug = slug;
-            this.team = team;
             this.title = title;
             this.description = description;
-            this.published = published;
-            this.updated = updated;
             this.categories = categories;
-            this.versions = versions;
+            this.body = body;
+            this.projectType = projectType;
             this.downloads = downloads;
             this.iconUrl = iconUrl;
-        }
-
-        public String getId() {
-            return id;
+            this.id = id;
+            this.team = team;
+            this.published = published;
+            this.updated = updated;
+            this.versions = versions;
         }
 
         public String getSlug() {
             return slug;
-        }
-
-        public String getTeam() {
-            return team;
         }
 
         public String getTitle() {
@@ -193,20 +201,16 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return description;
         }
 
-        public Instant getPublished() {
-            return published;
-        }
-
-        public Instant getUpdated() {
-            return updated;
-        }
-
         public List<String> getCategories() {
             return categories;
         }
 
-        public List<String> getVersions() {
-            return versions;
+        public String getBody() {
+            return body;
+        }
+
+        public String getProjectType() {
+            return projectType;
         }
 
         public int getDownloads() {
@@ -216,17 +220,91 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         public String getIconUrl() {
             return iconUrl;
         }
+
+        public String getId() {
+            return id;
+        }
+
+        public String getTeam() {
+            return team;
+        }
+
+        public Date getPublished() {
+            return published;
+        }
+
+        public Date getUpdated() {
+            return updated;
+        }
+
+        public List<String> getVersions() {
+            return versions;
+        }
+
+        @Override
+        public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
+            Set<String> dependencies = modRepository.getRemoteVersionsById(getId())
+                    .flatMap(version -> version.getDependencies().stream())
+                    .collect(Collectors.toSet());
+            List<RemoteMod> mods = new ArrayList<>();
+            for (String dependencyId : dependencies) {
+                if (StringUtils.isNotBlank(dependencyId)) {
+                    mods.add(modRepository.getModById(dependencyId));
+                }
+            }
+            return mods;
+        }
+
+        @Override
+        public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
+            return modRepository.getRemoteVersionsById(getId());
+        }
+
+        public RemoteMod toMod() {
+            return new RemoteMod(
+                    slug,
+                    "",
+                    title,
+                    description,
+                    categories,
+                    null,
+                    iconUrl,
+                    (RemoteMod.IMod) this
+            );
+        }
     }
 
-    public static class ModVersion implements RemoteMod.IVersion {
-        private final String id;
+    @Immutable
+    public static class Dependency {
+        @SerializedName("version_id")
+        private final String versionId;
 
-        @SerializedName("mod_id")
-        private final String modId;
+        @SerializedName("project_id")
+        private final String projectId;
 
-        @SerializedName("author_id")
-        private final String authorId;
+        @SerializedName("dependency_type")
+        private final String dependencyType;
 
+        public Dependency(String versionId, String projectId, String dependencyType) {
+            this.versionId = versionId;
+            this.projectId = projectId;
+            this.dependencyType = dependencyType;
+        }
+
+        public String getVersionId() {
+            return versionId;
+        }
+
+        public String getProjectId() {
+            return projectId;
+        }
+
+        public String getDependencyType() {
+            return dependencyType;
+        }
+    }
+
+    public static class ProjectVersion implements RemoteMod.IVersion {
         private final String name;
 
         @SerializedName("version_number")
@@ -234,49 +312,52 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         private final String changelog;
 
+        private final List<Dependency> dependencies;
+
+        @SerializedName("game_versions")
+        private final List<String> gameVersions;
+
+        @SerializedName("version_type")
+        private final String versionType;
+
+        private final List<String> loaders;
+
+        private final boolean featured;
+
+        private final String id;
+
+        @SerializedName("project_id")
+        private final String projectId;
+
+        @SerializedName("author_id")
+        private final String authorId;
+
         @SerializedName("date_published")
         private final Date datePublished;
 
         private final int downloads;
 
-        @SerializedName("version_type")
-        private final String versionType;
+        @SerializedName("changelog_url")
+        private final String changelogUrl;
 
-        private final List<ModVersionFile> files;
+        private final List<ProjectVersionFile> files;
 
-        private final List<String> dependencies;
-
-        @SerializedName("game_versions")
-        private final List<String> gameVersions;
-
-        private final List<String> loaders;
-
-        public ModVersion(String id, String modId, String authorId, String name, String versionNumber, String changelog, Date datePublished, int downloads, String versionType, List<ModVersionFile> files, List<String> dependencies, List<String> gameVersions, List<String> loaders) {
-            this.id = id;
-            this.modId = modId;
-            this.authorId = authorId;
+        public ProjectVersion(String name, String versionNumber, String changelog, List<Dependency> dependencies, List<String> gameVersions, String versionType, List<String> loaders, boolean featured, String id, String projectId, String authorId, Date datePublished, int downloads, String changelogUrl, List<ProjectVersionFile> files) {
             this.name = name;
             this.versionNumber = versionNumber;
             this.changelog = changelog;
-            this.datePublished = datePublished;
-            this.downloads = downloads;
-            this.versionType = versionType;
-            this.files = files;
             this.dependencies = dependencies;
             this.gameVersions = gameVersions;
+            this.versionType = versionType;
             this.loaders = loaders;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getModId() {
-            return modId;
-        }
-
-        public String getAuthorId() {
-            return authorId;
+            this.featured = featured;
+            this.id = id;
+            this.projectId = projectId;
+            this.authorId = authorId;
+            this.datePublished = datePublished;
+            this.downloads = downloads;
+            this.changelogUrl = changelogUrl;
+            this.files = files;
         }
 
         public String getName() {
@@ -291,6 +372,38 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return changelog;
         }
 
+        public List<Dependency> getDependencies() {
+            return dependencies;
+        }
+
+        public List<String> getGameVersions() {
+            return gameVersions;
+        }
+
+        public String getVersionType() {
+            return versionType;
+        }
+
+        public List<String> getLoaders() {
+            return loaders;
+        }
+
+        public boolean isFeatured() {
+            return featured;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public String getProjectId() {
+            return projectId;
+        }
+
+        public String getAuthorId() {
+            return authorId;
+        }
+
         public Date getDatePublished() {
             return datePublished;
         }
@@ -299,24 +412,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return downloads;
         }
 
-        public String getVersionType() {
-            return versionType;
+        public String getChangelogUrl() {
+            return changelogUrl;
         }
 
-        public List<ModVersionFile> getFiles() {
+        public List<ProjectVersionFile> getFiles() {
             return files;
-        }
-
-        public List<String> getDependencies() {
-            return dependencies;
-        }
-
-        public List<String> getGameVersions() {
-            return gameVersions;
-        }
-
-        public List<String> getLoaders() {
-            return loaders;
         }
 
         @Override
@@ -342,14 +443,14 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
             return Optional.of(new RemoteMod.Version(
                     this,
-                    modId,
+                    projectId,
                     name,
                     versionNumber,
                     changelog,
                     datePublished,
                     type,
                     files.get(0).toFile(),
-                    dependencies,
+                    dependencies.stream().map(Dependency::getProjectId).filter(Objects::nonNull).collect(Collectors.toList()),
                     gameVersions,
                     loaders.stream().flatMap(loader -> {
                         if ("fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FABRIC);
@@ -360,15 +461,19 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
     }
 
-    public static class ModVersionFile {
+    public static class ProjectVersionFile {
         private final Map<String, String> hashes;
         private final String url;
         private final String filename;
+        private final boolean primary;
+        private final int size;
 
-        public ModVersionFile(Map<String, String> hashes, String url, String filename) {
+        public ProjectVersionFile(Map<String, String> hashes, String url, String filename, boolean primary, int size) {
             this.hashes = hashes;
             this.url = url;
             this.filename = filename;
+            this.primary = primary;
+            this.size = size;
         }
 
         public Map<String, String> getHashes() {
@@ -383,18 +488,21 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return filename;
         }
 
+        public boolean isPrimary() {
+            return primary;
+        }
+
+        public int getSize() {
+            return size;
+        }
+
         public RemoteMod.File toFile() {
             return new RemoteMod.File(hashes, url, filename);
         }
     }
 
-    public static class ModResult implements RemoteMod.IMod {
-        @SerializedName("mod_id")
-        private final String modId;
-
+    public static class ProjectSearchResult implements RemoteMod.IMod {
         private final String slug;
-
-        private final String author;
 
         private final String title;
 
@@ -402,55 +510,48 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         private final List<String> categories;
 
-        private final List<String> versions;
+        @SerializedName("project_type")
+        private final String projectType;
 
         private final int downloads;
-
-        @SerializedName("page_url")
-        private final String pageUrl;
 
         @SerializedName("icon_url")
         private final String iconUrl;
 
-        @SerializedName("author_url")
-        private final String authorUrl;
+        @SerializedName("project_id")
+        private final String projectId;
+
+        private final String author;
+
+        private final List<String> versions;
 
         @SerializedName("date_created")
-        private final Instant dateCreated;
+        private final Date dateCreated;
 
         @SerializedName("date_modified")
-        private final Instant dateModified;
+        private final Date dateModified;
 
         @SerializedName("latest_version")
         private final String latestVersion;
 
-        public ModResult(String modId, String slug, String author, String title, String description, List<String> categories, List<String> versions, int downloads, String pageUrl, String iconUrl, String authorUrl, Instant dateCreated, Instant dateModified, String latestVersion) {
-            this.modId = modId;
+        public ProjectSearchResult(String slug, String title, String description, List<String> categories, String projectType, int downloads, String iconUrl, String projectId, String author, List<String> versions, Date dateCreated, Date dateModified, String latestVersion) {
             this.slug = slug;
-            this.author = author;
             this.title = title;
             this.description = description;
             this.categories = categories;
-            this.versions = versions;
+            this.projectType = projectType;
             this.downloads = downloads;
-            this.pageUrl = pageUrl;
             this.iconUrl = iconUrl;
-            this.authorUrl = authorUrl;
+            this.projectId = projectId;
+            this.author = author;
+            this.versions = versions;
             this.dateCreated = dateCreated;
             this.dateModified = dateModified;
             this.latestVersion = latestVersion;
         }
 
-        public String getModId() {
-            return modId;
-        }
-
         public String getSlug() {
             return slug;
-        }
-
-        public String getAuthor() {
-            return author;
         }
 
         public String getTitle() {
@@ -465,31 +566,35 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return categories;
         }
 
-        public List<String> getVersions() {
-            return versions;
+        public String getProjectType() {
+            return projectType;
         }
 
         public int getDownloads() {
             return downloads;
         }
 
-        public String getPageUrl() {
-            return pageUrl;
-        }
-
         public String getIconUrl() {
             return iconUrl;
         }
 
-        public String getAuthorUrl() {
-            return authorUrl;
+        public String getProjectId() {
+            return projectId;
         }
 
-        public Instant getDateCreated() {
+        public String getAuthor() {
+            return author;
+        }
+
+        public List<String> getVersions() {
+            return versions;
+        }
+
+        public Date getDateCreated() {
             return dateCreated;
         }
 
-        public Instant getDateModified() {
+        public Date getDateModified() {
             return dateModified;
         }
 
@@ -499,12 +604,21 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         @Override
         public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
-            return Collections.emptyList();
+            Set<String> dependencies = modRepository.getRemoteVersionsById(getProjectId())
+                    .flatMap(version -> version.getDependencies().stream())
+                    .collect(Collectors.toSet());
+            List<RemoteMod> mods = new ArrayList<>();
+            for (String dependencyId : dependencies) {
+                if (StringUtils.isNotBlank(dependencyId)) {
+                    mods.add(modRepository.getModById(dependencyId));
+                }
+            }
+            return mods;
         }
 
         @Override
         public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
-            return modRepository.getRemoteVersionsById(getModId());
+            return modRepository.getRemoteVersionsById(getProjectId());
         }
 
         public RemoteMod toMod() {
@@ -514,7 +628,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     title,
                     description,
                     categories,
-                    pageUrl,
+                    String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
                     this
             );
