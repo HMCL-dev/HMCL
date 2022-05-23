@@ -31,7 +31,6 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.download.java.JavaRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
@@ -173,7 +172,7 @@ public final class Controllers {
             dialog(i18n("launcher.cache_directory.invalid"));
         }
 
-        Task.runAsync(JavaVersion::initialize).thenRunAsync(JavaRepository::initialize).start();
+        Task.runAsync(JavaVersion::initialize).start();
 
         scene = new Scene(decorator.getDecorator());
         scene.setFill(Color.TRANSPARENT);

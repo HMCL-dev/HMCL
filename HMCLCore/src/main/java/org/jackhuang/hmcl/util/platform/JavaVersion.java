@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.download.java.JavaRepository;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -32,7 +33,6 @@ import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -305,13 +305,8 @@ public final class JavaVersion {
         // 2. Minecraft-installed locations
         // 3. PATH
         List<Stream<Path>> javaExecutables = new ArrayList<>();
-        // Can be not present -- we check at the last part
-        List<Optional<Path>> runtimeDirs = new ArrayList<>();
-        // Is this necessary? Can't we just do listDirectory(...).map(x -> x.resolve(...))?
-        // lookupJavas() should take care of it... 
-        List<String> runtimeOSArch = new ArrayList<>();
-        String pathSep = System.getProperty("path.separator");
-        String javaExec = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "java.exe" : "java";
+
+        String javaExe = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "java.exe" : "java";
 
         switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
@@ -332,26 +327,13 @@ public final class JavaVersion {
                         javaExecutables.add(listDirectory(programFiles.get().resolve(vendor)).map(JavaVersion::getExecutable));
                     }
                 }
-
-                runtimeDirs.add(FileUtils.tryGetPath(System.getenv("localappdata"),
-                        "Packages\\Microsoft.4297127D64EC6_8wekyb3d8bbwe\\LocalCache\\Local\\runtime"));
-                runtimeDirs.add(FileUtils.tryGetPath(
-                        Optional.ofNullable(System.getenv("ProgramFiles(x86)")).orElse("C:\\Program Files (x86)"),
-                        "Minecraft Launcher\\runtime"));
-
-                runtimeOSArch.add("windows-x64");
-                runtimeOSArch.add("windows-x86");
                 break;
 
             case LINUX:
                 javaExecutables.add(listDirectory(Paths.get("/usr/java")).map(JavaVersion::getExecutable)); // Oracle RPMs
                 javaExecutables.add(listDirectory(Paths.get("/usr/lib/jvm")).map(JavaVersion::getExecutable)); // General locations
                 javaExecutables.add(listDirectory(Paths.get("/usr/lib32/jvm")).map(JavaVersion::getExecutable)); // General locations
-
-                runtimeDirs.add(FileUtils.tryGetPath(System.getProperty("user.home", ".minecraft/runtime")));
-                runtimeOSArch.add("linux");
                 break;
-            
 
             case OSX:
                 javaExecutables.add(listDirectory(Paths.get("/Library/Java/JavaVirtualMachines"))
@@ -362,40 +344,29 @@ public final class JavaVersion {
                         .map(JavaVersion::getExecutable));
                 javaExecutables.add(Stream.of(Paths.get("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin/java")));
                 javaExecutables.add(Stream.of(Paths.get("/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/MacOS/itms/java/bin/java")));
-
-                runtimeDirs.add(FileUtils.tryGetPath("/Library/Application Support/minecraft/runtime"));
-                runtimeDirs.add(FileUtils.tryGetPath(System.getProperty("user.home"), "/Library/Application Support/minecraft/runtime"));
-
-                runtimeOSArch.add("mac-os");
                 break;
-    
+
             default:
                 break;
         }
 
-        // Do MC runtimes, given the OS-specific info we have.
-        for (Optional<Path> runtimeDir : runtimeDirs) {
-            if (!runtimeDir.isPresent())
-                continue;
-            
-            for (String osArch : runtimeOSArch) {
-                javaExecutables.add(Stream.of(
-                        runtimeDir.get().resolve("jre-legacy").resolve(osArch).resolve("jre-legacy"),
-                        runtimeDir.get().resolve("java-runtime-alpha").resolve(osArch).resolve("java-runtime-alpha"),
-                        runtimeDir.get().resolve("java-runtime-beta").resolve(osArch).resolve("java-runtime-beta"))
-                        .map(x -> OperatingSystem.CURRENT_OS == OperatingSystem.OSX ? x.resolve("jre.bundle/Contents/Home") : x)
-                        .map(JavaVersion::getExecutable));
-            }
+        // Search Minecraft bundled runtimes.
+        javaExecutables.add(Stream.concat(Stream.of(Optional.of(JavaRepository.getJavaStoragePath())), JavaRepository.findMinecraftRuntimeDirs())
+                .flatMap(Lang::toStream)
+                .flatMap(JavaRepository::findJavaHomeInMinecraftRuntimeDir)
+                .map(JavaVersion::getExecutable));
+
+        // Search in PATH.
+        if (System.getenv("PATH") != null) {
+            javaExecutables.add(Arrays.stream(System.getenv("PATH").split(OperatingSystem.PATH_SEPARATOR))
+                    .flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, javaExe))));
         }
 
-        // Do PATH.
-        if (System.getenv("PATH") != null) {
-            javaExecutables.add(Arrays.stream(System.getenv("PATH").split(pathSep))
-                    .flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, javaExec))));
-        }
+        // Search in HMCL_JRES, convenient environment variable for users to add JRE in global
+        // May be removed when we implement global Java configuration.
         if (System.getenv("HMCL_JRES") != null) {
-            javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(pathSep))
-                    .flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "bin", javaExec))));
+            javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(OperatingSystem.PATH_SEPARATOR))
+                    .flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "bin", javaExe))));
         }
         return javaExecutables.parallelStream().flatMap(stream -> stream);
     }
