@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jetbrains.annotations.Nullable;
 
@@ -196,7 +197,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                             Controllers.showToast(i18n("multiplayer.download.success"));
                         }
                     }).executor();
-            Controllers.taskDialog(executor, i18n("multiplayer.download"));
+            Controllers.taskDialog(executor, i18n("multiplayer.download"), TaskCancellationAction.NORMAL);
             executor.start();
         } else {
             setDisabled(false);

@@ -52,13 +52,13 @@ import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
@@ -263,11 +263,7 @@ public final class Controllers {
         return pane.getCompletableFuture();
     }
 
-    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, String title) {
-        return taskDialog(executor, title, null);
-    }
-
-    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, String title, Consumer<Region> onCancel) {
+    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, String title, TaskCancellationAction onCancel) {
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
         pane.setTitle(title);
         pane.setExecutor(executor);
@@ -275,7 +271,7 @@ public final class Controllers {
         return pane;
     }
 
-    public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, Consumer<Region> onCancel) {
+    public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, TaskCancellationAction onCancel) {
         TaskExecutor executor = task.executor();
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
         pane.setTitle(title);

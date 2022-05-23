@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.net.URL;
@@ -146,8 +147,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                     }
                 }),
                 i18n("mods.check_updates.update"),
-                t -> {
-                });
+                TaskCancellationAction.NORMAL);
     }
 
     @Override

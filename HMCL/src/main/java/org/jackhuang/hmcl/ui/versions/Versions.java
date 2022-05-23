@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -52,6 +53,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -91,13 +93,16 @@ public final class Versions {
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
                                 Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile()));
+                            } else if (e instanceof CancellationException) {
+                                Controllers.showToast(i18n("message.cancelled"));
                             } else {
                                 Controllers.dialog(
                                         i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
                                         i18n("download.failed"), MessageDialogPane.MessageType.ERROR);
                             }
                         }).executor(true),
-                i18n("message.downloading")
+                i18n("message.downloading"),
+                TaskCancellationAction.NORMAL
         );
     }
 
@@ -172,7 +177,7 @@ public final class Versions {
     public static void updateGameAssets(Profile profile, String version) {
         TaskExecutor executor = new GameAssetDownloadTask(profile.getDependency(), profile.getRepository().getVersion(version), GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true)
                 .executor();
-        Controllers.taskDialog(executor, i18n("version.manage.redownload_assets_index"));
+        Controllers.taskDialog(executor, i18n("version.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL);
         executor.start();
     }
 

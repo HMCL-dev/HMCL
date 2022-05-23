@@ -195,7 +195,7 @@ public final class TaskListPane extends StackPane {
                 if (task instanceof Task.CountTask) {
                     runInFX(() -> {
                         stageNodes.stream()
-                                .filter(x -> x.stage.equals(((Task.CountTask) task).getCountStage()))
+                                .filter(x -> x.stage.equals(((Task<?>.CountTask) task).getCountStage()))
                                 .findAny()
                                 .ifPresent(StageNode::count);
                     });

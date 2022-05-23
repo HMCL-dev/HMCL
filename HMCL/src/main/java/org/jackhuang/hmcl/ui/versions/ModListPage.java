@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
@@ -194,8 +195,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             }
                         })
                         .withStagesHint(Collections.singletonList("mods.check_updates")),
-                i18n("update.checking"), pane -> {
-                });
+                i18n("update.checking"), TaskCancellationAction.NORMAL);
     }
 
     public void download() {
