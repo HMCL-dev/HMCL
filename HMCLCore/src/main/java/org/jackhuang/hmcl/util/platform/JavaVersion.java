@@ -111,6 +111,8 @@ public final class JavaVersion {
     private static final Pattern OS_ARCH = Pattern.compile("os\\.arch = (?<arch>.*)");
     private static final Pattern JAVA_VERSION = Pattern.compile("java\\.version = (?<version>.*)");
 
+    private static final String JAVA_EXECUTABLE = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "java.exe" : "java";
+
     public static final int UNKNOWN = -1;
     public static final int JAVA_6 = 6;
     public static final int JAVA_7 = 7;
@@ -206,11 +208,7 @@ public final class JavaVersion {
     }
 
     public static Path getExecutable(Path javaHome) {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            return javaHome.resolve("bin").resolve("java.exe");
-        } else {
-            return javaHome.resolve("bin").resolve("java");
-        }
+        return javaHome.resolve("bin").resolve(JAVA_EXECUTABLE);
     }
 
     public static JavaVersion fromCurrentEnvironment() {
@@ -306,8 +304,6 @@ public final class JavaVersion {
         // 3. PATH
         List<Stream<Path>> javaExecutables = new ArrayList<>();
 
-        String javaExe = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "java.exe" : "java";
-
         switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
                 javaExecutables.add(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\").stream().map(JavaVersion::getExecutable));
@@ -359,14 +355,14 @@ public final class JavaVersion {
         // Search in PATH.
         if (System.getenv("PATH") != null) {
             javaExecutables.add(Arrays.stream(System.getenv("PATH").split(OperatingSystem.PATH_SEPARATOR))
-                    .flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, javaExe))));
+                    .flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, JAVA_EXECUTABLE))));
         }
 
         // Search in HMCL_JRES, convenient environment variable for users to add JRE in global
         // May be removed when we implement global Java configuration.
         if (System.getenv("HMCL_JRES") != null) {
             javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(OperatingSystem.PATH_SEPARATOR))
-                    .flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "bin", javaExe))));
+                    .flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "bin", JAVA_EXECUTABLE))));
         }
         return javaExecutables.parallelStream().flatMap(stream -> stream);
     }

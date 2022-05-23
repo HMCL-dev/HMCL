@@ -59,7 +59,7 @@ public final class JavaRepository {
                 return Stream.of(FileUtils.tryGetPath(System.getProperty("user.home", ".minecraft/runtime")));
             case OSX:
                 return Stream.of(FileUtils.tryGetPath("/Library/Application Support/minecraft/runtime"),
-                        FileUtils.tryGetPath(System.getProperty("user.home"), "/Library/Application Support/minecraft/runtime"));
+                        FileUtils.tryGetPath(System.getProperty("user.home"), "Library/Application Support/minecraft/runtime"));
             default:
                 return Stream.empty();
         }
