@@ -79,9 +79,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         if (StringUtils.isNotBlank(gameVersion)) {
             facets.add(Collections.singletonList("versions:" + gameVersion));
         }
+        /*
         if (StringUtils.isNotBlank(category.getId())) {
             facets.add(Collections.singletonList("categories:" + category.getId()));
         }
+
+         */
         Map<String, String> query = mapOf(
                 pair("query", searchFilter),
                 pair("facets", JsonUtils.UGLY_GSON.toJson(facets)),
