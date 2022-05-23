@@ -191,7 +191,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     protected String getLocalizedCategoryIndent(ModDownloadListPageSkin.CategoryIndented category) {
-        return StringUtils.repeats(' ', category.indent * 4) + getLocalizedCategory(category.getCategory() == null ? "0" : category.getCategory().getId());
+        return StringUtils.repeats(' ', category.indent * 4) +
+                (category.getCategory() == null
+                        ? i18n("curse.category.0")
+                        : getLocalizedCategory(category.getCategory().getId()));
     }
 
     protected String getLocalizedOfficialPage() {
@@ -309,15 +312,17 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 categoryComboBox.setPromptText(i18n("mods.category"));
                 categoryComboBox.getSelectionModel().select(0);
                 categoryComboBox.setConverter(stringConverter(getSkinnable()::getLocalizedCategoryIndent));
-                Task.supplyAsync(() -> getSkinnable().repository.getCategories())
-                        .thenAcceptAsync(Schedulers.javafx(), categories -> {
-                            List<CategoryIndented> result = new ArrayList<>();
-                            result.add(new CategoryIndented(0, null));
-                            for (RemoteModRepository.Category category : Lang.toIterable(categories)) {
-                                resolveCategory(category, 0, result);
-                            }
-                            categoryComboBox.getItems().setAll(result);
-                        }).start();
+                FXUtils.onChangeAndOperate(getSkinnable().downloadSource, downloadSource -> {
+                    Task.supplyAsync(() -> getSkinnable().repository.getCategories())
+                            .thenAcceptAsync(Schedulers.javafx(), categories -> {
+                                List<CategoryIndented> result = new ArrayList<>();
+                                result.add(new CategoryIndented(0, null));
+                                for (RemoteModRepository.Category category : Lang.toIterable(categories)) {
+                                    resolveCategory(category, 0, result);
+                                }
+                                categoryComboBox.getItems().setAll(result);
+                            }).start();
+                });
 
                 StackPane sortStackPane = new StackPane();
                 JFXComboBox<RemoteModRepository.SortType> sortComboBox = new JFXComboBox<>();
