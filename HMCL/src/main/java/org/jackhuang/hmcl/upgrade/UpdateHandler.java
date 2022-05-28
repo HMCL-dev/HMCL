@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.UpgradeDialog;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
@@ -39,6 +40,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -100,8 +102,9 @@ public final class UpdateHandler {
 
             Task<?> task = new HMCLDownloadTask(version, downloaded);
 
-            TaskExecutor executor = task.executor();
-            Controllers.taskDialog(executor, i18n("message.downloading"));
+            TaskExecutor executor = task.executor(false);
+            Controllers.taskDialog(executor, i18n("message.downloading"), TaskCancellationAction.NORMAL);
+            executor.start();
             thread(() -> {
                 boolean success = executor.test();
 
@@ -121,7 +124,11 @@ public final class UpdateHandler {
                 } else {
                     Exception e = executor.getException();
                     LOG.log(Level.WARNING, "Failed to update to " + version, e);
-                    Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageType.ERROR));
+                    if (e instanceof CancellationException) {
+                        Platform.runLater(() -> Controllers.showToast(i18n("message.cancelled")));
+                    } else {
+                        Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageType.ERROR));
+                    }
                 }
             });
         }));

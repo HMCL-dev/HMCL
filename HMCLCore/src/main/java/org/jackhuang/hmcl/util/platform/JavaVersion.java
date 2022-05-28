@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.download.java.JavaRepository;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -64,6 +65,10 @@ public final class JavaVersion {
         }
     }
 
+    public String toString() {
+        return "JavaVersion {" + binary + ", " + longVersion + "(" + version + ")" + ", " + platform + "}";
+    }
+
     public Path getBinary() {
         return binary;
     }
@@ -105,6 +110,8 @@ public final class JavaVersion {
 
     private static final Pattern OS_ARCH = Pattern.compile("os\\.arch = (?<arch>.*)");
     private static final Pattern JAVA_VERSION = Pattern.compile("java\\.version = (?<version>.*)");
+
+    private static final String JAVA_EXECUTABLE = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "java.exe" : "java";
 
     public static final int UNKNOWN = -1;
     public static final int JAVA_6 = 6;
@@ -201,11 +208,7 @@ public final class JavaVersion {
     }
 
     public static Path getExecutable(Path javaHome) {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            return javaHome.resolve("bin").resolve("java.exe");
-        } else {
-            return javaHome.resolve("bin").resolve("java");
-        }
+        return javaHome.resolve("bin").resolve(JAVA_EXECUTABLE);
     }
 
     public static JavaVersion fromCurrentEnvironment() {
@@ -295,9 +298,13 @@ public final class JavaVersion {
     }
 
     private static Stream<Path> searchPotentialJavaExecutables() throws IOException {
+        // Add order:
+        // 1. System-defined locations
+        // 2. Minecraft-installed locations
+        // 3. PATH
         List<Stream<Path>> javaExecutables = new ArrayList<>();
-        switch (OperatingSystem.CURRENT_OS) {
 
+        switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
                 javaExecutables.add(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\").stream().map(JavaVersion::getExecutable));
                 javaExecutables.add(queryJavaHomesInRegistryKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\").stream().map(JavaVersion::getExecutable));
@@ -309,33 +316,12 @@ public final class JavaVersion {
                         FileUtils.tryGetPath(Optional.ofNullable(System.getenv("ProgramFiles(x86)")).orElse("C:\\Program Files (x86)")),
                         FileUtils.tryGetPath(Optional.ofNullable(System.getenv("ProgramFiles(ARM)")).orElse("C:\\Program Files (ARM)"))
                 )) {
-                    if (programFiles.isPresent()) {
-                        javaExecutables.add(listDirectory(programFiles.get().resolve("Java")).map(JavaVersion::getExecutable));
-                        javaExecutables.add(listDirectory(programFiles.get().resolve("BellSoft")).map(JavaVersion::getExecutable));
-                        javaExecutables.add(listDirectory(programFiles.get().resolve("AdoptOpenJDK")).map(JavaVersion::getExecutable));
-                        javaExecutables.add(listDirectory(programFiles.get().resolve("Zulu")).map(JavaVersion::getExecutable));
-                        javaExecutables.add(listDirectory(programFiles.get().resolve("Microsoft")).map(JavaVersion::getExecutable));
-                        javaExecutables.add(listDirectory(programFiles.get().resolve("Eclipse Foundation")).map(JavaVersion::getExecutable));
-                        javaExecutables.add(listDirectory(programFiles.get().resolve("Semeru")).map(JavaVersion::getExecutable));
+                    if (!programFiles.isPresent())
+                        continue;
+
+                    for (String vendor : new String[]{"Java", "BellSoft", "AdoptOpenJDK", "Zulu", "Microsoft", "Eclipse Foundation", "Semeru"}) {
+                        javaExecutables.add(listDirectory(programFiles.get().resolve(vendor)).map(JavaVersion::getExecutable));
                     }
-                }
-
-                final Optional<Path> programFilesX86 = FileUtils.tryGetPath(Optional.ofNullable(System.getenv("ProgramFiles(x86)")).orElse("C:\\Program Files (x86)"));
-                if (programFilesX86.isPresent()) {
-                    final Path runtimeDir = programFilesX86.get().resolve("Minecraft Launcher").resolve("runtime");
-                    javaExecutables.add(Stream.of(
-                            runtimeDir.resolve("jre-legacy").resolve("windows-x64").resolve("jre-legacy"),
-                            runtimeDir.resolve("jre-legacy").resolve("windows-x86").resolve("jre-legacy"),
-                            runtimeDir.resolve("java-runtime-alpha").resolve("windows-x64").resolve("java-runtime-alpha"),
-                            runtimeDir.resolve("java-runtime-alpha").resolve("windows-x86").resolve("java-runtime-alpha")
-                    ).map(JavaVersion::getExecutable));
-                }
-
-                if (System.getenv("PATH") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("PATH").split(";")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "java.exe"))));
-                }
-                if (System.getenv("HMCL_JRES") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(";")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "bin", "java.exe"))));
                 }
                 break;
 
@@ -343,21 +329,6 @@ public final class JavaVersion {
                 javaExecutables.add(listDirectory(Paths.get("/usr/java")).map(JavaVersion::getExecutable)); // Oracle RPMs
                 javaExecutables.add(listDirectory(Paths.get("/usr/lib/jvm")).map(JavaVersion::getExecutable)); // General locations
                 javaExecutables.add(listDirectory(Paths.get("/usr/lib32/jvm")).map(JavaVersion::getExecutable)); // General locations
-                if (System.getenv("PATH") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "java"))));
-                }
-                if (System.getenv("HMCL_JRES") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "bin", "java"))));
-                }
-
-                final Optional<Path> home = FileUtils.tryGetPath(System.getProperty("user.home", ""));
-                if (home.isPresent()) {
-                    final Path runtimeDir = home.get().resolve(".minecraft").resolve("runtime");
-                    javaExecutables.add(Stream.of(
-                            runtimeDir.resolve("jre-legacy").resolve("linux").resolve("jre-legacy"),
-                            runtimeDir.resolve("java-runtime-alpha").resolve("linux").resolve("java-runtime-alpha")
-                    ).map(JavaVersion::getExecutable));
-                }
                 break;
 
             case OSX:
@@ -369,17 +340,29 @@ public final class JavaVersion {
                         .map(JavaVersion::getExecutable));
                 javaExecutables.add(Stream.of(Paths.get("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin/java")));
                 javaExecutables.add(Stream.of(Paths.get("/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/MacOS/itms/java/bin/java")));
-                javaExecutables.add(Stream.of(Paths.get("/Library/Application Support/minecraft/runtime/jre-x64/jre.bundle/Contents/Home/bin/java")));
-                if (System.getenv("PATH") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("PATH").split(":")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "java"))));
-                }
-                if (System.getenv("HMCL_JRES") != null) {
-                    javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(":")).flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "bin", "java"))));
-                }
                 break;
 
             default:
                 break;
+        }
+
+        // Search Minecraft bundled runtimes.
+        javaExecutables.add(Stream.concat(Stream.of(Optional.of(JavaRepository.getJavaStoragePath())), JavaRepository.findMinecraftRuntimeDirs())
+                .flatMap(Lang::toStream)
+                .flatMap(JavaRepository::findJavaHomeInMinecraftRuntimeDir)
+                .map(JavaVersion::getExecutable));
+
+        // Search in PATH.
+        if (System.getenv("PATH") != null) {
+            javaExecutables.add(Arrays.stream(System.getenv("PATH").split(OperatingSystem.PATH_SEPARATOR))
+                    .flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, JAVA_EXECUTABLE))));
+        }
+
+        // Search in HMCL_JRES, convenient environment variable for users to add JRE in global
+        // May be removed when we implement global Java configuration.
+        if (System.getenv("HMCL_JRES") != null) {
+            javaExecutables.add(Arrays.stream(System.getenv("HMCL_JRES").split(OperatingSystem.PATH_SEPARATOR))
+                    .flatMap(path -> Lang.toStream(FileUtils.tryGetPath(path, "bin", JAVA_EXECUTABLE))));
         }
         return javaExecutables.parallelStream().flatMap(stream -> stream);
     }
@@ -456,4 +439,14 @@ public final class JavaVersion {
         return null;
     }
     // ====
+
+    public static void main(String[] args) {
+        try {
+            LOG.setLevel(Level.ALL);
+            initialize();
+            LOG.info(JAVAS.toString());
+        } catch (Throwable e) {
+            LOG.log(Level.WARNING, "Oops:", e);
+        }
+    }
 }

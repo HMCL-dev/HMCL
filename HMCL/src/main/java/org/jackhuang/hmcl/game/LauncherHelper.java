@@ -92,8 +92,7 @@ public final class LauncherHelper {
         this.launchingStepsPane.setTitle(i18n("version.launch"));
     }
 
-    private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(it -> {
-    });
+    private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
 
     public void setTestMode() {
         launcherVisibility = LauncherVisibility.KEEP;
@@ -197,10 +196,10 @@ public final class LauncherHelper {
                         if (launcherVisibility == LauncherVisibility.CLOSE)
                             Launcher.stopApplication();
                         else
-                            launchingStepsPane.setCancel(it -> {
+                            launchingStepsPane.setCancel(new TaskCancellationAction(it -> {
                                 process.stop();
                                 it.fireEvent(new DialogCloseEvent());
-                            });
+                            }));
                     } else {
                         Platform.runLater(() -> {
                             launchingStepsPane.fireEvent(new DialogCloseEvent());
@@ -598,8 +597,7 @@ public final class LauncherHelper {
     private static CompletableFuture<JavaVersion> downloadJavaImpl(GameJavaVersion javaVersion, DownloadProvider downloadProvider) {
         CompletableFuture<JavaVersion> future = new CompletableFuture<>();
 
-        TaskExecutorDialogPane javaDownloadingPane = new TaskExecutorDialogPane(it -> {
-        });
+        TaskExecutorDialogPane javaDownloadingPane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
 
         TaskExecutor executor = JavaRepository.downloadJava(javaVersion, downloadProvider)
                 .whenComplete(Schedulers.javafx(), (downloadedJava, exception) -> {

@@ -119,7 +119,7 @@
 }
 
 .radio-button-title-label {
-    -fx-font-size: 16.0px;
+    -fx-font-size: 16px;
     -fx-padding: 14.0 0.0 -20.0 0.0;
     -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
 }

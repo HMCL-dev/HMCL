@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -73,11 +74,14 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
+    public Stream<RemoteMod> search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
         List<List<String>> facets = new ArrayList<>();
         facets.add(Collections.singletonList("project_type:" + projectType));
         if (StringUtils.isNotBlank(gameVersion)) {
             facets.add(Collections.singletonList("versions:" + gameVersion));
+        }
+        if (category != null && StringUtils.isNotBlank(category.getId())) {
+            facets.add(Collections.singletonList("categories:" + category.getId()));
         }
         Map<String, String> query = mapOf(
                 pair("query", searchFilter),
@@ -131,14 +135,52 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
     }
 
-    public List<String> getCategoriesImpl() throws IOException {
-        return HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(new TypeToken<List<String>>() {
-        }.getType());
+    public List<Category> getCategoriesImpl() throws IOException {
+        List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(new TypeToken<List<Category>>() {}.getType());
+        return categories.stream().filter(category -> category.getProjectType().equals(projectType)).collect(Collectors.toList());
     }
 
-    public Stream<Category> getCategories() throws IOException {
-        return getCategoriesImpl().stream()
-                .map(name -> new Category(null, name, Collections.emptyList()));
+    @Override
+    public Stream<RemoteModRepository.Category> getCategories() throws IOException {
+        return getCategoriesImpl().stream().map(Category::toCategory);
+    }
+
+    public static class Category {
+        private final String icon;
+
+        private final String name;
+
+        @SerializedName("project_type")
+        private final String projectType;
+
+        public Category() {
+            this("","","");
+        }
+
+        public Category(String icon, String name, String projectType) {
+            this.icon = icon;
+            this.name = name;
+            this.projectType = projectType;
+        }
+
+        public String getIcon() {
+            return icon;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getProjectType() {
+            return projectType;
+        }
+
+        public RemoteModRepository.Category toCategory() {
+            return new RemoteModRepository.Category(
+                    this,
+                    name,
+                    Collections.emptyList());
+        }
     }
 
     public static class Project implements RemoteMod.IMod {

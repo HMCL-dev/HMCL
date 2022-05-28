@@ -390,11 +390,19 @@ public final class FXUtils {
                 try {
                     Runtime.getRuntime().exec(new String[]{"explorer.exe", "/select,", file.toAbsolutePath().toString()});
                 } catch (IOException e) {
-                    Logging.LOG.log(Level.SEVERE, "Unable to open " + file + " by executing explorer /select", e);
+                    Logging.LOG.log(Level.SEVERE, "Unable to open " + file + " by executing explorer /select," + file, e);
+                }
+                break;
+            case OSX:
+                try {
+                    Runtime.getRuntime().exec(new String[]{"/usr/bin/open", "-R", file.toAbsolutePath().toString()});
+                } catch (IOException e) {
+                    Logging.LOG.log(Level.SEVERE, "Unable to open " + file + " by executing /usr/bin/open -R " + file, e);
                 }
                 break;
             default:
-                // Currently unsupported.
+                // We do not have an universal method to show file in file manager.
+                openFolder(file.getParent().toFile());
                 break;
         }
     }
