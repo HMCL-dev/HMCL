@@ -134,7 +134,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     .addNavigationDrawerItem(report -> {
                         report.setTitle(i18n("feedback"));
                         report.setLeftGraphic(wrap(SVG::messageAlertOutline));
-                        item.setOnAction(e -> FXUtils.openLink("https://mcer.cn/circle/353.html"));
+                        report.setOnAction(e -> FXUtils.openLink("https://mcer.cn/circle/353.html"));
                     });
             FXUtils.setLimitWidth(sideBar, 200);
             setLeft(sideBar);
