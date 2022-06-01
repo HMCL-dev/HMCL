@@ -79,12 +79,9 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         if (StringUtils.isNotBlank(gameVersion)) {
             facets.add(Collections.singletonList("versions:" + gameVersion));
         }
-        /*
         if (StringUtils.isNotBlank(category.getId())) {
             facets.add(Collections.singletonList("categories:" + category.getId()));
         }
-
-         */
         Map<String, String> query = mapOf(
                 pair("query", searchFilter),
                 pair("facets", JsonUtils.UGLY_GSON.toJson(facets)),
@@ -138,14 +135,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     public List<Category> getCategoriesImpl() throws IOException {
-        List<Category> reorganizedCategories = new ArrayList<>();
         List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(new TypeToken<List<Category>>() {}.getType());
-        for (Category category : categories) {
-            if (category.getProjectType().equals(projectType)) {
-                reorganizedCategories.add(category);
-            }
-        }
-        return reorganizedCategories;
+        return categories.stream().filter(category -> category.getProjectType().equals(projectType)).collect(Collectors.toList());
     }
 
     @Override
