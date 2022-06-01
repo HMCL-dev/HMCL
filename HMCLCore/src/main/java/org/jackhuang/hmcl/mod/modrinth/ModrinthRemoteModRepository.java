@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -73,13 +74,13 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public Stream<RemoteMod> search(String gameVersion, RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
+    public Stream<RemoteMod> search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
         List<List<String>> facets = new ArrayList<>();
         facets.add(Collections.singletonList("project_type:" + projectType));
         if (StringUtils.isNotBlank(gameVersion)) {
             facets.add(Collections.singletonList("versions:" + gameVersion));
         }
-        if (StringUtils.isNotBlank(category.getId())) {
+        if (category != null && StringUtils.isNotBlank(category.getId())) {
             facets.add(Collections.singletonList("categories:" + category.getId()));
         }
         Map<String, String> query = mapOf(
