@@ -4,6 +4,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.GameJavaVersion;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.CacheRepository;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -12,8 +13,11 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
@@ -42,24 +46,46 @@ public final class JavaRepository {
         throw new IOException("Incorrect java home " + javaHome);
     }
 
-    public static void initialize() throws IOException, InterruptedException {
-        Optional<String> platformOptional = getSystemJavaPlatform();
-        if (platformOptional.isPresent()) {
-            String platform = platformOptional.get();
-            Path javaStoragePath = getJavaStoragePath();
-            if (Files.isDirectory(javaStoragePath)) {
-                try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(javaStoragePath)) {
-                    for (Path component : dirStream) {
-                        Path javaHome = component.resolve(platform).resolve(component.getFileName());
-                        try {
-                            addJava(javaHome);
-                        } catch (IOException e) {
-                            LOG.log(Level.WARNING, "Failed to determine Java at " + javaHome, e);
-                        }
-                    }
-                }
-            }
+    public static Stream<Optional<Path>> findMinecraftRuntimeDirs() {
+        switch (OperatingSystem.CURRENT_OS) {
+            case WINDOWS:
+                return Stream.of(
+                        FileUtils.tryGetPath(System.getenv("localappdata"),
+                                "Packages\\Microsoft.4297127D64EC6_8wekyb3d8bbwe\\LocalCache\\Local\\runtime"),
+                        FileUtils.tryGetPath(
+                                Optional.ofNullable(System.getenv("ProgramFiles(x86)")).orElse("C:\\Program Files (x86)"),
+                                "Minecraft Launcher\\runtime"));
+            case LINUX:
+                return Stream.of(FileUtils.tryGetPath(System.getProperty("user.home", ".minecraft/runtime")));
+            case OSX:
+                return Stream.of(FileUtils.tryGetPath("/Library/Application Support/minecraft/runtime"),
+                        FileUtils.tryGetPath(System.getProperty("user.home"), "Library/Application Support/minecraft/runtime"));
+            default:
+                return Stream.empty();
         }
+    }
+
+    public static Stream<Path> findJavaHomeInMinecraftRuntimeDir(Path runtimeDir) {
+        // Examples:
+        // $HOME/Library/Application Support/minecraft/runtime/java-runtime-beta/mac-os/java-runtime-beta/jre.bundle/Contents/Home
+        // $HOME/.minecraft/runtime/java-runtime-beta/linux/java-runtime-beta
+        Optional<String> platformOptional = getSystemJavaPlatform();
+        if (!platformOptional.isPresent()) return Stream.empty();
+        String platform = platformOptional.get();
+        List<Path> javaHomes = new ArrayList<>();
+        try (DirectoryStream<Path> dir = Files.newDirectoryStream(runtimeDir)) {
+            // component can be jre-legacy, java-runtime-alpha, java-runtime-beta, java-runtime-gamma or any other being added in the future.
+            for (Path component : dir) {
+                Path javaHome = component.resolve(platform).resolve(component.getFileName());
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                    javaHomes.add(javaHome.resolve("jre.bundle/Contents/Home"));
+                }
+                javaHomes.add(javaHome);
+            }
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to list java-runtime directory " + runtimeDir, e);
+        }
+        return javaHomes.stream();
     }
 
     public static Optional<String> getSystemJavaPlatform() {
