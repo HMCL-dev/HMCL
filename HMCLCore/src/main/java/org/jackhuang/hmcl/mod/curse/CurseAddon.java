@@ -182,8 +182,8 @@ public class CurseAddon implements RemoteMod.IMod {
     public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
         Set<Integer> dependencies = latestFiles.stream()
                 .flatMap(latestFile -> latestFile.getDependencies().stream())
-                .filter(dep -> dep.getRelationType() == 3)
-                .map(Dependency::getModId)
+                .filter(dep -> dep.getType() == 3)
+                .map(Dependency::getAddonId)
                 .collect(Collectors.toSet());
         List<RemoteMod> mods = new ArrayList<>();
         for (int dependencyId : dependencies) {
@@ -370,24 +370,36 @@ public class CurseAddon implements RemoteMod.IMod {
 
     @Immutable
     public static class Dependency {
-        private final int modId;
-        private final int relationType;
+        private final int id;
+        private final int addonId;
+        private final int type;
+        private final int fileId;
 
         public Dependency() {
-            this(0, 1);
+            this(0, 0, 0, 0);
         }
 
-        public Dependency(int modId, int relationType) {
-            this.modId = modId;
-            this.relationType = relationType;
+        public Dependency(int id, int addonId, int type, int fileId) {
+            this.id = id;
+            this.addonId = addonId;
+            this.type = type;
+            this.fileId = fileId;
         }
 
-        public int getModId() {
-            return modId;
+        public int getId() {
+            return id;
         }
 
-        public int getRelationType() {
-            return relationType;
+        public int getAddonId() {
+            return addonId;
+        }
+
+        public int getType() {
+            return type;
+        }
+
+        public int getFileId() {
+            return fileId;
         }
     }
 

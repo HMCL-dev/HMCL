@@ -144,11 +144,9 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
     @Override
     public RemoteMod getModById(String id) throws IOException {
-        Response<CurseAddon> response =  HttpRequest.GET(PREFIX + "/v1/mods/" + id)
+        return HttpRequest.GET(PREFIX + "/v1/mods/" + id)
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<CurseAddon>>() {
-                }.getType());
-        return response.data.toMod();
+                .getJson(CurseAddon.class).toMod();
     }
 
     @Override
