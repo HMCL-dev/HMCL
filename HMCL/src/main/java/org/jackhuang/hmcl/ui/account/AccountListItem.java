@@ -156,7 +156,7 @@ public class AccountListItem extends RadioButton {
             return null;
         }
         if (account instanceof MicrosoftAccount) {
-            FXUtils.openLink("https://www.minecraft.net/profile/skin");
+            FXUtils.openLink("https://www.minecraft.net/msaprofile/mygames/editskin");
             return null;
         }
         if (!(account instanceof YggdrasilAccount)) {
