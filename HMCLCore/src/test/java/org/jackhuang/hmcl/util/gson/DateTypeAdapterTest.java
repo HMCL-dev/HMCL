@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 
 public class DateTypeAdapterTest {
@@ -22,7 +23,7 @@ public class DateTypeAdapterTest {
 
         Assert.assertEquals(
                 LocalDateTime.of(2021, 1, 3, 0, 53, 34)
-                        .atOffset(ZoneOffset.UTC).toInstant(),
+                        .atZone(ZoneId.systemDefault()).toInstant(),
                 DateTypeAdapter.deserializeToDate("2021-01-03T00:53:34").toInstant());
     }
 }
