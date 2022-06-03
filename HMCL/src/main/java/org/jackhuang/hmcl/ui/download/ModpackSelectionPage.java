@@ -23,6 +23,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
@@ -33,7 +34,6 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,7 +67,7 @@ public final class ModpackSelectionPage extends StackPane implements WizardPage 
             Platform.runLater(controller::onNext);
         }
 
-        FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
+        FXUtils.applyDragListener(this, ModpackHelper::isFileModpackByExtension, modpacks -> {
             File modpack = modpacks.get(0);
             controller.getSettings().put(MODPACK_FILE, modpack);
             controller.onNext();
@@ -78,7 +78,7 @@ public final class ModpackSelectionPage extends StackPane implements WizardPage 
     private void onChooseLocalFile() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("modpack.choose"));
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip", "*.mrpack"));
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());
         if (selectedFile == null) {
             Platform.runLater(controller::onEnd);
