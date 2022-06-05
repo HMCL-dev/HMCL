@@ -160,7 +160,7 @@ public class DefaultLauncher extends Launcher {
                     res.addUnstableDefault("G1HeapRegionSize", "16m");
                 }
             } else {
-                    res.addDefault("-Xmn", "128m");
+                res.addDefault("-Xmn", "128m");
             }
 
             if (options.getMetaspace() != null && options.getMetaspace() > 0)
