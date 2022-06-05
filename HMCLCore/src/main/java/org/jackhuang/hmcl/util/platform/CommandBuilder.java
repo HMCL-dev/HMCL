@@ -45,16 +45,16 @@ public final class CommandBuilder {
         this.os = os;
     }
 
-    private String parse(String s) {
+    private String quote(String s) {
         if (OperatingSystem.WINDOWS == os) {
-            return parseBatch(s);
+            return quoteBatch(s);
         } else {
-            return parseShell(s);
+            return quoteShell(s);
         }
     }
 
     /**
-     * Parsing will ignore your manual escaping
+     * "Parsing" (quoting) will ignore your manual escaping
      *
      * @param args commands
      * @return this
@@ -142,7 +142,7 @@ public final class CommandBuilder {
 
     @Override
     public String toString() {
-        return raw.stream().map(i -> i.parse ? parse(i.arg) : i.arg).collect(Collectors.joining(" "));
+        return raw.stream().map(i -> i.quote ? quote(i.arg) : i.arg).collect(Collectors.joining(" "));
     }
 
     public List<String> asList() {
@@ -155,19 +155,20 @@ public final class CommandBuilder {
 
     private static class Item {
         String arg;
-        boolean parse;
+        boolean quote;
 
-        Item(String arg, boolean parse) {
+        Item(String arg, boolean quote) {
             this.arg = arg;
-            this.parse = parse;
+            this.quote = quote;
         }
 
         @Override
         public String toString() {
-            return parse ? (OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS ? parseBatch(arg) : parseShell(arg)) : arg;
+            return quote ? (OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS ? quoteBatch(arg) : quoteShell(arg)) : arg;
         }
     }
 
+    // Quote for powershell.
     public static String pwshString(String str) {
         return "'" + str.replace("'", "''") + "'";
     }
@@ -206,28 +207,24 @@ public final class CommandBuilder {
         return true;
     }
 
-    private static String parseBatch(String s) {
-        String escape = " \t\"^&<>|";
+    private static String quoteBatch(String s) {
+        String escape = " \t\"^&<>|?*";
         if (StringUtils.containsOne(s, escape.toCharArray()))
             // The argument has not been quoted, add quotes.
-            return '"' + s
-                    .replace("\\", "\\\\")
-                    .replace("\"", "\\\"")
-                    + '"';
+            // See explanation at https://github.com/Artoria2e5/node/blob/fix!/child-process-args/lib/child_process.js
+            // about making the string "inert to CMD", and associated unit tests
+            return '"' + s.replaceAll('(\\*)($|")', '$1$1$2') + '"';
         else {
             return s;
         }
     }
 
-    private static String parseShell(String s) {
-        String escaping = " \t\"!#$&'()*,;<=>?[\\]^`{|}~";
-        String escaped = "\"$&`";
-        if (s.indexOf(' ') >= 0 || s.indexOf('\t') >= 0 || StringUtils.containsOne(s, escaping.toCharArray())) {
-            // The argument has not been quoted, add quotes.
-            for (char ch : escaped.toCharArray())
-                s = s.replace("" + ch, "\\" + ch);
-            return '"' + s + '"';
-        } else
+    private static String quoteShell(String s) {
+        String escape = " \t\"!#$&'()*,;<=>?[\\]^`{|}~";
+        if (StringUtils.containsOne(s, escape.toCharArray())) {
+            return "'" + s.replace("'", "'\''") + "'";
+        } else {
             return s;
+        }
     }
 }
