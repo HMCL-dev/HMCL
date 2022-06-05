@@ -213,7 +213,7 @@ public final class CommandBuilder {
             // The argument has not been quoted, add quotes.
             // See explanation at https://github.com/Artoria2e5/node/blob/fix!/child-process-args/lib/child_process.js
             // about making the string "inert to CMD", and associated unit tests
-            return '"' + s.replaceAll("(\\\\*)($|")"", "$1$1$2").replace("\"", "\"\"") + '"';
+            return '"' + s.replaceAll("(\\\\*)($|\")\"", "$1$1$2").replace("\"", "\"\"") + '"';
         else {
             return s;
         }
