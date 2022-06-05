@@ -159,6 +159,8 @@ public class DefaultLauncher extends Launcher {
                     res.addUnstableDefault("MaxGCPauseMillis", "50");
                     res.addUnstableDefault("G1HeapRegionSize", "16m");
                 }
+            } else {
+                    res.addDefault("-Xmn", "128m");
             }
 
             if (options.getMetaspace() != null && options.getMetaspace() > 0)
@@ -170,7 +172,6 @@ public class DefaultLauncher extends Launcher {
             res.addUnstableDefault("UseAdaptiveSizePolicy", false);
             res.addUnstableDefault("OmitStackTraceInFastThrow", false);
             res.addUnstableDefault("DontCompileHugeMethods", false);
-            res.addDefault("-Xmn", "128m");
 
             // As 32-bit JVM allocate 320KB for stack by default rather than 64-bit version allocating 1MB,
             // causing Minecraft 1.13 crashed accounting for java.lang.StackOverflowError.
