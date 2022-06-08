@@ -47,6 +47,7 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
                 pair("javafx.fxml.LoadException", i18n("crash.NoClassDefFound")),
                 pair("Location is not set", i18n("crash.NoClassDefFound")),
                 pair("UnsatisfiedLinkError", i18n("crash.user_fault")),
+                pair("java.time.zone.ZoneRulesException: Unable to load TZDB time-zone rules", i18n("crash.user_fault")),
                 pair("java.lang.NoClassDefFoundError", i18n("crash.NoClassDefFound")),
                 pair("org.jackhuang.hmcl.util.ResourceNotFoundError", i18n("crash.NoClassDefFound")),
                 pair("java.lang.VerifyError", i18n("crash.NoClassDefFound")),
