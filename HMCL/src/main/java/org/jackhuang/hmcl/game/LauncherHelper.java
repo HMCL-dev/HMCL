@@ -456,6 +456,11 @@ public final class LauncherHelper {
                         case VANILLA_X86:
                             if (setting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
                                 if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+                                    // Minecraft introduced native support for Apple Silicon after 1.19
+                                    if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX
+                                            && gameVersion.compareTo(VersionNumber.asVersion("1.19")) >= 0) {
+                                        break;
+                                    }
                                     if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX
                                             // Windows on ARM introduced translation support for x86-64 after 10.0.21277.
                                             || (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277)) {
