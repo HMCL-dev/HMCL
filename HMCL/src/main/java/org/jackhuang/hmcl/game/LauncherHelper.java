@@ -813,7 +813,7 @@ public final class LauncherHelper {
 
     }
 
-    private static final String OPENJDK_DOWNLOAD_LINK = "https://docs.microsoft.com/zh-cn/java/openjdk/download";
+    private static final String OPENJDK_DOWNLOAD_LINK = "https://docs.microsoft.com/java/openjdk/download";
 
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
 
