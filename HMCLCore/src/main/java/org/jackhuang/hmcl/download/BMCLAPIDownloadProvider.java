@@ -87,6 +87,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
                 .replace("https://bmclapi2.bangbang93.com", apiRoot)
                 .replace("https://launchermeta.mojang.com", apiRoot)
                 .replace("https://piston-meta.mojang.com", apiRoot)
+                .replace("https://piston-data.mojang.com", apiRoot)
                 .replace("https://launcher.mojang.com", apiRoot)
                 .replace("https://libraries.minecraft.net", apiRoot + "/libraries")
                 .replaceFirst("https?://files\\.minecraftforge\\.net/maven", apiRoot + "/maven")
