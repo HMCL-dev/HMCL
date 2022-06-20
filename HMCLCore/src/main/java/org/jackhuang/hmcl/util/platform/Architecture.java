@@ -45,6 +45,8 @@ public enum Architecture {
     S390(BIT_32),
     S390X(BIT_64, "S390x"),
     RISCV(BIT_64, "RISC-V"),
+    LOONGARCH32(BIT_32, "LoongArch32"),
+    LOONGARCH64(BIT_64, "LoongArch64"),
     UNKNOWN(Bits.UNKNOWN, "Unknown");
 
     private final String checkedName;
@@ -168,6 +170,10 @@ public enum Architecture {
                 return S390;
             case "s390x":
                 return S390X;
+            case "loongarch32":
+                return LOONGARCH32;
+            case "loongarch64":
+                return LOONGARCH64;
             default:
                 if (value.startsWith("armv7")) {
                     return ARM32;

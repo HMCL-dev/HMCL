@@ -120,7 +120,8 @@ public enum JavaVersionConstraint {
         @Override
         protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
                                                @Nullable JavaVersion javaVersion) {
-            return javaVersion != null && !javaVersion.getArchitecture().isX86();
+            return javaVersion != null && !javaVersion.getArchitecture().isX86()
+                    && (OperatingSystem.CURRENT_OS != OperatingSystem.OSX || gameVersionNumber.compareTo(VersionNumber.asVersion("1.19")) < 0);
         }
 
         @Override
@@ -240,7 +241,8 @@ public enum JavaVersionConstraint {
         JavaVersion suggested = null;
         for (JavaVersion javaVersion : JavaVersion.getJavas()) {
             // select the latest x86 java that this version accepts.
-            if (!javaVersion.getArchitecture().isX86())
+            if (!javaVersion.getArchitecture().isX86()
+                    && (OperatingSystem.CURRENT_OS != OperatingSystem.OSX || gameVersion.compareTo(VersionNumber.asVersion("1.19")) < 0))
                 continue;
 
             VersionNumber javaVersionNumber = javaVersion.getVersionNumber();

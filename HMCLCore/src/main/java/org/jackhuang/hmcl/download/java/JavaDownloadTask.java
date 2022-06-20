@@ -52,7 +52,7 @@ public class JavaDownloadTask extends Task<Void> {
         this.javaVersion = javaVersion;
         this.rootDir = rootDir;
         this.javaDownloadsTask = new GetTask(NetworkUtils.toURL(downloadProvider.injectURL(
-                "https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json")))
+                "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json")))
         .thenComposeAsync(javaDownloadsJson -> {
             JavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, JavaDownloads.class);
             if (!allDownloads.getDownloads().containsKey(platform)) throw new UnsupportedPlatformException();

@@ -134,18 +134,12 @@ public final class LauncherHelper {
         TaskExecutor executor = checkGameState(profile, setting, version)
                 .thenComposeAsync(javaVersion -> {
                     javaVersionRef.set(Objects.requireNonNull(javaVersion));
-                    return dependencyManager.checkPatchCompletionAsync(repository.getVersion(selectedVersion), integrityCheck);
-                })
-                .thenComposeAsync(Task.allOf(
-                        Task.composeAsync(() -> {
-                            if (setting.isNotCheckGame())
-                                return null;
-                            else
-                                return dependencyManager.checkGameCompletionAsync(version, integrityCheck);
-                        }), Task.composeAsync(() -> {
-                            if (setting.isNotCheckGame()) {
-                                return null;
-                            } else {
+                    if (setting.isNotCheckGame())
+                        return null;
+
+                    return Task.allOf(
+                            dependencyManager.checkGameCompletionAsync(version, integrityCheck),
+                            Task.composeAsync(() -> {
                                 try {
                                     ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
                                     ModpackProvider provider = ModpackHelper.getProviderByType(configuration.getType());
@@ -154,8 +148,9 @@ public final class LauncherHelper {
                                 } catch (IOException e) {
                                     return null;
                                 }
-                            }
-                        }))).withStage("launch.state.dependencies")
+                            })
+                    );
+                }).withStage("launch.state.dependencies")
                 .thenComposeAsync(() -> {
                     return gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version)).orElse(null);
                 })
@@ -813,7 +808,7 @@ public final class LauncherHelper {
 
     }
 
-    private static final String OPENJDK_DOWNLOAD_LINK = "https://docs.microsoft.com/zh-cn/java/openjdk/download";
+    private static final String OPENJDK_DOWNLOAD_LINK = "https://docs.microsoft.com/java/openjdk/download";
 
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
 

@@ -109,7 +109,8 @@ public final class GameLibrariesTask extends Task<Void> {
         libraries.stream().filter(Library::appliesToCurrentEnvironment).forEach(library -> {
             File file = dependencyManager.getGameRepository().getLibraryFile(version, library);
             if (shouldDownloadLibrary(dependencyManager.getGameRepository(), version, library, integrityCheck)) {
-                dependencies.add(new LibraryDownloadTask(dependencyManager, file, library));
+                if (library.hasDownloadURL() || !"optifine".equals(library.getGroupId()))
+                    dependencies.add(new LibraryDownloadTask(dependencyManager, file, library));
             } else {
                 dependencyManager.getCacheRepository().tryCacheLibrary(library, file.toPath());
             }

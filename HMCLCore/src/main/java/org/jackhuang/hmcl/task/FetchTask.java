@@ -121,7 +121,7 @@ public abstract class FetchTask<T> extends Task<T> {
                                 continue;
                             }
                         } else if (responseCode / 100 == 4) {
-                            throw new FileNotFoundException();
+                            throw new FileNotFoundException(url.toString());
                         } else if (responseCode / 100 != 2) {
                             throw new ResponseCodeException(url, responseCode);
                         }
