@@ -610,7 +610,7 @@ public final class VersionSetting implements Cloneable {
     public Task<JavaVersion> getJavaVersion(VersionNumber gameVersion, Version version, boolean checkJava) {
         return Task.runAsync(Schedulers.javafx(), () -> {
             if (StringUtils.isBlank(getJava())) {
-                setJava(StringUtils.isBlank(getJavaDir()) ? "Default" : "Custom");
+                setJava(StringUtils.isBlank(getJavaDir()) ? "Auto" : "Custom");
             }
         }).thenSupplyAsync(() -> {
             try {
@@ -633,7 +633,7 @@ public final class VersionSetting implements Cloneable {
                             .collect(Collectors.toList());
                     if (matchedJava.isEmpty()) {
                         runInFX(() -> {
-                            setJava("Default");
+                            setJava("Auto");
                         });
                         return JavaVersion.fromCurrentEnvironment();
                     } else {

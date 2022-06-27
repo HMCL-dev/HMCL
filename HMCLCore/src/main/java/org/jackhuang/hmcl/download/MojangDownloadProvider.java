@@ -49,7 +49,7 @@ public class MojangDownloadProvider implements DownloadProvider {
 
     @Override
     public String getVersionListURL() {
-        return "https://launchermeta.mojang.com/mc/game/version_manifest.json";
+        return "https://piston-meta.mojang.com/mc/game/version_manifest.json";
     }
 
     @Override

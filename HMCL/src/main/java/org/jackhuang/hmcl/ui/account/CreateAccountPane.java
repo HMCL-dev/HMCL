@@ -267,40 +267,49 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
         if (factory == Accounts.FACTORY_MICROSOFT) {
             VBox vbox = new VBox(8);
-            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-            FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
-                if (deviceCode != null) {
-                    FXUtils.copyText(deviceCode.getUserCode());
-                    hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri()));
-                } else {
-                    hintPane.setSegment(i18n("account.methods.microsoft.hint"));
-                }
-            });
-            hintPane.setOnMouseClicked(e -> {
-                if (deviceCode.get() != null) {
-                    FXUtils.copyText(deviceCode.get().getUserCode());
-                }
-            });
+            if (!Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
+                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
+                    if (deviceCode != null) {
+                        FXUtils.copyText(deviceCode.getUserCode());
+                        hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri()));
+                    } else {
+                        hintPane.setSegment(i18n("account.methods.microsoft.hint"));
+                    }
+                });
+                hintPane.setOnMouseClicked(e -> {
+                    if (deviceCode.get() != null) {
+                        FXUtils.copyText(deviceCode.get().getUserCode());
+                    }
+                });
 
-            holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
-                runInFX(() -> deviceCode.set(value));
-            }));
-            HBox box = new HBox(8);
-            JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
-            birthLink.setOnAction(e -> FXUtils.openLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a"));
-            JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
-            profileLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/editprof.aspx"));
-            JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
-            JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
-            deauthorizeLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A"));
-            purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
-            box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink);
-            GridPane.setColumnSpan(box, 2);
+                holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
+                    runInFX(() -> deviceCode.set(value));
+                }));
+                HBox box = new HBox(8);
+                JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
+                birthLink.setOnAction(e -> FXUtils.openLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a"));
+                JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
+                profileLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/editprof.aspx"));
+                JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
+                JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
+                deauthorizeLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A"));
+                purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
+                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink);
+                GridPane.setColumnSpan(box, 2);
 
-            vbox.getChildren().setAll(hintPane, box);
+                vbox.getChildren().setAll(hintPane, box);
+
+                btnAccept.setDisable(false);
+            } else {
+                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+                hintPane.setText(i18n("account.methods.microsoft.snapshot"));
+
+                vbox.getChildren().setAll(hintPane);
+                btnAccept.setDisable(true);
+            }
 
             detailsPane = vbox;
-            btnAccept.setDisable(false);
         } else if (factory == Accounts.FACTORY_MOJANG) {
             VBox vbox = new VBox(8);
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);

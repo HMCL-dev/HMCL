@@ -261,7 +261,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 mcmodButton.setText(i18n("mods.mcmod.page"));
                 mcmodButton.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
-                    FXUtils.openLink(ModManager.getMcmodUrl(modInfo.getMod().getMcmod()));
+                    FXUtils.openLink(ModTranslations.MOD.getMcmodUrl(modInfo.getMod()));
                 });
                 getActions().add(mcmodButton);
             }

@@ -36,10 +36,25 @@ import static org.jackhuang.hmcl.util.Pair.pair;
  *
  * @see <a href="https://www.mcmod.cn">mcmod.cn</a>
  */
-public final class ModTranslations {
-    public static ModTranslations MOD = new ModTranslations("/assets/mod_data.txt");
-    public static ModTranslations MODPACK = new ModTranslations("/assets/modpack_data.txt");
-    public static ModTranslations EMPTY = new ModTranslations("");
+public enum ModTranslations {
+    MOD("/assets/mod_data.txt") {
+        @Override
+        public String getMcmodUrl(Mod mod) {
+            return String.format("https://www.mcmod.cn/class/%s.html", mod.getMcmod());
+        }
+    },
+    MODPACK("/assets/modpack_data.txt") {
+        @Override
+        public String getMcmodUrl(Mod mod) {
+            return String.format("https://www.mcmod.cn/modpack/%s.html", mod.getMcmod());
+        }
+    },
+    EMPTY("") {
+        @Override
+        public String getMcmodUrl(Mod mod) {
+            return "";
+        }
+    };
 
     public static ModTranslations getTranslationsByRepositoryType(RemoteModRepository.Type type) {
         switch (type) {
@@ -59,7 +74,7 @@ public final class ModTranslations {
     private List<Pair<String, Mod>> keywords;
     private int maxKeywordLength = -1;
 
-    private ModTranslations(String resourceName) {
+    ModTranslations(String resourceName) {
         this.resourceName = resourceName;
     }
 
@@ -76,6 +91,8 @@ public final class ModTranslations {
 
         return modIdMap.get(id);
     }
+
+    public abstract String getMcmodUrl(Mod mod);
 
     public List<Mod> searchMod(String query) {
         if (!loadKeywords()) return Collections.emptyList();
