@@ -39,6 +39,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
@@ -96,7 +98,13 @@ public abstract class FetchTask<T> extends Task<T> {
                 }
 
                 try {
-                    url = new URL (URLEncoder.encode(String.valueOf(url),"UTF-8"));
+                    Matcher match = Pattern.compile("[\u4e00-\u9fa5 ]+").matcher(String.valueOf(url).replaceAll(" ","%20"));
+                    StringBuffer resultURL = new StringBuffer();
+                    while (match.find()) {
+                        match.appendReplacement(resultURL, URLEncoder.encode(match.group(0), "UTF-8"));
+                    }
+                    match.appendTail(resultURL);
+                    url = new URL (resultURL.toString());
 
                     beforeDownload(url);
 
