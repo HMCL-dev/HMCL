@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
@@ -95,6 +96,8 @@ public abstract class FetchTask<T> extends Task<T> {
                 }
 
                 try {
+                    url = URLEncoder.encode(url,"UTF-8");
+
                     beforeDownload(url);
 
                     updateProgress(0);
