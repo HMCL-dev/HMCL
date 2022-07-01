@@ -20,9 +20,13 @@ package org.jackhuang.hmcl.mod;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class RemoteMod {
@@ -199,7 +203,17 @@ public class RemoteMod {
         }
 
         public String getUrl() {
-            return url;
+            Matcher match = Pattern.compile("[\u4e00-\u9fa5 ]+").matcher(url.replaceAll(" ","%20"));
+            StringBuffer resultURL = new StringBuffer();
+            while (match.find()) {
+                try {
+                    match.appendReplacement(resultURL, URLEncoder.encode(match.group(0), "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            match.appendTail(resultURL);
+            return resultURL.toString();
         }
 
         public String getFilename() {
