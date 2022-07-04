@@ -20,13 +20,9 @@ package org.jackhuang.hmcl.mod;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.io.NetworkUtils.encodeLocation;
@@ -205,7 +201,7 @@ public class RemoteMod {
         }
 
         public String getUrl() {
-            return encodeLocation(url);
+            return encodeLocation (url);
         }
 
         public String getFilename() {
