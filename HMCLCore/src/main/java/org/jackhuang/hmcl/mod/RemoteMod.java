@@ -29,6 +29,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.util.io.NetworkUtils.encodeLocation;
+
 public class RemoteMod {
     private final String slug;
     private final String author;
@@ -203,17 +205,7 @@ public class RemoteMod {
         }
 
         public String getUrl() {
-            Matcher match = Pattern.compile("[\u4e00-\u9fa5 ]+").matcher(url.replaceAll(" ","%20"));
-            StringBuffer resultURL = new StringBuffer();
-            while (match.find()) {
-                try {
-                    match.appendReplacement(resultURL, URLEncoder.encode(match.group(0), "UTF-8"));
-                } catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            match.appendTail(resultURL);
-            return resultURL.toString();
+            return encodeLocation(url);
         }
 
         public String getFilename() {
