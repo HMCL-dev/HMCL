@@ -5,7 +5,7 @@ Join chat! ![Discord](https://img.shields.io/discord/879708313435123742?style=pl
 
 ## Introduction
 
-HMCL is a Minecraft launcher which supports Mod management, game customizing, auto installing(Forge, LiteLoader and OptiFine), modpack creating, UI customization, and more.
+HMCL is a Minecraft launcher which supports Mod management, game customizing, auto installing(Forge, Fabric, LiteLoader and OptiFine), modpack creating, UI customization, and more.
 
 No plugin API is provided.
 
