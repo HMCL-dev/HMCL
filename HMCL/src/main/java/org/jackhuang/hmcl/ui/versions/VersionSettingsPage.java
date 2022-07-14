@@ -461,14 +461,14 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             pane.setVgap(8);
             pane.getColumnConstraints().setAll(title, value);
 
-            txtJVMArgs = new JFXTextField();
-            txtJVMArgs.getStyleClass().add("fit-width");
-            pane.addRow(0, new Label(i18n("settings.advanced.jvm_args")), txtJVMArgs);
-
             HintPane hintPane = new HintPane();
             hintPane.setText(i18n("settings.advanced.jvm_args.prompt"));
             GridPane.setColumnSpan(hintPane, 2);
             pane.addRow(4, hintPane);
+
+            txtJVMArgs = new JFXTextField();
+            txtJVMArgs.getStyleClass().add("fit-width");
+            pane.addRow(0, new Label(i18n("settings.advanced.jvm_args")), txtJVMArgs);
 
             txtMetaspace = new JFXTextField();
             txtMetaspace.setPromptText(i18n("settings.advanced.java_permanent_generation_space.prompt"));
