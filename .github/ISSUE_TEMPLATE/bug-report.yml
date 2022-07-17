@@ -1,6 +1,6 @@
 name: Bug Feedback
 description: 
-  反馈一个 Bug。为了提高反馈效率，请优先在KOOK或者或 Discord 频道中反馈。若确认是 HMCL 问题，请发布 issue。
+  反馈一个 Bug。为了提高反馈效率，请优先在 KOOK 或者或 Discord 频道中反馈。若确认是 HMCL 问题，请发布 issue。
 body:
   - type: markdown
     attributes:
