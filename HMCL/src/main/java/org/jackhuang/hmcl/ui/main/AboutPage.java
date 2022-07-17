@@ -125,7 +125,7 @@ public class AboutPage extends StackPane {
             kaiheila.setImage(new Image("/assets/img/kaiheila.jpeg", 32, 32, false, true));
             kaiheila.setTitle(i18n("about.community.kaiheila"));
             kaiheila.setSubtitle(i18n("about.community.kaiheila.statement"));
-            kaiheila.setExternalLink("https://kaihei.co/Kx7n3t");
+            kaiheila.setExternalLink("https://kook.top/Kx7n3t");
 
             community.getContent().setAll(users, discord, kaiheila);
         }
