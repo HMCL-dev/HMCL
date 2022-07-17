@@ -1,7 +1,7 @@
 # ⛏ Hello Minecraft! Launcher 💎
 [![Build Status](https://ci.huangyuhui.net/job/HMCL/badge/icon?.svg)](https://ci.huangyuhui.net/job/HMCL)
 
-Join chat! ![Discord](https://img.shields.io/discord/879708313435123742?style=plastic) [Discord](https://discord.gg/jVvC7HfM6U)  [KaiHeiLa](https://kaihei.co/Kx7n3t)
+Join chat! ![Discord](https://img.shields.io/discord/879708313435123742?style=plastic) [Discord](https://discord.gg/jVvC7HfM6U)  [KOOK](https://kook.top/Kx7n3t)
 
 ## Introduction
 

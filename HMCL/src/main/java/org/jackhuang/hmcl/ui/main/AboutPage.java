@@ -121,13 +121,13 @@ public class AboutPage extends StackPane {
             discord.setSubtitle(i18n("about.community.discord.statement"));
             discord.setExternalLink("https://discord.gg/jVvC7HfM6U");
 
-            IconedTwoLineListItem kaiheila = new IconedTwoLineListItem();
-            kaiheila.setImage(new Image("/assets/img/kaiheila.jpeg", 32, 32, false, true));
-            kaiheila.setTitle(i18n("about.community.kaiheila"));
-            kaiheila.setSubtitle(i18n("about.community.kaiheila.statement"));
-            kaiheila.setExternalLink("https://kook.top/Kx7n3t");
+            IconedTwoLineListItem kookapp = new IconedTwoLineListItem();
+            kookapp.setImage(new Image("/assets/img/kookapp.png", 32, 32, false, true));
+            kookapp.setTitle(i18n("about.community.kookapp"));
+            kookapp.setSubtitle(i18n("about.community.kookapp.statement"));
+            kookapp.setExternalLink("https://kook.top/Kx7n3t");
 
-            community.getContent().setAll(users, discord, kaiheila);
+            community.getContent().setAll(users, discord, kookapp);
         }
 
         ComponentList dep = new ComponentList();
