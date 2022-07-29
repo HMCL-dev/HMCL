@@ -34,10 +34,7 @@ import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
-import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.LauncherVisibility;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -121,24 +118,24 @@ public final class LauncherHelper {
     private void launch0() {
         HMCLGameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
-        Version version = MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion));
-        Optional<String> gameVersion = repository.getGameVersion(version);
+        AtomicReference<Version> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion)));
+        Optional<String> gameVersion = repository.getGameVersion(version.get());
         boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
         CountDownLatch launchingLatch = new CountDownLatch(1);
         List<String> javaAgents = new ArrayList<>(0);
 
         AtomicReference<JavaVersion> javaVersionRef = new AtomicReference<>();
 
-        getLog4jPatch(version).ifPresent(javaAgents::add);
+        getLog4jPatch(version.get()).ifPresent(javaAgents::add);
 
-        TaskExecutor executor = checkGameState(profile, setting, version)
+        TaskExecutor executor = checkGameState(profile, setting, version.get())
                 .thenComposeAsync(javaVersion -> {
                     javaVersionRef.set(Objects.requireNonNull(javaVersion));
+                    version.set(NativePatcher.patchNative(version.get(), javaVersion, setting));
                     if (setting.isNotCheckGame())
                         return null;
-
                     return Task.allOf(
-                            dependencyManager.checkGameCompletionAsync(version, integrityCheck),
+                            dependencyManager.checkGameCompletionAsync(version.get(), integrityCheck),
                             Task.composeAsync(() -> {
                                 try {
                                     ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
@@ -152,7 +149,7 @@ public final class LauncherHelper {
                     );
                 }).withStage("launch.state.dependencies")
                 .thenComposeAsync(() -> {
-                    return gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version)).orElse(null);
+                    return gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null);
                 })
                 .thenComposeAsync(Task.supplyAsync(() -> {
                     try {
@@ -169,12 +166,12 @@ public final class LauncherHelper {
                     LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, scriptFile != null);
                     return new HMCLGameLauncher(
                             repository,
-                            version,
+                            version.get(),
                             authInfo,
                             launchOptions,
                             launcherVisibility == LauncherVisibility.CLOSE
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(repository, version, authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
+                                    : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
