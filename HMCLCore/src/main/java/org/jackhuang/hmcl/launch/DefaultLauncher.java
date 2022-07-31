@@ -481,8 +481,10 @@ public class DefaultLauncher extends Launcher {
         env.put("INST_MC_DIR", repository.getRunDirectory(version.getId()).getAbsolutePath());
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 
-        if (options.isUseSoftwareRenderer() && OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
+        if (options.isUseSoftwareRenderer() && OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
             env.put("LIBGL_ALWAYS_SOFTWARE", "1");
+            env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
+        }
 
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
         if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
