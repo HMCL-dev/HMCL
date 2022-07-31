@@ -327,30 +327,32 @@ public final class LauncherHelper {
                 Runnable continueAction = () -> future.complete(JavaVersion.fromCurrentEnvironment());
 
                 if (setting.isJavaAutoSelected()) {
-                    JavaVersionConstraint.VersionRanges range = JavaVersionConstraint.findSuitableJavaVersionRange(gameVersion, version);
-                    GameJavaVersion targetJavaVersion;
+                    GameJavaVersion targetJavaVersion = null;
 
-                    if (range.getMandatory().contains(VersionNumber.asVersion("17.0.1"))) {
-                        targetJavaVersion = GameJavaVersion.JAVA_17;
-                    } else if (range.getMandatory().contains(VersionNumber.asVersion("16.0.1"))) {
-                        targetJavaVersion = GameJavaVersion.JAVA_16;
-                    } else {
-                        String java8Version;
-
-                        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                            java8Version = "1.8.0_51";
-                        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                            java8Version = "1.8.0_202";
-                        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-                            java8Version = "1.8.0_74";
+                    if (org.jackhuang.hmcl.util.platform.Platform.isCompatibleWithX86Java()) {
+                        JavaVersionConstraint.VersionRanges range = JavaVersionConstraint.findSuitableJavaVersionRange(gameVersion, version);
+                        if (range.getMandatory().contains(VersionNumber.asVersion("17.0.1"))) {
+                            targetJavaVersion = GameJavaVersion.JAVA_17;
+                        } else if (range.getMandatory().contains(VersionNumber.asVersion("16.0.1"))) {
+                            targetJavaVersion = GameJavaVersion.JAVA_16;
                         } else {
-                            java8Version = null;
-                        }
+                            String java8Version;
 
-                        if (java8Version != null && range.getMandatory().contains(VersionNumber.asVersion(java8Version)))
-                            targetJavaVersion = GameJavaVersion.JAVA_8;
-                        else
-                            targetJavaVersion = null;
+                            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                                java8Version = "1.8.0_51";
+                            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+                                java8Version = "1.8.0_202";
+                            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                                java8Version = "1.8.0_74";
+                            } else {
+                                java8Version = null;
+                            }
+
+                            if (java8Version != null && range.getMandatory().contains(VersionNumber.asVersion(java8Version)))
+                                targetJavaVersion = GameJavaVersion.JAVA_8;
+                            else
+                                targetJavaVersion = null;
+                        }
                     }
 
                     if (targetJavaVersion != null) {
@@ -360,7 +362,9 @@ public final class LauncherHelper {
                                 })
                                 .exceptionally(throwable -> {
                                     LOG.log(Level.WARNING, "Failed to download java", throwable);
-                                    Controllers.dialog(i18n("launch.failed.no_accepted_java"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                                    Controllers.confirm(i18n("launch.failed.no_accepted_java"), i18n("message.warning"), MessageType.WARNING, continueAction, () -> {
+                                        future.completeExceptionally(new CancellationException("No accepted java"));
+                                    });
                                     return null;
                                 });
                     }
@@ -487,14 +491,10 @@ public final class LauncherHelper {
                         break;
                     case VANILLA_X86:
                         if (setting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-                            if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                                if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX
-                                        // Windows on ARM introduced translation support for x86-64 after 10.0.21277.
-                                        || (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277)) {
-                                    Controllers.dialog(i18n("launch.advice.vanilla_x86.translation"), i18n("message.warning"), MessageType.WARNING, continueAction);
-                                }
-                            }
-                            Controllers.dialog(i18n("launch.advice.vanilla_x86"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                            if (org.jackhuang.hmcl.util.platform.Platform.isCompatibleWithX86Java())
+                                Controllers.dialog(i18n("launch.advice.vanilla_x86.translation"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                            else
+                                Controllers.dialog(i18n("launch.advice.vanilla_x86"), i18n("message.warning"), MessageType.WARNING, continueAction);
                         }
                         break;
                 }

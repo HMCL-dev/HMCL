@@ -237,12 +237,15 @@ public enum JavaVersionConstraint {
     public static JavaVersion findSuitableJavaVersion(VersionNumber gameVersion, Version version) throws InterruptedException {
         VersionRanges range = findSuitableJavaVersionRange(gameVersion, version);
 
+        boolean skipCheckArchitecture = Architecture.CURRENT_ARCH.isX86()
+                || (OperatingSystem.CURRENT_OS == OperatingSystem.OSX && gameVersion.compareTo(VersionNumber.asVersion("1.19")) >= 0)
+                || OperatingSystem.CURRENT_OS == OperatingSystem.LINUX;
+
         JavaVersion mandatory = null;
         JavaVersion suggested = null;
         for (JavaVersion javaVersion : JavaVersion.getJavas()) {
             // select the latest x86 java that this version accepts.
-            if (!javaVersion.getArchitecture().isX86()
-                    && (OperatingSystem.CURRENT_OS != OperatingSystem.OSX || gameVersion.compareTo(VersionNumber.asVersion("1.19")) < 0))
+            if (!skipCheckArchitecture && !javaVersion.getArchitecture().isX86())
                 continue;
 
             VersionNumber javaVersionNumber = javaVersion.getVersionNumber();
