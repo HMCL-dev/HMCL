@@ -445,21 +445,6 @@ public final class LauncherHelper {
                             } else {
                                 break;
                             }
-                        case VANILLA_X86:
-                            if (setting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-                                if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                                    if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX
-                                            // Windows on ARM introduced translation support for x86-64 after 10.0.21277.
-                                            || (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277)) {
-                                        Controllers.dialog(i18n("launch.advice.vanilla_x86.translation"), i18n("message.error"), MessageType.ERROR, breakAction);
-                                        return null;
-                                    }
-                                }
-                                Controllers.dialog(i18n("launch.advice.vanilla_x86"), i18n("message.error"), MessageType.ERROR, breakAction);
-                                return null;
-                            } else {
-                                break;
-                            }
                         case LAUNCH_WRAPPER:
                             Controllers.dialog(i18n("launch.advice.java9") + "\n" + i18n("launch.advice.uncorrected"), i18n("message.error"), MessageType.ERROR, breakAction);
                             return null;
@@ -499,6 +484,18 @@ public final class LauncherHelper {
                         break;
                     case MODLAUNCHER_8:
                         Controllers.dialog(i18n("launch.advice.modlauncher8"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                        break;
+                    case VANILLA_X86:
+                        if (setting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+                            if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+                                if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX
+                                        // Windows on ARM introduced translation support for x86-64 after 10.0.21277.
+                                        || (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277)) {
+                                    Controllers.dialog(i18n("launch.advice.vanilla_x86.translation"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                                }
+                            }
+                            Controllers.dialog(i18n("launch.advice.vanilla_x86"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                        }
                         break;
                 }
             }

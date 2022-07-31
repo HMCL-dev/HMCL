@@ -116,7 +116,7 @@ public enum JavaVersionConstraint {
         }
     },
     // Minecraft currently does not provide official support for architectures other than x86 and x86-64.
-    VANILLA_X86(JavaVersionConstraint.RULE_MANDATORY, versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX), versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX)) {
+    VANILLA_X86(JavaVersionConstraint.RULE_SUGGESTED, versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX), versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX)) {
         @Override
         protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
                                                @Nullable JavaVersion javaVersion) {
