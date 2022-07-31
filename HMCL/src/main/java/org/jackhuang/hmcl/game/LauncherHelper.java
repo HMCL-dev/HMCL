@@ -26,9 +26,7 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.MaintainTask;
-import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
-import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
-import org.jackhuang.hmcl.download.game.LibraryDownloadException;
+import org.jackhuang.hmcl.download.game.*;
 import org.jackhuang.hmcl.download.java.JavaRepository;
 import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
@@ -143,6 +141,28 @@ public final class LauncherHelper {
                                     if (provider == null) return null;
                                     else return provider.createCompletionTask(dependencyManager, selectedVersion);
                                 } catch (IOException e) {
+                                    return null;
+                                }
+                            }),
+                            Task.composeAsync(() -> {
+                                if (setting.isUseSoftwareRenderer() && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                                    Library lib = NativePatcher.getSoftwareRendererLoader(javaVersion);
+                                    if (lib == null)
+                                        return null;
+                                    File file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
+                                    if (file.getAbsolutePath().indexOf('=') >= 0) {
+                                        LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
+                                        return null;
+                                    }
+
+                                    if (GameLibrariesTask.shouldDownloadLibrary(repository, version.get(), lib, integrityCheck)) {
+                                        return new LibraryDownloadTask(dependencyManager, file, lib)
+                                                .thenRunAsync(() -> javaAgents.add(file.getAbsolutePath()));
+                                    } else {
+                                        javaAgents.add(file.getAbsolutePath());
+                                        return null;
+                                    }
+                                } else {
                                     return null;
                                 }
                             })
@@ -803,6 +823,8 @@ public final class LauncherHelper {
     }
 
     private static final String OPENJDK_DOWNLOAD_LINK = "https://docs.microsoft.com/java/openjdk/download";
+
+    private static final Library LLVMPIPE_LOADER = new Library(Artifact.fromDescriptor("org.glavo:llvmpipe_loader:1.0.0"));
 
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
 

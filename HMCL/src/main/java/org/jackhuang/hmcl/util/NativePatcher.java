@@ -67,6 +67,11 @@ public final class NativePatcher {
         return version.setLibraries(newLibraries);
     }
 
+    public static Library getSoftwareRendererLoader(JavaVersion javaVersion) {
+        Map<String, Library> map = Hole.nativeReplacement.get(javaVersion.getPlatform().toString());
+        return map != null ? map.get("software-renderer-loader") : null;
+    }
+
     private static final class Hole {
         static Map<String, Map<String, Library>> nativeReplacement;
 

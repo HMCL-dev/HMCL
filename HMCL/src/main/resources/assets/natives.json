@@ -483,6 +483,19 @@
       "name": "com.mojang:text2speech:1.13.9:natives-linux"
     }
   },
+  "windows-x86_64": {
+    "software-renderer-loader": {
+      "name": "org.glavo:llvmpipe-loader:1.0",
+      "downloads": {
+        "artifact": {
+          "path": "org/glavo/llvmpipe-loader/1.0/llvmpipe-loader-1.0.jar",
+          "url": "https://repo1.maven.org/maven2/org/glavo/llvmpipe-loader/1.0/llvmpipe-loader-1.0.jar",
+          "sha1": "ff255415e5c4b2a18970da0a8e552b557ca013ae",
+          "size": 12964773
+        }
+      }
+    }
+  },
   "windows-arm64": {
     "org.lwjgl:lwjgl:3.3.1:natives-windows": {
       "name": "org.lwjgl:lwjgl:3.3.1:natives-windows-arm64",
