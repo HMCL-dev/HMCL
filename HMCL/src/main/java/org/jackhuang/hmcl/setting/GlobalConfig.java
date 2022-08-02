@@ -153,6 +153,7 @@ public class GlobalConfig implements Cloneable, Observable {
         private static final Set<String> knownFields = new HashSet<>(Arrays.asList(
                 "agreementVersion",
                 "multiplayerToken",
+                "multiplayerRelay",
                 "multiplayerAgreementVersion"
         ));
 

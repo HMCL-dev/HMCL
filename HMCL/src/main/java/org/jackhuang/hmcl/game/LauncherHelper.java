@@ -510,11 +510,11 @@ public final class LauncherHelper {
                         Controllers.dialog(i18n("launch.advice.modlauncher8"), i18n("message.warning"), MessageType.WARNING, continueAction);
                         break;
                     case VANILLA_X86:
-                        if (setting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-                            if (org.jackhuang.hmcl.util.platform.Platform.isCompatibleWithX86Java())
-                                Controllers.dialog(i18n("launch.advice.vanilla_x86.translation"), i18n("message.warning"), MessageType.WARNING, continueAction);
-                            else
-                                Controllers.dialog(i18n("launch.advice.vanilla_x86"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                        if (setting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER
+                                && org.jackhuang.hmcl.util.platform.Platform.isCompatibleWithX86Java()) {
+                            Controllers.dialog(i18n("launch.advice.vanilla_x86.translation"), i18n("message.warning"), MessageType.WARNING, continueAction);
+                        } else {
+                            continueAction.run();
                         }
                         break;
                 }

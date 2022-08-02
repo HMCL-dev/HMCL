@@ -845,6 +845,76 @@
     "com.mojang:text2speech:1.12.4:natives": null,
     "com.mojang:text2speech:1.13.9:natives-linux": null
   },
+  "linux-loongarch64": {
+    "org.lwjgl.lwjgl:lwjgl-platform:2.9.0:natives": {
+      "name": "org.glavo.hmcl:lwjgl2-natives:2.9.3-rc1",
+      "downloads": {
+        "classifiers": {
+          "linux-loongarch64": {
+            "path": "org/glavo/hmcl/lwjgl2-natives/2.9.3-rc1/lwjgl2-natives-2.9.3-rc1-linux-loongarch64.jar",
+            "url": "https://repo1.maven.org/maven2/org/glavo/hmcl/lwjgl2-natives/2.9.3-rc1-linux-loongarch64/lwjgl2-natives-2.9.3-rc1-linux-loongarch64.jar",
+            "sha1": "135e7e557431be70fa590eb6feffebb078d34728",
+            "size": 594335
+          }
+        }
+      },
+      "extract": {
+        "exclude": [
+          "META-INF/"
+        ]
+      },
+      "natives": {
+        "linux": "linux-loongarch64"
+      }
+    },
+    "org.lwjgl.lwjgl:lwjgl-platform:2.9.1:natives": {
+      "name": "org.glavo.hmcl:lwjgl2-natives:2.9.3-rc1",
+      "downloads": {
+        "classifiers": {
+          "linux-loongarch64": {
+            "path": "org/glavo/hmcl/lwjgl2-natives/2.9.3-rc1/lwjgl2-natives-2.9.3-rc1-linux-loongarch64.jar",
+            "url": "https://repo1.maven.org/maven2/org/glavo/hmcl/lwjgl2-natives/2.9.3-rc1-linux-loongarch64/lwjgl2-natives-2.9.3-rc1-linux-loongarch64.jar",
+            "sha1": "135e7e557431be70fa590eb6feffebb078d34728",
+            "size": 594335
+          }
+        }
+      },
+      "extract": {
+        "exclude": [
+          "META-INF/"
+        ]
+      },
+      "natives": {
+        "linux": "linux-loongarch64"
+      }
+    },
+    "org.lwjgl.lwjgl:lwjgl-platform:2.9.4-nightly-20150209:natives": {
+      "name": "org.glavo.hmcl:lwjgl2-natives:2.9.3-rc1",
+      "downloads": {
+        "classifiers": {
+          "linux-loongarch64": {
+            "path": "org/glavo/hmcl/lwjgl2-natives/2.9.3-rc1/lwjgl2-natives-2.9.3-rc1-linux-loongarch64.jar",
+            "url": "https://repo1.maven.org/maven2/org/glavo/hmcl/lwjgl2-natives/2.9.3-rc1-linux-loongarch64/lwjgl2-natives-2.9.3-rc1-linux-loongarch64.jar",
+            "sha1": "135e7e557431be70fa590eb6feffebb078d34728",
+            "size": 594335
+          }
+        }
+      },
+      "extract": {
+        "exclude": [
+          "META-INF/"
+        ]
+      },
+      "natives": {
+        "linux": "linux-loongarch64"
+      }
+    },
+    "net.java.jinput:jinput-platform:2.0.5:natives": null,
+    "com.mojang:text2speech:1.10.3:natives": null,
+    "com.mojang:text2speech:1.11.3:natives": null,
+    "com.mojang:text2speech:1.12.4:natives": null,
+    "com.mojang:text2speech:1.13.9:natives-linux": null
+  },
   "windows-x86_64": {
     "software-renderer-loader": {
       "name": "org.glavo:llvmpipe-loader:1.0",

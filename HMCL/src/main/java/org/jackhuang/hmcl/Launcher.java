@@ -69,6 +69,11 @@ public final class Launcher extends Application {
                 Main.showWarningAndContinue(i18n("fatal.illegal_char"));
             }
 
+            if (!Architecture.CURRENT_ARCH.isX86()
+                    && !(OperatingSystem.CURRENT_OS == OperatingSystem.OSX && Architecture.CURRENT_ARCH == Architecture.ARM64)) {
+                Main.showWarningAndContinue(i18n("fatal.unsupported_platform"));
+            }
+
             // runLater to ensure ConfigHolder.init() finished initialization
             Platform.runLater(() -> {
                 // When launcher visibility is set to "hide and reopen" without Platform.implicitExit = false,
