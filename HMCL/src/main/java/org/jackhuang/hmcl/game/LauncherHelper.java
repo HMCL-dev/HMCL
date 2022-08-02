@@ -824,8 +824,6 @@ public final class LauncherHelper {
 
     private static final String OPENJDK_DOWNLOAD_LINK = "https://docs.microsoft.com/java/openjdk/download";
 
-    private static final Library LLVMPIPE_LOADER = new Library(Artifact.fromDescriptor("org.glavo:llvmpipe_loader:1.0.0"));
-
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
 
     public static void stopManagedProcesses() {

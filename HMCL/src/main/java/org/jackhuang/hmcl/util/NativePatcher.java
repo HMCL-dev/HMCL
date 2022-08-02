@@ -23,6 +23,8 @@ public final class NativePatcher {
     private NativePatcher() {
     }
 
+    private static final Library NONEXISTENT_LIBRARY = new Library(null);
+
     public static Version patchNative(Version version, JavaVersion javaVersion, VersionSetting settings) {
         if (javaVersion.getArchitecture().isX86())
             return version;
@@ -48,19 +50,24 @@ public final class NativePatcher {
             }
 
             if (library.isNative()) {
-                Library replacement = replacements.get(library.getName() + ":natives");
-                if (replacement == null) {
+                Library replacement = replacements.getOrDefault(library.getName() + ":natives", NONEXISTENT_LIBRARY);
+                if (replacement == NONEXISTENT_LIBRARY) {
                     if (!(settings.isUseNativeGLFW() && library.getArtifactId().contains("glfw"))
                             && !(settings.isUseNativeOpenAL() && library.getArtifactId().contains("openal"))) {
                         LOG.warning("No alternative native library " + library.getName() + "provided for platform " + javaVersion.getPlatform());
                         return version;
                     }
                     newLibraries.add(library);
-                } else {
+                } else if (replacement != null) {
                     newLibraries.add(replacement);
                 }
             } else {
-                newLibraries.add(replacements.getOrDefault(library.getName(), library));
+                Library replacement = replacements.getOrDefault(library.getName(), NONEXISTENT_LIBRARY);
+                if (replacement == NONEXISTENT_LIBRARY) {
+                    newLibraries.add(library);
+                } else if (replacement != null) {
+                    newLibraries.add(replacement);
+                }
             }
         }
 
