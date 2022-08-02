@@ -453,25 +453,25 @@ public final class LauncherHelper {
                             Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 16), i18n("message.warning"), () -> {
                                 FXUtils.openLink(OPENJDK_DOWNLOAD_LINK);
                             }, breakAction);
-                            return null;
+                            return Task.fromCompletableFuture(future);
                         case VANILLA_JAVA_17:
                             Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 17), i18n("message.warning"), () -> {
                                 FXUtils.openLink(OPENJDK_DOWNLOAD_LINK);
                             }, breakAction);
-                            return null;
+                            return Task.fromCompletableFuture(future);
                         case VANILLA_JAVA_8:
                             Controllers.dialog(i18n("launch.advice.java8_1_13"), i18n("message.error"), MessageType.ERROR, breakAction);
                             return null;
                         case VANILLA_LINUX_JAVA_8:
                             if (setting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
                                 Controllers.dialog(i18n("launch.advice.vanilla_linux_java_8"), i18n("message.error"), MessageType.ERROR, breakAction);
-                                return null;
+                                return Task.fromCompletableFuture(future);
                             } else {
                                 break;
                             }
                         case LAUNCH_WRAPPER:
                             Controllers.dialog(i18n("launch.advice.java9") + "\n" + i18n("launch.advice.uncorrected"), i18n("message.error"), MessageType.ERROR, breakAction);
-                            return null;
+                            return Task.fromCompletableFuture(future);
                     }
                 }
             }
@@ -496,7 +496,7 @@ public final class LauncherHelper {
                 switch (violatedSuggestedConstraint) {
                     case MODDED_JAVA_7:
                         Controllers.dialog(i18n("launch.advice.java.modded_java_7"), i18n("message.warning"), MessageType.WARNING, continueAction);
-                        return null;
+                        break;
                     case MODDED_JAVA_8:
                         Controllers.dialog(i18n("launch.advice.newer_java"), i18n("message.warning"), MessageType.WARNING, continueAction);
                         break;
