@@ -70,7 +70,8 @@ public final class Launcher extends Application {
             }
 
             if (!Architecture.CURRENT_ARCH.isX86()
-                    && !(OperatingSystem.CURRENT_OS == OperatingSystem.OSX && Architecture.CURRENT_ARCH == Architecture.ARM64)) {
+                    && !(OperatingSystem.CURRENT_OS == OperatingSystem.OSX && Architecture.CURRENT_ARCH == Architecture.ARM64)
+                    && ConfigHolder.globalConfig().getAgreementVersion() < 1) {
                 Main.showWarningAndContinue(i18n("fatal.unsupported_platform"));
             }
 
