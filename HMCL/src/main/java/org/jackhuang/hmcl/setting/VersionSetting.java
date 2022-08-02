@@ -392,6 +392,20 @@ public final class VersionSetting implements Cloneable {
         notCheckGameProperty.set(notCheckGame);
     }
 
+    private final BooleanProperty notPatchNativesProperty = new SimpleBooleanProperty(this, "notPatchNatives", false);
+
+    public BooleanProperty notPatchNativesProperty() {
+        return notPatchNativesProperty;
+    }
+
+    public boolean isNotPatchNatives() {
+        return notPatchNativesProperty.get();
+    }
+
+    public void setNotPatchNatives(boolean notPatchNatives) {
+        notPatchNativesProperty.set(notPatchNatives);
+    }
+
     private final BooleanProperty showLogsProperty = new SimpleBooleanProperty(this, "showLogs", false);
 
     public BooleanProperty showLogsProperty() {
@@ -684,6 +698,7 @@ public final class VersionSetting implements Cloneable {
         noJVMArgsProperty.addListener(listener);
         notCheckGameProperty.addListener(listener);
         notCheckJVMProperty.addListener(listener);
+        notPatchNativesProperty.addListener(listener);
         showLogsProperty.addListener(listener);
         serverIpProperty.addListener(listener);
         fullscreenProperty.addListener(listener);
@@ -721,6 +736,7 @@ public final class VersionSetting implements Cloneable {
         versionSetting.setNoJVMArgs(isNoJVMArgs());
         versionSetting.setNotCheckGame(isNotCheckGame());
         versionSetting.setNotCheckJVM(isNotCheckJVM());
+        versionSetting.setNotPatchNatives(isNotPatchNatives());
         versionSetting.setShowLogs(isShowLogs());
         versionSetting.setServerIp(getServerIp());
         versionSetting.setFullscreen(isFullscreen());
@@ -763,6 +779,7 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("noJVMArgs", src.isNoJVMArgs());
             obj.addProperty("notCheckGame", src.isNotCheckGame());
             obj.addProperty("notCheckJVM", src.isNotCheckJVM());
+            obj.addProperty("notPatchNatives", src.isNotPatchNatives());
             obj.addProperty("showLogs", src.isShowLogs());
             obj.addProperty("gameDir", src.getGameDir());
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
@@ -810,6 +827,7 @@ public final class VersionSetting implements Cloneable {
             vs.setNoJVMArgs(Optional.ofNullable(obj.get("noJVMArgs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotCheckGame(Optional.ofNullable(obj.get("notCheckGame")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotCheckJVM(Optional.ofNullable(obj.get("notCheckJVM")).map(JsonElement::getAsBoolean).orElse(false));
+            vs.setNotPatchNatives(Optional.ofNullable(obj.get("notPatchNatives")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setLauncherVisibility(LauncherVisibility.values()[Optional.ofNullable(obj.get("launcherVisibility")).map(JsonElement::getAsInt).orElse(LauncherVisibility.HIDE.ordinal())]);
             vs.setProcessPriority(ProcessPriority.values()[Optional.ofNullable(obj.get("processPriority")).map(JsonElement::getAsInt).orElse(ProcessPriority.NORMAL.ordinal())]);

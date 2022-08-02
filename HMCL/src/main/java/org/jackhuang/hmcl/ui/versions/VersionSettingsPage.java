@@ -90,6 +90,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final OptionToggleButton noJVMArgsPane;
     private final OptionToggleButton noGameCheckPane;
     private final OptionToggleButton noJVMCheckPane;
+    private final OptionToggleButton noNativesPatchPane;
     private final OptionToggleButton useSoftwareRenderer;
     private final OptionToggleButton useNativeGLFWPane;
     private final OptionToggleButton useNativeOpenALPane;
@@ -509,6 +510,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             noJVMCheckPane = new OptionToggleButton();
             noJVMCheckPane.setTitle(i18n("settings.advanced.dont_check_jvm_validity"));
 
+            noNativesPatchPane = new OptionToggleButton();
+            noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
+
             useSoftwareRenderer = new OptionToggleButton();
             useSoftwareRenderer.setTitle(i18n("settings.advanced.use_software_renderer"));
 
@@ -519,7 +523,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
 
             workaroundPane.getContent().setAll(
-                    nativesDirSublist, noJVMArgsPane, noGameCheckPane, noJVMCheckPane, useSoftwareRenderer, useNativeGLFWPane, useNativeOpenALPane);
+                    nativesDirSublist,
+                    noJVMArgsPane, noGameCheckPane, noJVMCheckPane, noNativesPatchPane,
+                    useSoftwareRenderer, useNativeGLFWPane, useNativeOpenALPane);
         }
 
         rootPane.getChildren().addAll(componentList,
@@ -636,6 +642,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             noGameCheckPane.selectedProperty().unbindBidirectional(lastVersionSetting.notCheckGameProperty());
             noJVMCheckPane.selectedProperty().unbindBidirectional(lastVersionSetting.notCheckJVMProperty());
             noJVMArgsPane.selectedProperty().unbindBidirectional(lastVersionSetting.noJVMArgsProperty());
+            noNativesPatchPane.selectedProperty().unbindBidirectional(lastVersionSetting.notPatchNativesProperty());
             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
             useSoftwareRenderer.selectedProperty().unbindBidirectional(lastVersionSetting.useSoftwareRendererProperty());
             useNativeGLFWPane.selectedProperty().unbindBidirectional(lastVersionSetting.useNativeGLFWProperty());
@@ -676,6 +683,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         noGameCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckGameProperty());
         noJVMCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().bindBidirectional(versionSetting.noJVMArgsProperty());
+        noNativesPatchPane.selectedProperty().bindBidirectional(versionSetting.notPatchNativesProperty());
         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
         useSoftwareRenderer.selectedProperty().bindBidirectional(versionSetting.useSoftwareRendererProperty());
         useNativeGLFWPane.selectedProperty().bindBidirectional(versionSetting.useNativeGLFWProperty());

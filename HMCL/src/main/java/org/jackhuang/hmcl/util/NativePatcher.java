@@ -32,7 +32,7 @@ public final class NativePatcher {
                 && VersionNumber.VERSION_COMPARATOR.compare(version.getVersion(), "1.19") >= 0)
             return version;
 
-        if (settings.getNativesDirType() != NativesDirectoryType.VERSION_FOLDER)
+        if (settings.isNotPatchNatives() || settings.getNativesDirType() != NativesDirectoryType.VERSION_FOLDER)
             return version;
 
         Map<String, Library> replacements = Hole.nativeReplacement.get(javaVersion.getPlatform().toString());
