@@ -50,6 +50,8 @@ public class WorldListItem extends Control {
         title.set(parseColorEscapes(world.getWorldName()));
 
         subtitle.set(i18n("world.description", world.getFileName(), Locales.SIMPLE_DATE_FORMAT.get().format(new Date(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
+
+        setOnMouseClicked(event -> showInfo());
     }
 
     @Override
@@ -98,5 +100,13 @@ public class WorldListItem extends Control {
             return;
         }
         Controllers.navigate(new DatapackListPage(world.getWorldName(), world.getFile()));
+    }
+
+    public void showInfo() {
+        try {
+            Controllers.navigate(new WorldInfoPage(world));
+        } catch (Exception e) {
+            // TODO
+        }
     }
 }

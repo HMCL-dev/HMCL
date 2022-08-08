@@ -19,11 +19,9 @@ package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.file.*;
@@ -434,6 +432,23 @@ public final class FileUtils {
         Path tmpFile = tmpSaveFile(file);
         try (BufferedWriter writer = Files.newBufferedWriter(tmpFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
             writer.write(content);
+        }
+
+        try {
+            if (Files.exists(file) && Files.getAttribute(file, "dos:hidden") == Boolean.TRUE) {
+                Files.setAttribute(tmpFile, "dos:hidden", true);
+            }
+        } catch (Throwable ignored) {
+        }
+
+        Files.move(tmpFile, file, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    public static void saveSafely(Path file, ExceptionalConsumer<? super OutputStream, IOException> action) throws IOException {
+        Path tmpFile = tmpSaveFile(file);
+
+        try (OutputStream os = Files.newOutputStream(tmpFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
+            action.accept(os);
         }
 
         try {

@@ -235,6 +235,15 @@ public final class Lang {
         }
     }
 
+    public static Double toDoubleOrNull(Object string) {
+        try {
+            if (string == null) return null;
+            return Double.parseDouble(string.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     /**
      * Find the first non-null reference in given list.
      * @param t nullable references list.
