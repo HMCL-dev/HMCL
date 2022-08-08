@@ -38,7 +38,7 @@ public final class LiteModMetadata {
     private final String mcversion;
     private final String revision;
     private final String author;
-    private final String classTransformerClasses;
+    private final String[] classTransformerClasses;
     private final String description;
     private final String modpackName;
     private final String modpackVersion;
@@ -46,10 +46,10 @@ public final class LiteModMetadata {
     private final String updateURI;
 
     public LiteModMetadata() {
-        this("", "", "", "", "", "", "", "", "", "", "");
+        this("", "", "", "", "", new String[]{""}, "", "", "", "", "");
     }
 
-    public LiteModMetadata(String name, String version, String mcversion, String revision, String author, String classTransformerClasses, String description, String modpackName, String modpackVersion, String checkUpdateUrl, String updateURI) {
+    public LiteModMetadata(String name, String version, String mcversion, String revision, String author, String[] classTransformerClasses, String description, String modpackName, String modpackVersion, String checkUpdateUrl, String updateURI) {
         this.name = name;
         this.version = version;
         this.mcversion = mcversion;
@@ -83,7 +83,7 @@ public final class LiteModMetadata {
         return author;
     }
 
-    public String getClassTransformerClasses() {
+    public String[] getClassTransformerClasses() {
         return classTransformerClasses;
     }
 
