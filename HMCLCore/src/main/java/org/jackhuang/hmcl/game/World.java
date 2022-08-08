@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.io.Zipper;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -75,6 +74,10 @@ public class World {
 
     public String getWorldName() {
         return worldName;
+    }
+
+    public Path getLevelDatFile() {
+        return file.resolve("level.dat");
     }
 
     public long getLastPlayed() {
@@ -142,14 +145,10 @@ public class World {
             throw new IOException("Not a valid world directory");
 
         // Change the name recorded in level.dat
-        Path levelDat = file.resolve("level.dat");
-        CompoundTag nbt = parseLevelDat(levelDat);
+        CompoundTag nbt = readLevelDat();
         CompoundTag data = nbt.get("Data");
         data.put(new StringTag("LevelName", newName));
-
-        try (OutputStream os = new GZIPOutputStream(Files.newOutputStream(levelDat))) {
-            NBTIO.writeTag(os, nbt);
-        }
+        writeLevelDat(nbt);
 
         // then change the folder's name
         Files.move(file, file.resolveSibling(newName));
@@ -203,8 +202,26 @@ public class World {
         }
     }
 
+    public CompoundTag readLevelDat() throws IOException {
+        if (!Files.isDirectory(file))
+            throw new IOException("Not a valid world directory");
+
+        return parseLevelDat(getLevelDatFile());
+    }
+
+    public void writeLevelDat(CompoundTag nbt) throws IOException {
+        if (!Files.isDirectory(file))
+            throw new IOException("Not a valid world directory");
+
+        FileUtils.saveSafely(getLevelDatFile(), os -> {
+            try (OutputStream gos = new GZIPOutputStream(os)) {
+                NBTIO.writeTag(gos, nbt);
+            }
+        });
+    }
+
     private static CompoundTag parseLevelDat(Path path) throws IOException {
-        try (InputStream is = new BufferedInputStream(new GZIPInputStream(Files.newInputStream(path)))) {
+        try (InputStream is = new GZIPInputStream(Files.newInputStream(path))) {
             Tag nbt = NBTIO.readTag(is);
             if (nbt instanceof CompoundTag)
                 return (CompoundTag) nbt;
