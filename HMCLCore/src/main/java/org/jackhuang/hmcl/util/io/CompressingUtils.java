@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
@@ -72,7 +73,7 @@ public final class CompressingUtils {
             int clen = (int)(ba.length * cd.maxCharsPerByte());
             if (clen == 0) continue;
             if (clen <= cb.capacity())
-                cb.clear();
+                ((Buffer) cb).clear(); // cast to prevent "java.lang.NoSuchMethodError: java.nio.CharBuffer.clear()Ljava/nio/CharBuffer;" when compiling with Java 9+
             else
                 cb = CharBuffer.allocate(clen);
 
