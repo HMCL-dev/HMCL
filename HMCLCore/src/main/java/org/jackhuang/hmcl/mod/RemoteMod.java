@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.util.io.NetworkUtils.encodeLocation;
+
 public class RemoteMod {
     private final String slug;
     private final String author;
@@ -199,7 +201,7 @@ public class RemoteMod {
         }
 
         public String getUrl() {
-            return url;
+            return encodeLocation (url);
         }
 
         public String getFilename() {

@@ -4,7 +4,7 @@
 ![Downloads](https://img.shields.io/github/downloads/huanghongxun/HMCL/total)
 ![Stars](https://img.shields.io/github/stars/huanghongxun/HMCL)
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
-[![KOOK](https://img.shields.io/badge/KOOK-HMCL-brightgreen)](https://kaihei.co/Kx7n3t)
+[![KOOK](https://img.shields.io/badge/KOOK-HMCL-brightgreen)](https://kook.top/Kx7n3t)
 
 ## Introduction
 
