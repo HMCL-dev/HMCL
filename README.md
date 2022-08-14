@@ -1,11 +1,14 @@
 # ⛏ Hello Minecraft! Launcher 💎
-[![Build Status](https://ci.huangyuhui.net/job/HMCL/badge/icon?.svg)](https://ci.huangyuhui.net/job/HMCL)
 
-Join chat! ![Discord](https://img.shields.io/discord/879708313435123742?style=plastic) [Discord](https://discord.gg/jVvC7HfM6U)  [KaiHeiLa](https://kaihei.co/Kx7n3t)
+[![Build Status](https://ci.huangyuhui.net/job/HMCL/badge/icon?.svg)](https://ci.huangyuhui.net/job/HMCL)
+![Downloads](https://img.shields.io/github/downloads/huanghongxun/HMCL/total)
+![Stars](https://img.shields.io/github/stars/huanghongxun/HMCL)
+[![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
+[![KOOK](https://img.shields.io/badge/KOOK-HMCL-brightgreen)](https://kook.top/Kx7n3t)
 
 ## Introduction
 
-HMCL is a Minecraft launcher which supports Mod management, game customizing, auto installing(Forge, LiteLoader and OptiFine), modpack creating, UI customization, and more.
+HMCL is a Minecraft launcher which supports Mod management, game customizing, auto installing(Forge, Fabric, LiteLoader and OptiFine), modpack creating, UI customization, and more.
 
 No plugin API is provided.
 
