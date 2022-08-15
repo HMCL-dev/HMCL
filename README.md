@@ -5,7 +5,7 @@
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
 [![KOOK](https://img.shields.io/badge/KOOK-HMCL-brightgreen)](https://kook.top/Kx7n3t)
 
-[English](https://github.com/huanghongxun/HMCL/blob/javafx/README.md) | [中文](https://github.com/huanghongxun/HMCL/blob/javafx/README_cn.md)
+English | [中文](https://github.com/huanghongxun/HMCL/blob/javafx/README_cn.md)
 
 ## Introduction
 HMCL is a Minecraft launcher which supports Mod Management, Game Customizing, Auto Installing (Forge, Fabric, LiteLoader and OptiFine), Modpack Creating, UI Customization, and more.

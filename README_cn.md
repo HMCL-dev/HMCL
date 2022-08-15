@@ -5,7 +5,7 @@
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
 [![KOOK](https://img.shields.io/badge/KOOK-HMCL-brightgreen)](https://kook.top/Kx7n3t)
 
-[English](https://github.com/huanghongxun/HMCL/blob/javafx/README.md) | [中文](https://github.com/huanghongxun/HMCL/blob/javafx/README_cn.md)
+[English](https://github.com/huanghongxun/HMCL/blob/javafx/README.md) | 中文
 
 ## 简介
 HMCL 是一款 Minecraft 启动器, 支持 Mod 管理, 游戏自定义, 游戏自动安装 (Forge, Fabric, LiteLoader 与 OptiFine), 模组包创建, 界面自定义等功能.
