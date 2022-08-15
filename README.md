@@ -35,7 +35,7 @@ If you want to submit a pull request, there are some requirements:
 * Compiler: Java 1.8
 * Do NOT modify `gradle` files
 
-## Compilation
+### Compilation
 Simply execute the following command in project root directory:
 
 ```bash
