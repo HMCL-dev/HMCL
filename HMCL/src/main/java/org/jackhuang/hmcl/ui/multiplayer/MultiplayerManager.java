@@ -57,10 +57,11 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 
 /**
  * Cato Management.
+ CATO_DOWNLOAD_URL Link is QQ：2573874409 
  */
 public final class MultiplayerManager {
-    static final String CATO_VERSION = "1.2.2";
-    private static final String CATO_DOWNLOAD_URL = "https://gitcode.net/to/cato/-/raw/master/client/";
+    static final String CATO_VERSION = "ultimate-cato";
+    private static final String CATO_DOWNLOAD_URL = "https://gitcode.net/chearlai/cato/-/raw/hmcl/client/";
     private static final String CATO_HASH_URL = CATO_DOWNLOAD_URL + "cato-all-files.sha1";
     private static final String CATO_PATH = getCatoPath();
     public static final int CATO_AGREEMENT_VERSION = 2;
@@ -332,7 +333,7 @@ public final class MultiplayerManager {
     public static String getCatoPath() {
         String name = getCatoFileName();
         if (StringUtils.isBlank(name)) return "";
-        return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/" + name;
+        return "cato/ultimate-cato/" + MultiplayerManager.CATO_VERSION + "/" + name;
     }
 
     public static class CatoSession extends ManagedProcess {
