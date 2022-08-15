@@ -333,7 +333,7 @@ public final class MultiplayerManager {
     public static String getCatoPath() {
         String name = getCatoFileName();
         if (StringUtils.isBlank(name)) return "";
-        return "cato/ultimate-cato/" + MultiplayerManager.CATO_VERSION + "/" + name;
+        return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/" + name;
     }
 
     public static class CatoSession extends ManagedProcess {
