@@ -46,7 +46,7 @@ Make sure you have Java installed with JavaFX 8 at least. Liberica Full JDK 8 or
 
 ## JVM Options (for debugging)
 | Parameter                                    | Description                                                  |
-|----------------------------------------------|--------------------------------------------------------------|
+| -------------------------------------------- | ------------------------------------------------------------ |
 | `-Dhmcl.self_integrity_check.disable=true`   | Bypass the self integrity check when checking for update.    |
 | `-Dhmcl.bmclapi.override=<version>`          | Override API Root of BMCLAPI download provider, defaults to `https://bmclapi2.bangbang93.com`. e.g. `https://download.mcbbs.net`. |
 | `-Dhmcl.font.override=<font family>`         | Override font family.                                        |
