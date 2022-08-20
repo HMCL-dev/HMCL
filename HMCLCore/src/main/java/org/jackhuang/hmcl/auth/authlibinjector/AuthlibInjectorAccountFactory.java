@@ -33,8 +33,8 @@ import java.util.function.Function;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjectorAccount> {
-    private AuthlibInjectorArtifactProvider downloader;
-    private Function<String, AuthlibInjectorServer> serverLookup;
+    private final AuthlibInjectorArtifactProvider downloader;
+    private final Function<String, AuthlibInjectorServer> serverLookup;
 
     /**
      * @param serverLookup a function that looks up {@link AuthlibInjectorServer} by url
@@ -64,14 +64,17 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
     public AuthlibInjectorAccount fromStorage(Map<Object, Object> storage) {
         Objects.requireNonNull(storage);
 
+        String apiRoot = tryCast(storage.get("serverBaseURL"), String.class)
+                .orElseThrow(() -> new IllegalArgumentException("storage does not have API root."));
+        AuthlibInjectorServer server = serverLookup.apply(apiRoot);
+        return fromStorage(storage, downloader, server);
+    }
+
+    static AuthlibInjectorAccount fromStorage(Map<Object, Object> storage, AuthlibInjectorArtifactProvider downloader, AuthlibInjectorServer server) {
         YggdrasilSession session = YggdrasilSession.fromStorage(storage);
 
         String username = tryCast(storage.get("username"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have username"));
-        String apiRoot = tryCast(storage.get("serverBaseURL"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("storage does not have API root."));
-
-        AuthlibInjectorServer server = serverLookup.apply(apiRoot);
 
         tryCast(storage.get("profileProperties"), Map.class).ifPresent(
                 it -> {
