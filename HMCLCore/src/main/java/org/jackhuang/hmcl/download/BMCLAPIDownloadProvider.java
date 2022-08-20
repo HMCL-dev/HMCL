@@ -33,6 +33,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
     private final GameVersionList game;
     private final FabricVersionList fabric;
     private final FabricAPIVersionList fabricApi;
+    private final QuiltVersionList quilt;
     private final ForgeBMCLVersionList forge;
     private final LiteLoaderBMCLVersionList liteLoader;
     private final OptiFineBMCLVersionList optifine;
@@ -42,6 +43,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
         this.game = new GameVersionList(this);
         this.fabric = new FabricVersionList(this);
         this.fabricApi = new FabricAPIVersionList(this);
+        this.quilt = new QuiltVersionList(this);
         this.forge = new ForgeBMCLVersionList(apiRoot);
         this.liteLoader = new LiteLoaderBMCLVersionList(this);
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
@@ -72,6 +74,8 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
                 return fabricApi;
             case "forge":
                 return forge;
+            case "quilt":
+                return quilt;
             case "liteloader":
                 return liteLoader;
             case "optifine":
