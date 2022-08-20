@@ -129,7 +129,7 @@ public final class LauncherHelper {
         TaskExecutor executor = checkGameState(profile, setting, version.get())
                 .thenComposeAsync(javaVersion -> {
                     javaVersionRef.set(Objects.requireNonNull(javaVersion));
-                    version.set(NativePatcher.patchNative(version.get(), javaVersion, setting));
+                    version.set(NativePatcher.patchNative(version.get(), gameVersion.orElse(null), javaVersion, setting));
                     if (setting.isNotCheckGame())
                         return null;
                     return Task.allOf(

@@ -845,7 +845,7 @@
     "com.mojang:text2speech:1.12.4:natives": null,
     "com.mojang:text2speech:1.13.9:natives-linux": null
   },
-  "linux-loongarch64": {
+  "linux-loongarch64_ow": {
     "org.lwjgl.lwjgl:lwjgl-platform:2.9.0:natives": {
       "name": "org.glavo.hmcl:lwjgl2-natives:2.9.3-rc1",
       "downloads": {
@@ -909,6 +909,13 @@
         "linux": "linux-loongarch64"
       }
     },
+    "org.lwjgl:lwjgl:3.3.1:natives-linux": null,
+    "org.lwjgl:lwjgl-jemalloc:3.3.1:natives-linux": null,
+    "org.lwjgl:lwjgl-openal:3.3.1:natives-linux": null,
+    "org.lwjgl:lwjgl-opengl:3.3.1:natives-linux": null,
+    "org.lwjgl:lwjgl-glfw:3.3.1:natives-linux": null,
+    "org.lwjgl:lwjgl-stb:3.3.1:natives-linux": null,
+    "org.lwjgl:lwjgl-tinyfd:3.3.1:natives-linux": null,
     "net.java.jinput:jinput-platform:2.0.5:natives": null,
     "com.mojang:text2speech:1.10.3:natives": null,
     "com.mojang:text2speech:1.11.3:natives": null,

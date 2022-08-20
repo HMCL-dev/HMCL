@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Locale;
@@ -46,6 +48,7 @@ public enum Architecture {
     S390X(BIT_64, "S390x"),
     RISCV(BIT_64, "RISC-V"),
     LOONGARCH32(BIT_32, "LoongArch32"),
+    LOONGARCH64_OW(BIT_64, "LoongArch64 (old world)"),
     LOONGARCH64(BIT_64, "LoongArch64"),
     UNKNOWN(Bits.UNKNOWN, "Unknown");
 
@@ -172,8 +175,11 @@ public enum Architecture {
                 return S390X;
             case "loongarch32":
                 return LOONGARCH32;
-            case "loongarch64":
+            case "loongarch64": {
+                if (VersionNumber.VERSION_COMPARATOR.compare(System.getProperty("os.version"), "5.19") < 0)
+                    return LOONGARCH64_OW;
                 return LOONGARCH64;
+            }
             default:
                 if (value.startsWith("armv7")) {
                     return ARM32;

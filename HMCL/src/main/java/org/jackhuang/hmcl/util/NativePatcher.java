@@ -25,16 +25,35 @@ public final class NativePatcher {
 
     private static final Library NONEXISTENT_LIBRARY = new Library(null);
 
-    public static Version patchNative(Version version, JavaVersion javaVersion, VersionSetting settings) {
+    public static Version patchNative(Version version, String gameVersion, JavaVersion javaVersion, VersionSetting settings) {
+        if (settings.isNotPatchNatives())
+            return version;
+
+        if (settings.getNativesDirType() == NativesDirectoryType.CUSTOM) {
+            if (gameVersion != null && VersionNumber.VERSION_COMPARATOR.compare(gameVersion, "1.19") < 0)
+                return version;
+
+            ArrayList<Library> newLibraries = new ArrayList<>();
+            for (Library library : version.getLibraries()) {
+                if (!library.appliesToCurrentEnvironment())
+                    continue;
+
+                if (library.getClassifier() == null
+                        || !library.getArtifactId().startsWith("lwjgl")
+                        || !library.getClassifier().startsWith("natives")) {
+                    newLibraries.add(library);
+                }
+            }
+            return version.setLibraries(newLibraries);
+        }
+
         if (javaVersion.getArchitecture().isX86())
             return version;
 
         if (javaVersion.getPlatform().getOperatingSystem() == OperatingSystem.OSX
                 && javaVersion.getArchitecture() == Architecture.ARM64
-                && VersionNumber.VERSION_COMPARATOR.compare(version.getVersion(), "1.19") >= 0)
-            return version;
-
-        if (settings.isNotPatchNatives() || settings.getNativesDirType() != NativesDirectoryType.VERSION_FOLDER)
+                && gameVersion != null
+                && VersionNumber.VERSION_COMPARATOR.compare(gameVersion, "1.19") >= 0)
             return version;
 
         Map<String, Library> replacements = Hole.nativeReplacement.get(javaVersion.getPlatform().toString());
@@ -45,9 +64,8 @@ public final class NativePatcher {
 
         ArrayList<Library> newLibraries = new ArrayList<>();
         for (Library library : version.getLibraries()) {
-            if (!library.appliesToCurrentEnvironment()) {
+            if (!library.appliesToCurrentEnvironment())
                 continue;
-            }
 
             if (library.isNative()) {
                 Library replacement = replacements.getOrDefault(library.getName() + ":natives", NONEXISTENT_LIBRARY);
