@@ -85,13 +85,13 @@ public final class QuiltInstallTask extends Task<Version> {
 
     @Override
     public void execute() {
-        setResult(getPatch(JsonUtils.GSON.fromJson(launchMetaTask.getResult(), FabricInfo.class), remote.getGameVersion(), remote.getSelfVersion()));
+        setResult(getPatch(JsonUtils.GSON.fromJson(launchMetaTask.getResult(), QuiltInfo.class), remote.getGameVersion(), remote.getSelfVersion()));
 
         dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
     }
 
-    private Version getPatch(FabricInfo fabricInfo, String gameVersion, String loaderVersion) {
-        JsonObject launcherMeta = fabricInfo.launcherMeta;
+    private Version getPatch(QuiltInfo quiltInfo, String gameVersion, String loaderVersion) {
+        JsonObject launcherMeta = quiltInfo.launcherMeta;
         Arguments arguments = new Arguments();
 
         String mainClass;
@@ -117,25 +117,44 @@ public final class QuiltInstallTask extends Task<Version> {
             }
         }
 
-        libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.intermediary.maven), "https://maven.fabricmc.net/", null));
-        libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.loader.maven), "https://maven.fabricmc.net/", null));
+        libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.hashed.maven), getMavenRepositoryByGroup(quiltInfo.hashed.maven), null));
+        libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.intermediary.maven), getMavenRepositoryByGroup(quiltInfo.intermediary.maven), null));
+        libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.loader.maven), getMavenRepositoryByGroup(quiltInfo.loader.maven), null));
 
-        return new Version(LibraryAnalyzer.LibraryType.FABRIC.getPatchId(), loaderVersion, 30000, arguments, mainClass, libraries);
+        return new Version(LibraryAnalyzer.LibraryType.QUILT.getPatchId(), loaderVersion, 30000, arguments, mainClass, libraries);
     }
 
-    public static class FabricInfo {
+    private static String getMavenRepositoryByGroup(String maven) {
+        Artifact artifact = Artifact.fromDescriptor(maven);
+        switch (artifact.getGroup()) {
+            case "net.fabricmc":
+                return "https://maven.fabricmc.net/";
+            case "org.quiltmc":
+                return "https://maven.quiltmc.org/repository/release/";
+            default:
+                return "https://maven.fabricmc.net/";
+        }
+    }
+
+    public static class QuiltInfo {
         private final LoaderInfo loader;
         private final IntermediaryInfo hashed;
+        private final IntermediaryInfo intermediary;
         private final JsonObject launcherMeta;
 
-        public FabricInfo(LoaderInfo loader, IntermediaryInfo intermediary, JsonObject launcherMeta) {
+        public QuiltInfo(LoaderInfo loader, IntermediaryInfo hashed, IntermediaryInfo intermediary, JsonObject launcherMeta) {
             this.loader = loader;
+            this.hashed = hashed;
             this.intermediary = intermediary;
             this.launcherMeta = launcherMeta;
         }
 
         public LoaderInfo getLoader() {
             return loader;
+        }
+
+        public IntermediaryInfo getHashed() {
+            return hashed;
         }
 
         public IntermediaryInfo getIntermediary() {

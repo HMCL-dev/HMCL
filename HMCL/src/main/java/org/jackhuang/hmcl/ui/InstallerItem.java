@@ -83,6 +83,10 @@ public class InstallerItem extends Control {
             case "optifine":
                 imageUrl = "/assets/img/command.png";
                 break;
+            case "quilt":
+            case "quilt-api":
+                imageUrl = "/assets/img/quilt.png";
+                break;
             default:
                 imageUrl = null;
                 break;
@@ -111,40 +115,63 @@ public class InstallerItem extends Control {
         public final InstallerItem forge = new InstallerItem(FORGE);
         public final InstallerItem liteLoader = new InstallerItem(LITELOADER);
         public final InstallerItem optiFine = new InstallerItem(OPTIFINE);
+        public final InstallerItem quilt = new InstallerItem(QUILT);
+        public final InstallerItem quiltApi = new InstallerItem(QUILT_API);
 
         public InstallerItemGroup() {
             forge.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
                 if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
+                if (quilt.libraryVersion.get() != null) return QUILT.getPatchId();
                 return null;
-            }, fabric.libraryVersion));
+            }, fabric.libraryVersion, quilt.libraryVersion));
 
             liteLoader.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
                 if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
+                if (quilt.libraryVersion.get() != null) return QUILT.getPatchId();
                 return null;
-            }, fabric.libraryVersion));
+            }, fabric.libraryVersion, quilt.libraryVersion));
 
             optiFine.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
                 if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
+                if (quilt.libraryVersion.get() != null) return QUILT.getPatchId();
                 return null;
-            }, fabric.libraryVersion));
+            }, fabric.libraryVersion, quilt.libraryVersion));
 
             for (InstallerItem fabric : new InstallerItem[]{fabric, fabricApi}) {
                 fabric.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
+                    if (forge.libraryVersion.get() != null) return FORGE.getPatchId();
                     if (liteLoader.libraryVersion.get() != null) return LITELOADER.getPatchId();
                     if (optiFine.libraryVersion.get() != null) return OPTIFINE.getPatchId();
-                    if (forge.libraryVersion.get() != null) return FORGE.getPatchId();
+                    if (quilt.libraryVersion.get() != null) return QUILT.getPatchId();
+                    if (quiltApi.libraryVersion.get() != null) return QUILT_API.getPatchId();
                     return null;
-                }, optiFine.libraryVersion, forge.libraryVersion));
+                }, forge.libraryVersion, liteLoader.libraryVersion, optiFine.libraryVersion, quilt.libraryVersion, quiltApi.libraryVersion));
             }
 
             fabricApi.dependencyName.bind(Bindings.createStringBinding(() -> {
                 if (fabric.libraryVersion.get() == null) return FABRIC.getPatchId();
                 else return null;
             }, fabric.libraryVersion));
+
+            for (InstallerItem quilt : new InstallerItem[]{quilt, quiltApi}) {
+                quilt.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
+                    if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
+                    if (fabricApi.libraryVersion.get() != null) return FABRIC_API.getPatchId();
+                    if (forge.libraryVersion.get() != null) return FORGE.getPatchId();
+                    if (liteLoader.libraryVersion.get() != null) return LITELOADER.getPatchId();
+                    if (optiFine.libraryVersion.get() != null) return OPTIFINE.getPatchId();
+                    return null;
+                }, fabric.libraryVersion, fabricApi.libraryVersion, forge.libraryVersion, liteLoader.libraryVersion, optiFine.libraryVersion));
+            }
+
+            quiltApi.dependencyName.bind(Bindings.createStringBinding(() -> {
+                if (quilt.libraryVersion.get() == null) return QUILT.getPatchId();
+                else return null;
+            }, quilt.libraryVersion));
         }
 
         public InstallerItem[] getLibraries() {
-            return new InstallerItem[]{game, forge, liteLoader, optiFine, fabric, fabricApi};
+            return new InstallerItem[]{game, forge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi};
         }
     }
 

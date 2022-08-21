@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2022  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,13 +20,18 @@ package org.jackhuang.hmcl.download.quilt;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
+import org.jackhuang.hmcl.download.fabric.FabricAPIInstallTask;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.Task;
 
+import java.util.Date;
 import java.util.List;
 
-public class QuiltRemoteVersion extends RemoteVersion {
+public class QuiltAPIRemoteVersion extends RemoteVersion {
+    private final String fullVersion;
+    private final RemoteMod.Version version;
+
     /**
      * Constructor.
      *
@@ -34,12 +39,30 @@ public class QuiltRemoteVersion extends RemoteVersion {
      * @param selfVersion the version string of the remote version.
      * @param urls        the installer or universal jar original URL.
      */
-    QuiltRemoteVersion(String gameVersion, String selfVersion, List<String> urls) {
-        super(LibraryAnalyzer.LibraryType.QUILT.getPatchId(), gameVersion, selfVersion, null, urls);
+    QuiltAPIRemoteVersion(String gameVersion, String selfVersion, String fullVersion, Date datePublished, RemoteMod.Version version, List<String> urls) {
+        super(LibraryAnalyzer.LibraryType.QUILT_API.getPatchId(), gameVersion, selfVersion, datePublished, urls);
+
+        this.fullVersion = fullVersion;
+        this.version = version;
+    }
+
+    @Override
+    public String getFullVersion() {
+        return fullVersion;
+    }
+
+    public RemoteMod.Version getVersion() {
+        return version;
     }
 
     @Override
     public Task<Version> getInstallTask(DefaultDependencyManager dependencyManager, Version baseVersion) {
-        return new QuiltInstallTask(dependencyManager, baseVersion, this);
+        return new QuiltAPIInstallTask(dependencyManager, baseVersion, this);
+    }
+
+    @Override
+    public int compareTo(RemoteVersion o) {
+        if (!(o instanceof QuiltAPIRemoteVersion)) return 0;
+        return -this.getReleaseDate().compareTo(o.getReleaseDate());
     }
 }

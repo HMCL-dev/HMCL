@@ -23,6 +23,8 @@ import org.jackhuang.hmcl.download.forge.ForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderBMCLVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
+import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
+import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
 
 /**
  *
@@ -33,20 +35,22 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
     private final GameVersionList game;
     private final FabricVersionList fabric;
     private final FabricAPIVersionList fabricApi;
-    private final QuiltVersionList quilt;
     private final ForgeBMCLVersionList forge;
     private final LiteLoaderBMCLVersionList liteLoader;
     private final OptiFineBMCLVersionList optifine;
+    private final QuiltVersionList quilt;
+    private final QuiltAPIVersionList quiltApi;
 
     public BMCLAPIDownloadProvider(String apiRoot) {
         this.apiRoot = apiRoot;
         this.game = new GameVersionList(this);
         this.fabric = new FabricVersionList(this);
         this.fabricApi = new FabricAPIVersionList(this);
-        this.quilt = new QuiltVersionList(this);
         this.forge = new ForgeBMCLVersionList(apiRoot);
         this.liteLoader = new LiteLoaderBMCLVersionList(this);
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
+        this.quilt = new QuiltVersionList(this);
+        this.quiltApi = new QuiltAPIVersionList(this);
     }
 
     public String getApiRoot() {
@@ -74,12 +78,14 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
                 return fabricApi;
             case "forge":
                 return forge;
-            case "quilt":
-                return quilt;
             case "liteloader":
                 return liteLoader;
             case "optifine":
                 return optifine;
+            case "quilt":
+                return quilt;
+            case "quilt-api":
+                return quiltApi;
             default:
                 throw new IllegalArgumentException("Unrecognized version list id: " + id);
         }
