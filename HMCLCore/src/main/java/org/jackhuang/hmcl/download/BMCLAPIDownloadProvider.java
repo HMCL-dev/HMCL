@@ -106,7 +106,8 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
                 .replace("http://dl.liteloader.com/versions", apiRoot + "/maven")
                 .replace("https://meta.fabricmc.net", apiRoot + "/fabric-meta")
                 .replace("https://maven.fabricmc.net", apiRoot + "/maven")
-                .replace("https://authlib-injector.yushi.moe", apiRoot + "/mirrors/authlib-injector");
+                .replace("https://authlib-injector.yushi.moe", apiRoot + "/mirrors/authlib-injector")
+                .replace("https://repo1.maven.org/maven2", "https://maven.aliyun.com/repository/central");
     }
 
     @Override

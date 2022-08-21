@@ -26,9 +26,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -60,21 +58,37 @@ final class ExitWaiter implements Runnable {
             for (Thread thread : joins)
                 thread.join();
 
-            List<String> errorLines = process.getLines().stream()
-                    .filter(Log4jLevel::guessLogLineError).collect(Collectors.toList());
-            ProcessListener.ExitType exitType;
+            ProcessListener.ExitType exitType = null;
+            for (String line : process.getLines()) {
+                Log4jLevel level = Log4jLevel.guessLevel(line);
+                if (Log4jLevel.isError(level)) {
+                    // LaunchWrapper will catch the exception logged and will exit normally.
+                    if (exitCode != 0 && StringUtils.containsOne(line,
+                            "Could not create the Java Virtual Machine.",
+                            "Error occurred during initialization of VM",
+                            "A fatal exception has occurred. Program will exit.")) {
+                        EventBus.EVENT_BUS.fireEvent(new JVMLaunchFailedEvent(this, process));
+                        exitType = ProcessListener.ExitType.JVM_ERROR;
+                        break;
+                    }
 
-            // LaunchWrapper will catch the exception logged and will exit normally.
-            if (exitCode != 0 && StringUtils.containsOne(errorLines,
-                    "Could not create the Java Virtual Machine.",
-                    "Error occurred during initialization of VM",
-                    "A fatal exception has occurred. Program will exit.")) {
-                EventBus.EVENT_BUS.fireEvent(new JVMLaunchFailedEvent(this, process));
-                exitType = ProcessListener.ExitType.JVM_ERROR;
-            } else if (exitCode != 0 || StringUtils.containsOne(errorLines, "Unable to launch")) {
-                EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(this, process));
-                exitType = ProcessListener.ExitType.APPLICATION_ERROR;
-            } else
+                    if (exitCode != 0 || StringUtils.containsOne(line, "Unable to launch")) {
+                        EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(this, process));
+                        exitType = ProcessListener.ExitType.APPLICATION_ERROR;
+                        break;
+                    }
+                }
+
+                if (level == Log4jLevel.WARN) {
+                    if (StringUtils.containsOne(line, "Failed to create window")) {
+                        EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(this, process));
+                        exitType = ProcessListener.ExitType.APPLICATION_ERROR;
+                        break;
+                    }
+                }
+            }
+
+            if (exitType == null)
                 exitType = ProcessListener.ExitType.NORMAL;
 
             EventBus.EVENT_BUS.fireEvent(new ProcessStoppedEvent(this, process));

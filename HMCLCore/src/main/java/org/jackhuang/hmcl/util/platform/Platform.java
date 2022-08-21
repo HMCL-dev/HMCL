@@ -14,6 +14,21 @@ public final class Platform {
     public static final Platform CURRENT_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.CURRENT_ARCH);
     public static final Platform SYSTEM_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.SYSTEM_ARCH);
 
+    public static boolean isCompatibleWithX86Java() {
+        if (Architecture.CURRENT_ARCH.isX86())
+            return true;
+
+        // Rosetta 2 is available for Mac computers with Apple silicon
+        if (CURRENT_PLATFORM == OSX_ARM64)
+            return true;
+
+        // Windows on ARM introduced translation support for x86-64 after 10.0.21277.
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277)
+            return true;
+
+        return false;
+    }
+
     private final OperatingSystem os;
     private final Architecture arch;
 
