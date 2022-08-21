@@ -81,6 +81,7 @@ public final class Accounts {
     public static final YggdrasilAccountFactory FACTORY_MOJANG = YggdrasilAccountFactory.MOJANG;
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
     public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(OAUTH_CALLBACK));
+    public static final BoundAuthlibInjectorAccountFactory FACTORY_LITTLE_SKIN = getAccountFactoryByAuthlibInjectorServer(new AuthlibInjectorServer("https://littleskin.cn/api/yggdrasil/"));
     public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MOJANG, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
 
     // ==== login type / account factory mapping ====
@@ -96,13 +97,23 @@ public final class Accounts {
     }
 
     public static String getLoginType(AccountFactory<?> factory) {
-        return Optional.ofNullable(factory2type.get(factory))
-                .orElseThrow(() -> new IllegalArgumentException("Unrecognized account factory"));
+        String type = factory2type.get(factory);
+        if (type != null) return type;
+
+        if (factory instanceof BoundAuthlibInjectorAccountFactory) {
+            return factory2type.get(FACTORY_AUTHLIB_INJECTOR);
+        }
+
+        throw new IllegalArgumentException("Unrecognized account factory");
     }
 
     public static AccountFactory<?> getAccountFactory(String loginType) {
         return Optional.ofNullable(type2factory.get(loginType))
                 .orElseThrow(() -> new IllegalArgumentException("Unrecognized login type"));
+    }
+
+    public static BoundAuthlibInjectorAccountFactory getAccountFactoryByAuthlibInjectorServer(AuthlibInjectorServer server) {
+        return new BoundAuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, server);
     }
     // ====
 
@@ -119,10 +130,10 @@ public final class Accounts {
             throw new IllegalArgumentException("Failed to determine account type: " + account);
     }
 
-    private static ObservableList<Account> accounts = observableArrayList(account -> new Observable[] { account });
-    private static ReadOnlyListWrapper<Account> accountsWrapper = new ReadOnlyListWrapper<>(Accounts.class, "accounts", accounts);
+    private static final ObservableList<Account> accounts = observableArrayList(account -> new Observable[] { account });
+    private static final ReadOnlyListWrapper<Account> accountsWrapper = new ReadOnlyListWrapper<>(Accounts.class, "accounts", accounts);
 
-    private static ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<Account>(Accounts.class, "selectedAccount") {
+    private static final ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<Account>(Accounts.class, "selectedAccount") {
         {
             accounts.addListener(onInvalidating(this::invalidated));
         }
@@ -231,6 +242,14 @@ public final class Accounts {
             triggerAuthlibInjectorUpdateCheck();
         }
 
+        Schedulers.io().execute(() -> {
+            try {
+                FACTORY_LITTLE_SKIN.getServer().fetchMetadataResponse();
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to fetch authlib-injector server metdata: " + FACTORY_LITTLE_SKIN.getServer(), e);
+            }
+        });
+
         for (AuthlibInjectorServer server : config().getAuthlibInjectorServers()) {
             if (selected instanceof AuthlibInjectorAccount && ((AuthlibInjectorAccount) selected).getServer() == server)
                 continue;
@@ -313,7 +332,7 @@ public final class Accounts {
     // ====
 
     // ==== Login type name i18n ===
-    private static Map<AccountFactory<?>, String> unlocalizedLoginTypeNames = mapOf(
+    private static final Map<AccountFactory<?>, String> unlocalizedLoginTypeNames = mapOf(
             pair(Accounts.FACTORY_OFFLINE, "account.methods.offline"),
             pair(Accounts.FACTORY_MOJANG, "account.methods.yggdrasil"),
             pair(Accounts.FACTORY_AUTHLIB_INJECTOR, "account.methods.authlib_injector"),

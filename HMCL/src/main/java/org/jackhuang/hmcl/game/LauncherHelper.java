@@ -606,21 +606,14 @@ public final class LauncherHelper {
     private static CompletableFuture<JavaVersion> downloadJavaImpl(GameJavaVersion javaVersion, DownloadProvider downloadProvider) {
         CompletableFuture<JavaVersion> future = new CompletableFuture<>();
 
-        TaskExecutorDialogPane javaDownloadingPane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
-
-        TaskExecutor executor = JavaRepository.downloadJava(javaVersion, downloadProvider)
+        Controllers.taskDialog(JavaRepository.downloadJava(javaVersion, downloadProvider)
                 .whenComplete(Schedulers.javafx(), (downloadedJava, exception) -> {
                     if (exception != null) {
                         future.completeExceptionally(exception);
                     } else {
                         future.complete(downloadedJava);
                     }
-                })
-                .executor(false);
-
-        javaDownloadingPane.setExecutor(executor, true);
-        Controllers.dialog(javaDownloadingPane);
-        executor.start();
+                }), i18n("download.java"), TaskCancellationAction.NORMAL);
 
         return future;
     }

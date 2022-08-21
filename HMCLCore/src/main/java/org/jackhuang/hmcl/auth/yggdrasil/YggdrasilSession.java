@@ -78,6 +78,8 @@ public class YggdrasilSession {
     }
 
     public static YggdrasilSession fromStorage(Map<?, ?> storage) {
+        Objects.requireNonNull(storage);
+
         UUID uuid = tryCast(storage.get("uuid"), String.class).map(UUIDTypeAdapter::fromString).orElseThrow(() -> new IllegalArgumentException("uuid is missing"));
         String name = tryCast(storage.get("displayName"), String.class).orElseThrow(() -> new IllegalArgumentException("displayName is missing"));
         String clientToken = tryCast(storage.get("clientToken"), String.class).orElseThrow(() -> new IllegalArgumentException("clientToken is missing"));

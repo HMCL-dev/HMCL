@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccountFactory;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.authlibinjector.BoundAuthlibInjectorAccountFactory;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccountFactory;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
@@ -194,9 +195,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         setPrefWidth(560);
     }
 
-    public CreateAccountPane(AuthlibInjectorServer authserver) {
-        this(Accounts.FACTORY_AUTHLIB_INJECTOR);
-        ((AccountDetailsInputPane) detailsPane).selectAuthServer(authserver);
+    public CreateAccountPane(AuthlibInjectorServer authServer) {
+        this(Accounts.getAccountFactoryByAuthlibInjectorServer(authServer));
     }
 
     private void onAccept() {
@@ -338,7 +338,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private static class AccountDetailsInputPane extends GridPane {
 
         // ==== authlib-injector hyperlinks ====
-        private static final String[] ALLOWED_LINKS = { "register" };
+        private static final String[] ALLOWED_LINKS = { "homepage", "register" };
 
         private static List<Hyperlink> createHyperlinks(AuthlibInjectorServer server) {
             if (server == null) {
@@ -360,12 +360,12 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
         // =====
 
-        private AccountFactory<?> factory;
-        private @Nullable JFXComboBox<AuthlibInjectorServer> cboServers;
+        private final AccountFactory<?> factory;
+        private @Nullable AuthlibInjectorServer server;
         private @Nullable JFXTextField txtUsername;
         private @Nullable JFXPasswordField txtPassword;
         private @Nullable JFXTextField txtUUID;
-        private BooleanBinding valid;
+        private final BooleanBinding valid;
 
         public AccountDetailsInputPane(AccountFactory<?> factory, Runnable onAction) {
             this.factory = factory;
@@ -383,43 +383,31 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             int rowIndex = 0;
 
-            if (factory instanceof AuthlibInjectorAccountFactory) {
+            if (factory instanceof BoundAuthlibInjectorAccountFactory) {
+                this.server = ((BoundAuthlibInjectorAccountFactory) factory).getServer();
+
                 Label lblServers = new Label(i18n("account.injector.server"));
                 setHalignment(lblServers, HPos.LEFT);
                 add(lblServers, 0, rowIndex);
 
-                cboServers = new JFXComboBox<>();
-                cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
-                cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
-                bindContent(cboServers.getItems(), config().getAuthlibInjectorServers());
-                cboServers.getItems().addListener(onInvalidating(
-                        () -> Platform.runLater( // the selection will not be updated as expected if we call it immediately
-                                cboServers.getSelectionModel()::selectFirst)));
-                cboServers.getSelectionModel().selectFirst();
-                cboServers.setPromptText(i18n("account.injector.empty"));
-                BooleanBinding noServers = createBooleanBinding(cboServers.getItems()::isEmpty, cboServers.getItems());
-                classPropertyFor(cboServers, "jfx-combo-box-warning").bind(noServers);
-                classPropertyFor(cboServers, "jfx-combo-box").bind(noServers.not());
-                HBox.setHgrow(cboServers, Priority.ALWAYS);
-                HBox.setMargin(cboServers, new Insets(0, 10, 0, 0));
-                cboServers.setMaxWidth(Double.MAX_VALUE);
+                Label lblServerName = new Label(this.server.getName());
+                lblServerName.setMaxWidth(Double.MAX_VALUE);
+                HBox.setHgrow(lblServerName, Priority.ALWAYS);
 
                 HBox linksContainer = new HBox();
                 linksContainer.setAlignment(Pos.CENTER);
-                onChangeAndOperate(cboServers.valueProperty(), server -> linksContainer.getChildren().setAll(createHyperlinks(server)));
+                linksContainer.getChildren().setAll(createHyperlinks(this.server));
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
-                JFXButton btnAddServer = new JFXButton();
-                btnAddServer.setGraphic(SVG.plus(Theme.blackFillBinding(), 20, 20));
-                btnAddServer.getStyleClass().add("toggle-icon4");
-                btnAddServer.setOnAction(e -> {
-                    Controllers.dialog(new AddAuthlibInjectorServerPane());
-                });
-
-                HBox boxServers = new HBox(cboServers, linksContainer, btnAddServer);
+                HBox boxServers = new HBox(lblServerName, linksContainer);
+                boxServers.setAlignment(Pos.CENTER_LEFT);
                 add(boxServers, 1, rowIndex);
 
                 rowIndex++;
+            }
+
+            if (factory instanceof AuthlibInjectorAccountFactory) {
+                throw new IllegalArgumentException("Use BoundAuthlibInjectorAccountFactory instead");
             }
 
             if (factory.getLoginType().requiresUsername) {
@@ -523,8 +511,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             valid = new BooleanBinding() {
                 {
-                    if (cboServers != null)
-                        bind(cboServers.valueProperty());
                     if (txtUsername != null)
                         bind(txtUsername.textProperty());
                     if (txtPassword != null)
@@ -535,8 +521,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
                 @Override
                 protected boolean computeValue() {
-                    if (cboServers != null && cboServers.getValue() == null)
-                        return false;
                     if (txtUsername != null && !txtUsername.validate())
                         return false;
                     if (txtPassword != null && !txtPassword.validate())
@@ -551,11 +535,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         private boolean requiresEmailAsUsername() {
             if (factory instanceof YggdrasilAccountFactory) {
                 return true;
-            } else if ((factory instanceof AuthlibInjectorAccountFactory) && cboServers != null) {
-                AuthlibInjectorServer server = cboServers.getValue();
-                if (server != null && !server.isNonEmailLogin()) {
-                    return true;
-                }
+            } else if ((factory instanceof AuthlibInjectorAccountFactory) && this.server != null) {
+                return !server.isNonEmailLogin();
             }
             return false;
         }
@@ -572,7 +553,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
 
         public @Nullable AuthlibInjectorServer getAuthServer() {
-            return cboServers == null ? null : cboServers.getValue();
+            return this.server;
         }
 
         public @Nullable String getUsername() {
@@ -585,10 +566,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
         public BooleanBinding validProperty() {
             return valid;
-        }
-
-        public void selectAuthServer(AuthlibInjectorServer authserver) {
-            cboServers.getSelectionModel().select(authserver);
         }
 
         public void focus() {

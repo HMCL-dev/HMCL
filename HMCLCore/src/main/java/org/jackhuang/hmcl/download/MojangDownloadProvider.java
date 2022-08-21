@@ -23,6 +23,8 @@ import org.jackhuang.hmcl.download.forge.ForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
+import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
+import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
 
 /**
  * @see <a href="http://wiki.vg">http://wiki.vg</a>
@@ -35,6 +37,8 @@ public class MojangDownloadProvider implements DownloadProvider {
     private final ForgeBMCLVersionList forge;
     private final LiteLoaderVersionList liteLoader;
     private final OptiFineBMCLVersionList optifine;
+    private final QuiltVersionList quilt;
+    private final QuiltAPIVersionList quiltApi;
 
     public MojangDownloadProvider() {
         String apiRoot = "https://bmclapi2.bangbang93.com";
@@ -45,6 +49,8 @@ public class MojangDownloadProvider implements DownloadProvider {
         this.forge = new ForgeBMCLVersionList(apiRoot);
         this.liteLoader = new LiteLoaderVersionList(this);
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
+        this.quilt = new QuiltVersionList(this);
+        this.quiltApi = new QuiltAPIVersionList(this);
     }
 
     @Override
@@ -72,6 +78,10 @@ public class MojangDownloadProvider implements DownloadProvider {
                 return liteLoader;
             case "optifine":
                 return optifine;
+            case "quilt":
+                return quilt;
+            case "quilt-api":
+                return quiltApi;
             default:
                 throw new IllegalArgumentException("Unrecognized version list id: " + id);
         }
