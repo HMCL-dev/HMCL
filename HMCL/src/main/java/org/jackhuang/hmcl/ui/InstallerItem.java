@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.JFXButton;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
+import javafx.css.PseudoClass;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -32,9 +33,7 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
+import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
@@ -58,6 +57,13 @@ public class InstallerItem extends Control {
     public final BooleanProperty installable = new SimpleBooleanProperty(true);
     public final ObjectProperty<EventHandler<? super MouseEvent>> removeAction = new SimpleObjectProperty<>();
     public final ObjectProperty<EventHandler<? super MouseEvent>> action = new SimpleObjectProperty<>();
+
+    private Style style = Style.LIST_ITEM;
+
+    public enum Style {
+        LIST_ITEM,
+        CARD,
+    }
 
     public InstallerItem(LibraryAnalyzer.LibraryType id) {
         this(id.getPatchId());
@@ -91,6 +97,10 @@ public class InstallerItem extends Control {
                 imageUrl = null;
                 break;
         }
+    }
+
+    public void setStyleMode(Style style) {
+        this.style = style;
     }
 
     public void setState(String libraryVersion, boolean incompatibleWithGame, boolean removable) {
@@ -177,37 +187,50 @@ public class InstallerItem extends Control {
 
     public static class InstallerItemSkin extends SkinBase<InstallerItem> {
 
+        private static final PseudoClass LIST_ITEM = PseudoClass.getPseudoClass("list-item");
+        private static final PseudoClass CARD = PseudoClass.getPseudoClass("card");
+
         InstallerItemSkin(InstallerItem control) {
             super(control);
 
-            HBox hbox = new HBox();
-            hbox.getStyleClass().add("md-list-cell");
-            hbox.setPadding(new Insets(8));
-            RipplerContainer container = new RipplerContainer(hbox);
+            Pane pane;
+            if (control.style == Style.CARD) {
+                pane = new VBox();
+            } else {
+                pane = new HBox();
+            }
+            pane.getStyleClass().add("installer-item");
+            RipplerContainer container = new RipplerContainer(pane);
             getChildren().setAll(container);
 
-            hbox.setAlignment(Pos.CENTER_LEFT);
+            pane.pseudoClassStateChanged(LIST_ITEM, control.style == Style.LIST_ITEM);
+            pane.pseudoClassStateChanged(CARD, control.style == Style.CARD);
 
             if (control.imageUrl != null) {
                 ImageView view = new ImageView(new Image(control.imageUrl, 32, 32, true, true));
                 Node node = FXUtils.limitingSize(view, 32, 32);
                 node.setMouseTransparent(true);
-                hbox.getChildren().add(node);
+                node.getStyleClass().add("installer-item-image");
+                pane.getChildren().add(node);
+
+                if (control.style == Style.CARD) {
+                    VBox.setMargin(node, new Insets(8, 0, 16, 0));
+                }
             }
 
             Label nameLabel = new Label();
+            nameLabel.getStyleClass().add("installer-item-name");
             nameLabel.setMouseTransparent(true);
-            hbox.getChildren().add(nameLabel);
-            nameLabel.setPrefWidth(80);
+            pane.getChildren().add(nameLabel);
             nameLabel.textProperty().set(I18n.hasKey("install.installer." + control.id) ? i18n("install.installer." + control.id) : control.id);
             HBox.setMargin(nameLabel, new Insets(0, 4, 0, 4));
 
-            Label label = new Label();
-            label.setMouseTransparent(true);
-            hbox.getChildren().add(label);
-            label.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(label, Priority.ALWAYS);
-            label.textProperty().bind(Bindings.createStringBinding(() -> {
+            Label statusLabel = new Label();
+            statusLabel.getStyleClass().add("installer-item-status");
+            statusLabel.setMouseTransparent(true);
+            pane.getChildren().add(statusLabel);
+            HBox.setHgrow(statusLabel, Priority.ALWAYS);
+            statusLabel.textProperty().bind(Bindings.createStringBinding(() -> {
                 String incompatibleWith = control.incompatibleLibraryName.get();
                 String version = control.libraryVersion.get();
                 if (control.incompatibleWithGame.get()) {
@@ -220,8 +243,13 @@ public class InstallerItem extends Control {
                     return i18n("install.installer.version", version);
                 }
             }, control.incompatibleLibraryName, control.incompatibleWithGame, control.libraryVersion));
-            BorderPane.setMargin(label, new Insets(0, 0, 0, 8));
-            BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+            BorderPane.setMargin(statusLabel, new Insets(0, 0, 0, 8));
+            BorderPane.setAlignment(statusLabel, Pos.CENTER_LEFT);
+
+            HBox buttonsContainer = new HBox();
+            buttonsContainer.setSpacing(8);
+            buttonsContainer.setAlignment(Pos.CENTER);
+            pane.getChildren().add(buttonsContainer);
 
             JFXButton closeButton = new JFXButton();
             closeButton.setGraphic(SVG.close(Theme.blackFillBinding(), -1, -1));
@@ -229,7 +257,7 @@ public class InstallerItem extends Control {
             closeButton.visibleProperty().bind(control.removable);
             closeButton.managedProperty().bind(closeButton.visibleProperty());
             closeButton.onMouseClickedProperty().bind(control.removeAction);
-            hbox.getChildren().add(closeButton);
+            buttonsContainer.getChildren().add(closeButton);
 
             JFXButton arrowButton = new JFXButton();
             arrowButton.graphicProperty().bind(Bindings.createObjectBinding(() -> control.upgradable.get()
@@ -242,16 +270,16 @@ public class InstallerItem extends Control {
                     control.installable, control.incompatibleLibraryName));
             arrowButton.managedProperty().bind(arrowButton.visibleProperty());
             arrowButton.onMouseClickedProperty().bind(control.action);
-            hbox.getChildren().add(arrowButton);
+            buttonsContainer.getChildren().add(arrowButton);
 
             FXUtils.onChangeAndOperate(arrowButton.visibleProperty(), clickable -> {
                 if (clickable) {
                     container.onMouseClickedProperty().bind(control.action);
-                    hbox.setCursor(Cursor.HAND);
+                    pane.setCursor(Cursor.HAND);
                 } else {
                     container.onMouseClickedProperty().unbind();
                     container.onMouseClickedProperty().set(null);
-                    hbox.setCursor(Cursor.DEFAULT);
+                    pane.setCursor(Cursor.DEFAULT);
                 }
             });
         }
