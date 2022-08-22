@@ -29,14 +29,13 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.InstallerItem;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
@@ -66,6 +65,10 @@ public class InstallersPage extends Control implements WizardPage {
         txtName.setText(gameVersion);
 
         group.game.installable.setValue(false);
+
+        for (InstallerItem item : group.getLibraries()) {
+            item.setStyleMode(InstallerItem.Style.CARD);
+        }
 
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
@@ -140,22 +143,23 @@ public class InstallersPage extends Control implements WizardPage {
             BorderPane root = new BorderPane();
             root.setPadding(new Insets(16));
 
-            ComponentList list = new ComponentList();
-            list.getStyleClass().add("no-padding");
-            root.setCenter(list);
             {
                 HBox versionNamePane = new HBox(8);
+                versionNamePane.getStyleClass().add("card-non-transparent");
+                versionNamePane.setStyle("-fx-padding: 20 8 20 16");
                 versionNamePane.setAlignment(Pos.CENTER_LEFT);
-                versionNamePane.setPadding(new Insets(20, 8, 20, 16));
 
                 control.txtName.setMaxWidth(300);
                 versionNamePane.getChildren().setAll(new Label(i18n("archive.name")), control.txtName);
-                list.getContent().add(versionNamePane);
+                root.setTop(versionNamePane);
             }
 
             {
-                VBox libraryPane = new VBox(control.group.getLibraries());
-                list.getContent().add(libraryPane);
+                FlowPane libraryPane = new FlowPane(control.group.getLibraries());
+                BorderPane.setMargin(libraryPane, new Insets(16, 0, 16, 0));
+                libraryPane.setVgap(16);
+                libraryPane.setHgap(16);
+                root.setCenter(libraryPane);
             }
 
 

@@ -43,7 +43,9 @@ final class ExecutableHeaderHelper {
     private ExecutableHeaderHelper() {}
 
     private static Map<String, String> suffix2header = mapOf(
-            pair("exe", "assets/HMCLauncher.exe"));
+            pair("exe", "assets/HMCLauncher.exe"),
+            pair("sh", "assets/HMCLauncher.sh")
+    );
 
     private static Optional<String> getSuffix(Path file) {
         String filename = file.getFileName().toString();

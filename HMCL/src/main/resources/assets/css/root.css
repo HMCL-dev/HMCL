@@ -315,6 +315,33 @@
     -fx-cursor: hand;
 }
 
+.installer-item {
+    -fx-padding: 8px;
+}
+
+.installer-item:list-item {
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 0 1 0;
+    -fx-alignment: center-left;
+}
+
+.installer-item:list-item > .installer-item-name {
+    -fx-pref-width: 80px;
+}
+
+.installer-item:list-item > .installer-item-status {
+    -fx-max-width: infinity;
+}
+
+.installer-item:card {
+    -fx-background-color: white;
+    -fx-background-radius: 4;
+    -fx-alignment: center;
+    -fx-pref-width: 180px;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+}
+
 /*******************************************************************************
  *                                                                             *
  * Main Page                                                                   *

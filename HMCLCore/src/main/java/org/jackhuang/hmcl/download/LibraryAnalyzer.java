@@ -176,6 +176,8 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         },
         LITELOADER(true, "liteloader", Pattern.compile("com\\.mumfrey"), Pattern.compile("liteloader")),
         OPTIFINE(false, "optifine", Pattern.compile("(net\\.)?optifine"), Pattern.compile("^(?!.*launchwrapper).*$")),
+        QUILT(true, "quilt", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-loader")),
+        QUILT_API(true, "quilt-api", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-api")),
         BOOTSTRAP_LAUNCHER(false, "", Pattern.compile("cpw\\.mods"), Pattern.compile("bootstraplauncher"));
 
         private final boolean modLoader;

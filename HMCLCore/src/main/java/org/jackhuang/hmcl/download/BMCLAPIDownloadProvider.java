@@ -23,6 +23,8 @@ import org.jackhuang.hmcl.download.forge.ForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderBMCLVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
+import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
+import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
 
 /**
  *
@@ -36,6 +38,8 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
     private final ForgeBMCLVersionList forge;
     private final LiteLoaderBMCLVersionList liteLoader;
     private final OptiFineBMCLVersionList optifine;
+    private final QuiltVersionList quilt;
+    private final QuiltAPIVersionList quiltApi;
 
     public BMCLAPIDownloadProvider(String apiRoot) {
         this.apiRoot = apiRoot;
@@ -45,6 +49,8 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
         this.forge = new ForgeBMCLVersionList(apiRoot);
         this.liteLoader = new LiteLoaderBMCLVersionList(this);
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
+        this.quilt = new QuiltVersionList(this);
+        this.quiltApi = new QuiltAPIVersionList(this);
     }
 
     public String getApiRoot() {
@@ -76,6 +82,10 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
                 return liteLoader;
             case "optifine":
                 return optifine;
+            case "quilt":
+                return quilt;
+            case "quilt-api":
+                return quiltApi;
             default:
                 throw new IllegalArgumentException("Unrecognized version list id: " + id);
         }
@@ -96,7 +106,8 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
                 .replace("http://dl.liteloader.com/versions", apiRoot + "/maven")
                 .replace("https://meta.fabricmc.net", apiRoot + "/fabric-meta")
                 .replace("https://maven.fabricmc.net", apiRoot + "/maven")
-                .replace("https://authlib-injector.yushi.moe", apiRoot + "/mirrors/authlib-injector");
+                .replace("https://authlib-injector.yushi.moe", apiRoot + "/mirrors/authlib-injector")
+                .replace("https://repo1.maven.org/maven2", "https://maven.aliyun.com/repository/central");
     }
 
     @Override

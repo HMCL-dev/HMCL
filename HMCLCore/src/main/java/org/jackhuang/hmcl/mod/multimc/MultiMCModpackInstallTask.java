@@ -89,6 +89,12 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                 if (c.getVersion() != null)
                     builder.version("fabric", c.getVersion());
             });
+
+            Optional<MultiMCManifest.MultiMCManifestComponent> quilt = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("net.quiltmc.quilt-loader")).findAny();
+            quilt.ifPresent(c -> {
+                if (c.getVersion() != null)
+                    builder.version("quilt", c.getVersion());
+            });
         }
 
         dependents.add(builder.buildAsync());

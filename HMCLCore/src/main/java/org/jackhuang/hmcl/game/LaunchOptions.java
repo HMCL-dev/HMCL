@@ -58,6 +58,7 @@ public class LaunchOptions implements Serializable {
     private NativesDirectoryType nativesDirType;
     private String nativesDir;
     private ProcessPriority processPriority = ProcessPriority.NORMAL;
+    private boolean useSoftwareRenderer;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
     private boolean daemon;
@@ -242,6 +243,10 @@ public class LaunchOptions implements Serializable {
         return processPriority;
     }
 
+    public boolean isUseSoftwareRenderer() {
+        return useSoftwareRenderer;
+    }
+
     public boolean isUseNativeGLFW() {
         return useNativeGLFW;
     }
@@ -421,6 +426,10 @@ public class LaunchOptions implements Serializable {
             return options.nativesDir;
         }
 
+        public boolean isUseSoftwareRenderer() {
+            return options.useSoftwareRenderer;
+        }
+
         public boolean isUseNativeGLFW() {
             return options.useNativeGLFW;
         }
@@ -558,6 +567,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setProcessPriority(@NotNull ProcessPriority processPriority) {
             options.processPriority = processPriority;
+            return this;
+        }
+
+        public Builder setUseSoftwareRenderer(boolean useSoftwareRenderer) {
+            options.useSoftwareRenderer = useSoftwareRenderer;
             return this;
         }
 

@@ -94,7 +94,7 @@ public class JavaDownloadTask extends Task<Void> {
                 RemoteFiles.RemoteFile file = ((RemoteFiles.RemoteFile) entry.getValue());
                 if (file.getDownloads().containsKey("lzma")) {
                     DownloadInfo download = file.getDownloads().get("lzma");
-                    File tempFile = Files.createTempFile("hmcl", "tmp").toFile();
+                    File tempFile = jvmDir.resolve(entry.getKey() + ".lzma").toFile();
                     FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(download.getUrl()), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
