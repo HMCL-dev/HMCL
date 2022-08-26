@@ -134,7 +134,9 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     if (SUCCEEDED(MySHGetFolderPath(CSIDL_APPDATA, buffer)) || SUCCEEDED(MySHGetFolderPath(CSIDL_PROFILE, buffer))) {
       MyPathAppend(buffer, L".hmcl");
       MyPathAppend(buffer, L"java");
-      if (isX64) {
+      if (isARM64) {
+        MyPathAppend(buffer, L"windows-arm64");
+      } else if (isX64) {
         MyPathAppend(buffer, L"windows-x86_64");
       } else {
         MyPathAppend(buffer, L"windows-x86");
@@ -146,66 +148,24 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   if (!hmclJavaDir.empty()) {
     FindJavaInDirAndLaunchJVM(hmclJavaDir, workdir, exeName);
-    if (isWin7OrLater) {
-      HRSRC scriptFileResource = FindResource(NULL, MAKEINTRESOURCE(ID_SCRIPT_DOWNLOAD_JAVA), RT_RCDATA);
-      if (!scriptFileResource) goto error;
-
-      HGLOBAL scriptHandle = LoadResource(NULL, scriptFileResource);
-      DWORD dataSize = SizeofResource(NULL, scriptFileResource);
-      void *data = LockResource(scriptHandle);
-
-      std::wstring tempScriptPath;
-      if (ERROR_SUCCESS != MyGetTempFile(L"hmcl-download-java-", L"ps1", tempScriptPath)) goto error;
-
-      HANDLE hFile;
-      DWORD dwBytesWritten = 0;
-      BOOL bErrorFlag = FALSE;
-
-      hFile = CreateFile(tempScriptPath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-      if (hFile == INVALID_HANDLE_VALUE) goto error;
-
-      bErrorFlag  = WriteFile(hFile, data, dataSize, &dwBytesWritten, NULL);
-      if (FALSE == bErrorFlag || dwBytesWritten != dataSize) goto error;
-
-      CloseHandle(hFile);
-
-      std::wstring commandLineBuffer;
-
-      commandLineBuffer += L"powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File ";
-      MyAppendPathToCommandLine(commandLineBuffer, tempScriptPath);
-      commandLineBuffer += L" -JavaDir ";
-      MyAppendPathToCommandLine(commandLineBuffer, hmclJavaDir);
-      commandLineBuffer += L" -Arch ";
-      if (isX64) {
-        commandLineBuffer += L"x86-64";
-      } else {
-        commandLineBuffer += L"x86";
-      }
-
-      STARTUPINFO si;
-      PROCESS_INFORMATION pi;
-      si.cb = sizeof(si);
-      ZeroMemory(&si, sizeof(si));
-      ZeroMemory(&pi, sizeof(pi));
-      if (!CreateProcess(NULL, &commandLineBuffer[0], NULL, NULL, false, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi)) goto error;
-      WaitForSingleObject(pi.hProcess, INFINITE);
-      DeleteFile(tempScriptPath.c_str());
-
-      // Try starting again after installing Java
-      FindJavaInDirAndLaunchJVM(hmclJavaDir, workdir, exeName);
-    }
   }
 
 error:
-  LPCWSTR downloadLink = isWin7OrLater && (isX64 || isARM64) ? L"https://www.microsoft.com/openjdk" : L"https://java.com";
+  LPCWSTR downloadLink;
 
-  WCHAR errorPrompt[180];
-  {
-    LPCWSTR errorPromptFormat = useChinese ? ERROR_PROMPT_ZH : ERROR_PROMPT;
-    wsprintf(errorPrompt, errorPromptFormat, downloadLink);
+  if (isWin7OrLater) {
+    if (isARM64) {
+      downloadLink = L"https://aka.ms/download-jdk/microsoft-jdk-17-windows-aarch64.msi";
+    } if (isX64) {
+      downloadLink = L"https://aka.ms/download-jdk/microsoft-jdk-17-windows-x64.msi";
+    } else {
+      downloadLink = L"https://download.bell-sw.com/java/17.0.4.1+1/bellsoft-jre17.0.4.1+1-windows-i586-full.msi";
+    }
+  } else {
+    downloadLink = L"https://www.java.com";
   }
 
-  if (IDOK == MessageBox(NULL, errorPrompt, L"Error", MB_ICONERROR | MB_OKCANCEL)) {
+  if (IDOK == MessageBox(NULL, useChinese ? ERROR_PROMPT_ZH : ERROR_PROMPT, useChinese ? ERROR_TITLE_ZH : ERROR_TITLE, MB_ICONWARNING | MB_OKCANCEL)) {
     ShellExecute(0, 0, downloadLink, 0, 0, SW_SHOW);
   }
   return 1;
