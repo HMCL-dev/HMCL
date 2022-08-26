@@ -840,6 +840,70 @@
         }
       }
     },
+    "org.lwjgl.lwjgl:lwjgl-platform:2.9.0:natives": {
+      "name": "org.glavo.hmcl:lwjgl2-natives:2.9.3",
+      "downloads": {
+        "classifiers": {
+          "linux-arm32": {
+            "path": "org/glavo/hmcl/lwjgl2-natives/2.9.3/lwjgl2-natives-2.9.3-linux-arm32.jar",
+            "url": "https://repo1.maven.org/maven2/org/glavo/hmcl/lwjgl2-natives/2.9.3-linux-arm32/lwjgl2-natives-2.9.3-linux-arm32.jar",
+            "sha1": "b3017961cf4ff2ce189b64903e52025a88ed9229",
+            "size": 580670
+          }
+        }
+      },
+      "extract": {
+        "exclude": [
+          "META-INF/"
+        ]
+      },
+      "natives": {
+        "linux": "linux-arm32"
+      }
+    },
+    "org.lwjgl.lwjgl:lwjgl-platform:2.9.1:natives": {
+      "name": "org.glavo.hmcl:lwjgl2-natives:2.9.3",
+      "downloads": {
+        "classifiers": {
+          "linux-arm32": {
+            "path": "org/glavo/hmcl/lwjgl2-natives/2.9.3/lwjgl2-natives-2.9.3-linux-arm32.jar",
+            "url": "https://repo1.maven.org/maven2/org/glavo/hmcl/lwjgl2-natives/2.9.3-linux-arm32/lwjgl2-natives-2.9.3-linux-arm32.jar",
+            "sha1": "b3017961cf4ff2ce189b64903e52025a88ed9229",
+            "size": 580670
+          }
+        }
+      },
+      "extract": {
+        "exclude": [
+          "META-INF/"
+        ]
+      },
+      "natives": {
+        "linux": "linux-arm32"
+      }
+    },
+    "org.lwjgl.lwjgl:lwjgl-platform:2.9.4-nightly-20150209:natives": {
+      "name": "org.glavo.hmcl:lwjgl2-natives:2.9.3",
+      "downloads": {
+        "classifiers": {
+          "linux-arm32": {
+            "path": "org/glavo/hmcl/lwjgl2-natives/2.9.3/lwjgl2-natives-2.9.3-linux-arm32.jar",
+            "url": "https://repo1.maven.org/maven2/org/glavo/hmcl/lwjgl2-natives/2.9.3-linux-arm32/lwjgl2-natives-2.9.3-linux-arm32.jar",
+            "sha1": "b3017961cf4ff2ce189b64903e52025a88ed9229",
+            "size": 580670
+          }
+        }
+      },
+      "extract": {
+        "exclude": [
+          "META-INF/"
+        ]
+      },
+      "natives": {
+        "linux": "linux-arm32"
+      }
+    },
+    "net.java.jinput:jinput-platform:2.0.5:natives": null,
     "com.mojang:text2speech:1.10.3:natives": null,
     "com.mojang:text2speech:1.11.3:natives": null,
     "com.mojang:text2speech:1.12.4:natives": null,
