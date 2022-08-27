@@ -16,26 +16,23 @@ LPCWSTR VENDOR_DIRS[] = {
 };
 
 void RawLaunchJVM(const std::wstring &javaPath, const std::wstring &workdir,
-                  const std::wstring &jarPath) {
-  if (MyCreateProcess(
-          L"\"" + javaPath +
-              L"\" -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15 -jar \"" +
-              jarPath + L"\"",
-          workdir))
+                  const std::wstring &jarPath, const std::wstring &jvmOptions) {
+  if (MyCreateProcess(L"\"" + javaPath + L"\" " + jvmOptions + L" -jar \"" + jarPath + L"\"", workdir))
     exit(EXIT_SUCCESS);
 }
 
 void LaunchJVM(const std::wstring &javaPath, const std::wstring &workdir,
-               const std::wstring &jarPath) {
+               const std::wstring &jarPath, const std::wstring &jvmOptions) {
   Version javaVersion(L"");
   if (!MyGetFileVersionInfo(javaPath, javaVersion)) return;
 
   if (J8 <= javaVersion) {
-    RawLaunchJVM(javaPath, workdir, jarPath);
+    RawLaunchJVM(javaPath, workdir, jarPath, jvmOptions);
   }
 }
 
-void FindJavaInDirAndLaunchJVM(const std::wstring &baseDir, const std::wstring &workdir, const std::wstring &jarPath) {
+void FindJavaInDirAndLaunchJVM(const std::wstring &baseDir, const std::wstring &workdir,
+                               const std::wstring &jarPath, const std::wstring &jvmOptions) {
   std::wstring pattern = baseDir + L"*";
 
   WIN32_FIND_DATA data;
@@ -45,7 +42,7 @@ void FindJavaInDirAndLaunchJVM(const std::wstring &baseDir, const std::wstring &
     do {
       std::wstring javaw = baseDir + data.cFileName + std::wstring(L"\\bin\\javaw.exe");
       if (FindFirstFileExists(javaw.c_str(), 0)) {
-        LaunchJVM(javaw, workdir, jarPath);
+        LaunchJVM(javaw, workdir, jarPath, jvmOptions);
       }
     } while (FindNextFile(hFind, &data));
     FindClose(hFind);
@@ -54,7 +51,7 @@ void FindJavaInDirAndLaunchJVM(const std::wstring &baseDir, const std::wstring &
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                       LPWSTR lpCmdLine, int nCmdShow) {
-  std::wstring path, exeName;
+  std::wstring path, exeName, jvmOptions;
 
   // Since Jar file is appended to this executable, we should first get the
   // location of JAR file.
@@ -65,6 +62,10 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   if (last_slash != std::wstring::npos && last_slash + 1 < exeName.size()) {
     workdir = exeName.substr(0, last_slash);
     exeName = exeName.substr(last_slash + 1);
+  }
+
+  if (ERROR_SUCCESS != MyGetEnvironmentVariable(L"HMCL_JAVA_OPTS", jvmOptions)) {
+    jvmOptions = L"-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15"; // Default Options
   }
 
   bool useChinese = GetUserDefaultUILanguage() == 2052; // zh-CN
@@ -94,14 +95,14 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   bool isARM64 = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
 
   if (isARM64) {
-    RawLaunchJVM(L"jre-arm64\\bin\\javaw.exe", workdir, exeName);
+    RawLaunchJVM(L"jre-arm64\\bin\\javaw.exe", workdir, exeName, jvmOptions);
   }
   if (isX64) {
-    RawLaunchJVM(L"jre-x64\\bin\\javaw.exe", workdir, exeName);
+    RawLaunchJVM(L"jre-x64\\bin\\javaw.exe", workdir, exeName, jvmOptions);
   }
-  RawLaunchJVM(L"jre-x86\\bin\\javaw.exe", workdir, exeName);
+  RawLaunchJVM(L"jre-x86\\bin\\javaw.exe", workdir, exeName, jvmOptions);
 
-  if (FindJava(path)) LaunchJVM(path + L"\\bin\\javaw.exe", workdir, exeName);
+  if (FindJava(path)) LaunchJVM(path + L"\\bin\\javaw.exe", workdir, exeName, jvmOptions);
 
   std::wstring programFiles;
 
@@ -112,7 +113,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     MyPathAppend(dir, vendorDir);
     MyPathAddBackslash(dir);
 
-    FindJavaInDirAndLaunchJVM(dir, workdir, exeName);
+    FindJavaInDirAndLaunchJVM(dir, workdir, exeName, jvmOptions);
   }
 
   // Consider C:\Program Files (x86)
@@ -122,11 +123,11 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     MyPathAppend(dir, vendorDir);
     MyPathAddBackslash(dir);
 
-    FindJavaInDirAndLaunchJVM(dir, workdir, exeName);
+    FindJavaInDirAndLaunchJVM(dir, workdir, exeName, jvmOptions);
   }
 
   // Try java in PATH
-  RawLaunchJVM(L"javaw", workdir, exeName);
+  RawLaunchJVM(L"javaw", workdir, exeName, jvmOptions);
 
   std::wstring hmclJavaDir;
   {
@@ -147,7 +148,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   }
 
   if (!hmclJavaDir.empty()) {
-    FindJavaInDirAndLaunchJVM(hmclJavaDir, workdir, exeName);
+    FindJavaInDirAndLaunchJVM(hmclJavaDir, workdir, exeName, jvmOptions);
   }
 
 error:
