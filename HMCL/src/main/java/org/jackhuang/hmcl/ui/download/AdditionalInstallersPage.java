@@ -91,9 +91,11 @@ class AdditionalInstallersPage extends InstallersPage {
         String optiFine = analyzer.getVersion(OPTIFINE).orElse(null);
         String fabric = analyzer.getVersion(FABRIC).orElse(null);
         String fabricApi = analyzer.getVersion(FABRIC_API).orElse(null);
+        String quilt = analyzer.getVersion(QUILT).orElse(null);
+        String quiltApi = analyzer.getVersion(QUILT_API).orElse(null);
 
         InstallerItem[] libraries = group.getLibraries();
-        String[] versions = new String[]{game, forge, liteLoader, optiFine, fabric, fabricApi};
+        String[] versions = new String[]{game, forge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi};
 
         String currentGameVersion = Lang.nonNull(getVersion("game"), game);
 
