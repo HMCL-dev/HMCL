@@ -116,7 +116,7 @@ public final class QuiltInstallTask extends Task<Version> {
             }
         }
 
-        libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.hashed.maven), getMavenRepositoryByGroup(quiltInfo.hashed.maven), null));
+        // libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.hashed.maven), getMavenRepositoryByGroup(quiltInfo.hashed.maven), null));
         libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.intermediary.maven), getMavenRepositoryByGroup(quiltInfo.intermediary.maven), null));
         libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.loader.maven), getMavenRepositoryByGroup(quiltInfo.loader.maven), null));
 
