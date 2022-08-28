@@ -47,9 +47,9 @@ public final class CommandBuilder {
 
     private String parse(String s) {
         if (OperatingSystem.WINDOWS == os) {
-            return parseBatch(s);
+            return toBatchStringLiteral(s);
         } else {
-            return parseShell(s);
+            return toShellStringLiteral(s);
         }
     }
 
@@ -164,7 +164,7 @@ public final class CommandBuilder {
 
         @Override
         public String toString() {
-            return parse ? (OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS ? parseBatch(arg) : parseShell(arg)) : arg;
+            return parse ? (OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS ? toBatchStringLiteral(arg) : toShellStringLiteral(arg)) : arg;
         }
     }
 
@@ -206,7 +206,7 @@ public final class CommandBuilder {
         return true;
     }
 
-    private static String parseBatch(String s) {
+    public static String toBatchStringLiteral(String s) {
         String escape = " \t\"^&<>|";
         if (StringUtils.containsOne(s, escape.toCharArray()))
             // The argument has not been quoted, add quotes.
@@ -219,7 +219,7 @@ public final class CommandBuilder {
         }
     }
 
-    private static String parseShell(String s) {
+    public static String toShellStringLiteral(String s) {
         String escaping = " \t\"!#$&'()*,;<=>?[\\]^`{|}~";
         String escaped = "\"$&`";
         if (s.indexOf(' ') >= 0 || s.indexOf('\t') >= 0 || StringUtils.containsOne(s, escaping.toCharArray())) {

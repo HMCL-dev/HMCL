@@ -601,7 +601,7 @@ public class DefaultLauncher extends Launcher {
                     writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
                     writer.newLine();
                     for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
-                        writer.write("set " + entry.getKey() + "=" + entry.getValue());
+                        writer.write("set " + entry.getKey() + "=" + CommandBuilder.toBatchStringLiteral(entry.getValue()));
                         writer.newLine();
                     }
                     writer.newLine();
@@ -610,7 +610,7 @@ public class DefaultLauncher extends Launcher {
                     writer.write("#!/usr/bin/env bash");
                     writer.newLine();
                     for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
-                        writer.write("export " + entry.getKey() + "=" + entry.getValue());
+                        writer.write("export " + entry.getKey() + "=" + CommandBuilder.toShellStringLiteral(entry.getValue()));
                         writer.newLine();
                     }
                     if (commandLine.tempNativeFolder != null) {
