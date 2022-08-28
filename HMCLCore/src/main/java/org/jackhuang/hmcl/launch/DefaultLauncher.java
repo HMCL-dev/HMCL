@@ -541,9 +541,6 @@ public class DefaultLauncher extends Launcher {
                 throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh' or 'ps1' in macOS/Linux");
         }
 
-        if (!FileUtils.makeFile(scriptFile))
-            throw new IOException("Script file: " + scriptFile + " cannot be created.");
-
         final Command commandLine = generateCommandLine(nativeFolder);
         final String command = usePowerShell ? null : commandLine.commandLine.toString();
 
@@ -552,6 +549,9 @@ public class DefaultLauncher extends Launcher {
                 throw new CommandTooLongException();
             }
         }
+
+        if (!FileUtils.makeFile(scriptFile))
+            throw new IOException("Script file: " + scriptFile + " cannot be created.");
 
         OutputStream outputStream = new FileOutputStream(scriptFile);
         Charset charset = StandardCharsets.UTF_8;
