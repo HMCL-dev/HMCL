@@ -112,17 +112,28 @@ public class DefaultLauncher extends Launcher {
 
         res.addAllWithoutParsing(options.getJavaArguments());
 
-        Charset encoding = OperatingSystem.NATIVE_CHARSET;
-
-        // After Java 17, file.encoding does not affect console encoding
-        if (options.getJava().getParsedVersion() <= JavaVersion.JAVA_17) {
+        Charset encoding = StandardCharsets.UTF_8;
+        if (options.getJava().getParsedVersion() < JavaVersion.JAVA_8) {
             try {
                 String fileEncoding = res.addDefault("-Dfile.encoding=", encoding.name());
                 if (fileEncoding != null)
                     encoding = Charset.forName(fileEncoding.substring("-Dfile.encoding=".length()));
             } catch (Throwable ex) {
+                encoding = OperatingSystem.NATIVE_CHARSET;
                 LOG.log(Level.WARNING, "Bad file encoding", ex);
             }
+        } else {
+            res.addDefault("-Dfile.encoding=", "UTF-8");
+            try {
+                String stdoutEncoding = res.addDefault("-Dsun.stdout.encoding=", encoding.name());
+                if (stdoutEncoding != null)
+                    encoding = Charset.forName(stdoutEncoding.substring("-Dsun.stdout.encoding=".length()));
+            } catch (Throwable ex) {
+                encoding = OperatingSystem.NATIVE_CHARSET;
+                LOG.log(Level.WARNING, "Bad stdout encoding", ex);
+            }
+
+            res.addDefault("-Dsun.stderr.encoding=", encoding.name());
         }
 
         // JVM Args
@@ -237,7 +248,7 @@ public class DefaultLauncher extends Launcher {
         // Here is a workaround for this issue: https://github.com/huanghongxun/HMCL/issues/1141.
         String nativeFolderPath = nativeFolder.getAbsolutePath();
         Path tempNativeFolder = null;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX
+        if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
                 && !StringUtils.isASCII(nativeFolderPath)) {
             tempNativeFolder = Paths.get("/", "tmp", "hmcl-natives-" + UUID.randomUUID());
             nativeFolderPath = tempNativeFolder + File.pathSeparator + nativeFolderPath;
