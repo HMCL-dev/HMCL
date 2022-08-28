@@ -5,12 +5,17 @@
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
 [![KOOK](https://img.shields.io/badge/KOOK-HMCL-brightgreen)](https://kook.top/Kx7n3t)
 
-English | [中文](https://github.com/huanghongxun/HMCL/blob/javafx/README_cn.md)
+English | [中文](README_cn.md)
 
 ## Introduction
-HMCL is a Minecraft launcher which supports Mod Management, Game Customizing, Auto Installing (Forge, Fabric, LiteLoader and OptiFine), Modpack Creating, UI Customization, and more.
+HMCL is a cross-platform Minecraft launcher which supports Mod Management, Game Customizing, Auto Installing (Forge, Fabric, LiteLoader and OptiFine), Modpack Creating, UI Customization, and more.
 
-No plugin API is provided.
+HMCL has amazing cross-platform capabilities.
+It can not only run on different operating systems such as Windows, Linux, and Mac OS, 
+but also supports multiple CPU architectures such as x86, arm, mips, and loongarch.
+You can easily play Minecraft on different platforms through HMCL.
+
+For systems and CPU architectures supported by HMCL, see [this table](PLATFORM.md).
 
 ## Download
 Download the latest version from [the official website](https://hmcl.huangyuhui.net/download).

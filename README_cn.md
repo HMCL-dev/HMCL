@@ -5,12 +5,15 @@
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
 [![KOOK](https://img.shields.io/badge/KOOK-HMCL-brightgreen)](https://kook.top/Kx7n3t)
 
-[English](https://github.com/huanghongxun/HMCL/blob/javafx/README.md) | 中文
+[English](README.md) | 中文
 
 ## 简介
-HMCL 是一款 Minecraft 启动器, 支持 Mod 管理, 游戏自定义, 游戏自动安装 (Forge, Fabric, LiteLoader 与 OptiFine), 模组包创建, 界面自定义等功能.
+HMCL 是一款跨平台 Minecraft 启动器, 支持 Mod 管理, 游戏自定义, 游戏自动安装 (Forge, Fabric, LiteLoader 与 OptiFine), 模组包创建, 界面自定义等功能.
 
-不提供插件 API.
+HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、Mac OS 等常见的操作系统，同时也支持 x86、ARM、MIPS 和 LoongArch 等不同的 CPU 架构。
+您可以使用 HMCL 在不同平台上轻松的游玩 Minecraft。
+
+如果您想要了解 HMCL 对不同平台的支持程度，请参见[此表格](PLATFORM.md)。
 
 ## 下载
 请从 [HMCL 官网](https://hmcl.huangyuhui.net/download)下载最新版本的 HMCL.
