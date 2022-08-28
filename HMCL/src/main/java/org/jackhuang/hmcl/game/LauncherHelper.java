@@ -175,10 +175,10 @@ public final class LauncherHelper {
                     try {
                         return account.logIn();
                     } catch (CredentialExpiredException e) {
-                        LOG.info("Credential has expired: " + e);
+                        LOG.log(Level.INFO, "Credential has expired", e);
                         return DialogController.logIn(account);
                     } catch (AuthenticationException e) {
-                        LOG.warning("Authentication failed, try playing offline: " + e);
+                        LOG.log(Level.WARNING, "Authentication failed, try playing offline", e);
                         return account.playOffline().orElseThrow(() -> e);
                     }
                 }).withStage("launch.state.logging_in"))
