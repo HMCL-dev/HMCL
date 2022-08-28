@@ -36,6 +36,7 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import javax.swing.*;
@@ -99,7 +100,7 @@ public final class LogWindow extends Stage {
     }
 
     public void logLine(String line, Log4jLevel level) {
-        Log log = new Log(parseEscapeSequence(line), level);
+        Log log = new Log(Logging.filterForbiddenToken(parseEscapeSequence(line)), level);
         logs.add(log);
         if (levelShownMap.get(level).get())
             impl.listView.getItems().add(log);
