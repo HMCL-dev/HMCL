@@ -180,8 +180,8 @@ public class OfflineAccount extends Account {
     }
 
     @Override
-    public Optional<AuthInfo> playOffline() throws AuthenticationException {
-        return Optional.of(logIn());
+    public AuthInfo playOffline() throws AuthenticationException {
+        return logIn();
     }
 
     @Override

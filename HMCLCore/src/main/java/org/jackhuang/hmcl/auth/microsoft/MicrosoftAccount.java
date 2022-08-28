@@ -117,8 +117,8 @@ public class MicrosoftAccount extends OAuthAccount {
     }
 
     @Override
-    public Optional<AuthInfo> playOffline() {
-        return Optional.of(session.toAuthInfo());
+    public AuthInfo playOffline() {
+        return session.toAuthInfo();
     }
 
     @Override

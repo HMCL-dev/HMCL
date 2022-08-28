@@ -161,8 +161,8 @@ public class YggdrasilAccount extends ClassicAccount {
     }
 
     @Override
-    public Optional<AuthInfo> playOffline() {
-        return Optional.of(session.toAuthInfo());
+    public AuthInfo playOffline() throws AuthenticationException {
+        return session.toAuthInfo();
     }
 
     @Override
