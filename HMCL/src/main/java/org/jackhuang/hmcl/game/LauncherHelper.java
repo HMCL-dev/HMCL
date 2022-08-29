@@ -369,7 +369,11 @@ public final class LauncherHelper {
                         }
                     }
 
-                    if (targetJavaVersion != null) {
+                    if (targetJavaVersion == null) {
+                        Controllers.confirm(i18n("launch.failed.no_accepted_java"), i18n("message.warning"), MessageType.WARNING, continueAction, () -> {
+                            future.completeExceptionally(new CancellationException("No accepted java"));
+                        });
+                    } else {
                         downloadJava(gameVersion.toString(), targetJavaVersion, profile)
                                 .thenAcceptAsync(downloadedJavaVersion -> {
                                     future.complete(downloadedJavaVersion);
