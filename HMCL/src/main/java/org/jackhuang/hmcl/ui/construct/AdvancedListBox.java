@@ -19,26 +19,37 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.function.Consumer;
 
-public class AdvancedListBox extends VBox {
+public class AdvancedListBox extends ScrollPane {
+    private final VBox container = new VBox();
 
     {
-        getStyleClass().add("advanced-list-box-content");
+        setContent(container);
+
+        FXUtils.smoothScrolling(this);
+
+        setFitToHeight(true);
+        setFitToWidth(true);
+        setHbarPolicy(ScrollBarPolicy.NEVER);
+
+        container.getStyleClass().add("advanced-list-box-content");
     }
 
     public AdvancedListBox add(Node child) {
         if (child instanceof Pane || child instanceof AdvancedListItem)
-            getChildren().add(child);
+            container.getChildren().add(child);
         else {
             StackPane pane = new StackPane();
             pane.getStyleClass().add("advanced-list-box-item");
             pane.getChildren().setAll(child);
-            getChildren().add(pane);
+            container.getChildren().add(pane);
         }
         return this;
     }
@@ -53,27 +64,27 @@ public class AdvancedListBox extends VBox {
 
     public AdvancedListBox add(int index, Node child) {
         if (child instanceof Pane || child instanceof AdvancedListItem)
-            getChildren().add(index, child);
+            container.getChildren().add(index, child);
         else {
             StackPane pane = new StackPane();
             pane.getStyleClass().add("advanced-list-box-item");
             pane.getChildren().setAll(child);
-            getChildren().add(index, pane);
+            container.getChildren().add(index, pane);
         }
         return this;
     }
 
     public AdvancedListBox remove(Node child) {
-        getChildren().remove(indexOf(child));
+        container.getChildren().remove(indexOf(child));
         return this;
     }
 
     public int indexOf(Node child) {
         if (child instanceof Pane) {
-            return getChildren().indexOf(child);
+            return container.getChildren().indexOf(child);
         } else {
-            for (int i = 0; i < getChildren().size(); ++i) {
-                Node node = getChildren().get(i);
+            for (int i = 0; i < container.getChildren().size(); ++i) {
+                Node node = container.getChildren().get(i);
                 if (node instanceof StackPane) {
                     ObservableList<Node> list = ((StackPane) node).getChildren();
                     if (list.size() == 1 && list.get(0) == child)
@@ -88,7 +99,11 @@ public class AdvancedListBox extends VBox {
         return add(new ClassTitle(category));
     }
 
+    public void setSpacing(double spacing) {
+        container.setSpacing(spacing);
+    }
+
     public void clear() {
-        getChildren().clear();
+        container.getChildren().clear();
     }
 }

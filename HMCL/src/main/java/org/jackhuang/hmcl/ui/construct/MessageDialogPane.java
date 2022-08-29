@@ -123,10 +123,11 @@ public final class MessageDialogPane extends StackPane {
 
         public Builder addAction(Node actionNode) {
             dialog.addButton(actionNode);
+            actionNode.getStyleClass().add("dialog-accept");
             return this;
         }
 
-        public Builder ok(Runnable ok) {
+        public Builder ok(@Nullable Runnable ok) {
             JFXButton btnOk = new JFXButton(i18n("button.ok"));
             btnOk.getStyleClass().add("dialog-accept");
             if (ok != null) {
@@ -137,7 +138,22 @@ public final class MessageDialogPane extends StackPane {
             return this;
         }
 
-        public Builder yesOrNo(Runnable yes, Runnable no) {
+        public Builder addCancel(@Nullable Runnable cancel) {
+            return addCancel(i18n("button.cancel"), cancel);
+        }
+
+        public Builder addCancel(String cancelText, @Nullable Runnable cancel) {
+            JFXButton btnCancel = new JFXButton(cancelText);
+            btnCancel.getStyleClass().add("dialog-cancel");
+            if (cancel != null) {
+                btnCancel.setOnAction(e -> cancel.run());
+            }
+            dialog.addButton(btnCancel);
+            dialog.setCancelButton(btnCancel);
+            return this;
+        }
+
+        public Builder yesOrNo(@Nullable Runnable yes, @Nullable Runnable no) {
             JFXButton btnYes = new JFXButton(i18n("button.yes"));
             btnYes.getStyleClass().add("dialog-accept");
             if (yes != null) {
@@ -145,27 +161,14 @@ public final class MessageDialogPane extends StackPane {
             }
             dialog.addButton(btnYes);
 
-            JFXButton btnNo = new JFXButton(i18n("button.no"));
-            btnNo.getStyleClass().add("dialog-cancel");
-            if (no != null) {
-                btnNo.setOnAction(e -> no.run());
-            }
-            dialog.addButton(btnNo);
-            dialog.setCancelButton(btnNo);
+            addCancel(i18n("button.no"), no);
             return this;
         }
 
         public Builder actionOrCancel(ButtonBase actionButton, Runnable cancel) {
             dialog.addButton(actionButton);
 
-            JFXButton btnCancel = new JFXButton(i18n("button.cancel"));
-            btnCancel.getStyleClass().add("dialog-cancel");
-            if (cancel != null) {
-                btnCancel.setOnAction(e -> cancel.run());
-            }
-            dialog.addButton(btnCancel);
-            dialog.setCancelButton(btnCancel);
-
+            addCancel(cancel);
             return this;
         }
 

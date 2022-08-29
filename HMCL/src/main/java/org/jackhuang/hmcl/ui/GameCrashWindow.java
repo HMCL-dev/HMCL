@@ -137,7 +137,7 @@ public class GameCrashWindow extends Stage {
 
             if (exception != null) {
                 LOG.log(Level.WARNING, "Failed to analyze crash report", exception);
-                reasonTextFlow.getChildren().setAll(new Text(i18n("game.crash.reason.unknown")));
+                reasonTextFlow.getChildren().setAll(FXUtils.parseSegment(i18n("game.crash.reason.unknown"), Controllers::onHyperlinkAction));
             } else {
                 List<CrashReportAnalyzer.Result> results = pair.getKey();
                 Set<String> keywords = pair.getValue();
@@ -177,7 +177,7 @@ public class GameCrashWindow extends Stage {
                     if (!keywords.isEmpty()) {
                         reasonTextFlow.getChildren().setAll(new Text(i18n("game.crash.reason.stacktrace", String.join(", ", keywords))));
                     } else {
-                        reasonTextFlow.getChildren().setAll(new Text(i18n("game.crash.reason.unknown")));
+                        reasonTextFlow.getChildren().setAll(FXUtils.parseSegment(i18n("game.crash.reason.unknown"), Controllers::onHyperlinkAction));
                     }
 
                     feedbackLabel.setVisible(true);
@@ -350,7 +350,7 @@ public class GameCrashWindow extends Stage {
 
                 gameDirPane.setPadding(new Insets(8));
                 VBox.setVgrow(gameDirPane, Priority.ALWAYS);
-                gameDirPane.getChildren().setAll(gameDir, javaDir, new VBox(reasonTitle, reasonTextFlow));
+                gameDirPane.getChildren().setAll(gameDir, javaDir, new VBox(reasonTitle, reasonTextFlow, feedbackLabel));
             }
 
             HBox toolBar = new HBox();
@@ -368,7 +368,7 @@ public class GameCrashWindow extends Stage {
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);
                 toolBar.getStyleClass().add("jfx-tool-bar");
-                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton, feedbackLabel);
+                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton);
             }
 
             getChildren().setAll(titlePane, infoPane, moddedPane, gameDirPane, toolBar);

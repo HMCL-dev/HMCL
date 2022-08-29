@@ -488,6 +488,7 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public Task<Version> saveAsync(Version version) {
+        this.gameVersions.remove(getVersionJar(version));
         if (version.isResolvedPreservingPatches()) {
             return new VersionJsonSaveTask(this, MaintainTask.maintainPreservingPatches(this, version));
         } else {

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
@@ -35,6 +36,8 @@ import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.account.ClassicAccountLoginDialog;
+import org.jackhuang.hmcl.ui.account.OAuthAccountLoginDialog;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.*;
@@ -62,6 +65,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -171,17 +175,7 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> {
                     return gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null);
                 })
-                .thenComposeAsync(Task.supplyAsync(() -> {
-                    try {
-                        return account.logIn();
-                    } catch (CredentialExpiredException e) {
-                        LOG.info("Credential has expired: " + e);
-                        return DialogController.logIn(account);
-                    } catch (AuthenticationException e) {
-                        LOG.warning("Authentication failed, try playing offline: " + e);
-                        return account.playOffline().orElseThrow(() -> e);
-                    }
-                }).withStage("launch.state.logging_in"))
+                .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, scriptFile != null);
                     return new HMCLGameLauncher(
@@ -375,7 +369,11 @@ public final class LauncherHelper {
                         }
                     }
 
-                    if (targetJavaVersion != null) {
+                    if (targetJavaVersion == null) {
+                        Controllers.confirm(i18n("launch.failed.no_accepted_java"), i18n("message.warning"), MessageType.WARNING, continueAction, () -> {
+                            future.completeExceptionally(new CancellationException("No accepted java"));
+                        });
+                    } else {
                         downloadJava(gameVersion.toString(), targetJavaVersion, profile)
                                 .thenAcceptAsync(downloadedJavaVersion -> {
                                     future.complete(downloadedJavaVersion);
@@ -616,6 +614,43 @@ public final class LauncherHelper {
                 }), i18n("download.java"), TaskCancellationAction.NORMAL);
 
         return future;
+    }
+
+    private static Task<AuthInfo> logIn(Account account) {
+        return Task.composeAsync(() -> {
+            try {
+                return Task.completed(account.logIn());
+            } catch (CredentialExpiredException e) {
+                LOG.log(Level.INFO, "Credential has expired", e);
+
+                return Task.completed(DialogController.logIn(account));
+            } catch (AuthenticationException e) {
+                LOG.log(Level.WARNING, "Authentication failed, try playing offline", e);
+
+                CompletableFuture<Task<AuthInfo>> future = new CompletableFuture<>();
+                runInFX(() -> {
+                    JFXButton loginOfflineButton = new JFXButton(i18n("account.login.offline"));
+                    loginOfflineButton.setOnAction(event -> {
+                        try {
+                            future.complete(Task.completed(account.playOffline()));
+                        } catch (AuthenticationException e2) {
+                            future.completeExceptionally(e2);
+                        }
+                    });
+                    JFXButton retryButton = new JFXButton(i18n("button.retry"));
+                    retryButton.setOnAction(event -> {
+                        future.complete(logIn(account));
+                    });
+                    Controllers.dialog(new MessageDialogPane.Builder(i18n("account.failed.server_disconnected"), i18n("account.failed"), MessageType.ERROR)
+                            .addAction(loginOfflineButton)
+                            .addAction(retryButton)
+                            .addCancel(() ->
+                                    future.completeExceptionally(new CancellationException()))
+                            .build());
+                });
+                return Task.fromCompletableFuture(future).thenComposeAsync(task -> task);
+            }
+        });
     }
 
     private static Optional<String> getLog4jPatch(Version version) {

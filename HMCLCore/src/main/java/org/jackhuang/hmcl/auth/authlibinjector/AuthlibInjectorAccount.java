@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
-import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.auth.CharacterSelector;
-import org.jackhuang.hmcl.auth.ServerDisconnectException;
+import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
@@ -66,15 +63,15 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     }
 
     @Override
-    public Optional<AuthInfo> playOffline() {
-        Optional<AuthInfo> auth = super.playOffline();
+    public AuthInfo playOffline() throws AuthenticationException {
+        AuthInfo auth = super.playOffline();
         Optional<AuthlibInjectorArtifactInfo> artifact = downloader.getArtifactInfoImmediately();
         Optional<String> prefetchedMeta = server.getMetadataResponse();
 
-        if (auth.isPresent() && artifact.isPresent() && prefetchedMeta.isPresent()) {
-            return Optional.of(new AuthlibInjectorAuthInfo(auth.get(), artifact.get(), server, prefetchedMeta.get()));
+        if (artifact.isPresent() && prefetchedMeta.isPresent()) {
+            return new AuthlibInjectorAuthInfo(auth, artifact.get(), server, prefetchedMeta.get());
         } else {
-            return Optional.empty();
+            throw new NotLoggedInException();
         }
     }
 
