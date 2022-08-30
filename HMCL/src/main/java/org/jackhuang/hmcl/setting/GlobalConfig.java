@@ -68,6 +68,8 @@ public class GlobalConfig implements Cloneable, Observable {
 
     private IntegerProperty agreementVersion = new SimpleIntegerProperty();
 
+    private IntegerProperty platformPromptVersion = new SimpleIntegerProperty();
+
     private StringProperty multiplayerToken = new SimpleStringProperty();
 
     private BooleanProperty multiplayerRelay = new SimpleBooleanProperty();
@@ -113,6 +115,18 @@ public class GlobalConfig implements Cloneable, Observable {
         this.agreementVersion.set(agreementVersion);
     }
 
+    public int getPlatformPromptVersion() {
+        return platformPromptVersion.get();
+    }
+
+    public IntegerProperty platformPromptVersionProperty() {
+        return platformPromptVersion;
+    }
+
+    public void setPlatformPromptVersion(int platformPromptVersion) {
+        this.platformPromptVersion.set(platformPromptVersion);
+    }
+
     public boolean isMultiplayerRelay() {
         return multiplayerRelay.get();
     }
@@ -152,6 +166,7 @@ public class GlobalConfig implements Cloneable, Observable {
     public static class Serializer implements JsonSerializer<GlobalConfig>, JsonDeserializer<GlobalConfig> {
         private static final Set<String> knownFields = new HashSet<>(Arrays.asList(
                 "agreementVersion",
+                "platformPromptVersion",
                 "multiplayerToken",
                 "multiplayerRelay",
                 "multiplayerAgreementVersion"
@@ -165,6 +180,7 @@ public class GlobalConfig implements Cloneable, Observable {
 
             JsonObject jsonObject = new JsonObject();
             jsonObject.add("agreementVersion", context.serialize(src.getAgreementVersion()));
+            jsonObject.add("platformPromptVersion", context.serialize(src.getPlatformPromptVersion()));
             jsonObject.add("multiplayerToken", context.serialize(src.getMultiplayerToken()));
             jsonObject.add("multiplayerRelay", context.serialize(src.isMultiplayerRelay()));
             jsonObject.add("multiplayerAgreementVersion", context.serialize(src.getMultiplayerAgreementVersion()));
@@ -183,6 +199,7 @@ public class GlobalConfig implements Cloneable, Observable {
 
             GlobalConfig config = new GlobalConfig();
             config.setAgreementVersion(Optional.ofNullable(obj.get("agreementVersion")).map(JsonElement::getAsInt).orElse(0));
+            config.setPlatformPromptVersion(Optional.ofNullable(obj.get("platformPromptVersion")).map(JsonElement::getAsInt).orElse(0));
             config.setMultiplayerToken(Optional.ofNullable(obj.get("multiplayerToken")).map(JsonElement::getAsString).orElse(null));
             config.setMultiplayerRelay(Optional.ofNullable(obj.get("multiplayerRelay")).map(JsonElement::getAsBoolean).orElse(false));
             config.setMultiplayerAgreementVersion(Optional.ofNullable(obj.get("multiplayerAgreementVersion")).map(JsonElement::getAsInt).orElse(0));
