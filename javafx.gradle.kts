@@ -34,6 +34,7 @@ val jfxDependenciesFile = project("HMCL").buildDir.resolve("openjfx-dependencies
 val jfxPlatforms = listOf(
     Platform("windows-x86", "win-x86"),
     Platform("windows-x86_64", "win"),
+    Platform("windows-arm64", "win", groupId = "org.glavo.hmcl.openjfx", version = "18.0.2+1-arm64", unsupportedModules = listOf("media", "web")),
     Platform("osx-x86_64", "mac"),
     Platform("osx-arm64", "mac-aarch64"),
     Platform("linux-x86_64", "linux"),

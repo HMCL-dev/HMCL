@@ -1,16 +1,16 @@
 # Platform Support Status
 
-|                            | Windows                             | Linux                                   | Mac OS                          | FreeBSD |
-|----------------------------|:------------------------------------|:----------------------------------------|:--------------------------------|:--------|
-| x86-64                     | F                                   | F                                       | F                               | N       |
-| x86                        | F                                   | F                                       | /                               | /       |
-| ARM64                      | P (1.19+)<br/>F (use x86 emulation) | T                                       | P (1.19+)<br/>F (use Rosetta 2) | /       |
-| ARM32                      | /                                   | T                                       | /                               | /       |
-| MIPS64el                   | /                                   | N                                       | /                               | /       |
-| LoongArch64                | /                                   | F (for Old World)<br/>N (for New World) | /                               | /       |
-| PowerPC-64 (Little-Endian) | /                                   | L                                       | /                               | /       |
-| S390x                      | /                                   | L                                       | /                               | /       |
-| RISC-V                     | /                                   | N                                       | /                               | /       |
+|                            | Windows                            | Linux                                   | Mac OS                          | FreeBSD |
+|----------------------------|:-----------------------------------|:----------------------------------------|:--------------------------------|:--------|
+| x86-64                     | F                                  | F                                       | F                               | N       |
+| x86                        | F                                  | F                                       | /                               | /       |
+| ARM64                      | P (1.8+)<br/>F (use x86 emulation) | T                                       | P (1.19+)<br/>F (use Rosetta 2) | /       |
+| ARM32                      | /                                  | T                                       | /                               | /       |
+| MIPS64el                   | /                                  | N                                       | /                               | /       |
+| LoongArch64                | /                                  | F (for Old World)<br/>N (for New World) | /                               | /       |
+| PowerPC-64 (Little-Endian) | /                                  | L                                       | /                               | /       |
+| S390x                      | /                                  | L                                       | /                               | /       |
+| RISC-V                     | /                                  | N                                       | /                               | /       |
 
 * F: Fully supported platform.
 
