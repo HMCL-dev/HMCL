@@ -40,7 +40,7 @@ val jfxPlatforms = listOf(
     Platform("linux-x86_64", "linux"),
     Platform("linux-arm32", "linux-arm32-monocle", unsupportedModules = listOf("media", "web")),
     Platform("linux-arm64", "linux-aarch64"),
-    Platform("linux-loongarch64_ow", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19-ea+10-loongson64"),
+    Platform("linux-loongarch64_ow", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19-ea+10-loongson64", unsupportedModules = listOf("media", "web")),
 )
 
 val jfxInClasspath =
