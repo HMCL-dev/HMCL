@@ -80,7 +80,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         if (fs != null) {
             for (File f : fs) {
                 if (f.isDirectory())
-                    if (findFiles(f, fileName))
+                    if (f.listFiles((dir, name) -> name.equals(fileName)) != null)
                         return true;
                 if (f.getName().equals(fileName))
                     return true;
