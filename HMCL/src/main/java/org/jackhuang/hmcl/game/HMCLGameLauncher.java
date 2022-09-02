@@ -59,8 +59,13 @@ public final class HMCLGameLauncher extends DefaultLauncher {
 
     private void generateOptionsTxt() {
         File optionsFile = new File(repository.getRunDirectory(version.getId()), "options.txt");
+        File configFolder = new File(repository.getRunDirectory(version.getId()), "config");
+
         if (optionsFile.exists())
             return;
+        if (configFolder.isDirectory())
+            if (findFiles(configFolder, "options.txt"))
+                return;
         try {
             // TODO: Dirty implementation here
             if (I18n.getCurrentLocale().getLocale() == Locale.CHINA)
@@ -68,6 +73,20 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         } catch (IOException e) {
             Logging.LOG.log(Level.WARNING, "Unable to generate options.txt", e);
         }
+    }
+
+    private boolean findFiles(File folder, String fileName) {
+        File[] fs = folder.listFiles();
+        if (fs != null) {
+            for (File f : fs) {
+                if (f.isDirectory())
+                    if (f.listFiles((dir, name) -> name.equals(fileName)) != null)
+                        return true;
+                if (f.getName().equals(fileName))
+                    return true;
+            }
+        }
+        return false;
     }
 
     @Override
