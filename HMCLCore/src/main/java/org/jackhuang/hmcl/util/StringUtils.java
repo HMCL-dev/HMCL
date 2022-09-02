@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util;
 
+import javafx.scene.control.Labeled;
+import javafx.scene.control.Tooltip;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.*;
@@ -254,6 +256,16 @@ public final class StringUtils {
 
         final int halfLength = (MAX_SHORT_STRING_LENGTH - 5) / 2;
         return Optional.of(str.substring(0, halfLength) + " ... " + str.substring(str.length() - halfLength));
+    }
+
+    public static void setShortLabelText(Labeled label, String text) {
+        Optional<String> shortText = truncate(text);
+        if (shortText.isPresent()) {
+            label.setText(shortText.get());
+            label.setTooltip(new Tooltip(text));
+        } else {
+            label.setText(text);
+        }
     }
 
     public static boolean isASCII(CharSequence cs) {

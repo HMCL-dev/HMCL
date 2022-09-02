@@ -28,7 +28,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -165,14 +164,8 @@ public class MultiFileItem<T> extends VBox {
             pane.setLeft(left);
 
             if (StringUtils.isNotBlank(subtitle)) {
-                Optional<String> shortSubtitle = StringUtils.truncate(subtitle);
-                Label right;
-                if (shortSubtitle.isPresent()) {
-                    right = new Label(shortSubtitle.get());
-                    right.setTooltip(new Tooltip(subtitle));
-                } else {
-                    right = new Label(subtitle);
-                }
+                Label right = new Label();
+                StringUtils.setShortLabelText(right, subtitle);
                 BorderPane.setAlignment(right, Pos.CENTER_RIGHT);
                 right.setWrapText(true);
                 right.getStyleClass().add("subtitle-label");

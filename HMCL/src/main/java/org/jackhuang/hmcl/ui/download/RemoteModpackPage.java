@@ -36,6 +36,8 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.StringUtils;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
@@ -88,7 +90,7 @@ public class RemoteModpackPage extends StackPane implements WizardPage {
 
         manifest = tryCast(controller.getSettings().get(MODPACK_SERVER_MANIFEST), ServerModpackManifest.class)
                 .orElseThrow(() -> new IllegalStateException("MODPACK_SERVER_MANIFEST should exist"));
-        lblModpackLocation.setText(manifest.getFileApi());
+        StringUtils.setShortLabelText(lblModpackLocation, manifest.getFileApi());
 
         try {
             controller.getSettings().put(MODPACK_MANIFEST, manifest.toModpack(null));

@@ -43,6 +43,7 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -150,7 +151,7 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
                         spinnerPane.hideSpinner();
                         lblName.setText(selectedFile.getName());
                         installAsVersion.set(false);
-                        lblModpackLocation.setText(selectedFile.getAbsolutePath());
+                        StringUtils.setShortLabelText(lblModpackLocation, selectedFile.getAbsolutePath());
 
                         if (!name.isPresent()) {
                             // trim: https://github.com/huanghongxun/HMCL/issues/962
@@ -173,7 +174,7 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
                         lblVersion.setText(manifest.getVersion());
                         lblAuthor.setText(manifest.getAuthor());
 
-                        lblModpackLocation.setText(selectedFile.getAbsolutePath());
+                        StringUtils.setShortLabelText(lblModpackLocation, selectedFile.getAbsolutePath());
 
                         if (!name.isPresent()) {
                             // trim: https://github.com/huanghongxun/HMCL/issues/962
