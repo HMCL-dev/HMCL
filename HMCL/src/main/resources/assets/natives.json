@@ -2378,6 +2378,17 @@
       }
     },
     "ca.weblite:java-objc-bridge:1.0.0:natives": null,
+    "com.mojang:text2speech:1.10.3": {
+      "name": "com.mojang:text2speech:1.11.3",
+      "downloads": {
+        "artifact": {
+          "path": "com/mojang/text2speech/1.11.3/text2speech-1.11.3.jar",
+          "url": "https://libraries.minecraft.net/com/mojang/text2speech/1.11.3/text2speech-1.11.3.jar",
+          "sha1": "f378f889797edd7df8d32272c06ca80a1b6b0f58",
+          "size": 13164
+        }
+      }
+    },
     "net.java.jinput:jinput-platform:2.0.5:natives": null,
     "com.mojang:text2speech:1.10.3:natives": null,
     "com.mojang:text2speech:1.11.3:natives": null,
