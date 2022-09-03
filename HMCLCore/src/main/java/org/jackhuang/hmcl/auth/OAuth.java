@@ -181,7 +181,8 @@ public class OAuth {
 
         switch (response.error) {
             case "invalid_grant":
-                if (response.errorDescription.contains("The user must sign in again and if needed grant the client application access to the requested scope")) {
+                if (response.errorDescription.contains("The user must sign in again and if needed grant the client application access to the requested scope") ||
+                        response.errorDescription.contains("The user could not be authenticated as the grant is expired")) {
                     throw new CredentialExpiredException();
                 }
                 break;
