@@ -165,19 +165,12 @@ public class MultiFileItem<T> extends VBox {
             pane.setLeft(left);
 
             if (StringUtils.isNotBlank(subtitle)) {
-                Optional<String> shortSubtitle = StringUtils.truncate(subtitle);
-                Label right;
-                if (shortSubtitle.isPresent()) {
-                    right = new Label(shortSubtitle.get());
-                    right.setTooltip(new Tooltip(subtitle));
-                } else {
-                    right = new Label(subtitle);
-                }
-                BorderPane.setAlignment(right, Pos.CENTER_RIGHT);
-                right.setWrapText(true);
-                right.getStyleClass().add("subtitle-label");
-                right.setStyle("-fx-font-size: 10;");
-                pane.setRight(right);
+                Label center = new Label(subtitle);
+                BorderPane.setAlignment(center, Pos.CENTER_RIGHT);
+                center.setWrapText(true);
+                center.getStyleClass().add("subtitle-label");
+                center.setStyle("-fx-font-size: 10;");
+                pane.setCenter(center);
             }
 
             return pane;

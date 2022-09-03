@@ -17,12 +17,12 @@
     <SpinnerPane fx:id="spinnerPane" styleClass="large-spinner-pane">
         <VBox fx:id="borderPane" alignment="CENTER" FXUtils.limitWidth="500">
             <ComponentList>
-                <BorderPane><left><Label text="%modpack.task.install.will" /></left><right><Label fx:id="lblModpackLocation" /></right></BorderPane>
-                <BorderPane><left><Label BorderPane.alignment="CENTER_LEFT" text="%archive.name" /></left><right><JFXTextField fx:id="txtModpackName" StackPane.margin="$insets" /></right></BorderPane>
+                <BorderPane><left><Label text="%modpack.task.install.will" /></left><center><Label BorderPane.alignment="CENTER_RIGHT" fx:id="lblModpackLocation" /></center></BorderPane>
+                <BorderPane><left><Label BorderPane.alignment="CENTER_LEFT" text="%archive.name" /></left><center><JFXTextField BorderPane.alignment="CENTER_RIGHT" fx:id="txtModpackName" StackPane.margin="$insets" /></center></BorderPane>
 
-                <BorderPane><left><Label text="%modpack.name"/></left><right><Label fx:id="lblName" /></right></BorderPane>
-                <BorderPane><left><Label text="%archive.version"/></left><right><Label fx:id="lblVersion" /></right></BorderPane>
-                <BorderPane><left><Label text="%archive.author"/></left><right><Label fx:id="lblAuthor" /></right></BorderPane>
+                <BorderPane><left><Label text="%modpack.name"/></left><center><Label BorderPane.alignment="CENTER_RIGHT" fx:id="lblName" /></center></BorderPane>
+                <BorderPane><left><Label text="%archive.version"/></left><center><Label BorderPane.alignment="CENTER_RIGHT" fx:id="lblVersion" /></center></BorderPane>
+                <BorderPane><left><Label text="%archive.author"/></left><center><Label BorderPane.alignment="CENTER_RIGHT" fx:id="lblAuthor" /></center></BorderPane>
                 <BorderPane>
                     <left><JFXButton fx:id="btnDescription" onMouseClicked="#onDescribe" text="%modpack.description" styleClass="jfx-button-border" /></left>
                     <right><JFXButton buttonType="RAISED" fx:id="btnInstall" onMouseClicked="#onInstall" text="%button.install" styleClass="jfx-button-raised" /></right>
