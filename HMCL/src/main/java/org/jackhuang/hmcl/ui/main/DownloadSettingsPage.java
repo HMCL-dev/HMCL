@@ -53,10 +53,9 @@ public class DownloadSettingsPage extends StackPane {
         getChildren().setAll(scrollPane);
 
         {
-            ComponentList downloadSource = new ComponentList();
-
+            VBox downloadSource = new VBox(8);
+            downloadSource.getStyleClass().add("card-non-transparent");
             {
-                VBox pane = new VBox(8);
 
                 VBox chooseWrapper = new VBox();
                 chooseWrapper.setPadding(new Insets(8, 0, 8, 0));
@@ -75,7 +74,7 @@ public class DownloadSettingsPage extends StackPane {
                     JFXComboBox<String> cboVersionListSource = new JFXComboBox<>();
                     cboVersionListSource.setConverter(stringConverter(key -> i18n("download.provider." + key)));
                     versionListSourcePane.setRight(cboVersionListSource);
-                    FXUtils.setLimitWidth(cboVersionListSource, 420);
+                    FXUtils.setLimitWidth(cboVersionListSource, 400);
 
                     cboVersionListSource.getItems().setAll(DownloadProviders.providersById.keySet());
                     selectedItemPropertyFor(cboVersionListSource).bindBidirectional(config().versionListSourceProperty());
@@ -91,31 +90,28 @@ public class DownloadSettingsPage extends StackPane {
 
                     JFXComboBox<String> cboDownloadSource = new JFXComboBox<>();
                     cboDownloadSource.setConverter(stringConverter(key -> i18n("download.provider." + key)));
-                    downloadSourcePane.setRight(cboDownloadSource);
+                    downloadSourcePane.setCenter(cboDownloadSource);
                     FXUtils.setLimitWidth(cboDownloadSource, 420);
 
                     cboDownloadSource.getItems().setAll(DownloadProviders.rawProviders.keySet());
                     selectedItemPropertyFor(cboDownloadSource).bindBidirectional(config().downloadTypeProperty());
                 }
 
-                pane.getChildren().setAll(chooseWrapper, versionListSourcePane, downloadSourcePane);
-                downloadSource.getContent().add(pane);
+                downloadSource.getChildren().setAll(chooseWrapper, versionListSourcePane, downloadSourcePane);
             }
 
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.version_list_source")), downloadSource);
         }
 
         {
-            ComponentList downloadThreads = new ComponentList();
-
+            VBox downloadThreads = new VBox(16);
+            downloadThreads.getStyleClass().add("card-non-transparent");
             {
-                VBox pane = new VBox(16);
-                pane.setPadding(new Insets(8, 0, 8, 0));
-
                 {
                     JFXCheckBox chkAutoDownloadThreads = new JFXCheckBox(i18n("settings.launcher.download.threads.auto"));
+                    VBox.setMargin(chkAutoDownloadThreads, new Insets(8, 0, 0, 0));
                     chkAutoDownloadThreads.selectedProperty().bindBidirectional(config().autoDownloadThreadsProperty());
-                    pane.getChildren().add(chkAutoDownloadThreads);
+                    downloadThreads.getChildren().add(chkAutoDownloadThreads);
 
                     chkAutoDownloadThreads.selectedProperty().addListener((a, b, newValue) -> {
                         if (newValue) {
@@ -150,7 +146,7 @@ public class DownloadSettingsPage extends StackPane {
                     });
 
                     hbox.getChildren().setAll(label, slider, threadsField);
-                    pane.getChildren().add(hbox);
+                    downloadThreads.getChildren().add(hbox);
                 }
 
                 {
@@ -158,26 +154,22 @@ public class DownloadSettingsPage extends StackPane {
                     VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
                     hintPane.disableProperty().bind(config().autoDownloadThreadsProperty());
                     hintPane.setText(i18n("settings.launcher.download.threads.hint"));
-                    pane.getChildren().add(hintPane);
+                    downloadThreads.getChildren().add(hintPane);
                 }
-
-                downloadThreads.getContent().add(pane);
             }
 
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadThreads);
         }
 
         {
-            ComponentList proxyList = new ComponentList();
-
-            VBox proxyWrapper = new VBox();
-            proxyWrapper.setPadding(new Insets(8, 0, 8, 0));
-            proxyWrapper.setSpacing(10);
+            VBox proxyList = new VBox(10);
+            proxyList.getStyleClass().add("card-non-transparent");
 
             VBox proxyPane = new VBox();
             {
                 JFXCheckBox chkDisableProxy = new JFXCheckBox(i18n("settings.launcher.proxy.disable"));
-                proxyWrapper.getChildren().add(chkDisableProxy);
+                VBox.setMargin(chkDisableProxy, new Insets(8, 0, 0, 0));
+                proxyList.getChildren().add(chkDisableProxy);
                 reversedSelectedPropertyFor(chkDisableProxy).bindBidirectional(config().hasProxyProperty());
                 proxyPane.disableProperty().bind(chkDisableProxy.selectedProperty());
             }
@@ -310,9 +302,8 @@ public class DownloadSettingsPage extends StackPane {
 
                     proxyPane.getChildren().add(authPane);
                 }
-                proxyWrapper.getChildren().add(proxyPane);
+                proxyList.getChildren().add(proxyPane);
             }
-            proxyList.getContent().add(proxyWrapper);
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.proxy")), proxyList);
         }
 
