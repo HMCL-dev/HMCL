@@ -53,7 +53,9 @@ import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.util.List;
@@ -186,6 +188,19 @@ public final class Controllers {
         stage.setTitle(Metadata.FULL_TITLE);
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.setScene(scene);
+
+        if (!Architecture.SYSTEM_ARCH.isX86() && globalConfig().getPlatformPromptVersion() < 1) {
+            Runnable continueAction = () -> globalConfig().setPlatformPromptVersion(1);
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+                Controllers.dialog(i18n("fatal.unsupported_platform.osx_arm64"), null, MessageType.INFO, continueAction);
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+                Controllers.dialog(i18n("fatal.unsupported_platform.windows_arm64"), null, MessageType.INFO, continueAction);
+            } else {
+                Controllers.dialog(i18n("fatal.unsupported_platform"), null, MessageType.WARNING, continueAction);
+            }
+        }
+
 
         if (globalConfig().getAgreementVersion() < 1) {
             JFXDialogLayout agreementPane = new JFXDialogLayout();

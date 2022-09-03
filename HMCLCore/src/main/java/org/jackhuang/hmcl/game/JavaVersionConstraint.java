@@ -120,8 +120,16 @@ public enum JavaVersionConstraint {
         @Override
         protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
                                                @Nullable JavaVersion javaVersion) {
-            return javaVersion != null && !javaVersion.getArchitecture().isX86()
-                    && (OperatingSystem.CURRENT_OS != OperatingSystem.OSX || gameVersionNumber.compareTo(VersionNumber.asVersion("1.19")) < 0);
+            if (javaVersion == null || javaVersion.getArchitecture() != Architecture.ARM64)
+                return false;
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+                return gameVersionNumber.compareTo(VersionNumber.asVersion("1.6")) < 0;
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+                return gameVersionNumber.compareTo(VersionNumber.asVersion("1.19")) < 0;
+
+            return false;
         }
 
         @Override
