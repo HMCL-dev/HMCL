@@ -77,7 +77,7 @@ public class GameCrashWindow extends Stage {
     private final StringProperty arch = new SimpleStringProperty(Architecture.SYSTEM_ARCH.getDisplayName());
     private final TextFlow reasonTextFlow = new TextFlow(new Text(i18n("game.crash.reason.unknown")));
     private final BooleanProperty loading = new SimpleBooleanProperty();
-    private final Label feedbackLabel = new Label(i18n("game.crash.feedback"));
+    private final TextFlow feedbackTextFlow = new TextFlow();
 
     private final ManagedProcess managedProcess;
     private final DefaultGameRepository repository;
@@ -103,6 +103,8 @@ public class GameCrashWindow extends Stage {
                 : launchOptions.getJava().getVersion() + " (" + launchOptions.getJava().getArchitecture().getDisplayName() + ")";
 
         this.view = new View();
+
+        this.feedbackTextFlow.getChildren().addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
 
         setScene(new Scene(view, 800, 480));
         getScene().getStylesheets().addAll(config().getTheme().getStylesheets(config().getLauncherFontFamily()));
@@ -180,9 +182,9 @@ public class GameCrashWindow extends Stage {
                         reasonTextFlow.getChildren().setAll(FXUtils.parseSegment(i18n("game.crash.reason.unknown"), Controllers::onHyperlinkAction));
                     }
 
-                    feedbackLabel.setVisible(true);
+                    feedbackTextFlow.setVisible(true);
                 } else {
-                    feedbackLabel.setVisible(false);
+                    feedbackTextFlow.setVisible(false);
                     reasonTextFlow.getChildren().setAll(segments);
                 }
             }
@@ -350,7 +352,7 @@ public class GameCrashWindow extends Stage {
 
                 gameDirPane.setPadding(new Insets(8));
                 VBox.setVgrow(gameDirPane, Priority.ALWAYS);
-                gameDirPane.getChildren().setAll(gameDir, javaDir, new VBox(reasonTitle, reasonTextFlow, feedbackLabel));
+                gameDirPane.getChildren().setAll(gameDir, javaDir, new VBox(reasonTitle, reasonTextFlow, feedbackTextFlow));
             }
 
             HBox toolBar = new HBox();
