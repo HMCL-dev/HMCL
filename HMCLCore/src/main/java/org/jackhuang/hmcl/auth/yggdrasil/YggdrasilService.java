@@ -274,5 +274,5 @@ public class YggdrasilService {
 
     public static final String PROFILE_URL = "https://aka.ms/MinecraftMigration";
     public static final String MIGRATION_FAQ_URL = "https://help.minecraft.net/hc/en-us/articles/360050865492-JAVA-Account-Migration-FAQ";
-    public static final String PURCHASE_URL = "https://www.minecraft.net/zh-hans/store/minecraft-java-edition";
+    public static final String PURCHASE_URL = "https://www.minecraft.net/store/minecraft-java-bedrock-edition-pc";
 }
