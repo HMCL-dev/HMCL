@@ -39,6 +39,8 @@ jobs:
           wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.exe.sha1"
           wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar"
           wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar.sha1"
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.sh"
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.sh.sha1"
         env:
           DOWNLOAD_BASE_URL: https://ci.huangyuhui.net/job/HMCL/lastSuccessfulBuild/artifact/HMCL/build/libs
       - name: Generate release note
@@ -58,6 +60,8 @@ jobs:
             HMCL-${{ env.HMCL_VERSION }}.exe.sha1
             HMCL-${{ env.HMCL_VERSION }}.jar
             HMCL-${{ env.HMCL_VERSION }}.jar.sha1
+            HMCL-${{ env.HMCL_VERSION }}.sh
+            HMCL-${{ env.HMCL_VERSION }}.sh.sha1
           target_commitish: ${{ env.HMCL_COMMIT_SHA }}
           name: ${{ env.HMCL_TAG_NAME }}
           tag_name: ${{ env.HMCL_TAG_NAME }}
