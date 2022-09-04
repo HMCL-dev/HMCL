@@ -89,6 +89,7 @@ public class OAuth {
                         pair("grant_type", "authorization_code"), pair("client_secret", options.callback.getClientSecret()),
                         pair("redirect_uri", session.getRedirectURI()), pair("scope", options.scope))
                 .ignoreHttpCode()
+                .retry(5)
                 .getJson(AuthorizationResponse.class);
         handleErrorResponse(response);
         return new Result(response.accessToken, response.refreshToken);
@@ -98,6 +99,7 @@ public class OAuth {
         DeviceTokenResponse deviceTokenResponse = HttpRequest.POST(deviceCodeURL)
                 .form(pair("client_id", options.callback.getClientId()), pair("scope", options.scope))
                 .ignoreHttpCode()
+                .retry(5)
                 .getJson(DeviceTokenResponse.class);
         handleErrorResponse(deviceTokenResponse);
 
@@ -124,6 +126,7 @@ public class OAuth {
                             pair("code", deviceTokenResponse.deviceCode),
                             pair("client_id", options.callback.getClientId()))
                     .ignoreHttpCode()
+                    .retry(5)
                     .getJson(TokenResponse.class);
 
             if ("authorization_pending".equals(tokenResponse.error)) {
@@ -158,6 +161,7 @@ public class OAuth {
                     .form(query)
                     .accept("application/json")
                     .ignoreHttpCode()
+                    .retry(5)
                     .getJson(RefreshResponse.class);
 
             handleErrorResponse(response);
@@ -177,7 +181,8 @@ public class OAuth {
 
         switch (response.error) {
             case "invalid_grant":
-                if (response.errorDescription.contains("The user must sign in again and if needed grant the client application access to the requested scope")) {
+                if (response.errorDescription.contains("The user must sign in again and if needed grant the client application access to the requested scope") ||
+                        response.errorDescription.contains("The user could not be authenticated as the grant is expired")) {
                     throw new CredentialExpiredException();
                 }
                 break;

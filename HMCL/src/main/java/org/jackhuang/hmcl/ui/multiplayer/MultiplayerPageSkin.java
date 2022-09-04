@@ -146,7 +146,6 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
             content.setFillWidth(true);
             ScrollPane scrollPane = new ScrollPane(content);
             scrollPane.setFitToWidth(true);
-            scrollPane.setFitToHeight(true);
             setCenter(scrollPane);
 
             ComponentList roomPane = new ComponentList();

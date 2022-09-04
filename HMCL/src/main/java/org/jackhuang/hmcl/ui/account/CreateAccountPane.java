@@ -286,7 +286,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
                     runInFX(() -> deviceCode.set(value));
                 }));
-                HBox box = new HBox(8);
+                FlowPane box = new FlowPane();
+                box.setHgap(8);
                 JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
                 birthLink.setOnAction(e -> FXUtils.openLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a"));
                 JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));

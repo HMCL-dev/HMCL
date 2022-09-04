@@ -66,6 +66,8 @@ public final class JavaRepository {
     }
 
     public static Stream<Path> findJavaHomeInMinecraftRuntimeDir(Path runtimeDir) {
+        if (!Files.isDirectory(runtimeDir))
+            return Stream.empty();
         // Examples:
         // $HOME/Library/Application Support/minecraft/runtime/java-runtime-beta/mac-os/java-runtime-beta/jre.bundle/Contents/Home
         // $HOME/.minecraft/runtime/java-runtime-beta/linux/java-runtime-beta

@@ -885,7 +885,7 @@
     -fx-background-radius: 4;
     -fx-padding: 8px;
 
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
 }
 
 .card:selected {

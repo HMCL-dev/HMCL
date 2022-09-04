@@ -123,11 +123,8 @@ public enum JavaVersionConstraint {
             if (javaVersion == null || javaVersion.getArchitecture() != Architecture.ARM64)
                 return false;
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS || OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
                 return gameVersionNumber.compareTo(VersionNumber.asVersion("1.6")) < 0;
-
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
-                return gameVersionNumber.compareTo(VersionNumber.asVersion("1.19")) < 0;
 
             return false;
         }
@@ -245,15 +242,15 @@ public enum JavaVersionConstraint {
     public static JavaVersion findSuitableJavaVersion(VersionNumber gameVersion, Version version) throws InterruptedException {
         VersionRanges range = findSuitableJavaVersionRange(gameVersion, version);
 
-        boolean skipCheckArchitecture = Architecture.CURRENT_ARCH.isX86()
-                || (OperatingSystem.CURRENT_OS == OperatingSystem.OSX && gameVersion.compareTo(VersionNumber.asVersion("1.19")) >= 0)
-                || OperatingSystem.CURRENT_OS == OperatingSystem.LINUX;
+        boolean forceX86 = Architecture.SYSTEM_ARCH == Architecture.ARM64
+                && (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS || OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+                && gameVersion.compareTo(VersionNumber.asVersion("1.6")) < 0;
 
         JavaVersion mandatory = null;
         JavaVersion suggested = null;
         for (JavaVersion javaVersion : JavaVersion.getJavas()) {
             // select the latest x86 java that this version accepts.
-            if (!skipCheckArchitecture && !javaVersion.getArchitecture().isX86())
+            if (forceX86 && !javaVersion.getArchitecture().isX86())
                 continue;
 
             VersionNumber javaVersionNumber = javaVersion.getVersionNumber();
