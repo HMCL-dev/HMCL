@@ -294,8 +294,10 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
                 JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
                 deauthorizeLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A"));
+                JFXHyperlink Make_Game_ID_SettingsLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
+                Make_Game_ID_SettingsLink.setOnAction(e -> FXUtils.openLink("https://www.minecraft.net/msaprofile/mygames/editprofile"));    
                 purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
-                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink);
+                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, Make_Game_ID_SettingsLink);
                 GridPane.setColumnSpan(box, 2);
 
                 vbox.getChildren().setAll(hintPane, box);
