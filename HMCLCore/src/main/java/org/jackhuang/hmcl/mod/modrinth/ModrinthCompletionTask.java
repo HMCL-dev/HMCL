@@ -102,6 +102,8 @@ public class ModrinthCompletionTask extends Task<Void> {
         Path runDirectory = repository.getRunDirectory(version).toPath();
 
         for (ModrinthManifest.File file : manifest.getFiles()) {
+            if (file.getEnv() != null && file.getEnv().getOrDefault("client", null).equals("unsupported"))
+                continue;
             Path filePath = runDirectory.resolve(file.getPath());
             if (!Files.exists(filePath) && !file.getDownloads().isEmpty()) {
                 FileDownloadTask task = new FileDownloadTask(file.getDownloads().get(0), filePath.toFile());
