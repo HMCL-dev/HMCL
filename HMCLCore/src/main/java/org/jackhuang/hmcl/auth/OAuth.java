@@ -181,7 +181,7 @@ public class OAuth {
 
         switch (response.error) {
             case "invalid_grant":
-                if (response.errorDescription.contains(".")) {
+                if (response.errorDescription.contains("AADSTS70000")) {
                     throw new CredentialExpiredException();
                 }
                 break;
