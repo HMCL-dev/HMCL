@@ -184,6 +184,7 @@ public class OAuth {
                 if (response.errorDescription.contains("The user must sign in again and if needed grant the client application access to the requested scope") ||
                         response.errorDescription.contains("The user must first sign in and grant the client application access to the requested scope") ||
                         response.errorDescription.contains("The user must sign in again") ||
+                        response.errorDescription.contains("The provided value for the input parameter 'refresh_token' or 'assertion' is not valid") ||
                         response.errorDescription.contains("The user could not be authenticated as the grant is expired")) {
                     throw new CredentialExpiredException();
                 }
