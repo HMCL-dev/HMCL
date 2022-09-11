@@ -29,9 +29,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class LocalServerBroadcaster implements Runnable {
     private final int port;
-    private final MultiplayerManager.CatoSession session;
+    private final MultiplayerManager.HiperSession session;
 
-    public LocalServerBroadcaster(int port, MultiplayerManager.CatoSession session) {
+    public LocalServerBroadcaster(int port, MultiplayerManager.HiperSession session) {
         this.port = port;
         this.session = session;
     }

@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -59,11 +58,12 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
  * Cato Management.
  */
 public final class MultiplayerManager {
-    static final String CATO_VERSION = "1.2.2";
-    private static final String CATO_DOWNLOAD_URL = "https://gitcode.net/to/cato/-/raw/master/client/";
-    private static final String CATO_HASH_URL = CATO_DOWNLOAD_URL + "cato-all-files.sha1";
-    private static final String CATO_PATH = getCatoPath();
-    public static final int CATO_AGREEMENT_VERSION = 2;
+    static final String HIPER_VERSION = "1.2.2";
+    private static final String HIPER_DOWNLOAD_URL = "https://gitcode.net/to/hiper/-/raw/master/";
+    private static final String HIPER_PACKAGES_URL = HIPER_DOWNLOAD_URL + "packages.sha1";
+    private static final Path HIPER_CONFIG_PATH = Metadata.HMCL_DIRECTORY.resolve("hiper.yml");
+    private static final String HIPER_PATH = getHiperPath();
+    public static final int HIPER_AGREEMENT_VERSION = 2;
     private static final String REMOTE_ADDRESS = "127.0.0.1";
     private static final String LOCAL_ADDRESS = "0.0.0.0";
 
@@ -72,18 +72,18 @@ public final class MultiplayerManager {
     private MultiplayerManager() {
     }
 
-    private static CompletableFuture<Map<String, String>> getCatoHash() {
+    private static CompletableFuture<Map<String, String>> getPackagesHash() {
         FXUtils.checkFxUserThread();
         if (HASH == null) {
             HASH = CompletableFuture.supplyAsync(wrap(() -> {
-                String hashList = HttpRequest.GET(CATO_HASH_URL).getString();
+                String hashList = HttpRequest.GET(HIPER_PACKAGES_URL).getString();
                 Map<String, String> hashes = new HashMap<>();
                 for (String line : hashList.split("\n")) {
-                    String[] items = line.trim().split("  ");
+                    String[] items = line.trim().split(" {2}");
                     if (items.length == 2 && items[0].length() == 40) {
                         hashes.put(items[1], items[0]);
                     } else {
-                        LOG.warning("Failed to parse cato hash file, hash line " + line);
+                        LOG.warning("Failed to parse Hiper packages.sha1 file, line: " + line);
                     }
                 }
                 return hashes;
@@ -92,38 +92,34 @@ public final class MultiplayerManager {
         return HASH;
     }
 
-    public static Task<Void> downloadCato() {
-        return Task.fromCompletableFuture(getCatoHash()).thenComposeAsync(catoHashes ->
+    public static Task<Void> downloadHiper() {
+        return Task.fromCompletableFuture(getPackagesHash()).thenComposeAsync(packagesHash ->
                 new FileDownloadTask(
-                        NetworkUtils.toURL(CATO_DOWNLOAD_URL + getCatoFileName()),
-                        getCatoExecutable().toFile(),
-                        catoHashes.get(getCatoFileName()) == null ? null : new FileDownloadTask.IntegrityCheck("SHA-1", catoHashes.get(getCatoFileName()))
+                        NetworkUtils.toURL(HIPER_DOWNLOAD_URL + getHiperFileName()),
+                        getHiperExecutable().toFile(),
+                        packagesHash.get(getHiperFileName()) == null ? null : new FileDownloadTask.IntegrityCheck("SHA-1", packagesHash.get(getHiperFileName()))
                 ).thenRunAsync(() -> {
                     if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-                        Set<PosixFilePermission> perm = Files.getPosixFilePermissions(getCatoExecutable());
+                        Set<PosixFilePermission> perm = Files.getPosixFilePermissions(getHiperExecutable());
                         perm.add(PosixFilePermission.OWNER_EXECUTE);
-                        Files.setPosixFilePermissions(getCatoExecutable(), perm);
+                        Files.setPosixFilePermissions(getHiperExecutable(), perm);
                     }
                 }));
     }
 
-    public static Path getCatoExecutable() {
-        return Metadata.HMCL_DIRECTORY.resolve("libraries").resolve(CATO_PATH);
+    public static Path getHiperExecutable() {
+        return Metadata.HMCL_DIRECTORY.resolve("libraries").resolve(HIPER_PATH);
     }
 
-    private static CompletableFuture<CatoSession> startCato(String token, State state) {
-        return getCatoHash().thenApplyAsync(wrap(catoHashes -> {
-            Path exe = getCatoExecutable();
+    private static CompletableFuture<HiperSession> startHiper(String token, State state) {
+        return getPackagesHash().thenApplyAsync(wrap(packagesHash -> {
+            Path exe = getHiperExecutable();
             if (!Files.isRegularFile(exe)) {
-                throw new CatoNotExistsException(exe);
-            }
-
-            if (!isPortAvailable(3478)) {
-                throw new CatoAlreadyStartedException();
+                throw new HiperNotExistsException(exe);
             }
 
             try {
-                String hash = catoHashes.get(getCatoFileName());
+                String hash = packagesHash.get(getHiperFileName());
                 if (hash != null) {
                     ChecksumMismatchException.verifyChecksum(exe, "SHA-1", hash);
                 }
@@ -139,28 +135,28 @@ public final class MultiplayerManager {
                     .command(commands)
                     .start();
 
-            return new CatoSession(state, process, Arrays.asList(commands));
+            return new HiperSession(state, process, Arrays.asList(commands));
         }));
     }
 
-    public static CompletableFuture<CatoSession> joinSession(String token, String peer, Mode mode, int remotePort, int localPort, JoinSessionHandler handler) throws IncompatibleCatoVersionException {
+    public static CompletableFuture<HiperSession> joinSession(String token, String peer, Mode mode, int remotePort, int localPort, JoinSessionHandler handler) throws IncompatibleHiperVersionException {
         LOG.info(String.format("Joining session (token=%s,peer=%s,mode=%s,remotePort=%d,localPort=%d)", token, peer, mode, remotePort, localPort));
 
-        return startCato(token, State.SLAVE).thenComposeAsync(wrap(session -> {
-            CompletableFuture<CatoSession> future = new CompletableFuture<>();
+        return startHiper(token, State.SLAVE).thenComposeAsync(wrap(session -> {
+            CompletableFuture<HiperSession> future = new CompletableFuture<>();
 
             session.forwardPort(peer, LOCAL_ADDRESS, localPort, REMOTE_ADDRESS, remotePort, mode);
 
-            Consumer<CatoExitEvent> onExit = event -> {
+            Consumer<HiperExitEvent> onExit = event -> {
                 boolean ready = session.isReady();
                 switch (event.getExitCode()) {
                     case 1:
                         if (!ready) {
-                            future.completeExceptionally(new CatoExitTimeoutException());
+                            future.completeExceptionally(new HiperExitTimeoutException());
                         }
                         break;
                 }
-                future.completeExceptionally(new CatoExitException(event.getExitCode(), ready));
+                future.completeExceptionally(new HiperExitException(event.getExitCode(), ready));
             };
             session.onExit.register(onExit);
 
@@ -225,11 +221,11 @@ public final class MultiplayerManager {
         }));
     }
 
-    public static CompletableFuture<CatoSession> createSession(String token, String sessionName, int gamePort, boolean allowAllJoinRequests) {
+    public static CompletableFuture<HiperSession> createSession(String token, String sessionName, int gamePort, boolean allowAllJoinRequests) {
         LOG.info(String.format("Creating session (token=%s,sessionName=%s,gamePort=%d)", token, sessionName, gamePort));
 
-        return startCato(token, State.MASTER).thenComposeAsync(wrap(session -> {
-            CompletableFuture<CatoSession> future = new CompletableFuture<>();
+        return startHiper(token, State.MASTER).thenComposeAsync(wrap(session -> {
+            CompletableFuture<HiperSession> future = new CompletableFuture<>();
 
             MultiplayerServer server = new MultiplayerServer(sessionName, gamePort, allowAllJoinRequests);
             server.startServer();
@@ -239,16 +235,16 @@ public final class MultiplayerManager {
             session.allowForwardingAddress(REMOTE_ADDRESS, gamePort);
             session.showAllowedAddress();
 
-            Consumer<CatoExitEvent> onExit = event -> {
+            Consumer<HiperExitEvent> onExit = event -> {
                 boolean ready = session.isReady();
                 switch (event.getExitCode()) {
                     case 1:
                         if (!ready) {
-                            future.completeExceptionally(new CatoExitTimeoutException());
+                            future.completeExceptionally(new HiperExitTimeoutException());
                         }
                         break;
                 }
-                future.completeExceptionally(new CatoExitException(event.getExitCode(), ready));
+                future.completeExceptionally(new HiperExitException(event.getExitCode(), ready));
             };
 
             session.onExit.register(onExit);
@@ -294,49 +290,22 @@ public final class MultiplayerManager {
         }
     }
 
-    private static String getCatoFileName() {
-        switch (OperatingSystem.CURRENT_OS) {
-            case WINDOWS:
-                if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
-                    return "cato-client-windows-amd64.exe";
-                } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                    return "cato-client-windows-arm64.exe";
-                } else if (Architecture.SYSTEM_ARCH == Architecture.X86) {
-                    return "cato-client-windows-i386.exe";
-                } else {
-                    return "";
-                }
-            case OSX:
-                if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
-                    return "cato-client-darwin-amd64";
-                } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                    return "cato-client-darwin-arm64";
-                } else {
-                    return "";
-                }
-            case LINUX:
-                if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
-                    return "cato-client-linux-amd64";
-                } else if (Architecture.SYSTEM_ARCH == Architecture.ARM32) {
-                    return "cato-client-linux-arm7";
-                } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                    return "cato-client-linux-arm64";
-                } else {
-                    return "";
-                }
-            default:
-                return "";
+    private static String getHiperFileName() {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            return "hiper.exe";
+        } else {
+            return "hiper";
         }
     }
 
-    public static String getCatoPath() {
-        String name = getCatoFileName();
+    public static String getHiperPath() {
+        String name = getHiperFileName();
         if (StringUtils.isBlank(name)) return "";
-        return "cato/cato/" + MultiplayerManager.CATO_VERSION + "/" + name;
+        return "hiper/hiper/" + MultiplayerManager.HIPER_VERSION + "/" + name;
     }
 
-    public static class CatoSession extends ManagedProcess {
-        private final EventManager<CatoExitEvent> onExit = new EventManager<>();
+    public static class HiperSession extends ManagedProcess {
+        private final EventManager<HiperExitEvent> onExit = new EventManager<>();
         private final EventManager<CatoIdEvent> onIdGenerated = new EventManager<>();
         private final EventManager<Event> onPeerConnected = new EventManager<>();
 
@@ -348,15 +317,15 @@ public final class MultiplayerManager {
         private MultiplayerServer server;
         private final BufferedWriter writer;
 
-        CatoSession(State type, Process process, List<String> commands) {
+        HiperSession(State type, Process process, List<String> commands) {
             super(process, commands);
 
             Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
 
-            LOG.info("Started cato with command: " + new CommandBuilder().addAll(commands));
+            LOG.info("Started hiper with command: " + new CommandBuilder().addAll(commands));
 
             this.type = type;
-            addRelatedThread(Lang.thread(this::waitFor, "CatoExitWaiter", true));
+            addRelatedThread(Lang.thread(this::waitFor, "HiperExitWaiter", true));
             pumpInputStream(this::checkCatoLog);
             pumpErrorStream(this::checkCatoLog);
 
@@ -367,7 +336,7 @@ public final class MultiplayerManager {
             return client;
         }
 
-        public synchronized CatoSession setClient(MultiplayerClient client) {
+        public synchronized HiperSession setClient(MultiplayerClient client) {
             this.client = client;
             return this;
         }
@@ -376,13 +345,13 @@ public final class MultiplayerManager {
             return server;
         }
 
-        public CatoSession setServer(MultiplayerServer server) {
+        public HiperSession setServer(MultiplayerServer server) {
             this.server = server;
             return this;
         }
 
         private void checkCatoLog(String log) {
-            LOG.info("Cato: " + log);
+            LOG.info("[Hiper] " + log);
             if (id == null) {
                 Matcher matcher = TEMP_TOKEN_PATTERN.matcher(log);
                 if (matcher.find()) {
@@ -403,16 +372,16 @@ public final class MultiplayerManager {
         private void waitFor() {
             try {
                 int exitCode = getProcess().waitFor();
-                LOG.info("cato exited with exitcode " + exitCode);
-                onExit.fireEvent(new CatoExitEvent(this, exitCode));
+                LOG.info("Hiper exited with exitcode " + exitCode);
+                onExit.fireEvent(new HiperExitEvent(this, exitCode));
             } catch (InterruptedException e) {
-                onExit.fireEvent(new CatoExitEvent(this, CatoExitEvent.EXIT_CODE_INTERRUPTED));
+                onExit.fireEvent(new HiperExitEvent(this, HiperExitEvent.EXIT_CODE_INTERRUPTED));
             } finally {
                 try {
                     if (writer != null)
                         writer.close();
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to close cato stdin writer", e);
+                    LOG.log(Level.WARNING, "Failed to close Hiper stdin writer", e);
                 }
             }
             destroyRelatedThreads();
@@ -447,7 +416,7 @@ public final class MultiplayerManager {
         }
 
         public synchronized void invokeCommand(String command) throws IOException {
-            LOG.info("Invoking cato: " + command);
+            LOG.info("Invoking hiper: " + command);
             writer.write(command);
             writer.newLine();
             writer.flush();
@@ -465,7 +434,7 @@ public final class MultiplayerManager {
             invokeCommand("ufw net whitelist");
         }
 
-        public EventManager<CatoExitEvent> onExit() {
+        public EventManager<HiperExitEvent> onExit() {
             return onExit;
         }
 
@@ -482,10 +451,10 @@ public final class MultiplayerManager {
         private static final Pattern LOG_PATTERN = Pattern.compile("(\\[\\d+])\\s+(\\w+)\\s+(\\w+-{0,1}\\w+):\\s(.*)");
     }
 
-    public static class CatoExitEvent extends Event {
+    public static class HiperExitEvent extends Event {
         private final int exitCode;
 
-        public CatoExitEvent(Object source, int exitCode) {
+        public HiperExitEvent(Object source, int exitCode) {
             super(source);
             this.exitCode = exitCode;
         }
@@ -541,11 +510,11 @@ public final class MultiplayerManager {
         void onWaitingForJoinResponse();
     }
 
-    public static class IncompatibleCatoVersionException extends Exception {
+    public static class IncompatibleHiperVersionException extends Exception {
         private final String expected;
         private final String actual;
 
-        public IncompatibleCatoVersionException(String expected, String actual) {
+        public IncompatibleHiperVersionException(String expected, String actual) {
             this.expected = expected;
             this.actual = actual;
         }
@@ -568,11 +537,11 @@ public final class MultiplayerManager {
         }
     }
 
-    public static class CatoExitException extends RuntimeException {
+    public static class HiperExitException extends RuntimeException {
         private final int exitCode;
         private final boolean ready;
 
-        public CatoExitException(int exitCode, boolean ready) {
+        public HiperExitException(int exitCode, boolean ready) {
             this.exitCode = exitCode;
             this.ready = ready;
         }
@@ -586,13 +555,13 @@ public final class MultiplayerManager {
         }
     }
 
-    public static class CatoExitTimeoutException extends RuntimeException {
+    public static class HiperExitTimeoutException extends RuntimeException {
     }
 
-    public static class CatoSessionExpiredException extends RuntimeException {
+    public static class HiperSessionExpiredException extends RuntimeException {
     }
 
-    public static class CatoAlreadyStartedException extends RuntimeException {
+    public static class HiperAlreadyStartedException extends RuntimeException {
     }
 
     public static class JoinRequestTimeoutException extends RuntimeException {
@@ -616,10 +585,10 @@ public final class MultiplayerManager {
         }
     }
 
-    public static class CatoNotExistsException extends RuntimeException {
+    public static class HiperNotExistsException extends RuntimeException {
         private final Path file;
 
-        public CatoNotExistsException(Path file) {
+        public HiperNotExistsException(Path file) {
             this.file = file;
         }
 

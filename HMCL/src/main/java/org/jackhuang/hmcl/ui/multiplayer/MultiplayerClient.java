@@ -91,7 +91,7 @@ public class MultiplayerClient extends Thread {
                 LOG.info("Connected to 127.0.0.1:" + port);
 
                 endpoint.write(new HandshakeRequest());
-                endpoint.write(new JoinRequest(MultiplayerManager.CATO_VERSION, id));
+                endpoint.write(new JoinRequest(MultiplayerManager.HIPER_VERSION, id));
 
                 LOG.fine("Sent join request with id=" + id);
 

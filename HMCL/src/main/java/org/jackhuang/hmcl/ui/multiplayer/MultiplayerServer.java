@@ -153,7 +153,7 @@ public class MultiplayerServer extends Thread {
                     LOG.info("Received join request with clientVersion=" + joinRequest.getClientVersion() + ", id=" + joinRequest.getUsername());
                     clientName = joinRequest.getUsername();
 
-                    if (!Objects.equals(MultiplayerManager.CATO_VERSION, joinRequest.getClientVersion())) {
+                    if (!Objects.equals(MultiplayerManager.HIPER_VERSION, joinRequest.getClientVersion())) {
                         try {
                             endpoint.write(new KickResponse(KickResponse.VERSION_NOT_MATCHED));
                             LOG.info("Rejected join request from id=" + joinRequest.getUsername());

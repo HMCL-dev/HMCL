@@ -64,10 +64,10 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
     private final ReadOnlyStringWrapper token = new ReadOnlyStringWrapper();
     private final ReadOnlyObjectWrapper<@Nullable Result<DiscoveryInfo>> natState = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyIntegerWrapper gamePort = new ReadOnlyIntegerWrapper(-1);
-    private final ReadOnlyObjectWrapper<MultiplayerManager.CatoSession> session = new ReadOnlyObjectWrapper<>();
+    private final ReadOnlyObjectWrapper<MultiplayerManager.HiperSession> session = new ReadOnlyObjectWrapper<>();
     private final ObservableList<MultiplayerChannel.CatoClient> clients = FXCollections.observableArrayList();
 
-    private Consumer<MultiplayerManager.CatoExitEvent> onExit;
+    private Consumer<MultiplayerManager.HiperExitEvent> onExit;
     private Consumer<MultiplayerManager.CatoIdEvent> onIdGenerated;
     private Consumer<Event> onPeerConnected;
 
@@ -125,11 +125,11 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         return gamePort.getReadOnlyProperty();
     }
 
-    public MultiplayerManager.CatoSession getSession() {
+    public MultiplayerManager.HiperSession getSession() {
         return session.get();
     }
 
-    public ReadOnlyObjectProperty<MultiplayerManager.CatoSession> sessionProperty() {
+    public ReadOnlyObjectProperty<MultiplayerManager.HiperSession> sessionProperty() {
         return session.getReadOnlyProperty();
     }
 
@@ -148,7 +148,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
     }
 
     private void checkAgreement(Runnable runnable) {
-        if (globalConfig().getMultiplayerAgreementVersion() < MultiplayerManager.CATO_AGREEMENT_VERSION) {
+        if (globalConfig().getMultiplayerAgreementVersion() < MultiplayerManager.HIPER_AGREEMENT_VERSION) {
             JFXDialogLayout agreementPane = new JFXDialogLayout();
             agreementPane.setHeading(new Label(i18n("launcher.agreement")));
             agreementPane.setBody(new Label(i18n("multiplayer.agreement.prompt")));
@@ -157,7 +157,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
             JFXButton yesButton = new JFXButton(i18n("launcher.agreement.accept"));
             yesButton.getStyleClass().add("dialog-accept");
             yesButton.setOnAction(e -> {
-                globalConfig().setMultiplayerAgreementVersion(MultiplayerManager.CATO_AGREEMENT_VERSION);
+                globalConfig().setMultiplayerAgreementVersion(MultiplayerManager.HIPER_AGREEMENT_VERSION);
                 runnable.run();
                 agreementPane.fireEvent(new DialogCloseEvent());
             });
@@ -175,15 +175,15 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
     }
 
     private void downloadCatoIfNecessary() {
-        if (StringUtils.isBlank(MultiplayerManager.getCatoPath())) {
+        if (StringUtils.isBlank(MultiplayerManager.getHiperPath())) {
             Controllers.dialog(i18n("multiplayer.download.unsupported"), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
             fireEvent(new PageCloseEvent());
             return;
         }
 
-        if (!MultiplayerManager.getCatoExecutable().toFile().exists()) {
+        if (!MultiplayerManager.getHiperExecutable().toFile().exists()) {
             setDisabled(true);
-            TaskExecutor executor = MultiplayerManager.downloadCato()
+            TaskExecutor executor = MultiplayerManager.downloadHiper()
                     .whenComplete(Schedulers.javafx(), exception -> {
                         setDisabled(false);
                         if (exception != null) {
@@ -325,7 +325,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                             reject.accept(localizeJoinErrorMessage(throwable, isStaticToken));
                             return null;
                         });
-            } catch (MultiplayerManager.IncompatibleCatoVersionException e) {
+            } catch (MultiplayerManager.IncompatibleHiperVersionException e) {
                 reject.accept(i18n("multiplayer.session.join.invitation_code.version"));
             }
         })
@@ -353,11 +353,11 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         } else if (e instanceof MultiplayerManager.KickedException) {
             LOG.info("Kicked by server");
             return i18n("multiplayer.session.join.kicked", localizeKickMessage(((MultiplayerManager.KickedException) e).getReason()));
-        } else if (e instanceof MultiplayerManager.CatoAlreadyStartedException) {
+        } else if (e instanceof MultiplayerManager.HiperAlreadyStartedException) {
             LOG.info("Cato already started");
             return i18n("multiplayer.session.error.already_started");
-        } else if (e instanceof MultiplayerManager.CatoNotExistsException) {
-            LOG.log(Level.WARNING, "Cato not found " + ((MultiplayerManager.CatoNotExistsException) e).getFile(), e);
+        } else if (e instanceof MultiplayerManager.HiperNotExistsException) {
+            LOG.log(Level.WARNING, "Cato not found " + ((MultiplayerManager.HiperNotExistsException) e).getFile(), e);
             return i18n("multiplayer.session.error.file_not_found");
         } else if (e instanceof MultiplayerManager.JoinRequestTimeoutException) {
             LOG.info("Cato already started");
@@ -365,17 +365,17 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         } else if (e instanceof MultiplayerManager.ConnectionErrorException) {
             LOG.info("Failed to establish connection with server");
             return i18n("multiplayer.session.join.error.connection");
-        } else if (e instanceof MultiplayerManager.CatoExitTimeoutException) {
+        } else if (e instanceof MultiplayerManager.HiperExitTimeoutException) {
             LOG.info("Cato failed to connect to main net");
             if (isStaticToken) {
                 return i18n("multiplayer.exit.timeout.static_token");
             } else {
                 return i18n("multiplayer.exit.timeout.dynamic_token");
             }
-        } else if (e instanceof MultiplayerManager.CatoExitException) {
+        } else if (e instanceof MultiplayerManager.HiperExitException) {
             LOG.info("Cato exited accidentally");
-            int exitCode = ((MultiplayerManager.CatoExitException) e).getExitCode();
-            if (!((MultiplayerManager.CatoExitException) e).isReady()) {
+            int exitCode = ((MultiplayerManager.HiperExitException) e).getExitCode();
+            if (!((MultiplayerManager.HiperExitException) e).isReady()) {
                 return i18n("multiplayer.exit.before_ready", exitCode);
             } else {
                 return i18n("multiplayer.exit.after_ready", exitCode);
@@ -442,7 +442,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         stopCatoSession();
     }
 
-    private void initCatoSession(MultiplayerManager.CatoSession session) {
+    private void initCatoSession(MultiplayerManager.HiperSession session) {
         runInFX(() -> {
             onExit = session.onExit().registerWeak(this::onCatoExit);
             onIdGenerated = session.onIdGenerated().registerWeak(this::onCatoIdGenerated);
@@ -467,13 +467,13 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         this.multiplayerState.set(MultiplayerManager.State.DISCONNECTED);
     }
 
-    private void onCatoExit(MultiplayerManager.CatoExitEvent event) {
+    private void onCatoExit(MultiplayerManager.HiperExitEvent event) {
         runInFX(() -> {
-            boolean ready = ((MultiplayerManager.CatoSession) event.getSource()).isReady();
+            boolean ready = ((MultiplayerManager.HiperSession) event.getSource()).isReady();
             switch (event.getExitCode()) {
                 case 0:
                     break;
-                case MultiplayerManager.CatoExitEvent.EXIT_CODE_SESSION_EXPIRED:
+                case MultiplayerManager.HiperExitEvent.EXIT_CODE_SESSION_EXPIRED:
                     Controllers.dialog(i18n("multiplayer.session.expired"));
                     break;
                 case 1:
@@ -485,7 +485,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                     // do nothing
                     break;
                 default:
-                    if (!((MultiplayerManager.CatoSession) event.getSource()).isReady()) {
+                    if (!((MultiplayerManager.HiperSession) event.getSource()).isReady()) {
                         Controllers.dialog(i18n("multiplayer.exit.before_ready", event.getExitCode()));
                     } else {
                         Controllers.dialog(i18n("multiplayer.exit.after_ready", event.getExitCode()));
@@ -505,7 +505,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
     private void onCatoIdGenerated(MultiplayerManager.CatoIdEvent event) {
         runInFX(() -> {
             token.set(event.getId());
-            setMultiplayerState(((MultiplayerManager.CatoSession) event.getSource()).getType());
+            setMultiplayerState(((MultiplayerManager.HiperSession) event.getSource()).getType());
         });
     }
 
