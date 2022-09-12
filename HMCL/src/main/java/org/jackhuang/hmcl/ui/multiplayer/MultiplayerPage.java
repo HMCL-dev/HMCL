@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
@@ -57,6 +56,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
     private final StringProperty address = new SimpleStringProperty();
 
     private Consumer<MultiplayerManager.HiperExitEvent> onExit;
+    private Consumer<MultiplayerManager.HiperIPEvent> onIPAllocated;
 
     public MultiplayerPage() {
         testNAT();
@@ -205,7 +205,11 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
 
     public void start() {
         MultiplayerManager.startHiper(globalConfig().getMultiplayerToken())
-                .thenAcceptAsync(this.session::set, Schedulers.javafx())
+                .thenAcceptAsync(session -> {
+                    this.session.set(session);
+                    onExit = session.onExit().registerWeak(this::onExit);
+                    onIPAllocated = session.onIPAllocated().registerWeak(this::onIPAllocated);
+                }, Schedulers.javafx())
                 .exceptionally(throwable -> {
                     runInFX(() -> Controllers.dialog(localizeErrorMessage(throwable), null, MessageDialogPane.MessageType.ERROR));
                     return null;
@@ -221,6 +225,14 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
 
     private void clearSession() {
         this.session.set(null);
+        this.onExit = null;
+        this.onIPAllocated = null;
+    }
+
+    private void onIPAllocated(MultiplayerManager.HiperIPEvent event) {
+        runInFX(() -> {
+            this.address.set(event.getIP());
+        });
     }
 
     private void onExit(MultiplayerManager.HiperExitEvent event) {

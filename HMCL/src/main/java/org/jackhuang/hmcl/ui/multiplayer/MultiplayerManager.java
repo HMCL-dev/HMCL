@@ -217,6 +217,7 @@ public final class MultiplayerManager {
 
     public static class HiperSession extends ManagedProcess {
         private final EventManager<HiperExitEvent> onExit = new EventManager<>();
+        private final EventManager<HiperIPEvent> onIPAllocated = new EventManager<>();
         private final BufferedWriter writer;
 
         HiperSession(Process process, List<String> commands) {
@@ -262,6 +263,11 @@ public final class MultiplayerManager {
         public EventManager<HiperExitEvent> onExit() {
             return onExit;
         }
+
+        public EventManager<HiperIPEvent> onIPAllocated() {
+            return onIPAllocated;
+        }
+
     }
 
     public static class HiperExitEvent extends Event {
@@ -280,6 +286,19 @@ public final class MultiplayerManager {
 
         public static final int INVALID_CONFIGURATION = 1;
         public static final int CERTIFICATE_EXPIRED = 11;
+    }
+
+    public static class HiperIPEvent extends Event {
+        private final String ip;
+
+        public HiperIPEvent(Object source, String ip) {
+            super(source);
+            this.ip = ip;
+        }
+
+        public String getIP() {
+            return ip;
+        }
     }
 
     public static class HiperExitException extends RuntimeException {
