@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import jdk.nashorn.internal.parser.JSONParser;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
@@ -26,6 +27,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
@@ -50,8 +52,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Lang.wrap;
+import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
@@ -188,7 +189,7 @@ public final class MultiplayerManager {
             // 下载 HiPer 配置文件
             String certFileContent;
             try {
-                certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString();
+                certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString() + "\nlogging:\n  format: json\n  file_path: ./hiper.log";
             } catch (IOException e) {
                 throw new HiperInvalidTokenException();
             }
@@ -219,6 +220,7 @@ public final class MultiplayerManager {
         private final EventManager<HiperExitEvent> onExit = new EventManager<>();
         private final EventManager<HiperIPEvent> onIPAllocated = new EventManager<>();
         private final BufferedWriter writer;
+        private int error = 0;
 
         HiperSession(Process process, List<String> commands) {
             super(process, commands);
@@ -237,8 +239,30 @@ public final class MultiplayerManager {
         private void onLog(String log) {
             LOG.info("[Hiper] " + log);
 
-            if (log.contains("IP")) {
-                // TODO
+            if (log.contains("failed to load config")) {
+                error = HiperExitEvent.INVALID_CONFIGURATION;
+                return;
+            }
+
+            try {
+                Map<?, ?> logJson = JsonUtils.fromNonNullJson(log, Map.class);
+                String msg = "";
+                if (logJson.containsKey("msg")) {
+                    msg = tryCast(logJson.get("msg"), String.class).orElse("");
+                    if (msg.contains("Failed to get a tun/tap device")) {
+                        error = HiperExitEvent.FAILED_GET_DEVICE;
+                    }
+                }
+
+                if (logJson.containsKey("network")) {
+                    Map<?, ?> network = tryCast(logJson.get("network"), Map.class).orElse(Collections.emptyMap());
+                    if (network.containsKey("IP") && msg.contains("Main HostMap created")) {
+                        Optional<String> ip = tryCast(network.get("IP"), String.class);
+                        ip.ifPresent(s -> onIPAllocated.fireEvent(new HiperIPEvent(this, s)));
+                    }
+                }
+            } catch (JsonParseException e) {
+                LOG.log(Level.WARNING, "Failed to parse hiper log: " + log, e);
             }
         }
 
@@ -246,7 +270,11 @@ public final class MultiplayerManager {
             try {
                 int exitCode = getProcess().waitFor();
                 LOG.info("Hiper exited with exitcode " + exitCode);
-                onExit.fireEvent(new HiperExitEvent(this, exitCode));
+                if (error != 0) {
+                    onExit.fireEvent(new HiperExitEvent(this, error));
+                } else {
+                    onExit.fireEvent(new HiperExitEvent(this, exitCode));
+                }
             } catch (InterruptedException e) {
                 onExit.fireEvent(new HiperExitEvent(this, HiperExitEvent.INTERRUPTED));
             } finally {
@@ -283,9 +311,9 @@ public final class MultiplayerManager {
         }
 
         public static final int INTERRUPTED = -1;
-
-        public static final int INVALID_CONFIGURATION = 1;
-        public static final int CERTIFICATE_EXPIRED = 11;
+        public static final int INVALID_CONFIGURATION = -2;
+        public static final int CERTIFICATE_EXPIRED = -3;
+        public static final int FAILED_GET_DEVICE = -4;
     }
 
     public static class HiperIPEvent extends Event {
