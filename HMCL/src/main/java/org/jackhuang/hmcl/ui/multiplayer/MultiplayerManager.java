@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import javafx.application.Platform;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
@@ -27,10 +26,11 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -39,20 +39,21 @@ import org.jetbrains.annotations.Nullable;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
+import java.util.function.BiFunction;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.wrap;
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
  * Cato Management.
@@ -61,15 +62,45 @@ public final class MultiplayerManager {
     static final String HIPER_VERSION = "1.2.2";
     private static final String HIPER_DOWNLOAD_URL = "https://gitcode.net/to/hiper/-/raw/master/";
     private static final String HIPER_PACKAGES_URL = HIPER_DOWNLOAD_URL + "packages.sha1";
+    private static final String HIPER_POINTS_URL = "https://cert.mcer.cn/point.yml";
     private static final Path HIPER_CONFIG_PATH = Metadata.HMCL_DIRECTORY.resolve("hiper.yml");
-    private static final String HIPER_PATH = getHiperPath();
+    public static final Path HIPER_PATH = getHiperLocalDirectory().resolve(getHiperFileName());
     public static final int HIPER_AGREEMENT_VERSION = 2;
     private static final String REMOTE_ADDRESS = "127.0.0.1";
     private static final String LOCAL_ADDRESS = "0.0.0.0";
 
+    private static final Map<Architecture, String> archMap = mapOf(
+            pair(Architecture.ARM32, "arm-7"),
+            pair(Architecture.ARM64, "arm64"),
+            pair(Architecture.X86, "386"),
+            pair(Architecture.X86_64, "amd64"),
+            pair(Architecture.LOONGARCH64, "loong64"),
+            pair(Architecture.MIPS, "mips"),
+            pair(Architecture.MIPS64, "mips64"),
+            pair(Architecture.MIPS64EL, "mips64le"),
+            pair(Architecture.PPC64LE, "ppc64le"),
+            pair(Architecture.RISCV, "riscv64"),
+            pair(Architecture.MIPSEL, "mipsle")
+    );
+
+    private static final Map<OperatingSystem, String> osMap = mapOf(
+            pair(OperatingSystem.LINUX, "linux"),
+            pair(OperatingSystem.WINDOWS, "windows"),
+            pair(OperatingSystem.OSX, "darwin")
+    );
+
+    private static final String HIPER_TARGET_NAME = String.format("%s-%s",
+            osMap.getOrDefault(OperatingSystem.CURRENT_OS, "windows"),
+            archMap.getOrDefault(Architecture.CURRENT_ARCH, "amd64"));
+
+
     private static CompletableFuture<Map<String, String>> HASH;
 
     private MultiplayerManager() {
+    }
+
+    public static void clearConfiguration() {
+        HIPER_CONFIG_PATH.toFile().delete();
     }
 
     private static CompletableFuture<Map<String, String>> getPackagesHash() {
@@ -93,204 +124,86 @@ public final class MultiplayerManager {
     }
 
     public static Task<Void> downloadHiper() {
-        return Task.fromCompletableFuture(getPackagesHash()).thenComposeAsync(packagesHash ->
-                new FileDownloadTask(
-                        NetworkUtils.toURL(HIPER_DOWNLOAD_URL + getHiperFileName()),
-                        getHiperExecutable().toFile(),
-                        packagesHash.get(getHiperFileName()) == null ? null : new FileDownloadTask.IntegrityCheck("SHA-1", packagesHash.get(getHiperFileName()))
-                ).thenRunAsync(() -> {
-                    if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-                        Set<PosixFilePermission> perm = Files.getPosixFilePermissions(getHiperExecutable());
-                        perm.add(PosixFilePermission.OWNER_EXECUTE);
-                        Files.setPosixFilePermissions(getHiperExecutable(), perm);
-                    }
-                }));
-    }
+        return Task.fromCompletableFuture(getPackagesHash()).thenComposeAsync(packagesHash -> {
 
-    public static Path getHiperExecutable() {
-        return Metadata.HMCL_DIRECTORY.resolve("libraries").resolve(HIPER_PATH);
-    }
+            BiFunction<String, String, FileDownloadTask> getFileDownloadTask = (String remotePath, String localFileName) -> {
+                String hash = packagesHash.get(remotePath);
+                return new FileDownloadTask(
+                        NetworkUtils.toURL(String.format("%s%s", HIPER_DOWNLOAD_URL, remotePath)),
+                        getHiperLocalDirectory().resolve(localFileName).toFile(),
+                        hash == null ? null : new FileDownloadTask.IntegrityCheck("SHA-1", hash));
+            };
 
-    private static CompletableFuture<HiperSession> startHiper(String token, State state) {
-        return getPackagesHash().thenApplyAsync(wrap(packagesHash -> {
-            Path exe = getHiperExecutable();
-            if (!Files.isRegularFile(exe)) {
-                throw new HiperNotExistsException(exe);
-            }
-
-            try {
-                String hash = packagesHash.get(getHiperFileName());
-                if (hash != null) {
-                    ChecksumMismatchException.verifyChecksum(exe, "SHA-1", hash);
+            List<Task<?>> tasks;
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (!packagesHash.containsKey(String.format("%s/hiper.exe", HIPER_TARGET_NAME))) {
+                    throw new HiperUnsupportedPlatformException();
                 }
-            } catch (IOException e) {
-                Files.deleteIfExists(exe);
-                throw e;
+                tasks = Arrays.asList(
+                        getFileDownloadTask.apply(String.format("%s/hiper.exe", HIPER_TARGET_NAME), "hiper.exe"),
+                        getFileDownloadTask.apply(String.format("%s/wintun.dll", HIPER_TARGET_NAME), "wintun.dll"),
+                        getFileDownloadTask.apply("tap-windows-9.21.2.exe", "tap-windows-9.21.2.exe")
+                );
+            } else {
+                if (!packagesHash.containsKey(String.format("%s/hiper", HIPER_TARGET_NAME))) {
+                    throw new HiperUnsupportedPlatformException();
+                }
+                tasks = Collections.singletonList(getFileDownloadTask.apply(String.format("%s/hiper", HIPER_TARGET_NAME), "hiper"));
+            }
+            return Task.allOf(tasks).thenRunAsync(() -> {
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                    Set<PosixFilePermission> perm = Files.getPosixFilePermissions(HIPER_PATH);
+                    perm.add(PosixFilePermission.OWNER_EXECUTE);
+                    Files.setPosixFilePermissions(HIPER_PATH, perm);
+                }
+            });
+        });
+    }
+
+    private static void verifyChecksumAndDeleteIfNotMatched(Path file, @Nullable String expectedChecksum) throws IOException {
+        try {
+            if (expectedChecksum != null) {
+                ChecksumMismatchException.verifyChecksum(file, "SHA-1", expectedChecksum);
+            }
+        } catch (IOException e) {
+            Files.deleteIfExists(file);
+            throw e;
+        }
+    }
+
+    public static CompletableFuture<HiperSession> startHiper(String token) {
+        return getPackagesHash().thenApplyAsync(wrap(packagesHash -> {
+            if (!Files.isRegularFile(HIPER_PATH)) {
+                throw new HiperNotExistsException(HIPER_PATH);
             }
 
-            String[] commands = StringUtils.isBlank(token)
-                    ? new String[]{exe.toString()}
-                    : new String[]{exe.toString(), "-auth.token", token};
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("hiper.exe"), packagesHash.get(String.format("%s/hiper.exe", HIPER_TARGET_NAME)));
+                verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("wintun.dll"), packagesHash.get(String.format("%s/wintun.dll", HIPER_TARGET_NAME)));
+                verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("tap-windows-9.21.2.exe"), packagesHash.get("tap-windows-9.21.2.exe"));
+            } else {
+                verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("hiper"), packagesHash.get(String.format("%s/hiper", HIPER_TARGET_NAME)));
+            }
+
+            // 下载 HiPer 配置文件
+            String certFileContent;
+            try {
+                certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString();
+            } catch (IOException e) {
+                throw new HiperInvalidTokenException();
+            }
+            FileUtils.writeText(HIPER_CONFIG_PATH, certFileContent);
+
+            String[] commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
             Process process = new ProcessBuilder()
                     .command(commands)
                     .start();
 
-            return new HiperSession(state, process, Arrays.asList(commands));
+            return new HiperSession(process, Arrays.asList(commands));
         }));
     }
 
-    public static CompletableFuture<HiperSession> joinSession(String token, String peer, Mode mode, int remotePort, int localPort, JoinSessionHandler handler) throws IncompatibleHiperVersionException {
-        LOG.info(String.format("Joining session (token=%s,peer=%s,mode=%s,remotePort=%d,localPort=%d)", token, peer, mode, remotePort, localPort));
-
-        return startHiper(token, State.SLAVE).thenComposeAsync(wrap(session -> {
-            CompletableFuture<HiperSession> future = new CompletableFuture<>();
-
-            session.forwardPort(peer, LOCAL_ADDRESS, localPort, REMOTE_ADDRESS, remotePort, mode);
-
-            Consumer<HiperExitEvent> onExit = event -> {
-                boolean ready = session.isReady();
-                switch (event.getExitCode()) {
-                    case 1:
-                        if (!ready) {
-                            future.completeExceptionally(new HiperExitTimeoutException());
-                        }
-                        break;
-                }
-                future.completeExceptionally(new HiperExitException(event.getExitCode(), ready));
-            };
-            session.onExit.register(onExit);
-
-            TimerTask peerConnectionTimeoutTask = Lang.setTimeout(() -> {
-                future.completeExceptionally(new PeerConnectionTimeoutException());
-                session.stop();
-            }, 15 * 1000);
-
-            session.onPeerConnected.register(event -> {
-                peerConnectionTimeoutTask.cancel();
-
-                MultiplayerClient client = new MultiplayerClient(session.getId(), localPort);
-                session.addRelatedThread(client);
-                session.setClient(client);
-
-                TimerTask task = Lang.setTimeout(() -> {
-                    Platform.runLater(() -> future.completeExceptionally(new JoinRequestTimeoutException()));
-                    session.stop();
-                }, 30 * 1000);
-
-                client.onConnected().register(connectedEvent -> {
-                    try {
-                        int port = findAvailablePort();
-                        session.forwardPort(peer, LOCAL_ADDRESS, port, REMOTE_ADDRESS, connectedEvent.getPort(), mode);
-                        session.addRelatedThread(Lang.thread(new LocalServerBroadcaster(port, session), "LocalServerBroadcaster", true));
-                        session.setName(connectedEvent.getSessionName());
-                        client.setGamePort(port);
-                        Platform.runLater(() -> {
-                            session.onExit.unregister(onExit);
-                            future.complete(session);
-                        });
-                    } catch (IOException e) {
-                        session.stop();
-                        Platform.runLater(() -> future.completeExceptionally(e));
-                    }
-                    task.cancel();
-                });
-                client.onKicked().register(kickedEvent -> {
-                    session.stop();
-                    task.cancel();
-                    Platform.runLater(() -> {
-                        future.completeExceptionally(new KickedException(kickedEvent.getReason()));
-                    });
-                });
-                client.onDisconnected().register(disconnectedEvent -> {
-                    Platform.runLater(() -> {
-                        if (!client.isConnected()) {
-                            // We fail to establish connection with server
-                            future.completeExceptionally(new ConnectionErrorException());
-                        }
-                    });
-                });
-                client.onHandshake().register(handshakeEvent -> {
-                    if (handler != null) {
-                        handler.onWaitingForJoinResponse();
-                    }
-                });
-                client.start();
-            });
-
-            return future;
-        }));
-    }
-
-    public static CompletableFuture<HiperSession> createSession(String token, String sessionName, int gamePort, boolean allowAllJoinRequests) {
-        LOG.info(String.format("Creating session (token=%s,sessionName=%s,gamePort=%d)", token, sessionName, gamePort));
-
-        return startHiper(token, State.MASTER).thenComposeAsync(wrap(session -> {
-            CompletableFuture<HiperSession> future = new CompletableFuture<>();
-
-            MultiplayerServer server = new MultiplayerServer(sessionName, gamePort, allowAllJoinRequests);
-            server.startServer();
-
-            session.setName(sessionName);
-            session.allowForwardingAddress(REMOTE_ADDRESS, server.getPort());
-            session.allowForwardingAddress(REMOTE_ADDRESS, gamePort);
-            session.showAllowedAddress();
-
-            Consumer<HiperExitEvent> onExit = event -> {
-                boolean ready = session.isReady();
-                switch (event.getExitCode()) {
-                    case 1:
-                        if (!ready) {
-                            future.completeExceptionally(new HiperExitTimeoutException());
-                        }
-                        break;
-                }
-                future.completeExceptionally(new HiperExitException(event.getExitCode(), ready));
-            };
-
-            session.onExit.register(onExit);
-            session.setServer(server);
-            session.addRelatedThread(server);
-
-            TimerTask peerConnectionTimeoutTask = Lang.setTimeout(() -> {
-                future.completeExceptionally(new PeerConnectionTimeoutException());
-                session.stop();
-            }, 15 * 1000);
-
-            session.onPeerConnected.register(event -> {
-                peerConnectionTimeoutTask.cancel();
-                Platform.runLater(() -> {
-                    session.onExit.unregister(onExit);
-                    future.complete(session);
-                });
-            });
-
-            return future;
-        }));
-    }
-
-    public static final Pattern INVITATION_CODE_PATTERN = Pattern.compile("^(?<id>.*?)#(?<port>\\d{2,5})$");
-
-    public static Invitation parseInvitationCode(String invitationCode) throws JsonParseException {
-        Matcher matcher = INVITATION_CODE_PATTERN.matcher(invitationCode);
-        if (!matcher.find()) throw new IllegalArgumentException("Invalid invitation code");
-        return new Invitation(matcher.group("id"), Integer.parseInt(matcher.group("port")));
-    }
-
-    public static int findAvailablePort() throws IOException {
-        try (ServerSocket socket = new ServerSocket(0)) {
-            return socket.getLocalPort();
-        }
-    }
-
-    public static boolean isPortAvailable(int port) {
-        try (ServerSocket socket = new ServerSocket(port)) {
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
-    private static String getHiperFileName() {
+    public static String getHiperFileName() {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             return "hiper.exe";
         } else {
@@ -298,74 +211,33 @@ public final class MultiplayerManager {
         }
     }
 
-    public static String getHiperPath() {
-        String name = getHiperFileName();
-        if (StringUtils.isBlank(name)) return "";
-        return "hiper/hiper/" + MultiplayerManager.HIPER_VERSION + "/" + name;
+    public static Path getHiperLocalDirectory() {
+        return Metadata.HMCL_DIRECTORY.resolve("libraries").resolve("hiper").resolve("hiper").resolve(HIPER_VERSION);
     }
 
     public static class HiperSession extends ManagedProcess {
         private final EventManager<HiperExitEvent> onExit = new EventManager<>();
-        private final EventManager<CatoIdEvent> onIdGenerated = new EventManager<>();
-        private final EventManager<Event> onPeerConnected = new EventManager<>();
-
-        private String name;
-        private final State type;
-        private String id;
-        private boolean peerConnected = false;
-        private MultiplayerClient client;
-        private MultiplayerServer server;
         private final BufferedWriter writer;
 
-        HiperSession(State type, Process process, List<String> commands) {
+        HiperSession(Process process, List<String> commands) {
             super(process, commands);
 
             Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
 
             LOG.info("Started hiper with command: " + new CommandBuilder().addAll(commands));
 
-            this.type = type;
             addRelatedThread(Lang.thread(this::waitFor, "HiperExitWaiter", true));
-            pumpInputStream(this::checkCatoLog);
-            pumpErrorStream(this::checkCatoLog);
+            pumpInputStream(this::onLog);
+            pumpErrorStream(this::onLog);
 
             writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
         }
 
-        public synchronized MultiplayerClient getClient() {
-            return client;
-        }
-
-        public synchronized HiperSession setClient(MultiplayerClient client) {
-            this.client = client;
-            return this;
-        }
-
-        public MultiplayerServer getServer() {
-            return server;
-        }
-
-        public HiperSession setServer(MultiplayerServer server) {
-            this.server = server;
-            return this;
-        }
-
-        private void checkCatoLog(String log) {
+        private void onLog(String log) {
             LOG.info("[Hiper] " + log);
-            if (id == null) {
-                Matcher matcher = TEMP_TOKEN_PATTERN.matcher(log);
-                if (matcher.find()) {
-                    id = matcher.group("id");
-                    onIdGenerated.fireEvent(new CatoIdEvent(this, id));
-                }
-            }
 
-            if (!peerConnected) {
-                Matcher matcher = PEER_CONNECTED_PATTERN.matcher(log);
-                if (matcher.find()) {
-                    peerConnected = true;
-                    onPeerConnected.fireEvent(new Event(this));
-                }
+            if (log.contains("IP")) {
+                // TODO
             }
         }
 
@@ -375,7 +247,7 @@ public final class MultiplayerManager {
                 LOG.info("Hiper exited with exitcode " + exitCode);
                 onExit.fireEvent(new HiperExitEvent(this, exitCode));
             } catch (InterruptedException e) {
-                onExit.fireEvent(new HiperExitEvent(this, HiperExitEvent.EXIT_CODE_INTERRUPTED));
+                onExit.fireEvent(new HiperExitEvent(this, HiperExitEvent.INTERRUPTED));
             } finally {
                 try {
                     if (writer != null)
@@ -387,68 +259,9 @@ public final class MultiplayerManager {
             destroyRelatedThreads();
         }
 
-        public boolean isReady() {
-            return id != null;
-        }
-
-        public synchronized String getName() {
-            return name;
-        }
-
-        public synchronized void setName(String name) {
-            this.name = name;
-        }
-
-        public State getType() {
-            return type;
-        }
-
-        @Nullable
-        public String getId() {
-            return id;
-        }
-
-        public String generateInvitationCode(int serverPort) {
-            if (id == null) {
-                throw new IllegalStateException("id not generated");
-            }
-            return id + "#" + serverPort;
-        }
-
-        public synchronized void invokeCommand(String command) throws IOException {
-            LOG.info("Invoking hiper: " + command);
-            writer.write(command);
-            writer.newLine();
-            writer.flush();
-        }
-
-        public void forwardPort(String peerId, String localAddress, int localPort, String remoteAddress, int remotePort, Mode mode) throws IOException {
-            invokeCommand(String.format("net add %s %s:%d %s:%d %s", peerId, localAddress, localPort, remoteAddress, remotePort, mode.getName()));
-        }
-
-        public void allowForwardingAddress(String address, int port) throws IOException {
-            invokeCommand(String.format("ufw net open %s:%d", address, port));
-        }
-
-        public void showAllowedAddress() throws IOException {
-            invokeCommand("ufw net whitelist");
-        }
-
         public EventManager<HiperExitEvent> onExit() {
             return onExit;
         }
-
-        public EventManager<CatoIdEvent> onIdGenerated() {
-            return onIdGenerated;
-        }
-
-        public EventManager<Event> onPeerConnected() {
-            return onPeerConnected;
-        }
-
-        private static final Pattern TEMP_TOKEN_PATTERN = Pattern.compile("id\\((?<id>\\w+)\\)");
-        private static final Pattern PEER_CONNECTED_PATTERN = Pattern.compile("Connected to main net");
-        private static final Pattern LOG_PATTERN = Pattern.compile("(\\[\\d+])\\s+(\\w+)\\s+(\\w+-{0,1}\\w+):\\s(.*)");
     }
 
     public static class HiperExitEvent extends Event {
@@ -463,78 +276,10 @@ public final class MultiplayerManager {
             return exitCode;
         }
 
-        public static final int EXIT_CODE_INTERRUPTED = -1;
-        public static final int EXIT_CODE_SESSION_EXPIRED = 10;
-    }
+        public static final int INTERRUPTED = -1;
 
-    public static class CatoIdEvent extends Event {
-        private final String id;
-
-        public CatoIdEvent(Object source, String id) {
-            super(source);
-            this.id = id;
-        }
-
-        public String getId() {
-            return id;
-        }
-    }
-
-    enum State {
-        DISCONNECTED,
-        CONNECTING,
-        MASTER,
-        SLAVE
-    }
-
-    public static class Invitation {
-        private final String id;
-        @SerializedName("p")
-        private final int channelPort;
-
-        public Invitation(String id, int channelPort) {
-            this.id = id;
-            this.channelPort = channelPort;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public int getChannelPort() {
-            return channelPort;
-        }
-    }
-
-    public interface JoinSessionHandler {
-        void onWaitingForJoinResponse();
-    }
-
-    public static class IncompatibleHiperVersionException extends Exception {
-        private final String expected;
-        private final String actual;
-
-        public IncompatibleHiperVersionException(String expected, String actual) {
-            this.expected = expected;
-            this.actual = actual;
-        }
-
-        public String getExpected() {
-            return expected;
-        }
-
-        public String getActual() {
-            return actual;
-        }
-    }
-
-    public enum Mode {
-        P2P,
-        BRIDGE;
-
-        String getName() {
-            return name().toLowerCase(Locale.ROOT);
-        }
+        public static final int INVALID_CONFIGURATION = 1;
+        public static final int CERTIFICATE_EXPIRED = 11;
     }
 
     public static class HiperExitException extends RuntimeException {
@@ -558,10 +303,10 @@ public final class MultiplayerManager {
     public static class HiperExitTimeoutException extends RuntimeException {
     }
 
-    public static class HiperSessionExpiredException extends RuntimeException {
+    public static class HiperSessionExpiredException extends HiperInvalidConfigurationException {
     }
 
-    public static class HiperAlreadyStartedException extends RuntimeException {
+    public static class HiperInvalidConfigurationException extends RuntimeException {
     }
 
     public static class JoinRequestTimeoutException extends RuntimeException {
@@ -596,4 +341,11 @@ public final class MultiplayerManager {
             return file;
         }
     }
+
+    public static class HiperInvalidTokenException extends RuntimeException {
+    }
+
+    public static class HiperUnsupportedPlatformException extends RuntimeException {
+    }
+
 }

@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPasswordField;
+import com.jfoenix.controls.JFXTextField;
 import de.javawi.jstun.test.DiscoveryInfo;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ObservableList;
@@ -28,6 +29,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
+import javafx.util.StringConverter;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -41,12 +43,14 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.HMCLService;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
+import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -63,57 +67,6 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
         super(control);
 
         {
-            VBox roomPane = new VBox();
-            {
-                AdvancedListItem createRoomItem = new AdvancedListItem();
-                createRoomItem.setTitle(i18n("multiplayer.session.create"));
-                createRoomItem.setLeftGraphic(wrap(SVG::plusCircleOutline));
-                createRoomItem.setActionButtonVisible(false);
-                createRoomItem.setOnAction(e -> control.createRoom());
-
-                AdvancedListItem joinRoomItem = new AdvancedListItem();
-                joinRoomItem.setTitle(i18n("multiplayer.session.join"));
-                joinRoomItem.setLeftGraphic(wrap(SVG::accountArrowRightOutline));
-                joinRoomItem.setActionButtonVisible(false);
-                joinRoomItem.setOnAction(e -> control.joinRoom());
-
-                AdvancedListItem copyLinkItem = new AdvancedListItem();
-                copyLinkItem.setTitle(i18n("multiplayer.session.copy_room_code"));
-                copyLinkItem.setLeftGraphic(wrap(SVG::accountArrowRightOutline));
-                copyLinkItem.setActionButtonVisible(false);
-                copyLinkItem.setOnAction(e -> control.copyInvitationCode());
-
-                AdvancedListItem cancelItem = new AdvancedListItem();
-                cancelItem.setTitle(i18n("button.cancel"));
-                cancelItem.setLeftGraphic(wrap(SVG::closeCircle));
-                cancelItem.setActionButtonVisible(false);
-                cancelItem.setOnAction(e -> control.cancelRoom());
-
-                AdvancedListItem quitItem = new AdvancedListItem();
-                quitItem.setTitle(i18n("multiplayer.session.quit"));
-                quitItem.setLeftGraphic(wrap(SVG::closeCircle));
-                quitItem.setActionButtonVisible(false);
-                quitItem.setOnAction(e -> control.quitRoom());
-
-                AdvancedListItem closeRoomItem = new AdvancedListItem();
-                closeRoomItem.setTitle(i18n("multiplayer.session.close"));
-                closeRoomItem.setLeftGraphic(wrap(SVG::closeCircle));
-                closeRoomItem.setActionButtonVisible(false);
-                closeRoomItem.setOnAction(e -> control.closeRoom());
-
-                FXUtils.onChangeAndOperate(getSkinnable().multiplayerStateProperty(), state -> {
-                    if (state == MultiplayerManager.State.DISCONNECTED) {
-                        roomPane.getChildren().setAll(createRoomItem, joinRoomItem);
-                    } else if (state == MultiplayerManager.State.CONNECTING) {
-                        roomPane.getChildren().setAll(cancelItem);
-                    } else if (state == MultiplayerManager.State.MASTER) {
-                        roomPane.getChildren().setAll(copyLinkItem, closeRoomItem);
-                    } else if (state == MultiplayerManager.State.SLAVE) {
-                        roomPane.getChildren().setAll(quitItem);
-                    }
-                });
-            }
-
             AdvancedListBox sideBar = new AdvancedListBox()
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("version.launch"));
@@ -123,8 +76,6 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                             Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
                         });
                     })
-                    .startCategory(i18n("multiplayer.session"))
-                    .add(roomPane)
                     .startCategory(i18n("help"))
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("help"));
@@ -148,74 +99,119 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
             scrollPane.setFitToWidth(true);
             setCenter(scrollPane);
 
-            ComponentList roomPane = new ComponentList();
+            VBox mainPane = new VBox(16);
             {
-                TransitionPane transitionPane = new TransitionPane();
-                roomPane.getContent().setAll(transitionPane);
-
-                VBox disconnectedPane = new VBox(8);
+                ComponentList offPane = new ComponentList();
                 {
                     HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                    hintPane.setText(i18n("multiplayer.state.disconnected.hint"));
+                    hintPane.setText(i18n("multiplayer.off.hint"));
 
-                    Label label = new Label(i18n("multiplayer.state.disconnected"));
+                    BorderPane tokenPane = new BorderPane();
+                    {
+                        Label tokenTitle = new Label(i18n("multiplayer.token"));
+                        BorderPane.setAlignment(tokenTitle, Pos.CENTER_LEFT);
+                        tokenPane.setLeft(tokenTitle);
+                        // Token acts like password, we hide it here preventing users from accidentally leaking their token when taking screenshots.
+                        JFXPasswordField tokenField = new JFXPasswordField();
+                        BorderPane.setAlignment(tokenField, Pos.CENTER_LEFT);
+                        BorderPane.setMargin(tokenField, new Insets(0, 8, 0, 8));
+                        tokenPane.setCenter(tokenField);
+                        tokenField.textProperty().bindBidirectional(globalConfig().multiplayerTokenProperty());
+                        tokenField.setPromptText(i18n("multiplayer.token.prompt"));
 
-                    disconnectedPane.getChildren().setAll(hintPane, label);
+                        JFXHyperlink applyLink = new JFXHyperlink(i18n("multiplayer.token.apply"));
+                        BorderPane.setAlignment(applyLink, Pos.CENTER_RIGHT);
+                        applyLink.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-static-token"));
+                        tokenPane.setRight(applyLink);
+                    }
+
+                    HBox startPane = new HBox();
+                    {
+                        JFXButton startButton = new JFXButton(i18n("multiplayer.off.start"));
+                        startButton.getStyleClass().add("jfx-button-raised");
+                        startButton.setButtonType(JFXButton.ButtonType.RAISED);
+                        startButton.setOnMouseClicked(e -> control.start());
+
+                        startPane.getChildren().setAll(startButton);
+                        startPane.setAlignment(Pos.CENTER_RIGHT);
+                    }
+
+                    offPane.getContent().setAll(hintPane, tokenPane, startPane);
                 }
 
-                VBox connectingPane = new VBox(8);
+                ComponentList onPane = new ComponentList();
                 {
-                    Label label = new Label(i18n("multiplayer.state.connecting"));
+                    GridPane masterPane = new GridPane();
+                    masterPane.setVgap(8);
+                    masterPane.setHgap(16);
+                    ColumnConstraints titleColumn = new ColumnConstraints();
+                    ColumnConstraints valueColumn = new ColumnConstraints();
+                    ColumnConstraints rightColumn = new ColumnConstraints();
+                    masterPane.getColumnConstraints().setAll(titleColumn, valueColumn, rightColumn);
+                    valueColumn.setFillWidth(true);
+                    valueColumn.setHgrow(Priority.ALWAYS);
+                    {
+                        Label title = new Label(i18n("multiplayer.master"));
+                        GridPane.setColumnSpan(title, 3);
+                        masterPane.addRow(0, title);
 
-                    connectingPane.getChildren().setAll(label);
+                        HintPane masterHintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                        GridPane.setColumnSpan(masterHintPane, 3);
+                        masterHintPane.setText(i18n("multiplayer.master.hint"));
+                        masterPane.addRow(1, masterHintPane);
+
+                        Label portTitle = new Label(i18n("multiplayer.master.port"));
+                        BorderPane.setAlignment(portTitle, Pos.CENTER_LEFT);
+
+                        JFXTextField portTextField = new JFXTextField();
+                        GridPane.setColumnSpan(portTextField, 2);
+                        FXUtils.setValidateWhileTextChanged(portTextField, true);
+                        portTextField.getValidators().add(new Validator(i18n("multiplayer.master.port.validate"), (text) -> {
+                            Integer value = Lang.toIntOrNull(text);
+                            return value != null && 0 <= value && value <= 65535;
+                        }));
+                        portTextField.textProperty().bindBidirectional(control.portProperty(), new StringConverter<Number>() {
+                            @Override
+                            public String toString(Number object) {
+                                return Integer.toString(object.intValue());
+                            }
+
+                            @Override
+                            public Number fromString(String string) {
+                                return Lang.parseInt(string, 0);
+                            }
+                        });
+                        masterPane.addRow(2, portTitle, portTextField);
+
+                        Label serverAddressTitle = new Label(i18n("multiplayer.master.server_address"));
+                        BorderPane.setAlignment(serverAddressTitle, Pos.CENTER_LEFT);
+                        Label serverAddressLabel = new Label();
+                        BorderPane.setAlignment(serverAddressLabel, Pos.CENTER_LEFT);
+                        serverAddressLabel.textProperty().bind(Bindings.createStringBinding(() -> {
+                            return (control.getAddress() == null ? "" : control.getAddress()) + ":" + control.getPort();
+                        }, control.addressProperty(), control.portProperty()));
+                        JFXButton copyButton = new JFXButton(i18n("multiplayer.master.server_address.copy"));
+                        copyButton.setOnAction(e -> FXUtils.copyText(serverAddressLabel.getText()));
+                        masterPane.addRow(3, serverAddressTitle, serverAddressLabel, copyButton);
+                    }
+
+                    VBox slavePane = new VBox(8);
+                    {
+                        HintPane slaveHintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                        slaveHintPane.setText(i18n("multiplayer.slave.hint"));
+                        slavePane.getChildren().setAll(new Label(i18n("multiplayer.slave")), slaveHintPane);
+                    }
+
+                    onPane.getContent().setAll(masterPane, slavePane);
                 }
 
-                VBox masterPane = new VBox(8);
-                {
-                    HintPane masterHintPane = new HintPane();
-                    masterHintPane.setText(i18n("multiplayer.state.master.hint"));
-
-                    Label label = new Label(i18n("multiplayer.state.master"));
-                    label.textProperty().bind(Bindings.createStringBinding(() ->
-                            i18n("multiplayer.state.master", control.getSession() == null ? "" : control.getSession().getName(), control.getGamePort()),
-                            control.gamePortProperty(), control.sessionProperty()));
-
-                    Label membersLabel = new Label(i18n("multiplayer.session.create.members"));
-
-                    VBox clientsPane = new VBox(8);
-                    clients = MappedObservableList.create(control.getClients(), ClientItem::new);
-                    Bindings.bindContent(clientsPane.getChildren(), clients);
-
-                    masterPane.getChildren().setAll(masterHintPane, label, membersLabel, clientsPane);
-                }
-
-                BorderPane slavePane = new BorderPane();
-                {
-                    HintPane slaveHintPane = new HintPane();
-                    slaveHintPane.setText(i18n("multiplayer.state.slave.hint"));
-                    slavePane.setTop(slaveHintPane);
-
-                    Label label = new Label();
-                    label.textProperty().bind(Bindings.createStringBinding(() ->
-                            i18n("multiplayer.state.slave", control.getSession() == null ? "" : control.getSession().getName(), "0.0.0.0:" + control.getGamePort()),
-                            control.sessionProperty(), control.gamePortProperty()));
-                    BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                    slavePane.setCenter(label);
-
-                    JFXButton copyButton = new JFXButton(i18n("multiplayer.state.slave.copy"));
-                    copyButton.setOnAction(e -> FXUtils.copyText("0.0.0.0:" + control.getGamePort()));
-                    slavePane.setRight(copyButton);
-                }
-
-                FXUtils.onChangeAndOperate(getSkinnable().multiplayerStateProperty(), state -> {
-                    if (state == MultiplayerManager.State.DISCONNECTED) {
-                        transitionPane.setContent(disconnectedPane, ContainerAnimations.NONE.getAnimationProducer());
-                    } else if (state == MultiplayerManager.State.CONNECTING) {
-                        transitionPane.setContent(connectingPane, ContainerAnimations.NONE.getAnimationProducer());
-                    } else if (state == MultiplayerManager.State.MASTER) {
-                        transitionPane.setContent(masterPane, ContainerAnimations.NONE.getAnimationProducer());
-                    } else if (state == MultiplayerManager.State.SLAVE) {
-                        transitionPane.setContent(slavePane, ContainerAnimations.NONE.getAnimationProducer());
+                FXUtils.onChangeAndOperate(getSkinnable().sessionProperty(), session -> {
+                    if (session == null) {
+                        mainPane.getChildren().setAll(ComponentList.createComponentListTitle(i18n("multiplayer.off")),
+                                offPane);
+                    } else {
+                        mainPane.getChildren().setAll(ComponentList.createComponentListTitle(i18n("multiplayer.on")),
+                                onPane);
                     }
                 });
             }
@@ -246,27 +242,6 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
             ComponentList thanksPane = new ComponentList();
             {
-                GridPane gridPane = new GridPane();
-                gridPane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing(), new ColumnConstraints());
-                gridPane.setVgap(8);
-                gridPane.setHgap(16);
-
-                // Token acts like password, we hide it here preventing users from accidentally leaking their token when taking screenshots.
-                JFXPasswordField tokenField = new JFXPasswordField();
-                tokenField.textProperty().bindBidirectional(globalConfig().multiplayerTokenProperty());
-                tokenField.setPromptText(i18n("multiplayer.session.create.token.prompt"));
-
-                JFXHyperlink applyLink = new JFXHyperlink(i18n("multiplayer.session.create.token.apply"));
-                applyLink.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-static-token"));
-
-                gridPane.addRow(0, new Label(i18n("multiplayer.session.create.token")), tokenField, applyLink);
-
-                OptionToggleButton relay = new OptionToggleButton();
-                relay.disableProperty().bind(tokenField.textProperty().isEmpty());
-                relay.selectedProperty().bindBidirectional(globalConfig().multiplayerRelayProperty());
-                relay.setTitle(i18n("multiplayer.relay"));
-                relay.setSubtitle(i18n("multiplayer.relay.hint"));
-
                 HBox pane = new HBox();
                 pane.setAlignment(Pos.CENTER_LEFT);
 
@@ -277,20 +252,19 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                 HBox.setHgrow(placeholder, Priority.ALWAYS);
 
                 pane.getChildren().setAll(
-                        new Label("Based on Cato"),
+                        new Label("Based on HiPer"),
                         aboutLink,
                         placeholder,
                         FXUtils.segmentToTextFlow(i18n("multiplayer.powered_by"), Controllers::onHyperlinkAction));
 
-                thanksPane.getContent().addAll(gridPane, relay, pane);
+                thanksPane.getContent().addAll(pane);
             }
 
             content.getChildren().setAll(
-                    ComponentList.createComponentListTitle(i18n("multiplayer.session")),
-                    roomPane,
+                    mainPane,
                     ComponentList.createComponentListTitle(i18n("multiplayer.nat")),
                     natDetectionPane,
-                    ComponentList.createComponentListTitle(i18n("settings")),
+                    ComponentList.createComponentListTitle(i18n("about")),
                     thanksPane
             );
         }
@@ -320,21 +294,4 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
         }
     }
 
-    private class ClientItem extends StackPane {
-        ClientItem(MultiplayerChannel.CatoClient client) {
-            BorderPane pane = new BorderPane();
-            pane.setPadding(new Insets(8));
-            pane.setLeft(new Label(client.getUsername()));
-
-            JFXButton kickButton = new JFXButton();
-            kickButton.setGraphic(SVG.close(Theme.blackFillBinding(), 16, 16));
-            kickButton.getStyleClass().add("toggle-icon-tiny");
-            kickButton.setOnAction(e -> getSkinnable().kickPlayer(client));
-            pane.setRight(kickButton);
-
-            RipplerContainer container = new RipplerContainer(pane);
-            getChildren().setAll(container);
-            getStyleClass().add("md-list-cell");
-        }
-    }
 }
