@@ -59,7 +59,6 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
     private Consumer<MultiplayerManager.HiperIPEvent> onIPAllocated;
 
     public MultiplayerPage() {
-        testNAT();
     }
 
     @Override
