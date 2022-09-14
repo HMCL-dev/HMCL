@@ -254,6 +254,9 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                 case MultiplayerManager.HiperExitEvent.FAILED_GET_DEVICE:
                     Controllers.dialog(i18n("multiplayer.error.failed_get_device"));
                     break;
+                case MultiplayerManager.HiperExitEvent.FAILED_LOAD_CONFIG:
+                    Controllers.dialog(i18n("multiplayer.error.failed_load_config"));
+                    break;
                 default:
                     Controllers.dialog(i18n("multiplayer.exit", event.getExitCode()));
                     break;
