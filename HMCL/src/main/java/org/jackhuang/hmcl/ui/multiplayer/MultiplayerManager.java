@@ -252,6 +252,9 @@ public final class MultiplayerManager {
                     if (msg.contains("Failed to get a tun/tap device")) {
                         error = HiperExitEvent.FAILED_GET_DEVICE;
                     }
+                    if (msg.contains("Failed to load certificate from config")) {
+                        error = HiperExitEvent.FAILED_LOAD_CONFIG;
+                    }
                 }
 
                 if (logJson.containsKey("network")) {
@@ -314,6 +317,7 @@ public final class MultiplayerManager {
         public static final int INVALID_CONFIGURATION = -2;
         public static final int CERTIFICATE_EXPIRED = -3;
         public static final int FAILED_GET_DEVICE = -4;
+        public static final int FAILED_LOAD_CONFIG = -5;
     }
 
     public static class HiperIPEvent extends Event {
