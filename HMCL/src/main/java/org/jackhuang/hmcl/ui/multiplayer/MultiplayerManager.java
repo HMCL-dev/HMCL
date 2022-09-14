@@ -142,7 +142,7 @@ public final class MultiplayerManager {
                 }
                 tasks = Arrays.asList(
                         getFileDownloadTask.apply(String.format("%s/hiper.exe", HIPER_TARGET_NAME), "hiper.exe"),
-                        getFileDownloadTask.apply(String.format("%s/wintun.dll", HIPER_TARGET_NAME), "wintun.dll"),
+                        getFileDownloadTask.apply(String.format("%s/wintun.dll", HIPER_TARGET_NAME), "wintun.dll")
                         // getFileDownloadTask.apply("tap-windows-9.21.2.exe", "tap-windows-9.21.2.exe")
                 );
             } else {
