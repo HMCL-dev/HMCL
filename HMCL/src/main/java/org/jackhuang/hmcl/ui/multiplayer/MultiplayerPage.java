@@ -112,20 +112,6 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         return session.getReadOnlyProperty();
     }
 
-    private void testNAT() {
-        Task.supplyAsync(() -> {
-            DiscoveryTest tester = new DiscoveryTest(null, 0, "stun.miwifi.com", 3478);
-            return tester.test();
-        }).whenComplete(Schedulers.javafx(), (info, exception) -> {
-            if (exception == null) {
-                natState.set(Result.ok(info));
-            } else {
-                natState.set(Result.error());
-            }
-            LOG.log(Level.INFO, "Nat test result " + MultiplayerPageSkin.getNATType(natState.get()), exception);
-        }).start();
-    }
-
     private void checkAgreement(Runnable runnable) {
         if (globalConfig().getMultiplayerAgreementVersion() < MultiplayerManager.HIPER_AGREEMENT_VERSION) {
             JFXDialogLayout agreementPane = new JFXDialogLayout();
