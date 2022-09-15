@@ -52,8 +52,6 @@ version = "$versionRoot.$buildNumber"
 dependencies {
     implementation(project(":HMCLCore"))
     implementation("libs:JFoenix")
-
-    implementation("de.javawi.jstun:jstun:0.7.4")
 }
 
 fun digest(algorithm: String, bytes: ByteArray) = MessageDigest.getInstance(algorithm).digest(bytes)

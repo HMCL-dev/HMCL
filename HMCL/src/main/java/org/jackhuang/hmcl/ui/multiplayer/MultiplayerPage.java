@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
-import de.javawi.jstun.test.DiscoveryInfo;
 import javafx.beans.property.*;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
@@ -30,10 +29,8 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.HMCLService;
-import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
@@ -48,7 +45,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("multiplayer")));
 
-    private final ReadOnlyObjectWrapper<@Nullable Result<DiscoveryInfo>> natState = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper<MultiplayerManager.HiperSession> session = new ReadOnlyObjectWrapper<>();
     private final IntegerProperty port = new SimpleIntegerProperty();
     private final StringProperty address = new SimpleStringProperty();
@@ -67,14 +63,6 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
     @Override
     protected Skin<?> createDefaultSkin() {
         return new MultiplayerPageSkin(this);
-    }
-
-    public Result<DiscoveryInfo> getNatState() {
-        return natState.get();
-    }
-
-    public ReadOnlyObjectProperty<Result<DiscoveryInfo>> natStateProperty() {
-        return natState.getReadOnlyProperty();
     }
 
     public int getPort() {
@@ -213,9 +201,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
     }
 
     private void onIPAllocated(MultiplayerManager.HiperIPEvent event) {
-        runInFX(() -> {
-            this.address.set(event.getIP());
-        });
+        runInFX(() -> this.address.set(event.getIP()));
     }
 
     private void onExit(MultiplayerManager.HiperExitEvent event) {
