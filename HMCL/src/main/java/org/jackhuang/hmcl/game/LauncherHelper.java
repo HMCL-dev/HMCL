@@ -560,7 +560,11 @@ public final class LauncherHelper {
 
         JFXHyperlink link = new JFXHyperlink(i18n("download.external_link"));
         link.setOnAction(e -> {
-            FXUtils.openLink(OPENJDK_DOWNLOAD_LINK);
+            if (javaVersion.getMajorVersion() == JavaVersion.JAVA_8) {
+                FXUtils.openLink(ORACLEJDK_DOWNLOAD_LINK);
+            } else {
+                FXUtils.openLink(OPENJDK_DOWNLOAD_LINK);
+            }
             future.completeExceptionally(new CancellationException());
         });
 
@@ -848,6 +852,7 @@ public final class LauncherHelper {
 
     }
 
+    private static final String ORACLEJDK_DOWNLOAD_LINK = "https://www.java.com/download";
     private static final String OPENJDK_DOWNLOAD_LINK = "https://docs.microsoft.com/java/openjdk/download";
 
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
