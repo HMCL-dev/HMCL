@@ -28,11 +28,11 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
-import javafx.scene.control.SkinBase;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -116,11 +116,16 @@ public class ComponentList extends Control {
     }
 
     @Override
+    public Orientation getContentBias() {
+        return Orientation.HORIZONTAL;
+    }
+
+    @Override
     protected javafx.scene.control.Skin<?> createDefaultSkin() {
         return new Skin(this);
     }
 
-    protected static class Skin extends SkinBase<ComponentList> {
+    protected static class Skin extends ControlSkinBase<ComponentList> {
         private static final PseudoClass PSEUDO_CLASS_FIRST = PseudoClass.getPseudoClass("first");
         private static final PseudoClass PSEUDO_CLASS_LAST = PseudoClass.getPseudoClass("last");
 
@@ -166,7 +171,7 @@ public class ComponentList extends Control {
             VBox vbox = new VBox();
             vbox.setFillWidth(true);
             Bindings.bindContent(vbox.getChildren(), list);
-            getChildren().setAll(vbox);
+            node = vbox;
         }
     }
 
