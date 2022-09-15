@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.multiplayer;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPasswordField;
 import com.jfoenix.controls.JFXTextField;
-import de.javawi.jstun.test.DiscoveryInfo;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -41,9 +40,6 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Result;
-import org.jackhuang.hmcl.util.javafx.BindingMapping;
-import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
@@ -211,30 +207,6 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                 });
             }
 
-            ComponentList natDetectionPane = new ComponentList();
-            {
-                GridPane pane = new GridPane();
-                ColumnConstraints title = new ColumnConstraints();
-                ColumnConstraints value = new ColumnConstraints();
-                pane.getColumnConstraints().setAll(title, value);
-                value.setFillWidth(true);
-                value.setHgrow(Priority.ALWAYS);
-                pane.setHgap(16);
-                pane.setVgap(8);
-
-                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                hintPane.setText(i18n("multiplayer.nat.hint"));
-                GridPane.setColumnSpan(hintPane, 2);
-                pane.addRow(0, hintPane);
-
-                Label natResult = new Label();
-                natResult.textProperty().bind(BindingMapping.of(getSkinnable().natStateProperty())
-                        .map(MultiplayerPageSkin::getNATType));
-                pane.addRow(1, new Label(i18n("multiplayer.nat.type")), natResult);
-
-                natDetectionPane.getContent().add(pane);
-            }
-
             ComponentList thanksPane = new ComponentList();
             {
                 HBox pane = new HBox();
@@ -257,35 +229,9 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
             content.getChildren().setAll(
                     mainPane,
-                    ComponentList.createComponentListTitle(i18n("multiplayer.nat")),
-                    natDetectionPane,
                     ComponentList.createComponentListTitle(i18n("about")),
                     thanksPane
             );
-        }
-    }
-
-    public static String getNATType(@Nullable Result<DiscoveryInfo> info) {
-        if (info == null) {
-            return i18n("multiplayer.nat.testing");
-        } else if (info.isError()) {
-            return i18n("multiplayer.nat.failed");
-        } else if (info.get().isBlockedUDP()) {
-            return i18n("multiplayer.nat.type.blocked_udp");
-        } else if (info.get().isFullCone()) {
-            return i18n("multiplayer.nat.type.full_cone");
-        } else if (info.get().isOpenAccess()) {
-            return i18n("multiplayer.nat.type.open_access");
-        } else if (info.get().isPortRestrictedCone()) {
-            return i18n("multiplayer.nat.type.port_restricted_cone");
-        } else if (info.get().isRestrictedCone()) {
-            return i18n("multiplayer.nat.type.restricted_cone");
-        } else if (info.get().isSymmetric()) {
-            return i18n("multiplayer.nat.type.symmetric");
-        } else if (info.get().isSymmetricUDPFirewall()) {
-            return i18n("multiplayer.nat.type.symmetric_udp_firewall");
-        } else {
-            return i18n("multiplayer.nat.type.unknown");
         }
     }
 
