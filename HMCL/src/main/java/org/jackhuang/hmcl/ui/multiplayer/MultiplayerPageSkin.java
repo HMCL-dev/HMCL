@@ -33,12 +33,9 @@ import javafx.util.StringConverter;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
@@ -46,11 +43,9 @@ import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
-import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
-import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 

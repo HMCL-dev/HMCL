@@ -18,8 +18,6 @@
 package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.annotations.SerializedName;
-import jdk.nashorn.internal.parser.JSONParser;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
@@ -49,8 +47,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -142,7 +138,7 @@ public final class MultiplayerManager {
                 }
                 tasks = Arrays.asList(
                         getFileDownloadTask.apply(String.format("%s/hiper.exe", HIPER_TARGET_NAME), "hiper.exe"),
-                        getFileDownloadTask.apply(String.format("%s/wintun.dll", HIPER_TARGET_NAME), "wintun.dll"),
+                        getFileDownloadTask.apply(String.format("%s/wintun.dll", HIPER_TARGET_NAME), "wintun.dll")
                         // getFileDownloadTask.apply("tap-windows-9.21.2.exe", "tap-windows-9.21.2.exe")
                 );
             } else {
