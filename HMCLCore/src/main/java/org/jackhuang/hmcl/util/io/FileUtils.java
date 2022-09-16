@@ -142,6 +142,21 @@ public final class FileUtils {
     }
 
     /**
+     * Write plain text to file. Characters are encoded into bytes using UTF-8.
+     * <p>
+     * We don't care about platform difference of line separator. Because readText accept all possibilities of line separator.
+     * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
+     * All characters in text will be written into the file in binary format. Existing data will be erased.
+     *
+     * @param file the path to the file
+     * @param text the text being written to file
+     * @throws IOException if an I/O error occurs
+     */
+    public static void writeText(Path file, String text) throws IOException {
+        writeText(file, text, UTF_8);
+    }
+
+    /**
      * Write plain text to file.
      * <p>
      * We don't care about platform difference of line separator. Because readText accept all possibilities of line separator.
@@ -158,17 +173,46 @@ public final class FileUtils {
     }
 
     /**
+     * Write plain text to file.
+     * <p>
+     * We don't care about platform difference of line separator. Because readText accept all possibilities of line separator.
+     * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
+     * All characters in text will be written into the file in binary format. Existing data will be erased.
+     *
+     * @param file    the path to the file
+     * @param text    the text being written to file
+     * @param charset the charset to use for encoding
+     * @throws IOException if an I/O error occurs
+     */
+    public static void writeText(Path file, String text, Charset charset) throws IOException {
+        writeBytes(file, text.getBytes(charset));
+    }
+
+    /**
      * Write byte array to file.
      * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
      * All bytes in byte array will be written into the file in binary format. Existing data will be erased.
      *
      * @param file  the path to the file
-     * @param array the data being written to file
+     * @param data the data being written to file
      * @throws IOException if an I/O error occurs
      */
-    public static void writeBytes(File file, byte[] array) throws IOException {
-        Files.createDirectories(file.toPath().getParent());
-        Files.write(file.toPath(), array);
+    public static void writeBytes(File file, byte[] data) throws IOException {
+        writeBytes(file.toPath(), data);
+    }
+
+    /**
+     * Write byte array to file.
+     * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
+     * All bytes in byte array will be written into the file in binary format. Existing data will be erased.
+     *
+     * @param file  the path to the file
+     * @param data the data being written to file
+     * @throws IOException if an I/O error occurs
+     */
+    public static void writeBytes(Path file, byte[] data) throws IOException {
+        Files.createDirectories(file.getParent());
+        Files.write(file, data);
     }
 
     public static void deleteDirectory(File directory)
