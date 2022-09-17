@@ -326,20 +326,14 @@ public final class MultiplayerManager {
 
     public static class HiperIPEvent extends Event {
         private final String ip;
-        private final String validAt;
 
-        public HiperIPEvent(Object source, String ip, String validAt) {
+        public HiperIPEvent(Object source, String ip) {
             super(source);
             this.ip = ip;
-            this.validAt = validAt;
         }
 
         public String getIP() {
             return ip;
-        }
-
-        public String getValidAt() {
-            return validAt;
         }
     }
 
