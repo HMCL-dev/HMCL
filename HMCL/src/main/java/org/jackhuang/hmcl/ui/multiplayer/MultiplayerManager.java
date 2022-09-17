@@ -215,7 +215,7 @@ public final class MultiplayerManager {
     public static class HiperSession extends ManagedProcess {
         private final EventManager<HiperExitEvent> onExit = new EventManager<>();
         private final EventManager<HiperIPEvent> onIPAllocated = new EventManager<>();
-        private final EventManager<HiperIPEvent> onValidAt = new EventManager<>();
+        private final EventManager<HiperShowValidAtEvent> onValidAt = new EventManager<>();
         private final BufferedWriter writer;
         private int error = 0;
 
