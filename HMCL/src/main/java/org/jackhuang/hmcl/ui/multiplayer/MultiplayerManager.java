@@ -243,6 +243,7 @@ public final class MultiplayerManager {
             try {
                 Map<?, ?> logJson = JsonUtils.fromNonNullJson(log, Map.class);
                 String msg = "";
+                String validAt = "";
                 if (logJson.containsKey("msg")) {
                     msg = tryCast(logJson.get("msg"), String.class).orElse("");
                     if (msg.contains("Failed to get a tun/tap device")) {
@@ -251,13 +252,16 @@ public final class MultiplayerManager {
                     if (msg.contains("Failed to load certificate from config")) {
                         error = HiperExitEvent.FAILED_LOAD_CONFIG;
                     }
+                    if (msg.contains("Validity of client certificate")) {
+                        validAt = tryCast(msg.get("valid"), String.class);
+                    }
                 }
 
                 if (logJson.containsKey("network")) {
                     Map<?, ?> network = tryCast(logJson.get("network"), Map.class).orElse(Collections.emptyMap());
                     if (network.containsKey("IP") && msg.contains("Main HostMap created")) {
                         Optional<String> ip = tryCast(network.get("IP"), String.class);
-                        ip.ifPresent(s -> onIPAllocated.fireEvent(new HiperIPEvent(this, s)));
+                        ip.ifPresent(s -> onIPAllocated.fireEvent(new HiperIPEvent(this, s, validAt)));
                     }
                 }
             } catch (JsonParseException e) {
@@ -318,14 +322,20 @@ public final class MultiplayerManager {
 
     public static class HiperIPEvent extends Event {
         private final String ip;
+        private final String validAt;
 
-        public HiperIPEvent(Object source, String ip) {
+        public HiperIPEvent(Object source, String ip, String validAt) {
             super(source);
             this.ip = ip;
+            this.validAt = validAt;
         }
 
         public String getIP() {
             return ip;
+        }
+
+        public String getValidAt() {
+            return validAt;
         }
     }
 
