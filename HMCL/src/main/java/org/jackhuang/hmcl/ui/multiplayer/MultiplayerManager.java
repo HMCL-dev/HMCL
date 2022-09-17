@@ -262,7 +262,7 @@ public final class MultiplayerManager {
                     Map<?, ?> network = tryCast(logJson.get("network"), Map.class).orElse(Collections.emptyMap());
                     if (network.containsKey("IP") && msg.contains("Main HostMap created")) {
                         Optional<String> ip = tryCast(network.get("IP"), String.class);
-                        ip.ifPresent(s -> onIPAllocated.fireEvent(new HiperIPEvent(this, s, validAt)));
+                        ip.ifPresent(s -> onIPAllocated.fireEvent(new HiperIPEvent(this, s)));
                     }
                 }
             } catch (JsonParseException e) {
