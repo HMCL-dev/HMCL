@@ -253,7 +253,7 @@ public final class MultiplayerManager {
                         error = HiperExitEvent.FAILED_LOAD_CONFIG;
                     }
                     if (msg.contains("Validity of client certificate")) {
-                        Optional<String> validAt = tryCast(logJson.get("valid"), String.class).orElse("");
+                        Optional<String> validAt = tryCast(logJson.get("valid"), String.class);
                         validAt.ifPresent(s -> onValidAt.fireEvent(new HiperShowValidAtEvent(this, s)));
                     }
                 }
@@ -299,7 +299,7 @@ public final class MultiplayerManager {
         public EventManager<HiperIPEvent> onIPAllocated() {
             return onIPAllocated;
         }
-        public EventManager<HiperIPEvent> onValidAt() {
+        public EventManager<HiperShowValidAtEvent> onValidAt() {
             return onValidAt;
         }
 
