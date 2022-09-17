@@ -337,10 +337,10 @@ public final class MultiplayerManager {
         }
     }
 
-        public static class HiperShowValidEvent extends Event {
+        public static class HiperShowValidAtEvent extends Event {
         private final String validAt;
 
-        public HiperShowValidEvent(Object source, String validAt) {
+        public HiperShowValidAtEvent(Object source, String validAt) {
             super(source);
             this.validAt = validAt;
         }
