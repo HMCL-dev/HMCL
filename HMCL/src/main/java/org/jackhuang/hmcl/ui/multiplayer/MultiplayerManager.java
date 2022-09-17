@@ -253,7 +253,7 @@ public final class MultiplayerManager {
                         error = HiperExitEvent.FAILED_LOAD_CONFIG;
                     }
                     if (msg.contains("Validity of client certificate")) {
-                        validAt = tryCast(logJson.get("valid"), String.class);
+                        validAt = tryCast(logJson.get("valid"), String.class).orElse("");
                     }
                 }
 
