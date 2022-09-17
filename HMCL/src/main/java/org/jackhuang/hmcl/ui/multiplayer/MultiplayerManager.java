@@ -215,6 +215,7 @@ public final class MultiplayerManager {
     public static class HiperSession extends ManagedProcess {
         private final EventManager<HiperExitEvent> onExit = new EventManager<>();
         private final EventManager<HiperIPEvent> onIPAllocated = new EventManager<>();
+        private final EventManager<HiperIPEvent> onValidAt = new EventManager<>();
         private final BufferedWriter writer;
         private int error = 0;
 
@@ -243,7 +244,6 @@ public final class MultiplayerManager {
             try {
                 Map<?, ?> logJson = JsonUtils.fromNonNullJson(log, Map.class);
                 String msg = "";
-                String validAt = "";
                 if (logJson.containsKey("msg")) {
                     msg = tryCast(logJson.get("msg"), String.class).orElse("");
                     if (msg.contains("Failed to get a tun/tap device")) {
@@ -253,7 +253,8 @@ public final class MultiplayerManager {
                         error = HiperExitEvent.FAILED_LOAD_CONFIG;
                     }
                     if (msg.contains("Validity of client certificate")) {
-                        validAt = tryCast(logJson.get("valid"), String.class).orElse("");
+                        Optional<String> validAt = tryCast(logJson.get("valid"), String.class).orElse("");
+                        validAt.ifPresent(s -> onValidAt.fireEvent(new HiperShowValidAtEvent(this, s)));
                     }
                 }
 
@@ -298,6 +299,9 @@ public final class MultiplayerManager {
         public EventManager<HiperIPEvent> onIPAllocated() {
             return onIPAllocated;
         }
+        public EventManager<HiperIPEvent> onValidAt() {
+            return onValidAt;
+        }
 
     }
 
@@ -332,6 +336,19 @@ public final class MultiplayerManager {
 
         public String getIP() {
             return ip;
+        }
+
+        public String getValidAt() {
+            return validAt;
+        }
+    }
+
+        public static class HiperShowValidEvent extends Event {
+        private final String validAt;
+
+        public HiperShowValidEvent(Object source, String validAt) {
+            super(source);
+            this.validAt = validAt;
         }
 
         public String getValidAt() {
