@@ -299,6 +299,7 @@ public final class MultiplayerManager {
         public EventManager<HiperIPEvent> onIPAllocated() {
             return onIPAllocated;
         }
+
         public EventManager<HiperShowValidAtEvent> onValidAt() {
             return onValidAt;
         }
@@ -337,7 +338,7 @@ public final class MultiplayerManager {
         }
     }
 
-        public static class HiperShowValidAtEvent extends Event {
+    public static class HiperShowValidAtEvent extends Event {
         private final String validAt;
 
         public HiperShowValidAtEvent(Object source, String validAt) {
