@@ -120,10 +120,10 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                 ComponentList offPane = new ComponentList();
                 {
                     HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-                    hintPane.setSegment(i18n("multiplayer.off.hint", deviceCode.getUserCode(), deviceCode.getVerificationUri()));
+                    hintPane.setSegment(i18n("multiplayer.off.hint", deviceCode.getUserCode()));
                     // hintPane.setText(i18n("multiplayer.off.hint"));
 
-                    HintPane hintPane2 = new HintPane2(MessageDialogPane.MessageType.INFO);
+                    HintPane hintPane2 = new HintPane(MessageDialogPane.MessageType.INFO);
                     hintPane2.setText(i18n("multiplayer.off.hint2"));
 
                     BorderPane tokenPane = new BorderPane();
