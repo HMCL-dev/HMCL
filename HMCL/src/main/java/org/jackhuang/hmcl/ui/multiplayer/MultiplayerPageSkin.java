@@ -122,8 +122,8 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
                     hintPane.setText(i18n("multiplayer.off.hint"));
 
-                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                    hintPane.setText(i18n("multiplayer.off.hint2"));
+                    HintPane hintPane2 = new HintPane(MessageDialogPane.MessageType.INFO);
+                    hintPane2.setText(i18n("multiplayer.off.hint2"));
 
                     BorderPane tokenPane = new BorderPane();
                     {
