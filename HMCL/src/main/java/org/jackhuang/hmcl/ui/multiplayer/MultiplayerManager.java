@@ -186,12 +186,12 @@ public final class MultiplayerManager {
             String certFileContent;
             try {
                 certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString();
-                if (certFileContent != ""){
+                if (certFileContent != "") {
                     certFileContent += "\nlogging:\n  format: json\n  file_path: ./hiper.log";
                     FileUtils.writeText(HIPER_CONFIG_PATH, certFileContent);
                 }
             } catch (IOException e) {
-                // throw new HiperInvalidTokenException();
+                Controllers.confirm(i18n("multiplayer.token.remote.invalid"), i18n("multiplayer.token.use.local.cert"), null, return i18n("multiplayer.token.invalid"));
             }
 
             String[] commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
