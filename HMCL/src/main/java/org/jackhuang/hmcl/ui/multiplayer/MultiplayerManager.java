@@ -186,7 +186,7 @@ public final class MultiplayerManager {
             String certFileContent;
             try {
                 certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString();
-                if (certFileContent != ""){
+                if (!certFileContent.equals("")) {
                     certFileContent += "\nlogging:\n  format: json\n  file_path: ./hiper.log";
                     FileUtils.writeText(HIPER_CONFIG_PATH, certFileContent);
                 }
