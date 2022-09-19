@@ -185,11 +185,14 @@ public final class MultiplayerManager {
             // 下载 HiPer 配置文件
             String certFileContent;
             try {
-                certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString() + "\nlogging:\n  format: json\n  file_path: ./hiper.log";
+                certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString();
+                if (certFileContent != ""){
+                    certFileContent += "\nlogging:\n  format: json\n  file_path: ./hiper.log";
+                    FileUtils.writeText(HIPER_CONFIG_PATH, certFileContent);
+                }
             } catch (IOException e) {
-                throw new HiperInvalidTokenException();
+                // throw new HiperInvalidTokenException();
             }
-            FileUtils.writeText(HIPER_CONFIG_PATH, certFileContent);
 
             String[] commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
             Process process = new ProcessBuilder()
