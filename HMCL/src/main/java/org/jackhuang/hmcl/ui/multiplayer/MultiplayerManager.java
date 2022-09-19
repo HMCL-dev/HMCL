@@ -193,7 +193,7 @@ public final class MultiplayerManager {
                     FileUtils.writeText(HIPER_CONFIG_PATH, certFileContent);
                 }
             } catch (IOException e) {
-                Controllers.confirm(i18n("multiplayer.token.remote.invalid"), i18n("multiplayer.token.use.local.cert"), null, ()->{return i18n("multiplayer.token.invalid");});
+                Controllers.confirm(i18n("multiplayer.token.remote.invalid"), i18n("multiplayer.token.use.local.cert"), null, throw new HiperInvalidTokenException();});
             }
 
             String[] commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
