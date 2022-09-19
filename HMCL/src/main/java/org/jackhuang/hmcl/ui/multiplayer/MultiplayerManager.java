@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
-import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -52,7 +51,6 @@ import java.util.logging.Level;
 import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
  * Cato Management.
@@ -188,12 +186,12 @@ public final class MultiplayerManager {
             String certFileContent;
             try {
                 certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString();
-                if (certFileContent != "") {
+                if (certFileContent != ""){
                     certFileContent += "\nlogging:\n  format: json\n  file_path: ./hiper.log";
                     FileUtils.writeText(HIPER_CONFIG_PATH, certFileContent);
                 }
             } catch (IOException e) {
-                Controllers.confirm(i18n("multiplayer.token.remote.invalid"), i18n("multiplayer.token.use.local.cert"), null, ()->{throw new HiperInvalidTokenException();});
+                // throw new HiperInvalidTokenException();
             }
 
             String[] commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
