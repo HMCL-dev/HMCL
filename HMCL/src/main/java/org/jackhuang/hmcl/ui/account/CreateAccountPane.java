@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccountFactory;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.authlibinjector.BoundAuthlibInjectorAccountFactory;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccountFactory;
+import org.jackhuang.hmcl.auth.nide8.Nide8AccountFactory;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
@@ -215,7 +216,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             username = details.getUsername();
             password = details.getPassword();
             additionalData = details.getAdditionalData();
-        } else {
+        }else {
             username = null;
             password = null;
             additionalData = null;
@@ -369,6 +370,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         private @Nullable JFXTextField txtUsername;
         private @Nullable JFXPasswordField txtPassword;
         private @Nullable JFXTextField txtUUID;
+        private @Nullable JFXTextField serverid;
         private final BooleanBinding valid;
 
         public AccountDetailsInputPane(AccountFactory<?> factory, Runnable onAction) {
@@ -406,6 +408,26 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 HBox boxServers = new HBox(lblServerName, linksContainer);
                 boxServers.setAlignment(Pos.CENTER_LEFT);
                 add(boxServers, 1, rowIndex);
+
+                rowIndex++;
+            }else if (factory instanceof Nide8AccountFactory) {
+                Label lblServerid = new Label(i18n("account.nide8.serverid"));
+                setHalignment(lblServerid, HPos.LEFT);
+                add(lblServerid, 0, rowIndex);
+
+                serverid = new JFXTextField();
+                serverid.setValidators(
+                        new RequiredValidator(),
+                        new Validator(i18n("account.nide8.serverid"), username -> {
+                            if (requiresEmailAsUsername()) {
+                                return username.contains("@");
+                            } else {
+                                return true;
+                            }
+                        }));
+                setValidateWhileTextChanged(serverid, true);
+                serverid.setOnAction(e -> onAction.run());
+                add(serverid, 1, rowIndex);
 
                 rowIndex++;
             } else if (factory instanceof AuthlibInjectorAccountFactory) {
@@ -559,6 +581,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         bind(txtPassword.textProperty());
                     if (txtUUID != null)
                         bind(txtUUID.textProperty());
+                    if (serverid != null)
+                        bind(serverid.textProperty());
                 }
 
                 @Override
@@ -570,6 +594,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     if (txtPassword != null && !txtPassword.validate())
                         return false;
                     if (txtUUID != null && !txtUUID.validate())
+                        return false;
+                    if (serverid != null && !serverid.validate())
                         return false;
                     return true;
                 }
@@ -591,6 +617,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             } else if (factory instanceof OfflineAccountFactory) {
                 UUID uuid = txtUUID == null ? null : StringUtils.isBlank(txtUUID.getText()) ? null : UUIDTypeAdapter.fromString(txtUUID.getText());
                 return new OfflineAccountFactory.AdditionalData(uuid, null);
+            } else if (factory instanceof Nide8AccountFactory) {
+                return serverid.getText();
             } else {
                 return null;
             }

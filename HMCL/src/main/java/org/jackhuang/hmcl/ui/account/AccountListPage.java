@@ -130,6 +130,14 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                     littleSkinItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_LITTLE_SKIN)));
                     boxMethods.getChildren().add(littleSkinItem);
 
+                    AdvancedListItem nide8Item = new AdvancedListItem();
+                    nide8Item.getStyleClass().add("navigation-drawer-item");
+                    nide8Item.setActionButtonVisible(false);
+                    nide8Item.setTitle(i18n("account.methods.nide8"));
+                    nide8Item.setLeftGraphic(wrap(SVG::server));
+                    nide8Item.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_NIDE8)));
+                    boxMethods.getChildren().add(nide8Item);
+
                     VBox boxAuthServers = new VBox();
                     authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
                         AdvancedListItem item = new AdvancedListItem();

@@ -18,7 +18,10 @@
 package org.jackhuang.hmcl.ui;
 
 import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.auth.nide8.Nide8AuthInfo;
+import org.jackhuang.hmcl.auth.nide8.Nide8ClassicAccount;
 import org.jackhuang.hmcl.ui.account.ClassicAccountLoginDialog;
+import org.jackhuang.hmcl.ui.account.Nide8AccountLoginDialog;
 import org.jackhuang.hmcl.ui.account.OAuthAccountLoginDialog;
 
 import java.util.Optional;
@@ -50,6 +53,18 @@ public final class DialogController {
             AtomicReference<AuthInfo> res = new AtomicReference<>(null);
             runInFX(() -> {
                 OAuthAccountLoginDialog pane = new OAuthAccountLoginDialog((OAuthAccount) account, it -> {
+                    res.set(it);
+                    latch.countDown();
+                }, latch::countDown);
+                Controllers.dialog(pane);
+            });
+            latch.await();
+            return Optional.ofNullable(res.get()).orElseThrow(CancellationException::new);
+        } else if (account instanceof Nide8ClassicAccount) {
+            CountDownLatch latch = new CountDownLatch(1);
+            AtomicReference<Nide8AuthInfo> res = new AtomicReference<>(null);
+            runInFX(() -> {
+                Nide8AccountLoginDialog pane = new Nide8AccountLoginDialog((Nide8ClassicAccount) account, it -> {
                     res.set(it);
                     latch.countDown();
                 }, latch::countDown);
