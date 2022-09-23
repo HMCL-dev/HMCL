@@ -216,7 +216,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             username = details.getUsername();
             password = details.getPassword();
             additionalData = details.getAdditionalData();
-        }else {
+        } else {
             username = null;
             password = null;
             additionalData = null;
@@ -297,7 +297,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
                 deauthorizeLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A"));
                 JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
-                createProfileLink.setOnAction(e -> FXUtils.openLink("https://www.minecraft.net/msaprofile/mygames/editprofile"));    
+                createProfileLink.setOnAction(e -> FXUtils.openLink("https://www.minecraft.net/msaprofile/mygames/editprofile"));
                 purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
                 box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, createProfileLink);
                 GridPane.setColumnSpan(box, 2);
@@ -342,7 +342,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private static class AccountDetailsInputPane extends GridPane {
 
         // ==== authlib-injector hyperlinks ====
-        private static final String[] ALLOWED_LINKS = { "homepage", "register" };
+        private static final String[] ALLOWED_LINKS = {"homepage", "register"};
 
         private static List<Hyperlink> createHyperlinks(AuthlibInjectorServer server) {
             if (server == null) {
@@ -410,21 +410,13 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 add(boxServers, 1, rowIndex);
 
                 rowIndex++;
-            }else if (factory instanceof Nide8AccountFactory) {
+            } else if (factory instanceof Nide8AccountFactory) {
                 Label lblServerid = new Label(i18n("account.nide8.serverid"));
                 setHalignment(lblServerid, HPos.LEFT);
                 add(lblServerid, 0, rowIndex);
 
                 serverid = new JFXTextField();
-                serverid.setValidators(
-                        new RequiredValidator(),
-                        new Validator(i18n("account.nide8.serverid"), username -> {
-                            if (requiresEmailAsUsername()) {
-                                return username.contains("@");
-                            } else {
-                                return true;
-                            }
-                        }));
+                serverid.setValidators(new RequiredValidator());
                 setValidateWhileTextChanged(serverid, true);
                 serverid.setOnAction(e -> onAction.run());
                 add(serverid, 1, rowIndex);
@@ -641,7 +633,9 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
 
         public void focus() {
-            if (txtUsername != null) {
+            if (serverid != null) {
+                serverid.requestFocus();
+            } else if (txtUsername != null) {
                 txtUsername.requestFocus();
             }
         }
