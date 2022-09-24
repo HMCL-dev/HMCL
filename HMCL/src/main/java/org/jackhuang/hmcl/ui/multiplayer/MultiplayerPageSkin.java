@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXPasswordField;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ObservableList;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -171,9 +172,15 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     valueColumn.setFillWidth(true);
                     valueColumn.setHgrow(Priority.ALWAYS);
                     {
+                        BorderPane titlePane = new BorderPane();
+                        GridPane.setColumnSpan(titlePane, 3);
                         Label title = new Label(i18n("multiplayer.master"));
-                        GridPane.setColumnSpan(title, 3);
-                        masterPane.addRow(0, title);
+                        titlePane.setLeft(title);
+
+                        JFXHyperlink tutorial = new JFXHyperlink(i18n("multiplayer.master.video_tutorial"));
+                        titlePane.setRight(tutorial);
+                        tutorial.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-tutorial-master"));
+                        masterPane.addRow(0, titlePane);
 
                         HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
                         GridPane.setColumnSpan(hintPane, 3);
@@ -217,9 +224,13 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                     VBox slavePane = new VBox(8);
                     {
+                        BorderPane titlePane = new BorderPane();
                         Label title = new Label(i18n("multiplayer.slave"));
-                        GridPane.setColumnSpan(title, 3);
-                        slavePane.getChildren().add(title);
+                        titlePane.setLeft(title);
+
+                        JFXHyperlink tutorial = new JFXHyperlink(i18n("multiplayer.slave.video_tutorial"));
+                        tutorial.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-tutorial-slave"));
+                        titlePane.setRight(tutorial);
 
                         HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
                         GridPane.setColumnSpan(hintPane, 3);
@@ -235,38 +246,36 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                             Label addressTitle = new Label(i18n("multiplayer.slave.server_address"));
 
                             JFXTextField addressField = new JFXTextField();
-                            GridPane.setColumnSpan(addressField, 2);
                             FXUtils.setValidateWhileTextChanged(addressField, true);
-                            addressField.getValidators().add(new URLValidator());
+                            addressField.getValidators().add(new ServerAddressValidator());
 
-                            JFXButton startButton = new JFXButton(i18n("multiplayer.master.server_address.start"));
+                            JFXButton startButton = new JFXButton(i18n("multiplayer.slave.server_address.start"));
                             startButton.setOnAction(e -> control.broadcast(addressField.getText()));
-                            notBroadcastingPane.addRow(2, addressTitle, addressField, startButton);
+                            notBroadcastingPane.addRow(0, addressTitle, addressField, startButton);
                         }
 
                         GridPane broadcastingPane = new GridPane();
                         {
-                            notBroadcastingPane.setVgap(8);
-                            notBroadcastingPane.setHgap(16);
-                            notBroadcastingPane.getColumnConstraints().setAll(titleColumn, valueColumn, rightColumn);
+                            broadcastingPane.setVgap(8);
+                            broadcastingPane.setHgap(16);
+                            broadcastingPane.getColumnConstraints().setAll(titleColumn, valueColumn, rightColumn);
 
                             Label addressTitle = new Label(i18n("multiplayer.slave.server_address"));
                             Label addressLabel = new Label();
                             addressLabel.textProperty().bind(Bindings.createStringBinding(() ->
                                             control.getBroadcaster() != null ? control.getBroadcaster().getAddress() : "",
                                     control.broadcasterProperty()));
-                            GridPane.setColumnSpan(addressLabel, 2);
 
                             JFXButton stopButton = new JFXButton(i18n("multiplayer.slave.server_address.stop"));
                             stopButton.setOnAction(e -> control.stopBroadcasting());
-                            notBroadcastingPane.addRow(2, addressTitle, addressLabel, stopButton);
+                            broadcastingPane.addRow(0, addressTitle, addressLabel, stopButton);
                         }
 
                         FXUtils.onChangeAndOperate(control.broadcasterProperty(), broadcaster -> {
                             if (broadcaster == null) {
-                                slavePane.getChildren().setAll(title, hintPane, notBroadcastingPane);
+                                slavePane.getChildren().setAll(titlePane, hintPane, notBroadcastingPane);
                             } else {
-                                slavePane.getChildren().setAll(title, hintPane, broadcastingPane);
+                                slavePane.getChildren().setAll(titlePane, hintPane, broadcastingPane);
                             }
                         });
                     }

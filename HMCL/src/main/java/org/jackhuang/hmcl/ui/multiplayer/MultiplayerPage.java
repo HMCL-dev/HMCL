@@ -239,11 +239,16 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
     public void stopBroadcasting() {
         if (getBroadcaster() != null) {
             getBroadcaster().close();
+            setBroadcaster(null);
         }
     }
 
     private void onBroadcasterExit(Event event) {
-        this.broadcaster.set(null);
+        runInFX(() -> {
+            if (this.broadcaster.get() == event.getSource()) {
+                this.broadcaster.set(null);
+            }
+        });
     }
 
     private void clearSession() {
@@ -290,7 +295,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                     break;
             }
 
-            clearSession();
+//            clearSession();
         });
     }
 
