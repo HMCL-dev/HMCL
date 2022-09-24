@@ -33,7 +33,6 @@ import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;

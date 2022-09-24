@@ -42,9 +42,6 @@ import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
-
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
