@@ -191,7 +191,7 @@ public final class MultiplayerManager {
                     FileUtils.writeText(HIPER_CONFIG_PATH, certFileContent);
                 }
             } catch (IOException e) {
-                Log.log(Level.WARNING, "configuration file cloud cache index code has been not available , try to use the local configuration file", e);
+                LOG.warning(Level.WARNING, "configuration file cloud cache index code has been not available , try to use the local configuration file", e);
             }
 
             String[] commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
