@@ -215,6 +215,7 @@ public final class MultiplayerManager {
     public static class HiperSession extends ManagedProcess {
         private final EventManager<HiperExitEvent> onExit = new EventManager<>();
         private final EventManager<HiperIPEvent> onIPAllocated = new EventManager<>();
+        private final EventManager<HiperShowValidAtEvent> onValidAt = new EventManager<>();
         private final BufferedWriter writer;
         private int error = 0;
 
@@ -250,6 +251,10 @@ public final class MultiplayerManager {
                     }
                     if (msg.contains("Failed to load certificate from config")) {
                         error = HiperExitEvent.FAILED_LOAD_CONFIG;
+                    }
+                    if (msg.contains("Validity of client certificate")) {
+                        Optional<String> validAt = tryCast(logJson.get("valid"), String.class);
+                        validAt.ifPresent(s -> onValidAt.fireEvent(new HiperShowValidAtEvent(this, s)));
                     }
                 }
 
@@ -295,6 +300,10 @@ public final class MultiplayerManager {
             return onIPAllocated;
         }
 
+        public EventManager<HiperShowValidAtEvent> onValidAt() {
+            return onValidAt;
+        }
+
     }
 
     public static class HiperExitEvent extends Event {
@@ -326,6 +335,19 @@ public final class MultiplayerManager {
 
         public String getIP() {
             return ip;
+        }
+    }
+
+    public static class HiperShowValidAtEvent extends Event {
+        private final String validAt;
+
+        public HiperShowValidAtEvent(Object source, String validAt) {
+            super(source);
+            this.validAt = validAt;
+        }
+
+        public String getValidAt() {
+            return validAt;
         }
     }
 
