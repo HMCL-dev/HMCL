@@ -215,31 +215,29 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                             Label addressTitle = new Label(i18n("multiplayer.slave.server_address"));
 
                             JFXTextField addressField = new JFXTextField();
-                            GridPane.setColumnSpan(addressField, 2);
                             FXUtils.setValidateWhileTextChanged(addressField, true);
-                            addressField.getValidators().add(new URLValidator());
+                            addressField.getValidators().add(new ServerAddressValidator());
 
-                            JFXButton startButton = new JFXButton(i18n("multiplayer.master.server_address.start"));
+                            JFXButton startButton = new JFXButton(i18n("multiplayer.slave.server_address.start"));
                             startButton.setOnAction(e -> control.broadcast(addressField.getText()));
-                            notBroadcastingPane.addRow(2, addressTitle, addressField, startButton);
+                            notBroadcastingPane.addRow(0, addressTitle, addressField, startButton);
                         }
 
                         GridPane broadcastingPane = new GridPane();
                         {
-                            notBroadcastingPane.setVgap(8);
-                            notBroadcastingPane.setHgap(16);
-                            notBroadcastingPane.getColumnConstraints().setAll(titleColumn, valueColumn, rightColumn);
+                            broadcastingPane.setVgap(8);
+                            broadcastingPane.setHgap(16);
+                            broadcastingPane.getColumnConstraints().setAll(titleColumn, valueColumn, rightColumn);
 
                             Label addressTitle = new Label(i18n("multiplayer.slave.server_address"));
                             Label addressLabel = new Label();
                             addressLabel.textProperty().bind(Bindings.createStringBinding(() ->
                                             control.getBroadcaster() != null ? control.getBroadcaster().getAddress() : "",
                                     control.broadcasterProperty()));
-                            GridPane.setColumnSpan(addressLabel, 2);
 
                             JFXButton stopButton = new JFXButton(i18n("multiplayer.slave.server_address.stop"));
                             stopButton.setOnAction(e -> control.stopBroadcasting());
-                            notBroadcastingPane.addRow(2, addressTitle, addressLabel, stopButton);
+                            broadcastingPane.addRow(0, addressTitle, addressLabel, stopButton);
                         }
 
                         FXUtils.onChangeAndOperate(control.broadcasterProperty(), broadcaster -> {
