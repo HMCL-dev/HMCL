@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.property.*;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
+import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -33,6 +34,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -49,11 +51,14 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
     private final ReadOnlyObjectWrapper<MultiplayerManager.HiperSession> session = new ReadOnlyObjectWrapper<>();
     private final IntegerProperty port = new SimpleIntegerProperty();
     private final StringProperty address = new SimpleStringProperty();
-    private final ReadOnlyObjectWrapper<Instant> expireTime = new ReadOnlyObjectWrapper<>();
+    private final ReadOnlyObjectWrapper<Date> expireTime = new ReadOnlyObjectWrapper<>();
 
     private Consumer<MultiplayerManager.HiperExitEvent> onExit;
     private Consumer<MultiplayerManager.HiperIPEvent> onIPAllocated;
-    private Consumer<MultiplayerManager.HiperShowValidAtEvent> onValidAt;
+    private Consumer<MultiplayerManager.HiperShowValidUntilEvent> onValidUntil;
+
+    private final ReadOnlyObjectWrapper<LocalServerBroadcaster> broadcaster = new ReadOnlyObjectWrapper<>();
+    private Consumer<Event> onBroadcasterExit = null;
 
     public MultiplayerPage() {
     }
@@ -92,15 +97,27 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         this.address.set(address);
     }
 
-    public Instant getExpireTime() {
+    public LocalServerBroadcaster getBroadcaster() {
+        return broadcaster.get();
+    }
+
+    public ReadOnlyObjectWrapper<LocalServerBroadcaster> broadcasterProperty() {
+        return broadcaster;
+    }
+
+    public void setBroadcaster(LocalServerBroadcaster broadcaster) {
+        this.broadcaster.set(broadcaster);
+    }
+
+    public Date getExpireTime() {
         return expireTime.get();
     }
 
-    public ReadOnlyObjectWrapper<Instant> expireTimeProperty() {
+    public ReadOnlyObjectWrapper<Date> expireTimeProperty() {
         return expireTime;
     }
 
-    public void setExpireTime(Instant expireTime) {
+    public void setExpireTime(Date expireTime) {
         this.expireTime.set(expireTime);
     }
 
@@ -195,7 +212,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                     this.session.set(session);
                     onExit = session.onExit().registerWeak(this::onExit);
                     onIPAllocated = session.onIPAllocated().registerWeak(this::onIPAllocated);
-                    onValidAt = session.onValidAt().registerWeak(this::onValidAt);
+                    onValidUntil = session.onValidUntil().registerWeak(this::onValidUntil);
                 }, Schedulers.javafx())
                 .exceptionally(throwable -> {
                     runInFX(() -> Controllers.dialog(localizeErrorMessage(throwable), null, MessageDialogPane.MessageType.ERROR));
@@ -207,22 +224,44 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         if (getSession() != null) {
             getSession().stop();
         }
+        if (getBroadcaster() != null) {
+            getBroadcaster().close();
+        }
         clearSession();
+    }
+
+    public void broadcast(String url) {
+        LocalServerBroadcaster broadcaster = new LocalServerBroadcaster(url);
+        this.onBroadcasterExit = broadcaster.onExit().registerWeak(this::onBroadcasterExit);
+        broadcaster.start();
+        this.broadcaster.set(broadcaster);
+    }
+
+    public void stopBroadcasting() {
+        if (getBroadcaster() != null) {
+            getBroadcaster().close();
+        }
+    }
+
+    private void onBroadcasterExit(Event event) {
+        this.broadcaster.set(null);
     }
 
     private void clearSession() {
         this.session.set(null);
         this.onExit = null;
         this.onIPAllocated = null;
-        this.onValidAt = null;
+        this.onValidUntil = null;
+        this.broadcaster.set(null);
+        this.onBroadcasterExit = null;
     }
 
     private void onIPAllocated(MultiplayerManager.HiperIPEvent event) {
         runInFX(() -> this.address.set(event.getIP()));
     }
 
-    private void onValidAt(MultiplayerManager.HiperShowValidAtEvent event) {
-        runInFX(() -> this.expireTime.set(event.getValidAt()));
+    private void onValidUntil(MultiplayerManager.HiperShowValidUntilEvent event) {
+        runInFX(() -> this.expireTime.set(event.getValidUntil()));
     }
 
     private void onExit(MultiplayerManager.HiperExitEvent event) {

@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.gson.DateTypeAdapter;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -218,7 +219,7 @@ public final class MultiplayerManager {
     public static class HiperSession extends ManagedProcess {
         private final EventManager<HiperExitEvent> onExit = new EventManager<>();
         private final EventManager<HiperIPEvent> onIPAllocated = new EventManager<>();
-        private final EventManager<HiperShowValidAtEvent> onValidAt = new EventManager<>();
+        private final EventManager<HiperShowValidUntilEvent> onValidUntil = new EventManager<>();
         private final BufferedWriter writer;
         private int error = 0;
 
@@ -256,8 +257,15 @@ public final class MultiplayerManager {
                         error = HiperExitEvent.FAILED_LOAD_CONFIG;
                     }
                     if (msg.contains("Validity of client certificate")) {
-                        Optional<String> validAt = tryCast(logJson.get("valid"), String.class);
-                        validAt.ifPresent(s -> onValidAt.fireEvent(new HiperShowValidAtEvent(this, s)));
+                        Optional<String> validUntil = tryCast(logJson.get("valid"), String.class);
+                        if (validUntil.isPresent()) {
+                            try {
+                                Date date = DateTypeAdapter.deserializeToDate(validUntil.get());
+                                onValidUntil.fireEvent(new HiperShowValidUntilEvent(this, date));
+                            } catch (JsonParseException e) {
+                                LOG.log(Level.WARNING, "Failed to parse certification expire time string: " + validUntil.get());
+                            }
+                        }
                     }
                 }
 
@@ -303,8 +311,8 @@ public final class MultiplayerManager {
             return onIPAllocated;
         }
 
-        public EventManager<HiperShowValidAtEvent> onValidAt() {
-            return onValidAt;
+        public EventManager<HiperShowValidUntilEvent> onValidUntil() {
+            return onValidUntil;
         }
 
     }
@@ -341,15 +349,15 @@ public final class MultiplayerManager {
         }
     }
 
-    public static class HiperShowValidAtEvent extends Event {
-        private final String validAt;
+    public static class HiperShowValidUntilEvent extends Event {
+        private final Date validAt;
 
-        public HiperShowValidAtEvent(Object source, String validAt) {
+        public HiperShowValidUntilEvent(Object source, Date validAt) {
             super(source);
             this.validAt = validAt;
         }
 
-        public String getValidAt() {
+        public Date getValidUntil() {
             return validAt;
         }
     }

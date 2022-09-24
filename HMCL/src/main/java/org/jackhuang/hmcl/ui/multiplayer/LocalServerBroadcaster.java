@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.multiplayer;
 
+import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.io.IOException;
@@ -36,6 +38,8 @@ public class LocalServerBroadcaster implements AutoCloseable {
     private final String address;
     private final ThreadGroup threadGroup = new ThreadGroup("JoinSession");
 
+    private final EventManager<Event> onExit = new EventManager<>();
+
     private boolean running = true;
 
     public LocalServerBroadcaster(String address) {
@@ -47,6 +51,14 @@ public class LocalServerBroadcaster implements AutoCloseable {
     public void close() {
         running = false;
         threadGroup.interrupt();
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public EventManager<Event> onExit() {
+        return onExit;
     }
 
     public static final Pattern ADDRESS_PATTERN = Pattern.compile("^\\s*(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}):(\\d{1,5})\\s*$");
@@ -77,7 +89,9 @@ public class LocalServerBroadcaster implements AutoCloseable {
             }
         } catch (IOException e) {
             LOG.log(Level.WARNING, "Error in forwarding port", e);
-            threadGroup.interrupt();
+        } finally {
+            close();
+            onExit.fireEvent(new Event(this));
         }
     }
 
