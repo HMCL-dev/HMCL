@@ -41,6 +41,9 @@ import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.Lang;
 
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -132,6 +135,15 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                 ComponentList onPane = new ComponentList();
                 {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);
+                    BorderPane expirationPane = new BorderPane();
+                    expirationPane.setLeft(new Label(i18n("multiplayer.session.expiration")));
+                    Label expirationLabel = new Label();
+                    expirationLabel.textProperty().bind(Bindings.createStringBinding(() ->
+                                    control.getExpireTime() == null ? "" : formatter.format(control.getExpireTime()),
+                            control.expireTimeProperty()));
+                    expirationPane.setCenter(expirationLabel);
+
                     GridPane masterPane = new GridPane();
                     masterPane.setVgap(8);
                     masterPane.setHgap(16);
@@ -193,7 +205,13 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         slavePane.getChildren().setAll(new Label(i18n("multiplayer.slave")), slaveHintPane);
                     }
 
-                    onPane.getContent().setAll(masterPane, slavePane);
+                    FXUtils.onChangeAndOperate(control.expireTimeProperty(), t -> {
+                        if (t == null) {
+                            onPane.getContent().setAll(masterPane, slavePane);
+                        } else {
+                            onPane.getContent().setAll(expirationPane, masterPane, slavePane);
+                        }
+                    });
                 }
 
                 FXUtils.onChangeAndOperate(getSkinnable().sessionProperty(), session -> {

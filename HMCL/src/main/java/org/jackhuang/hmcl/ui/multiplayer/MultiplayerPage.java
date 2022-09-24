@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 
+import java.time.Instant;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -48,9 +49,11 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
     private final ReadOnlyObjectWrapper<MultiplayerManager.HiperSession> session = new ReadOnlyObjectWrapper<>();
     private final IntegerProperty port = new SimpleIntegerProperty();
     private final StringProperty address = new SimpleStringProperty();
+    private final ReadOnlyObjectWrapper<Instant> expireTime = new ReadOnlyObjectWrapper<>();
 
     private Consumer<MultiplayerManager.HiperExitEvent> onExit;
     private Consumer<MultiplayerManager.HiperIPEvent> onIPAllocated;
+    private Consumer<MultiplayerManager.HiperShowValidAtEvent> onValidAt;
 
     public MultiplayerPage() {
     }
@@ -87,6 +90,18 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
 
     public void setAddress(String address) {
         this.address.set(address);
+    }
+
+    public Instant getExpireTime() {
+        return expireTime.get();
+    }
+
+    public ReadOnlyObjectWrapper<Instant> expireTimeProperty() {
+        return expireTime;
+    }
+
+    public void setExpireTime(Instant expireTime) {
+        this.expireTime.set(expireTime);
     }
 
     public MultiplayerManager.HiperSession getSession() {
@@ -180,6 +195,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                     this.session.set(session);
                     onExit = session.onExit().registerWeak(this::onExit);
                     onIPAllocated = session.onIPAllocated().registerWeak(this::onIPAllocated);
+                    onValidAt = session.onValidAt().registerWeak(this::onValidAt);
                 }, Schedulers.javafx())
                 .exceptionally(throwable -> {
                     runInFX(() -> Controllers.dialog(localizeErrorMessage(throwable), null, MessageDialogPane.MessageType.ERROR));
@@ -198,10 +214,15 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         this.session.set(null);
         this.onExit = null;
         this.onIPAllocated = null;
+        this.onValidAt = null;
     }
 
     private void onIPAllocated(MultiplayerManager.HiperIPEvent event) {
         runInFX(() -> this.address.set(event.getIP()));
+    }
+
+    private void onValidAt(MultiplayerManager.HiperShowValidAtEvent event) {
+        runInFX(() -> this.expireTime.set(event.getValidAt()));
     }
 
     private void onExit(MultiplayerManager.HiperExitEvent event) {
