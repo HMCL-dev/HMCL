@@ -75,27 +75,22 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("multiplayer.help.1"));
-                        item.setLeftGraphic(wrap(SVG::helpCircleOutline));
                         item.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/multiplayer/help.html#%E9%9B%B6%E3%80%81%E4%BD%BF%E7%94%A8%E7%AE%A1%E7%90%86%E5%91%98%E6%9D%83%E9%99%90%E5%90%AF%E5%8A%A8%20HMCL"));
                     })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("multiplayer.help.2"));
-                        item.setLeftGraphic(wrap(SVG::helpCircleOutline));
                         item.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/multiplayer/help.html"));
                     })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("multiplayer.help.3"));
-                        item.setLeftGraphic(wrap(SVG::helpCircleOutline));
                         item.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/multiplayer/help.html#%E5%88%9B%E5%BB%BA%E6%96%B9"));
                     })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("multiplayer.help.4"));
-                        item.setLeftGraphic(wrap(SVG::helpCircleOutline));
                         item.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/multiplayer/help.html#%E5%8F%82%E4%B8%8E%E8%80%85"));
                     })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("multiplayer.help.5"));
-                        item.setLeftGraphic(wrap(SVG::helpCircleOutline));
                         item.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/multiplayer/account.html"));
                     })
                     .addNavigationDrawerItem(report -> {
