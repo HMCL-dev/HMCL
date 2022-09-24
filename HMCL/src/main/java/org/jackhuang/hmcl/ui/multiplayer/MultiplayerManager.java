@@ -63,7 +63,7 @@ public final class MultiplayerManager {
     private static final String HIPER_POINTS_URL = "https://cert.mcer.cn/point.yml";
     private static final Path HIPER_CONFIG_PATH = Metadata.HMCL_DIRECTORY.resolve("hiper.yml");
     public static final Path HIPER_PATH = getHiperLocalDirectory().resolve(getHiperFileName());
-    public static final int HIPER_AGREEMENT_VERSION = 2;
+    public static final int HIPER_AGREEMENT_VERSION = 3;
     private static final String REMOTE_ADDRESS = "127.0.0.1";
     private static final String LOCAL_ADDRESS = "0.0.0.0";
 
