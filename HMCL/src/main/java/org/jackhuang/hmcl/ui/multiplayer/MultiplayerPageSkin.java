@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXPasswordField;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ObservableList;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -151,9 +152,15 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     valueColumn.setFillWidth(true);
                     valueColumn.setHgrow(Priority.ALWAYS);
                     {
+                        BorderPane titlePane = new BorderPane();
+                        GridPane.setColumnSpan(titlePane, 3);
                         Label title = new Label(i18n("multiplayer.master"));
-                        GridPane.setColumnSpan(title, 3);
-                        masterPane.addRow(0, title);
+                        titlePane.setLeft(title);
+
+                        JFXHyperlink tutorial = new JFXHyperlink(i18n("multiplayer.master.video_tutorial"));
+                        titlePane.setRight(tutorial);
+                        tutorial.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-tutorial-master"));
+                        masterPane.addRow(0, titlePane);
 
                         HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
                         GridPane.setColumnSpan(hintPane, 3);
@@ -197,9 +204,13 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                     VBox slavePane = new VBox(8);
                     {
+                        BorderPane titlePane = new BorderPane();
                         Label title = new Label(i18n("multiplayer.slave"));
-                        GridPane.setColumnSpan(title, 3);
-                        slavePane.getChildren().add(title);
+                        titlePane.setLeft(title);
+
+                        JFXHyperlink tutorial = new JFXHyperlink(i18n("multiplayer.slave.video_tutorial"));
+                        tutorial.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-tutorial-slave"));
+                        titlePane.setRight(tutorial);
 
                         HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
                         GridPane.setColumnSpan(hintPane, 3);
@@ -242,9 +253,9 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                         FXUtils.onChangeAndOperate(control.broadcasterProperty(), broadcaster -> {
                             if (broadcaster == null) {
-                                slavePane.getChildren().setAll(title, hintPane, notBroadcastingPane);
+                                slavePane.getChildren().setAll(titlePane, hintPane, notBroadcastingPane);
                             } else {
-                                slavePane.getChildren().setAll(title, hintPane, broadcastingPane);
+                                slavePane.getChildren().setAll(titlePane, hintPane, broadcastingPane);
                             }
                         });
                     }
