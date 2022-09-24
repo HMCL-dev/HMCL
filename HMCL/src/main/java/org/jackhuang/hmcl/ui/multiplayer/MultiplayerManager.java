@@ -191,7 +191,7 @@ public final class MultiplayerManager {
                     FileUtils.writeText(HIPER_CONFIG_PATH, certFileContent);
                 }
             } catch (IOException e) {
-                 Log.log(Level.WARNING, "Remote configuration cannot be read, use local cache", e)
+                Log.log(Level.WARNING, "Remote configuration cannot be read, use local cache", e)
             }
 
             String[] commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
