@@ -243,7 +243,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
     }
 
     private void onBroadcasterExit(Event event) {
-        this.broadcaster.set(null);
+        runInFX(() -> this.broadcaster.set(null));
     }
 
     private void clearSession() {
