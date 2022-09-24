@@ -27,11 +27,7 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
-import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
-import org.jackhuang.hmcl.util.platform.ManagedProcess;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Bits;
+import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.*;
@@ -459,7 +455,7 @@ public class DefaultLauncher extends Launcher {
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
             ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand())).directory(runDirectory);
             builder.environment().putAll(getEnvVars());
-            builder.start().waitFor();
+            SystemUtils.callExternalProcess(builder);
         }
 
         Process process;

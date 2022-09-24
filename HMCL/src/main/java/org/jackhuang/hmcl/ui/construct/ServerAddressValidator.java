@@ -22,24 +22,22 @@ import javafx.beans.NamedArg;
 import javafx.scene.control.TextInputControl;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class URLValidator extends ValidatorBase {
+public class ServerAddressValidator extends ValidatorBase {
     private final boolean nullable;
 
-    public URLValidator() {
+    public ServerAddressValidator() {
         this(false);
     }
 
-    public URLValidator(@NamedArg("nullable") boolean nullable) {
+    public ServerAddressValidator(@NamedArg("nullable") boolean nullable) {
         this(i18n("input.url"), nullable);
     }
 
-    public URLValidator(@NamedArg("message") String message, @NamedArg("nullable") boolean nullable) {
+    public ServerAddressValidator(@NamedArg("message") String message, @NamedArg("nullable") boolean nullable) {
         super(message);
         this.nullable = nullable;
     }
@@ -51,18 +49,14 @@ public class URLValidator extends ValidatorBase {
         }
     }
 
+    private static final Pattern PATTERN = Pattern.compile("[-a-zA-Z0-9@:%._+~#=]{1,256}(:\\d+)?");
+
     private void evalTextInputField() {
         TextInputControl textField = ((TextInputControl) srcControl.get());
 
         if (StringUtils.isBlank(textField.getText()))
             hasErrors.set(!nullable);
-        else {
-            try {
-                new URL(textField.getText()).toURI();
-                hasErrors.set(false);
-            } catch (IOException | URISyntaxException e) {
-                hasErrors.set(true);
-            }
-        }
+        else
+            hasErrors.set(!PATTERN.matcher(textField.getText()).matches());
     }
 }

@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.gson.DateTypeAdapter;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -62,7 +63,7 @@ public final class MultiplayerManager {
     private static final String HIPER_POINTS_URL = "https://cert.mcer.cn/point.yml";
     private static final Path HIPER_CONFIG_PATH = Metadata.HMCL_DIRECTORY.resolve("hiper.yml");
     public static final Path HIPER_PATH = getHiperLocalDirectory().resolve(getHiperFileName());
-    public static final int HIPER_AGREEMENT_VERSION = 2;
+    public static final int HIPER_AGREEMENT_VERSION = 3;
     private static final String REMOTE_ADDRESS = "127.0.0.1";
     private static final String LOCAL_ADDRESS = "0.0.0.0";
 
@@ -185,11 +186,14 @@ public final class MultiplayerManager {
             // 下载 HiPer 配置文件
             String certFileContent;
             try {
-                certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString() + "\nlogging:\n  format: json\n  file_path: ./hiper.log";
+                certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString();
+                if (!certFileContent.equals("")) {
+                    certFileContent += "\nlogging:\n  format: json\n  file_path: ./hiper.log";
+                    FileUtils.writeText(HIPER_CONFIG_PATH, certFileContent);
+                }
             } catch (IOException e) {
-                throw new HiperInvalidTokenException();
+                LOG.log(Level.WARNING, "configuration file cloud cache index code has been not available , try to use the local configuration file", e);
             }
-            FileUtils.writeText(HIPER_CONFIG_PATH, certFileContent);
 
             String[] commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
             Process process = new ProcessBuilder()
@@ -215,6 +219,7 @@ public final class MultiplayerManager {
     public static class HiperSession extends ManagedProcess {
         private final EventManager<HiperExitEvent> onExit = new EventManager<>();
         private final EventManager<HiperIPEvent> onIPAllocated = new EventManager<>();
+        private final EventManager<HiperShowValidUntilEvent> onValidUntil = new EventManager<>();
         private final BufferedWriter writer;
         private int error = 0;
 
@@ -250,6 +255,17 @@ public final class MultiplayerManager {
                     }
                     if (msg.contains("Failed to load certificate from config")) {
                         error = HiperExitEvent.FAILED_LOAD_CONFIG;
+                    }
+                    if (msg.contains("Validity of client certificate")) {
+                        Optional<String> validUntil = tryCast(logJson.get("valid"), String.class);
+                        if (validUntil.isPresent()) {
+                            try {
+                                Date date = DateTypeAdapter.deserializeToDate(validUntil.get());
+                                onValidUntil.fireEvent(new HiperShowValidUntilEvent(this, date));
+                            } catch (JsonParseException e) {
+                                LOG.log(Level.WARNING, "Failed to parse certification expire time string: " + validUntil.get());
+                            }
+                        }
                     }
                 }
 
@@ -295,6 +311,10 @@ public final class MultiplayerManager {
             return onIPAllocated;
         }
 
+        public EventManager<HiperShowValidUntilEvent> onValidUntil() {
+            return onValidUntil;
+        }
+
     }
 
     public static class HiperExitEvent extends Event {
@@ -326,6 +346,19 @@ public final class MultiplayerManager {
 
         public String getIP() {
             return ip;
+        }
+    }
+
+    public static class HiperShowValidUntilEvent extends Event {
+        private final Date validAt;
+
+        public HiperShowValidUntilEvent(Object source, Date validAt) {
+            super(source);
+            this.validAt = validAt;
+        }
+
+        public Date getValidUntil() {
+            return validAt;
         }
     }
 

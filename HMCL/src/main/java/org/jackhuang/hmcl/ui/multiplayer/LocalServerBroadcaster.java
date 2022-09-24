@@ -17,13 +17,15 @@
  */
 package org.jackhuang.hmcl.ui.multiplayer;
 
+import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.UnresolvedAddressException;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -36,6 +38,8 @@ public class LocalServerBroadcaster implements AutoCloseable {
     private final String address;
     private final ThreadGroup threadGroup = new ThreadGroup("JoinSession");
 
+    private final EventManager<Event> onExit = new EventManager<>();
+
     private boolean running = true;
 
     public LocalServerBroadcaster(String address) {
@@ -47,6 +51,14 @@ public class LocalServerBroadcaster implements AutoCloseable {
     public void close() {
         running = false;
         threadGroup.interrupt();
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public EventManager<Event> onExit() {
+        return onExit;
     }
 
     public static final Pattern ADDRESS_PATTERN = Pattern.compile("^\\s*(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}):(\\d{1,5})\\s*$");
@@ -62,32 +74,41 @@ public class LocalServerBroadcaster implements AutoCloseable {
             if (!matcher.find()) {
                 throw new MalformedURLException();
             }
-            try (SocketChannel forwardingSocket = SocketChannel.open(new InetSocketAddress(matcher.group(0), Lang.parseInt(matcher.group(1), 0)));
-                 ServerSocketChannel serverSocket = ServerSocketChannel.open()) {
-                serverSocket.socket().bind(null);
+            try (Socket forwardingSocket = new Socket();
+                 ServerSocket serverSocket = new ServerSocket()) {
+                forwardingSocket.setSoTimeout(30000);
+                forwardingSocket.connect(new InetSocketAddress(matcher.group(1), Lang.parseInt(matcher.group(2), 0)));
 
-                Thread broadcastMOTDThread = new Thread(threadGroup, () -> broadcastMOTD(serverSocket.socket().getLocalPort()), "BroadcastMOTD");
+                serverSocket.bind(null);
+
+                Thread broadcastMOTDThread = new Thread(threadGroup, () -> broadcastMOTD(serverSocket.getLocalPort()), "BroadcastMOTD");
                 broadcastMOTDThread.start();
 
+                LOG.log(Level.INFO, "Listening " + serverSocket.getLocalSocketAddress());
+
                 while (running) {
-                    SocketChannel forwardedSocket = serverSocket.accept();
+                    Socket forwardedSocket = serverSocket.accept();
+                    LOG.log(Level.INFO, "Accepting client");
                     new Thread(threadGroup, () -> forwardTraffic(forwardingSocket, forwardedSocket), "Forward S->D").start();
                     new Thread(threadGroup, () -> forwardTraffic(forwardedSocket, forwardingSocket), "Forward D->S").start();
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | UnresolvedAddressException e) {
             LOG.log(Level.WARNING, "Error in forwarding port", e);
-            threadGroup.interrupt();
+        } finally {
+            close();
+            onExit.fireEvent(new Event(this));
         }
     }
 
-    private void forwardTraffic(SocketChannel src, SocketChannel dest) {
-        try {
-            ByteBuffer buf = ByteBuffer.allocate(1024);
+    private void forwardTraffic(Socket src, Socket dest) {
+        try (InputStream is = src.getInputStream(); OutputStream os = dest.getOutputStream()) {
+            byte[] buf = new byte[1024];
             while (true) {
-                int len = src.read(buf);
+                int len = is.read(buf, 0, buf.length);
                 if (len < 0) break;
-                dest.write(buf);
+                LOG.log(Level.INFO, "Forwarding buffer " + len);
+                os.write(buf, 0, len);
             }
         } catch (IOException e) {
             LOG.log(Level.WARNING, "Disconnected", e);
