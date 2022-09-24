@@ -25,9 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
 import java.nio.channels.UnresolvedAddressException;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
@@ -105,7 +102,7 @@ public class LocalServerBroadcaster implements AutoCloseable {
     }
 
     private void forwardTraffic(Socket src, Socket dest) {
-        try(InputStream is = src.getInputStream(); OutputStream os = dest.getOutputStream()) {
+        try (InputStream is = src.getInputStream(); OutputStream os = dest.getOutputStream()) {
             byte[] buf = new byte[1024];
             while (true) {
                 int len = is.read(buf, 0, buf.length);
