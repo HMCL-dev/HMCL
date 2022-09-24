@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.i18n.Locales;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
@@ -152,6 +153,14 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                 ComponentList onPane = new ComponentList();
                 {
+                    BorderPane expirationPane = new BorderPane();
+                    expirationPane.setLeft(new Label(i18n("multiplayer.session.expiration")));
+                    Label expirationLabel = new Label();
+                    expirationLabel.textProperty().bind(Bindings.createStringBinding(() ->
+                                    control.getExpireTime() == null ? "" : Locales.SIMPLE_DATE_FORMAT.get().format(control.getExpireTime()),
+                            control.expireTimeProperty()));
+                    expirationPane.setCenter(expirationLabel);
+
                     GridPane masterPane = new GridPane();
                     masterPane.setVgap(8);
                     masterPane.setHgap(16);
@@ -166,10 +175,10 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         GridPane.setColumnSpan(title, 3);
                         masterPane.addRow(0, title);
 
-                        HintPane masterHintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                        GridPane.setColumnSpan(masterHintPane, 3);
-                        masterHintPane.setText(i18n("multiplayer.master.hint"));
-                        masterPane.addRow(1, masterHintPane);
+                        HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                        GridPane.setColumnSpan(hintPane, 3);
+                        hintPane.setText(i18n("multiplayer.master.hint"));
+                        masterPane.addRow(1, hintPane);
 
                         Label portTitle = new Label(i18n("multiplayer.master.port"));
                         BorderPane.setAlignment(portTitle, Pos.CENTER_LEFT);
@@ -208,12 +217,67 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                     VBox slavePane = new VBox(8);
                     {
-                        HintPane slaveHintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                        slaveHintPane.setText(i18n("multiplayer.slave.hint"));
-                        slavePane.getChildren().setAll(new Label(i18n("multiplayer.slave")), slaveHintPane);
+                        Label title = new Label(i18n("multiplayer.slave"));
+                        GridPane.setColumnSpan(title, 3);
+                        slavePane.getChildren().add(title);
+
+                        HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                        GridPane.setColumnSpan(hintPane, 3);
+                        hintPane.setText(i18n("multiplayer.slave.hint"));
+                        slavePane.getChildren().add(hintPane);
+
+                        GridPane notBroadcastingPane = new GridPane();
+                        {
+                            notBroadcastingPane.setVgap(8);
+                            notBroadcastingPane.setHgap(16);
+                            notBroadcastingPane.getColumnConstraints().setAll(titleColumn, valueColumn, rightColumn);
+
+                            Label addressTitle = new Label(i18n("multiplayer.slave.server_address"));
+
+                            JFXTextField addressField = new JFXTextField();
+                            GridPane.setColumnSpan(addressField, 2);
+                            FXUtils.setValidateWhileTextChanged(addressField, true);
+                            addressField.getValidators().add(new URLValidator());
+
+                            JFXButton startButton = new JFXButton(i18n("multiplayer.master.server_address.start"));
+                            startButton.setOnAction(e -> control.broadcast(addressField.getText()));
+                            notBroadcastingPane.addRow(2, addressTitle, addressField, startButton);
+                        }
+
+                        GridPane broadcastingPane = new GridPane();
+                        {
+                            notBroadcastingPane.setVgap(8);
+                            notBroadcastingPane.setHgap(16);
+                            notBroadcastingPane.getColumnConstraints().setAll(titleColumn, valueColumn, rightColumn);
+
+                            Label addressTitle = new Label(i18n("multiplayer.slave.server_address"));
+                            Label addressLabel = new Label();
+                            addressLabel.textProperty().bind(Bindings.createStringBinding(() ->
+                                            control.getBroadcaster() != null ? control.getBroadcaster().getAddress() : "",
+                                    control.broadcasterProperty()));
+                            GridPane.setColumnSpan(addressLabel, 2);
+
+                            JFXButton stopButton = new JFXButton(i18n("multiplayer.slave.server_address.stop"));
+                            stopButton.setOnAction(e -> control.stopBroadcasting());
+                            notBroadcastingPane.addRow(2, addressTitle, addressLabel, stopButton);
+                        }
+
+                        FXUtils.onChangeAndOperate(control.broadcasterProperty(), broadcaster -> {
+                            if (broadcaster == null) {
+                                slavePane.getChildren().setAll(title, hintPane, notBroadcastingPane);
+                            } else {
+                                slavePane.getChildren().setAll(title, hintPane, broadcastingPane);
+                            }
+                        });
                     }
 
-                    onPane.getContent().setAll(masterPane, slavePane);
+                    FXUtils.onChangeAndOperate(control.expireTimeProperty(), t -> {
+                        if (t == null) {
+                            onPane.getContent().setAll(masterPane, slavePane);
+                        } else {
+                            onPane.getContent().setAll(expirationPane, masterPane, slavePane);
+                        }
+                    });
                 }
 
                 FXUtils.onChangeAndOperate(getSkinnable().sessionProperty(), session -> {
