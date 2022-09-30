@@ -96,7 +96,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("multiplayer.help.text"));
-                        item.setLeftGraphic(wrap(SVG::helpCircleOutline));
+                        item.setLeftGraphic(wrap(SVG::rocketLaunchOutline));
                         item.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/multiplayer/text.html"));
                     })
                     .addNavigationDrawerItem(report -> {
