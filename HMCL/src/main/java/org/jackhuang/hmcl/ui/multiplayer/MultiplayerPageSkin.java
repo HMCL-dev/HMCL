@@ -291,7 +291,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                             onPane.getContent().setAll(expirationPane, masterPane, slavePane);
                         }
                     });
-                };
+                }
             }
 
             ComponentList thanksPane = new ComponentList();
@@ -319,7 +319,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     ComponentList.createComponentListTitle(i18n("about")),
                     thanksPane
             );
-        };
+        }
         
     }
 
