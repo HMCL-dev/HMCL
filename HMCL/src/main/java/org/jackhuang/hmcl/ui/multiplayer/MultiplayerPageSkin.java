@@ -143,6 +143,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         startButton.getStyleClass().add("jfx-button-raised");
                         startButton.setButtonType(JFXButton.ButtonType.RAISED);
                         startButton.setOnMouseClicked(e -> control.start());
+                        startButton.disableProperty().bind(Bindings.isEmpty(globalConfig().multiplayerTokenProperty()));
 
                         startPane.getChildren().setAll(startButton);
                         startPane.setAlignment(Pos.CENTER_RIGHT);
