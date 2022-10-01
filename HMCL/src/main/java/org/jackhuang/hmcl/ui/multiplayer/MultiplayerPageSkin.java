@@ -279,7 +279,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                             if (broadcaster == null) {
                                 slavePane.getChildren().setAll(titlePane, hintPane, notBroadcastingPane);
                             } else {
-                                slavePane.getChildren().setAll(titlePane, hintPane, broadcastingPane);
+                                slavePane.getChildren().setAll(titlePane, hintPane, hintPane2, broadcastingPane);
                             }
                         });
                     }
