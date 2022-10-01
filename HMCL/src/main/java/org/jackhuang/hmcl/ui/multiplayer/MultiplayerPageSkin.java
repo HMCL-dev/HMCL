@@ -277,7 +277,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                         FXUtils.onChangeAndOperate(control.broadcasterProperty(), broadcaster -> {
                             if (broadcaster == null) {
-                                slavePane.getChildren().setAll(titlePane, hintPane, notBroadcastingPane);
+                                slavePane.getChildren().setAll(titlePane, hintPane, hintPane2, notBroadcastingPane);
                             } else {
                                 slavePane.getChildren().setAll(titlePane, hintPane, hintPane2, broadcastingPane);
                             }
