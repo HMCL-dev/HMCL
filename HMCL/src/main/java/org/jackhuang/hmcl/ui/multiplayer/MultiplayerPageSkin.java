@@ -291,8 +291,6 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                             onPane.getContent().setAll(expirationPane, masterPane, slavePane);
                         }
                     });
-                }
-
                 };
             }
 
@@ -322,6 +320,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     thanksPane
             );
         };
+        
     }
 
 }
