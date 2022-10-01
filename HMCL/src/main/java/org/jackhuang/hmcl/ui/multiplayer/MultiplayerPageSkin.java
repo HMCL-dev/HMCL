@@ -321,7 +321,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     ComponentList.createComponentListTitle(i18n("about")),
                     thanksPane
             );
-        }
+        };
     }
 
 }
