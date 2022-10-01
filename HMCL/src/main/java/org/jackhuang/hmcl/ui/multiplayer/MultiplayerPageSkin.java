@@ -295,11 +295,9 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                 FXUtils.onChangeAndOperate(getSkinnable().sessionProperty(), session -> {
                     if (session == null) {
-                        mainPane.getChildren().setAll(new Label("HiPer"),
-                                offPane);
+                        mainPane.getChildren().setAll(offPane);
                     } else {
-                        mainPane.getChildren().setAll(new Label("HiPer"),
-                                onPane);
+                        mainPane.getChildren().setAll(onPane);
                     }
                 });
             }
