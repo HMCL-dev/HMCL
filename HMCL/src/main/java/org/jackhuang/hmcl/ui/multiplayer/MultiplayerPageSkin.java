@@ -115,8 +115,6 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
             {
                 ComponentList offPane = new ComponentList();
                 {
-                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-                    hintPane.setText(i18n("multiplayer.off.hint"));
 
                     BorderPane tokenPane = new BorderPane();
                     {
@@ -288,14 +286,6 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     });
                 }
 
-                FXUtils.onChangeAndOperate(getSkinnable().sessionProperty(), session -> {
-                    if (session == null) {
-                        mainPane.getChildren().setAll(ComponentList.createComponentListTitle(i18n("multiplayer.off")),
-                                offPane);
-                    } else {
-                        mainPane.getChildren().setAll(ComponentList.createComponentListTitle(i18n("multiplayer.on")),
-                                onPane);
-                    }
                 });
             }
 
