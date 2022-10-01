@@ -292,6 +292,14 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         }
                     });
                 }
+
+                FXUtils.onChangeAndOperate(getSkinnable().sessionProperty(), session -> {
+                    if (session == null) {
+                        mainPane.getChildren();
+                    } else {
+                        mainPane.getChildren();
+                    }
+                });
             }
 
             ComponentList thanksPane = new ComponentList();
@@ -320,7 +328,6 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     thanksPane
             );
         }
-        
     }
 
 }
