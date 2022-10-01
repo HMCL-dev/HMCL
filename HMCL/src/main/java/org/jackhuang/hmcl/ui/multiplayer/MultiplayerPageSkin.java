@@ -293,7 +293,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     });
                 }
 
-                });
+                };
             }
 
             ComponentList thanksPane = new ComponentList();
