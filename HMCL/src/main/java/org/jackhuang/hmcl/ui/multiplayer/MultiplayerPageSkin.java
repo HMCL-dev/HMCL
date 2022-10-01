@@ -236,10 +236,10 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         hintPane.setText(i18n("multiplayer.slave.hint"));
                         slavePane.getChildren().add(hintPane);
 
-                        HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-                        GridPane.setColumnSpan(hintPane, 3);
-                        hintPane.setText(i18n("multiplayer.slave.hint2"));
-                        slavePane.getChildren().add(hintPane);
+                        HintPane hintPane2 = new HintPane(MessageDialogPane.MessageType.WARNING);
+                        GridPane.setColumnSpan(hintPane2, 3);
+                        hintPane2.setText(i18n("multiplayer.slave.hint2"));
+                        slavePane.getChildren().add(hintPane2);
 
                         GridPane notBroadcastingPane = new GridPane();
                         {
