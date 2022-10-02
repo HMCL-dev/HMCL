@@ -89,8 +89,13 @@ public final class MultiplayerManager {
 
     private static final String HIPER_TARGET_NAME = String.format("%s-%s",
             osMap.getOrDefault(OperatingSystem.CURRENT_OS, "windows"),
-            archMap.getOrDefault(Architecture.CURRENT_ARCH, "amd64"));
+            archMap.getOrDefault(Architecture.SYSTEM_ARCH, "amd64"));
 
+    private static final String GSUDO_VERSION = "1.7.1";
+    private static final String GSUDO_TARGET_ARCH = Architecture.SYSTEM_ARCH == Architecture.X86_64 ? "amd64" : "x86";
+    private static final String GSUDO_FILE_NAME = "gsudo.exe";
+    private static final String GSUDO_DOWNLOAD_URL = "https://gitcode.net/glavo/gsudo-release/-/raw/75c952ea3afe8792b0db4fe9bab87d41b21e5895/" + GSUDO_TARGET_ARCH + "/" + GSUDO_FILE_NAME;
+    private static final Path GSUDO_LOCAL_FILE = Metadata.HMCL_DIRECTORY.resolve("libraries").resolve("gsudo").resolve("gsudo").resolve(GSUDO_VERSION).resolve(GSUDO_TARGET_ARCH).resolve(GSUDO_FILE_NAME);
 
     private static CompletableFuture<Map<String, String>> HASH;
 
@@ -114,6 +119,9 @@ public final class MultiplayerManager {
                     } else {
                         LOG.warning("Failed to parse Hiper packages.sha1 file, line: " + line);
                     }
+                }
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    hashes.put(GSUDO_FILE_NAME, HttpRequest.GET(GSUDO_DOWNLOAD_URL + ".sha1").getString().trim());
                 }
                 return hashes;
             }));
@@ -139,8 +147,13 @@ public final class MultiplayerManager {
                 }
                 tasks = Arrays.asList(
                         getFileDownloadTask.apply(String.format("%s/hiper.exe", HIPER_TARGET_NAME), "hiper.exe"),
-                        getFileDownloadTask.apply(String.format("%s/wintun.dll", HIPER_TARGET_NAME), "wintun.dll")
-                        // getFileDownloadTask.apply("tap-windows-9.21.2.exe", "tap-windows-9.21.2.exe")
+                        getFileDownloadTask.apply(String.format("%s/wintun.dll", HIPER_TARGET_NAME), "wintun.dll"),
+                        // getFileDownloadTask.apply("tap-windows-9.21.2.exe", "tap-windows-9.21.2.exe"),
+                        new FileDownloadTask(
+                                NetworkUtils.toURL(GSUDO_DOWNLOAD_URL),
+                                GSUDO_LOCAL_FILE.toFile(),
+                                new FileDownloadTask.IntegrityCheck("SHA-1", packagesHash.get(GSUDO_FILE_NAME))
+                        )
                 );
             } else {
                 if (!packagesHash.containsKey(String.format("%s/hiper", HIPER_TARGET_NAME))) {
@@ -179,6 +192,7 @@ public final class MultiplayerManager {
                 verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("hiper.exe"), packagesHash.get(String.format("%s/hiper.exe", HIPER_TARGET_NAME)));
                 verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("wintun.dll"), packagesHash.get(String.format("%s/wintun.dll", HIPER_TARGET_NAME)));
                 // verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("tap-windows-9.21.2.exe"), packagesHash.get("tap-windows-9.21.2.exe"));
+                verifyChecksumAndDeleteIfNotMatched(GSUDO_LOCAL_FILE, packagesHash.get(GSUDO_FILE_NAME));
             } else {
                 verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("hiper"), packagesHash.get(String.format("%s/hiper", HIPER_TARGET_NAME)));
             }
@@ -195,7 +209,12 @@ public final class MultiplayerManager {
                 LOG.log(Level.WARNING, "configuration file cloud cache index code has been not available , try to use the local configuration file", e);
             }
 
-            String[] commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+            String[] commands;
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                commands = new String[]{GSUDO_LOCAL_FILE.toString(), HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+            } else {
+                commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+            }
             Process process = new ProcessBuilder()
                     .command(commands)
                     .start();
