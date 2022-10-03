@@ -118,6 +118,11 @@ public class DefaultLauncher extends Launcher {
                 LOG.log(Level.WARNING, "Bad file encoding", ex);
             }
         } else {
+            if (options.getJava().getParsedVersion() > JavaVersion.JAVA_17
+                    && VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("1.13"), "1.13") < 0) {
+                res.addDefault("-Dfile.encoding=", "COMPAT");
+            }
+
             try {
                 String stdoutEncoding = res.addDefault("-Dsun.stdout.encoding=", encoding.name());
                 if (stdoutEncoding != null)
