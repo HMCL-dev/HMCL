@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -32,7 +33,7 @@ import java.util.Objects;
  * @author huangyuhui
  */
 @Immutable
-public final class CurseManifestFile implements Validation {
+public final class CurseManifestFile implements Validation, ModpackFile {
 
     @SerializedName("projectID")
     private final int projectID;
@@ -71,6 +72,11 @@ public final class CurseManifestFile implements Validation {
 
     public String getFileName() {
         return fileName;
+    }
+
+    @Override
+    public boolean isOptional() {
+        return !isRequired();
     }
 
     public boolean isRequired() {

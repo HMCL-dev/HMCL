@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Set;
 
 public interface ModpackProvider {
 
@@ -34,7 +35,7 @@ public interface ModpackProvider {
 
     Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, String version);
 
-    Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, File zipFile, Modpack modpack) throws MismatchedModpackTypeException;
+    Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, File zipFile, Modpack modpack, Set<? extends ModpackFile> selectedFiles) throws MismatchedModpackTypeException;
 
     /**
      * @param zipFile the opened modpack zip file.

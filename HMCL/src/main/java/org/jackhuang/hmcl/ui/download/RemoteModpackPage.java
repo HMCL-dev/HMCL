@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 
@@ -30,13 +31,11 @@ import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.RequiredValidator;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -73,6 +72,12 @@ public class RemoteModpackPage extends StackPane implements WizardPage {
     @FXML
     private SpinnerPane spinnerPane;
 
+    @FXML
+    private ScrollPane scrollPane;
+
+    @FXML
+    private OptionalFilesSelectionPane optionalFilesPane;
+
     public RemoteModpackPage(WizardController controller) {
         this.controller = controller;
 
@@ -101,6 +106,7 @@ public class RemoteModpackPage extends StackPane implements WizardPage {
         lblName.setText(manifest.getName());
         lblVersion.setText(manifest.getVersion());
         lblAuthor.setText(manifest.getAuthor());
+        optionalFilesPane.updateOptionalFileList(Collections.emptyList());
 
         if (!name.isPresent()) {
             // trim: https://github.com/huanghongxun/HMCL/issues/962

@@ -196,7 +196,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                                         encoding -> ModpackHelper.readModpackManifest(modpackFile.toPath(), encoding))
                                 .thenApplyAsync(modpack -> ModpackHelper
                                         .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(),
-                                                modpack)
+                                                modpack, null)
                                         .executor())
                                 .thenAcceptAsync(Schedulers.javafx(), executor -> {
                                     Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);

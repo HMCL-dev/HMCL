@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.download;
 
+import com.google.gson.JsonParseException;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.application.Platform;
@@ -24,6 +25,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
@@ -31,6 +33,10 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
+import org.jackhuang.hmcl.mod.curse.CurseManifest;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthManifest;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -41,16 +47,23 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.ui.construct.OptionalFilesSelectionPane;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -85,6 +98,12 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
 
     @FXML
     private SpinnerPane spinnerPane;
+
+    @FXML
+    private ScrollPane scrollPane;
+
+    @FXML
+    private OptionalFilesSelectionPane optionalFilesPane;
 
     private final BooleanProperty installAsVersion = new SimpleBooleanProperty(true);
     private Charset charset;
@@ -145,6 +164,32 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
                     manifest = ModpackHelper.readModpackManifest(selectedFile.toPath(), encoding);
                     return manifest;
                 })
+                .thenApplyAsync(modpack -> {
+                    if(modpack.getManifest() instanceof CurseManifest) {
+                        CurseManifest manifest1 = (CurseManifest) modpack.getManifest(); // Fetch files in advance so that we can display the optional mods
+                        return modpack.setManifest(manifest1.setFiles(
+                                manifest1.getFiles().parallelStream()
+                                        .map(file -> {
+                                            if (StringUtils.isBlank(file.getFileName()) || file.getUrl() == null) {
+                                                try {
+                                                    RemoteMod.File remoteFile = CurseForgeRemoteModRepository.MODS.getModFile(Integer.toString(file.getProjectID()), Integer.toString(file.getFileID()));
+                                                    return file.withFileName(remoteFile.getFilename()).withURL(remoteFile.getUrl());
+                                                } catch (FileNotFoundException fof) {
+                                                    Logging.LOG.log(Level.WARNING, "Could not query api.curseforge.com for deleted mods: " + file.getProjectID() + ", " + file.getFileID(), fof);
+                                                    return file;
+                                                } catch (IOException | JsonParseException e) {
+                                                    Logging.LOG.log(Level.WARNING, "Unable to fetch the file name projectID=" + file.getProjectID() + ", fileID=" + file.getFileID(), e);
+                                                    return file;
+                                                }
+                                            } else {
+                                                return file;
+                                            }
+                                        })
+                                        .collect(Collectors.toList())));
+                    } else {
+                        return modpack;
+                    }
+                })
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
                     if (exception instanceof ManuallyCreatedModpackException) {
                         spinnerPane.hideSpinner();
@@ -172,6 +217,13 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
                         lblName.setText(manifest.getName());
                         lblVersion.setText(manifest.getVersion());
                         lblAuthor.setText(manifest.getAuthor());
+                        if(manifest.getManifest() instanceof CurseManifest) {
+                            optionalFilesPane.updateOptionalFileList(((CurseManifest) manifest.getManifest()).getFiles());
+                        } else if (manifest.getManifest() instanceof ModrinthManifest) {
+                            optionalFilesPane.updateOptionalFileList(((ModrinthManifest) manifest.getManifest()).getFiles());
+                        } else {
+                            optionalFilesPane.updateOptionalFileList(Collections.emptyList());
+                        }
 
                         lblModpackLocation.setText(selectedFile.getAbsolutePath());
 
@@ -193,6 +245,7 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
         if (!txtModpackName.validate()) return;
         controller.getSettings().put(MODPACK_NAME, txtModpackName.getText());
         controller.getSettings().put(MODPACK_CHARSET, charset);
+        controller.getSettings().put(MODPACK_SELECTED_FILES, optionalFilesPane.getSelected());
         controller.onFinish();
     }
 
@@ -213,4 +266,5 @@ public final class LocalModpackPage extends StackPane implements WizardPage {
     public static final String MODPACK_MANIFEST = "MODPACK_MANIFEST";
     public static final String MODPACK_CHARSET = "MODPACK_CHARSET";
     public static final String MODPACK_MANUALLY_CREATED = "MODPACK_MANUALLY_CREATED";
+    public static final String MODPACK_SELECTED_FILES = "MODPACK_SELECTED_FILES";
 }

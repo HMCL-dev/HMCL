@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.mod.modrinth;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.mod.ModpackManifest;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
@@ -25,6 +26,7 @@ import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -94,7 +96,7 @@ public class ModrinthManifest implements ModpackManifest, Validation {
         }
     }
 
-    public static class File {
+    public static class File implements ModpackFile {
         private final String path;
         private final Map<String, String> hashes;
         private final Map<String, String> env;
@@ -140,6 +142,16 @@ public class ModrinthManifest implements ModpackManifest, Validation {
         @Override
         public int hashCode() {
             return Objects.hash(path, hashes, env, downloads, fileSize);
+        }
+
+        @Override
+        public String getFileName() {
+            return new java.io.File(path).getName();
+        }
+
+        @Override
+        public boolean isOptional() {
+            return env != null && env.get("client").equals("optional");
         }
     }
 

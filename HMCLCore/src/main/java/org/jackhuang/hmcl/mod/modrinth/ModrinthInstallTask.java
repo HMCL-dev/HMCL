@@ -46,8 +46,9 @@ public class ModrinthInstallTask extends Task<Void> {
     private final ModpackConfiguration<ModrinthManifest> config;
     private final List<Task<?>> dependents = new ArrayList<>(4);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
+    private final Set<? extends ModpackFile> selectedFiles;
 
-    public ModrinthInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, ModrinthManifest manifest, String name) {
+    public ModrinthInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, ModrinthManifest manifest, String name, Set<? extends ModpackFile> selectedFiles) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
@@ -55,6 +56,7 @@ public class ModrinthInstallTask extends Task<Void> {
         this.name = name;
         this.repository = dependencyManager.getGameRepository();
         this.run = repository.getRunDirectory(name);
+        this.selectedFiles = selectedFiles;
 
         File json = repository.getModpackConfiguration(name);
         if (repository.hasVersion(name) && !json.exists())
@@ -106,7 +108,7 @@ public class ModrinthInstallTask extends Task<Void> {
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
 
-        dependencies.add(new ModrinthCompletionTask(dependencyManager, name, manifest));
+        dependencies.add(new ModrinthCompletionTask(dependencyManager, name, manifest, selectedFiles));
     }
 
     @Override

@@ -51,10 +51,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -190,7 +187,7 @@ public final class ModpackHelper {
                 });
     }
 
-    public static Task<?> getInstallTask(Profile profile, File zipFile, String name, Modpack modpack) {
+    public static Task<?> getInstallTask(Profile profile, File zipFile, String name, Modpack modpack, Set<? extends ModpackFile> selectedFiles) {
         profile.getRepository().markVersionAsModpack(name);
 
         ExceptionalRunnable<?> success = () -> {
@@ -210,15 +207,15 @@ public final class ModpackHelper {
         };
 
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return modpack.getInstallTask(profile.getDependency(), zipFile, name)
+            return modpack.getInstallTask(profile.getDependency(), zipFile, name, selectedFiles)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
-            return modpack.getInstallTask(profile.getDependency(), zipFile, name)
+            return modpack.getInstallTask(profile.getDependency(), zipFile, name, selectedFiles)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMcbbsPostInstallTask(profile, (McbbsModpackManifest) modpack.getManifest(), name));
         else
-            return modpack.getInstallTask(profile.getDependency(), zipFile, name)
+            return modpack.getInstallTask(profile.getDependency(), zipFile, name, selectedFiles)
                     .whenComplete(Schedulers.javafx(), success, failure);
     }
 
@@ -232,13 +229,13 @@ public final class ModpackHelper {
         }
     }
 
-    public static Task<?> getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
+    public static Task<?> getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration, Set<? extends ModpackFile> selectedFiles) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile.toPath(), charset);
         ModpackProvider provider = getProviderByType(configuration.getType());
         if (provider == null) {
             throw new UnsupportedModpackException();
         }
-        return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack);
+        return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack, selectedFiles);
     }
 
     public static void toVersionSetting(MultiMCInstanceConfiguration c, VersionSetting vs) {

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.mod.modrinth;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
+import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Logging;
@@ -33,6 +34,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -42,6 +44,7 @@ public class ModrinthCompletionTask extends Task<Void> {
     private final DefaultDependencyManager dependency;
     private final DefaultGameRepository repository;
     private final String version;
+    private final Set<? extends ModpackFile> selectedFiles;
     private ModrinthManifest manifest;
     private final List<Task<?>> dependencies = new ArrayList<>();
 
@@ -56,7 +59,7 @@ public class ModrinthCompletionTask extends Task<Void> {
      * @param version           the existent and physical version.
      */
     public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, String version) {
-        this(dependencyManager, version, null);
+        this(dependencyManager, version, null, null);
     }
 
     /**
@@ -66,11 +69,12 @@ public class ModrinthCompletionTask extends Task<Void> {
      * @param version           the existent and physical version.
      * @param manifest          the CurseForgeModpack manifest.
      */
-    public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, String version, ModrinthManifest manifest) {
+    public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, String version, ModrinthManifest manifest, Set<? extends ModpackFile> selectedFiles) {
         this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
         this.version = version;
         this.manifest = manifest;
+        this.selectedFiles = selectedFiles;
 
         if (manifest == null)
             try {
@@ -105,7 +109,7 @@ public class ModrinthCompletionTask extends Task<Void> {
             if (file.getEnv() != null && file.getEnv().getOrDefault("client", "required").equals("unsupported"))
                 continue;
             Path filePath = runDirectory.resolve(file.getPath());
-            if (!Files.exists(filePath) && !file.getDownloads().isEmpty()) {
+            if ((selectedFiles == null || selectedFiles.contains(file)) && !Files.exists(filePath) && !file.getDownloads().isEmpty()) {
                 FileDownloadTask task = new FileDownloadTask(file.getDownloads().get(0), filePath.toFile());
                 task.setCacheRepository(dependency.getCacheRepository());
                 task.setCaching(true);

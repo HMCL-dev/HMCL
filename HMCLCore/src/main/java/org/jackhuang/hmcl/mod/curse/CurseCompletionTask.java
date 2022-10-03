@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
+import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -33,9 +34,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -54,6 +53,7 @@ public final class CurseCompletionTask extends Task<Void> {
     private final String version;
     private CurseManifest manifest;
     private final List<Task<?>> dependencies = new ArrayList<>();
+    private final Set<? extends ModpackFile> selectedFiles;
 
     private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
     private final AtomicInteger finished = new AtomicInteger(0);
@@ -66,7 +66,7 @@ public final class CurseCompletionTask extends Task<Void> {
      * @param version           the existent and physical version.
      */
     public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version) {
-        this(dependencyManager, version, null);
+        this(dependencyManager, version, null, null);
     }
 
     /**
@@ -76,12 +76,13 @@ public final class CurseCompletionTask extends Task<Void> {
      * @param version           the existent and physical version.
      * @param manifest          the CurseForgeModpack manifest.
      */
-    public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version, CurseManifest manifest) {
+    public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version, CurseManifest manifest, Set<? extends ModpackFile> selectedFiles) {
         this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
         this.modManager = repository.getModManager(version);
         this.version = version;
         this.manifest = manifest;
+        this.selectedFiles = selectedFiles;
 
         if (manifest == null)
             try {
@@ -112,34 +113,10 @@ public final class CurseCompletionTask extends Task<Void> {
 
         File root = repository.getVersionRoot(version);
 
-        // Because in China, Curse is too difficult to visit,
-        // if failed, ignore it and retry next time.
-        CurseManifest newManifest = manifest.setFiles(
-                manifest.getFiles().parallelStream()
-                        .map(file -> {
-                            updateProgress(finished.incrementAndGet(), manifest.getFiles().size());
-                            if (StringUtils.isBlank(file.getFileName()) || file.getUrl() == null) {
-                                try {
-                                    RemoteMod.File remoteFile = CurseForgeRemoteModRepository.MODS.getModFile(Integer.toString(file.getProjectID()), Integer.toString(file.getFileID()));
-                                    return file.withFileName(remoteFile.getFilename()).withURL(remoteFile.getUrl());
-                                } catch (FileNotFoundException fof) {
-                                    Logging.LOG.log(Level.WARNING, "Could not query api.curseforge.com for deleted mods: " + file.getProjectID() + ", " + file.getFileID(), fof);
-                                    notFound.set(true);
-                                    return file;
-                                } catch (IOException | JsonParseException e) {
-                                    Logging.LOG.log(Level.WARNING, "Unable to fetch the file name projectID=" + file.getProjectID() + ", fileID=" + file.getFileID(), e);
-                                    allNameKnown.set(false);
-                                    return file;
-                                }
-                            } else {
-                                return file;
-                            }
-                        })
-                        .collect(Collectors.toList()));
-        FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(newManifest));
+        FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(manifest));
 
-        for (CurseManifestFile file : newManifest.getFiles())
-            if (StringUtils.isNotBlank(file.getFileName())) {
+        for (CurseManifestFile file : manifest.getFiles())
+            if ((selectedFiles == null || selectedFiles.contains(file)) && StringUtils.isNotBlank(file.getFileName())) {
                 if (!modManager.hasSimpleMod(file.getFileName())) {
                     FileDownloadTask task = new FileDownloadTask(file.getUrl(), modManager.getSimpleModPath(file.getFileName()).toFile());
                     task.setCacheRepository(dependency.getCacheRepository());
