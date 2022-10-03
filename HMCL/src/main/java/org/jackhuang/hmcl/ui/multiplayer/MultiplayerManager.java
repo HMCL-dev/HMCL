@@ -198,6 +198,7 @@ public final class MultiplayerManager {
             String[] commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
             Process process = new ProcessBuilder()
                     .command(commands)
+                    .retry(1)
                     .start();
 
             return new HiperSession(process, Arrays.asList(commands));
