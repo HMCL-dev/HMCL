@@ -89,7 +89,7 @@ public class OAuth {
                         pair("grant_type", "authorization_code"), pair("client_secret", options.callback.getClientSecret()),
                         pair("redirect_uri", session.getRedirectURI()), pair("scope", options.scope))
                 .ignoreHttpCode()
-                .retry(15)
+                .retry(20)
                 .getJson(AuthorizationResponse.class);
         handleErrorResponse(response);
         return new Result(response.accessToken, response.refreshToken);
@@ -99,7 +99,7 @@ public class OAuth {
         DeviceTokenResponse deviceTokenResponse = HttpRequest.POST(deviceCodeURL)
                 .form(pair("client_id", options.callback.getClientId()), pair("scope", options.scope))
                 .ignoreHttpCode()
-                .retry(15)
+                .retry(20)
                 .getJson(DeviceTokenResponse.class);
         handleErrorResponse(deviceTokenResponse);
 
@@ -126,7 +126,7 @@ public class OAuth {
                             pair("code", deviceTokenResponse.deviceCode),
                             pair("client_id", options.callback.getClientId()))
                     .ignoreHttpCode()
-                    .retry(15)
+                    .retry(20)
                     .getJson(TokenResponse.class);
 
             if ("authorization_pending".equals(tokenResponse.error)) {
