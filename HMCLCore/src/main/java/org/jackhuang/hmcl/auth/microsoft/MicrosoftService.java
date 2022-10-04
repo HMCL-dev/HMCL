@@ -119,7 +119,7 @@ public class MicrosoftService {
                                 mapOf(pair("AuthMethod", "RPS"), pair("SiteName", "user.auth.xboxlive.com"),
                                         pair("RpsTicket", "d=" + liveAccessToken))),
                         pair("RelyingParty", "http://auth.xboxlive.com"), pair("TokenType", "JWT")))
-                .retry(15)
+                .retry(20)
                 .accept("application/json").getJson(XBoxLiveAuthenticationResponse.class);
 
         String uhs = getUhs(xboxResponse, null);
@@ -133,7 +133,7 @@ public class MicrosoftService {
                                         pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
                         pair("RelyingParty", "rp://api.minecraftservices.com/"), pair("TokenType", "JWT")))
                 .ignoreHttpErrorCode(401)
-                .retry(15)
+                .retry(20)
                 .getJson(XBoxLiveAuthenticationResponse.class);
 
         getUhs(minecraftXstsResponse, uhs);
@@ -142,7 +142,7 @@ public class MicrosoftService {
         MinecraftLoginWithXBoxResponse minecraftResponse = HttpRequest
                 .POST("https://api.minecraftservices.com/authentication/login_with_xbox")
                 .json(mapOf(pair("identityToken", "XBL3.0 x=" + uhs + ";" + minecraftXstsResponse.token)))
-                .retry(15)
+                .retry(20)
                 .accept("application/json").getJson(MinecraftLoginWithXBoxResponse.class);
 
         long notAfter = minecraftResponse.expiresIn * 1000L + System.currentTimeMillis();
