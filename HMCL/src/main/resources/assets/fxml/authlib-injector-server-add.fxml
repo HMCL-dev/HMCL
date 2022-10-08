@@ -18,7 +18,7 @@
                 <JFXTextField fx:id="txtServerUrl" promptText="%account.injector.server_url" onAction="#onAddNext" />
             </body>
             <actions>
-                <Label fx:id="lblCreationWarning" />
+                <Label fx:id="lblCreationWarning" wrapText="true" />
                 <HBox>
                     <JFXButton onMouseClicked="#onAddCancel" text="%button.cancel" styleClass="dialog-cancel" />
                     <SpinnerPane fx:id="nextPane" styleClass="small-spinner-pane">
