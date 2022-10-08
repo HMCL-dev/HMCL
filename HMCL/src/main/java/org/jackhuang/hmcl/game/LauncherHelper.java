@@ -627,11 +627,11 @@ public final class LauncherHelper {
 
                 return Task.completed(DialogController.logIn(account));
             } catch (AuthenticationException e) {
-                LOG.log(Level.WARNING, "Authentication failed, try playing offline", e);
+                LOG.log(Level.WARNING, "Authentication failed, try skipping refresh", e);
 
                 CompletableFuture<Task<AuthInfo>> future = new CompletableFuture<>();
                 runInFX(() -> {
-                    JFXButton loginOfflineButton = new JFXButton(i18n("account.login.offline"));
+                    JFXButton loginOfflineButton = new JFXButton(i18n("account.login.skip"));
                     loginOfflineButton.setOnAction(event -> {
                         try {
                             future.complete(Task.completed(account.playOffline()));
@@ -639,7 +639,7 @@ public final class LauncherHelper {
                             future.completeExceptionally(e2);
                         }
                     });
-                    JFXButton retryButton = new JFXButton(i18n("button.retry"));
+                    JFXButton retryButton = new JFXButton(i18n("account.login.retry"));
                     retryButton.setOnAction(event -> {
                         future.complete(logIn(account));
                     });

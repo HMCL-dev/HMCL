@@ -295,6 +295,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
                 JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
                 deauthorizeLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A"));
+                JFXHyperlink forgotpasswordLink = new JFXHyperlink(i18n("account.methods.forgot_password"));
+                forgotpasswordLink.setOnAction(e -> FXUtils.openLink("https://www.minecraft.net/password/forgot"));
                 JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
                 createProfileLink.setOnAction(e -> FXUtils.openLink("https://www.minecraft.net/msaprofile/mygames/editprofile"));    
                 purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
