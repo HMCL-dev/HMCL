@@ -295,7 +295,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                     break;
             }
 
-//            clearSession();
+            clearSession();
         });
     }
 

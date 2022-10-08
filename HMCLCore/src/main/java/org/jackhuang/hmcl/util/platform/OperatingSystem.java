@@ -256,6 +256,7 @@ public enum OperatingSystem {
         return Optional.empty();
     }
 
+    @SuppressWarnings("removal")
     public static void forceGC() {
         System.gc();
         try {

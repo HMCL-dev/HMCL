@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -67,6 +68,7 @@ public class AddAuthlibInjectorServerPane extends StackPane implements DialogAwa
         loadFXML(this, "/assets/fxml/authlib-injector-server-add.fxml");
         root.setContent(addServerPane, ContainerAnimations.NONE.getAnimationProducer());
 
+        lblCreationWarning.maxWidthProperty().bind(((FlowPane)lblCreationWarning.getParent()).widthProperty());
         btnAddNext.disableProperty().bind(txtServerUrl.textProperty().isEmpty());
         nextPane.hideSpinner();
 
