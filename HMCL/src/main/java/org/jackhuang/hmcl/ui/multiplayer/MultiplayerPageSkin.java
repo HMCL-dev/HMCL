@@ -236,6 +236,11 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         hintPane.setText(i18n("multiplayer.slave.hint"));
                         slavePane.getChildren().add(hintPane);
 
+                        HintPane hintPane2 = new HintPane(MessageDialogPane.MessageType.WARNING);
+                        GridPane.setColumnSpan(hintPane2, 3);
+                        hintPane2.setText(i18n("multiplayer.slave.hint2"));
+                        slavePane.getChildren().add(hintPane2);
+
                         GridPane notBroadcastingPane = new GridPane();
                         {
                             notBroadcastingPane.setVgap(8);
@@ -272,9 +277,9 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                         FXUtils.onChangeAndOperate(control.broadcasterProperty(), broadcaster -> {
                             if (broadcaster == null) {
-                                slavePane.getChildren().setAll(titlePane, hintPane, notBroadcastingPane);
+                                slavePane.getChildren().setAll(titlePane, hintPane, hintPane2, notBroadcastingPane);
                             } else {
-                                slavePane.getChildren().setAll(titlePane, hintPane, broadcastingPane);
+                                slavePane.getChildren().setAll(titlePane, hintPane, hintPane2, broadcastingPane);
                             }
                         });
                     }
@@ -290,11 +295,9 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                 FXUtils.onChangeAndOperate(getSkinnable().sessionProperty(), session -> {
                     if (session == null) {
-                        mainPane.getChildren().setAll(ComponentList.createComponentListTitle(i18n("multiplayer.off")),
-                                offPane);
+                        mainPane.getChildren().setAll(offPane);
                     } else {
-                        mainPane.getChildren().setAll(ComponentList.createComponentListTitle(i18n("multiplayer.on")),
-                                onPane);
+                        mainPane.getChildren().setAll(onPane);
                     }
                 });
             }
