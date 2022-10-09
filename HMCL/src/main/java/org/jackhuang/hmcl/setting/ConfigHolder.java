@@ -22,6 +22,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -189,6 +190,28 @@ public final class ConfigHolder {
     // Global Config
 
     private static GlobalConfig loadGlobalConfig() throws IOException {
+        // Migrate from old directory
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Files.notExists(GLOBAL_CONFIG_PATH)) {
+            Path oldHome;
+            String xdgCache = System.getenv("XDG_CACHE_HOME");
+            if (StringUtils.isNotBlank(xdgCache)) {
+                oldHome = Paths.get(xdgCache, "hmcl");
+            } else {
+                oldHome = Paths.get(System.getProperty("user.home", "."), ".cache", "hmcl");
+            }
+
+            if (Files.exists(oldHome)) {
+                Path oldConfigPath = oldHome.resolve("config.json");
+                if (Files.isRegularFile(oldConfigPath)) {
+                    try {
+                        Files.copy(oldConfigPath, GLOBAL_CONFIG_PATH);
+                    } catch (IOException e) {
+                        LOG.log(Level.WARNING, "Failed to migrate global config", e);
+                    }
+                }
+            }
+        }
+
         if (Files.exists(GLOBAL_CONFIG_PATH)) {
             try {
                 String content = FileUtils.readText(GLOBAL_CONFIG_PATH);
