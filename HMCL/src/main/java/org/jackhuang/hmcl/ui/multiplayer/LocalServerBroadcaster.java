@@ -44,7 +44,12 @@ public class LocalServerBroadcaster implements AutoCloseable {
 
     public LocalServerBroadcaster(String address) {
         this.address = address;
-        this.threadGroup.setDaemon(true);
+    }
+
+    private Thread newThread(Runnable task, String name) {
+        Thread thread = new Thread(threadGroup, task, name);
+        thread.setDaemon(true);
+        return thread;
     }
 
     @Override
@@ -64,7 +69,7 @@ public class LocalServerBroadcaster implements AutoCloseable {
     public static final Pattern ADDRESS_PATTERN = Pattern.compile("^\\s*(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}):(\\d{1,5})\\s*$");
 
     public void start() {
-        Thread forwardPortThread = new Thread(threadGroup, this::forwardPort, "ForwardPort");
+        Thread forwardPortThread = newThread(this::forwardPort, "ForwardPort");
         forwardPortThread.start();
     }
 
@@ -81,7 +86,7 @@ public class LocalServerBroadcaster implements AutoCloseable {
 
                 serverSocket.bind(null);
 
-                Thread broadcastMOTDThread = new Thread(threadGroup, () -> broadcastMOTD(serverSocket.getLocalPort()), "BroadcastMOTD");
+                Thread broadcastMOTDThread = newThread(() -> broadcastMOTD(serverSocket.getLocalPort()), "BroadcastMOTD");
                 broadcastMOTDThread.start();
 
                 LOG.log(Level.INFO, "Listening " + serverSocket.getLocalSocketAddress());
@@ -89,8 +94,8 @@ public class LocalServerBroadcaster implements AutoCloseable {
                 while (running) {
                     Socket forwardedSocket = serverSocket.accept();
                     LOG.log(Level.INFO, "Accepting client");
-                    new Thread(threadGroup, () -> forwardTraffic(forwardingSocket, forwardedSocket), "Forward S->D").start();
-                    new Thread(threadGroup, () -> forwardTraffic(forwardedSocket, forwardingSocket), "Forward D->S").start();
+                    newThread(() -> forwardTraffic(forwardingSocket, forwardedSocket), "Forward S->D").start();
+                    newThread(() -> forwardTraffic(forwardedSocket, forwardingSocket), "Forward D->S").start();
                 }
             }
         } catch (IOException | UnresolvedAddressException e) {
