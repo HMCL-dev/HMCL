@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
@@ -46,6 +47,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.logging.Level;
 
@@ -57,7 +59,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
  * Cato Management.
  */
 public final class MultiplayerManager {
-    static final String HIPER_VERSION = "1.2.2";
+    // static final String HIPER_VERSION = "1.2.2";
     private static final String HIPER_DOWNLOAD_URL = "https://gitcode.net/to/hiper/-/raw/master/";
     private static final String HIPER_PACKAGES_URL = HIPER_DOWNLOAD_URL + "packages.sha1";
     private static final String HIPER_POINTS_URL = "https://cert.mcer.cn/point.yml";
@@ -202,19 +204,27 @@ public final class MultiplayerManager {
             try {
                 certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString();
                 if (!certFileContent.equals("")) {
-                    certFileContent += "\nlogging:\n  format: json\n  file_path: ./hiper.log";
+                    certFileContent += "\n" +
+                            "logging:\n" +
+                            "  format: json\n" +
+                            "  max_backups: 3\n" +
+                            "  file_path: '" + Metadata.HMCL_DIRECTORY.resolve("logs").toString().replace("'", "''") + "'";
                     FileUtils.writeText(HIPER_CONFIG_PATH, certFileContent);
                 }
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "configuration file cloud cache index code has been not available , try to use the local configuration file", e);
+                LOG.log(Level.WARNING, "configuration file cloud cache index code has been not available, try to use the local configuration file", e);
             }
 
-            String[] commands;
+            String[] commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 commands = new String[]{GSUDO_LOCAL_FILE.toString(), HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
-            } else {
-                commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+                if (!"root".equals(System.getProperty("user.name")) && new File("/usr/bin/pkexec").exists()) {
+                    commands = new String[]{"/usr/bin/pkexec", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+                }
             }
+
             Process process = new ProcessBuilder()
                     .command(commands)
                     .start();
@@ -232,7 +242,7 @@ public final class MultiplayerManager {
     }
 
     public static Path getHiperLocalDirectory() {
-        return Metadata.HMCL_DIRECTORY.resolve("libraries").resolve("hiper").resolve("hiper").resolve(HIPER_VERSION);
+        return Metadata.HMCL_DIRECTORY.resolve("libraries").resolve("hiper").resolve("hiper").resolve("binary");
     }
 
     public static class HiperSession extends ManagedProcess {
@@ -257,10 +267,14 @@ public final class MultiplayerManager {
         }
 
         private void onLog(String log) {
-            LOG.info("[Hiper] " + log);
-
             if (log.contains("failed to load config")) {
+                LOG.warning("[HiPer] " + log);
                 error = HiperExitEvent.INVALID_CONFIGURATION;
+                return;
+            }
+
+            if (!log.startsWith("{")) {
+                LOG.warning("[HiPer] " + log);
                 return;
             }
 
@@ -320,6 +334,21 @@ public final class MultiplayerManager {
                 }
             }
             destroyRelatedThreads();
+        }
+
+        @Override
+        public void stop() {
+            try {
+                writer.write("quit\n");
+                writer.flush();
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to quit HiPer", e);
+            }
+            try {
+                getProcess().waitFor(1, TimeUnit.SECONDS);
+            } catch (InterruptedException ignored) {
+            }
+            super.stop();
         }
 
         public EventManager<HiperExitEvent> onExit() {
