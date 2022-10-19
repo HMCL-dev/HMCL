@@ -219,9 +219,12 @@ public final class MultiplayerManager {
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 commands = new String[]{GSUDO_LOCAL_FILE.toString(), HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                if (!"root".equals(System.getProperty("user.name")) && new File("/usr/bin/pkexec").exists()) {
-                    commands = new String[]{"/usr/bin/pkexec", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+            } else if (!"root".equals(System.getProperty("user.name"))) {
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+                    if (new File("/usr/bin/pkexec").exists())
+                        commands = new String[]{"/usr/bin/pkexec", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                    commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
                 }
             }
 
@@ -267,14 +270,14 @@ public final class MultiplayerManager {
         }
 
         private void onLog(String log) {
-            if (log.contains("failed to load config")) {
-                LOG.warning("[HiPer] " + log);
-                error = HiperExitEvent.INVALID_CONFIGURATION;
-                return;
-            }
-
             if (!log.startsWith("{")) {
                 LOG.warning("[HiPer] " + log);
+
+                if (log.startsWith("failed to load config"))
+                    error = HiperExitEvent.INVALID_CONFIGURATION;
+                else if (log.startsWith("sudo: ") || log.startsWith("Error getting authority"))
+                    error = HiperExitEvent.NO_SUDO_PRIVILEGES;
+
                 return;
             }
 
@@ -382,6 +385,7 @@ public final class MultiplayerManager {
         public static final int CERTIFICATE_EXPIRED = -3;
         public static final int FAILED_GET_DEVICE = -4;
         public static final int FAILED_LOAD_CONFIG = -5;
+        public static final int NO_SUDO_PRIVILEGES = -6;
     }
 
     public static class HiperIPEvent extends Event {

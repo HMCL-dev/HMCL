@@ -17,28 +17,41 @@
  */
 package org.jackhuang.hmcl.ui.multiplayer;
 
+import com.google.gson.JsonParseException;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.property.*;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.game.OAuthServer;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.HMCLAccounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -281,6 +294,34 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                     MultiplayerManager.clearConfiguration();
                     Controllers.dialog(i18n("multiplayer.token.malformed"));
                     break;
+                case MultiplayerManager.HiperExitEvent.NO_SUDO_PRIVILEGES:
+                    Controllers.confirm(i18n("multiplayer.error.failed_sudo"), null, MessageDialogPane.MessageType.INFO, () -> {
+                        try {
+                            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                                String text = "%hmcl-hiper ALL=(ALL:ALL) NOPASSWD: " + MultiplayerManager.HIPER_PATH.toString().replaceAll("[ @!(),:=\\\\]", "\\\\$0") + "\n";
+
+                                File sudoersTmp = File.createTempFile("sudoer", ".tmp");
+                                sudoersTmp.deleteOnExit();
+                                FileUtils.writeText(sudoersTmp, text);
+
+                                SystemUtils.callExternalProcess(
+                                        "osascript", "-e", String.format("do shell script \"%s\" with administrator privileges", String.join(";",
+                                                "dscl . create /Groups/hmcl-hiper PrimaryGroupID 758",
+                                                "dscl . merge /Groups/hmcl-hiper GroupMembership '" + System.getProperty("user.name") + "'",
+                                                "mkdir -p /private/etc/sudoers.d",
+                                                "mv -f '" + sudoersTmp + "' /private/etc/sudoers.d/hmcl-hiper",
+                                                "chown root /private/etc/sudoers.d/hmcl-hiper",
+                                                "chmod 0440 /private/etc/sudoers.d/hmcl-hiper"
+                                        ))
+                                );
+                            } else {
+                                throw new UnsupportedOperationException("unsupported operating systems: " + OperatingSystem.CURRENT_OS);
+                            }
+                        } catch (Throwable e) {
+                            LOG.log(Level.WARNING, "Failed to modify sudoers", e);
+                        }
+                    }, null);
+                    break;
                 case MultiplayerManager.HiperExitEvent.INTERRUPTED:
                     // do nothing
                     break;
@@ -304,4 +345,58 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         return state;
     }
 
+    private static final class AskSudoDialog extends JFXDialogLayout {
+        private final SpinnerPane spinnerPane = new SpinnerPane();
+        private final Label errorLabel = new Label();
+        private final BooleanProperty logging = new SimpleBooleanProperty();
+
+        public AskSudoDialog() {
+            VBox vbox = new VBox(8);
+            setBody(vbox);
+            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+            hintPane.textProperty().bind(BindingMapping.of(logging).map(logging ->
+                    logging
+                            ? i18n("account.hmcl.hint")
+                            : i18n("account.hmcl.hint")));
+            hintPane.setOnMouseClicked(e -> {
+                if (logging.get() && OAuthServer.lastlyOpenedURL != null) {
+                    FXUtils.copyText(OAuthServer.lastlyOpenedURL);
+                }
+            });
+            vbox.getChildren().setAll(hintPane);
+
+            JFXButton loginButton = new JFXButton();
+            spinnerPane.setContent(loginButton);
+            loginButton.setText(i18n("account.login"));
+            loginButton.setOnAction(e -> login());
+
+            JFXButton cancelButton = new JFXButton();
+            cancelButton.setText(i18n("button.cancel"));
+            cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+            onEscPressed(this, cancelButton::fire);
+
+            setActions(errorLabel, spinnerPane, cancelButton);
+        }
+
+        private void login() {
+            spinnerPane.showSpinner();
+            errorLabel.setText("");
+            logging.set(true);
+
+            HMCLAccounts.login().whenComplete(Schedulers.javafx(), (result, exception) -> {
+                logging.set(false);
+                if (exception != null) {
+                    if (exception instanceof IOException) {
+                        errorLabel.setText(i18n("account.failed.connect_authentication_server"));
+                    } else if (exception instanceof JsonParseException) {
+                        errorLabel.setText(i18n("account.failed.server_response_malformed"));
+                    } else {
+                        errorLabel.setText(Accounts.localizeErrorMessage(exception));
+                    }
+                } else {
+                    fireEvent(new DialogCloseEvent());
+                }
+            }).start();
+        }
+    }
 }
