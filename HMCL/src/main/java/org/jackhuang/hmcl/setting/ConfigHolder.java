@@ -61,6 +61,10 @@ public final class ConfigHolder {
         return globalConfigInstance;
     }
 
+    public static Path configLocation() {
+        return configLocation;
+    }
+
     public static boolean isNewlyCreated() {
         return newlyCreated;
     }
@@ -110,7 +114,7 @@ public final class ConfigHolder {
     }
 
     private static Path locateConfig() {
-        Path exePath = Paths.get("");
+        Path exePath = Paths.get("").toAbsolutePath();
         try {
             Path jarPath = Paths.get(ConfigHolder.class.getProtectionDomain().getCodeSource().getLocation()
                     .toURI()).toAbsolutePath();

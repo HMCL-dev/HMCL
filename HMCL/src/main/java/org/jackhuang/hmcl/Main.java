@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl;
 
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -68,7 +70,6 @@ public final class Main {
 
         checkJavaFX();
 
-
         Launcher.main(args);
     }
 
@@ -116,7 +117,10 @@ public final class Main {
     static void showErrorAndExit(String message) {
         System.err.println(message);
         System.err.println("A fatal error has occurred, forcibly exiting.");
-        JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
+        if (Platform.isFxApplicationThread())
+            new Alert(Alert.AlertType.ERROR, message).showAndWait();
+        else
+            JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
         System.exit(1);
     }
 
@@ -126,7 +130,10 @@ public final class Main {
     static void showWarningAndContinue(String message) {
         System.err.println(message);
         System.err.println("Potential issues have been detected.");
-        JOptionPane.showMessageDialog(null, message, "Warning", JOptionPane.WARNING_MESSAGE);
+        if (Platform.isFxApplicationThread())
+            new Alert(Alert.AlertType.WARNING, message).showAndWait();
+        else
+            JOptionPane.showMessageDialog(null, message, "Warning", JOptionPane.WARNING_MESSAGE);
     }
 
     static void fixLetsEncrypt() {
@@ -156,7 +163,8 @@ public final class Main {
             tls.init(null, instance.getTrustManagers(), null);
             HttpsURLConnection.setDefaultSSLSocketFactory(tls.getSocketFactory());
             LOG.info("Added Lets Encrypt root certificates as additional trust");
-        } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException | KeyManagementException e) {
+        } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException |
+                 KeyManagementException e) {
             LOG.log(Level.SEVERE, "Failed to load lets encrypt certificate. Expect problems", e);
         }
     }

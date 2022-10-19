@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 
@@ -307,12 +308,12 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                                 SystemUtils.callExternalProcess(
                                         "osascript", "-e", String.format("do shell script \"%s\" with administrator privileges", String.join(";",
                                                 "dscl . create /Groups/hmcl-hiper PrimaryGroupID 758",
-                                                "dscl . merge /Groups/hmcl-hiper GroupMembership '" + System.getProperty("user.name") + "'",
+                                                "dscl . merge /Groups/hmcl-hiper GroupMembership " + CommandBuilder.toShellStringLiteral(System.getProperty("user.name")) + "",
                                                 "mkdir -p /private/etc/sudoers.d",
-                                                "mv -f '" + sudoersTmp + "' /private/etc/sudoers.d/hmcl-hiper",
+                                                "mv -f " + CommandBuilder.toShellStringLiteral(sudoersTmp.toString()) + " /private/etc/sudoers.d/hmcl-hiper",
                                                 "chown root /private/etc/sudoers.d/hmcl-hiper",
                                                 "chmod 0440 /private/etc/sudoers.d/hmcl-hiper"
-                                        ))
+                                        ).replaceAll("[\\\\\"]", "\\\\$0"))
                                 );
                             } else {
                                 throw new UnsupportedOperationException("unsupported operating systems: " + OperatingSystem.CURRENT_OS);

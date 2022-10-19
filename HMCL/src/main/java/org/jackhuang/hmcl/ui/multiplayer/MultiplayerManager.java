@@ -38,12 +38,12 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -221,7 +221,7 @@ public final class MultiplayerManager {
                 commands = new String[]{GSUDO_LOCAL_FILE.toString(), HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
             } else if (!"root".equals(System.getProperty("user.name"))) {
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                    if (new File("/usr/bin/pkexec").exists())
+                    if (Files.exists(Paths.get("/usr/bin/pkexec")))
                         commands = new String[]{"/usr/bin/pkexec", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
                 } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
