@@ -30,7 +30,7 @@ public final class Metadata {
 
     public static final String NAME = "HMCL";
     public static final String FULL_NAME = "Hello Minecraft! Launcher";
-    public static final String VERSION = System.getProperty("hmcl.version.override", JarUtils.thisJar().flatMap(JarUtils::getImplementationVersion).orElse("@develop@"));
+    public static final String VERSION = System.getProperty("hmcl.version.override", JarUtils.getManifestAttribute("Implementation-Version", "@develop@"));
 
     public static final String TITLE = NAME + " " + VERSION;
     public static final String FULL_TITLE = FULL_NAME + " v" + VERSION;
@@ -39,10 +39,10 @@ public final class Metadata {
     public static final String CONTACT_URL = "https://github.com/huanghongxun/HMCL/issues";
     public static final String HELP_URL = "https://hmcl.huangyuhui.net/help";
     public static final String CHANGELOG_URL = "https://hmcl.huangyuhui.net/changelog/";
-    public static final String PUBLISH_URL = "http://www.mcbbs.net/thread-142335-1-1.html";
+    public static final String PUBLISH_URL = "https://www.mcbbs.net/thread-142335-1-1.html";
     public static final String EULA_URL = "https://hmcl.huangyuhui.net/eula";
 
-    public static final String BUILD_CHANNEL = JarUtils.thisJar().flatMap(JarUtils::getManifest).map(manifest -> manifest.getMainAttributes().getValue("Build-Channel")).orElse("nightly");
+    public static final String BUILD_CHANNEL = JarUtils.getManifestAttribute("Build-Channel", "nightly");
 
     public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
     public static final Path HMCL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
