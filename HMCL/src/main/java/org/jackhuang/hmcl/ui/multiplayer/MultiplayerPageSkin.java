@@ -204,7 +204,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         HintPane hintPane2 = new HintPane(MessageDialogPane.MessageType.INFO);
                         GridPane.setColumnSpan(hintPane2, 3);
                         hintPane2.setText(i18n("multiplayer.master.hint2"));
-                        masterPane.addRow(1, hintPane2);
+                        masterPane.addRow(2, hintPane2);
 
                         Label portTitle = new Label(i18n("multiplayer.master.port"));
                         BorderPane.setAlignment(portTitle, Pos.CENTER_LEFT);
@@ -332,15 +332,15 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                 HBox pane = new HBox();
                 pane.setAlignment(Pos.CENTER_LEFT);
 
-                JFXHyperlink aboutLink = new JFXHyperlink(i18n("about"));
-                aboutLink.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-about"));
+                //JFXHyperlink aboutLink = new JFXHyperlink(i18n("about"));
+                //aboutLink.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-about"));
 
                 HBox placeholder = new HBox();
                 HBox.setHgrow(placeholder, Priority.ALWAYS);
 
                 pane.getChildren().setAll(
-                        aboutLink,
-                        placeholder,
+                        //aboutLink,
+                        //placeholder,
                         FXUtils.segmentToTextFlow(i18n("multiplayer.powered_by"), Controllers::onHyperlinkAction));
 
                 thanksPane.getContent().addAll(pane);

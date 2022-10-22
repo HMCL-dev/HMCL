@@ -94,7 +94,7 @@ public class AboutPage extends StackPane {
 
             IconedTwoLineListItem matrix_network = new IconedTwoLineListItem();
             matrix_network.setImage(new Image("/assets/img/matrix_network.png", 32, 32, false, true));
-            matrix_network.setTitle(i18n("about.thanks_to.noin"));
+            matrix_network.setTitle(i18n("about.thanks_to.matrix_network"));
             matrix_network.setSubtitle(i18n("about.thanks_to.matrix_network.statement"));
             matrix_network.setExternalLink("https://www.the.bb/");
 
