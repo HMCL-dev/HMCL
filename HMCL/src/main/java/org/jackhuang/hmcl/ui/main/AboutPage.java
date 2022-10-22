@@ -92,11 +92,11 @@ public class AboutPage extends StackPane {
             mcmod.setSubtitle(i18n("about.thanks_to.mcmod.statement"));
             mcmod.setExternalLink("https://www.mcmod.cn/");
 
-            IconedTwoLineListItem noin = new IconedTwoLineListItem();
-            noin.setImage(new Image("/assets/img/noin.png", 32, 32, false, true));
-            noin.setTitle(i18n("about.thanks_to.noin"));
-            noin.setSubtitle(i18n("about.thanks_to.noin.statement"));
-            noin.setExternalLink("https://mcer.cn/cato");
+            IconedTwoLineListItem matrix_network = new IconedTwoLineListItem();
+            matrix_network.setImage(new Image("/assets/img/matrix_network.png", 32, 32, false, true));
+            matrix_network.setTitle(i18n("about.thanks_to.noin"));
+            matrix_network.setSubtitle(i18n("about.thanks_to.matrix_network.statement"));
+            matrix_network.setExternalLink("https://www.the.bb/");
 
             IconedTwoLineListItem contributors = new IconedTwoLineListItem();
             contributors.setImage(new Image("/assets/img/github.png", 32, 32, false, true));
@@ -104,7 +104,7 @@ public class AboutPage extends StackPane {
             contributors.setSubtitle(i18n("about.thanks_to.contributors.statement"));
             contributors.setExternalLink("https://github.com/huanghongxun/HMCL/graphs/contributors");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, mcbbs, mcmod, noin, gamerteam, redLnn, contributors);
+            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, mcbbs, mcmod, matrix_network, gamerteam, redLnn, contributors);
         }
 
         ComponentList community = new ComponentList();

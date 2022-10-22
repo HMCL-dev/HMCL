@@ -101,7 +101,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("multiplayer.help.5"));
-                        item.setLeftGraphic(wrap(SVG::rocketLaunchOutline));
+                        item.setLeftGraphic(wrap(SVG::helpCircleOutline));
                         item.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/multiplayer/help.html#3%E5%A6%82%E4%BD%95%E5%85%B3%E9%97%AD%E9%98%B2%E7%81%AB%E5%A2%99"));
                     })
                     .addNavigationDrawerItem(report -> {
@@ -166,6 +166,8 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                 ComponentList onPane = new ComponentList();
                 {     
+                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+
                     BorderPane expirationPane = new BorderPane();
                     expirationPane.setLeft(new Label(i18n("multiplayer.session.expiration")));
                     Label expirationLabel = new Label();
@@ -173,8 +175,6 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                                     control.getExpireTime() == null ? "" : Locales.SIMPLE_DATE_FORMAT.get().format(control.getExpireTime()),
                             control.expireTimeProperty()));
                     expirationPane.setCenter(expirationLabel);
-
-                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
 
                     GridPane masterPane = new GridPane();
                     masterPane.setVgap(8);
@@ -339,7 +339,6 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                 HBox.setHgrow(placeholder, Priority.ALWAYS);
 
                 pane.getChildren().setAll(
-                        new Label("Based on HiPer"),
                         aboutLink,
                         placeholder,
                         FXUtils.segmentToTextFlow(i18n("multiplayer.powered_by"), Controllers::onHyperlinkAction));
