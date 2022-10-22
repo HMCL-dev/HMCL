@@ -200,10 +200,10 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         hintPane1.setText(i18n("multiplayer.master.hint"));
                         masterPane.addRow(1, hintPane1);
 
-                        HintPane hintPane4 = new HintPane(MessageDialogPane.MessageType.INFO);
-                        GridPane.setColumnSpan(hintPan4, 3);
-                        hintPane4.setText(i18n("multiplayer.master.hint2"));
-                        masterPane.addRow(1, hintPane4);
+                        HintPane hintPane2 = new HintPane(MessageDialogPane.MessageType.INFO);
+                        GridPane.setColumnSpan(hintPane2, 3);
+                        hintPane2.setText(i18n("multiplayer.master.hint2"));
+                        masterPane.addRow(1, hintPane2);
 
                         Label portTitle = new Label(i18n("multiplayer.master.port"));
                         BorderPane.setAlignment(portTitle, Pos.CENTER_LEFT);
@@ -250,20 +250,20 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         tutorial.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-tutorial-slave"));
                         titlePane.setRight(tutorial);
 
-                        HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                        GridPane.setColumnSpan(hintPane, 3);
-                        hintPane.setText(i18n("multiplayer.slave.hint"));
-                        slavePane.getChildren().add(hintPane);
-
-                        HintPane hintPane2 = new HintPane(MessageDialogPane.MessageType.WARNING);
-                        GridPane.setColumnSpan(hintPane2, 3);
-                        hintPane2.setText(i18n("multiplayer.slave.hint2"));
-                        slavePane.getChildren().add(hintPane2);
-
                         HintPane hintPane3 = new HintPane(MessageDialogPane.MessageType.INFO);
                         GridPane.setColumnSpan(hintPane3, 3);
-                        hintPane3.setText(i18n("multiplayer.slave.server_address.hint"));
+                        hintPane3.setText(i18n("multiplayer.slave.hint"));
                         slavePane.getChildren().add(hintPane3);
+
+                        HintPane hintPane4 = new HintPane(MessageDialogPane.MessageType.WARNING);
+                        GridPane.setColumnSpan(hintPane4, 3);
+                        hintPane4.setText(i18n("multiplayer.slave.hint2"));
+                        slavePane.getChildren().add(hintPane4);
+
+                        HintPane hintPane5 = new HintPane(MessageDialogPane.MessageType.INFO);
+                        GridPane.setColumnSpan(hintPane5, 3);
+                        hintPane5.setText(i18n("multiplayer.slave.server_address.hint"));
+                        slavePane.getChildren().add(hintPane5);
 
                         GridPane notBroadcastingPane = new GridPane();
                         {
@@ -301,9 +301,9 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                         FXUtils.onChangeAndOperate(control.broadcasterProperty(), broadcaster -> {
                             if (broadcaster == null) {
-                                slavePane.getChildren().setAll(titlePane, hintPane, hintPane2, hintPane3, notBroadcastingPane);
+                                slavePane.getChildren().setAll(titlePane, hintPane3, hintPane4, hintPane5, notBroadcastingPane);
                             } else {
-                                slavePane.getChildren().setAll(titlePane, hintPane, hintPane2, hintPane3, broadcastingPane);
+                                slavePane.getChildren().setAll(titlePane, hintPane3, hintPane4, hintPane5, broadcastingPane);
                             }
                         });
                     }
