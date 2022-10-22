@@ -201,12 +201,6 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         GridPane.setColumnSpan(hintPane1, 3);
                         hintPane1.setText(i18n("multiplayer.master.hint"));
                         masterPane.addRow(1, hintPane1);
-                        
-                        HintPane hintPane2 = new HintPane(MessageDialogPane.MessageType.INFO);
-                        GridPane.setColumnSpan(hintPane2, 3);
-                        hintPane2.setText(i18n("multiplayer.master.hint2"));
-                        slavePane.getChildren().add(hintPane2);
-                        slavePane.getChildren().setAll(hintPane2);
 
                         Label portTitle = new Label(i18n("multiplayer.master.port"));
                         BorderPane.setAlignment(portTitle, Pos.CENTER_LEFT);
