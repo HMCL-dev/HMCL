@@ -195,12 +195,12 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         tutorial.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-tutorial-master"));
                         masterPane.addRow(0, titlePane);
 
-                        HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                        HintPane hintPane1 = new HintPane(MessageDialogPane.MessageType.INFO);
                         GridPane.setColumnSpan(hintPane, 3);
                         hintPane.setText(i18n("multiplayer.master.hint"));
                         masterPane.addRow(1, hintPane);
 
-                        HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                        HintPane hintPane4 = new HintPane(MessageDialogPane.MessageType.INFO);
                         GridPane.setColumnSpan(hintPane, 3);
                         hintPane.setText(i18n("multiplayer.master.hint2"));
                         masterPane.addRow(1, hintPane);
