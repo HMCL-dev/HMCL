@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.HMCLService;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -200,23 +201,24 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
             LOG.info("Connection rejected by the server");
             return i18n("message.cancelled");
         } else if (e instanceof MultiplayerManager.HiperInvalidConfigurationException) {
-            LOG.info("Hiper invalid configuration");
+            LOG.warning("HiPer invalid configuration");
             return i18n("multiplayer.token.malformed");
         } else if (e instanceof MultiplayerManager.HiperNotExistsException) {
             LOG.log(Level.WARNING, "Hiper not found " + ((MultiplayerManager.HiperNotExistsException) e).getFile(), e);
             return i18n("multiplayer.error.file_not_found");
         } else if (e instanceof ChecksumMismatchException) {
-            LOG.log(Level.WARNING, "HiPer files are not verified");
+            LOG.log(Level.WARNING, "HiPer files are not verified", e);
             return i18n("multiplayer.error.file_not_found");
         } else if (e instanceof MultiplayerManager.HiperExitException) {
-            LOG.info("HiPer exited accidentally");
             int exitCode = ((MultiplayerManager.HiperExitException) e).getExitCode();
+            LOG.warning("HiPer exited unexpectedly with exit code " + exitCode);
             return i18n("multiplayer.exit", exitCode);
         } else if (e instanceof MultiplayerManager.HiperInvalidTokenException) {
-            LOG.info("invalid token");
+            LOG.warning("invalid token");
             return i18n("multiplayer.token.invalid");
         } else {
-            return e.getLocalizedMessage();
+            LOG.log(Level.WARNING, "Unknown HiPer exception", e);
+            return e.getLocalizedMessage() + "\n" + StringUtils.getStackTrace(e);
         }
     }
 
