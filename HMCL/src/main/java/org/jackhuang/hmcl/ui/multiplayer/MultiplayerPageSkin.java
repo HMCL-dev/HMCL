@@ -166,9 +166,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                 ComponentList onPane = new ComponentList();
                 {     
-                    BorderPane hintPane = new BorderPane();
-                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                    hintPane0.setText(i18n("multiplayer.hint"));
+                    hintPane.setText(i18n("multiplayer.hint"));
 
                     BorderPane expirationPane = new BorderPane();
                     expirationPane.setLeft(new Label(i18n("multiplayer.session.expiration")));
@@ -311,7 +309,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                     FXUtils.onChangeAndOperate(control.expireTimeProperty(), t -> {
                         if (t == null) {
-                            onPane.getContent().setAll(masterPane, slavePane);
+                            onPane.getContent().setAll(hintPane, hintPane0, masterPane, slavePane);
                         } else {
                             onPane.getContent().setAll(hintPane, expirationPane, masterPane, slavePane);
                         }
