@@ -125,6 +125,9 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
             {
                 ComponentList offPane = new ComponentList();
                 {
+                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                    hintPane.setText(i18n("multiplayer.hint"));
+
                     HintPane hintPane0 = new HintPane(MessageDialogPane.MessageType.WARNING);
                     hintPane0.setText(i18n("multiplayer.off.hint"));
 
@@ -158,15 +161,11 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         startPane.setAlignment(Pos.CENTER_RIGHT);
                     }
 
-                    offPane.getContent().setAll(hintPane0, tokenPane, startPane);
+                    offPane.getContent().setAll(hintPane0, hintPane, tokenPane, startPane);
                 }
 
                 ComponentList onPane = new ComponentList();
-                {   
-                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                    hintPane.setText(i18n("multiplayer.hint"));
-                    hintPane.getChildren().add(hintPane);
-                    
+                {     
                     BorderPane expirationPane = new BorderPane();
                     expirationPane.setLeft(new Label(i18n("multiplayer.session.expiration")));
                     Label expirationLabel = new Label();
@@ -175,6 +174,8 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                             control.expireTimeProperty()));
                     expirationPane.setCenter(expirationLabel);
 
+                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                    
                     GridPane masterPane = new GridPane();
                     masterPane.setVgap(8);
                     masterPane.setHgap(16);
