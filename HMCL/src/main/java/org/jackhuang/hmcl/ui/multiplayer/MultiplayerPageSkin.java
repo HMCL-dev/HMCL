@@ -161,7 +161,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         startPane.setAlignment(Pos.CENTER_RIGHT);
                     }
 
-                    offPane.getContent().setAll(hintPane0, hintPane, tokenPane, startPane);
+                    offPane.getContent().setAll(hintPane, hintPane0, tokenPane, startPane);
                 }
 
                 ComponentList onPane = new ComponentList();
@@ -175,7 +175,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     expirationPane.setCenter(expirationLabel);
 
                     HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                    
+
                     GridPane masterPane = new GridPane();
                     masterPane.setVgap(8);
                     masterPane.setHgap(16);
