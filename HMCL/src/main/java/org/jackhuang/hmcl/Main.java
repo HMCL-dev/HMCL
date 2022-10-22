@@ -117,10 +117,16 @@ public final class Main {
     static void showErrorAndExit(String message) {
         System.err.println(message);
         System.err.println("A fatal error has occurred, forcibly exiting.");
-        if (Platform.isFxApplicationThread())
-            new Alert(Alert.AlertType.ERROR, message).showAndWait();
-        else
-            JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
+
+        try {
+            if (Platform.isFxApplicationThread()) {
+                new Alert(Alert.AlertType.ERROR, message).showAndWait();
+                System.exit(1);
+            }
+        } catch (Throwable ignored) {
+        }
+
+        JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
         System.exit(1);
     }
 
@@ -130,10 +136,15 @@ public final class Main {
     static void showWarningAndContinue(String message) {
         System.err.println(message);
         System.err.println("Potential issues have been detected.");
-        if (Platform.isFxApplicationThread())
-            new Alert(Alert.AlertType.WARNING, message).showAndWait();
-        else
-            JOptionPane.showMessageDialog(null, message, "Warning", JOptionPane.WARNING_MESSAGE);
+
+        try {
+            if (Platform.isFxApplicationThread()) {
+                new Alert(Alert.AlertType.WARNING, message).showAndWait();
+                return;
+            }
+        } catch (Throwable ignored) {
+        }
+        JOptionPane.showMessageDialog(null, message, "Warning", JOptionPane.WARNING_MESSAGE);
     }
 
     static void fixLetsEncrypt() {
