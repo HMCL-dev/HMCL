@@ -240,8 +240,17 @@ public final class MultiplayerManager {
                             commands = new String[]{GSUDO_LOCAL_FILE.toString(), HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
                         break;
                     case LINUX:
-                        if (Files.exists(Paths.get("/usr/bin/pkexec")))
-                            commands = new String[]{"/usr/bin/pkexec", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+                        String askpass = System.getProperty("hmcl.askpass", System.getenv("HMCL_ASKPASS"));
+                        if ("user".equalsIgnoreCase(askpass))
+                            commands = new String[]{"sudo", "-A", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+                        else if ("false".equalsIgnoreCase(askpass))
+                            commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+                        else {
+                            if (Files.exists(Paths.get("/usr/bin/pkexec")))
+                                commands = new String[]{"/usr/bin/pkexec", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+                            else
+                                commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+                        }
                         break;
                     case OSX:
                         commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
@@ -298,6 +307,10 @@ public final class MultiplayerManager {
                     error = HiperExitEvent.INVALID_CONFIGURATION;
                 else if (log.startsWith("sudo: ") || log.startsWith("Error getting authority"))
                     error = HiperExitEvent.NO_SUDO_PRIVILEGES;
+                else if (log.startsWith("Failed to write to log, can't rename log file")) {
+                    error = HiperExitEvent.NO_SUDO_PRIVILEGES;
+                    stop();
+                }
 
                 return;
             }

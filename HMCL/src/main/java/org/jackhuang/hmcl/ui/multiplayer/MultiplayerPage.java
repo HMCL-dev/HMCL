@@ -299,9 +299,15 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                     Controllers.dialog(i18n("multiplayer.token.malformed"));
                     break;
                 case MultiplayerManager.HiperExitEvent.NO_SUDO_PRIVILEGES:
-                    Controllers.confirm(i18n("multiplayer.error.failed_sudo"), null, MessageDialogPane.MessageType.INFO, () -> {
-                        try {
-                            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                        Controllers.confirm(i18n("multiplayer.error.failed_sudo.windows"), null, MessageDialogPane.MessageType.WARNING, () -> {
+                            FXUtils.openLink("https://docs.hmcl.net/multiplayer/help.html#%E9%9B%B6%E4%BD%BF%E7%94%A8%E7%AE%A1%E7%90%86%E5%91%98%E6%9D%83%E9%99%90%E5%90%AF%E5%8A%A8-hmcl");
+                        }, null);
+                    } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+                        Controllers.dialog(i18n("multiplayer.error.failed_sudo.linux", MultiplayerManager.HIPER_PATH.toString()), null, MessageDialogPane.MessageType.WARNING);
+                    } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                        Controllers.confirm(i18n("multiplayer.error.failed_sudo.mac"), null, MessageDialogPane.MessageType.INFO, () -> {
+                            try {
                                 String text = "%hmcl-hiper ALL=(ALL:ALL) NOPASSWD: " + MultiplayerManager.HIPER_PATH.toString().replaceAll("[ @!(),:=\\\\]", "\\\\$0") + "\n";
 
                                 File sudoersTmp = File.createTempFile("sudoer", ".tmp");
@@ -318,13 +324,11 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                                                 "chmod 0440 /private/etc/sudoers.d/hmcl-hiper"
                                         ).replaceAll("[\\\\\"]", "\\\\$0"))
                                 );
-                            } else {
-                                throw new UnsupportedOperationException("unsupported operating systems: " + OperatingSystem.CURRENT_OS);
+                            } catch (Throwable e) {
+                                LOG.log(Level.WARNING, "Failed to modify sudoers", e);
                             }
-                        } catch (Throwable e) {
-                            LOG.log(Level.WARNING, "Failed to modify sudoers", e);
-                        }
-                    }, null);
+                        }, null);
+                    }
                     break;
                 case MultiplayerManager.HiperExitEvent.INTERRUPTED:
                     // do nothing
