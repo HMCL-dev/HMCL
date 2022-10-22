@@ -336,7 +336,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                 pane.getChildren().setAll(
                         //aboutLink,
-                        //placeholder,
+                        placeholder,
                         FXUtils.segmentToTextFlow(i18n("multiplayer.powered_by"), Controllers::onHyperlinkAction));
 
                 thanksPane.getContent().addAll(pane);
