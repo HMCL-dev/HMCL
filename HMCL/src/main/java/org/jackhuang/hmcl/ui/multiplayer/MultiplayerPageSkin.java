@@ -166,9 +166,9 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                 ComponentList onPane = new ComponentList();
                 {     
-                    BorderPane roothintPane = new BorderPane();
-                    HintPane roothintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                    roothintPane.setText(i18n("multiplayer.hint"));
+                    BorderPane roothintPane0 = new BorderPane();
+                    HintPane roothintPane0 = new HintPane(MessageDialogPane.MessageType.INFO);
+                    roothintPane0.setText(i18n("multiplayer.hint"));
 
                     BorderPane expirationPane = new BorderPane();
                     expirationPane.setLeft(new Label(i18n("multiplayer.session.expiration")));
