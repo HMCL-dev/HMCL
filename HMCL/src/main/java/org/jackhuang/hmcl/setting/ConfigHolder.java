@@ -46,6 +46,7 @@ public final class ConfigHolder {
     private static Config configInstance;
     private static GlobalConfig globalConfigInstance;
     private static boolean newlyCreated;
+    private static boolean ownerChanged = false;
 
     public static Config config() {
         if (configInstance == null) {
@@ -67,6 +68,10 @@ public final class ConfigHolder {
 
     public static boolean isNewlyCreated() {
         return newlyCreated;
+    }
+
+    public static boolean isOwnerChanged() {
+        return ownerChanged;
     }
 
     public synchronized static void init() throws IOException {
@@ -148,6 +153,15 @@ public final class ConfigHolder {
 
     private static Config loadConfig() throws IOException {
         if (Files.exists(configLocation)) {
+            try {
+                if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
+                        && "root".equals(System.getProperty("user.name"))
+                        && !"root".equals(Files.getOwner(configLocation).getName())) {
+                    ownerChanged = true;
+                }
+            } catch (IOException e1) {
+                LOG.log(Level.WARNING, "Failed to get owner");
+            }
             try {
                 String content = FileUtils.readText(configLocation);
                 Config deserialized = Config.fromJson(content);

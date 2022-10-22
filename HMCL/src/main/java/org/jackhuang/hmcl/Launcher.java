@@ -111,6 +111,14 @@ public final class Launcher extends Application {
                 Main.showErrorAndExit(i18n("fatal.config_loading_failure", Paths.get("").toAbsolutePath().normalize().toString()));
             }
 
+            if (ConfigHolder.isOwnerChanged()) {
+                ButtonType res = new Alert(Alert.AlertType.WARNING, i18n("fatal.config_change_owner_root"), ButtonType.YES, ButtonType.NO)
+                        .showAndWait()
+                        .orElse(null);
+                if (res == ButtonType.NO)
+                    return;
+            }
+
             if (Metadata.HMCL_DIRECTORY.toAbsolutePath().toString().indexOf('=') >= 0) {
                 Main.showWarningAndContinue(i18n("fatal.illegal_char"));
             }
