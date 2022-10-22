@@ -102,12 +102,11 @@ public final class MultiplayerManager {
         boolean isAdministrator = false;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             try {
-                String[] groups = new com.sun.security.auth.module.NTSystem().getGroupIDs();
-                for (String group : groups) {
-                    if ("S-1-5-32-544".equals(group)) {
-                        isAdministrator = true;
-                        break;
-                    }
+                Process process = Runtime.getRuntime().exec(new String[]{"net.exe", "session"});
+                if (!process.waitFor(1, TimeUnit.SECONDS)) {
+                    process.destroy();
+                } else {
+                    isAdministrator = process.exitValue() == 0;
                 }
             } catch (Throwable ignored) {
             }
