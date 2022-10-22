@@ -125,8 +125,8 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
             {
                 ComponentList offPane = new ComponentList();
                 {
-                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                    hintPane.setText(i18n("multiplayer.hint"));
+                    HintPane roothintPane1 = new HintPane(MessageDialogPane.MessageType.INFO);
+                    roothintPane1.setText(i18n("multiplayer.hint"));
 
                     HintPane hintPane0 = new HintPane(MessageDialogPane.MessageType.WARNING);
                     hintPane0.setText(i18n("multiplayer.off.hint"));
@@ -161,12 +161,13 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         startPane.setAlignment(Pos.CENTER_RIGHT);
                     }
 
-                    offPane.getContent().setAll(hintPane, hintPane0, tokenPane, startPane);
+                    offPane.getContent().setAll(roothintPane1, hintPane0, tokenPane, startPane);
                 }
 
                 ComponentList onPane = new ComponentList();
                 {     
-                    hintPane.setText(i18n("multiplayer.hint"));
+                    HintPane roothintPane2 = new HintPane(MessageDialogPane.MessageType.INFO);
+                    roothintPane2.setText(i18n("multiplayer.hint"));
 
                     BorderPane expirationPane = new BorderPane();
                     expirationPane.setLeft(new Label(i18n("multiplayer.session.expiration")));
@@ -309,9 +310,9 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                     FXUtils.onChangeAndOperate(control.expireTimeProperty(), t -> {
                         if (t == null) {
-                            onPane.getContent().setAll(hintPane, hintPane0, masterPane, slavePane);
+                            onPane.getContent().setAll(roothintPane2, masterPane, slavePane);
                         } else {
-                            onPane.getContent().setAll(hintPane, expirationPane, masterPane, slavePane);
+                            onPane.getContent().setAll(roothintPane2, expirationPane, masterPane, slavePane);
                         }
                     });
                 }
