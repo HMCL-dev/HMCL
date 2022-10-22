@@ -154,7 +154,9 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         startPane.setAlignment(Pos.CENTER_RIGHT);
                     }
 
-                    offPane.getContent().setAll(hintPane, tokenPane, startPane);
+                    if (!MultiplayerManager.IS_ADMINISTRATOR)
+                        offPane.getContent().add(hintPane);
+                    offPane.getContent().addAll(tokenPane, startPane);
                 }
 
                 ComponentList onPane = new ComponentList();

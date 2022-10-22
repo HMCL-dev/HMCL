@@ -96,7 +96,7 @@ public final class MultiplayerManager {
     private static final Path GSUDO_LOCAL_FILE = Metadata.HMCL_DIRECTORY.resolve("libraries").resolve("gsudo").resolve("gsudo").resolve(GSUDO_VERSION).resolve(GSUDO_TARGET_ARCH).resolve(GSUDO_FILE_NAME);
     private static final boolean USE_GSUDO;
 
-    private static final boolean IS_ADMINISTRATOR;
+    static final boolean IS_ADMINISTRATOR;
 
     static {
         boolean isAdministrator = false;
