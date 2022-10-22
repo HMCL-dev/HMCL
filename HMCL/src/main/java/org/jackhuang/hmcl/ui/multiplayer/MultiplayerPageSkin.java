@@ -166,8 +166,9 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                 ComponentList onPane = new ComponentList();
                 {     
-                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                    hintPane.setText(i18n("multiplayer.hint"));
+                    BorderPane roothintPane = new BorderPane();
+                    HintPane roothintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                    roothintPane.setText(i18n("multiplayer.hint"));
 
                     BorderPane expirationPane = new BorderPane();
                     expirationPane.setLeft(new Label(i18n("multiplayer.session.expiration")));
@@ -204,7 +205,6 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         HintPane hintPane2 = new HintPane(MessageDialogPane.MessageType.INFO);
                         GridPane.setColumnSpan(hintPane2, 3);
                         hintPane2.setText(i18n("multiplayer.master.hint2"));
-                        masterPane.addRow(0, hintPane1, hintPane2);
 
                         Label portTitle = new Label(i18n("multiplayer.master.port"));
                         BorderPane.setAlignment(portTitle, Pos.CENTER_LEFT);
@@ -313,7 +313,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         if (t == null) {
                             onPane.getContent().setAll(masterPane, slavePane);
                         } else {
-                            onPane.getContent().setAll(expirationPane, masterPane, slavePane);
+                            onPane.getContent().setAll(roothintPane, expirationPane, masterPane, slavePane);
                         }
                     });
                 }
