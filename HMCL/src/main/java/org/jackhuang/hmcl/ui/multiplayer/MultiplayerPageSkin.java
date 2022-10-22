@@ -125,8 +125,8 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
             {
                 ComponentList offPane = new ComponentList();
                 {
-                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-                    hintPane.setText(i18n("multiplayer.off.hint"));
+                    HintPane hintPane0 = new HintPane(MessageDialogPane.MessageType.WARNING);
+                    hintPane0.setText(i18n("multiplayer.off.hint"));
 
                     BorderPane tokenPane = new BorderPane();
                     {
@@ -158,7 +158,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         startPane.setAlignment(Pos.CENTER_RIGHT);
                     }
 
-                    offPane.getContent().setAll(hintPane, tokenPane, startPane);
+                    offPane.getContent().setAll(hintPane0, tokenPane, startPane);
                 }
 
                 ComponentList onPane = new ComponentList();
@@ -196,14 +196,14 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         masterPane.addRow(0, titlePane);
 
                         HintPane hintPane1 = new HintPane(MessageDialogPane.MessageType.INFO);
-                        GridPane.setColumnSpan(hintPane, 3);
-                        hintPane.setText(i18n("multiplayer.master.hint"));
-                        masterPane.addRow(1, hintPane);
+                        GridPane.setColumnSpan(hintPane1, 3);
+                        hintPane1.setText(i18n("multiplayer.master.hint"));
+                        masterPane.addRow(1, hintPane1);
 
                         HintPane hintPane4 = new HintPane(MessageDialogPane.MessageType.INFO);
-                        GridPane.setColumnSpan(hintPane, 3);
-                        hintPane.setText(i18n("multiplayer.master.hint2"));
-                        masterPane.addRow(1, hintPane);
+                        GridPane.setColumnSpan(hintPan4, 3);
+                        hintPane4.setText(i18n("multiplayer.master.hint2"));
+                        masterPane.addRow(1, hintPane4);
 
                         Label portTitle = new Label(i18n("multiplayer.master.port"));
                         BorderPane.setAlignment(portTitle, Pos.CENTER_LEFT);
