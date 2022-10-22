@@ -99,6 +99,11 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         item.setLeftGraphic(wrap(SVG::rocketLaunchOutline));
                         item.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/multiplayer/text.html"));
                     })
+                    .addNavigationDrawerItem(item -> {
+                        item.setTitle(i18n("multiplayer.help.5"));
+                        item.setLeftGraphic(wrap(SVG::rocketLaunchOutline));
+                        item.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/multiplayer/help.html#3%E5%A6%82%E4%BD%95%E5%85%B3%E9%97%AD%E9%98%B2%E7%81%AB%E5%A2%99"));
+                    })
                     .addNavigationDrawerItem(report -> {
                         report.setTitle(i18n("feedback"));
                         report.setLeftGraphic(wrap(SVG::messageAlertOutline));
@@ -157,7 +162,11 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                 }
 
                 ComponentList onPane = new ComponentList();
-                {
+                {   
+                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                    hintPane.setText(i18n("multiplayer.hint"));
+                    hintPane.getChildren().add(hintPane);
+                    
                     BorderPane expirationPane = new BorderPane();
                     expirationPane.setLeft(new Label(i18n("multiplayer.session.expiration")));
                     Label expirationLabel = new Label();
@@ -189,6 +198,11 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
                         GridPane.setColumnSpan(hintPane, 3);
                         hintPane.setText(i18n("multiplayer.master.hint"));
+                        masterPane.addRow(1, hintPane);
+
+                        HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                        GridPane.setColumnSpan(hintPane, 3);
+                        hintPane.setText(i18n("multiplayer.master.hint2"));
                         masterPane.addRow(1, hintPane);
 
                         Label portTitle = new Label(i18n("multiplayer.master.port"));
@@ -246,6 +260,11 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         hintPane2.setText(i18n("multiplayer.slave.hint2"));
                         slavePane.getChildren().add(hintPane2);
 
+                        HintPane hintPane3 = new HintPane(MessageDialogPane.MessageType.INFO);
+                        GridPane.setColumnSpan(hintPane3, 3);
+                        hintPane3.setText(i18n("multiplayer.slave.server_address.hint"));
+                        slavePane.getChildren().add(hintPane3);
+
                         GridPane notBroadcastingPane = new GridPane();
                         {
                             notBroadcastingPane.setVgap(8);
@@ -282,9 +301,9 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                         FXUtils.onChangeAndOperate(control.broadcasterProperty(), broadcaster -> {
                             if (broadcaster == null) {
-                                slavePane.getChildren().setAll(titlePane, hintPane, hintPane2, notBroadcastingPane);
+                                slavePane.getChildren().setAll(titlePane, hintPane, hintPane2, hintPane3, notBroadcastingPane);
                             } else {
-                                slavePane.getChildren().setAll(titlePane, hintPane, hintPane2, broadcastingPane);
+                                slavePane.getChildren().setAll(titlePane, hintPane, hintPane2, hintPane3, broadcastingPane);
                             }
                         });
                     }
