@@ -31,10 +31,7 @@ import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.util.platform.ManagedProcess;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedWriter;
@@ -190,13 +187,19 @@ public final class MultiplayerManager {
                 throw new HiperNotExistsException(HIPER_PATH);
             }
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("hiper.exe"), packagesHash.get(String.format("%s/hiper.exe", HIPER_TARGET_NAME)));
-                verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("wintun.dll"), packagesHash.get(String.format("%s/wintun.dll", HIPER_TARGET_NAME)));
-                // verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("tap-windows-9.21.2.exe"), packagesHash.get("tap-windows-9.21.2.exe"));
-                verifyChecksumAndDeleteIfNotMatched(GSUDO_LOCAL_FILE, packagesHash.get(GSUDO_FILE_NAME));
-            } else {
-                verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("hiper"), packagesHash.get(String.format("%s/hiper", HIPER_TARGET_NAME)));
+            try {
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("hiper.exe"), packagesHash.get(String.format("%s/hiper.exe", HIPER_TARGET_NAME)));
+                    verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("wintun.dll"), packagesHash.get(String.format("%s/wintun.dll", HIPER_TARGET_NAME)));
+                    // verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("tap-windows-9.21.2.exe"), packagesHash.get("tap-windows-9.21.2.exe"));
+                    verifyChecksumAndDeleteIfNotMatched(GSUDO_LOCAL_FILE, packagesHash.get(GSUDO_FILE_NAME));
+                } else {
+                    verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("hiper"), packagesHash.get(String.format("%s/hiper", HIPER_TARGET_NAME)));
+                }
+            } catch (IOException e) {
+                // force redownload
+                Files.deleteIfExists(HIPER_PATH);
+                throw e;
             }
 
             // 下载 HiPer 配置文件
