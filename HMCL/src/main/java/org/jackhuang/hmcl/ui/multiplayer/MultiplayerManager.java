@@ -81,7 +81,7 @@ public final class MultiplayerManager {
             pair(Architecture.MIPS64, "mips64"),
             pair(Architecture.MIPS64EL, "mips64le"),
             pair(Architecture.PPC64LE, "ppc64le"),
-            pair(Architecture.RISCV, "riscv64"),
+            pair(Architecture.RISCV64, "riscv64"),
             pair(Architecture.MIPSEL, "mipsle")
     );
 
