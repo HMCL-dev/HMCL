@@ -42,9 +42,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -65,6 +63,7 @@ public final class MultiplayerManager {
     private static final String HIPER_DOWNLOAD_URL = "https://gitcode.net/to/hiper/-/raw/master/";
     private static final String HIPER_PACKAGES_URL = HIPER_DOWNLOAD_URL + "packages.sha1";
     private static final String HIPER_POINTS_URL = "https://cert.mcer.cn/point.yml";
+    private static final Path HIPER_TEMP_CONFIG_PATH = Metadata.HMCL_DIRECTORY.resolve("hiper.yml");
     private static final Path HIPER_CONFIG_DIR = Metadata.HMCL_DIRECTORY.resolve("hiper-config");
     public static final Path HIPER_PATH = getHiperLocalDirectory().resolve(getHiperFileName());
     public static final int HIPER_AGREEMENT_VERSION = 3;
@@ -135,7 +134,8 @@ public final class MultiplayerManager {
 
     public static void clearConfiguration() {
         try {
-            Files.delete(getConfigPath(ConfigHolder.globalConfig().getMultiplayerToken()));
+            Files.deleteIfExists(HIPER_TEMP_CONFIG_PATH);
+            Files.deleteIfExists(getConfigPath(ConfigHolder.globalConfig().getMultiplayerToken()));
         } catch (IOException e) {
             LOG.log(Level.WARNING, "Failed to delete config", e);
         }
@@ -237,44 +237,45 @@ public final class MultiplayerManager {
             try {
                 certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString();
                 if (!certFileContent.equals("")) {
-                    certFileContent += "\n" +
-                            "logging:\n" +
-                            "  format: json\n" +
-                            "  file_path: '" + Metadata.HMCL_DIRECTORY.resolve("logs").resolve("hiper.log").toString().replace("'", "''") + "'\n";
                     FileUtils.writeText(configPath, certFileContent);
                 }
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "configuration file cloud cache index code has been not available, try to use the local configuration file", e);
             }
 
-            Path oldConfigPath = Metadata.HMCL_DIRECTORY.resolve("hiper.yml");
-            if (Files.notExists(configPath) && Files.exists(oldConfigPath)) {
-                Files.move(oldConfigPath, configPath);
+            if (Files.exists(configPath)) {
+                Files.copy(configPath, HIPER_TEMP_CONFIG_PATH, StandardCopyOption.REPLACE_EXISTING);
+                try (BufferedWriter output = Files.newBufferedWriter(HIPER_TEMP_CONFIG_PATH, StandardOpenOption.WRITE, StandardOpenOption.APPEND)) {
+                    output.write("\n");
+                    output.write("logging:\n");
+                    output.write("  format: json\n");
+                    output.write("  file_path: '" + Metadata.HMCL_DIRECTORY.resolve("logs").resolve("hiper.log").toString().replace("'", "''") + "'\n");
+                }
             }
 
-            String[] commands = new String[]{HIPER_PATH.toString(), "-config", configPath.toString()};
+            String[] commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_TEMP_CONFIG_PATH.toString()};
 
             if (!IS_ADMINISTRATOR) {
                 switch (OperatingSystem.CURRENT_OS) {
                     case WINDOWS:
                         if (USE_GSUDO)
-                            commands = new String[]{GSUDO_LOCAL_FILE.toString(), HIPER_PATH.toString(), "-config", configPath.toString()};
+                            commands = new String[]{GSUDO_LOCAL_FILE.toString(), HIPER_PATH.toString(), "-config", HIPER_TEMP_CONFIG_PATH.toString()};
                         break;
                     case LINUX:
                         String askpass = System.getProperty("hmcl.askpass", System.getenv("HMCL_ASKPASS"));
                         if ("user".equalsIgnoreCase(askpass))
-                            commands = new String[]{"sudo", "-A", HIPER_PATH.toString(), "-config", configPath.toString()};
+                            commands = new String[]{"sudo", "-A", HIPER_PATH.toString(), "-config", HIPER_TEMP_CONFIG_PATH.toString()};
                         else if ("false".equalsIgnoreCase(askpass))
-                            commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", configPath.toString()};
+                            commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", HIPER_TEMP_CONFIG_PATH.toString()};
                         else {
                             if (Files.exists(Paths.get("/usr/bin/pkexec")))
-                                commands = new String[]{"/usr/bin/pkexec", HIPER_PATH.toString(), "-config", configPath.toString()};
+                                commands = new String[]{"/usr/bin/pkexec", HIPER_PATH.toString(), "-config", HIPER_TEMP_CONFIG_PATH.toString()};
                             else
-                                commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", configPath.toString()};
+                                commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", HIPER_TEMP_CONFIG_PATH.toString()};
                         }
                         break;
                     case OSX:
-                        commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", configPath.toString()};
+                        commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", HIPER_TEMP_CONFIG_PATH.toString()};
                         break;
                 }
             }
