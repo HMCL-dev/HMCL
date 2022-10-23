@@ -77,7 +77,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 //                    .addNavigationDrawerItem(item -> {
 //                        item.setTitle(i18n("multiplayer.help.1"));
 //                        item.setLeftGraphic(wrap(SVG::helpCircleOutline));
-//                        item.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/multiplayer/help.html#%E9%9B%B6%E4%BD%BF%E7%94%A8%E7%AE%A1%E7%90%86%E5%91%98%E6%9D%83%E9%99%90%E5%90%AF%E5%8A%A8-hmcl"));
+//                        item.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/multiplayer/admin.html"));
 //                    })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("multiplayer.help.2"));

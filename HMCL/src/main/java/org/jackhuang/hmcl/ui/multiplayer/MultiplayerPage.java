@@ -301,7 +301,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                 case MultiplayerManager.HiperExitEvent.NO_SUDO_PRIVILEGES:
                     if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                         Controllers.confirm(i18n("multiplayer.error.failed_sudo.windows"), null, MessageDialogPane.MessageType.WARNING, () -> {
-                            FXUtils.openLink("https://docs.hmcl.net/multiplayer/help.html#%E9%9B%B6%E4%BD%BF%E7%94%A8%E7%AE%A1%E7%90%86%E5%91%98%E6%9D%83%E9%99%90%E5%90%AF%E5%8A%A8-hmcl");
+                            FXUtils.openLink("https://docs.hmcl.net/multiplayer/admin.html");
                         }, null);
                     } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
                         Controllers.dialog(i18n("multiplayer.error.failed_sudo.linux", MultiplayerManager.HIPER_PATH.toString()), null, MessageDialogPane.MessageType.WARNING);
