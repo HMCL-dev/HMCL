@@ -21,16 +21,22 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.Hex;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.DateTypeAdapter;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.CommandBuilder;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -59,7 +65,7 @@ public final class MultiplayerManager {
     private static final String HIPER_DOWNLOAD_URL = "https://gitcode.net/to/hiper/-/raw/master/";
     private static final String HIPER_PACKAGES_URL = HIPER_DOWNLOAD_URL + "packages.sha1";
     private static final String HIPER_POINTS_URL = "https://cert.mcer.cn/point.yml";
-    private static final Path HIPER_CONFIG_PATH = Metadata.HMCL_DIRECTORY.resolve("hiper.yml");
+    private static final Path HIPER_CONFIG_DIR = Metadata.HMCL_DIRECTORY.resolve("hiper-config");
     public static final Path HIPER_PATH = getHiperLocalDirectory().resolve(getHiperFileName());
     public static final int HIPER_AGREEMENT_VERSION = 3;
     private static final String REMOTE_ADDRESS = "127.0.0.1";
@@ -123,8 +129,16 @@ public final class MultiplayerManager {
     private MultiplayerManager() {
     }
 
+    public static Path getConfigPath(String token) {
+        return HIPER_CONFIG_DIR.resolve(Hex.encodeHex(DigestUtils.digest("SHA-1", token)) + ".yml");
+    }
+
     public static void clearConfiguration() {
-        HIPER_CONFIG_PATH.toFile().delete();
+        try {
+            Files.delete(getConfigPath(ConfigHolder.globalConfig().getMultiplayerToken()));
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to delete config", e);
+        }
     }
 
     private static CompletableFuture<Map<String, String>> getPackagesHash() {
@@ -215,6 +229,9 @@ public final class MultiplayerManager {
                 throw e;
             }
 
+            Path configPath = getConfigPath(token);
+            Files.createDirectories(configPath.getParent());
+
             // 下载 HiPer 配置文件
             String certFileContent;
             try {
@@ -223,37 +240,41 @@ public final class MultiplayerManager {
                     certFileContent += "\n" +
                             "logging:\n" +
                             "  format: json\n" +
-                            "  max_backups: 3\n" +
-                            "  file_path: '" + Metadata.HMCL_DIRECTORY.resolve("logs").toString().replace("'", "''") + "'";
-                    FileUtils.writeText(HIPER_CONFIG_PATH, certFileContent);
+                            "  file_path: '" + Metadata.HMCL_DIRECTORY.resolve("logs").resolve("hiper.log").toString().replace("'", "''") + "'\n";
+                    FileUtils.writeText(configPath, certFileContent);
                 }
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "configuration file cloud cache index code has been not available, try to use the local configuration file", e);
             }
 
-            String[] commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+            Path oldConfigPath = Metadata.HMCL_DIRECTORY.resolve("hiper.yml");
+            if (Files.notExists(configPath) && Files.exists(oldConfigPath)) {
+                Files.move(oldConfigPath, configPath);
+            }
+
+            String[] commands = new String[]{HIPER_PATH.toString(), "-config", configPath.toString()};
 
             if (!IS_ADMINISTRATOR) {
                 switch (OperatingSystem.CURRENT_OS) {
                     case WINDOWS:
                         if (USE_GSUDO)
-                            commands = new String[]{GSUDO_LOCAL_FILE.toString(), HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+                            commands = new String[]{GSUDO_LOCAL_FILE.toString(), HIPER_PATH.toString(), "-config", configPath.toString()};
                         break;
                     case LINUX:
                         String askpass = System.getProperty("hmcl.askpass", System.getenv("HMCL_ASKPASS"));
                         if ("user".equalsIgnoreCase(askpass))
-                            commands = new String[]{"sudo", "-A", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+                            commands = new String[]{"sudo", "-A", HIPER_PATH.toString(), "-config", configPath.toString()};
                         else if ("false".equalsIgnoreCase(askpass))
-                            commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+                            commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", configPath.toString()};
                         else {
                             if (Files.exists(Paths.get("/usr/bin/pkexec")))
-                                commands = new String[]{"/usr/bin/pkexec", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+                                commands = new String[]{"/usr/bin/pkexec", HIPER_PATH.toString(), "-config", configPath.toString()};
                             else
-                                commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+                                commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", configPath.toString()};
                         }
                         break;
                     case OSX:
-                        commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+                        commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", configPath.toString()};
                         break;
                 }
             }
