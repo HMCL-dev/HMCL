@@ -24,10 +24,14 @@ import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -111,25 +115,6 @@ public final class ConfigHolder {
 
     private static Path locateConfig() {
         Path exePath = Paths.get("");
-        try {
-            Path jarPath = Paths.get(ConfigHolder.class.getProtectionDomain().getCodeSource().getLocation()
-                    .toURI()).toAbsolutePath();
-            if (Files.isRegularFile(jarPath) && Files.isWritable(jarPath)) {
-                jarPath = jarPath.getParent();
-                exePath = jarPath;
-
-                Path config = jarPath.resolve(CONFIG_FILENAME);
-                if (Files.isRegularFile(config))
-                    return config;
-
-                Path dotConfig = jarPath.resolve(CONFIG_FILENAME_LINUX);
-                if (Files.isRegularFile(dotConfig))
-                    return dotConfig;
-            }
-
-        } catch (Throwable ignore) {
-        }
-
         Path config = Paths.get(CONFIG_FILENAME);
         if (Files.isRegularFile(config))
             return config;
@@ -138,8 +123,22 @@ public final class ConfigHolder {
         if (Files.isRegularFile(dotConfig))
             return dotConfig;
 
-        // create new
-        return exePath.resolve(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? CONFIG_FILENAME : CONFIG_FILENAME_LINUX);
+        try {
+            Path jarPath = JarUtils.thisJar().orElse(null);
+            if (jarPath != null && Files.isRegularFile(jarPath) && Files.isWritable(jarPath)) {
+                Path jarDir = jarPath.getParent();
+
+                Path jarConfig = jarDir.resolve(CONFIG_FILENAME);
+                if (Files.isRegularFile(jarConfig))
+                    return jarConfig;
+
+                Path jarDotConfig = jarDir.resolve(CONFIG_FILENAME_LINUX);
+                if (Files.isRegularFile(jarDotConfig))
+                    return jarDotConfig;
+            }
+        } catch (Throwable ignore) {
+        }
+        return config;
     }
 
     private static Config loadConfig() throws IOException {
