@@ -389,16 +389,17 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                     JFXButton exportButton = new JFXButton(i18n("multiplayer.persistence.export.button"));
                     exportButton.setOnMouseClicked(e -> {
+                        String token = globalConfig().getMultiplayerToken();
+                        Path configPath = MultiplayerManager.getConfigPath(token);
+
                         FileChooser fileChooser = new FileChooser();
                         fileChooser.setTitle(i18n("multiplayer.persistence.export.title"));
                         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("multiplayer.persistence.license_file"), "*.yml"));
+                        fileChooser.setInitialFileName(configPath.getFileName().toString());
 
                         File file = fileChooser.showSaveDialog(Controllers.getStage());
                         if (file == null)
                             return;
-
-                        String token = globalConfig().getMultiplayerToken();
-                        Path configPath = MultiplayerManager.getConfigPath(token);
 
                         CompletableFuture.runAsync(Lang.wrap(() -> MultiplayerManager.downloadHiperConfig(token, configPath)), Schedulers.io())
                                 .handleAsync((ignored, exception) -> {
