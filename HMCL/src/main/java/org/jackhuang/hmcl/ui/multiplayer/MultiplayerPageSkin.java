@@ -362,7 +362,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                         CompletableFuture<Boolean> future = new CompletableFuture<>();
                         if (file.getName().matches("[a-z0-9]{40}.yml") && !targetPath.getFileName().toString().equals(file.getName())) {
-                            Controllers.confirm(i18n(""), null, MessageType.QUESTION,
+                            Controllers.confirm(i18n("multiplayer.persistence.import.token_not_match"), null, MessageType.QUESTION,
                                     () -> future.complete(true),
                                     () -> future.complete(false)) ;
                         } else {
