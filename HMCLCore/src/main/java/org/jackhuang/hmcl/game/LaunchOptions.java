@@ -62,6 +62,7 @@ public class LaunchOptions implements Serializable {
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
     private boolean daemon;
+    private boolean hiperMode;
 
     /**
      * The game directory
@@ -262,6 +263,10 @@ public class LaunchOptions implements Serializable {
         return daemon;
     }
 
+    public boolean isHiperMode() {
+        return hiperMode;
+    }
+
     public static class Builder {
 
         private final LaunchOptions options = new LaunchOptions();
@@ -442,8 +447,17 @@ public class LaunchOptions implements Serializable {
             return options.daemon;
         }
 
+        public boolean isHiperMode() {
+            return options.hiperMode;
+        }
+
         public Builder setGameDir(File gameDir) {
             options.gameDir = gameDir;
+            return this;
+        }
+
+        public Builder setHiperMode(boolean hiperMode) {
+            options.hiperMode = hiperMode;
             return this;
         }
 

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.mod.multimc;
 
+import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.mod.ModpackManifest;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.util.Lang;
@@ -29,11 +30,11 @@ import java.util.Optional;
 import java.util.Properties;
 
 /**
- *
  * @author huangyuhui
  */
 public final class MultiMCInstanceConfiguration implements ModpackManifest {
 
+    private static String OS = System.getProperty("os.name").toLowerCase();
     private final String instanceType; // InstanceType
     private final String name; // name
     private final String gameVersion; // IntendedVersion
@@ -58,10 +59,10 @@ public final class MultiMCInstanceConfiguration implements ModpackManifest {
     private final boolean overrideConsole; // OverrideConsole
     private final boolean overrideCommands; // OverrideCommands
     private final boolean overrideWindow; // OverrideWindow
-
     private final MultiMCManifest mmcPack;
 
     MultiMCInstanceConfiguration(String defaultName, InputStream contentStream, MultiMCManifest mmcPack) throws IOException {
+        LaunchOptions launchOptions = new LaunchOptions();
         Properties p = new Properties();
         p.load(new InputStreamReader(contentStream, StandardCharsets.UTF_8));
 
@@ -72,6 +73,24 @@ public final class MultiMCInstanceConfiguration implements ModpackManifest {
         gameVersion = mmcPack != null ? mmcPack.getComponents().stream().filter(e -> "net.minecraft".equals(e.getUid())).findAny()
                 .orElseThrow(() -> new IOException("Malformed mmc-pack.json")).getVersion() : p.getProperty("IntendedVersion");
         javaPath = p.getProperty("JavaPath");
+        //DEBUG NEED
+        /*
+        if (launchOptions.isHiperMode()) {
+            String authLibPath = null;
+            if (isMacOS())
+                authLibPath = System.getProperty("user.home") + "/Library/Application Support/.hmcl/authlib-injector.jar";
+            else if (isLinux())
+                authLibPath = System.getProperty("user.home") + "/.local/share/.hmcl/authlib-injector.jar";
+            else if (isWindows()) authLibPath = System.getenv("appdata") + "\\Roaming\\.hmcl\\authlib-injector.jar";
+            if (authLibPath != null) {
+                jvmArgs = p.getProperty("JvmArgs" + "-javaagent:\"" + authLibPath + "\"=https://skin.minenoah.top/api/yggdrasil-hiper/");
+            } else {
+                jvmArgs = p.getProperty("JvmArgs");
+            }
+        } else {
+            jvmArgs = p.getProperty("JvmArgs");
+        }
+        */
         jvmArgs = p.getProperty("JvmArgs");
         fullscreen = Boolean.parseBoolean(p.getProperty("LaunchMaximized"));
         maxMemory = Lang.toIntOrNull(p.getProperty("MaxMemAlloc"));
@@ -120,6 +139,18 @@ public final class MultiMCInstanceConfiguration implements ModpackManifest {
         this.overrideCommands = overrideCommands;
         this.overrideWindow = overrideWindow;
         this.mmcPack = null;
+    }
+
+    public static boolean isMacOS() {
+        return OS.contains("mac") && OS.indexOf("os") > 0 && !OS.contains("x");
+    }
+
+    public static boolean isWindows() {
+        return OS.contains("windows");
+    }
+
+    public boolean isLinux() {
+        return OS.contains("linux");
     }
 
     public String getInstanceType() {
