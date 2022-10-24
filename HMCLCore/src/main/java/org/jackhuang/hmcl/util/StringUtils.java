@@ -260,6 +260,16 @@ public final class StringUtils {
         return US_ASCII_ENCODER.canEncode(cs);
     }
 
+    public static boolean isAlphabeticOrNumber(String str) {
+        int length = str.length();
+        for (int i = 0; i < length; i++) {
+            char ch = str.charAt(i);
+            if (!(ch >= '0' && ch <= '9') && !(ch >= 'a' && ch <= 'z') && !(ch >= 'A' && ch <= 'Z'))
+                return false;
+        }
+        return true;
+    }
+
     /**
      * Class for computing the longest common subsequence between strings.
      */

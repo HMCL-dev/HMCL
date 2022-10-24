@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.google.gson.JsonParseException;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
@@ -25,9 +27,7 @@ import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Hex;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.DateTypeAdapter;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -50,6 +50,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -102,6 +103,10 @@ public final class MultiplayerManager {
     private static final boolean USE_GSUDO;
 
     static final boolean IS_ADMINISTRATOR;
+
+    static final BooleanBinding tokenInvalid = Bindings.createBooleanBinding(
+            () -> !StringUtils.isAlphabeticOrNumber(globalConfig().multiplayerTokenProperty().getValue()),
+            globalConfig().multiplayerTokenProperty());
 
     static {
         boolean isAdministrator = false;
@@ -207,6 +212,13 @@ public final class MultiplayerManager {
         });
     }
 
+    public static void downloadHiperConfig(String token, Path configPath) throws IOException {
+        String certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString();
+        if (!certFileContent.equals("")) {
+            FileUtils.writeText(configPath, certFileContent);
+        }
+    }
+
     public static CompletableFuture<HiperSession> startHiper(String token) {
         return getPackagesHash().thenApplyAsync(wrap(packagesHash -> {
             if (!Files.isRegularFile(HIPER_PATH)) {
@@ -233,14 +245,11 @@ public final class MultiplayerManager {
             Files.createDirectories(configPath.getParent());
 
             // 下载 HiPer 配置文件
-            String certFileContent;
+            Logging.registerForbiddenToken(token, "<hiper token>");
             try {
-                certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString();
-                if (!certFileContent.equals("")) {
-                    FileUtils.writeText(configPath, certFileContent);
-                }
+                downloadHiperConfig(token, configPath);
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "configuration file cloud cache index code has been not available, try to use the local configuration file", e);
+                LOG.log(Level.WARNING, "configuration file cloud cache token has been not available, try to use the local configuration file", e);
             }
 
             if (Files.exists(configPath)) {
