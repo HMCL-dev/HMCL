@@ -84,6 +84,8 @@ public final class CrashReportAnalyzer {
         MODLAUNCHER_8(Pattern.compile("java\\.lang\\.NoSuchMethodError: ('void sun\\.security\\.util\\.ManifestEntryVerifier\\.<init>\\(java\\.util\\.jar\\.Manifest\\)'|sun\\.security\\.util\\.ManifestEntryVerifier\\.<init>\\(Ljava/util/jar/Manifest;\\)V)")),
         // Manually triggerd debug crash
         DEBUG_CRASH(Pattern.compile("Manually triggered debug crash")),
+        //https://github.com/huanghongxun/HMCL/issues/1780
+        PROCESSING_OF_JAVAAGENT_FAILED(Pattern.compile("processing of -javaagent failed")),
         CONFIG(Pattern.compile("Failed loading config file (?<file>.*?) of type SERVER for modid (?<id>.*)"), "id", "file"),
         // Fabric gives some warnings
         FABRIC_WARNINGS(Pattern.compile("Warnings were found!(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\["), "reason"),
