@@ -19,11 +19,15 @@ package org.jackhuang.hmcl;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.DataFormat;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.SambaException;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.AwtUtils;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
@@ -33,13 +37,19 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.awt.*;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.net.*;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -63,7 +73,51 @@ public final class Launcher extends Application {
                 Main.showWarningAndContinue(i18n("fatal.samba"));
             } catch (IOException e) {
                 LOG.log(Level.SEVERE, "Failed to load config", e);
-                Main.showErrorAndExit(i18n("fatal.config_loading_failure", Paths.get("").toAbsolutePath().normalize()));
+
+                try {
+                    if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+                        String owner = Files.getOwner(ConfigHolder.configLocation()).getName();
+                        String userName = System.getProperty("user.name");
+                        if (!Files.isWritable(ConfigHolder.configLocation())
+                                && !userName.equals("root")
+                                && !userName.equals(owner)) {
+
+                            ArrayList<String> files = new ArrayList<>();
+                            {
+                                files.add(ConfigHolder.configLocation().toString());
+                                if (Files.exists(Metadata.HMCL_DIRECTORY))
+                                    files.add(Metadata.HMCL_DIRECTORY.toString());
+
+                                Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
+                                if (Files.exists(mcDir))
+                                    files.add(mcDir.toString());
+                            }
+
+                            String command = new CommandBuilder().add("sudo", "chown", "-R", userName).addAll(files).toString();
+                            ButtonType copyAndExit = new ButtonType(i18n("button.copy_and_exit"));
+
+                            ButtonType res = new Alert(Alert.AlertType.ERROR, i18n("fatal.config_loading_failure.unix", owner, command), copyAndExit, ButtonType.CLOSE)
+                                    .showAndWait()
+                                    .orElse(null);
+                            if (res == copyAndExit) {
+                                Clipboard.getSystemClipboard()
+                                        .setContent(Collections.singletonMap(DataFormat.PLAIN_TEXT, command));
+                            }
+                            System.exit(1);
+                        }
+                    }
+                } catch (IOException ioe) {
+                    LOG.log(Level.WARNING, "Failed to get file owner", ioe);
+                }
+                Main.showErrorAndExit(i18n("fatal.config_loading_failure", Paths.get("").toAbsolutePath().normalize().toString()));
+            }
+
+            if (ConfigHolder.isOwnerChanged()) {
+                ButtonType res = new Alert(Alert.AlertType.WARNING, i18n("fatal.config_change_owner_root"), ButtonType.YES, ButtonType.NO)
+                        .showAndWait()
+                        .orElse(null);
+                if (res == ButtonType.NO)
+                    return;
             }
 
             if (Metadata.HMCL_DIRECTORY.toAbsolutePath().toString().indexOf('=') >= 0) {

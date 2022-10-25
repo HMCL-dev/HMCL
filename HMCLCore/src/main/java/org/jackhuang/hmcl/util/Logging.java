@@ -67,6 +67,9 @@ public final class Logging {
         });
 
         try {
+            if (Files.isRegularFile(logFolder))
+                Files.delete(logFolder);
+
             Files.createDirectories(logFolder);
             FileHandler fileHandler = new FileHandler(logFolder.resolve("hmcl.log").toAbsolutePath().toString());
             fileHandler.setLevel(Level.FINEST);
@@ -74,7 +77,7 @@ public final class Logging {
             fileHandler.setEncoding("UTF-8");
             LOG.addHandler(fileHandler);
         } catch (IOException e) {
-            System.err.println("Unable to create hmcl.log, " + e.getMessage());
+            System.err.println("Unable to create hmcl.log\n" + StringUtils.getStackTrace(e));
         }
 
         ConsoleHandler consoleHandler = new ConsoleHandler();

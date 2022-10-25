@@ -18,16 +18,18 @@
 package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.google.gson.JsonParseException;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.DateTypeAdapter;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -35,33 +37,35 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.io.ChecksumMismatchException.verifyChecksum;
 
 /**
  * Cato Management.
  */
 public final class MultiplayerManager {
-    static final String HIPER_VERSION = "1.2.2";
+    // static final String HIPER_VERSION = "1.2.2";
     private static final String HIPER_DOWNLOAD_URL = "https://gitcode.net/to/hiper/-/raw/master/";
     private static final String HIPER_PACKAGES_URL = HIPER_DOWNLOAD_URL + "packages.sha1";
     private static final String HIPER_POINTS_URL = "https://cert.mcer.cn/point.yml";
-    private static final Path HIPER_CONFIG_PATH = Metadata.HMCL_DIRECTORY.resolve("hiper.yml");
+    private static final Path HIPER_TEMP_CONFIG_PATH = Metadata.HMCL_DIRECTORY.resolve("hiper.yml");
+    private static final Path HIPER_CONFIG_DIR = Metadata.HMCL_DIRECTORY.resolve("hiper-config");
     public static final Path HIPER_PATH = getHiperLocalDirectory().resolve(getHiperFileName());
     public static final int HIPER_AGREEMENT_VERSION = 3;
     private static final String REMOTE_ADDRESS = "127.0.0.1";
@@ -77,7 +81,7 @@ public final class MultiplayerManager {
             pair(Architecture.MIPS64, "mips64"),
             pair(Architecture.MIPS64EL, "mips64le"),
             pair(Architecture.PPC64LE, "ppc64le"),
-            pair(Architecture.RISCV, "riscv64"),
+            pair(Architecture.RISCV64, "riscv64"),
             pair(Architecture.MIPSEL, "mipsle")
     );
 
@@ -89,16 +93,57 @@ public final class MultiplayerManager {
 
     private static final String HIPER_TARGET_NAME = String.format("%s-%s",
             osMap.getOrDefault(OperatingSystem.CURRENT_OS, "windows"),
-            archMap.getOrDefault(Architecture.CURRENT_ARCH, "amd64"));
+            archMap.getOrDefault(Architecture.SYSTEM_ARCH, "amd64"));
 
+    private static final String GSUDO_VERSION = "1.7.1";
+    private static final String GSUDO_TARGET_ARCH = Architecture.SYSTEM_ARCH == Architecture.X86_64 ? "amd64" : "x86";
+    private static final String GSUDO_FILE_NAME = "gsudo.exe";
+    private static final String GSUDO_DOWNLOAD_URL = "https://gitcode.net/glavo/gsudo-release/-/raw/75c952ea3afe8792b0db4fe9bab87d41b21e5895/" + GSUDO_TARGET_ARCH + "/" + GSUDO_FILE_NAME;
+    private static final Path GSUDO_LOCAL_FILE = Metadata.HMCL_DIRECTORY.resolve("libraries").resolve("gsudo").resolve("gsudo").resolve(GSUDO_VERSION).resolve(GSUDO_TARGET_ARCH).resolve(GSUDO_FILE_NAME);
+    private static final boolean USE_GSUDO;
+
+    static final boolean IS_ADMINISTRATOR;
+
+    static final BooleanBinding tokenInvalid = Bindings.createBooleanBinding(
+            () -> !StringUtils.isAlphabeticOrNumber(globalConfig().multiplayerTokenProperty().getValue()),
+            globalConfig().multiplayerTokenProperty());
+
+    static {
+        boolean isAdministrator = false;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"net.exe", "session"});
+                if (!process.waitFor(1, TimeUnit.SECONDS)) {
+                    process.destroy();
+                } else {
+                    isAdministrator = process.exitValue() == 0;
+                }
+            } catch (Throwable ignored) {
+            }
+            USE_GSUDO = !isAdministrator && OperatingSystem.SYSTEM_BUILD_NUMBER >= 10000;
+        } else {
+            isAdministrator = "root".equals(System.getProperty("user.name"));
+            USE_GSUDO = false;
+        }
+        IS_ADMINISTRATOR = isAdministrator;
+    }
 
     private static CompletableFuture<Map<String, String>> HASH;
 
     private MultiplayerManager() {
     }
 
+    public static Path getConfigPath(String token) {
+        return HIPER_CONFIG_DIR.resolve(Hex.encodeHex(DigestUtils.digest("SHA-1", token)) + ".yml");
+    }
+
     public static void clearConfiguration() {
-        HIPER_CONFIG_PATH.toFile().delete();
+        try {
+            Files.deleteIfExists(HIPER_TEMP_CONFIG_PATH);
+            Files.deleteIfExists(getConfigPath(ConfigHolder.globalConfig().getMultiplayerToken()));
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to delete config", e);
+        }
     }
 
     private static CompletableFuture<Map<String, String>> getPackagesHash() {
@@ -114,6 +159,9 @@ public final class MultiplayerManager {
                     } else {
                         LOG.warning("Failed to parse Hiper packages.sha1 file, line: " + line);
                     }
+                }
+                if (USE_GSUDO) {
+                    hashes.put(GSUDO_FILE_NAME, HttpRequest.GET(GSUDO_DOWNLOAD_URL + ".sha1").getString().trim());
                 }
                 return hashes;
             }));
@@ -137,11 +185,17 @@ public final class MultiplayerManager {
                 if (!packagesHash.containsKey(String.format("%s/hiper.exe", HIPER_TARGET_NAME))) {
                     throw new HiperUnsupportedPlatformException();
                 }
-                tasks = Arrays.asList(
-                        getFileDownloadTask.apply(String.format("%s/hiper.exe", HIPER_TARGET_NAME), "hiper.exe"),
-                        getFileDownloadTask.apply(String.format("%s/wintun.dll", HIPER_TARGET_NAME), "wintun.dll")
-                        // getFileDownloadTask.apply("tap-windows-9.21.2.exe", "tap-windows-9.21.2.exe")
-                );
+                tasks = new ArrayList<>(4);
+
+                tasks.add(getFileDownloadTask.apply(String.format("%s/hiper.exe", HIPER_TARGET_NAME), "hiper.exe"));
+                tasks.add(getFileDownloadTask.apply(String.format("%s/wintun.dll", HIPER_TARGET_NAME), "wintun.dll"));
+                // tasks.add(getFileDownloadTask.apply("tap-windows-9.21.2.exe", "tap-windows-9.21.2.exe"));
+                if (USE_GSUDO)
+                    tasks.add(new FileDownloadTask(
+                            NetworkUtils.toURL(GSUDO_DOWNLOAD_URL),
+                            GSUDO_LOCAL_FILE.toFile(),
+                            new FileDownloadTask.IntegrityCheck("SHA-1", packagesHash.get(GSUDO_FILE_NAME))
+                    ));
             } else {
                 if (!packagesHash.containsKey(String.format("%s/hiper", HIPER_TARGET_NAME))) {
                     throw new HiperUnsupportedPlatformException();
@@ -158,14 +212,10 @@ public final class MultiplayerManager {
         });
     }
 
-    private static void verifyChecksumAndDeleteIfNotMatched(Path file, @Nullable String expectedChecksum) throws IOException {
-        try {
-            if (expectedChecksum != null) {
-                ChecksumMismatchException.verifyChecksum(file, "SHA-1", expectedChecksum);
-            }
-        } catch (IOException e) {
-            Files.deleteIfExists(file);
-            throw e;
+    public static void downloadHiperConfig(String token, Path configPath) throws IOException {
+        String certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString();
+        if (!certFileContent.equals("")) {
+            FileUtils.writeText(configPath, certFileContent);
         }
     }
 
@@ -175,27 +225,70 @@ public final class MultiplayerManager {
                 throw new HiperNotExistsException(HIPER_PATH);
             }
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("hiper.exe"), packagesHash.get(String.format("%s/hiper.exe", HIPER_TARGET_NAME)));
-                verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("wintun.dll"), packagesHash.get(String.format("%s/wintun.dll", HIPER_TARGET_NAME)));
-                // verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("tap-windows-9.21.2.exe"), packagesHash.get("tap-windows-9.21.2.exe"));
-            } else {
-                verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("hiper"), packagesHash.get(String.format("%s/hiper", HIPER_TARGET_NAME)));
-            }
-
-            // 下载 HiPer 配置文件
-            String certFileContent;
             try {
-                certFileContent = HttpRequest.GET(String.format("https://cert.mcer.cn/%s.yml", token)).getString();
-                if (!certFileContent.equals("")) {
-                    certFileContent += "\nlogging:\n  format: json\n  file_path: ./hiper.log";
-                    FileUtils.writeText(HIPER_CONFIG_PATH, certFileContent);
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    verifyChecksum(getHiperLocalDirectory().resolve("hiper.exe"), "SHA-1", packagesHash.get(String.format("%s/hiper.exe", HIPER_TARGET_NAME)));
+                    verifyChecksum(getHiperLocalDirectory().resolve("wintun.dll"), "SHA-1", packagesHash.get(String.format("%s/wintun.dll", HIPER_TARGET_NAME)));
+                    // verifyChecksumAndDeleteIfNotMatched(getHiperLocalDirectory().resolve("tap-windows-9.21.2.exe"), packagesHash.get("tap-windows-9.21.2.exe"));
+                    if (USE_GSUDO)
+                        verifyChecksum(GSUDO_LOCAL_FILE, "SHA-1", packagesHash.get(GSUDO_FILE_NAME));
+                } else {
+                    verifyChecksum(getHiperLocalDirectory().resolve("hiper"), "SHA-1", packagesHash.get(String.format("%s/hiper", HIPER_TARGET_NAME)));
                 }
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "configuration file cloud cache index code has been not available , try to use the local configuration file", e);
+                // force redownload
+                Files.deleteIfExists(HIPER_PATH);
+                throw e;
             }
 
-            String[] commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_CONFIG_PATH.toString()};
+            Path configPath = getConfigPath(token);
+            Files.createDirectories(configPath.getParent());
+
+            // 下载 HiPer 配置文件
+            Logging.registerForbiddenToken(token, "<hiper token>");
+            try {
+                downloadHiperConfig(token, configPath);
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "configuration file cloud cache token has been not available, try to use the local configuration file", e);
+            }
+
+            if (Files.exists(configPath)) {
+                Files.copy(configPath, HIPER_TEMP_CONFIG_PATH, StandardCopyOption.REPLACE_EXISTING);
+                try (BufferedWriter output = Files.newBufferedWriter(HIPER_TEMP_CONFIG_PATH, StandardOpenOption.WRITE, StandardOpenOption.APPEND)) {
+                    output.write("\n");
+                    output.write("logging:\n");
+                    output.write("  format: json\n");
+                    output.write("  file_path: '" + Metadata.HMCL_DIRECTORY.resolve("logs").resolve("hiper.log").toString().replace("'", "''") + "'\n");
+                }
+            }
+
+            String[] commands = new String[]{HIPER_PATH.toString(), "-config", HIPER_TEMP_CONFIG_PATH.toString()};
+
+            if (!IS_ADMINISTRATOR) {
+                switch (OperatingSystem.CURRENT_OS) {
+                    case WINDOWS:
+                        if (USE_GSUDO)
+                            commands = new String[]{GSUDO_LOCAL_FILE.toString(), HIPER_PATH.toString(), "-config", HIPER_TEMP_CONFIG_PATH.toString()};
+                        break;
+                    case LINUX:
+                        String askpass = System.getProperty("hmcl.askpass", System.getenv("HMCL_ASKPASS"));
+                        if ("user".equalsIgnoreCase(askpass))
+                            commands = new String[]{"sudo", "-A", HIPER_PATH.toString(), "-config", HIPER_TEMP_CONFIG_PATH.toString()};
+                        else if ("false".equalsIgnoreCase(askpass))
+                            commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", HIPER_TEMP_CONFIG_PATH.toString()};
+                        else {
+                            if (Files.exists(Paths.get("/usr/bin/pkexec")))
+                                commands = new String[]{"/usr/bin/pkexec", HIPER_PATH.toString(), "-config", HIPER_TEMP_CONFIG_PATH.toString()};
+                            else
+                                commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", HIPER_TEMP_CONFIG_PATH.toString()};
+                        }
+                        break;
+                    case OSX:
+                        commands = new String[]{"sudo", "--non-interactive", HIPER_PATH.toString(), "-config", HIPER_TEMP_CONFIG_PATH.toString()};
+                        break;
+                }
+            }
+
             Process process = new ProcessBuilder()
                     .command(commands)
                     .start();
@@ -213,7 +306,7 @@ public final class MultiplayerManager {
     }
 
     public static Path getHiperLocalDirectory() {
-        return Metadata.HMCL_DIRECTORY.resolve("libraries").resolve("hiper").resolve("hiper").resolve(HIPER_VERSION);
+        return Metadata.HMCL_DIRECTORY.resolve("libraries").resolve("hiper").resolve("hiper").resolve("binary");
     }
 
     public static class HiperSession extends ManagedProcess {
@@ -238,10 +331,18 @@ public final class MultiplayerManager {
         }
 
         private void onLog(String log) {
-            LOG.info("[Hiper] " + log);
+            if (!log.startsWith("{")) {
+                LOG.warning("[HiPer] " + log);
 
-            if (log.contains("failed to load config")) {
-                error = HiperExitEvent.INVALID_CONFIGURATION;
+                if (log.startsWith("failed to load config"))
+                    error = HiperExitEvent.INVALID_CONFIGURATION;
+                else if (log.startsWith("sudo: ") || log.startsWith("Error getting authority") || log.startsWith("Error: An error occurred trying to start process"))
+                    error = HiperExitEvent.NO_SUDO_PRIVILEGES;
+                else if (log.startsWith("Failed to write to log, can't rename log file")) {
+                    error = HiperExitEvent.NO_SUDO_PRIVILEGES;
+                    stop();
+                }
+
                 return;
             }
 
@@ -303,6 +404,21 @@ public final class MultiplayerManager {
             destroyRelatedThreads();
         }
 
+        @Override
+        public void stop() {
+            try {
+                writer.write("quit\n");
+                writer.flush();
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to quit HiPer", e);
+            }
+            try {
+                getProcess().waitFor(1, TimeUnit.SECONDS);
+            } catch (InterruptedException ignored) {
+            }
+            super.stop();
+        }
+
         public EventManager<HiperExitEvent> onExit() {
             return onExit;
         }
@@ -334,6 +450,7 @@ public final class MultiplayerManager {
         public static final int CERTIFICATE_EXPIRED = -3;
         public static final int FAILED_GET_DEVICE = -4;
         public static final int FAILED_LOAD_CONFIG = -5;
+        public static final int NO_SUDO_PRIVILEGES = -6;
     }
 
     public static class HiperIPEvent extends Event {

@@ -26,13 +26,20 @@ import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.HMCLService;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.platform.CommandBuilder;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 
+import java.io.File;
 import java.util.Date;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
@@ -186,22 +193,24 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
             LOG.info("Connection rejected by the server");
             return i18n("message.cancelled");
         } else if (e instanceof MultiplayerManager.HiperInvalidConfigurationException) {
-            LOG.info("Hiper invalid configuration");
+            LOG.warning("HiPer invalid configuration");
             return i18n("multiplayer.token.malformed");
         } else if (e instanceof MultiplayerManager.HiperNotExistsException) {
             LOG.log(Level.WARNING, "Hiper not found " + ((MultiplayerManager.HiperNotExistsException) e).getFile(), e);
             return i18n("multiplayer.error.file_not_found");
+        } else if (e instanceof ChecksumMismatchException) {
+            LOG.log(Level.WARNING, "HiPer files are not verified", e);
+            return i18n("multiplayer.error.file_not_found");
         } else if (e instanceof MultiplayerManager.HiperExitException) {
-            LOG.info("HiPer exited accidentally");
             int exitCode = ((MultiplayerManager.HiperExitException) e).getExitCode();
+            LOG.warning("HiPer exited unexpectedly with exit code " + exitCode);
             return i18n("multiplayer.exit", exitCode);
         } else if (e instanceof MultiplayerManager.HiperInvalidTokenException) {
-            LOG.info("invalid token");
+            LOG.warning("invalid token");
             return i18n("multiplayer.token.invalid");
-        } else if (e instanceof ChecksumMismatchException) {
-            return i18n("exception.artifact_malformed");
         } else {
-            return e.getLocalizedMessage();
+            LOG.log(Level.WARNING, "Unknown HiPer exception", e);
+            return e.getLocalizedMessage() + "\n" + StringUtils.getStackTrace(e);
         }
     }
 
@@ -281,6 +290,38 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
                     MultiplayerManager.clearConfiguration();
                     Controllers.dialog(i18n("multiplayer.token.malformed"));
                     break;
+                case MultiplayerManager.HiperExitEvent.NO_SUDO_PRIVILEGES:
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                        Controllers.confirm(i18n("multiplayer.error.failed_sudo.windows"), null, MessageDialogPane.MessageType.WARNING, () -> {
+                            FXUtils.openLink("https://docs.hmcl.net/multiplayer/admin.html");
+                        }, null);
+                    } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+                        Controllers.dialog(i18n("multiplayer.error.failed_sudo.linux", MultiplayerManager.HIPER_PATH.toString()), null, MessageDialogPane.MessageType.WARNING);
+                    } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                        Controllers.confirm(i18n("multiplayer.error.failed_sudo.mac"), null, MessageDialogPane.MessageType.INFO, () -> {
+                            try {
+                                String text = "%hmcl-hiper ALL=(ALL:ALL) NOPASSWD: " + MultiplayerManager.HIPER_PATH.toString().replaceAll("[ @!(),:=\\\\]", "\\\\$0") + "\n";
+
+                                File sudoersTmp = File.createTempFile("sudoer", ".tmp");
+                                sudoersTmp.deleteOnExit();
+                                FileUtils.writeText(sudoersTmp, text);
+
+                                SystemUtils.callExternalProcess(
+                                        "osascript", "-e", String.format("do shell script \"%s\" with administrator privileges", String.join(";",
+                                                "dscl . create /Groups/hmcl-hiper PrimaryGroupID 758",
+                                                "dscl . merge /Groups/hmcl-hiper GroupMembership " + CommandBuilder.toShellStringLiteral(System.getProperty("user.name")) + "",
+                                                "mkdir -p /private/etc/sudoers.d",
+                                                "mv -f " + CommandBuilder.toShellStringLiteral(sudoersTmp.toString()) + " /private/etc/sudoers.d/hmcl-hiper",
+                                                "chown root /private/etc/sudoers.d/hmcl-hiper",
+                                                "chmod 0440 /private/etc/sudoers.d/hmcl-hiper"
+                                        ).replaceAll("[\\\\\"]", "\\\\$0"))
+                                );
+                            } catch (Throwable e) {
+                                LOG.log(Level.WARNING, "Failed to modify sudoers", e);
+                            }
+                        }, null);
+                    }
+                    break;
                 case MultiplayerManager.HiperExitEvent.INTERRUPTED:
                     // do nothing
                     break;
@@ -303,5 +344,4 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state;
     }
-
 }
