@@ -336,7 +336,7 @@ public final class MultiplayerManager {
 
                 if (log.startsWith("failed to load config"))
                     error = HiperExitEvent.INVALID_CONFIGURATION;
-                else if (log.startsWith("sudo: ") || log.startsWith("Error getting authority"))
+                else if (log.startsWith("sudo: ") || log.startsWith("Error getting authority") || log.startsWith("Error: An error occurred trying to start process"))
                     error = HiperExitEvent.NO_SUDO_PRIVILEGES;
                 else if (log.startsWith("Failed to write to log, can't rename log file")) {
                     error = HiperExitEvent.NO_SUDO_PRIVILEGES;
