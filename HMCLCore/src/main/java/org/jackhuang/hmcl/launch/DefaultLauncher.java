@@ -401,7 +401,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${profile_name}", Optional.ofNullable(options.getProfileName()).orElse("Minecraft")),
                 pair("${version_type}", Optional.ofNullable(options.getVersionType()).orElse(version.getType().getId())),
                 pair("${game_directory}", repository.getRunDirectory(version.getId()).getAbsolutePath()),
-                pair("${user_type}", "mojang"),
+                pair("${user_type}", authInfo.getUserType()),
                 pair("${assets_index_name}", version.getAssetIndex().getId()),
                 pair("${user_properties}", authInfo.getUserProperties()),
                 pair("${resolution_width}", options.getWidth().toString()),

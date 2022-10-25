@@ -30,16 +30,21 @@ import java.util.UUID;
  */
 @Immutable
 public class AuthInfo implements AutoCloseable {
+    public static final String USER_TYPE_MOJANG = "mojang";
+    public static final String USER_TYPE_LEGACY = "legacy";
+
 
     private final String username;
     private final UUID uuid;
     private final String accessToken;
+    private final String userType;
     private final String userProperties;
 
-    public AuthInfo(String username, UUID uuid, String accessToken, String userProperties) {
+    public AuthInfo(String username, UUID uuid, String accessToken, String userType, String userProperties) {
         this.username = username;
         this.uuid = uuid;
         this.accessToken = accessToken;
+        this.userType = userType;
         this.userProperties = userProperties;
     }
 
@@ -53,6 +58,10 @@ public class AuthInfo implements AutoCloseable {
 
     public String getAccessToken() {
         return accessToken;
+    }
+
+    public String getUserType() {
+        return userType;
     }
 
     /**
