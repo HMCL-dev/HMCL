@@ -57,13 +57,13 @@ import static org.jackhuang.hmcl.util.Pair.pair;
  * Cato Management.
  */
 public final class MultiplayerManager {
+    public static final int HIPER_AGREEMENT_VERSION = 3;
     static final String HIPER_VERSION = "1.2.2";
+    public static final Path HIPER_PATH = getHiperLocalDirectory().resolve(getHiperFileName());
     private static final String HIPER_DOWNLOAD_URL = "https://gitcode.net/to/hiper/-/raw/master/";
     private static final String HIPER_PACKAGES_URL = HIPER_DOWNLOAD_URL + "packages.sha1";
     private static final String HIPER_POINTS_URL = "https://cert.mcer.cn/point.yml";
     private static final Path HIPER_CONFIG_PATH = Metadata.HMCL_DIRECTORY.resolve("hiper.yml");
-    public static final Path HIPER_PATH = getHiperLocalDirectory().resolve(getHiperFileName());
-    public static final int HIPER_AGREEMENT_VERSION = 3;
     private static final String REMOTE_ADDRESS = "127.0.0.1";
     private static final String LOCAL_ADDRESS = "0.0.0.0";
 
@@ -94,7 +94,13 @@ public final class MultiplayerManager {
 
     private static CompletableFuture<Map<String, String>> HASH;
 
+    private static boolean hiperRunning;
+
     private MultiplayerManager() {
+    }
+
+    public static boolean isHiperRunning() {
+        return hiperRunning;
     }
 
     public static void clearConfiguration() {
@@ -200,6 +206,7 @@ public final class MultiplayerManager {
                     .command(commands)
                     .start();
 
+            hiperRunning = true;
             return new HiperSession(process, Arrays.asList(commands));
         }));
     }
@@ -318,6 +325,11 @@ public final class MultiplayerManager {
     }
 
     public static class HiperExitEvent extends Event {
+        public static final int INTERRUPTED = -1;
+        public static final int INVALID_CONFIGURATION = -2;
+        public static final int CERTIFICATE_EXPIRED = -3;
+        public static final int FAILED_GET_DEVICE = -4;
+        public static final int FAILED_LOAD_CONFIG = -5;
         private final int exitCode;
 
         public HiperExitEvent(Object source, int exitCode) {
@@ -328,12 +340,6 @@ public final class MultiplayerManager {
         public int getExitCode() {
             return exitCode;
         }
-
-        public static final int INTERRUPTED = -1;
-        public static final int INVALID_CONFIGURATION = -2;
-        public static final int CERTIFICATE_EXPIRED = -3;
-        public static final int FAILED_GET_DEVICE = -4;
-        public static final int FAILED_LOAD_CONFIG = -5;
     }
 
     public static class HiperIPEvent extends Event {

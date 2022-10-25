@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- *
  * @author huangyuhui
  */
 public class LaunchOptions implements Serializable {
@@ -62,6 +61,8 @@ public class LaunchOptions implements Serializable {
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
     private boolean daemon;
+
+    private boolean hiperMode;
 
     /**
      * The game directory
@@ -262,6 +263,10 @@ public class LaunchOptions implements Serializable {
         return daemon;
     }
 
+    public boolean isHiperMode() {
+        return hiperMode;
+    }
+
     public static class Builder {
 
         private final LaunchOptions options = new LaunchOptions();
@@ -277,11 +282,21 @@ public class LaunchOptions implements Serializable {
             return options.gameDir;
         }
 
+        public Builder setGameDir(File gameDir) {
+            options.gameDir = gameDir;
+            return this;
+        }
+
         /**
          * The Java Environment that Minecraft runs on.
          */
         public JavaVersion getJava() {
             return options.java;
+        }
+
+        public Builder setJava(JavaVersion java) {
+            options.java = java;
+            return this;
         }
 
         /**
@@ -292,12 +307,22 @@ public class LaunchOptions implements Serializable {
             return options.versionName;
         }
 
+        public Builder setVersionName(String versionName) {
+            options.versionName = versionName;
+            return this;
+        }
+
         /**
          * Will shown in the left bottom corner of the main menu of Minecraft.
          * null if use Version.versionType.
          */
         public String getVersionType() {
             return options.versionType;
+        }
+
+        public Builder setVersionType(String versionType) {
+            options.versionType = versionType;
+            return this;
         }
 
         /**
@@ -307,11 +332,22 @@ public class LaunchOptions implements Serializable {
             return options.profileName;
         }
 
+        public Builder setProfileName(String profileName) {
+            options.profileName = profileName;
+            return this;
+        }
+
         /**
          * User custom additional minecraft command line arguments.
          */
         public List<String> getGameArguments() {
             return options.gameArguments;
+        }
+
+        public Builder setGameArguments(List<String> gameArguments) {
+            options.gameArguments.clear();
+            options.gameArguments.addAll(gameArguments);
+            return this;
         }
 
         /**
@@ -321,8 +357,20 @@ public class LaunchOptions implements Serializable {
             return options.javaArguments;
         }
 
+        public Builder setJavaArguments(List<String> javaArguments) {
+            options.javaArguments.clear();
+            options.javaArguments.addAll(javaArguments);
+            return this;
+        }
+
         public List<String> getJavaAgents() {
             return options.javaAgents;
+        }
+
+        public Builder setJavaAgents(List<String> javaAgents) {
+            options.javaAgents.clear();
+            options.javaAgents.addAll(javaAgents);
+            return this;
         }
 
         /**
@@ -332,11 +380,21 @@ public class LaunchOptions implements Serializable {
             return options.minMemory;
         }
 
+        public Builder setMinMemory(Integer minMemory) {
+            options.minMemory = minMemory;
+            return this;
+        }
+
         /**
          * The maximum memory that the JVM can allocate.
          */
         public Integer getMaxMemory() {
             return options.maxMemory;
+        }
+
+        public Builder setMaxMemory(Integer maxMemory) {
+            options.maxMemory = maxMemory;
+            return this;
         }
 
         /**
@@ -348,11 +406,21 @@ public class LaunchOptions implements Serializable {
             return options.metaspace;
         }
 
+        public Builder setMetaspace(Integer metaspace) {
+            options.metaspace = metaspace;
+            return this;
+        }
+
         /**
          * The initial game window width
          */
         public Integer getWidth() {
             return options.width;
+        }
+
+        public Builder setWidth(Integer width) {
+            options.width = width;
+            return this;
         }
 
         /**
@@ -362,11 +430,21 @@ public class LaunchOptions implements Serializable {
             return options.height;
         }
 
+        public Builder setHeight(Integer height) {
+            options.height = height;
+            return this;
+        }
+
         /**
          * Is inital game window fullscreen.
          */
         public boolean isFullscreen() {
             return options.fullscreen;
+        }
+
+        public Builder setFullscreen(boolean fullscreen) {
+            options.fullscreen = fullscreen;
+            return this;
         }
 
         /**
@@ -376,11 +454,21 @@ public class LaunchOptions implements Serializable {
             return options.serverIp;
         }
 
+        public Builder setServerIp(String serverIp) {
+            options.serverIp = serverIp;
+            return this;
+        }
+
         /**
          * i.e. optirun
          */
         public String getWrapper() {
             return options.wrapper;
+        }
+
+        public Builder setWrapper(String wrapper) {
+            options.wrapper = wrapper;
+            return this;
         }
 
         /**
@@ -390,11 +478,21 @@ public class LaunchOptions implements Serializable {
             return options.proxy;
         }
 
+        public Builder setProxy(Proxy proxy) {
+            options.proxy = proxy;
+            return this;
+        }
+
         /**
          * The user name of the proxy, optional.
          */
         public String getProxyUser() {
             return options.proxyUser;
+        }
+
+        public Builder setProxyUser(String proxyUser) {
+            options.proxyUser = proxyUser;
+            return this;
         }
 
         /**
@@ -404,11 +502,21 @@ public class LaunchOptions implements Serializable {
             return options.proxyPass;
         }
 
+        public Builder setProxyPass(String proxyPass) {
+            options.proxyPass = proxyPass;
+            return this;
+        }
+
         /**
          * Prevent game launcher from generating default JVM arguments like max memory.
          */
         public boolean isNoGeneratedJVMArgs() {
             return options.noGeneratedJVMArgs;
+        }
+
+        public Builder setNoGeneratedJVMArgs(boolean noGeneratedJVMArgs) {
+            options.noGeneratedJVMArgs = noGeneratedJVMArgs;
+            return this;
         }
 
         /**
@@ -418,135 +526,62 @@ public class LaunchOptions implements Serializable {
             return options.preLaunchCommand;
         }
 
+        public Builder setPreLaunchCommand(String preLaunchCommand) {
+            options.preLaunchCommand = preLaunchCommand;
+            return this;
+        }
+
         public NativesDirectoryType getNativesDirType() {
             return options.nativesDirType;
+        }
+
+        public Builder setNativesDirType(NativesDirectoryType nativesDirType) {
+            options.nativesDirType = nativesDirType;
+            return this;
         }
 
         public String getNativesDir() {
             return options.nativesDir;
         }
 
+        public Builder setNativesDir(String nativesDir) {
+            options.nativesDir = nativesDir;
+            return this;
+        }
+
         public boolean isUseSoftwareRenderer() {
             return options.useSoftwareRenderer;
+        }
+
+        public Builder setUseSoftwareRenderer(boolean useSoftwareRenderer) {
+            options.useSoftwareRenderer = useSoftwareRenderer;
+            return this;
         }
 
         public boolean isUseNativeGLFW() {
             return options.useNativeGLFW;
         }
 
+        public Builder setUseNativeGLFW(boolean useNativeGLFW) {
+            options.useNativeGLFW = useNativeGLFW;
+            return this;
+        }
+
         public boolean isUseNativeOpenAL() {
             return options.useNativeOpenAL;
+        }
+
+        public Builder setUseNativeOpenAL(boolean useNativeOpenAL) {
+            options.useNativeOpenAL = useNativeOpenAL;
+            return this;
         }
 
         public boolean isDaemon() {
             return options.daemon;
         }
 
-        public Builder setGameDir(File gameDir) {
-            options.gameDir = gameDir;
-            return this;
-        }
-
-        public Builder setJava(JavaVersion java) {
-            options.java = java;
-            return this;
-        }
-
-        public Builder setVersionName(String versionName) {
-            options.versionName = versionName;
-            return this;
-        }
-
-        public Builder setVersionType(String versionType) {
-            options.versionType = versionType;
-            return this;
-        }
-
-        public Builder setProfileName(String profileName) {
-            options.profileName = profileName;
-            return this;
-        }
-
-        public Builder setGameArguments(List<String> gameArguments) {
-            options.gameArguments.clear();
-            options.gameArguments.addAll(gameArguments);
-            return this;
-        }
-
-        public Builder setJavaArguments(List<String> javaArguments) {
-            options.javaArguments.clear();
-            options.javaArguments.addAll(javaArguments);
-            return this;
-        }
-
-        public Builder setJavaAgents(List<String> javaAgents) {
-            options.javaAgents.clear();
-            options.javaAgents.addAll(javaAgents);
-            return this;
-        }
-
-        public Builder setMinMemory(Integer minMemory) {
-            options.minMemory = minMemory;
-            return this;
-        }
-
-        public Builder setMaxMemory(Integer maxMemory) {
-            options.maxMemory = maxMemory;
-            return this;
-        }
-
-        public Builder setMetaspace(Integer metaspace) {
-            options.metaspace = metaspace;
-            return this;
-        }
-
-        public Builder setWidth(Integer width) {
-            options.width = width;
-            return this;
-        }
-
-        public Builder setHeight(Integer height) {
-            options.height = height;
-            return this;
-        }
-
-        public Builder setFullscreen(boolean fullscreen) {
-            options.fullscreen = fullscreen;
-            return this;
-        }
-
-        public Builder setServerIp(String serverIp) {
-            options.serverIp = serverIp;
-            return this;
-        }
-
-        public Builder setWrapper(String wrapper) {
-            options.wrapper = wrapper;
-            return this;
-        }
-
-        public Builder setProxy(Proxy proxy) {
-            options.proxy = proxy;
-            return this;
-        }
-
-        public Builder setProxyUser(String proxyUser) {
-            options.proxyUser = proxyUser;
-            return this;
-        }
-
-        public Builder setProxyPass(String proxyPass) {
-            options.proxyPass = proxyPass;
-            return this;
-        }
-
-        public Builder setNoGeneratedJVMArgs(boolean noGeneratedJVMArgs) {
-            options.noGeneratedJVMArgs = noGeneratedJVMArgs;
-            return this;
-        }
-
-        public Builder setPreLaunchCommand(String preLaunchCommand) {
-            options.preLaunchCommand = preLaunchCommand;
+        public Builder setDaemon(boolean daemon) {
+            options.daemon = daemon;
             return this;
         }
 
@@ -555,38 +590,13 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setNativesDirType(NativesDirectoryType nativesDirType) {
-            options.nativesDirType = nativesDirType;
-            return this;
-        }
-
-        public Builder setNativesDir(String nativesDir) {
-            options.nativesDir = nativesDir;
-            return this;
-        }
-
         public Builder setProcessPriority(@NotNull ProcessPriority processPriority) {
             options.processPriority = processPriority;
             return this;
         }
 
-        public Builder setUseSoftwareRenderer(boolean useSoftwareRenderer) {
-            options.useSoftwareRenderer = useSoftwareRenderer;
-            return this;
-        }
-
-        public Builder setUseNativeGLFW(boolean useNativeGLFW) {
-            options.useNativeGLFW = useNativeGLFW;
-            return this;
-        }
-
-        public Builder setUseNativeOpenAL(boolean useNativeOpenAL) {
-            options.useNativeOpenAL = useNativeOpenAL;
-            return this;
-        }
-
-        public Builder setDaemon(boolean daemon) {
-            options.daemon = daemon;
+        public Builder setHiperMode(boolean hiperMode) {
+            options.hiperMode = hiperMode;
             return this;
         }
 

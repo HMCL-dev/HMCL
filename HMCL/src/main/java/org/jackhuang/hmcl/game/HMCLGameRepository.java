@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.ProxyManager;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.ui.multiplayer.MultiplayerManager;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -54,17 +55,51 @@ import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class HMCLGameRepository extends DefaultGameRepository {
+    private static final Gson GSON = new GsonBuilder()
+            .setPrettyPrinting()
+            .create();
+    private static final String PROFILE = "{\"selectedProfile\": \"(Default)\",\"profiles\": {\"(Default)\": {\"name\": \"(Default)\"}},\"clientToken\": \"88888888-8888-8888-8888-888888888888\"}";
+    // These version ids are forbidden because they may conflict with modpack configuration filenames
+    private static final Set<String> FORBIDDEN_VERSION_IDS = new HashSet<>(Arrays.asList(
+            "modpack", "minecraftinstance", "manifest"));
+    public final EventManager<Event> onVersionIconChanged = new EventManager<>();
     private final Profile profile;
-
     // local version settings
     private final Map<String, VersionSetting> localVersionSettings = new HashMap<>();
     private final Set<String> beingModpackVersions = new HashSet<>();
 
-    public final EventManager<Event> onVersionIconChanged = new EventManager<>();
-
     public HMCLGameRepository(Profile profile, File baseDirectory) {
         super(baseDirectory);
         this.profile = profile;
+    }
+
+    public static boolean isValidVersionId(String id) {
+        if (FORBIDDEN_VERSION_IDS.contains(id))
+            return false;
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS &&
+                FORBIDDEN_VERSION_IDS.contains(id.toLowerCase()))
+            return false;
+
+        return OperatingSystem.isNameValid(id);
+    }
+
+    public static long getAllocatedMemory(long minimum, long available, boolean auto) {
+        if (auto) {
+            available -= 256 * 1024 * 1024; // Reserve 256MB memory for off-heap memory and HMCL itself
+            if (available <= 0) {
+                return minimum;
+            }
+
+            final long threshold = 8L * 1024 * 1024 * 1024;
+            final long suggested = Math.min(available <= threshold
+                            ? (long) (available * 0.8)
+                            : (long) (threshold * 0.8 + (available - threshold) * 0.2),
+                    32736L * 1024 * 1024); // Limit the maximum suggested memory to ensure that compressed oops are available
+            return Math.max(minimum, suggested);
+        } else {
+            return minimum;
+        }
     }
 
     public Profile getProfile() {
@@ -161,7 +196,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         Files.move(fromJson, toJson);
 
         FileUtils.writeText(toJson.toFile(), JsonUtils.GSON.toJson(fromVersion.setId(dstId)));
-        
+
         VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
         GameDirectoryType originalGameDirType = oldVersionSetting.getGameDirType();
         oldVersionSetting.setUsesGlobal(false);
@@ -210,6 +245,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     /**
      * Create new version setting if version id has no version setting.
+     *
      * @param id the version id.
      * @return new version setting, null if given version does not exist.
      */
@@ -232,7 +268,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
      * Get the version setting for version id.
      *
      * @param id version id
-     *
      * @return corresponding version setting, null if the version has no its own version setting.
      */
     @Nullable
@@ -307,6 +342,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     /**
      * Make version use self version settings instead of the global one.
+     *
      * @param id the version id.
      * @return specialized version setting, null if given version does not exist.
      */
@@ -337,7 +373,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setProfileName(Metadata.TITLE)
                 .setGameArguments(StringUtils.tokenize(vs.getMinecraftArgs()))
                 .setJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
-                .setMaxMemory((int)(getAllocatedMemory(
+                .setMaxMemory((int) (getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,
                         OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID).getAvailable(),
                         vs.isAutoMemory()
@@ -366,6 +402,11 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 builder.setProxyUser(config().getProxyUser());
                 builder.setProxyPass(config().getProxyPass());
             }
+        }
+        if (MultiplayerManager.isHiperRunning()) {
+            builder.setHiperMode(true);
+        } else {
+            builder.setHiperMode(false);
         }
 
         File json = getModpackConfiguration(version);
@@ -410,28 +451,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
         return result;
     }
 
-    private static final Gson GSON = new GsonBuilder()
-            .setPrettyPrinting()
-            .create();
-
-    private static final String PROFILE = "{\"selectedProfile\": \"(Default)\",\"profiles\": {\"(Default)\": {\"name\": \"(Default)\"}},\"clientToken\": \"88888888-8888-8888-8888-888888888888\"}";
-
-
-    // These version ids are forbidden because they may conflict with modpack configuration filenames
-    private static final Set<String> FORBIDDEN_VERSION_IDS = new HashSet<>(Arrays.asList(
-            "modpack", "minecraftinstance", "manifest"));
-
-    public static boolean isValidVersionId(String id) {
-        if (FORBIDDEN_VERSION_IDS.contains(id))
-            return false;
-
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS &&
-                FORBIDDEN_VERSION_IDS.contains(id.toLowerCase()))
-            return false;
-
-        return OperatingSystem.isNameValid(id);
-    }
-
     /**
      * Returns true if the given version id conflicts with an existing version.
      */
@@ -446,24 +465,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
             return false;
         } else {
             return versions.containsKey(id);
-        }
-    }
-
-    public static long getAllocatedMemory(long minimum, long available, boolean auto) {
-        if (auto) {
-            available -= 256 * 1024 * 1024; // Reserve 256MB memory for off-heap memory and HMCL itself
-            if (available <= 0) {
-                return minimum;
-            }
-
-            final long threshold = 8L * 1024 * 1024 * 1024;
-            final long suggested = Math.min(available <= threshold
-                            ? (long) (available * 0.8)
-                            : (long) (threshold * 0.8 + (available - threshold) * 0.2),
-                    32736L * 1024 * 1024); // Limit the maximum suggested memory to ensure that compressed oops are available
-            return Math.max(minimum, suggested);
-        } else {
-            return minimum;
         }
     }
 }

@@ -23,7 +23,8 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.*;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
+import org.jackhuang.hmcl.auth.authlibinjector.*;
+import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.MaintainTask;
@@ -33,7 +34,10 @@ import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
-import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.LauncherVisibility;
+import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -50,10 +54,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.nio.file.AccessDeniedException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -71,11 +72,15 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class LauncherHelper {
 
+    public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
+    private static final String ORACLEJDK_DOWNLOAD_LINK = "https://www.java.com/download";
+    private static final String OPENJDK_DOWNLOAD_LINK = "https://docs.microsoft.com/java/openjdk/download";
     private final Profile profile;
     private final Account account;
     private final String selectedVersion;
-    private File scriptFile;
     private final VersionSetting setting;
+    private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+    private File scriptFile;
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
 
@@ -87,238 +92,6 @@ public final class LauncherHelper {
         this.launcherVisibility = setting.getLauncherVisibility();
         this.showLogs = setting.isShowLogs();
         this.launchingStepsPane.setTitle(i18n("version.launch"));
-    }
-
-    private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
-
-    public void setTestMode() {
-        launcherVisibility = LauncherVisibility.KEEP;
-        showLogs = true;
-    }
-
-    public void setKeep() {
-        launcherVisibility = LauncherVisibility.KEEP;
-    }
-
-    public void launch() {
-        FXUtils.checkFxUserThread();
-
-        Logging.LOG.info("Launching game version: " + selectedVersion);
-
-        Controllers.dialog(launchingStepsPane);
-        launch0();
-    }
-
-    public void makeLaunchScript(File scriptFile) {
-        this.scriptFile = Objects.requireNonNull(scriptFile);
-
-        launch();
-    }
-
-    private void launch0() {
-        HMCLGameRepository repository = profile.getRepository();
-        DefaultDependencyManager dependencyManager = profile.getDependency();
-        AtomicReference<Version> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion)));
-        Optional<String> gameVersion = repository.getGameVersion(version.get());
-        boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
-        CountDownLatch launchingLatch = new CountDownLatch(1);
-        List<String> javaAgents = new ArrayList<>(0);
-
-        AtomicReference<JavaVersion> javaVersionRef = new AtomicReference<>();
-
-        getLog4jPatch(version.get()).ifPresent(javaAgents::add);
-
-        TaskExecutor executor = checkGameState(profile, setting, version.get())
-                .thenComposeAsync(javaVersion -> {
-                    javaVersionRef.set(Objects.requireNonNull(javaVersion));
-                    version.set(NativePatcher.patchNative(version.get(), gameVersion.orElse(null), javaVersion, setting));
-                    if (setting.isNotCheckGame())
-                        return null;
-                    return Task.allOf(
-                            dependencyManager.checkGameCompletionAsync(version.get(), integrityCheck),
-                            Task.composeAsync(() -> {
-                                try {
-                                    ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
-                                    ModpackProvider provider = ModpackHelper.getProviderByType(configuration.getType());
-                                    if (provider == null) return null;
-                                    else return provider.createCompletionTask(dependencyManager, selectedVersion);
-                                } catch (IOException e) {
-                                    return null;
-                                }
-                            }),
-                            Task.composeAsync(() -> {
-                                if (setting.isUseSoftwareRenderer() && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                                    Library lib = NativePatcher.getSoftwareRendererLoader(javaVersion);
-                                    if (lib == null)
-                                        return null;
-                                    File file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
-                                    if (file.getAbsolutePath().indexOf('=') >= 0) {
-                                        LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
-                                        return null;
-                                    }
-
-                                    if (GameLibrariesTask.shouldDownloadLibrary(repository, version.get(), lib, integrityCheck)) {
-                                        return new LibraryDownloadTask(dependencyManager, file, lib)
-                                                .thenRunAsync(() -> javaAgents.add(file.getAbsolutePath()));
-                                    } else {
-                                        javaAgents.add(file.getAbsolutePath());
-                                        return null;
-                                    }
-                                } else {
-                                    return null;
-                                }
-                            })
-                    );
-                }).withStage("launch.state.dependencies")
-                .thenComposeAsync(() -> {
-                    return gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null);
-                })
-                .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
-                .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
-                    LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, scriptFile != null);
-                    return new HMCLGameLauncher(
-                            repository,
-                            version.get(),
-                            authInfo,
-                            launchOptions,
-                            launcherVisibility == LauncherVisibility.CLOSE
-                                    ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
-                    );
-                }).thenComposeAsync(launcher -> { // launcher is prev task's result
-                    if (scriptFile == null) {
-                        return Task.supplyAsync(launcher::launch);
-                    } else {
-                        return Task.supplyAsync(() -> {
-                            launcher.makeLaunchScript(scriptFile);
-                            return null;
-                        });
-                    }
-                }).thenAcceptAsync(process -> { // process is LaunchTask's result
-                    if (scriptFile == null) {
-                        PROCESSES.add(process);
-                        if (launcherVisibility == LauncherVisibility.CLOSE)
-                            Launcher.stopApplication();
-                        else
-                            launchingStepsPane.setCancel(new TaskCancellationAction(it -> {
-                                process.stop();
-                                it.fireEvent(new DialogCloseEvent());
-                            }));
-                    } else {
-                        Platform.runLater(() -> {
-                            launchingStepsPane.fireEvent(new DialogCloseEvent());
-                            Controllers.dialog(i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
-                        });
-                    }
-                }).thenRunAsync(() -> {
-                    launchingLatch.await();
-                }).withStage("launch.state.waiting_launching"))
-                .withStagesHint(Lang.immutableListOf(
-                        "launch.state.java",
-                        "launch.state.dependencies",
-                        "launch.state.logging_in",
-                        "launch.state.waiting_launching"))
-                .executor();
-        launchingStepsPane.setExecutor(executor, false);
-        executor.addTaskListener(new TaskListener() {
-
-            @Override
-            public void onStop(boolean success, TaskExecutor executor) {
-                Platform.runLater(() -> {
-                    // Check if the application has stopped
-                    // because onStop will be invoked if tasks fail when the executor service shut down.
-                    if (!Controllers.isStopped()) {
-                        launchingStepsPane.fireEvent(new DialogCloseEvent());
-                        if (!success) {
-                            Exception ex = executor.getException();
-                            if (!(ex instanceof CancellationException)) {
-                                String message;
-                                if (ex instanceof ModpackCompletionException) {
-                                    if (ex.getCause() instanceof FileNotFoundException)
-                                        message = i18n("modpack.type.curse.not_found");
-                                    else
-                                        message = i18n("modpack.type.curse.error");
-                                } else if (ex instanceof PermissionException) {
-                                    message = i18n("launch.failed.executable_permission");
-                                } else if (ex instanceof ProcessCreationException) {
-                                    message = i18n("launch.failed.creating_process") + ex.getLocalizedMessage();
-                                } else if (ex instanceof NotDecompressingNativesException) {
-                                    message = i18n("launch.failed.decompressing_natives") + ex.getLocalizedMessage();
-                                } else if (ex instanceof LibraryDownloadException) {
-                                    message = i18n("launch.failed.download_library", ((LibraryDownloadException) ex).getLibrary().getName()) + "\n";
-                                    if (ex.getCause() instanceof ResponseCodeException) {
-                                        ResponseCodeException rce = (ResponseCodeException) ex.getCause();
-                                        int responseCode = rce.getResponseCode();
-                                        URL url = rce.getUrl();
-                                        if (responseCode == 404)
-                                            message += i18n("download.code.404", url);
-                                        else
-                                            message += i18n("download.failed", url, responseCode);
-                                    } else {
-                                        message += StringUtils.getStackTrace(ex.getCause());
-                                    }
-                                } else if (ex instanceof DownloadException) {
-                                    URL url = ((DownloadException) ex).getUrl();
-                                    if (ex.getCause() instanceof SocketTimeoutException) {
-                                        message = i18n("install.failed.downloading.timeout", url);
-                                    } else if (ex.getCause() instanceof ResponseCodeException) {
-                                        ResponseCodeException responseCodeException = (ResponseCodeException) ex.getCause();
-                                        if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
-                                            message = i18n("download.code." + responseCodeException.getResponseCode(), url);
-                                        } else {
-                                            message = i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(ex.getCause());
-                                        }
-                                    } else {
-                                        message = i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(ex.getCause());
-                                    }
-                                } else if (ex instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
-                                    message = i18n("assets.index.malformed");
-                                } else if (ex instanceof AuthlibInjectorDownloadException) {
-                                    message = i18n("account.failed.injector_download_failure");
-                                } else if (ex instanceof CharacterDeletedException) {
-                                    message = i18n("account.failed.character_deleted");
-                                } else if (ex instanceof ResponseCodeException) {
-                                    ResponseCodeException rce = (ResponseCodeException) ex;
-                                    int responseCode = rce.getResponseCode();
-                                    URL url = rce.getUrl();
-                                    if (responseCode == 404)
-                                        message = i18n("download.code.404", url);
-                                    else
-                                        message = i18n("download.failed", url, responseCode);
-                                } else if (ex instanceof CommandTooLongException) {
-                                    message = i18n("launch.failed.command_too_long");
-                                } else if (ex instanceof ExecutionPolicyLimitException) {
-                                    Controllers.prompt(new PromptDialogPane.Builder(i18n("launch.failed.execution_policy"),
-                                            (result, resolve, reject) -> {
-                                                if (CommandBuilder.setExecutionPolicy()) {
-                                                    LOG.info("Set the ExecutionPolicy for the scope 'CurrentUser' to 'RemoteSigned'");
-                                                    resolve.run();
-                                                } else {
-                                                    LOG.warning("Failed to set ExecutionPolicy");
-                                                    reject.accept(i18n("launch.failed.execution_policy.failed_to_set"));
-                                                }
-                                            })
-                                            .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("launch.failed.execution_policy.hint")))
-                                    );
-
-                                    return;
-                                } else if (ex instanceof AccessDeniedException) {
-                                    message = i18n("exception.access_denied", ((AccessDeniedException) ex).getFile());
-                                } else {
-                                    message = StringUtils.getStackTrace(ex);
-                                }
-                                Controllers.dialog(message,
-                                        scriptFile == null ? i18n("launch.failed") : i18n("version.launch_script.failed"),
-                                        MessageType.ERROR);
-                            }
-                        }
-                    }
-                    launchingStepsPane.setExecutor(null);
-                });
-            }
-        });
-
-        executor.start();
     }
 
     private static Task<JavaVersion> checkGameState(Profile profile, VersionSetting setting, Version version) {
@@ -599,7 +372,7 @@ public final class LauncherHelper {
     /**
      * Directly start java downloading.
      *
-     * @param javaVersion target Java version
+     * @param javaVersion      target Java version
      * @param downloadProvider download provider
      * @return JavaVersion, null if we failed to download java, failed if an error occurred when downloading.
      */
@@ -696,6 +469,270 @@ public final class LauncherHelper {
         }
     }
 
+    public static void stopManagedProcesses() {
+        while (!PROCESSES.isEmpty())
+            Optional.ofNullable(PROCESSES.poll()).ifPresent(ManagedProcess::stop);
+    }
+
+    public void setTestMode() {
+        launcherVisibility = LauncherVisibility.KEEP;
+        showLogs = true;
+    }
+
+    public void setKeep() {
+        launcherVisibility = LauncherVisibility.KEEP;
+    }
+
+    public void launch() {
+        FXUtils.checkFxUserThread();
+
+        Logging.LOG.info("Launching game version: " + selectedVersion);
+
+        Controllers.dialog(launchingStepsPane);
+        launch0();
+    }
+
+    public void makeLaunchScript(File scriptFile) {
+        this.scriptFile = Objects.requireNonNull(scriptFile);
+
+        launch();
+    }
+
+    private void launch0() {
+        HMCLGameRepository repository = profile.getRepository();
+        DefaultDependencyManager dependencyManager = profile.getDependency();
+        AtomicReference<Version> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion)));
+        Optional<String> gameVersion = repository.getGameVersion(version.get());
+        boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
+        CountDownLatch launchingLatch = new CountDownLatch(1);
+        List<String> javaAgents = new ArrayList<>(0);
+
+        AtomicReference<JavaVersion> javaVersionRef = new AtomicReference<>();
+
+        getLog4jPatch(version.get()).ifPresent(javaAgents::add);
+
+        TaskExecutor executor = checkGameState(profile, setting, version.get())
+                .thenComposeAsync(javaVersion -> {
+                    javaVersionRef.set(Objects.requireNonNull(javaVersion));
+                    version.set(NativePatcher.patchNative(version.get(), gameVersion.orElse(null), javaVersion, setting));
+                    if (setting.isNotCheckGame())
+                        return null;
+                    return Task.allOf(
+                            dependencyManager.checkGameCompletionAsync(version.get(), integrityCheck),
+                            Task.composeAsync(() -> {
+                                try {
+                                    ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
+                                    ModpackProvider provider = ModpackHelper.getProviderByType(configuration.getType());
+                                    if (provider == null) return null;
+                                    else return provider.createCompletionTask(dependencyManager, selectedVersion);
+                                } catch (IOException e) {
+                                    return null;
+                                }
+                            }),
+                            Task.composeAsync(() -> {
+                                if (setting.isUseSoftwareRenderer() && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                                    Library lib = NativePatcher.getSoftwareRendererLoader(javaVersion);
+                                    if (lib == null)
+                                        return null;
+                                    File file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
+                                    if (file.getAbsolutePath().indexOf('=') >= 0) {
+                                        LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
+                                        return null;
+                                    }
+
+                                    if (GameLibrariesTask.shouldDownloadLibrary(repository, version.get(), lib, integrityCheck)) {
+                                        return new LibraryDownloadTask(dependencyManager, file, lib)
+                                                .thenRunAsync(() -> javaAgents.add(file.getAbsolutePath()));
+                                    } else {
+                                        javaAgents.add(file.getAbsolutePath());
+                                        return null;
+                                    }
+                                } else {
+                                    return null;
+                                }
+                            })
+                    );
+                }).withStage("launch.state.dependencies")
+                .thenComposeAsync(() -> {
+                    return gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null);
+                })
+                .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
+                .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
+                    LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, scriptFile != null);
+                    if (launchOptions.isHiperMode() && (this.account instanceof OfflineAccount)) {
+                        AuthlibInjectorServer hiperServer = new AuthlibInjectorServer("https://skin.minenoah.top/api/yggdrasil-hiper/");
+                        AuthlibInjectorArtifactProvider authLibJar = null;
+                        AuthlibInjectorAccount hiperUser;
+                        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+                            authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getenv("APPDATA") + "\\.hmcl\\authlib-injector.jar"));
+                        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
+                            authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getProperty("user.home") + "/.hmcl/authlib-injector.jar"));
+                        if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+                            authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getProperty("user.home") + "/Library/Application Support/.hmcl/authlib-injector.jar"));
+                        CharacterSelector hiperCharacterSelector = (yggdrasilService, names) -> {
+                            if (names.isEmpty()) {
+                                throw new NoSelectedCharacterException();
+                            }
+                            return null;
+                        };
+                        hiperUser = new AuthlibInjectorAccount(hiperServer, authLibJar, this.account.getUsername(), "114514", hiperCharacterSelector);
+                        AuthInfo hiperAuth = hiperUser.logIn();
+                        return new HMCLGameLauncher(
+                                repository,
+                                version.get(),
+                                hiperAuth,
+                                launchOptions,
+                                launcherVisibility == LauncherVisibility.CLOSE
+                                        ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
+                                        : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
+                        );
+                    } else {
+                        return new HMCLGameLauncher(
+                                repository,
+                                version.get(),
+                                authInfo,
+                                launchOptions,
+                                launcherVisibility == LauncherVisibility.CLOSE
+                                        ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
+                                        : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
+                        );
+                    }
+                }).thenComposeAsync(launcher -> { // launcher is prev task's result
+                    if (scriptFile == null) {
+                        return Task.supplyAsync(launcher::launch);
+                    } else {
+                        return Task.supplyAsync(() -> {
+                            launcher.makeLaunchScript(scriptFile);
+                            return null;
+                        });
+                    }
+                }).thenAcceptAsync(process -> { // process is LaunchTask's result
+                    if (scriptFile == null) {
+                        PROCESSES.add(process);
+                        if (launcherVisibility == LauncherVisibility.CLOSE)
+                            Launcher.stopApplication();
+                        else
+                            launchingStepsPane.setCancel(new TaskCancellationAction(it -> {
+                                process.stop();
+                                it.fireEvent(new DialogCloseEvent());
+                            }));
+                    } else {
+                        Platform.runLater(() -> {
+                            launchingStepsPane.fireEvent(new DialogCloseEvent());
+                            Controllers.dialog(i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
+                        });
+                    }
+                }).thenRunAsync(() -> {
+                    launchingLatch.await();
+                }).withStage("launch.state.waiting_launching"))
+                .withStagesHint(Lang.immutableListOf(
+                        "launch.state.java",
+                        "launch.state.dependencies",
+                        "launch.state.logging_in",
+                        "launch.state.waiting_launching"))
+                .executor();
+        launchingStepsPane.setExecutor(executor, false);
+        executor.addTaskListener(new TaskListener() {
+
+            @Override
+            public void onStop(boolean success, TaskExecutor executor) {
+                Platform.runLater(() -> {
+                    // Check if the application has stopped
+                    // because onStop will be invoked if tasks fail when the executor service shut down.
+                    if (!Controllers.isStopped()) {
+                        launchingStepsPane.fireEvent(new DialogCloseEvent());
+                        if (!success) {
+                            Exception ex = executor.getException();
+                            if (!(ex instanceof CancellationException)) {
+                                String message;
+                                if (ex instanceof ModpackCompletionException) {
+                                    if (ex.getCause() instanceof FileNotFoundException)
+                                        message = i18n("modpack.type.curse.not_found");
+                                    else
+                                        message = i18n("modpack.type.curse.error");
+                                } else if (ex instanceof PermissionException) {
+                                    message = i18n("launch.failed.executable_permission");
+                                } else if (ex instanceof ProcessCreationException) {
+                                    message = i18n("launch.failed.creating_process") + ex.getLocalizedMessage();
+                                } else if (ex instanceof NotDecompressingNativesException) {
+                                    message = i18n("launch.failed.decompressing_natives") + ex.getLocalizedMessage();
+                                } else if (ex instanceof LibraryDownloadException) {
+                                    message = i18n("launch.failed.download_library", ((LibraryDownloadException) ex).getLibrary().getName()) + "\n";
+                                    if (ex.getCause() instanceof ResponseCodeException) {
+                                        ResponseCodeException rce = (ResponseCodeException) ex.getCause();
+                                        int responseCode = rce.getResponseCode();
+                                        URL url = rce.getUrl();
+                                        if (responseCode == 404)
+                                            message += i18n("download.code.404", url);
+                                        else
+                                            message += i18n("download.failed", url, responseCode);
+                                    } else {
+                                        message += StringUtils.getStackTrace(ex.getCause());
+                                    }
+                                } else if (ex instanceof DownloadException) {
+                                    URL url = ((DownloadException) ex).getUrl();
+                                    if (ex.getCause() instanceof SocketTimeoutException) {
+                                        message = i18n("install.failed.downloading.timeout", url);
+                                    } else if (ex.getCause() instanceof ResponseCodeException) {
+                                        ResponseCodeException responseCodeException = (ResponseCodeException) ex.getCause();
+                                        if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
+                                            message = i18n("download.code." + responseCodeException.getResponseCode(), url);
+                                        } else {
+                                            message = i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(ex.getCause());
+                                        }
+                                    } else {
+                                        message = i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(ex.getCause());
+                                    }
+                                } else if (ex instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
+                                    message = i18n("assets.index.malformed");
+                                } else if (ex instanceof AuthlibInjectorDownloadException) {
+                                    message = i18n("account.failed.injector_download_failure");
+                                } else if (ex instanceof CharacterDeletedException) {
+                                    message = i18n("account.failed.character_deleted");
+                                } else if (ex instanceof ResponseCodeException) {
+                                    ResponseCodeException rce = (ResponseCodeException) ex;
+                                    int responseCode = rce.getResponseCode();
+                                    URL url = rce.getUrl();
+                                    if (responseCode == 404)
+                                        message = i18n("download.code.404", url);
+                                    else
+                                        message = i18n("download.failed", url, responseCode);
+                                } else if (ex instanceof CommandTooLongException) {
+                                    message = i18n("launch.failed.command_too_long");
+                                } else if (ex instanceof ExecutionPolicyLimitException) {
+                                    Controllers.prompt(new PromptDialogPane.Builder(i18n("launch.failed.execution_policy"),
+                                            (result, resolve, reject) -> {
+                                                if (CommandBuilder.setExecutionPolicy()) {
+                                                    LOG.info("Set the ExecutionPolicy for the scope 'CurrentUser' to 'RemoteSigned'");
+                                                    resolve.run();
+                                                } else {
+                                                    LOG.warning("Failed to set ExecutionPolicy");
+                                                    reject.accept(i18n("launch.failed.execution_policy.failed_to_set"));
+                                                }
+                                            })
+                                            .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("launch.failed.execution_policy.hint")))
+                                    );
+
+                                    return;
+                                } else if (ex instanceof AccessDeniedException) {
+                                    message = i18n("exception.access_denied", ((AccessDeniedException) ex).getFile());
+                                } else {
+                                    message = StringUtils.getStackTrace(ex);
+                                }
+                                Controllers.dialog(message,
+                                        scriptFile == null ? i18n("launch.failed") : i18n("version.launch_script.failed"),
+                                        MessageType.ERROR);
+                            }
+                        }
+                    }
+                    launchingStepsPane.setExecutor(null);
+                });
+            }
+        });
+
+        executor.start();
+    }
+
     private void checkExit() {
         switch (launcherVisibility) {
             case HIDE_AND_REOPEN:
@@ -730,13 +767,13 @@ public final class LauncherHelper {
         private final HMCLGameRepository repository;
         private final Version version;
         private final LaunchOptions launchOptions;
-        private ManagedProcess process;
-        private boolean lwjgl;
-        private LogWindow logWindow;
         private final boolean detectWindow;
         private final LinkedList<Pair<String, Log4jLevel>> logs;
         private final CountDownLatch logWindowLatch = new CountDownLatch(1);
         private final CountDownLatch launchingLatch;
+        private ManagedProcess process;
+        private boolean lwjgl;
+        private LogWindow logWindow;
 
         public HMCLProcessListener(HMCLGameRepository repository, Version version, AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
             this.repository = repository;
@@ -850,15 +887,5 @@ public final class LauncherHelper {
             checkExit();
         }
 
-    }
-
-    private static final String ORACLEJDK_DOWNLOAD_LINK = "https://www.java.com/download";
-    private static final String OPENJDK_DOWNLOAD_LINK = "https://docs.microsoft.com/java/openjdk/download";
-
-    public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
-
-    public static void stopManagedProcesses() {
-        while (!PROCESSES.isEmpty())
-            Optional.ofNullable(PROCESSES.poll()).ifPresent(ManagedProcess::stop);
     }
 }
