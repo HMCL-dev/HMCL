@@ -568,7 +568,7 @@ public final class LauncherHelper {
                         if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
                             authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getProperty("user.home") + "/.hmcl/authlib-injector.jar"));
                         if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
-                            authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getProperty("user.home") + "/Library/Application Support/.hmcl/authlib-injector.jar"));
+                            authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getProperty("user.home") + "/Library/Application Support/hmcl/authlib-injector.jar"));
                         CharacterSelector hiperCharacterSelector = (yggdrasilService, names) -> {
                             if (names.isEmpty()) {
                                 throw new NoSelectedCharacterException();
