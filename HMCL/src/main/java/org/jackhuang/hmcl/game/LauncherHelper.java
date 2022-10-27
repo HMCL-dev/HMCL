@@ -560,22 +560,21 @@ public final class LauncherHelper {
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, scriptFile != null);
                     if (launchOptions.isHiperMode() && (this.account instanceof OfflineAccount)) {
-                        AuthlibInjectorServer hiperServer = new AuthlibInjectorServer("https://skin.minenoah.top/api/yggdrasil-hiper/");
-                        AuthlibInjectorArtifactProvider authLibJar = null;
-                        AuthlibInjectorAccount hiperUser;
-                        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-                            authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getenv("APPDATA") + "\\.hmcl\\authlib-injector.jar"));
-                        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
-                            authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getProperty("user.home") + "/.hmcl/authlib-injector.jar"));
-                        if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
-                            authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getProperty("user.home") + "/Library/Application Support/.hmcl/authlib-injector.jar"));
                         CharacterSelector hiperCharacterSelector = (yggdrasilService, names) -> {
                             if (names.isEmpty()) {
                                 throw new NoSelectedCharacterException();
                             }
                             return null;
                         };
-                        hiperUser = new AuthlibInjectorAccount(hiperServer, authLibJar, this.account.getUsername(), "114514", hiperCharacterSelector);
+                        AuthlibInjectorServer hiperServer = new AuthlibInjectorServer("https://skin.minenoah.top/api/yggdrasil-hiper/");
+                        AuthlibInjectorArtifactProvider authLibJar = null;
+                        AuthlibInjectorAccount hiperUser = new AuthlibInjectorAccount(hiperServer, authLibJar, this.account.getUsername(), "114514", hiperCharacterSelector);
+                        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+                            authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getenv("APPDATA") + "\\.hmcl\\authlib-injector.jar"));
+                        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
+                            authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getProperty("user.home") + "/.hmcl/authlib-injector.jar"));
+                        if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+                            authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getProperty("user.home") + "/Library/Application Support/hmcl/authlib-injector.jar"));
                         AuthInfo hiperAuth = hiperUser.logIn();
                         return new HMCLGameLauncher(
                                 repository,
