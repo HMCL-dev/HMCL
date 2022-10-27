@@ -1,0 +1,8 @@
+Exception in thread "main" java.lang.ClassNotFoundException: org.glavo.log4j.patch.agent.Log4jAgent
+	at java.net.URLClassLoader.findClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+FATAL ERROR in native method: processing of -javaagent failed
+	at sun.misc.Launcher$AppClassLoader.loadClass(Unknown Source)
+	at java.lang.ClassLoader.loadClass(Unknown Source)
+	at sun.instrument.InstrumentationImpl.loadClassAndStartAgent(Unknown Source)
+	at sun.instrument.InstrumentationImpl.loadClassAndCallPremain(Unknown Source)
