@@ -403,11 +403,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 builder.setProxyPass(config().getProxyPass());
             }
         }
-        if (MultiplayerManager.isHiperRunning()) {
-            builder.setHiperMode(true);
-        } else {
-            builder.setHiperMode(false);
-        }
+        builder.setHiperMode(MultiplayerManager.isHiperRunning());
 
         File json = getModpackConfiguration(version);
         if (json.exists()) {

@@ -102,6 +102,8 @@ public final class MultiplayerManager {
     private static final Path GSUDO_LOCAL_FILE = Metadata.HMCL_DIRECTORY.resolve("libraries").resolve("gsudo").resolve("gsudo").resolve(GSUDO_VERSION).resolve(GSUDO_TARGET_ARCH).resolve(GSUDO_FILE_NAME);
     private static final boolean USE_GSUDO;
 
+    private static boolean IS_HIPER_RUNNING;
+
     static final boolean IS_ADMINISTRATOR;
 
     static final BooleanBinding tokenInvalid = Bindings.createBooleanBinding(
@@ -131,6 +133,10 @@ public final class MultiplayerManager {
     private static CompletableFuture<Map<String, String>> HASH;
 
     private MultiplayerManager() {
+    }
+
+    public static boolean isHiperRunning() {
+        return IS_HIPER_RUNNING;
     }
 
     public static Path getConfigPath(String token) {
