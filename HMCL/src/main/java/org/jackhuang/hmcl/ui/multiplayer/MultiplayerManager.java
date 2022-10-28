@@ -60,17 +60,20 @@ import static org.jackhuang.hmcl.util.io.ChecksumMismatchException.verifyChecksu
  * Cato Management.
  */
 public final class MultiplayerManager {
+    public static final Path HIPER_PATH = getHiperLocalDirectory().resolve(getHiperFileName());
+    public static final int HIPER_AGREEMENT_VERSION = 3;
+    static final boolean IS_ADMINISTRATOR;
+    static final BooleanBinding tokenInvalid = Bindings.createBooleanBinding(
+            () -> !StringUtils.isAlphabeticOrNumber(globalConfig().multiplayerTokenProperty().getValue()),
+            globalConfig().multiplayerTokenProperty());
     // static final String HIPER_VERSION = "1.2.2";
     private static final String HIPER_DOWNLOAD_URL = "https://gitcode.net/to/hiper/-/raw/master/";
     private static final String HIPER_PACKAGES_URL = HIPER_DOWNLOAD_URL + "packages.sha1";
     private static final String HIPER_POINTS_URL = "https://cert.mcer.cn/point.yml";
     private static final Path HIPER_TEMP_CONFIG_PATH = Metadata.HMCL_DIRECTORY.resolve("hiper.yml");
     private static final Path HIPER_CONFIG_DIR = Metadata.HMCL_DIRECTORY.resolve("hiper-config");
-    public static final Path HIPER_PATH = getHiperLocalDirectory().resolve(getHiperFileName());
-    public static final int HIPER_AGREEMENT_VERSION = 3;
     private static final String REMOTE_ADDRESS = "127.0.0.1";
     private static final String LOCAL_ADDRESS = "0.0.0.0";
-
     private static final Map<Architecture, String> archMap = mapOf(
             pair(Architecture.ARM32, "arm-7"),
             pair(Architecture.ARM64, "arm64"),
@@ -84,31 +87,22 @@ public final class MultiplayerManager {
             pair(Architecture.RISCV64, "riscv64"),
             pair(Architecture.MIPSEL, "mipsle")
     );
-
     private static final Map<OperatingSystem, String> osMap = mapOf(
             pair(OperatingSystem.LINUX, "linux"),
             pair(OperatingSystem.WINDOWS, "windows"),
             pair(OperatingSystem.OSX, "darwin")
     );
-
     private static final String HIPER_TARGET_NAME = String.format("%s-%s",
             osMap.getOrDefault(OperatingSystem.CURRENT_OS, "windows"),
             archMap.getOrDefault(Architecture.SYSTEM_ARCH, "amd64"));
-
     private static final String GSUDO_VERSION = "1.7.1";
     private static final String GSUDO_TARGET_ARCH = Architecture.SYSTEM_ARCH == Architecture.X86_64 ? "amd64" : "x86";
     private static final String GSUDO_FILE_NAME = "gsudo.exe";
     private static final String GSUDO_DOWNLOAD_URL = "https://gitcode.net/glavo/gsudo-release/-/raw/75c952ea3afe8792b0db4fe9bab87d41b21e5895/" + GSUDO_TARGET_ARCH + "/" + GSUDO_FILE_NAME;
     private static final Path GSUDO_LOCAL_FILE = Metadata.HMCL_DIRECTORY.resolve("libraries").resolve("gsudo").resolve("gsudo").resolve(GSUDO_VERSION).resolve(GSUDO_TARGET_ARCH).resolve(GSUDO_FILE_NAME);
     private static final boolean USE_GSUDO;
-
     private static boolean IS_HIPER_RUNNING;
-
-    static final boolean IS_ADMINISTRATOR;
-
-    static final BooleanBinding tokenInvalid = Bindings.createBooleanBinding(
-            () -> !StringUtils.isAlphabeticOrNumber(globalConfig().multiplayerTokenProperty().getValue()),
-            globalConfig().multiplayerTokenProperty());
+    private static CompletableFuture<Map<String, String>> HASH;
 
     static {
         boolean isAdministrator = false;
@@ -129,8 +123,6 @@ public final class MultiplayerManager {
         }
         IS_ADMINISTRATOR = isAdministrator;
     }
-
-    private static CompletableFuture<Map<String, String>> HASH;
 
     private MultiplayerManager() {
     }
@@ -299,6 +291,7 @@ public final class MultiplayerManager {
                     .command(commands)
                     .start();
 
+            IS_HIPER_RUNNING = true;
             return new HiperSession(process, Arrays.asList(commands));
         }));
     }
@@ -440,6 +433,12 @@ public final class MultiplayerManager {
     }
 
     public static class HiperExitEvent extends Event {
+        public static final int INTERRUPTED = -1;
+        public static final int INVALID_CONFIGURATION = -2;
+        public static final int CERTIFICATE_EXPIRED = -3;
+        public static final int FAILED_GET_DEVICE = -4;
+        public static final int FAILED_LOAD_CONFIG = -5;
+        public static final int NO_SUDO_PRIVILEGES = -6;
         private final int exitCode;
 
         public HiperExitEvent(Object source, int exitCode) {
@@ -450,13 +449,6 @@ public final class MultiplayerManager {
         public int getExitCode() {
             return exitCode;
         }
-
-        public static final int INTERRUPTED = -1;
-        public static final int INVALID_CONFIGURATION = -2;
-        public static final int CERTIFICATE_EXPIRED = -3;
-        public static final int FAILED_GET_DEVICE = -4;
-        public static final int FAILED_LOAD_CONFIG = -5;
-        public static final int NO_SUDO_PRIVILEGES = -6;
     }
 
     public static class HiperIPEvent extends Event {
