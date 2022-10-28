@@ -48,6 +48,7 @@ import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
+import javax.naming.OperationNotSupportedException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -568,13 +569,16 @@ public final class LauncherHelper {
                         };
                         AuthlibInjectorServer hiperServer = new AuthlibInjectorServer("http://6.6.3.3/api/yggdrasil-hiper/");
                         AuthlibInjectorArtifactProvider authLibJar = null;
-                        AuthlibInjectorAccount hiperUser = new AuthlibInjectorAccount(hiperServer, authLibJar, this.account.getUsername(), "114514", hiperCharacterSelector);
                         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
                             authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getenv("APPDATA") + "\\.hmcl\\authlib-injector.jar"));
                         if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
                             authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getProperty("user.home") + "/.hmcl/authlib-injector.jar"));
                         if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
                             authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getProperty("user.home") + "/Library/Application Support/hmcl/authlib-injector.jar"));
+                        if (authLibJar == null) {
+                            throw new OperationNotSupportedException();
+                        }
+                        AuthlibInjectorAccount hiperUser = new AuthlibInjectorAccount(hiperServer, authLibJar, this.account.getUsername(), "114514", hiperCharacterSelector);
                         AuthInfo hiperAuth = hiperUser.logIn();
                         return new HMCLGameLauncher(
                                 repository,
