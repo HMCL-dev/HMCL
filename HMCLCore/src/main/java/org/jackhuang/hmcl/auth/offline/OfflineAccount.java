@@ -46,7 +46,6 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
- *
  * @author huang
  */
 public class OfflineAccount extends Account {
@@ -96,7 +95,7 @@ public class OfflineAccount extends Account {
         if (skin.getType() == Skin.Type.DEFAULT) return false;
         TextureModel defaultModel = TextureModel.detectUUID(getUUID());
         if (skin.getType() == Skin.Type.ALEX && defaultModel == TextureModel.ALEX ||
-            skin.getType() == Skin.Type.STEVE && defaultModel == TextureModel.STEVE) {
+                skin.getType() == Skin.Type.STEVE && defaultModel == TextureModel.STEVE) {
             return false;
         }
         return true;
@@ -140,46 +139,6 @@ public class OfflineAccount extends Account {
         }
     }
 
-    private class OfflineAuthInfo extends AuthInfo {
-        private final AuthlibInjectorArtifactInfo artifact;
-        private YggdrasilServer server;
-
-        public OfflineAuthInfo(AuthInfo authInfo, AuthlibInjectorArtifactInfo artifact) {
-            super(authInfo.getUsername(), authInfo.getUUID(), authInfo.getAccessToken(), USER_TYPE_LEGACY, authInfo.getUserProperties());
-
-            this.artifact = artifact;
-        }
-
-        @Override
-        public Arguments getLaunchArguments(LaunchOptions options) throws IOException {
-            if (!options.isDaemon()) return null;
-
-            server = new YggdrasilServer(0);
-            server.start();
-
-            try {
-                server.addCharacter(new YggdrasilServer.Character(uuid, username, skin.load(username).run()));
-            } catch (IOException e) {
-                // ignore
-            } catch (Exception e) {
-                throw new IOException(e);
-            }
-
-            return new Arguments().addJVMArguments(
-                    "-javaagent:" + artifact.getLocation().toString() + "=" + "http://localhost:" + server.getListeningPort(),
-                    "-Dauthlibinjector.side=client"
-            );
-        }
-
-        @Override
-        public void close() throws Exception {
-            super.close();
-
-            if (server != null)
-                server.stop();
-        }
-    }
-
     @Override
     public AuthInfo playOffline() throws AuthenticationException {
         return logIn();
@@ -218,5 +177,52 @@ public class OfflineAccount extends Account {
             return false;
         OfflineAccount another = (OfflineAccount) obj;
         return username.equals(another.username);
+    }
+
+    private class OfflineAuthInfo extends AuthInfo {
+        private final AuthlibInjectorArtifactInfo artifact;
+        private YggdrasilServer server;
+
+        public OfflineAuthInfo(AuthInfo authInfo, AuthlibInjectorArtifactInfo artifact) {
+            super(authInfo.getUsername(), authInfo.getUUID(), authInfo.getAccessToken(), USER_TYPE_LEGACY, authInfo.getUserProperties());
+
+            this.artifact = artifact;
+        }
+
+        @Override
+        public Arguments getLaunchArguments(LaunchOptions options) throws IOException {
+            if (!options.isDaemon()) return null;
+
+            server = new YggdrasilServer(0);
+            server.start();
+
+            try {
+                server.addCharacter(new YggdrasilServer.Character(uuid, username, skin.load(username).run()));
+            } catch (IOException e) {
+                // ignore
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+
+            if (options.isHiperMode()) {
+                return new Arguments().addJVMArguments(
+                        "-javaagent:" + artifact.getLocation().toString() + "=" + "http://6.6.3.3/api/yggdrasil-hiper/",
+                        "-Dauthlibinjector.side=client"
+                );
+            } else {
+                return new Arguments().addJVMArguments(
+                        "-javaagent:" + artifact.getLocation().toString() + "=" + "http://localhost:" + server.getListeningPort(),
+                        "-Dauthlibinjector.side=client"
+                );
+            }
+        }
+
+        @Override
+        public void close() throws Exception {
+            super.close();
+
+            if (server != null)
+                server.stop();
+        }
     }
 }
