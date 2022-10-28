@@ -358,7 +358,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
             ComponentList persistencePane = new ComponentList();
             {
-                HintPane hintPane = new HintPane(MessageType.WARNING);
+                HintPane hintPane = new HintPane(MessageType.INFO);
                 hintPane.setText(i18n("multiplayer.persistence.hint"));
 
                 BorderPane importPane = new BorderPane();
