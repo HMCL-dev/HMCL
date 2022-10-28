@@ -566,7 +566,7 @@ public final class LauncherHelper {
                             }
                             return null;
                         };
-                        AuthlibInjectorServer hiperServer = new AuthlibInjectorServer("http://skin.x/api/yggdrasil-hiper/");
+                        AuthlibInjectorServer hiperServer = new AuthlibInjectorServer("http://6.6.3.3/api/yggdrasil-hiper/");
                         AuthlibInjectorArtifactProvider authLibJar = null;
                         AuthlibInjectorAccount hiperUser = new AuthlibInjectorAccount(hiperServer, authLibJar, this.account.getUsername(), "114514", hiperCharacterSelector);
                         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
