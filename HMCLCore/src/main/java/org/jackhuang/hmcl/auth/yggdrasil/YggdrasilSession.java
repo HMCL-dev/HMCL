@@ -104,7 +104,7 @@ public class YggdrasilSession {
         if (selectedProfile == null)
             throw new IllegalStateException("No character is selected");
 
-        return new AuthInfo(selectedProfile.getName(), selectedProfile.getId(), accessToken,
+        return new AuthInfo(selectedProfile.getName(), selectedProfile.getId(), accessToken, AuthInfo.USER_TYPE_MOJANG,
                 Optional.ofNullable(userProperties)
                         .map(properties -> properties.entrySet().stream()
                                 .collect(Collectors.toMap(Map.Entry::getKey,

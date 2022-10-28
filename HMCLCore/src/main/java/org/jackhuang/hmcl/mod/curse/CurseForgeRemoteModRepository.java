@@ -41,12 +41,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
     private static final String PREFIX = "https://api.curseforge.com";
 
-    private static String apiKey;
-
-    static {
-        apiKey = System.getProperty("hmcl.curseforge.apikey",
-                JarUtils.thisJar().flatMap(JarUtils::getManifest).map(manifest -> manifest.getMainAttributes().getValue("CurseForge-Api-Key")).orElse(""));
-    }
+    private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getManifestAttribute("CurseForge-Api-Key", ""));
 
     private final Type type;
     private final int section;

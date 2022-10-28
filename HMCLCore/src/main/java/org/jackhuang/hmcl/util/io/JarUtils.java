@@ -18,14 +18,13 @@
 package org.jackhuang.hmcl.util.io;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.CodeSource;
 import java.util.Optional;
-import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
@@ -34,20 +33,43 @@ public final class JarUtils {
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private static final Optional<Path> THIS_JAR =
-            Optional.ofNullable(JarUtils.class.getProtectionDomain().getCodeSource())
-                    .map(CodeSource::getLocation)
-                    .map(url -> {
-                        try {
-                            return Paths.get(url.toURI());
-                        } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException e) {
-                            return null;
-                        }
-                    })
-                    .filter(Files::isRegularFile);
+    private static final Optional<Path> THIS_JAR;
+
+    private static final Manifest manifest;
+
+    static {
+        THIS_JAR = Optional.ofNullable(JarUtils.class.getProtectionDomain().getCodeSource())
+                .map(codeSource -> {
+                    try {
+                        return Paths.get(codeSource.getLocation().toURI());
+                    } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException e) {
+                        return null;
+                    }
+                })
+                .filter(Files::isRegularFile);
+
+        Manifest mf = null;
+        try (InputStream input = JarUtils.class.getResourceAsStream("/META-INF/MANIFEST.MF")) {
+            if (input != null)
+                mf = new Manifest(input);
+        } catch (IOException e) {
+            // Logger has not started
+            e.printStackTrace();
+        }
+
+        if (mf == null)
+            mf = THIS_JAR.flatMap(JarUtils::getManifest).orElseGet(Manifest::new);
+
+        manifest = mf;
+    }
 
     public static Optional<Path> thisJar() {
         return THIS_JAR;
+    }
+
+    public static String getManifestAttribute(String name, String defaultValue) {
+        String value = manifest.getMainAttributes().getValue(name);
+        return value != null ? value : defaultValue;
     }
 
     public static Optional<Manifest> getManifest(Path jar) {
@@ -56,10 +78,5 @@ public final class JarUtils {
         } catch (IOException e) {
             return Optional.empty();
         }
-    }
-
-    public static Optional<String> getImplementationVersion(Path jar) {
-        return Optional.of(jar).flatMap(JarUtils::getManifest)
-                .flatMap(manifest -> Optional.ofNullable(manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION)));
     }
 }

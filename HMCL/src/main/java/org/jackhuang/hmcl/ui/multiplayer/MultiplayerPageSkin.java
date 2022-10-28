@@ -20,6 +20,9 @@ package org.jackhuang.hmcl.ui.multiplayer;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPasswordField;
 import com.jfoenix.controls.JFXTextField;
+import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -28,22 +31,35 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.Locales;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimatedPageSkin<MultiplayerPage> {
@@ -74,11 +90,11 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         item.setLeftGraphic(wrap(SVG::helpCircleOutline));
                         item.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/multiplayer"));
                     })
-                    .addNavigationDrawerItem(item -> {
-                        item.setTitle(i18n("multiplayer.help.1"));
-                        item.setLeftGraphic(wrap(SVG::helpCircleOutline));
-                        item.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/multiplayer/help.html#%E9%9B%B6%E4%BD%BF%E7%94%A8%E7%AE%A1%E7%90%86%E5%91%98%E6%9D%83%E9%99%90%E5%90%AF%E5%8A%A8-hmcl"));
-                    })
+//                    .addNavigationDrawerItem(item -> {
+//                        item.setTitle(i18n("multiplayer.help.1"));
+//                        item.setLeftGraphic(wrap(SVG::helpCircleOutline));
+//                        item.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/multiplayer/admin.html"));
+//                    })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("multiplayer.help.2"));
                         item.setLeftGraphic(wrap(SVG::helpCircleOutline));
@@ -152,6 +168,12 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         tokenField.textProperty().bindBidirectional(globalConfig().multiplayerTokenProperty());
                         tokenField.setPromptText(i18n("multiplayer.token.prompt"));
 
+                        Validator validator = new Validator("multiplayer.token.format_invalid", StringUtils::isAlphabeticOrNumber);
+                        InvalidationListener listener = any -> tokenField.validate();
+                        validator.getProperties().put(validator, listener);
+                        tokenField.textProperty().addListener(new WeakInvalidationListener(listener));
+                        tokenField.getValidators().add(validator);
+
                         JFXHyperlink applyLink = new JFXHyperlink(i18n("multiplayer.token.apply"));
                         BorderPane.setAlignment(applyLink, Pos.CENTER_RIGHT);
                         applyLink.setOnAction(e -> HMCLService.openRedirectLink("multiplayer-static-token"));
@@ -164,6 +186,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         startButton.getStyleClass().add("jfx-button-raised");
                         startButton.setButtonType(JFXButton.ButtonType.RAISED);
                         startButton.setOnMouseClicked(e -> control.start());
+                        startButton.disableProperty().bind(MultiplayerManager.tokenInvalid);
 
                         startPane.getChildren().setAll(startButton);
                         startPane.setAlignment(Pos.CENTER_RIGHT);
@@ -333,6 +356,107 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                 });
             }
 
+            ComponentList persistencePane = new ComponentList();
+            {
+                HintPane hintPane = new HintPane(MessageType.WARNING);
+                hintPane.setText(i18n("multiplayer.persistence.hint"));
+
+                BorderPane importPane = new BorderPane();
+                {
+                    Label left = new Label(i18n("multiplayer.persistence.import"));
+                    BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                    importPane.setLeft(left);
+
+                    JFXButton importButton = new JFXButton(i18n("multiplayer.persistence.import.button"));
+                    importButton.setOnMouseClicked(e -> {
+                        Path targetPath = MultiplayerManager.getConfigPath(globalConfig().getMultiplayerToken());
+                        if (Files.exists(targetPath)) {
+                            LOG.warning("License file " + targetPath + " already exists");
+                            Controllers.dialog(i18n("multiplayer.persistence.import.file_already_exists"), null, MessageType.ERROR);
+                            return;
+                        }
+
+                        FileChooser fileChooser = new FileChooser();
+                        fileChooser.setTitle(i18n("multiplayer.persistence.import.title"));
+                        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("multiplayer.persistence.license_file"), "*.yml"));
+
+                        File file = fileChooser.showOpenDialog(Controllers.getStage());
+                        if (file == null)
+                            return;
+
+                        CompletableFuture<Boolean> future = new CompletableFuture<>();
+                        if (file.getName().matches("[a-z0-9]{40}.yml") && !targetPath.getFileName().toString().equals(file.getName())) {
+                            Controllers.confirm(i18n("multiplayer.persistence.import.token_not_match"), null, MessageType.QUESTION,
+                                    () -> future.complete(true),
+                                    () -> future.complete(false)) ;
+                        } else {
+                            future.complete(true);
+                        }
+                        future.thenAcceptAsync(Lang.wrapConsumer(c -> {
+                            if (c) Files.copy(file.toPath(), targetPath);
+                        })).exceptionally(exception -> {
+                            LOG.log(Level.WARNING, "Failed to import license file", exception);
+                            Platform.runLater(() -> Controllers.dialog(i18n("multiplayer.persistence.import.failed"), null, MessageType.ERROR));
+                            return null;
+                        });
+                    });
+                    importButton.disableProperty().bind(MultiplayerManager.tokenInvalid);
+                    importButton.getStyleClass().add("jfx-button-border");
+                    importPane.setRight(importButton);
+                }
+
+                BorderPane exportPane = new BorderPane();
+                {
+                    Label left = new Label(i18n("multiplayer.persistence.export"));
+                    BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                    exportPane.setLeft(left);
+
+                    JFXButton exportButton = new JFXButton(i18n("multiplayer.persistence.export.button"));
+                    exportButton.setOnMouseClicked(e -> {
+                        String token = globalConfig().getMultiplayerToken();
+                        Path configPath = MultiplayerManager.getConfigPath(token);
+
+                        FileChooser fileChooser = new FileChooser();
+                        fileChooser.setTitle(i18n("multiplayer.persistence.export.title"));
+                        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("multiplayer.persistence.license_file"), "*.yml"));
+                        fileChooser.setInitialFileName(configPath.getFileName().toString());
+
+                        File file = fileChooser.showSaveDialog(Controllers.getStage());
+                        if (file == null)
+                            return;
+
+                        CompletableFuture.runAsync(Lang.wrap(() -> MultiplayerManager.downloadHiperConfig(token, configPath)), Schedulers.io())
+                                .handleAsync((ignored, exception) -> {
+                                    if (exception != null) {
+                                        LOG.log(Level.INFO, "Unable to download hiper config file", e);
+                                    }
+
+                                    if (!Files.isRegularFile(configPath)) {
+                                        LOG.warning("License file " + configPath + " not exists");
+                                        Platform.runLater(() -> Controllers.dialog(i18n("multiplayer.persistence.export.file_not_exists"), null, MessageType.ERROR));
+                                        return null;
+                                    }
+
+                                    try {
+                                        Files.copy(configPath, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                                    } catch (IOException ioException) {
+                                        LOG.log(Level.WARNING, "Failed to export license file", ioException);
+                                        Platform.runLater(() -> Controllers.dialog(i18n("multiplayer.persistence.export.failed"), null, MessageType.ERROR));
+                                    }
+
+                                    return null;
+                                });
+
+                    });
+                    exportButton.disableProperty().bind(MultiplayerManager.tokenInvalid);
+                    exportButton.getStyleClass().add("jfx-button-border");
+                    exportPane.setRight(exportButton);
+                }
+
+                persistencePane.getContent().setAll(hintPane, importPane, exportPane);
+            }
+
+
             ComponentList thanksPane = new ComponentList();
             {
                 HBox pane = new HBox();
@@ -354,6 +478,8 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
             content.getChildren().setAll(
                     mainPane,
+                    ComponentList.createComponentListTitle(i18n("multiplayer.persistence")),
+                    persistencePane,
                     ComponentList.createComponentListTitle(i18n("about")),
                     thanksPane
             );

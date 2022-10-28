@@ -131,11 +131,11 @@ public class ManagedProcess {
     }
 
     public synchronized void pumpInputStream(Consumer<String> onLogLine) {
-        addRelatedThread(Lang.thread(new StreamPump(process.getInputStream(), onLogLine), "ProcessInputStreamPump", true));
+        addRelatedThread(Lang.thread(new StreamPump(process.getInputStream(), onLogLine, OperatingSystem.NATIVE_CHARSET), "ProcessInputStreamPump", true));
     }
 
     public synchronized void pumpErrorStream(Consumer<String> onLogLine) {
-        addRelatedThread(Lang.thread(new StreamPump(process.getErrorStream(), onLogLine), "ProcessErrorStreamPump", true));
+        addRelatedThread(Lang.thread(new StreamPump(process.getErrorStream(), onLogLine, OperatingSystem.NATIVE_CHARSET), "ProcessErrorStreamPump", true));
     }
 
     /**

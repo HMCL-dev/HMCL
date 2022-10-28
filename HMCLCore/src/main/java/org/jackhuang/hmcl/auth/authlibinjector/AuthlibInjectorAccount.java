@@ -120,7 +120,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         private final String prefetchedMeta;
 
         public AuthlibInjectorAuthInfo(AuthInfo authInfo, AuthlibInjectorArtifactInfo artifact, AuthlibInjectorServer server, String prefetchedMeta) {
-            super(authInfo.getUsername(), authInfo.getUUID(), authInfo.getAccessToken(), authInfo.getUserProperties());
+            super(authInfo.getUsername(), authInfo.getUUID(), authInfo.getAccessToken(), authInfo.getUserType(), authInfo.getUserProperties());
 
             this.artifact = artifact;
             this.server = server;
