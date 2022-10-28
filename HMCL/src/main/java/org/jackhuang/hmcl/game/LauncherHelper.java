@@ -575,16 +575,29 @@ public final class LauncherHelper {
                         };
                         AuthlibInjectorServer hiperServer = new AuthlibInjectorServer("http://6.6.3.3/api/yggdrasil-hiper/");
                         AuthlibInjectorAccount hiperUser = new AuthlibInjectorAccount(hiperServer, authLibJar, this.account.getUsername(), "HMCL", hiperCharacterSelector);
-                        AuthInfo hiperAuth = hiperUser.logIn();
-                        return new HMCLGameLauncher(
-                                repository,
-                                version.get(),
-                                hiperAuth,
-                                launchOptions,
-                                launcherVisibility == LauncherVisibility.CLOSE
-                                        ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                        : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
-                        );
+                        try {
+                            AuthInfo hiperAuth = hiperUser.logIn();
+                            return new HMCLGameLauncher(
+                                    repository,
+                                    version.get(),
+                                    hiperAuth,
+                                    launchOptions,
+                                    launcherVisibility == LauncherVisibility.CLOSE
+                                            ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
+                                            : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
+                            );
+                        } catch (AuthenticationException hiperAuthFailed) {
+                            // igrone AuthFailedExpection and use OfflineAccount
+                            return new HMCLGameLauncher(
+                                    repository,
+                                    version.get(),
+                                    authInfo,
+                                    launchOptions,
+                                    launcherVisibility == LauncherVisibility.CLOSE
+                                            ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
+                                            : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
+                            );
+                        }
                     } else {
                         return new HMCLGameLauncher(
                                 repository,
