@@ -573,7 +573,7 @@ public final class LauncherHelper {
                             }
                             return null;
                         };
-                        AuthlibInjectorServer hiperServer = new AuthlibInjectorServer("http://6.6.3.3/api/yggdrasil-hiper/");
+                        AuthlibInjectorServer hiperServer = new AuthlibInjectorServer("http://hiperauth.tech/api/yggdrasil-hiper/");
                         AuthlibInjectorAccount hiperUser = new AuthlibInjectorAccount(hiperServer, authLibJar, this.account.getUsername(), "HMCL", hiperCharacterSelector);
                         try {
                             AuthInfo hiperAuth = hiperUser.logIn();
