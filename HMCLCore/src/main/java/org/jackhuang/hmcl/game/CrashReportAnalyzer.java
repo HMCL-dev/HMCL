@@ -35,12 +35,12 @@ public final class CrashReportAnalyzer {
     public enum Rule {
         // We manually write "Pattern.compile" here for IDEA syntax highlighting.
 
-        OPENJ9(Pattern.compile("(Open J9 is not supported|OpenJ9 is incompatible)")),
+        OPENJ9(Pattern.compile("(Open J9 is not supported|OpenJ9 is incompatible|.J9VMInternals.)")),
         TOO_OLD_JAVA(Pattern.compile("java\\.lang\\.UnsupportedClassVersionError: (.*?) version (?<expected>\\d+)\\.0"), "expected"),
         JVM_32BIT(Pattern.compile("(Could not reserve enough space for (.*?) object heap|The specified size exceeds the maximum representable size)")),
 
         // Some mods/shader packs do incorrect GL operations.
-        GL_OPERATION_FAILURE(Pattern.compile("1282: Invalid operation")),
+        GL_OPERATION_FAILURE(Pattern.compile("(1282: Invalid operation|Maybe try a lower resolution resourcepack?)")),
 
         // Maybe software rendering? Suggest user for using a graphics card.
         OPENGL_NOT_SUPPORTED(Pattern.compile("The driver does not appear to support OpenGL")),
@@ -95,8 +95,11 @@ public final class CrashReportAnalyzer {
         BLOCK(Pattern.compile("Block: (?<type>.*)[\\w\\W\\n\\r]*?Block location: (?<location>.*)"), "type", "location"),
         // Cannot find native libraries
         UNSATISFIED_LINK_ERROR(Pattern.compile("java.lang.UnsatisfiedLinkError: Failed to locate library: (?<name>.*)"), "name"),
-
-
+        //
+        OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE(Pattern.compile("(Cannot read field ""ofTelemetry"" because ""net.optifine.Config.gameSettings"" is null|TRANSFORMER/net.optifine/net.optifine.reflect.Reflector.<clinit>(Reflector.java)")),//OptiFine与Forge不兼容
+        MOD_FILES_ARE_DECOMPRESSED(Pattern.compile("(The directories below appear to be extracted jar files. Fix this before you continue.|Extracted mod jars found, loading will NOT continue)")),//Mod文件被解压
+        OPTIFINE_CAUSES_THE_WORLD_TO_FAIL_TO_LOAD(Pattern.compile("java.lang.NoSuchMethodError: net.minecraft.world.server.ChunkManager$ProxyTicketManager.shouldForceTicks(J)Z+OptiFine")),//OptiFine导致无法加载世界 https://www.minecraftforum.net/forums/support/java-edition-support/3051132-exception-ticking-world
+        TOO_MANY_MODS_LEAD_TO_EXCEEDING_THE_ID_LIMIT(Pattern.compile("maximum id range exceeded")),//Mod过多导致超出ID限制
 
         // Mod issues
         // TwilightForest is not compatible with OptiFine on Minecraft 1.16.
@@ -177,16 +180,16 @@ public final class CrashReportAnalyzer {
     private static final Pattern STACK_TRACE_LINE_PATTERN = Pattern.compile("at (?<method>.*?)\\((?<sourcefile>.*?)\\)");
     private static final Pattern STACK_TRACE_LINE_MODULE_PATTERN = Pattern.compile("\\{(?<tokens>.*)}");
     private static final Set<String> PACKAGE_KEYWORD_BLACK_LIST = new HashSet<>(Arrays.asList(
-            "net", "minecraft", "item", "block", "player", "tileentity", "events", "common", "client", "entity", "mojang", "main", "gui", "world", "server", "dedicated", // minecraft
+            "net", "minecraft", "item", "setup", "block", "assist",  "optifine", "player", "unimi", "fastutil", "tileentity", "events", "common", "blockentity", "client", "entity", "mojang", "main", "gui", "world", "server", "dedicated", // minecraft
             "renderer", "chunk", "model", "loading", "color", "pipeline", "inventory", "launcher", "physics", "particle", "gen", "registry", "worldgen", "texture", "biomes", "biome",
-            "monster", "passive", "ai", "integrated", "tile", "state", "play", "structure", "nbt", "pathfinding", "chunk", "audio", "entities", "items", "renderers",
+            "monster", "passive", "ai", "integrated", "tile", "state", "play", "override", "transformers", "structure", "nbt", "pathfinding", "chunk", "audio", "entities", "items", "renderers",
             "storage",
-            "java", "lang", "util", "nio", "io", "sun", "reflect", "zip", "jdk", "nashorn", "scripts", "runtime", "internal", // java
+            "java", "lang", "util", "nio", "io", "sun", "reflect", "zip", "jar, ""jdk", "nashorn", "scripts", "runtime", "internal", // java
             "mods", "mod", "impl", "org", "com", "cn", "cc", "jp", // title
-            "core", "config", "registries", "lib", "ruby", "mc", "codec", "channel", "embedded", "netty", "network", "handler", "feature", // misc
+            "core", "config", "registries", "lib", "ruby", "mc", "codec", "recipe", "channel", "embedded", "done", "net", "netty", "network", "load", "github", "handler", "content", "feature", // misc
             "file", "machine", "shader", "general", "helper", "init", "library", "api", "integration", "engine", "preload", "preinit",
             "hellominecraft", "jackhuang", // hmcl
-            "fml", "minecraftforge", "forge", "cpw", "modlauncher", "launchwrapper", "objectweb", "asm", "event", "eventhandler", "handshake", "kcauldron", // forge
+            "fml", "minecraftforge", "forge", "cpw", "modlauncher", "launchwrapper", "objectweb", "asm", "event", "eventhandler", "handshake", "modapi", "kcauldron", // forge
             "fabricmc", "loader", "game", "knot", "launch", "mixin" // fabric
     ));
 
