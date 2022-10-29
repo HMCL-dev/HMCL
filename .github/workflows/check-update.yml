@@ -48,7 +48,7 @@ jobs:
         run: |
           echo "HMCL v$HMCL_VERSION" >> RELEASE_NOTE
           echo "" >> RELEASE_NOTE
-          echo "The full changelogs can be found on the website: https://docs.hmcl.net/assets/changelog/dev.html" >> RELEASE_NOTE
+          echo "The full changelogs can be found on the website: https://docs.hmcl.net/changelog/dev.html" >> RELEASE_NOTE
           echo "Notice: changelogs are written in Chinese." >> RELEASE_NOTE
       - name: Create release
         if: ${{ env.continue == 'true' }}
