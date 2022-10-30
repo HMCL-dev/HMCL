@@ -165,10 +165,17 @@ public class OfflineAccount extends Account {
                 throw new IOException(e);
             }
 
-            return new Arguments().addJVMArguments(
-                    "-javaagent:" + artifact.getLocation().toString() + "=" + "http://localhost:" + server.getListeningPort(),
-                    "-Dauthlibinjector.side=client"
-            );
+            if (options.isHiperMode()) {
+                return new Arguments().addJVMArguments(
+                        "-javaagent:" + artifact.getLocation().toString() + "=" + "http://hiperauth.tech/api/yggdrasil-hiper/",
+                        "-Dauthlibinjector.side=client"
+                );
+            } else {
+                return new Arguments().addJVMArguments(
+                        "-javaagent:" + artifact.getLocation().toString() + "=" + "http://localhost:" + server.getListeningPort(),
+                        "-Dauthlibinjector.side=client"
+                );
+            }
         }
 
         @Override

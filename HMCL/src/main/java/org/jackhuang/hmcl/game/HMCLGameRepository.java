@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.ProxyManager;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.ui.multiplayer.MultiplayerManager;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -367,6 +368,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 builder.setProxyPass(config().getProxyPass());
             }
         }
+        builder.setHiperMode(MultiplayerManager.isHiperMode());
 
         File json = getModpackConfiguration(version);
         if (json.exists()) {

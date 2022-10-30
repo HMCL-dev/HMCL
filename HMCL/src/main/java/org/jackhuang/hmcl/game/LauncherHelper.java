@@ -23,7 +23,8 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.*;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
+import org.jackhuang.hmcl.auth.authlibinjector.*;
+import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.MaintainTask;
@@ -50,10 +51,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.nio.file.AccessDeniedException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -176,15 +174,56 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, scriptFile != null);
-                    return new HMCLGameLauncher(
-                            repository,
-                            version.get(),
-                            authInfo,
-                            launchOptions,
-                            launcherVisibility == LauncherVisibility.CLOSE
-                                    ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
-                    );
+                    AuthlibInjectorArtifactProvider authLibJar = null;
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+                        authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getenv("APPDATA") + "\\.hmcl\\authlib-injector.jar"));
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
+                        authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getProperty("user.home") + "/.hmcl/authlib-injector.jar"));
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+                        authLibJar = new SimpleAuthlibInjectorArtifactProvider(Paths.get(System.getProperty("user.home") + "/Library/Application Support/hmcl/authlib-injector.jar"));
+                    if (launchOptions.isHiperMode() && (this.account instanceof OfflineAccount) && authLibJar != null) {
+                        CharacterSelector hiperCharacterSelector = (yggdrasilService, names) -> {
+                            if (names.isEmpty()) {
+                                throw new NoSelectedCharacterException();
+                            }
+                            return null;
+                        };
+                        AuthlibInjectorServer hiperServer = new AuthlibInjectorServer("http://hiperauth.tech/api/yggdrasil-hiper/");
+                        AuthlibInjectorAccount hiperUser = new AuthlibInjectorAccount(hiperServer, authLibJar, this.account.getUsername(), "HMCL", hiperCharacterSelector);
+                        try {
+                            AuthInfo hiperAuth = hiperUser.logIn();
+                            return new HMCLGameLauncher(
+                                    repository,
+                                    version.get(),
+                                    hiperAuth,
+                                    launchOptions,
+                                    launcherVisibility == LauncherVisibility.CLOSE
+                                            ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
+                                            : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
+                            );
+                        } catch (AuthenticationException hiperAuthFailed) {
+                            // igrone AuthFailedExpection and use OfflineAccount
+                            return new HMCLGameLauncher(
+                                    repository,
+                                    version.get(),
+                                    authInfo,
+                                    launchOptions,
+                                    launcherVisibility == LauncherVisibility.CLOSE
+                                            ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
+                                            : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
+                            );
+                        }
+                    } else {
+                        return new HMCLGameLauncher(
+                                repository,
+                                version.get(),
+                                authInfo,
+                                launchOptions,
+                                launcherVisibility == LauncherVisibility.CLOSE
+                                        ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
+                                        : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
+                        );
+                    }
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
                         return Task.supplyAsync(launcher::launch);

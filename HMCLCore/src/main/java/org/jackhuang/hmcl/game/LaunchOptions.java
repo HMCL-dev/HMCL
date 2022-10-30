@@ -1,3 +1,4 @@
+
 /*
  * Hello Minecraft! Launcher
  * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
@@ -62,6 +63,7 @@ public class LaunchOptions implements Serializable {
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
     private boolean daemon;
+    private boolean hiperMode;
 
     /**
      * The game directory
@@ -163,6 +165,13 @@ public class LaunchOptions implements Serializable {
      */
     public boolean isFullscreen() {
         return fullscreen;
+    }
+
+    /**
+     * Is the game start in hiper mode.
+     */
+    public boolean isHiperMode() {
+        return hiperMode;
     }
 
     /**
@@ -587,6 +596,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setDaemon(boolean daemon) {
             options.daemon = daemon;
+            return this;
+        }
+
+        public Builder setHiperMode(boolean hiperMode){
+            options.hiperMode = hiperMode;
             return this;
         }
 

@@ -101,6 +101,7 @@ public final class MultiplayerManager {
     private static final String GSUDO_DOWNLOAD_URL = "https://gitcode.net/glavo/gsudo-release/-/raw/75c952ea3afe8792b0db4fe9bab87d41b21e5895/" + GSUDO_TARGET_ARCH + "/" + GSUDO_FILE_NAME;
     private static final Path GSUDO_LOCAL_FILE = Metadata.HMCL_DIRECTORY.resolve("libraries").resolve("gsudo").resolve("gsudo").resolve(GSUDO_VERSION).resolve(GSUDO_TARGET_ARCH).resolve(GSUDO_FILE_NAME);
     private static final boolean USE_GSUDO;
+    private static boolean IS_HIPER_MODE = false;
 
     static final boolean IS_ADMINISTRATOR;
 
@@ -131,6 +132,10 @@ public final class MultiplayerManager {
     private static CompletableFuture<Map<String, String>> HASH;
 
     private MultiplayerManager() {
+    }
+
+    public static boolean isHiperMode() {
+        return IS_HIPER_MODE;
     }
 
     public static Path getConfigPath(String token) {
@@ -293,6 +298,7 @@ public final class MultiplayerManager {
                     .command(commands)
                     .start();
 
+            IS_HIPER_MODE=true;
             return new HiperSession(process, Arrays.asList(commands));
         }));
     }
