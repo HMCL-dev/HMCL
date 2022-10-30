@@ -72,7 +72,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class LauncherHelper {
 
     private final Profile profile;
-    private final Account account;
+    private Account account;
     private final String selectedVersion;
     private File scriptFile;
     private final VersionSetting setting;
@@ -90,6 +90,14 @@ public final class LauncherHelper {
     }
 
     private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+
+    public Account getAccount() {
+        return account;
+    }
+
+    public void setAccount(Account account) {
+        this.account = account;
+    }
 
     public void setTestMode() {
         launcherVisibility = LauncherVisibility.KEEP;

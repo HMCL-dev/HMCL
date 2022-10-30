@@ -33,9 +33,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
-import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -43,7 +40,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
-import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -80,8 +76,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         item.setTitle(i18n("version.launch"));
                         item.setLeftGraphic(wrap(SVG::rocketLaunchOutline));
                         item.setOnAction(e -> {
-                            Profile profile = Profiles.getSelectedProfile();
-                            Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
+                            control.launchGame();
                         });
                     })
                     .startCategory(i18n("help"))
