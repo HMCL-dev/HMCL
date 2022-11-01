@@ -1,38 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.*?>
 <?import java.lang.String?>
-<?import javafx.geometry.Insets?>
 <fx:root xmlns="http://javafx.com/javafx"
          xmlns:fx="http://javafx.com/fxml"
          type="StackPane">
-    <BorderPane styleClass="jfx-dialog-layout">
-        <left>
-            <Label fx:id="graphic" translateX="10" translateY="10" minWidth="40" maxWidth="40" minHeight="40" maxHeight="40" />
-        </left>
-        <center>
-            <VBox>
-                <BorderPane.margin>
-                    <Insets left="8" />
-                </BorderPane.margin>
-                <HBox spacing="8">
-                    <StackPane>
-                        <styleClass>
-                            <String fx:value="jfx-layout-heading" />
-                            <String fx:value="title" />
-                        </styleClass>
-                        <Label fx:id="title" text="%message.info" />
-                    </StackPane>
-                </HBox>
-                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true" fitToHeight="true">
-                    <StackPane fx:id="content" styleClass="jfx-layout-body" />
-                </ScrollPane>
-            </VBox>
-        </center>
-        <bottom>
-            <HBox fx:id="actions" styleClass="jfx-layout-actions" />
-        </bottom>
-    </BorderPane>
+    <HBox spacing="8" styleClass="jfx-dialog-layout">
+        <Label fx:id="graphic" translateX="10" translateY="10" minWidth="40" maxWidth="40" minHeight="40"
+               maxHeight="40"/>
+        <VBox HBox.hgrow="ALWAYS">
+            <StackPane>
+                <styleClass>
+                    <String fx:value="jfx-layout-heading"/>
+                    <String fx:value="title"/>
+                </styleClass>
+                <Label fx:id="title" text="%message.info"/>
+            </StackPane>
+            <StackPane fx:id="content" styleClass="jfx-layout-body"/>
+            <HBox fx:id="actions" styleClass="jfx-layout-actions"/>
+        </VBox>
+    </HBox>
 </fx:root>
