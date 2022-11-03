@@ -217,11 +217,8 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
         } else if (e instanceof MultiplayerManager.HiperInvalidConfigurationException) {
             LOG.warning("HiPer invalid configuration");
             return i18n("multiplayer.token.malformed");
-        } else if (e instanceof MultiplayerManager.HiperNotExistsException) {
-            LOG.log(Level.WARNING, "Hiper not found " + ((MultiplayerManager.HiperNotExistsException) e).getFile(), e);
-            return i18n("multiplayer.error.file_not_found");
         } else if (e instanceof ChecksumMismatchException) {
-            LOG.log(Level.WARNING, "HiPer files are not verified", e);
+            LOG.log(Level.WARNING, "Failed to verify HiPer files", e);
             return i18n("multiplayer.error.file_not_found");
         } else if (e instanceof MultiplayerManager.HiperExitException) {
             int exitCode = ((MultiplayerManager.HiperExitException) e).getExitCode();

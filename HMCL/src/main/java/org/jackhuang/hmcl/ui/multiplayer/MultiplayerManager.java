@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.multiplayer;
 
 import com.google.gson.JsonParseException;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import org.jackhuang.hmcl.Metadata;
@@ -26,6 +27,7 @@ import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -56,6 +58,7 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.io.ChecksumMismatchException.verifyChecksum;
 
 /**
@@ -224,11 +227,8 @@ public final class MultiplayerManager {
     }
 
     public static CompletableFuture<HiperSession> startHiper(String token) {
-        return getPackagesHash().thenApplyAsync(wrap(packagesHash -> {
-            if (!Files.isRegularFile(HIPER_PATH)) {
-                throw new HiperNotExistsException(HIPER_PATH);
-            }
-
+        return getPackagesHash().thenComposeAsync(packagesHash -> {
+            CompletableFuture<Void> future = new CompletableFuture<>();
             try {
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     verifyChecksum(getHiperLocalDirectory().resolve("hiper.exe"), "SHA-1", packagesHash.get(String.format("%s/hiper.exe", HIPER_TARGET_NAME)));
@@ -239,12 +239,20 @@ public final class MultiplayerManager {
                 } else {
                     verifyChecksum(getHiperLocalDirectory().resolve("hiper"), "SHA-1", packagesHash.get(String.format("%s/hiper", HIPER_TARGET_NAME)));
                 }
-            } catch (IOException e) {
-                // force redownload
-                Files.deleteIfExists(HIPER_PATH);
-                throw e;
-            }
 
+                future.complete(null);
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to verify HiPer files", e);
+                Platform.runLater(() -> Controllers.taskDialog(MultiplayerManager.downloadHiper()
+                        .whenComplete(exception -> {
+                            if (exception == null)
+                                future.complete(null);
+                            else
+                                future.completeExceptionally(exception);
+                        }), i18n("multiplayer.download"), TaskCancellationAction.NORMAL));
+            }
+            return future;
+        }).thenApplyAsync(wrap(ignored -> {
             Path configPath = getConfigPath(token);
             Files.createDirectories(configPath.getParent());
 
@@ -530,18 +538,6 @@ public final class MultiplayerManager {
 
         public String getReason() {
             return reason;
-        }
-    }
-
-    public static class HiperNotExistsException extends RuntimeException {
-        private final Path file;
-
-        public HiperNotExistsException(Path file) {
-            this.file = file;
-        }
-
-        public Path getFile() {
-            return file;
         }
     }
 
