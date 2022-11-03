@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.gson.DateTypeAdapter;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
@@ -44,6 +43,9 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.PosixFilePermission;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -107,6 +109,8 @@ public final class MultiplayerManager {
     static final BooleanBinding tokenInvalid = Bindings.createBooleanBinding(
             () -> !StringUtils.isAlphabeticOrNumber(globalConfig().multiplayerTokenProperty().getValue()),
             globalConfig().multiplayerTokenProperty());
+
+    private static final DateFormat HIPER_VALID_TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     static {
         boolean isAdministrator = false;
@@ -361,9 +365,11 @@ public final class MultiplayerManager {
                         Optional<String> validUntil = tryCast(logJson.get("valid"), String.class);
                         if (validUntil.isPresent()) {
                             try {
-                                Date date = DateTypeAdapter.deserializeToDate(validUntil.get());
-                                onValidUntil.fireEvent(new HiperShowValidUntilEvent(this, date));
-                            } catch (JsonParseException e) {
+                                synchronized (HIPER_VALID_TIME_FORMAT) {
+                                    Date date = HIPER_VALID_TIME_FORMAT.parse(validUntil.get());
+                                    onValidUntil.fireEvent(new HiperShowValidUntilEvent(this, date));
+                                }
+                            } catch (JsonParseException | ParseException e) {
                                 LOG.log(Level.WARNING, "Failed to parse certification expire time string: " + validUntil.get());
                             }
                         }

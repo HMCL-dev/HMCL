@@ -284,6 +284,7 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
 
     private void clearSession() {
         this.session.set(null);
+        this.expireTime.set(null);
         this.onExit = null;
         this.onIPAllocated = null;
         this.onValidUntil = null;
