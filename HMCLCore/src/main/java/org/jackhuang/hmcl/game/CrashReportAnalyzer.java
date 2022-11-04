@@ -180,7 +180,7 @@ public final class CrashReportAnalyzer {
     private static final Pattern STACK_TRACE_LINE_PATTERN = Pattern.compile("at (?<method>.*?)\\((?<sourcefile>.*?)\\)");
     private static final Pattern STACK_TRACE_LINE_MODULE_PATTERN = Pattern.compile("\\{(?<tokens>.*)}");
     private static final Set<String> PACKAGE_KEYWORD_BLACK_LIST = new HashSet<>(Arrays.asList(
-            "net", "minecraft", "item", "setup", "block", "assist",  "optifine", "player", "unimi", "fastutil", "tileentity", "events", "common", "blockentity", "client", "entity", "mojang", "main", "gui", "world", "server", "dedicated", // minecraft
+            "net", "minecraft", "item", "setup", "block", "assist", "optifine", "player", "unimi", "fastutil", "tileentity", "events", "common", "blockentity", "client", "entity", "mojang", "main", "gui", "world", "server", "dedicated", // minecraft
             "renderer", "chunk", "model", "loading", "color", "pipeline", "inventory", "launcher", "physics", "particle", "gen", "registry", "worldgen", "texture", "biomes", "biome",
             "monster", "passive", "ai", "integrated", "tile", "state", "play", "override", "transformers", "structure", "nbt", "pathfinding", "chunk", "audio", "entities", "items", "renderers",
             "storage",
