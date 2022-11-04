@@ -146,17 +146,14 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
             {
                 ComponentList offPane = new ComponentList();
                 {
-                    HintPane roothintPane1 = new HintPane(MessageDialogPane.MessageType.INFO);
-                    roothintPane1.setText(i18n("multiplayer.hint"));
-
-                    HintPane hintPane0 = new HintPane(MessageDialogPane.MessageType.WARNING);
+                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
                     hintPane0.setText(i18n("multiplayer.off.hint"));
-
-                    HintPane hintPane00 = new HintPane(MessageDialogPane.MessageType.INFO);
-                    hintPane00.setText(i18n("multiplayer.off.hint2"));
 
                     BorderPane tokenPane = new BorderPane();
                     {
+                        HintPane hintPane00 = new HintPane(MessageDialogPane.MessageType.WARNING);
+                        hintPane0.setText(i18n("multiplayer.token.prompt"));
+
                         Label tokenTitle = new Label(i18n("multiplayer.token"));
                         BorderPane.setAlignment(tokenTitle, Pos.CENTER_LEFT);
                         tokenPane.setLeft(tokenTitle);
@@ -166,7 +163,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                         BorderPane.setMargin(tokenField, new Insets(0, 8, 0, 8));
                         tokenPane.setCenter(tokenField);
                         tokenField.textProperty().bindBidirectional(globalConfig().multiplayerTokenProperty());
-                        tokenField.setPromptText(i18n("multiplayer.token.prompt"));
+                        tokenField.setPromptText(i18n("multiplayer.token.prompt2"));
 
                         Validator validator = new Validator("multiplayer.token.format_invalid", StringUtils::isAlphabeticOrNumber);
                         InvalidationListener listener = any -> tokenField.validate();
@@ -194,13 +191,13 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                     if (!MultiplayerManager.IS_ADMINISTRATOR)
                         offPane.getContent().add(hintPane0);
-                    offPane.getContent().addAll(roothintPane1, hintPane00, tokenPane, startPane);
+                    offPane.getContent().addAll(tokenPane, startPane);
                 }
 
                 ComponentList onPane = new ComponentList();
                 {     
-                    HintPane roothintPane2 = new HintPane(MessageDialogPane.MessageType.INFO);
-                    roothintPane2.setText(i18n("multiplayer.hint"));
+                    HintPane roothintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                    roothintPane.setText(i18n("multiplayer.hint"));
 
                     BorderPane expirationPane = new BorderPane();
                     expirationPane.setLeft(new Label(i18n("multiplayer.session.expiration")));
@@ -340,9 +337,9 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                     FXUtils.onChangeAndOperate(control.expireTimeProperty(), t -> {
                         if (t == null) {
-                            onPane.getContent().setAll(roothintPane2, masterPane, slavePane);
+                            onPane.getContent().setAll(roothintPane, masterPane, slavePane);
                         } else {
-                            onPane.getContent().setAll(roothintPane2, expirationPane, masterPane, slavePane);
+                            onPane.getContent().setAll(roothintPane, expirationPane, masterPane, slavePane);
                         }
                     });
                 }
