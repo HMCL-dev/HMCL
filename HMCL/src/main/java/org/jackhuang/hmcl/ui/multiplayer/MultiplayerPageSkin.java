@@ -191,7 +191,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                     if (!MultiplayerManager.IS_ADMINISTRATOR)
                         offPane.getContent().add(hintPane0);
-                    offPane.getContent().addAll(tokenPane, hintPane00, startPane);
+                    offPane.getContent().addAll(hintPane00, tokenPane, startPane);
                 }
 
                 ComponentList onPane = new ComponentList();
