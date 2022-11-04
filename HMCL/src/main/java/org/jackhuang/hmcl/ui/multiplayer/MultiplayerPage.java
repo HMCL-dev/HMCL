@@ -22,14 +22,19 @@ import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.property.*;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
+import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -133,6 +138,23 @@ public class MultiplayerPage extends DecoratorAnimatedPage implements DecoratorP
 
     public ReadOnlyObjectProperty<MultiplayerManager.HiperSession> sessionProperty() {
         return session.getReadOnlyProperty();
+    }
+
+    void launchGame() {
+        Profile profile = Profiles.getSelectedProfile();
+        Versions.launch(profile, profile.getSelectedVersion(), (launcherHelper) -> {
+            launcherHelper.setKeep();
+            Account account = launcherHelper.getAccount();
+            if (account instanceof OfflineAccount && !(account instanceof MultiplayerOfflineAccount)) {
+                OfflineAccount offlineAccount = (OfflineAccount) account;
+                launcherHelper.setAccount(new MultiplayerOfflineAccount(
+                        offlineAccount.getDownloader(),
+                        offlineAccount.getUsername(),
+                        offlineAccount.getUUID(),
+                        offlineAccount.getSkin()
+                ));
+            }
+        });
     }
 
     private void checkAgreement(Runnable runnable) {
