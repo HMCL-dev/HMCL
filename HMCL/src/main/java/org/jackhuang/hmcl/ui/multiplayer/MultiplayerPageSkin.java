@@ -149,11 +149,11 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     HintPane hintPane0 = new HintPane(MessageDialogPane.MessageType.WARNING);
                     hintPane0.setText(i18n("multiplayer.off.hint"));
 
+                    HintPane hintPane00 = new HintPane(MessageDialogPane.MessageType.WARNING);
+                    hintPane00.setText(i18n("multiplayer.token.prompt"));
+
                     BorderPane tokenPane = new BorderPane();
                     {
-                        HintPane hintPane00 = new HintPane(MessageDialogPane.MessageType.WARNING);
-                        hintPane00.setText(i18n("multiplayer.token.prompt"));
-
                         Label tokenTitle = new Label(i18n("multiplayer.token"));
                         BorderPane.setAlignment(tokenTitle, Pos.CENTER_LEFT);
                         tokenPane.setLeft(tokenTitle);
@@ -191,7 +191,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                     if (!MultiplayerManager.IS_ADMINISTRATOR)
                         offPane.getContent().add(hintPane0);
-                    offPane.getContent().addAll(tokenPane, startPane);
+                    offPane.getContent().addAll(tokenPane, hintPane00, startPane);
                 }
 
                 ComponentList onPane = new ComponentList();
@@ -328,9 +328,9 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
 
                         FXUtils.onChangeAndOperate(control.broadcasterProperty(), broadcaster -> {
                             if (broadcaster == null) {
-                                slavePane.getChildren().setAll(titlePane, hintPane3, hintPane4, hintPane5, notBroadcastingPane);
+                                slavePane.getChildren().setAll(titlePane, hintPane3);//, hintPane4, hintPane5, notBroadcastingPane);
                             } else {
-                                slavePane.getChildren().setAll(titlePane, hintPane3, hintPane4, hintPane5, broadcastingPane);
+                                slavePane.getChildren().setAll(titlePane, hintPane3);//, hintPane4, hintPane5, broadcastingPane);
                             }
                         });
                     }
