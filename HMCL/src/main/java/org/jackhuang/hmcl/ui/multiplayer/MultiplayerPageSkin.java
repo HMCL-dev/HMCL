@@ -200,7 +200,7 @@ public class MultiplayerPageSkin extends DecoratorAnimatedPage.DecoratorAnimated
                     expirationLabel.textProperty().bind(Bindings.createStringBinding(() ->
                                     control.getExpireTime() == null ? "" : Locales.SIMPLE_DATE_FORMAT.get().format(control.getExpireTime()),
                             control.expireTimeProperty()));
-                    expirationPane.setCenter(expirationLabel);
+                    expirationPane.setRight(expirationLabel);
 
                     GridPane masterPane = new GridPane();
                     masterPane.setVgap(8);

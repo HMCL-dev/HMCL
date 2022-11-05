@@ -710,6 +710,9 @@ public final class FXUtils {
     }
 
     public static List<Node> parseSegment(String segment, Consumer<String> hyperlinkAction) {
+        if (segment.indexOf('<') < 0)
+            return Collections.singletonList(new Text(segment));
+
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();

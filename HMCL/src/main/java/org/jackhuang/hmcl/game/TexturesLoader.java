@@ -136,8 +136,8 @@ public final class TexturesLoader {
     private final static Map<TextureModel, LoadedTexture> DEFAULT_SKINS = new EnumMap<>(TextureModel.class);
 
     static {
-        loadDefaultSkin("/assets/img/steve.png", TextureModel.STEVE);
-        loadDefaultSkin("/assets/img/alex.png", TextureModel.ALEX);
+        loadDefaultSkin("/assets/img/skin/steve.png", TextureModel.STEVE);
+        loadDefaultSkin("/assets/img/skin/alex.png", TextureModel.ALEX);
     }
 
     private static void loadDefaultSkin(String path, TextureModel model) {
