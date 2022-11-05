@@ -48,8 +48,15 @@ public class Skin {
 
     public enum Type {
         DEFAULT,
-        STEVE,
         ALEX,
+        ARI,
+        EFE,
+        KAI,
+        MAKENA,
+        NOOR,
+        STEVE,
+        SUNNY,
+        ZURI,
         LOCAL_FILE,
         LITTLE_SKIN,
         CUSTOM_SKIN_LOADER_API,
@@ -59,10 +66,24 @@ public class Skin {
             switch (type) {
                 case "default":
                     return DEFAULT;
-                case "steve":
-                    return STEVE;
                 case "alex":
                     return ALEX;
+                case "ari":
+                    return ARI;
+                case "efe":
+                    return EFE;
+                case "kai":
+                    return KAI;
+                case "makena":
+                    return MAKENA;
+                case "noor":
+                    return NOOR;
+                case "steve":
+                    return STEVE;
+                case "sunny":
+                    return SUNNY;
+                case "zuri":
+                    return ZURI;
                 case "local_file":
                     return LOCAL_FILE;
                 case "little_skin":
@@ -115,10 +136,24 @@ public class Skin {
         switch (type) {
             case DEFAULT:
                 return Task.supplyAsync(() -> null);
-            case STEVE:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/steve.png")), null));
             case ALEX:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.ALEX, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/alex.png")), null));
+                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.ALEX, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/alex.png")), null));
+            case ARI:
+                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/ari.png")), null));
+            case EFE:
+                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.ALEX, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/efe.png")), null));
+            case KAI:
+                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/kai.png")), null));
+            case MAKENA:
+                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.ALEX, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/makena.png")), null));
+            case NOOR:
+                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.ALEX, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/noor.png")), null));
+            case STEVE:
+                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/steve.png")), null));
+            case SUNNY:
+                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/sunny.png")), null));
+            case ZURI:
+                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/zuri.png")), null));
             case LOCAL_FILE:
                 return Task.supplyAsync(() -> {
                     Texture skin = null, cape = null;
