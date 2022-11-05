@@ -34,6 +34,8 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
+import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -42,6 +44,7 @@ import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
@@ -153,7 +156,18 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             multiplayerItem.setLeftGraphic(wrap(SVG::lan));
             multiplayerItem.setActionButtonVisible(false);
             multiplayerItem.setTitle(i18n("multiplayer"));
-            multiplayerItem.setOnAction(e -> Controllers.navigate(Controllers.getMultiplayerPage()));
+            if ("true".equalsIgnoreCase(JarUtils.getManifestAttribute("Enable-HiPer", "")))
+                multiplayerItem.setOnAction(e -> Controllers.navigate(Controllers.getMultiplayerPage()));
+            else {
+                JFXHyperlink link = new JFXHyperlink(i18n("multiplayer.hint.details"));
+                link.setOnAction(e -> FXUtils.openLink("https://hmcl.huangyuhui.net/api/redirect/multiplayer-migrate"));
+                multiplayerItem.setOnAction(e ->
+                        Controllers.dialog(
+                                new MessageDialogPane.Builder(i18n("multiplayer.hint"), null, MessageDialogPane.MessageType.INFO)
+                                        .addAction(link)
+                                        .ok(null)
+                                        .build()));
+            }
 
             // sixth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
