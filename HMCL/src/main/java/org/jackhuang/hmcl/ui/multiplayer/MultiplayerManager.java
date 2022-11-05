@@ -110,7 +110,10 @@ public final class MultiplayerManager {
     static final boolean IS_ADMINISTRATOR;
 
     static final BooleanBinding tokenInvalid = Bindings.createBooleanBinding(
-            () -> !StringUtils.isAlphabeticOrNumber(globalConfig().multiplayerTokenProperty().getValue()),
+            () -> {
+                String token = globalConfig().multiplayerTokenProperty().getValue();
+                return token == null || token.isEmpty() || !StringUtils.isAlphabeticOrNumber(token);
+            },
             globalConfig().multiplayerTokenProperty());
 
     private static final DateFormat HIPER_VALID_TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
