@@ -300,7 +300,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
                 createProfileLink.setOnAction(e -> FXUtils.openLink("https://www.minecraft.net/msaprofile/mygames/editprofile"));    
                 purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
-                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, createProfileLink);
+                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink);
                 GridPane.setColumnSpan(box, 2);
 
                 vbox.getChildren().setAll(hintPane, box);
