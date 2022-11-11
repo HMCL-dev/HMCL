@@ -47,8 +47,6 @@ val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
 
-val enableHiPer = System.getenv("ENABLE_HIPER") ?: "false"
-
 version = "$versionRoot.$buildNumber"
 
 dependencies {
@@ -151,7 +149,6 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
             "Microsoft-Auth-Secret" to microsoftAuthSecret,
             "CurseForge-Api-Key" to curseForgeApiKey,
             "Build-Channel" to versionType,
-            "Enable-HiPer" to enableHiPer,
             "Class-Path" to "pack200.jar",
             "Add-Opens" to listOf(
                 "java.base/java.lang",
