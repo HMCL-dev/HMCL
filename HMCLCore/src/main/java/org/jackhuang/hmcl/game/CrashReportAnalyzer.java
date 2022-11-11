@@ -96,7 +96,7 @@ public final class CrashReportAnalyzer {
         // Cannot find native libraries
         UNSATISFIED_LINK_ERROR(Pattern.compile("java.lang.UnsatisfiedLinkError: Failed to locate library: (?<name>.*)"), "name"),
         //https://github.com/huanghongxun/HMCL/pull/1813
-        OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE(Pattern.compile("(Cannot read field \"ofTelemetry\" because \"net\\.optifine\\.Config\\.gameSettings\\" is null|TRANSFORMER/net\\.optifine/net\\.optifine\\.reflect\\.Reflector\\.<clinit>(Reflector\\.java )")),
+        OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE(Pattern.compile("(Cannot read field \"ofTelemetry\" because \"net\\.optifine\\.Config\\.gameSettings\" is null|TRANSFORMER/net\\.optifine/net\\.optifine\\.reflect\\.Reflector\\.<clinit>(Reflector\\.java )")),
         MOD_FILES_ARE_DECOMPRESSED(Pattern.compile("(The directories below appear to be extracted jar files\\. Fix this before you continue|Extracted mod jars found, loading will NOT continue)")),//Mod文件被解压
         OPTIFINE_CAUSES_THE_WORLD_TO_FAIL_TO_LOAD(Pattern.compile("java\\.lang\\.NoSuchMethodError: net\\.minecraft\\.world\\.server\\.ChunkManager$ProxyTicketManager\\.shouldForceTicks\\(J\\)Z\\+OptiFine")),//OptiFine导致无法加载世界 https://www.minecraftforum.net/forums/support/java-edition-support/3051132-exception-ticking-world
         TOO_MANY_MODS_LEAD_TO_EXCEEDING_THE_ID_LIMIT(Pattern.compile("maximum id range exceeded")),//Mod过多导致超出ID限制
