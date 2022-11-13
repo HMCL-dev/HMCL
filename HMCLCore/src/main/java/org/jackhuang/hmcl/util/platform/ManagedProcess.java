@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.util.Lang;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 
 /**
@@ -38,7 +37,7 @@ public class ManagedProcess {
     private final List<String> commands;
     private final String classpath;
     private final Map<String, Object> properties = new HashMap<>();
-    private final Queue<String> lines = new ConcurrentLinkedQueue<>();
+    private final List<String> lines = new ArrayList<>();
     private final List<Thread> relatedThreads = new ArrayList<>();
 
     public ManagedProcess(ProcessBuilder processBuilder) throws IOException {
@@ -116,7 +115,7 @@ public class ManagedProcess {
         return Collections.unmodifiableCollection(lines);
     }
 
-    public void addLine(String line) {
+    public synchronized void addLine(String line) {
         lines.add(line);
     }
 

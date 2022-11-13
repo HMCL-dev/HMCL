@@ -24,11 +24,11 @@ import javafx.beans.value.WeakChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.WeakListChangeListener;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class WeakListenerHolder {
-    private List<Object> refs = new LinkedList<>();
+    private final List<Object> refs = new ArrayList<>(0);
 
     public WeakListenerHolder() {
     }

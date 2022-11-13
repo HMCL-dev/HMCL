@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Pack200Utils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
@@ -43,8 +44,6 @@ import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.util.DigestUtils.digest;
-import static org.jackhuang.hmcl.util.Hex.encodeHex;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class LibraryDownloadTask extends Task<Void> {
@@ -181,7 +180,7 @@ public class LibraryDownloadTask extends Task<Void> {
                 return true;
             }
             byte[] fileData = Files.readAllBytes(libPath.toPath());
-            boolean valid = checksums.contains(encodeHex(digest("SHA-1", fileData)));
+            boolean valid = checksums.contains(DigestUtils.digestToString("SHA-1", fileData));
             if (!valid && libPath.getName().endsWith(".jar")) {
                 valid = validateJar(fileData, checksums);
             }
@@ -203,7 +202,7 @@ public class LibraryDownloadTask extends Task<Void> {
                 hashes = new String(eData, StandardCharsets.UTF_8).split("\n");
             }
             if (!entry.isDirectory()) {
-                files.put(entry.getName(), encodeHex(digest("SHA-1", eData)));
+                files.put(entry.getName(), DigestUtils.digestToString("SHA-1", eData));
             }
             entry = jar.getNextJarEntry();
         }

@@ -95,7 +95,7 @@ public class DefaultCacheRepository extends CacheRepository {
             LibraryDownloadInfo info = library.getDownload();
             String hash = info.getSha1();
             if (hash != null) {
-                String checksum = Hex.encodeHex(DigestUtils.digest("SHA-1", jar));
+                String checksum = DigestUtils.digestToString("SHA-1", jar);
                 if (hash.equalsIgnoreCase(checksum))
                     cacheLibrary(library, jar, false);
             } else if (library.getChecksums() != null && !library.getChecksums().isEmpty()) {
@@ -148,7 +148,7 @@ public class DefaultCacheRepository extends CacheRepository {
         if (Files.exists(jar)) {
             try {
                 if (hash != null) {
-                    String checksum = Hex.encodeHex(DigestUtils.digest("SHA-1", jar));
+                    String checksum = DigestUtils.digestToString("SHA-1", jar);
                     if (hash.equalsIgnoreCase(checksum))
                         return Optional.of(restore(jar, () -> cacheLibrary(library, jar, false)));
                 } else if (library.getChecksums() != null && !library.getChecksums().isEmpty()) {
@@ -177,7 +177,7 @@ public class DefaultCacheRepository extends CacheRepository {
     public Path cacheLibrary(Library library, Path path, boolean forge) throws IOException {
         String hash = library.getDownload().getSha1();
         if (hash == null)
-            hash = Hex.encodeHex(DigestUtils.digest(SHA1, path));
+            hash = DigestUtils.digestToString(SHA1, path);
 
         Path cache = getFile(SHA1, hash);
         FileUtils.copyFile(path.toFile(), cache.toFile());

@@ -98,7 +98,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
     @Override
     public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
-        String sha1 = Hex.encodeHex(DigestUtils.digest("SHA-1", file));
+        String sha1 = DigestUtils.digestToString("SHA-1", file);
 
         try {
             ProjectVersion mod = HttpRequest.GET(PREFIX + "/v2/version_file/" + sha1,
