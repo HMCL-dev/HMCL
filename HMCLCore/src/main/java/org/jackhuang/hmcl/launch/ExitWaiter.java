@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -60,8 +59,7 @@ final class ExitWaiter implements Runnable {
             for (Thread thread : joins)
                 thread.join();
 
-            List<String> errorLines = process.getLines().stream()
-                    .filter(Log4jLevel::guessLogLineError).collect(Collectors.toList());
+            List<String> errorLines = process.getLines(Log4jLevel::guessLogLineError);
             ProcessListener.ExitType exitType;
 
             // LaunchWrapper will catch the exception logged and will exit normally.

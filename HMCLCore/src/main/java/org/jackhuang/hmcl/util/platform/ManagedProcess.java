@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.util.Lang;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * The managed process.
@@ -111,8 +112,16 @@ public class ManagedProcess {
      *
      * @see #addLine
      */
-    public Collection<String> getLines() {
-        return Collections.unmodifiableCollection(lines);
+    public synchronized List<String> getLines(Predicate<String> lineFilter) {
+        if (lineFilter == null)
+            return Collections.unmodifiableList(Arrays.asList(lines.toArray(new String[0])));
+
+        ArrayList<String> res = new ArrayList<>();
+        for (String line : this.lines) {
+            if (lineFilter.test(line))
+                res.add(line);
+        }
+        return Collections.unmodifiableList(res);
     }
 
     public synchronized void addLine(String line) {
