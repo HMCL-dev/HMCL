@@ -81,6 +81,8 @@ public class MultiMCModpackExportTask extends Task<Void> {
                     components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, "com.mumfrey.liteloader", liteLoaderVersion)));
             analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->
                     components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, "net.fabricmc.fabric-loader", fabricVersion)));
+            analyzer.getVersion(QUILT).ifPresent(quiltVersion ->
+                    components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, "org.quiltmc.quilt-loader", quiltVersion)));
             MultiMCManifest mmcPack = new MultiMCManifest(1, components);
             zip.putTextFile(JsonUtils.GSON.toJson(mmcPack), "mmc-pack.json");
 
