@@ -85,9 +85,9 @@ public class GameCrashWindow extends Stage {
     private final LaunchOptions launchOptions;
     private final View view;
 
-    private final List<Pair<String, Log4jLevel>> logs;
+    private final Collection<Pair<String, Log4jLevel>> logs;
 
-    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, Version version, LaunchOptions launchOptions, List<Pair<String, Log4jLevel>> logs) {
+    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, Version version, LaunchOptions launchOptions, Collection<Pair<String, Log4jLevel>> logs) {
         this.managedProcess = managedProcess;
         this.exitType = exitType;
         this.repository = repository;

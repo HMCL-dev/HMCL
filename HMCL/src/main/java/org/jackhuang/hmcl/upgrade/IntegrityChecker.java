@@ -24,10 +24,7 @@ import org.jackhuang.hmcl.util.io.JarUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
-import java.security.PublicKey;
-import java.security.Signature;
+import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -63,6 +60,7 @@ public final class IntegrityChecker {
 
     private static boolean verifyJar(Path jarPath) throws IOException {
         PublicKey publickey = getPublicKey();
+        MessageDigest md = DigestUtils.getDigest("SHA-512");
 
         byte[] signature = null;
         Map<String, byte[]> fileFingerprints = new TreeMap<>();
@@ -77,7 +75,8 @@ public final class IntegrityChecker {
                     if (SIGNATURE_FILE.equals(filename)) {
                         signature = IOUtils.readFullyAsByteArray(in);
                     } else {
-                        fileFingerprints.put(filename, DigestUtils.digest("SHA-512", in));
+                        md.reset();
+                        fileFingerprints.put(filename, DigestUtils.digest(md, in));
                     }
                 }
             }
@@ -91,7 +90,8 @@ public final class IntegrityChecker {
             Signature verifier = Signature.getInstance("SHA512withRSA");
             verifier.initVerify(publickey);
             for (Entry<String, byte[]> entry : fileFingerprints.entrySet()) {
-                verifier.update(DigestUtils.digest("SHA-512", entry.getKey().getBytes(UTF_8)));
+                md.reset();
+                verifier.update(md.digest(entry.getKey().getBytes(UTF_8)));
                 verifier.update(entry.getValue());
             }
             return verifier.verify(signature);

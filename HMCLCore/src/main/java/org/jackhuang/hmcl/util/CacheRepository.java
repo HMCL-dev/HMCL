@@ -111,7 +111,7 @@ public class CacheRepository {
         Path file = getFile(algorithm, hash);
         if (Files.exists(file)) {
             try {
-                return Hex.encodeHex(DigestUtils.digest(algorithm, file)).equalsIgnoreCase(hash);
+                return DigestUtils.digestToString(algorithm, file).equalsIgnoreCase(hash);
             } catch (IOException e) {
                 return false;
             }
@@ -139,7 +139,7 @@ public class CacheRepository {
         if (original != null && Files.exists(original)) {
             if (hash != null) {
                 try {
-                    String checksum = Hex.encodeHex(DigestUtils.digest(algorithm, original));
+                    String checksum = DigestUtils.digestToString(algorithm, original);
                     if (checksum.equalsIgnoreCase(hash))
                         return Optional.of(restore(original, () -> cacheFile(original, algorithm, hash)));
                 } catch (IOException e) {
@@ -173,7 +173,7 @@ public class CacheRepository {
         if (StringUtils.isBlank(eTagItem.hash) || !fileExists(SHA1, eTagItem.hash)) throw new FileNotFoundException();
         Path file = getFile(SHA1, eTagItem.hash);
         if (Files.getLastModifiedTime(file).toMillis() != eTagItem.localLastModified) {
-            String hash = Hex.encodeHex(DigestUtils.digest(SHA1, file));
+            String hash = DigestUtils.digestToString(SHA1, file);
             if (!Objects.equals(hash, eTagItem.hash))
                 throw new IOException("This file is modified");
         }
@@ -208,7 +208,7 @@ public class CacheRepository {
 
     public void cacheRemoteFile(Path downloaded, URLConnection conn) throws IOException {
         cacheData(() -> {
-            String hash = Hex.encodeHex(DigestUtils.digest(SHA1, downloaded));
+            String hash = DigestUtils.digestToString(SHA1, downloaded);
             Path cached = cacheFile(downloaded, SHA1, hash);
             return new CacheResult(hash, cached);
         }, conn);
@@ -220,7 +220,7 @@ public class CacheRepository {
 
     public void cacheBytes(byte[] bytes, URLConnection conn) throws IOException {
         cacheData(() -> {
-            String hash = Hex.encodeHex(DigestUtils.digest(SHA1, bytes));
+            String hash = DigestUtils.digestToString(SHA1, bytes);
             Path cached = getFile(SHA1, hash);
             FileUtils.writeBytes(cached.toFile(), bytes);
             return new CacheResult(hash, cached);

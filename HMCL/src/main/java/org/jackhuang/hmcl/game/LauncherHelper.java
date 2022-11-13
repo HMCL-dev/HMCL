@@ -742,7 +742,7 @@ public final class LauncherHelper {
         private boolean lwjgl;
         private LogWindow logWindow;
         private final boolean detectWindow;
-        private final LinkedList<Pair<String, Log4jLevel>> logs;
+        private final ArrayDeque<Pair<String, Log4jLevel>> logs;
         private final CountDownLatch logWindowLatch = new CountDownLatch(1);
         private final CountDownLatch launchingLatch;
 
@@ -753,7 +753,7 @@ public final class LauncherHelper {
             this.launchingLatch = launchingLatch;
             this.detectWindow = detectWindow;
 
-            logs = new LinkedList<>();
+            this.logs = new ArrayDeque<>(config().getLogLines() + 1);
         }
 
         @Override

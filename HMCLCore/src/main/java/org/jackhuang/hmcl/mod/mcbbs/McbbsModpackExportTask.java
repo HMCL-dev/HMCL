@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.mod.curse.CurseManifest;
 import org.jackhuang.hmcl.mod.curse.CurseManifestMinecraft;
 import org.jackhuang.hmcl.mod.curse.CurseManifestModLoader;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -41,8 +42,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
-import static org.jackhuang.hmcl.util.DigestUtils.digest;
-import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
 public class McbbsModpackExportTask extends Task<Void> {
     private final DefaultGameRepository repository;
@@ -75,7 +74,7 @@ public class McbbsModpackExportTask extends Task<Void> {
                     Path file = runDirectory.resolve(path);
                     if (Files.isRegularFile(file)) {
                         String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                        files.add(new McbbsModpackManifest.AddonFile(true, relativePath, encodeHex(digest("SHA-1", file))));
+                        files.add(new McbbsModpackManifest.AddonFile(true, relativePath, DigestUtils.digestToString("SHA-1", file)));
                     }
                     return true;
                 } else {
