@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.JavaVersion;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -60,8 +61,9 @@ public final class Main {
 
         checkDirectoryPath();
 
-        // This environment check will take ~300ms
-        thread(Main::fixLetsEncrypt, "CA Certificate Check", true);
+        if (JavaVersion.CURRENT_JAVA.getParsedVersion() < 9)
+            // This environment check will take ~300ms
+            thread(Main::fixLetsEncrypt, "CA Certificate Check", true);
 
         Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
 
