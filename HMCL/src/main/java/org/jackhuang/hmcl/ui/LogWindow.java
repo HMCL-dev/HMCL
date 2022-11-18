@@ -39,7 +39,6 @@ import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -207,7 +206,12 @@ public final class LogWindow extends Stage {
                     return;
                 }
 
-                JOptionPane.showMessageDialog(null, i18n("settings.launcher.launcher_log.export.success", logFile), i18n("settings.launcher.launcher_log.export"), JOptionPane.INFORMATION_MESSAGE);
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", logFile));
+                    alert.setTitle(i18n("settings.launcher.launcher_log.export"));
+                    alert.showAndWait();
+                });
+
                 if (Desktop.isDesktopSupported()) {
                     try {
                         Desktop.getDesktop().open(logFile.toFile());
