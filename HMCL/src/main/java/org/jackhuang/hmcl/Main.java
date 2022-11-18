@@ -21,12 +21,12 @@ import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
+import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,9 +58,6 @@ public final class Main {
         // Fix title bar not displaying in GTK systems
         System.setProperty("jdk.gtk.version", "2");
 
-        // Use System look and feel
-        initLookAndFeel();
-
         checkDirectoryPath();
 
         // This environment check will take ~300ms
@@ -71,15 +68,6 @@ public final class Main {
         checkJavaFX();
 
         Launcher.main(args);
-    }
-
-    private static void initLookAndFeel() {
-        if (System.getProperty("swing.defaultlaf") == null) {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Throwable ignored) {
-            }
-        }
     }
 
     private static void checkDirectoryPath() {
@@ -126,7 +114,7 @@ public final class Main {
         } catch (Throwable ignored) {
         }
 
-        JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
+        SwingUtils.showErrorDialog(message);
         System.exit(1);
     }
 
@@ -144,7 +132,8 @@ public final class Main {
             }
         } catch (Throwable ignored) {
         }
-        JOptionPane.showMessageDialog(null, message, "Warning", JOptionPane.WARNING_MESSAGE);
+
+        SwingUtils.showWarningDialog(message);
     }
 
     static void fixLetsEncrypt() {

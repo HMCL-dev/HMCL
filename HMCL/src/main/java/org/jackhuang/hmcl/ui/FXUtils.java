@@ -53,6 +53,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
+import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
@@ -469,12 +470,12 @@ public final class FXUtils {
         } catch (NoClassDefFoundError | UnsatisfiedLinkError e) {
             LOG.log(Level.WARNING, "WebView is missing or initialization failed, use JEditorPane replaced", e);
 
+            SwingUtils.initLookAndFeel();
             SwingUtilities.invokeLater(() -> {
                 final JFrame frame = new JFrame(title);
                 frame.setSize(width, height);
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 frame.setLocationByPlatform(true);
-                //noinspection ConstantConditions
                 frame.setIconImage(new ImageIcon(FXUtils.class.getResource("/assets/img/icon.png")).getImage());
                 frame.setLayout(new BorderLayout());
 

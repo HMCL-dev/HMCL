@@ -261,6 +261,8 @@ public final class SelfDependencyPatcher {
      * @throws IOException When the files cannot be fetched or saved.
      */
     private void fetchDependencies(List<DependencyDescriptor> dependencies) throws IOException {
+        SwingUtils.initLookAndFeel();
+
         boolean isFirstTime = true;
 
         byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
