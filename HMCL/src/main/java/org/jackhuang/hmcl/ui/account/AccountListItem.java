@@ -20,14 +20,11 @@ package org.jackhuang.hmcl.ui.account;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.StringBinding;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Skin;
-import javafx.scene.image.Image;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthenticationException;
@@ -39,7 +36,6 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -70,7 +66,6 @@ public class AccountListItem extends RadioButton {
     private final Account account;
     private final StringProperty title = new SimpleStringProperty();
     private final StringProperty subtitle = new SimpleStringProperty();
-    private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
 
     public AccountListItem(Account account) {
         this.account = account;
@@ -95,8 +90,6 @@ public class AccountListItem extends RadioButton {
                     account.getUsername().isEmpty() ? characterName :
                             Bindings.concat(account.getUsername(), " - ", characterName));
         }
-
-        image.bind(TexturesLoader.fxAvatarBinding(account, 32));
     }
 
     @Override
@@ -225,17 +218,5 @@ public class AccountListItem extends RadioButton {
 
     public StringProperty subtitleProperty() {
         return subtitle;
-    }
-
-    public Image getImage() {
-        return image.get();
-    }
-
-    public void setImage(Image image) {
-        this.image.set(image);
-    }
-
-    public ObjectProperty<Image> imageProperty() {
-        return image;
     }
 }

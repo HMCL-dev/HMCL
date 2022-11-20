@@ -22,9 +22,8 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
-import javafx.scene.Node;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.ImageView;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
@@ -34,20 +33,18 @@ import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import static javafx.beans.binding.Bindings.createStringBinding;
 import static org.jackhuang.hmcl.setting.Accounts.getAccountFactory;
 import static org.jackhuang.hmcl.setting.Accounts.getLocalizedLoginTypeName;
-import static org.jackhuang.hmcl.ui.FXUtils.toFXImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AccountAdvancedListItem extends AdvancedListItem {
     private final Tooltip tooltip;
-    private final ImageView imageView;
+    private final Canvas canvas;
 
-    private ObjectProperty<Account> account = new SimpleObjectProperty<Account>() {
+    private final ObjectProperty<Account> account = new SimpleObjectProperty<Account>() {
 
         @Override
         protected void invalidated() {
@@ -55,17 +52,19 @@ public class AccountAdvancedListItem extends AdvancedListItem {
             if (account == null) {
                 titleProperty().unbind();
                 subtitleProperty().unbind();
-                imageView.imageProperty().unbind();
                 tooltip.textProperty().unbind();
                 setTitle(i18n("account.missing"));
                 setSubtitle(i18n("account.missing.add"));
-                imageView.setImage(toFXImage(TexturesLoader.toAvatar(TexturesLoader.getDefaultSkin(TextureModel.STEVE).getImage(), 32)));
                 tooltip.setText(i18n("account.create"));
+
+                TexturesLoader.unbindAvatar(canvas);
+                TexturesLoader.drawAvatar(canvas, TexturesLoader.getDefaultSkin(TextureModel.STEVE).getImage());
+
             } else {
                 titleProperty().bind(BindingMapping.of(account, Account::getCharacter));
                 subtitleProperty().bind(accountSubtitle(account));
-                imageView.imageProperty().bind(TexturesLoader.fxAvatarBinding(account, 32));
                 tooltip.textProperty().bind(accountTooltip(account));
+                TexturesLoader.bindAvatar(canvas, account);
             }
         }
     };
@@ -74,9 +73,8 @@ public class AccountAdvancedListItem extends AdvancedListItem {
         tooltip = new Tooltip();
         FXUtils.installFastTooltip(this, tooltip);
 
-        Pair<Node, ImageView> view = createImageView(null);
-        setLeftGraphic(view.getKey());
-        imageView = view.getValue();
+        canvas = new Canvas(32, 32);
+        setLeftGraphic(canvas);
 
         setActionButtonVisible(false);
 

@@ -34,10 +34,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.image.*;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.image.PixelWriter;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
@@ -717,17 +715,33 @@ public final class FXUtils {
     // Based on https://stackoverflow.com/a/57552025
     // Fix #874: Use it instead of SwingFXUtils.toFXImage
     public static WritableImage toFXImage(BufferedImage image) {
-        WritableImage wr = new WritableImage(image.getWidth(), image.getHeight());
-        PixelWriter pw = wr.getPixelWriter();
-
         final int iw = image.getWidth();
         final int ih = image.getHeight();
+
+        WritableImage wr = new WritableImage(iw, ih);
+        PixelWriter pw = wr.getPixelWriter();
+
         for (int x = 0; x < iw; x++) {
             for (int y = 0; y < ih; y++) {
                 pw.setArgb(x, y, image.getRGB(x, y));
             }
         }
         return wr;
+    }
+
+    public static BufferedImage fromFXImage(Image image) {
+        final int iw = (int) image.getWidth();
+        final int ih = (int) image.getHeight();
+
+        PixelReader pr = image.getPixelReader();
+        BufferedImage bufferedImage = new BufferedImage(iw, ih, BufferedImage.TYPE_INT_ARGB);
+        for (int x = 0; x < iw; x++) {
+            for (int y = 0; y < ih; y++) {
+                bufferedImage.setRGB(x, y, pr.getArgb(x, y));
+            }
+        }
+
+        return bufferedImage;
     }
 
     public static void copyText(String text) {
