@@ -56,6 +56,7 @@ import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CancellationException;
@@ -73,6 +74,8 @@ public final class SelfDependencyPatcher {
     private final List<DependencyDescriptor> dependencies = DependencyDescriptor.readDependencies();
     private final List<Repository> repositories;
     private final Repository defaultRepository;
+    private final byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
+    private final MessageDigest digest = DigestUtils.getDigest("SHA-1");
 
     private SelfDependencyPatcher() throws IncompatibleVersionException {
         // We can only self-patch JavaFX on specific platform.
@@ -266,7 +269,6 @@ public final class SelfDependencyPatcher {
 
         boolean isFirstTime = true;
 
-        byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
         Repository repository = defaultRepository;
 
         int count = 0;
@@ -363,8 +365,18 @@ public final class SelfDependencyPatcher {
         return missing;
     }
 
-    private static void verifyChecksum(DependencyDescriptor dependency) throws IOException, ChecksumMismatchException {
-        ChecksumMismatchException.verifyChecksum(dependency.localPath(), "SHA-1", dependency.sha1());
+    private void verifyChecksum(DependencyDescriptor dependency) throws IOException, ChecksumMismatchException {
+        digest.reset();
+        try (InputStream is = Files.newInputStream(dependency.localPath())) {
+            int read;
+            while ((read = is.read(buffer, 0, IOUtils.DEFAULT_BUFFER_SIZE)) > -1) {
+                digest.update(buffer, 0, read);
+            }
+        }
+
+        String sha1 = Hex.encodeHex(digest.digest());
+        if (!dependency.sha1().equalsIgnoreCase(sha1))
+            throw new ChecksumMismatchException("SHA-1", dependency.sha1(), sha1);
     }
 
     public static class PatchException extends Exception {
