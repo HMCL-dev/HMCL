@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.game;
 
-import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -150,7 +149,7 @@ public final class TexturesLoader {
             if (skin.isError())
                 throw skin.getException();
         } catch (Throwable e) {
-            throw new ResourceNotFoundError("Cannoot load default skin from " + path, e);
+            throw new ResourceNotFoundError("Cannot load default skin from " + path, e);
         }
 
         DEFAULT_SKINS.put(model, new LoadedTexture(skin, singletonMap("model", model.modelName)));
@@ -309,8 +308,10 @@ public final class TexturesLoader {
     public static void bindAvatar(Canvas canvas, Account account) {
         if (account instanceof YggdrasilAccount || account instanceof MicrosoftAccount)
             fxAvatarBinding(canvas, skinBinding(account));
-        else
-            fxAvatarBinding(canvas, Bindings.createObjectBinding(() -> getDefaultSkin(TextureModel.detectUUID(account.getUUID()))));
+        else {
+            unbindAvatar(canvas);
+            drawAvatar(canvas, getDefaultSkin(TextureModel.detectUUID(account.getUUID())).image);
+        }
     }
 
     public static void unbindAvatar(Canvas canvas) {
