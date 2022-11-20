@@ -21,7 +21,7 @@ import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
-import org.jackhuang.hmcl.util.SwingUtils;
+import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 

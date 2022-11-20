@@ -40,7 +40,6 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.awt.*;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.CookieHandler;
@@ -131,7 +130,8 @@ public final class Launcher extends Application {
                 Platform.setImplicitExit(false);
                 Controllers.initialize(primaryStage);
 
-                initIcon();
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+                    initIcon();
 
                 UpdateChecker.init();
 
@@ -149,8 +149,7 @@ public final class Launcher extends Application {
     }
 
     private void initIcon() {
-        Toolkit toolkit = Toolkit.getDefaultToolkit();
-        Image image = toolkit.getImage(Launcher.class.getResource("/assets/img/icon.png"));
+        java.awt.Image image = java.awt.Toolkit.getDefaultToolkit().getImage(Launcher.class.getResource("/assets/img/icon.png"));
         AwtUtils.setAppleIcon(image);
     }
 

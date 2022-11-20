@@ -1,4 +1,4 @@
-package org.jackhuang.hmcl.util;
+package org.jackhuang.hmcl.ui;
 
 import javax.swing.*;
 

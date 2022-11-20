@@ -43,6 +43,7 @@ package org.jackhuang.hmcl.util;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.Platform;

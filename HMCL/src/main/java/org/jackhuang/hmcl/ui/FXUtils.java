@@ -53,12 +53,12 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
-import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -358,53 +358,77 @@ public final class FXUtils {
 
     public static void openFolder(File file) {
         if (!FileUtils.makeDirectory(file)) {
-            Logging.LOG.log(Level.SEVERE, "Unable to make directory " + file);
+            LOG.log(Level.SEVERE, "Unable to make directory " + file);
             return;
         }
 
         String path = file.getAbsolutePath();
 
-        switch (OperatingSystem.CURRENT_OS) {
-            case OSX:
+        String openCommand;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+            openCommand = "explorer.exe";
+        else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+            openCommand = "/usr/bin/open";
+        else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && new File("/usr/bin/xdg-open").exists())
+            openCommand = "/usr/bin/xdg-open";
+        else
+            openCommand = null;
+
+        thread(() -> {
+            if (openCommand != null) {
                 try {
-                    Runtime.getRuntime().exec(new String[]{"/usr/bin/open", path});
-                } catch (IOException e) {
-                    Logging.LOG.log(Level.SEVERE, "Unable to open " + path + " by executing /usr/bin/open", e);
+                    int exitCode = SystemUtils.callExternalProcess(openCommand, path);
+
+                    // explorer.exe always return 1
+                    if (exitCode == 0 || (exitCode == 1 && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS))
+                        return;
+                    else
+                        LOG.warning("Open " + path + " failed with code " + exitCode);
+                } catch (Throwable e) {
+                    LOG.log(Level.WARNING, "Unable to open " + path + " by executing " + openCommand, e);
                 }
-                break;
-            default:
-                thread(() -> {
-                    if (java.awt.Desktop.isDesktopSupported()) {
-                        try {
-                            java.awt.Desktop.getDesktop().open(file);
-                        } catch (Throwable e) {
-                            Logging.LOG.log(Level.SEVERE, "Unable to open " + path + " by java.awt.Desktop.getDesktop()::open", e);
-                        }
-                    }
-                });
-        }
+            }
+
+            // Fallback to java.awt.Desktop::open
+            try {
+                java.awt.Desktop.getDesktop().open(file);
+            } catch (Throwable e) {
+                LOG.log(Level.SEVERE, "Unable to open " + path + " by java.awt.Desktop.getDesktop()::open", e);
+            }
+        });
     }
 
     public static void showFileInExplorer(Path file) {
-        switch (OperatingSystem.CURRENT_OS) {
-            case WINDOWS:
+        String path = file.toAbsolutePath().toString();
+
+        String[] openCommands;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+            openCommands = new String[]{"explorer.exe", "/select,", path};
+        else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+            openCommands = new String[]{"/usr/bin/open", "-R", path};
+        else
+            openCommands = null;
+
+        if (openCommands != null) {
+            thread(() -> {
                 try {
-                    Runtime.getRuntime().exec(new String[]{"explorer.exe", "/select,", file.toAbsolutePath().toString()});
-                } catch (IOException e) {
-                    Logging.LOG.log(Level.SEVERE, "Unable to open " + file + " by executing explorer /select," + file, e);
+                    int exitCode = SystemUtils.callExternalProcess(openCommands);
+
+                    // explorer.exe always return 1
+                    if (exitCode == 0 || (exitCode == 1 && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS))
+                        return;
+                    else
+                        LOG.warning("Show " + path + " in explorer failed with code " + exitCode);
+                } catch (Throwable e) {
+                    LOG.log(Level.WARNING, "Unable to show " + path + " in explorer", e);
                 }
-                break;
-            case OSX:
-                try {
-                    Runtime.getRuntime().exec(new String[]{"/usr/bin/open", "-R", file.toAbsolutePath().toString()});
-                } catch (IOException e) {
-                    Logging.LOG.log(Level.SEVERE, "Unable to open " + file + " by executing /usr/bin/open -R " + file, e);
-                }
-                break;
-            default:
-                // We do not have an universal method to show file in file manager.
+
+                // Fallback to open folder
                 openFolder(file.getParent().toFile());
-                break;
+            });
+        } else {
+            // We do not have a universal method to show file in file manager.
+            openFolder(file.getParent().toFile());
         }
     }
 
@@ -427,34 +451,38 @@ public final class FXUtils {
         if (link == null)
             return;
 
-        if (java.awt.Desktop.isDesktopSupported()) {
-            thread(() -> {
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                    for (String browser : linuxBrowsers) {
-                        try (final InputStream is = Runtime.getRuntime().exec(new String[]{"which", browser}).getInputStream()) {
-                            if (is.read() != -1) {
-                                Runtime.getRuntime().exec(new String[]{browser, link});
-                                return;
-                            }
-                        } catch (Throwable ignored) {
-                        }
-                        Logging.LOG.log(Level.WARNING, "No known browser found");
-                    }
-                }
+        thread(() -> {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 try {
-                    java.awt.Desktop.getDesktop().browse(new URI(link));
+                    Runtime.getRuntime().exec(new String[]{"rundll32.exe", "url.dll,FileProtocolHandler", link});
+                    return;
                 } catch (Throwable e) {
-                    if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
-                        try {
-                            Runtime.getRuntime().exec(new String[]{"/usr/bin/open", link});
-                        } catch (IOException ex) {
-                            Logging.LOG.log(Level.WARNING, "Unable to open link: " + link, ex);
-                        }
-                    Logging.LOG.log(Level.WARNING, "Failed to open link: " + link, e);
+                    LOG.log(Level.WARNING, "An exception occurred while calling rundll32", e);
                 }
-            });
-
-        }
+            } if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+                for (String browser : linuxBrowsers) {
+                    try (final InputStream is = Runtime.getRuntime().exec(new String[]{"which", browser}).getInputStream()) {
+                        if (is.read() != -1) {
+                            Runtime.getRuntime().exec(new String[]{browser, link});
+                            return;
+                        }
+                    } catch (Throwable ignored) {
+                    }
+                    Logging.LOG.log(Level.WARNING, "No known browser found");
+                }
+            }
+            try {
+                java.awt.Desktop.getDesktop().browse(new URI(link));
+            } catch (Throwable e) {
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+                    try {
+                        Runtime.getRuntime().exec(new String[]{"/usr/bin/open", link});
+                    } catch (IOException ex) {
+                        Logging.LOG.log(Level.WARNING, "Unable to open link: " + link, ex);
+                    }
+                Logging.LOG.log(Level.WARNING, "Failed to open link: " + link, e);
+            }
+        });
     }
 
     public static void showWebDialog(String title, String content) {

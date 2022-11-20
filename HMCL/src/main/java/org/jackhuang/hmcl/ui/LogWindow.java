@@ -39,7 +39,6 @@ import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -212,12 +211,7 @@ public final class LogWindow extends Stage {
                     alert.showAndWait();
                 });
 
-                if (Desktop.isDesktopSupported()) {
-                    try {
-                        Desktop.getDesktop().open(logFile.toFile());
-                    } catch (IOException | IllegalArgumentException ignored) {
-                    }
-                }
+                FXUtils.showFileInExplorer(logFile);
             });
         }
 
