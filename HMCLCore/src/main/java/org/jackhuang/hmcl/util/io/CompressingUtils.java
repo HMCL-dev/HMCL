@@ -231,7 +231,7 @@ public final class CompressingUtils {
      * @return the plain text content of given file.
      */
     public static String readTextZipEntry(ZipFile zipFile, String name) throws IOException {
-        return IOUtils.readFullyAsString(zipFile.getInputStream(zipFile.getEntry(name)), StandardCharsets.UTF_8);
+        return IOUtils.readFullyAsString(zipFile.getInputStream(zipFile.getEntry(name)));
     }
 
     /**
@@ -244,7 +244,7 @@ public final class CompressingUtils {
      */
     public static String readTextZipEntry(Path zipFile, String name, Charset encoding) throws IOException {
         try (ZipFile s = openZipFile(zipFile, encoding)) {
-            return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)), StandardCharsets.UTF_8);
+            return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)));
         }
     }
 

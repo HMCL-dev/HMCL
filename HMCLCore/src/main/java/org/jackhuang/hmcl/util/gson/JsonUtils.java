@@ -48,6 +48,18 @@ public final class JsonUtils {
     private JsonUtils() {
     }
 
+    public static <T> T fromJsonFully(InputStream json, Class<T> classOfT) throws IOException, JsonParseException {
+        try (InputStreamReader reader = new InputStreamReader(json, StandardCharsets.UTF_8)) {
+            return GSON.fromJson(reader, classOfT);
+        }
+    }
+
+    public static <T> T fromJsonFully(InputStream json, Type type) throws IOException, JsonParseException {
+        try (InputStreamReader reader = new InputStreamReader(json, StandardCharsets.UTF_8)) {
+            return GSON.fromJson(reader, type);
+        }
+    }
+
     public static <T> T fromNonNullJson(String json, Class<T> classOfT) throws JsonParseException {
         T parsed = GSON.fromJson(json, classOfT);
         if (parsed == null)

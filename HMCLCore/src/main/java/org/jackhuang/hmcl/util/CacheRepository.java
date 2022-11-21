@@ -295,7 +295,7 @@ public class CacheRepository {
                 channel.truncate(0);
                 OutputStream os = Channels.newOutputStream(channel);
                 ETagIndex writeTo = new ETagIndex(newIndex.values());
-                IOUtils.write(JsonUtils.GSON.toJson(writeTo).getBytes(UTF_8), os);
+                os.write(JsonUtils.GSON.toJson(writeTo).getBytes(UTF_8));
                 this.index = newIndex;
             } finally {
                 lock.release();
@@ -430,7 +430,7 @@ public class CacheRepository {
                     indexOnDisk.putAll(storage);
                     channel.truncate(0);
                     OutputStream os = Channels.newOutputStream(channel);
-                    IOUtils.write(JsonUtils.GSON.toJson(storage).getBytes(UTF_8), os);
+                    os.write(JsonUtils.GSON.toJson(storage).getBytes(UTF_8));
                     this.storage = indexOnDisk;
                 } finally {
                     lock.release();

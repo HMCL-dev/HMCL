@@ -25,7 +25,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class CrashReportAnalyzerTest {
@@ -35,7 +34,7 @@ public class CrashReportAnalyzerTest {
         if (is == null) {
             throw new IllegalStateException("Resource not found: " + path);
         }
-        return IOUtils.readFullyAsString(is, StandardCharsets.UTF_8);
+        return IOUtils.readFullyAsString(is);
     }
 
     private CrashReportAnalyzer.Result findResultByRule(List<CrashReportAnalyzer.Result> results, CrashReportAnalyzer.Rule rule) {
