@@ -23,7 +23,11 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
@@ -56,6 +60,24 @@ public final class JsonUtils {
         if (parsed == null)
             throw new JsonParseException("Json object cannot be null.");
         return parsed;
+    }
+
+    public static <T> T fromNonNullJsonFully(InputStream json, Class<T> classOfT) throws IOException, JsonParseException {
+        try (InputStreamReader reader = new InputStreamReader(json, StandardCharsets.UTF_8)) {
+            T parsed = GSON.fromJson(reader, classOfT);
+            if (parsed == null)
+                throw new JsonParseException("Json object cannot be null.");
+            return parsed;
+        }
+    }
+
+    public static <T> T fromNonNullJsonFully(InputStream json, Type type) throws IOException, JsonParseException {
+        try (InputStreamReader reader = new InputStreamReader(json, StandardCharsets.UTF_8)) {
+            T parsed = GSON.fromJson(reader, type);
+            if (parsed == null)
+                throw new JsonParseException("Json object cannot be null.");
+            return parsed;
+        }
     }
 
     public static <T> T fromMaybeMalformedJson(String json, Class<T> classOfT) throws JsonParseException {
