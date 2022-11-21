@@ -230,7 +230,7 @@ public class FeedbackPage extends VBox implements PageAware {
         Controllers.dialog(new AddFeedbackDialog());
     }
 
-    private class LoginDialog extends JFXDialogLayout {
+    private static final class LoginDialog extends JFXDialogLayout {
         private final SpinnerPane spinnerPane = new SpinnerPane();
         private final Label errorLabel = new Label();
         private final BooleanProperty logging = new SimpleBooleanProperty();
@@ -241,10 +241,7 @@ public class FeedbackPage extends VBox implements PageAware {
             VBox vbox = new VBox(8);
             setBody(vbox);
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-            hintPane.textProperty().bind(BindingMapping.of(logging).map(logging ->
-                    logging
-                            ? i18n("account.hmcl.hint")
-                            : i18n("account.hmcl.hint")));
+            hintPane.textProperty().bind(BindingMapping.of(logging).map(logging -> i18n("account.hmcl.hint")));
             hintPane.setOnMouseClicked(e -> {
                 if (logging.get() && OAuthServer.lastlyOpenedURL != null) {
                     FXUtils.copyText(OAuthServer.lastlyOpenedURL);

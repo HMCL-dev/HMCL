@@ -240,7 +240,7 @@ public class DefaultCacheRepository extends CacheRepository {
         }
     }
 
-    private class LibraryIndex implements Validation {
+    private static final class LibraryIndex implements Validation {
         private final String name;
         private final String hash;
         private final String type;

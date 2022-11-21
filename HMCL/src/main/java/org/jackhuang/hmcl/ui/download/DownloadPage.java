@@ -234,7 +234,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         tab.select(worldTab);
     }
 
-    private class DownloadNavigator implements Navigation {
+    private static final class DownloadNavigator implements Navigation {
         private final Map<String, Object> settings = new HashMap<>();
 
         @Override

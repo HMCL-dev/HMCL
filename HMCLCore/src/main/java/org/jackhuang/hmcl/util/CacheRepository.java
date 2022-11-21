@@ -54,7 +54,7 @@ public class CacheRepository {
     private Path cacheDirectory;
     private Path indexFile;
     private Map<String, ETagItem> index;
-    private Map<String, Storage> storages = new HashMap<>();
+    private final Map<String, Storage> storages = new HashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public void changeDirectory(Path commonDir) {
@@ -303,7 +303,7 @@ public class CacheRepository {
         }
     }
 
-    private class ETagIndex {
+    private static final class ETagIndex {
         private final Collection<ETagItem> eTag;
 
         public ETagIndex() {
@@ -315,7 +315,7 @@ public class CacheRepository {
         }
     }
 
-    private class ETagItem {
+    private static final class ETagItem {
         private final String url;
         private final String eTag;
         private final String hash;
