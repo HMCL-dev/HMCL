@@ -93,7 +93,7 @@ public final class TexturesLoader {
             dot = url.length();
         }
         String hash = url.substring(slash + 1, dot);
-        String prefix = hash.length() > 2 ? hash.substring(0, 2) : "xx" ;
+        String prefix = hash.length() > 2 ? hash.substring(0, 2) : "xx";
         return TEXTURES_DIR.resolve(prefix).resolve(hash);
     }
 
