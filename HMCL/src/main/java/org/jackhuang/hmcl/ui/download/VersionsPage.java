@@ -40,7 +40,10 @@ import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
+import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
+import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -55,6 +58,7 @@ import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -122,86 +126,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
         btnRefresh.setGraphic(wrap(SVG.refresh(Theme.blackFillBinding(), -1, -1)));
 
-        list.setCellFactory(listView -> new ListCell<RemoteVersion>() {
-            IconedTwoLineListItem content = new IconedTwoLineListItem();
-            RipplerContainer ripplerContainer = new RipplerContainer(content);
-            StackPane pane = new StackPane();
-
-            {
-                pane.getStyleClass().add("md-list-cell");
-                StackPane.setMargin(content, new Insets(10, 16, 10, 16));
-                pane.getChildren().setAll(ripplerContainer);
-            }
-
-            @Override
-            public void updateItem(RemoteVersion remoteVersion, boolean empty) {
-                super.updateItem(remoteVersion, empty);
-                if (empty) {
-                    setGraphic(null);
-                    return;
-                }
-                setGraphic(pane);
-
-                content.setTitle(remoteVersion.getSelfVersion());
-                if (remoteVersion.getReleaseDate() != null) {
-                    content.setSubtitle(Locales.DATE_TIME_FORMATTER.get().format(remoteVersion.getReleaseDate().toInstant()));
-                } else {
-                    content.setSubtitle("");
-                }
-
-                if (remoteVersion instanceof GameRemoteVersion) {
-                    switch (remoteVersion.getVersionType()) {
-                        case RELEASE:
-                            content.getTags().setAll(i18n("version.game.release"));
-                            content.setImage(new Image("/assets/img/grass.png", 32, 32, false, true));
-                            break;
-                        case SNAPSHOT:
-                            content.getTags().setAll(i18n("version.game.snapshot"));
-                            content.setImage(new Image("/assets/img/command.png", 32, 32, false, true));
-                            break;
-                        default:
-                            content.getTags().setAll(i18n("version.game.old"));
-                            content.setImage(new Image("/assets/img/craft_table.png", 32, 32, false, true));
-                            break;
-                    }
-                } else if (remoteVersion instanceof LiteLoaderRemoteVersion) {
-                    content.setImage(new Image("/assets/img/chicken.png", 32, 32, false, true));
-                    if (StringUtils.isNotBlank(content.getSubtitle())) {
-                        content.getTags().setAll(remoteVersion.getGameVersion());
-                    } else {
-                        content.setSubtitle(remoteVersion.getGameVersion());
-                    }
-                } else if (remoteVersion instanceof OptiFineRemoteVersion) {
-                    content.setImage(new Image("/assets/img/command.png", 32, 32, false, true));
-                    if (StringUtils.isNotBlank(content.getSubtitle())) {
-                        content.getTags().setAll(remoteVersion.getGameVersion());
-                    } else {
-                        content.setSubtitle(remoteVersion.getGameVersion());
-                    }
-                } else if (remoteVersion instanceof ForgeRemoteVersion) {
-                    content.setImage(new Image("/assets/img/forge.png", 32, 32, false, true));
-                    if (StringUtils.isNotBlank(content.getSubtitle())) {
-                        content.getTags().setAll(remoteVersion.getGameVersion());
-                    } else {
-                        content.setSubtitle(remoteVersion.getGameVersion());
-                    }
-                } else if (remoteVersion instanceof FabricRemoteVersion) {
-                    content.setImage(new Image("/assets/img/fabric.png", 32, 32, false, true));
-                    if (StringUtils.isNotBlank(content.getSubtitle())) {
-                        content.getTags().setAll(remoteVersion.getGameVersion());
-                    } else {
-                        content.setSubtitle(remoteVersion.getGameVersion());
-                    }
-                } else if (remoteVersion instanceof FabricAPIRemoteVersion) {
-                    content.setImage(new Image("/assets/img/fabric.png", 32, 32, false, true));
-                    if (StringUtils.isNotBlank(content.getSubtitle())) {
-                        content.getTags().setAll(remoteVersion.getGameVersion());
-                    } else {
-                        content.setSubtitle(remoteVersion.getGameVersion());
-                    }
-                }
-            }
-        });
+        list.setCellFactory(listView -> new RemoteVersionListCell());
 
         list.setOnMouseClicked(e -> {
             if (list.getSelectionModel().getSelectedIndex() < 0)
@@ -289,5 +214,107 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     @FXML
     private void onSponsor() {
         HMCLService.openRedirectLink("bmclapi_sponsor");
+    }
+
+    private static class RemoteVersionListCell extends ListCell<RemoteVersion> {
+        private static final EnumMap<VersionIconType, Image> icon = new EnumMap<>(VersionIconType.class);
+
+        private static Image getIcon(VersionIconType type) {
+            assert Platform.isFxApplicationThread();
+            return icon.computeIfAbsent(type, iconType -> new Image(iconType.getResourceUrl(), 32, 32, false, true));
+        }
+
+        final IconedTwoLineListItem content = new IconedTwoLineListItem();
+        final RipplerContainer ripplerContainer = new RipplerContainer(content);
+        final StackPane pane = new StackPane();
+
+        {
+            pane.getStyleClass().add("md-list-cell");
+            StackPane.setMargin(content, new Insets(10, 16, 10, 16));
+            pane.getChildren().setAll(ripplerContainer);
+        }
+
+        @Override
+        public void updateItem(RemoteVersion remoteVersion, boolean empty) {
+            super.updateItem(remoteVersion, empty);
+            if (empty) {
+                setGraphic(null);
+                return;
+            }
+            setGraphic(pane);
+
+            content.setTitle(remoteVersion.getSelfVersion());
+            if (remoteVersion.getReleaseDate() != null) {
+                content.setSubtitle(Locales.DATE_TIME_FORMATTER.get().format(remoteVersion.getReleaseDate().toInstant()));
+            } else {
+                content.setSubtitle("");
+            }
+
+            if (remoteVersion instanceof GameRemoteVersion) {
+                switch (remoteVersion.getVersionType()) {
+                    case RELEASE:
+                        content.getTags().setAll(i18n("version.game.release"));
+                        content.setImage(getIcon(VersionIconType.GRASS));
+                        break;
+                    case SNAPSHOT:
+                        content.getTags().setAll(i18n("version.game.snapshot"));
+                        content.setImage(getIcon(VersionIconType.COMMAND));
+                        break;
+                    default:
+                        content.getTags().setAll(i18n("version.game.old"));
+                        content.setImage(getIcon(VersionIconType.CRAFT_TABLE));
+                        break;
+                }
+            } else if (remoteVersion instanceof LiteLoaderRemoteVersion) {
+                content.setImage(getIcon(VersionIconType.CHICKEN));
+                if (StringUtils.isNotBlank(content.getSubtitle())) {
+                    content.getTags().setAll(remoteVersion.getGameVersion());
+                } else {
+                    content.setSubtitle(remoteVersion.getGameVersion());
+                }
+            } else if (remoteVersion instanceof OptiFineRemoteVersion) {
+                content.setImage(getIcon(VersionIconType.COMMAND));
+                if (StringUtils.isNotBlank(content.getSubtitle())) {
+                    content.getTags().setAll(remoteVersion.getGameVersion());
+                } else {
+                    content.setSubtitle(remoteVersion.getGameVersion());
+                }
+            } else if (remoteVersion instanceof ForgeRemoteVersion) {
+                content.setImage(getIcon(VersionIconType.FORGE));
+                if (StringUtils.isNotBlank(content.getSubtitle())) {
+                    content.getTags().setAll(remoteVersion.getGameVersion());
+                } else {
+                    content.setSubtitle(remoteVersion.getGameVersion());
+                }
+            } else if (remoteVersion instanceof FabricRemoteVersion) {
+                content.setImage(getIcon(VersionIconType.FABRIC));
+                if (StringUtils.isNotBlank(content.getSubtitle())) {
+                    content.getTags().setAll(remoteVersion.getGameVersion());
+                } else {
+                    content.setSubtitle(remoteVersion.getGameVersion());
+                }
+            } else if (remoteVersion instanceof FabricAPIRemoteVersion) {
+                content.setImage(getIcon(VersionIconType.FABRIC));
+                if (StringUtils.isNotBlank(content.getSubtitle())) {
+                    content.getTags().setAll(remoteVersion.getGameVersion());
+                } else {
+                    content.setSubtitle(remoteVersion.getGameVersion());
+                }
+            } else if (remoteVersion instanceof QuiltRemoteVersion) {
+                content.setImage(getIcon(VersionIconType.QUILT));
+                if (StringUtils.isNotBlank(content.getSubtitle())) {
+                    content.getTags().setAll(remoteVersion.getGameVersion());
+                } else {
+                    content.setSubtitle(remoteVersion.getGameVersion());
+                }
+            } else if (remoteVersion instanceof QuiltAPIRemoteVersion) {
+                content.setImage(getIcon(VersionIconType.QUILT));
+                if (StringUtils.isNotBlank(content.getSubtitle())) {
+                    content.getTags().setAll(remoteVersion.getGameVersion());
+                } else {
+                    content.setSubtitle(remoteVersion.getGameVersion());
+                }
+            }
+        }
     }
 }
