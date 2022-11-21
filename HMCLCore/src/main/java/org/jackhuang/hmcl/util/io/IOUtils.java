@@ -39,7 +39,7 @@ public final class IOUtils {
      * @throws IOException if an I/O error occurs.
      */
     public static byte[] readFullyWithoutClosing(InputStream stream) throws IOException {
-        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(stream.available(), 32));
         copyTo(stream, result);
         return result.toByteArray();
     }
@@ -53,7 +53,7 @@ public final class IOUtils {
      */
     public static ByteArrayOutputStream readFully(InputStream stream) throws IOException {
         try (InputStream is = stream) {
-            ByteArrayOutputStream result = new ByteArrayOutputStream();
+            ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(is.available(), 32));
             copyTo(is, result);
             return result;
         }
