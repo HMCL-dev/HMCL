@@ -34,6 +34,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Logging;
@@ -45,10 +46,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayDeque;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -153,12 +151,12 @@ public final class LogWindow extends Stage {
 
     public class LogWindowImpl extends Control {
 
-        private ListView<Log> listView = new JFXListView<>();
-        private BooleanProperty autoScroll = new SimpleBooleanProperty();
-        private List<StringProperty> buttonText = IntStream.range(0, 5).mapToObj(x -> new SimpleStringProperty()).collect(Collectors.toList());
-        private List<BooleanProperty> showLevel = IntStream.range(0, 5).mapToObj(x -> new SimpleBooleanProperty(true)).collect(Collectors.toList());
-        private JFXComboBox<String> cboLines = new JFXComboBox<>();
-        private BooleanProperty showCrashReport = new SimpleBooleanProperty();
+        private final ListView<Log> listView = new JFXListView<>();
+        private final BooleanProperty autoScroll = new SimpleBooleanProperty();
+        private final List<StringProperty> buttonText = IntStream.range(0, 5).mapToObj(x -> new SimpleStringProperty()).collect(Collectors.toList());
+        private final List<BooleanProperty> showLevel = IntStream.range(0, 5).mapToObj(x -> new SimpleBooleanProperty(true)).collect(Collectors.toList());
+        private final JFXComboBox<String> cboLines = new JFXComboBox<>();
+        private final BooleanProperty showCrashReport = new SimpleBooleanProperty();
 
         LogWindowImpl() {
             getStyleClass().add("log-window");
@@ -227,13 +225,13 @@ public final class LogWindow extends Stage {
     }
 
     private static class LogWindowSkin extends SkinBase<LogWindowImpl> {
-        private static PseudoClass EMPTY = PseudoClass.getPseudoClass("empty");
-        private static PseudoClass FATAL = PseudoClass.getPseudoClass("fatal");
-        private static PseudoClass ERROR = PseudoClass.getPseudoClass("error");
-        private static PseudoClass WARN = PseudoClass.getPseudoClass("warn");
-        private static PseudoClass INFO = PseudoClass.getPseudoClass("info");
-        private static PseudoClass DEBUG = PseudoClass.getPseudoClass("debug");
-        private static PseudoClass TRACE = PseudoClass.getPseudoClass("trace");
+        private static final PseudoClass EMPTY = PseudoClass.getPseudoClass("empty");
+        private static final PseudoClass FATAL = PseudoClass.getPseudoClass("fatal");
+        private static final PseudoClass ERROR = PseudoClass.getPseudoClass("error");
+        private static final PseudoClass WARN = PseudoClass.getPseudoClass("warn");
+        private static final PseudoClass INFO = PseudoClass.getPseudoClass("info");
+        private static final PseudoClass DEBUG = PseudoClass.getPseudoClass("debug");
+        private static final PseudoClass TRACE = PseudoClass.getPseudoClass("trace");
 
         private static ToggleButton createToggleButton(String backgroundColor, StringProperty buttonText, BooleanProperty showLevel) {
             ToggleButton button = new ToggleButton();
@@ -290,6 +288,7 @@ public final class LogWindow extends Stage {
                         listView.scrollTo(listView.getItems().size() - 1);
                 });
                 listView.setStyle("-fx-font-family: " + config().getFontFamily() + "; -fx-font-size: " + config().getFontSize() + "px;");
+                MutableObject<Object> lastCell = new MutableObject<>();
                 listView.setCellFactory(x -> new ListCell<Log>() {
                     {
                         getStyleClass().add("log-window-list-cell");
@@ -306,6 +305,12 @@ public final class LogWindow extends Stage {
                     @Override
                     protected void updateItem(Log item, boolean empty) {
                         super.updateItem(item, empty);
+
+                        // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
+                        if (this == lastCell.getValue() && !isVisible())
+                            return;
+                        lastCell.setValue(this);
+
                         pseudoClassStateChanged(EMPTY, empty);
                         pseudoClassStateChanged(FATAL, !empty && item.level == Log4jLevel.FATAL);
                         pseudoClassStateChanged(ERROR, !empty && item.level == Log4jLevel.ERROR);

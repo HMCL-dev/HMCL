@@ -30,6 +30,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.setting.Accounts;
@@ -117,7 +118,8 @@ public class FeedbackPage extends VBox implements PageAware {
             JFXListView<FeedbackResponse> listView = new JFXListView<>();
             spinnerPane.setContent(listView);
             Bindings.bindContent(listView.getItems(), feedbacks);
-            listView.setCellFactory(x -> new MDListCell<FeedbackResponse>(listView) {
+            MutableObject<Object> lastCell = new MutableObject<>();
+            listView.setCellFactory(x -> new MDListCell<FeedbackResponse>(listView, lastCell) {
                 private final TwoLineListItem content = new TwoLineListItem();
                 private final JFXButton likeButton = new JFXButton();
                 private final JFXButton unlikeButton = new JFXButton();

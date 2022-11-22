@@ -47,6 +47,7 @@ import javafx.scene.text.TextFlow;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.util.Logging;
@@ -659,10 +660,17 @@ public final class FXUtils {
     }
 
     public static <T> Callback<ListView<T>, ListCell<T>> jfxListCellFactory(Function<T, Node> graphicBuilder) {
+        MutableObject<Object> lastCell = new MutableObject<>();
         return view -> new JFXListCell<T>() {
             @Override
             public void updateItem(T item, boolean empty) {
                 super.updateItem(item, empty);
+
+                // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
+                if (this == lastCell.getValue() && !isVisible())
+                    return;
+                lastCell.setValue(this);
+
                 if (!empty) {
                     setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
                     setGraphic(graphicBuilder.apply(item));

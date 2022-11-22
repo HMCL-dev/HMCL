@@ -31,6 +31,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
@@ -125,7 +126,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
         btnRefresh.setGraphic(wrap(SVG.refresh(Theme.blackFillBinding(), -1, -1)));
 
-        list.setCellFactory(listView -> new RemoteVersionListCell());
+        MutableObject<RemoteVersionListCell> lastCell = new MutableObject<>();
+        list.setCellFactory(listView -> new RemoteVersionListCell(lastCell));
 
         list.setOnMouseClicked(e -> {
             if (list.getSelectionModel().getSelectedIndex() < 0)
@@ -227,6 +229,12 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         final RipplerContainer ripplerContainer = new RipplerContainer(content);
         final StackPane pane = new StackPane();
 
+        private final MutableObject<RemoteVersionListCell> lastCell;
+
+        RemoteVersionListCell(MutableObject<RemoteVersionListCell> lastCell) {
+            this.lastCell = lastCell;
+        }
+
         {
             pane.getStyleClass().add("md-list-cell");
             StackPane.setMargin(content, new Insets(10, 16, 10, 16));
@@ -236,6 +244,12 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         @Override
         public void updateItem(RemoteVersion remoteVersion, boolean empty) {
             super.updateItem(remoteVersion, empty);
+
+            // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
+            if (this == lastCell.getValue() && !isVisible())
+                return;
+            lastCell.setValue(this);
+
             if (empty) {
                 setGraphic(null);
                 return;
