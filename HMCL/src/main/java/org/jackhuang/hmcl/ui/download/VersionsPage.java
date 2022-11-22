@@ -55,7 +55,6 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.HMCLService;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
 import java.util.EnumMap;
@@ -247,7 +246,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             if (remoteVersion.getReleaseDate() != null) {
                 content.setSubtitle(Locales.DATE_TIME_FORMATTER.get().format(remoteVersion.getReleaseDate().toInstant()));
             } else {
-                content.setSubtitle("");
+                content.setSubtitle(null);
             }
 
             if (remoteVersion instanceof GameRemoteVersion) {
@@ -265,55 +264,26 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         content.setImage(getIcon(VersionIconType.CRAFT_TABLE));
                         break;
                 }
-            } else if (remoteVersion instanceof LiteLoaderRemoteVersion) {
-                content.setImage(getIcon(VersionIconType.CHICKEN));
-                if (StringUtils.isNotBlank(content.getSubtitle())) {
-                    content.getTags().setAll(remoteVersion.getGameVersion());
-                } else {
+            } else {
+                VersionIconType iconType;
+                if (remoteVersion instanceof LiteLoaderRemoteVersion)
+                    iconType = VersionIconType.CHICKEN;
+                else if (remoteVersion instanceof OptiFineRemoteVersion)
+                    iconType = VersionIconType.COMMAND;
+                else if (remoteVersion instanceof ForgeRemoteVersion)
+                    iconType = VersionIconType.FORGE;
+                else if (remoteVersion instanceof FabricRemoteVersion || remoteVersion instanceof FabricAPIRemoteVersion)
+                    iconType = VersionIconType.FABRIC;
+                else if (remoteVersion instanceof QuiltRemoteVersion || remoteVersion instanceof QuiltAPIRemoteVersion)
+                    iconType = VersionIconType.QUILT;
+                else
+                    iconType = null;
+
+                content.setImage(iconType != null ? getIcon(iconType) : null);
+                if (content.getSubtitle() == null)
                     content.setSubtitle(remoteVersion.getGameVersion());
-                }
-            } else if (remoteVersion instanceof OptiFineRemoteVersion) {
-                content.setImage(getIcon(VersionIconType.COMMAND));
-                if (StringUtils.isNotBlank(content.getSubtitle())) {
+                else
                     content.getTags().setAll(remoteVersion.getGameVersion());
-                } else {
-                    content.setSubtitle(remoteVersion.getGameVersion());
-                }
-            } else if (remoteVersion instanceof ForgeRemoteVersion) {
-                content.setImage(getIcon(VersionIconType.FORGE));
-                if (StringUtils.isNotBlank(content.getSubtitle())) {
-                    content.getTags().setAll(remoteVersion.getGameVersion());
-                } else {
-                    content.setSubtitle(remoteVersion.getGameVersion());
-                }
-            } else if (remoteVersion instanceof FabricRemoteVersion) {
-                content.setImage(getIcon(VersionIconType.FABRIC));
-                if (StringUtils.isNotBlank(content.getSubtitle())) {
-                    content.getTags().setAll(remoteVersion.getGameVersion());
-                } else {
-                    content.setSubtitle(remoteVersion.getGameVersion());
-                }
-            } else if (remoteVersion instanceof FabricAPIRemoteVersion) {
-                content.setImage(getIcon(VersionIconType.FABRIC));
-                if (StringUtils.isNotBlank(content.getSubtitle())) {
-                    content.getTags().setAll(remoteVersion.getGameVersion());
-                } else {
-                    content.setSubtitle(remoteVersion.getGameVersion());
-                }
-            } else if (remoteVersion instanceof QuiltRemoteVersion) {
-                content.setImage(getIcon(VersionIconType.QUILT));
-                if (StringUtils.isNotBlank(content.getSubtitle())) {
-                    content.getTags().setAll(remoteVersion.getGameVersion());
-                } else {
-                    content.setSubtitle(remoteVersion.getGameVersion());
-                }
-            } else if (remoteVersion instanceof QuiltAPIRemoteVersion) {
-                content.setImage(getIcon(VersionIconType.QUILT));
-                if (StringUtils.isNotBlank(content.getSubtitle())) {
-                    content.getTags().setAll(remoteVersion.getGameVersion());
-                } else {
-                    content.setSubtitle(remoteVersion.getGameVersion());
-                }
             }
         }
     }
