@@ -9,8 +9,8 @@ public final class AwtUtils {
 
     public static void setAppleIcon(Image image) {
         try {
-            Class<?> taskbarClass = Class.forName("java.awt.TaskBar");
-            Method getTaskBarMethod = taskbarClass.getDeclaredMethod("getTaskBar");
+            Class<?> taskbarClass = Class.forName("java.awt.Taskbar");
+            Method getTaskBarMethod = taskbarClass.getDeclaredMethod("getTaskbar");
             Object taskBar = getTaskBarMethod.invoke(null);
             Method setIconImageMethod = taskbarClass.getDeclaredMethod("setIconImage", Image.class);
             setIconImageMethod.invoke(taskBar, image);
