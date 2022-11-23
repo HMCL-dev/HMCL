@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.HttpServer;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.IOException;
 import java.security.*;
@@ -80,8 +79,7 @@ public class YggdrasilServer extends HttpServer {
     }
 
     private Response profiles(Request request) throws IOException {
-        String body = IOUtils.readFullyAsString(request.getSession().getInputStream(), UTF_8);
-        List<String> names = JsonUtils.fromNonNullJson(body, new TypeToken<List<String>>() {
+        List<String> names = JsonUtils.fromNonNullJsonFully(request.getSession().getInputStream(), new TypeToken<List<String>>() {
         }.getType());
         return ok(names.stream().distinct()
                 .map(this::findCharacterByName)

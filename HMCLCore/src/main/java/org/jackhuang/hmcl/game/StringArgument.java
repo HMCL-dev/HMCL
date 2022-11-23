@@ -67,7 +67,7 @@ public final class StringArgument implements Argument {
         return argument;
     }
 
-    public class Serializer implements JsonSerializer<StringArgument> {
+    public static final class Serializer implements JsonSerializer<StringArgument> {
         @Override
         public JsonElement serialize(StringArgument src, Type typeOfSrc, JsonSerializationContext context) {
             return new JsonPrimitive(src.getArgument());

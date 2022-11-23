@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -139,12 +138,7 @@ public final class SettingsPage extends SettingsView {
             }
 
             Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", logFile)));
-            if (Desktop.isDesktopSupported()) {
-                try {
-                    Desktop.getDesktop().open(logFile.toFile());
-                } catch (IOException ignored) {
-                }
-            }
+            FXUtils.showFileInExplorer(logFile);
         });
     }
 

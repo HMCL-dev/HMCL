@@ -31,6 +31,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.setting.Theme;
@@ -84,12 +85,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             toolbarNormal.getChildren().setAll(
                     createToolbarButton2(i18n("button.refresh"), SVG::refresh, skinnable::refresh),
                     createToolbarButton2(i18n("mods.add"), SVG::plus, skinnable::add),
-                    createToolbarButton2(i18n("folder.mod"), SVG::folderOpen, () ->
-                            skinnable.openModFolder()),
-                    createToolbarButton2(i18n("mods.check_updates"), SVG::update, () ->
-                            skinnable.checkUpdates()),
-                    createToolbarButton2(i18n("download"), SVG::downloadOutline, () ->
-                            skinnable.download()));
+                    createToolbarButton2(i18n("folder.mod"), SVG::folderOpen, skinnable::openModFolder),
+                    createToolbarButton2(i18n("mods.check_updates"), SVG::update, skinnable::checkUpdates),
+                    createToolbarButton2(i18n("download"), SVG::downloadOutline, skinnable::download));
             HBox toolbarSelecting = new HBox();
             toolbarSelecting.getChildren().setAll(
                     createToolbarButton2(i18n("button.remove"), SVG::delete, () -> {
@@ -121,7 +119,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            listView.setCellFactory(x -> new ModInfoListCell(listView));
+            MutableObject<Object> lastCell = new MutableObject<>();
+            listView.setCellFactory(x -> new ModInfoListCell(listView, lastCell));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
 
@@ -276,10 +275,10 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    private static Lazy<PopupMenu> menu = new Lazy<>(PopupMenu::new);
-    private static Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
+    private static final Lazy<PopupMenu> menu = new Lazy<>(PopupMenu::new);
+    private static final Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
 
-    class ModInfoListCell extends MDListCell<ModInfoObject> {
+    final class ModInfoListCell extends MDListCell<ModInfoObject> {
         JFXCheckBox checkBox = new JFXCheckBox();
         TwoLineListItem content = new TwoLineListItem();
         JFXButton restoreButton = new JFXButton();
@@ -287,8 +286,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton revealButton = new JFXButton();
         BooleanProperty booleanProperty;
 
-        ModInfoListCell(JFXListView<ModInfoObject> listView) {
-            super(listView);
+        ModInfoListCell(JFXListView<ModInfoObject> listView, MutableObject<Object> lastCell) {
+            super(listView, lastCell);
 
             HBox container = new HBox(8);
             container.setPickOnBounds(false);

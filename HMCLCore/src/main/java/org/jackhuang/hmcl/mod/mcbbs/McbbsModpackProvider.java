@@ -26,10 +26,10 @@ import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 
@@ -66,8 +66,8 @@ public final class McbbsModpackProvider implements ModpackProvider {
         config.getManifest().injectLaunchOptions(builder);
     }
 
-    private static Modpack fromManifestFile(String json, Charset encoding) throws IOException, JsonParseException {
-        McbbsModpackManifest manifest = JsonUtils.fromNonNullJson(json, McbbsModpackManifest.class);
+    private static Modpack fromManifestFile(InputStream json, Charset encoding) throws IOException, JsonParseException {
+        McbbsModpackManifest manifest = JsonUtils.fromNonNullJsonFully(json, McbbsModpackManifest.class);
         return manifest.toModpack(encoding);
     }
 
@@ -75,11 +75,11 @@ public final class McbbsModpackProvider implements ModpackProvider {
     public Modpack readManifest(ZipFile zip, Path file, Charset encoding) throws IOException, JsonParseException {
         ZipArchiveEntry mcbbsPackMeta = zip.getEntry("mcbbs.packmeta");
         if (mcbbsPackMeta != null) {
-            return fromManifestFile(IOUtils.readFullyAsString(zip.getInputStream(mcbbsPackMeta)), encoding);
+            return fromManifestFile(zip.getInputStream(mcbbsPackMeta), encoding);
         }
         ZipArchiveEntry manifestJson = zip.getEntry("manifest.json");
         if (manifestJson != null) {
-            return fromManifestFile(IOUtils.readFullyAsString(zip.getInputStream(manifestJson)), encoding);
+            return fromManifestFile(zip.getInputStream(manifestJson), encoding);
         }
         throw new IOException("`mcbbs.packmeta` or `manifest.json` cannot be found");
     }

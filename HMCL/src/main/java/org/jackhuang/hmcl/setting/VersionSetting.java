@@ -24,6 +24,7 @@ import javafx.beans.property.*;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -40,8 +41,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
-
-import static com.jfoenix.concurrency.JFXUtilities.runInFX;
 
 /**
  *
@@ -660,9 +659,7 @@ public final class VersionSetting implements Cloneable {
                             .filter(java -> java.getVersion().equals(getJava()))
                             .collect(Collectors.toList());
                     if (matchedJava.isEmpty()) {
-                        runInFX(() -> {
-                            setJava("Auto");
-                        });
+                        FXUtils.runInFX(() -> setJava("Auto"));
                         return JavaVersion.fromCurrentEnvironment();
                     } else {
                         return matchedJava.stream()

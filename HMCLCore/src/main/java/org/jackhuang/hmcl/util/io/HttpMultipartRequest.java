@@ -27,10 +27,11 @@ import java.net.HttpURLConnection;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class HttpMultipartRequest implements Closeable {
+    private static final String endl = "\r\n";
+
     private final String boundary = "*****" + System.currentTimeMillis() + "*****";
     private final HttpURLConnection urlConnection;
     private final ByteArrayOutputStream stream;
-    private final String endl = "\r\n";
 
     public HttpMultipartRequest(HttpURLConnection urlConnection) throws IOException {
         this.urlConnection = urlConnection;
@@ -69,7 +70,7 @@ public class HttpMultipartRequest implements Closeable {
         addLine("--" + boundary + "--");
         urlConnection.setRequestProperty("Content-Length", "" + stream.size());
         try (OutputStream os = urlConnection.getOutputStream()) {
-            IOUtils.write(stream.toByteArray(), os);
+            stream.writeTo(os);
         }
     }
 }

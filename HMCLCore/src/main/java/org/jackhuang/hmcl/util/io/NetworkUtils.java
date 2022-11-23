@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.util.Pair;
 
 import java.io.*;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -176,7 +175,7 @@ public final class NetworkUtils {
     public static String doGet(URL url) throws IOException {
         HttpURLConnection con = createHttpConnection(url);
         con = resolveConnection(con);
-        return IOUtils.readFullyAsString(con.getInputStream(), StandardCharsets.UTF_8);
+        return IOUtils.readFullyAsString(con.getInputStream());
     }
 
     public static String doPost(URL u, Map<String, String> params) throws IOException {
@@ -210,13 +209,13 @@ public final class NetworkUtils {
     public static String readData(HttpURLConnection con) throws IOException {
         try {
             try (InputStream stdout = con.getInputStream()) {
-                return IOUtils.readFullyAsString(stdout, UTF_8);
+                return IOUtils.readFullyAsString(stdout);
             }
         } catch (IOException e) {
             try (InputStream stderr = con.getErrorStream()) {
                 if (stderr == null)
                     throw e;
-                return IOUtils.readFullyAsString(stderr, UTF_8);
+                return IOUtils.readFullyAsString(stderr);
             }
         }
     }

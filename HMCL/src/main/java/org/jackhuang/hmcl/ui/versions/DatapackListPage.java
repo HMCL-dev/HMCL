@@ -47,6 +47,8 @@ public class DatapackListPage extends ListPageBase<DatapackListPageSkin.Datapack
     private final Path worldDir;
     private final Datapack datapack;
 
+    // Strongly referencing items, preventing GC collection
+    @SuppressWarnings("FieldCanBeLocal")
     private final ObservableList<DatapackListPageSkin.DatapackInfoObject> items;
 
     public DatapackListPage(String worldName, Path worldDir) {
