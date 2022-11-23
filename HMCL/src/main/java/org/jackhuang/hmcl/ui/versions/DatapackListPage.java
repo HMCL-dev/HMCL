@@ -47,6 +47,10 @@ public class DatapackListPage extends ListPageBase<DatapackListPageSkin.Datapack
     private final Path worldDir;
     private final Datapack datapack;
 
+    // Strongly referencing items, preventing GC collection
+    @SuppressWarnings("FieldCanBeLocal")
+    private final ObservableList<DatapackListPageSkin.DatapackInfoObject> items;
+
     public DatapackListPage(String worldName, Path worldDir) {
         this.worldDir = worldDir;
 
@@ -55,7 +59,7 @@ public class DatapackListPage extends ListPageBase<DatapackListPageSkin.Datapack
         datapack = new Datapack(worldDir.resolve("datapacks"));
         datapack.loadFromDir();
 
-        setItems(MappedObservableList.create(datapack.getInfo(), DatapackListPageSkin.DatapackInfoObject::new));
+        setItems(items = MappedObservableList.create(datapack.getInfo(), DatapackListPageSkin.DatapackInfoObject::new));
 
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
                 mods -> mods.forEach(this::installSingleDatapack), this::refresh);
