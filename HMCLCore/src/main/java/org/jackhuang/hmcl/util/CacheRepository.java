@@ -27,9 +27,9 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.URLConnection;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -293,9 +293,8 @@ public class CacheRepository {
                 ETagIndex indexOnDisk = JsonUtils.fromMaybeMalformedJson(new String(IOUtils.readFullyWithoutClosing(Channels.newInputStream(channel)), UTF_8), ETagIndex.class);
                 Map<String, ETagItem> newIndex = joinETagIndexes(indexOnDisk == null ? null : indexOnDisk.eTag, index.values());
                 channel.truncate(0);
-                OutputStream os = Channels.newOutputStream(channel);
                 ETagIndex writeTo = new ETagIndex(newIndex.values());
-                os.write(JsonUtils.GSON.toJson(writeTo).getBytes(UTF_8));
+                channel.write(ByteBuffer.wrap(JsonUtils.GSON.toJson(writeTo).getBytes(UTF_8)));
                 this.index = newIndex;
             } finally {
                 lock.release();
@@ -429,8 +428,7 @@ public class CacheRepository {
                     if (indexOnDisk == null) indexOnDisk = new HashMap<>();
                     indexOnDisk.putAll(storage);
                     channel.truncate(0);
-                    OutputStream os = Channels.newOutputStream(channel);
-                    os.write(JsonUtils.GSON.toJson(storage).getBytes(UTF_8));
+                    channel.write(ByteBuffer.wrap(JsonUtils.GSON.toJson(storage).getBytes(UTF_8)));
                     this.storage = indexOnDisk;
                 } finally {
                     lock.release();
