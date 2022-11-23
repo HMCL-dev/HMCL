@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.TabControl;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -128,19 +129,19 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                         item.setTitle(i18n("resourcepack"));
                         item.setLeftGraphic(wrap(SVG::textureBox));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(resourcePackTab));
-                        item.setOnAction(e -> tab.select(resourcePackTab));
+                        item.setOnAction(e -> selectTabIfCurseForgeAvailable(resourcePackTab));
                     })
 //                    .addNavigationDrawerItem(item -> {
 //                        item.setTitle(i18n("download.curseforge.customization"));
 //                        item.setLeftGraphic(wrap(SVG::script));
 //                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(customizationTab));
-//                        item.setOnAction(e -> tab.select(customizationTab));
+//                        item.setOnAction(e -> selectTabIfCurseForgeAvailable(customizationTab));
 //                    })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("world"));
                         item.setLeftGraphic(wrap(SVG::earth));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(worldTab));
-                        item.setOnAction(e -> tab.select(worldTab));
+                        item.setOnAction(e -> selectTabIfCurseForgeAvailable(worldTab));
                     });
             FXUtils.setLimitWidth(sideBar, 200);
             setLeft(sideBar);
@@ -149,7 +150,14 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         setCenter(transitionPane);
     }
 
-    private <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
+    private void selectTabIfCurseForgeAvailable(TabControl.Tab<?> newTab) {
+        if (CurseForgeRemoteModRepository.isAvailable())
+            tab.select(newTab);
+        else
+            Controllers.dialog(i18n("download.curseforge.unavailable"));
+    }
+
+    private static <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
         return () -> {
             T node = nodeSupplier.get();
             if (node instanceof VersionPage.VersionLoadable) {
@@ -159,7 +167,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         };
     }
 
-    private void download(Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
+    private static void download(Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
         if (version == null) version = profile.getSelectedVersion();
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version).toPath() : profile.getRepository().getBaseDirectory().toPath();
