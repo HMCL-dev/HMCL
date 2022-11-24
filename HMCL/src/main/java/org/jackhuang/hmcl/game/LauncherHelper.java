@@ -756,6 +756,7 @@ public final class LauncherHelper {
                             Controllers.getStage().close();
                             Controllers.shutdown();
                             Schedulers.shutdown();
+                            System.gc();
                         }
                     });
                     break;
