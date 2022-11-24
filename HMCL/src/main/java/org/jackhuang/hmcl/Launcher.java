@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.SambaException;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.ui.AwtUtils;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
@@ -130,9 +129,6 @@ public final class Launcher extends Application {
                 Platform.setImplicitExit(false);
                 Controllers.initialize(primaryStage);
 
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
-                    initIcon();
-
                 UpdateChecker.init();
 
                 primaryStage.show();
@@ -146,11 +142,6 @@ public final class Launcher extends Application {
     public void stop() throws Exception {
         super.stop();
         Controllers.onApplicationStop();
-    }
-
-    private void initIcon() {
-        java.awt.Image image = java.awt.Toolkit.getDefaultToolkit().getImage(Launcher.class.getResource("/assets/img/icon.png"));
-        AwtUtils.setAppleIcon(image);
     }
 
     public static void main(String[] args) {

@@ -19,11 +19,13 @@ package org.jackhuang.hmcl;
 
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
+import org.jackhuang.hmcl.ui.AwtUtils;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -65,11 +67,19 @@ public final class Main {
             // This environment check will take ~300ms
             thread(Main::fixLetsEncrypt, "CA Certificate Check", true);
 
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+            initIcon();
+
         Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
 
         checkJavaFX();
 
         Launcher.main(args);
+    }
+
+    private static void initIcon() {
+        java.awt.Image image = java.awt.Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/img/icon@8x.png"));
+        AwtUtils.setAppleIcon(image);
     }
 
     private static void checkDirectoryPath() {
