@@ -315,6 +315,8 @@ public final class Controllers {
         rootPage = null;
         versionPage = null;
         gameListPage = null;
+        downloadPage = null;
+        accountListPage = null;
         settingsPage = null;
         decorator = null;
         stage = null;
