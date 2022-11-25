@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
@@ -222,7 +223,7 @@ public class GameCrashWindow extends Stage {
     private void showLogWindow() {
         LogWindow logWindow = new LogWindow();
 
-        logWindow.logLine("Command: " + new CommandBuilder().addAll(managedProcess.getCommands()).toString(), Log4jLevel.INFO);
+        logWindow.logLine(Logging.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.getCommands())), Log4jLevel.INFO);
         if (managedProcess.getClasspath() != null) logWindow.logLine("ClassPath: " + managedProcess.getClasspath(), Log4jLevel.INFO);
         for (Map.Entry<String, Log4jLevel> entry : logs)
             logWindow.logLine(entry.getKey(), entry.getValue());

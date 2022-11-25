@@ -366,6 +366,13 @@ public final class Lang {
         return () -> iterator;
     }
 
+    public static <T, U> void forEachZipped(Iterable<T> i1, Iterable<U> i2, BiConsumer<T, U> action) {
+        Iterator<T> it1 = i1.iterator();
+        Iterator<U> it2 = i2.iterator();
+        while (it1.hasNext() && it2.hasNext())
+            action.accept(it1.next(), it2.next());
+    }
+
     private static Timer timer;
 
     public static synchronized Timer getTimer() {

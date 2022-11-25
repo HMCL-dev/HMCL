@@ -685,7 +685,7 @@ public final class LauncherHelper {
      * Guarantee that one [JavaProcess], one [HMCLProcessListener].
      * Because every time we launched a game, we generates a new [HMCLProcessListener]
      */
-    class HMCLProcessListener implements ProcessListener {
+    private final class HMCLProcessListener implements ProcessListener {
 
         private final HMCLGameRepository repository;
         private final Version version;
@@ -694,9 +694,11 @@ public final class LauncherHelper {
         private boolean lwjgl;
         private LogWindow logWindow;
         private final boolean detectWindow;
-        private final ArrayDeque<Pair<String, Log4jLevel>> logs;
+        private final ArrayDeque<String> logs;
+        private final ArrayDeque</*Log4jLevel*/Object> levels;
         private final CountDownLatch logWindowLatch = new CountDownLatch(1);
         private final CountDownLatch launchingLatch;
+        private final String forbiddenAccessToken;
 
         public HMCLProcessListener(HMCLGameRepository repository, Version version, AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
             this.repository = repository;
@@ -704,8 +706,11 @@ public final class LauncherHelper {
             this.launchOptions = launchOptions;
             this.launchingLatch = launchingLatch;
             this.detectWindow = detectWindow;
+            this.forbiddenAccessToken = authInfo != null ? authInfo.getAccessToken() : null;
 
-            this.logs = new ArrayDeque<>(config().getLogLines() + 1);
+            final int numLogs = config().getLogLines() + 1;
+            this.logs = new ArrayDeque<>(numLogs);
+            this.levels = new ArrayDeque<>(numLogs);
         }
 
         @Override
@@ -764,17 +769,24 @@ public final class LauncherHelper {
         }
 
         @Override
-        public synchronized void onLog(String log, Log4jLevel level) {
-            String filteredLog = Logging.filterForbiddenToken(log);
+        public void onLog(String log, boolean isErrorStream) {
+            String filteredLog = forbiddenAccessToken == null ? log : log.replace(forbiddenAccessToken, "<access token>");
 
-            if (level.lessOrEqual(Log4jLevel.ERROR))
+            if (isErrorStream)
                 System.err.println(filteredLog);
             else
                 System.out.println(filteredLog);
 
-            logs.add(pair(filteredLog, level));
-            if (logs.size() > config().getLogLines())
-                logs.removeFirst();
+            Log4jLevel level = isErrorStream ? Log4jLevel.ERROR : (showLogs ? Log4jLevel.guessLevel(filteredLog) : null);
+
+            synchronized (this) {
+                logs.add(filteredLog);
+                levels.add(level != null ? level : Optional.empty()); // Use 'Optional.empty()' as hole
+                if (logs.size() > config().getLogLines()) {
+                    logs.removeFirst();
+                    levels.removeFirst();
+                }
+            }
 
             if (showLogs) {
                 try {
@@ -787,7 +799,7 @@ public final class LauncherHelper {
                 Platform.runLater(() -> logWindow.logLine(filteredLog, level));
             }
 
-            if (!lwjgl && (filteredLog.toLowerCase().contains("lwjgl version") || filteredLog.toLowerCase().contains("lwjgl openal") || !detectWindow)) {
+            if (!lwjgl && (!detectWindow || filteredLog.toLowerCase().contains("lwjgl version") || filteredLog.toLowerCase().contains("lwjgl openal"))) {
                 lwjgl = true;
                 finishLaunch();
             }
@@ -804,8 +816,11 @@ public final class LauncherHelper {
             if (!lwjgl) finishLaunch();
 
             if (exitType != ExitType.NORMAL) {
+                ArrayList<Pair<String, Log4jLevel>> pairs = new ArrayList<>(logs.size());
+                Lang.forEachZipped(logs, levels,
+                        (log, l) -> pairs.add(pair(log, l instanceof Log4jLevel ? ((Log4jLevel) l) : Log4jLevel.guessLevel(log))));
                 repository.markVersionLaunchedAbnormally(version.getId());
-                Platform.runLater(() -> new GameCrashWindow(process, exitType, repository, version, launchOptions, logs).show());
+                Platform.runLater(() -> new GameCrashWindow(process, exitType, repository, version, launchOptions, pairs).show());
             }
 
             checkExit();
