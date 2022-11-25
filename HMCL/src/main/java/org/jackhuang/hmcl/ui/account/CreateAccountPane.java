@@ -508,6 +508,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             }
 
             if (factory instanceof OfflineAccountFactory) {
+                txtUsername.setPromptText(i18n("account.methods.offline.name.special_characters"));
+
                 JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
                 purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
                 HBox linkPane = new HBox(purchaseLink);
