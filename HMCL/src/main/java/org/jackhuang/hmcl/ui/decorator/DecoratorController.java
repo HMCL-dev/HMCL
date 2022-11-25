@@ -163,10 +163,10 @@ public class DecoratorController {
                         config().backgroundImageUrlProperty()));
     }
 
-    private final Image defaultBackground = newImage("/assets/img/background.jpg");
+    private Image defaultBackground;
 
     /**
-     * Load background image from bg/, background.png, background.jpg
+     * Load background image from bg/, background.png, background.jpg, background.gif
      */
     private Image loadDefaultBackgroundImage() {
         Optional<Image> image = randomImageIn(Paths.get("bg"));
@@ -176,7 +176,15 @@ public class DecoratorController {
         if (!image.isPresent()) {
             image = tryLoadImage(Paths.get("background.jpg"));
         }
-        return image.orElse(defaultBackground);
+        if (!image.isPresent()) {
+            image = tryLoadImage(Paths.get("background.gif"));
+        }
+
+        return image.orElseGet(() -> {
+            if (defaultBackground == null)
+                defaultBackground = newImage("/assets/img/background.jpg");
+            return defaultBackground;
+        });
     }
 
     private Optional<Image> randomImageIn(Path imageDir) {
@@ -190,7 +198,7 @@ public class DecoratorController {
                 .filter(Files::isReadable)
                     .filter(it -> {
                         String ext = getExtension(it).toLowerCase();
-                        return ext.equals("png") || ext.equals("jpg");
+                        return ext.equals("png") || ext.equals("jpg") || ext.equals("gif");
                     })
                     .collect(toList());
         } catch (IOException e) {
