@@ -141,7 +141,7 @@ public final class Config implements Cloneable, Observable {
     private StringProperty versionListSource = new SimpleStringProperty("balanced");
 
     @SerializedName("configurations")
-    private ObservableMap<String, Profile> configurations = FXCollections.observableMap(new TreeMap<>());
+    private SimpleMapProperty<String, Profile> configurations = new SimpleMapProperty<>(FXCollections.observableMap(new TreeMap<>()));
 
     @SerializedName("accounts")
     private ObservableList<Map<Object, Object>> accountStorages = FXCollections.observableArrayList();
@@ -476,7 +476,7 @@ public final class Config implements Cloneable, Observable {
         return versionListSource;
     }
 
-    public ObservableMap<String, Profile> getConfigurations() {
+    public MapProperty<String, Profile> getConfigurations() {
         return configurations;
     }
 
