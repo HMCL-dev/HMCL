@@ -124,6 +124,9 @@ public final class JavaRepository {
     }
 
     public static Path getJavaHome(GameJavaVersion javaVersion, String platform) {
-        return getJavaStoragePath().resolve(javaVersion.getComponent()).resolve(platform).resolve(javaVersion.getComponent());
+        Path javaHome = getJavaStoragePath().resolve(javaVersion.getComponent()).resolve(platform).resolve(javaVersion.getComponent());
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+            javaHome = javaHome.resolve("jre.bundle/Contents/Home");
+        return javaHome;
     }
 }
