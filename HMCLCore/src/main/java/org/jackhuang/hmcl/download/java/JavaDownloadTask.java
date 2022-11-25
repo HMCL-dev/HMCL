@@ -48,10 +48,12 @@ public class JavaDownloadTask extends Task<Void> {
     private final Task<RemoteFiles> javaDownloadsTask;
     private JavaDownloads.JavaDownload download;
     private final List<Task<?>> dependencies = new ArrayList<>();
+    private final DownloadProvider downloadProvider;
 
     public JavaDownloadTask(GameJavaVersion javaVersion, Path rootDir, DownloadProvider downloadProvider) {
         this.javaVersion = javaVersion;
         this.rootDir = rootDir;
+        this.downloadProvider = downloadProvider;
         this.javaDownloadsTask = new GetTask(NetworkUtils.toURL(downloadProvider.injectURL(
                 "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json")))
         .thenComposeAsync(javaDownloadsJson -> {
@@ -63,7 +65,7 @@ public class JavaDownloadTask extends Task<Void> {
             for (JavaDownloads.JavaDownload download : candidates) {
                 if (VersionNumber.VERSION_COMPARATOR.compare(download.getVersion().getName(), Integer.toString(javaVersion.getMajorVersion())) >= 0) {
                     this.download = download;
-                    return new GetTask(NetworkUtils.toURL(download.getManifest().getUrl()));
+                    return new GetTask(NetworkUtils.toURL(downloadProvider.injectURL(download.getManifest().getUrl())));
                 }
             }
             throw new UnsupportedPlatformException();
@@ -96,7 +98,7 @@ public class JavaDownloadTask extends Task<Void> {
                 if (file.getDownloads().containsKey("lzma")) {
                     DownloadInfo download = file.getDownloads().get("lzma");
                     File tempFile = jvmDir.resolve(entry.getKey() + ".lzma").toFile();
-                    FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(download.getUrl()), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(downloadProvider.injectURL(download.getUrl())), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
                         try (LZMAInputStream input = new LZMAInputStream(new FileInputStream(tempFile))) {
@@ -111,7 +113,7 @@ public class JavaDownloadTask extends Task<Void> {
                     }));
                 } else if (file.getDownloads().containsKey("raw")) {
                     DownloadInfo download = file.getDownloads().get("raw");
-                    FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(download.getUrl()), dest.toFile(), new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(downloadProvider.injectURL(download.getUrl())), dest.toFile(), new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     if (file.isExecutable()) {
                         dependencies.add(task.thenRunAsync(() -> dest.toFile().setExecutable(true)));
