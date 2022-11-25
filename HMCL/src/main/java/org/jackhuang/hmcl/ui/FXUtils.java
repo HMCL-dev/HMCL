@@ -72,6 +72,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -530,20 +531,85 @@ public final class FXUtils {
         }
     }
 
-    public static void bindInt(JFXTextField textField, Property<Number> property) {
-        textField.textProperty().bindBidirectional(property, SafeStringConverter.fromInteger());
+    public static <T> void bind(JFXTextField textField, Property<T> property, StringConverter<T> converter) {
+        textField.setText(converter == null ? (String) property.getValue() : converter.toString(property.getValue()));
+        TextFieldBindingListener<T> listener = new TextFieldBindingListener<>(textField, property, converter);
+        textField.focusedProperty().addListener((ChangeListener<Boolean>) listener);
+        property.addListener(listener);
     }
 
-    public static void unbindInt(JFXTextField textField, Property<Number> property) {
-        textField.textProperty().unbindBidirectional(property);
+    public static void bindInt(JFXTextField textField, Property<Number> property) {
+        bind(textField, property, SafeStringConverter.fromInteger());
     }
 
     public static void bindString(JFXTextField textField, Property<String> property) {
-        textField.textProperty().bindBidirectional(property);
+        bind(textField, property, null);
     }
 
-    public static void unbindString(JFXTextField textField, Property<String> property) {
-        textField.textProperty().unbindBidirectional(property);
+    public static void unbind(JFXTextField textField, Property<?> property) {
+        TextFieldBindingListener<?> listener = new TextFieldBindingListener<>(textField, property, null);
+        textField.focusedProperty().removeListener((ChangeListener<Boolean>) listener);
+        property.removeListener(listener);
+    }
+
+    private static final class TextFieldBindingListener<T> implements ChangeListener<Boolean>, InvalidationListener {
+        private final int hashCode;
+        private final WeakReference<JFXTextField> textFieldRef;
+        private final WeakReference<Property<T>> propertyRef;
+        private final StringConverter<T> converter;
+
+        TextFieldBindingListener(JFXTextField textField, Property<T> property, StringConverter<T> converter) {
+            this.textFieldRef = new WeakReference<>(textField);
+            this.propertyRef = new WeakReference<>(property);
+            this.converter = converter;
+            this.hashCode = System.identityHashCode(textField) ^ System.identityHashCode(property);
+        }
+
+        @Override
+        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean focused) { // On TextField changed
+            JFXTextField textField = textFieldRef.get();
+            Property<T> property = this.propertyRef.get();
+
+            if (textField != null && property != null && oldValue == Boolean.TRUE && focused == Boolean.FALSE) {
+                if (textField.validate()) {
+                    String newText = textField.getText();
+                    @SuppressWarnings("unchecked")
+                    T newValue = converter == null ? (T) newText : converter.fromString(newText);
+
+                    if (!Objects.equals(newValue, property.getValue()))
+                        property.setValue(newValue);
+                } else {
+                    // Rollback to old value
+                    invalidated(null);
+                }
+            }
+        }
+
+        @Override
+        public void invalidated(Observable observable) { // On property change
+            JFXTextField textField = textFieldRef.get();
+            Property<T> property = this.propertyRef.get();
+
+            if (textField != null && property != null) {
+                T value = property.getValue();
+                textField.setText(converter == null ? (String) value : converter.toString(value));
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return hashCode;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof TextFieldBindingListener))
+                return false;
+            TextFieldBindingListener<?> other = (TextFieldBindingListener<?>) obj;
+            return this.hashCode == other.hashCode
+                    && this.textFieldRef.get() == other.textFieldRef.get()
+                    && this.propertyRef.get() == other.propertyRef.get();
+        }
     }
 
     public static void bindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {

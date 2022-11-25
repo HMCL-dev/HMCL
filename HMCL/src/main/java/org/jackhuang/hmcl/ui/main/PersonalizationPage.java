@@ -146,12 +146,10 @@ public class PersonalizationPage extends StackPane {
 
                         JFXTextField txtLogFontSize = new JFXTextField();
                         FXUtils.setLimitWidth(txtLogFontSize, 50);
-                        txtLogFontSize.textProperty().bindBidirectional(config().fontSizeProperty(),
-                                SafeStringConverter.fromFiniteDouble()
-                                        .restrict(it -> it > 0)
-                                        .fallbackTo(12.0)
-                                        .asPredicate(Validator.addTo(txtLogFontSize)));
-
+                        FXUtils.bind(txtLogFontSize, config().fontSizeProperty(), SafeStringConverter.fromFiniteDouble()
+                                .restrict(it -> it > 0)
+                                .fallbackTo(12.0)
+                                .asPredicate(Validator.addTo(txtLogFontSize)));
 
                         hBox.getChildren().setAll(cboLogFont, txtLogFontSize);
 
