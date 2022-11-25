@@ -40,7 +40,7 @@ public final class CrashReportAnalyzer {
         JVM_32BIT(Pattern.compile("(Could not reserve enough space for (.*?) object heap|The specified size exceeds the maximum representable size)")),
 
         // Some mods/shader packs do incorrect GL operations.
-        GL_OPERATION_FAILURE(Pattern.compile("(1282: Invalid operation|Maybe try a lower resolution resourcepack?)")),
+        GL_OPERATION_FAILURE(Pattern.compile("(1282: Invalid operation|Maybe try a lower resolution resourcepack\\?)")),
 
         // Maybe software rendering? Suggest user for using a graphics card.
         OPENGL_NOT_SUPPORTED(Pattern.compile("The driver does not appear to support OpenGL")),
