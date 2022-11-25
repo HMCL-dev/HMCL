@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -109,30 +108,16 @@ public class DefaultLauncher extends Launcher {
         res.addAllWithoutParsing(options.getJavaArguments());
 
         Charset encoding = OperatingSystem.NATIVE_CHARSET;
-        if (options.getJava().getParsedVersion() < JavaVersion.JAVA_8) {
+        String fileEncoding = res.addDefault("-Dfile.encoding=", encoding.name());
+        if (fileEncoding != null && !"-Dfile.encoding=COMPAT".equals(fileEncoding)) {
             try {
-                String fileEncoding = res.addDefault("-Dfile.encoding=", encoding.name());
-                if (fileEncoding != null)
-                    encoding = Charset.forName(fileEncoding.substring("-Dfile.encoding=".length()));
+                encoding = Charset.forName(fileEncoding.substring("-Dfile.encoding=".length()));
             } catch (Throwable ex) {
                 LOG.log(Level.WARNING, "Bad file encoding", ex);
             }
-        } else {
-            if (options.getJava().getParsedVersion() > JavaVersion.JAVA_17
-                    && VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("1.13"), "1.13") < 0) {
-                res.addDefault("-Dfile.encoding=", "COMPAT");
-            }
-
-            try {
-                String stdoutEncoding = res.addDefault("-Dsun.stdout.encoding=", encoding.name());
-                if (stdoutEncoding != null)
-                    encoding = Charset.forName(stdoutEncoding.substring("-Dsun.stdout.encoding=".length()));
-            } catch (Throwable ex) {
-                LOG.log(Level.WARNING, "Bad stdout encoding", ex);
-            }
-
-            res.addDefault("-Dsun.stderr.encoding=", encoding.name());
         }
+        res.addDefault("-Dsun.stdout.encoding=", encoding.name());
+        res.addDefault("-Dsun.stderr.encoding=", encoding.name());
 
         // JVM Args
         if (!options.isNoGeneratedJVMArgs()) {
@@ -646,15 +631,15 @@ public class DefaultLauncher extends Launcher {
             throw new ExecutionPolicyLimitException();
     }
 
-    private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, Charset encoding, boolean isDaemon) {
+    private static void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, Charset encoding, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
-            processListener.onLog(it, Optional.ofNullable(Log4jLevel.guessLevel(it)).orElse(Log4jLevel.INFO));
+            processListener.onLog(it, false);
             managedProcess.addLine(it);
         }, encoding), "stdout-pump", isDaemon);
         managedProcess.addRelatedThread(stdout);
         Thread stderr = Lang.thread(new StreamPump(managedProcess.getProcess().getErrorStream(), it -> {
-            processListener.onLog(it, Log4jLevel.ERROR);
+            processListener.onLog(it, true);
             managedProcess.addLine(it);
         }, encoding), "stderr-pump", isDaemon);
         managedProcess.addRelatedThread(stderr);

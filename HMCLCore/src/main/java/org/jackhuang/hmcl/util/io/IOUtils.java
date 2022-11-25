@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.util.io;
 
 import java.io.*;
-import java.nio.charset.Charset;
 
 /**
  * This utility class consists of some util methods operating on InputStream/OutputStream.
@@ -40,7 +39,7 @@ public final class IOUtils {
      * @throws IOException if an I/O error occurs.
      */
     public static byte[] readFullyWithoutClosing(InputStream stream) throws IOException {
-        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(stream.available(), 32));
         copyTo(stream, result);
         return result.toByteArray();
     }
@@ -54,7 +53,7 @@ public final class IOUtils {
      */
     public static ByteArrayOutputStream readFully(InputStream stream) throws IOException {
         try (InputStream is = stream) {
-            ByteArrayOutputStream result = new ByteArrayOutputStream();
+            ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(is.available(), 32));
             copyTo(is, result);
             return result;
         }
@@ -66,18 +65,6 @@ public final class IOUtils {
 
     public static String readFullyAsString(InputStream stream) throws IOException {
         return readFully(stream).toString("UTF-8");
-    }
-
-    public static String readFullyAsString(InputStream stream, Charset charset) throws IOException {
-        return readFully(stream).toString(charset.name());
-    }
-
-    public static void write(String text, OutputStream outputStream) throws IOException {
-        write(text.getBytes(), outputStream);
-    }
-
-    public static void write(byte[] bytes, OutputStream outputStream) throws IOException {
-        copyTo(new ByteArrayInputStream(bytes), outputStream);
     }
 
     public static void copyTo(InputStream src, OutputStream dest) throws IOException {

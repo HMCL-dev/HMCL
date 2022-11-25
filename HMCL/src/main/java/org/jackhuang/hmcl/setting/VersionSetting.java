@@ -24,6 +24,7 @@ import javafx.beans.property.*;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -40,8 +41,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
-
-import static com.jfoenix.concurrency.JFXUtilities.runInFX;
 
 /**
  *
@@ -660,9 +659,7 @@ public final class VersionSetting implements Cloneable {
                             .filter(java -> java.getVersion().equals(getJava()))
                             .collect(Collectors.toList());
                     if (matchedJava.isEmpty()) {
-                        runInFX(() -> {
-                            setJava("Auto");
-                        });
+                        FXUtils.runInFX(() -> setJava("Auto"));
                         return JavaVersion.fromCurrentEnvironment();
                     } else {
                         return matchedJava.stream()
@@ -796,9 +793,17 @@ public final class VersionSetting implements Cloneable {
             return obj;
         }
 
+        private static <T> T getOrDefault(T[] values, JsonElement index, T defaultValue) {
+            if (index == null)
+                return defaultValue;
+
+            int idx = index.getAsInt();
+            return idx >= 0 && idx < values.length ? values[idx] : defaultValue;
+        }
+
         @Override
         public VersionSetting deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            if (json == JsonNull.INSTANCE || !(json instanceof JsonObject))
+            if (!(json instanceof JsonObject))
                 return null;
             JsonObject obj = (JsonObject) json;
 
@@ -829,15 +834,15 @@ public final class VersionSetting implements Cloneable {
             vs.setNotCheckJVM(Optional.ofNullable(obj.get("notCheckJVM")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotPatchNatives(Optional.ofNullable(obj.get("notPatchNatives")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
-            vs.setLauncherVisibility(LauncherVisibility.values()[Optional.ofNullable(obj.get("launcherVisibility")).map(JsonElement::getAsInt).orElse(LauncherVisibility.HIDE.ordinal())]);
-            vs.setProcessPriority(ProcessPriority.values()[Optional.ofNullable(obj.get("processPriority")).map(JsonElement::getAsInt).orElse(ProcessPriority.NORMAL.ordinal())]);
+            vs.setLauncherVisibility(getOrDefault(LauncherVisibility.values(), obj.get("launcherVisibility"), LauncherVisibility.HIDE));
+            vs.setProcessPriority(getOrDefault(ProcessPriority.values(), obj.get("processPriority"), ProcessPriority.NORMAL));
             vs.setUseSoftwareRenderer(Optional.ofNullable(obj.get("useSoftwareRenderer")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useNativeGLFW")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setUseNativeOpenAL(Optional.ofNullable(obj.get("useNativeOpenAL")).map(JsonElement::getAsBoolean).orElse(false));
-            vs.setGameDirType(GameDirectoryType.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(GameDirectoryType.ROOT_FOLDER.ordinal())]);
+            vs.setGameDirType(getOrDefault(GameDirectoryType.values(), obj.get("gameDirType"), GameDirectoryType.ROOT_FOLDER));
             vs.setDefaultJavaPath(Optional.ofNullable(obj.get("defaultJavaPath")).map(JsonElement::getAsString).orElse(null));
-            vs.setNativesDirType(NativesDirectoryType.values()[Optional.ofNullable(obj.get("nativesDirType")).map(JsonElement::getAsInt).orElse(0)]);
-            vs.setVersionIcon(VersionIconType.values()[Optional.ofNullable(obj.get("versionIcon")).map(JsonElement::getAsInt).orElse(0)]);
+            vs.setNativesDirType(getOrDefault(NativesDirectoryType.values(), obj.get("nativesDirType"), NativesDirectoryType.VERSION_FOLDER));
+            vs.setVersionIcon(getOrDefault(VersionIconType.values(), obj.get("versionIcon"), VersionIconType.DEFAULT));
 
             return vs;
         }

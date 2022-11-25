@@ -21,15 +21,16 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.geometry.Pos;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -64,9 +65,8 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         center.setSpacing(8);
         center.setAlignment(Pos.CENTER_LEFT);
 
-        ImageView imageView = new ImageView();
-        FXUtils.limitSize(imageView, 32, 32);
-        imageView.imageProperty().bind(skinnable.imageProperty());
+        Canvas canvas = new Canvas(32, 32);
+        TexturesLoader.bindAvatar(canvas, skinnable.getAccount());
 
         Label title = new Label();
         title.getStyleClass().add("title");
@@ -84,7 +84,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         item.getStyleClass().add("two-line-list-item");
         BorderPane.setAlignment(item, Pos.CENTER);
 
-        center.getChildren().setAll(imageView, item);
+        center.getChildren().setAll(canvas, item);
         root.setCenter(center);
 
         HBox right = new HBox();

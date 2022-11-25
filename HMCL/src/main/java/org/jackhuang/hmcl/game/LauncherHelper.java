@@ -21,7 +21,6 @@ import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
@@ -47,13 +46,9 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.AccessDeniedException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -72,7 +67,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class LauncherHelper {
 
     private final Profile profile;
-    private final Account account;
+    private Account account;
     private final String selectedVersion;
     private File scriptFile;
     private final VersionSetting setting;
@@ -90,6 +85,14 @@ public final class LauncherHelper {
     }
 
     private final TaskExecutorDialogPane launchingStepsPane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+
+    public Account getAccount() {
+        return account;
+    }
+
+    public void setAccount(Account account) {
+        this.account = account;
+    }
 
     public void setTestMode() {
         launcherVisibility = LauncherVisibility.KEEP;
@@ -125,8 +128,6 @@ public final class LauncherHelper {
         List<String> javaAgents = new ArrayList<>(0);
 
         AtomicReference<JavaVersion> javaVersionRef = new AtomicReference<>();
-
-        getLog4jPatch(version.get()).ifPresent(javaAgents::add);
 
         TaskExecutor executor = checkGameState(profile, setting, version.get())
                 .thenComposeAsync(javaVersion -> {
@@ -655,47 +656,6 @@ public final class LauncherHelper {
         });
     }
 
-    private static Optional<String> getLog4jPatch(Version version) {
-        Optional<String> log4jVersion = version.getLibraries().stream()
-                .filter(it -> it.is("org.apache.logging.log4j", "log4j-core")
-                        && (VersionNumber.VERSION_COMPARATOR.compare(it.getVersion(), "2.17") < 0 || "2.0-beta9".equals(it.getVersion())))
-                .map(Library::getVersion)
-                .findFirst();
-
-        if (log4jVersion.isPresent()) {
-            final String agentFileName = "log4j-patch-agent-1.0.jar";
-
-            Path agentFile = Metadata.HMCL_DIRECTORY.resolve(agentFileName).toAbsolutePath();
-            String agentFilePath = agentFile.toString();
-            if (agentFilePath.indexOf('=') >= 0) {
-                LOG.warning("Invalid character '=' in the HMCL directory path, unable to attach log4j-patch");
-                return Optional.empty();
-            }
-
-            if (Files.notExists(agentFile)) {
-                try (InputStream input = DefaultLauncher.class.getResourceAsStream("/assets/game/" + agentFileName)) {
-                    LOG.info("Extract log4j patch to " + agentFilePath);
-                    Files.createDirectories(agentFile.getParent());
-                    Files.copy(input, agentFile, StandardCopyOption.REPLACE_EXISTING);
-                } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to extract log4j patch");
-                    try {
-                        Files.deleteIfExists(agentFile);
-                    } catch (IOException ex) {
-                        LOG.log(Level.WARNING, "Failed to delete incomplete log4j patch", ex);
-                    }
-                    return Optional.empty();
-                }
-            }
-
-            boolean isBeta = log4jVersion.get().startsWith("2.0-beta");
-            return Optional.of(agentFilePath + "=" + isBeta);
-        } else {
-            LOG.info("No log4j with security vulnerabilities found");
-            return Optional.empty();
-        }
-    }
-
     private void checkExit() {
         switch (launcherVisibility) {
             case HIDE_AND_REOPEN:
@@ -725,7 +685,7 @@ public final class LauncherHelper {
      * Guarantee that one [JavaProcess], one [HMCLProcessListener].
      * Because every time we launched a game, we generates a new [HMCLProcessListener]
      */
-    class HMCLProcessListener implements ProcessListener {
+    private final class HMCLProcessListener implements ProcessListener {
 
         private final HMCLGameRepository repository;
         private final Version version;
@@ -734,9 +694,11 @@ public final class LauncherHelper {
         private boolean lwjgl;
         private LogWindow logWindow;
         private final boolean detectWindow;
-        private final LinkedList<Pair<String, Log4jLevel>> logs;
+        private final ArrayDeque<String> logs;
+        private final ArrayDeque</*Log4jLevel*/Object> levels;
         private final CountDownLatch logWindowLatch = new CountDownLatch(1);
         private final CountDownLatch launchingLatch;
+        private final String forbiddenAccessToken;
 
         public HMCLProcessListener(HMCLGameRepository repository, Version version, AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
             this.repository = repository;
@@ -744,8 +706,11 @@ public final class LauncherHelper {
             this.launchOptions = launchOptions;
             this.launchingLatch = launchingLatch;
             this.detectWindow = detectWindow;
+            this.forbiddenAccessToken = authInfo != null ? authInfo.getAccessToken() : null;
 
-            logs = new LinkedList<>();
+            final int numLogs = config().getLogLines() + 1;
+            this.logs = new ArrayDeque<>(numLogs);
+            this.levels = new ArrayDeque<>(numLogs);
         }
 
         @Override
@@ -796,6 +761,7 @@ public final class LauncherHelper {
                             Controllers.getStage().close();
                             Controllers.shutdown();
                             Schedulers.shutdown();
+                            System.gc();
                         }
                     });
                     break;
@@ -803,17 +769,28 @@ public final class LauncherHelper {
         }
 
         @Override
-        public synchronized void onLog(String log, Log4jLevel level) {
-            String filteredLog = Logging.filterForbiddenToken(log);
+        public void onLog(String log, boolean isErrorStream) {
+            String filteredLog = forbiddenAccessToken == null ? log : log.replace(forbiddenAccessToken, "<access token>");
 
-            if (level.lessOrEqual(Log4jLevel.ERROR))
+            if (isErrorStream)
                 System.err.println(filteredLog);
             else
                 System.out.println(filteredLog);
 
-            logs.add(pair(filteredLog, level));
-            if (logs.size() > config().getLogLines())
-                logs.removeFirst();
+            Log4jLevel level;
+            if (isErrorStream)
+                level = Log4jLevel.ERROR;
+            else
+                level = showLogs ? Optional.ofNullable(Log4jLevel.guessLevel(filteredLog)).orElse(Log4jLevel.INFO) : null;
+
+            synchronized (this) {
+                logs.add(filteredLog);
+                levels.add(level != null ? level : Optional.empty()); // Use 'Optional.empty()' as hole
+                if (logs.size() > config().getLogLines()) {
+                    logs.removeFirst();
+                    levels.removeFirst();
+                }
+            }
 
             if (showLogs) {
                 try {
@@ -826,7 +803,7 @@ public final class LauncherHelper {
                 Platform.runLater(() -> logWindow.logLine(filteredLog, level));
             }
 
-            if (!lwjgl && (filteredLog.toLowerCase().contains("lwjgl version") || filteredLog.toLowerCase().contains("lwjgl openal") || !detectWindow)) {
+            if (!lwjgl && (!detectWindow || filteredLog.toLowerCase().contains("lwjgl version") || filteredLog.toLowerCase().contains("lwjgl openal"))) {
                 lwjgl = true;
                 finishLaunch();
             }
@@ -843,8 +820,11 @@ public final class LauncherHelper {
             if (!lwjgl) finishLaunch();
 
             if (exitType != ExitType.NORMAL) {
+                ArrayList<Pair<String, Log4jLevel>> pairs = new ArrayList<>(logs.size());
+                Lang.forEachZipped(logs, levels,
+                        (log, l) -> pairs.add(pair(log, l instanceof Log4jLevel ? ((Log4jLevel) l) : Log4jLevel.guessLevel(log))));
                 repository.markVersionLaunchedAbnormally(version.getId());
-                Platform.runLater(() -> new GameCrashWindow(process, exitType, repository, version, launchOptions, logs).show());
+                Platform.runLater(() -> new GameCrashWindow(process, exitType, repository, version, launchOptions, pairs).show());
             }
 
             checkExit();

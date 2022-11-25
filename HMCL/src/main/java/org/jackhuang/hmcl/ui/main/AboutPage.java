@@ -92,19 +92,13 @@ public class AboutPage extends StackPane {
             mcmod.setSubtitle(i18n("about.thanks_to.mcmod.statement"));
             mcmod.setExternalLink("https://www.mcmod.cn/");
 
-            IconedTwoLineListItem noin = new IconedTwoLineListItem();
-            noin.setImage(new Image("/assets/img/noin.png", 32, 32, false, true));
-            noin.setTitle(i18n("about.thanks_to.noin"));
-            noin.setSubtitle(i18n("about.thanks_to.noin.statement"));
-            noin.setExternalLink("https://mcer.cn/cato");
-
             IconedTwoLineListItem contributors = new IconedTwoLineListItem();
             contributors.setImage(new Image("/assets/img/github.png", 32, 32, false, true));
             contributors.setTitle(i18n("about.thanks_to.contributors"));
             contributors.setSubtitle(i18n("about.thanks_to.contributors.statement"));
             contributors.setExternalLink("https://github.com/huanghongxun/HMCL/graphs/contributors");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, mcbbs, mcmod, noin, gamerteam, redLnn, contributors);
+            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, mcbbs, mcmod, gamerteam, redLnn, contributors);
         }
 
         ComponentList community = new ComponentList();

@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -104,7 +103,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
         String html;
         try {
-            html = IOUtils.readFullyAsString(OAuthServer.class.getResourceAsStream("/assets/microsoft_auth.html"), StandardCharsets.UTF_8)
+            html = IOUtils.readFullyAsString(OAuthServer.class.getResourceAsStream("/assets/microsoft_auth.html"))
                     .replace("%close-page%", i18n("account.methods.microsoft.close_page"));
         } catch (IOException e) {
             Logging.LOG.log(Level.SEVERE, "Failed to load html");

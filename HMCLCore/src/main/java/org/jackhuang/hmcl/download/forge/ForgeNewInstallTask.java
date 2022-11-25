@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -59,8 +60,6 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.zip.ZipException;
 
-import static org.jackhuang.hmcl.util.DigestUtils.digest;
-import static org.jackhuang.hmcl.util.Hex.encodeHex;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.fromNonNullJson;
 
@@ -99,7 +98,7 @@ public class ForgeNewInstallTask extends Task<Version> {
                 if (Files.exists(artifact)) {
                     String code;
                     try (InputStream stream = Files.newInputStream(artifact)) {
-                        code = encodeHex(digest("SHA-1", stream));
+                        code = (DigestUtils.digestToString("SHA-1", stream));
                     }
 
                     if (!Objects.equals(code, value)) {
@@ -167,7 +166,7 @@ public class ForgeNewInstallTask extends Task<Version> {
 
                 String code;
                 try (InputStream stream = Files.newInputStream(artifact)) {
-                    code = encodeHex(digest("SHA-1", stream));
+                    code = DigestUtils.digestToString("SHA-1", stream);
                 }
 
                 if (!Objects.equals(code, entry.getValue())) {

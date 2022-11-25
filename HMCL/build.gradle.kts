@@ -28,7 +28,7 @@ buildscript {
 }
 
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
@@ -37,7 +37,8 @@ val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
         (number - offset).toString()
     } else {
         val shortCommit = System.getenv("GITHUB_SHA")?.toLowerCase()?.substring(0, 7)
-        if (!shortCommit.isNullOrEmpty()) "dev-$shortCommit" else "SNAPSHOT"
+        val prefix = if (System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun") "dev" else "unofficial"
+        if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "SNAPSHOT"
     }
 }
 val versionRoot = System.getenv("VERSION_ROOT") ?: "3.5"

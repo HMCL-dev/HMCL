@@ -30,10 +30,10 @@ import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputControl;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
@@ -300,7 +300,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
                 createProfileLink.setOnAction(e -> FXUtils.openLink("https://www.minecraft.net/msaprofile/mygames/editprofile"));    
                 purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
-                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, createProfileLink);
+                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink);
                 GridPane.setColumnSpan(box, 2);
 
                 vbox.getChildren().setAll(hintPane, box);
@@ -508,6 +508,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             }
 
             if (factory instanceof OfflineAccountFactory) {
+                txtUsername.setPromptText(i18n("account.methods.offline.name.special_characters"));
+
                 JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
                 purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
                 HBox linkPane = new HBox(purchaseLink);
@@ -652,12 +654,10 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         public GameProfile select(YggdrasilService service, List<GameProfile> profiles) throws NoSelectedCharacterException {
             Platform.runLater(() -> {
                 for (GameProfile profile : profiles) {
-                    ImageView portraitView = new ImageView();
-                    portraitView.setSmooth(false);
-                    portraitView.imageProperty().bind(TexturesLoader.fxAvatarBinding(service, profile.getId(), 32));
-                    FXUtils.limitSize(portraitView, 32, 32);
+                    Canvas portraitCanvas = new Canvas(32, 32);
+                    TexturesLoader.bindAvatar(portraitCanvas, service, profile.getId());
 
-                    IconedItem accountItem = new IconedItem(portraitView, profile.getName());
+                    IconedItem accountItem = new IconedItem(portraitCanvas, profile.getName());
                     accountItem.setOnMouseClicked(e -> {
                         selectedProfile = profile;
                         latch.countDown();

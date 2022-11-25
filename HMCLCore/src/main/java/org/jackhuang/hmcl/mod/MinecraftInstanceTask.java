@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -30,9 +31,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.jackhuang.hmcl.util.DigestUtils.digest;
-import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
 public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>> {
 
@@ -69,7 +67,7 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
                         @Override
                         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                             String relativePath = root.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                            overrides.add(new ModpackConfiguration.FileInformation(relativePath, encodeHex(digest("SHA-1", file))));
+                            overrides.add(new ModpackConfiguration.FileInformation(relativePath, DigestUtils.digestToString("SHA-1", file)));
                             return FileVisitResult.CONTINUE;
                         }
                     });

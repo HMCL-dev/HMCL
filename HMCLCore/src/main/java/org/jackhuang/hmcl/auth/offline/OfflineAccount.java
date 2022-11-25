@@ -67,6 +67,10 @@ public class OfflineAccount extends Account {
         }
     }
 
+    public AuthlibInjectorArtifactProvider getDownloader() {
+        return downloader;
+    }
+
     @Override
     public UUID getUUID() {
         return uuid;
@@ -91,7 +95,7 @@ public class OfflineAccount extends Account {
         invalidate();
     }
 
-    private boolean loadAuthlibInjector(Skin skin) {
+    protected boolean loadAuthlibInjector(Skin skin) {
         if (skin == null) return false;
         if (skin.getType() == Skin.Type.DEFAULT) return false;
         TextureModel defaultModel = TextureModel.detectUUID(getUUID());
@@ -158,7 +162,8 @@ public class OfflineAccount extends Account {
             server.start();
 
             try {
-                server.addCharacter(new YggdrasilServer.Character(uuid, username, skin.load(username).run()));
+                server.addCharacter(new YggdrasilServer.Character(uuid, username,
+                        skin != null ? skin.load(username).run() : null));
             } catch (IOException e) {
                 // ignore
             } catch (Exception e) {

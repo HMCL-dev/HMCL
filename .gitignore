@@ -12,6 +12,7 @@ hs_err_pid*
 .mine*
 /externalgames
 NVIDIA
+minecraft-exported-crash-info*
 
 # gradle build
 /build/
@@ -19,7 +20,6 @@ NVIDIA
 /HMCLCore/build/
 /HMCLTransformerDiscoveryService/build/
 /minecraft/libraries/HMCLTransformerDiscoveryService/build/
-/minecraft/libraries/log4j-patch/build/
 
 # idea
 .idea
@@ -27,14 +27,12 @@ NVIDIA
 /HMCL/out/
 /HMCLCore/out/
 /minecraft/libraries/HMCLTransformerDiscoveryService/out/
-/minecraft/libraries/log4j-patch/out/
 
 # eclipse
 /bin/
 /HMCL/bin/
 /HMCLCore/bin/
 /minecraft/libraries/HMCLTransformerDiscoveryService/bin/
-/minecraft/libraries/log4j-patch/bin/
 .classpath
 .project
 .settings

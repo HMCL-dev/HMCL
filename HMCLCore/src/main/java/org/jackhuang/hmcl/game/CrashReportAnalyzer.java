@@ -53,6 +53,10 @@ public final class CrashReportAnalyzer {
         RESOLUTION_TOO_HIGH(Pattern.compile("Maybe try a (lower resolution|lowerresolution) (resourcepack|texturepack)\\?")),
         // game can only run on Java 8. Version of uesr's JVM is too high.
         JDK_9(Pattern.compile("java\\.lang\\.ClassCastException: (java\\.base/jdk|class jdk)")),
+        // Forge and OptiFine with crash because the JVM compiled with a new version of Xcode
+        // https://github.com/sp614x/optifine/issues/4824
+        // https://github.com/MinecraftForge/MinecraftForge/issues/7546
+        MAC_JDK_8U261(Pattern.compile("Terminating app due to uncaught exception 'NSInternalInconsistencyException', reason: 'NSWindow drag regions should only be invalidated on the Main Thread!'")),
         // user modifies minecraft primary jar without changing hash file
         FILE_CHANGED(Pattern.compile("java\\.lang\\.SecurityException: SHA1 digest error for (?<file>.*)"), "file"),
         // mod loader/coremod injection fault, prompt user to reinstall game.

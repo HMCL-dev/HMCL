@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.util.io;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
@@ -48,19 +47,7 @@ public final class JarUtils {
                 })
                 .filter(Files::isRegularFile);
 
-        Manifest mf = null;
-        try (InputStream input = JarUtils.class.getResourceAsStream("/META-INF/MANIFEST.MF")) {
-            if (input != null)
-                mf = new Manifest(input);
-        } catch (IOException e) {
-            // Logger has not started
-            e.printStackTrace();
-        }
-
-        if (mf == null)
-            mf = THIS_JAR.flatMap(JarUtils::getManifest).orElseGet(Manifest::new);
-
-        manifest = mf;
+        manifest = THIS_JAR.flatMap(JarUtils::getManifest).orElseGet(Manifest::new);
     }
 
     public static Optional<Path> thisJar() {

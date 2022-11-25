@@ -57,7 +57,10 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+import org.jackhuang.hmcl.util.platform.JavaVersion;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
@@ -89,7 +92,16 @@ public final class MainPage extends StackPane implements DecoratorPage {
         titleNode.setAlignment(Pos.CENTER_LEFT);
 
         ImageView titleIcon = new ImageView();
-        titleIcon.setImage(new Image("/assets/img/icon.png", 20, 20, false, false));
+        if (JavaVersion.CURRENT_JAVA.getParsedVersion() < 9) {
+            // JavaFX 8 has some problems with @2x images
+            // Force load the original icon
+            try (InputStream is = MainPage.class.getResourceAsStream("/assets/img/icon.png")) {
+                titleIcon.setImage(new Image(is, 20, 20, false, false));
+            } catch (IOException ignored) {
+            }
+        } else {
+            titleIcon.setImage(new Image("/assets/img/icon.png", 20, 20, false, false));
+        }
 
         Label titleLabel = new Label(Metadata.FULL_TITLE);
         titleLabel.getStyleClass().add("jfx-decorator-title");

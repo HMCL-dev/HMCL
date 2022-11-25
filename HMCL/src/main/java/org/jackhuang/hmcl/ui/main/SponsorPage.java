@@ -27,6 +27,7 @@ import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.text.TextAlignment;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -84,10 +85,17 @@ public class SponsorPage extends StackPane {
             StackPane pane = new StackPane();
             pane.getStyleClass().add("card");
             listView = new JFXListView<>();
+            MutableObject<Object> lastCell = new MutableObject<>();
             listView.setCellFactory((listView) -> new JFXListCell<Sponsor>() {
                 @Override
                 public void updateItem(Sponsor item, boolean empty) {
                     super.updateItem(item, empty);
+
+                    // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
+                    if (this == lastCell.getValue() && !isVisible())
+                        return;
+                    lastCell.setValue(this);
+
                     if (!empty) {
                         setText(item.getName());
                         setGraphic(null);

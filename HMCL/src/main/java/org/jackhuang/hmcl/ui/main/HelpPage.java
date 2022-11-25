@@ -63,7 +63,7 @@ public class HelpPage extends SpinnerPane {
 
     private void loadHelp() {
         showSpinner();
-        Task.<List<HelpCategory>>supplyAsync(() -> HttpRequest.GET("https://hmcl.huangyuhui.net/api/help/").getJson(new TypeToken<List<HelpCategory>>() {
+        Task.<List<HelpCategory>>supplyAsync(() -> HttpRequest.GET("https://docs.hmcl.net/index.json").getJson(new TypeToken<List<HelpCategory>>() {
         }.getType()))
                 .thenAcceptAsync(Schedulers.javafx(), helpCategories -> {
                     for (HelpCategory category : helpCategories) {
