@@ -58,8 +58,7 @@ public final class JavaRepository {
             case LINUX:
                 return Stream.of(FileUtils.tryGetPath(System.getProperty("user.home", ".minecraft/runtime")));
             case OSX:
-                return Stream.of(FileUtils.tryGetPath("/Library/Application Support/minecraft/runtime"),
-                        FileUtils.tryGetPath(System.getProperty("user.home"), "Library/Application Support/minecraft/runtime"));
+                return Stream.of(FileUtils.tryGetPath(System.getProperty("user.home"), "Library/Application Support/minecraft/runtime"));
             default:
                 return Stream.empty();
         }
@@ -81,7 +80,7 @@ public final class JavaRepository {
                 if (Files.isRegularFile(component.resolve(platform).resolve(component.getFileName() + ".sha1"))) {
                     Path javaHome = component.resolve(platform).resolve(component.getFileName());
                     if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-                        javaHomes.add(javaHome.resolve("jre.bundle/Contents/Home"));
+                        javaHome = javaHome.resolve("jre.bundle/Contents/Home");
                     }
                     javaHomes.add(javaHome);
                 }
