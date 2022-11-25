@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -99,7 +100,7 @@ public class JavaDownloadTask extends Task<Void> {
                     task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
                         try (LZMAInputStream input = new LZMAInputStream(new FileInputStream(tempFile))) {
-                            Files.copy(input, dest);
+                            Files.copy(input, dest, StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {
                             throw new ArtifactMalformedException("File " + entry.getKey() + " is malformed", e);
                         }
