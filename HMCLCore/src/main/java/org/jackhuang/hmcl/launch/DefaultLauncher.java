@@ -108,30 +108,16 @@ public class DefaultLauncher extends Launcher {
         res.addAllWithoutParsing(options.getJavaArguments());
 
         Charset encoding = OperatingSystem.NATIVE_CHARSET;
-        if (options.getJava().getParsedVersion() < JavaVersion.JAVA_8) {
+        String fileEncoding = res.addDefault("-Dfile.encoding=", encoding.name());
+        if (fileEncoding != null && !"-Dfile.encoding=COMPAT".equals(fileEncoding)) {
             try {
-                String fileEncoding = res.addDefault("-Dfile.encoding=", encoding.name());
-                if (fileEncoding != null)
-                    encoding = Charset.forName(fileEncoding.substring("-Dfile.encoding=".length()));
+                encoding = Charset.forName(fileEncoding.substring("-Dfile.encoding=".length()));
             } catch (Throwable ex) {
                 LOG.log(Level.WARNING, "Bad file encoding", ex);
             }
-        } else {
-            if (options.getJava().getParsedVersion() > JavaVersion.JAVA_17
-                    && VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("1.13"), "1.13") < 0) {
-                res.addDefault("-Dfile.encoding=", "COMPAT");
-            }
-
-            try {
-                String stdoutEncoding = res.addDefault("-Dsun.stdout.encoding=", encoding.name());
-                if (stdoutEncoding != null)
-                    encoding = Charset.forName(stdoutEncoding.substring("-Dsun.stdout.encoding=".length()));
-            } catch (Throwable ex) {
-                LOG.log(Level.WARNING, "Bad stdout encoding", ex);
-            }
-
-            res.addDefault("-Dsun.stderr.encoding=", encoding.name());
         }
+        res.addDefault("-Dsun.stdout.encoding=", encoding.name());
+        res.addDefault("-Dsun.stderr.encoding=", encoding.name());
 
         // JVM Args
         if (!options.isNoGeneratedJVMArgs()) {
