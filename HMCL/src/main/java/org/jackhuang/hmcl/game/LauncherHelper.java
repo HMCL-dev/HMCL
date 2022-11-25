@@ -777,7 +777,11 @@ public final class LauncherHelper {
             else
                 System.out.println(filteredLog);
 
-            Log4jLevel level = isErrorStream ? Log4jLevel.ERROR : (showLogs ? Log4jLevel.guessLevel(filteredLog) : null);
+            Log4jLevel level;
+            if (isErrorStream)
+                level = Log4jLevel.ERROR;
+            else
+                level = showLogs ? Optional.ofNullable(Log4jLevel.guessLevel(filteredLog)).orElse(Log4jLevel.INFO) : null;
 
             synchronized (this) {
                 logs.add(filteredLog);

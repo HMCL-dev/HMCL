@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.setting;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
@@ -29,8 +30,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static javafx.collections.FXCollections.observableArrayList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -130,8 +131,11 @@ public final class Profiles {
         if (!initialized)
             return;
         // update storage
-        config().getConfigurations().clear();
-        config().getConfigurations().putAll(profiles.stream().collect(Collectors.toMap(Profile::getName, it -> it)));
+        TreeMap<String, Profile> newConfigurations = new TreeMap<>();
+        for (Profile profile : profiles) {
+            newConfigurations.put(profile.getName(), profile);
+        }
+        config().getConfigurations().setValue(FXCollections.observableMap(newConfigurations));
     }
 
     /**
