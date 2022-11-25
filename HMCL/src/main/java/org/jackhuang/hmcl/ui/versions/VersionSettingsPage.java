@@ -43,7 +43,6 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
-import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -259,7 +258,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     JFXTextField txtMaxMemory = new JFXTextField();
                     FXUtils.setLimitWidth(txtMaxMemory, 60);
                     FXUtils.setValidateWhileTextChanged(txtMaxMemory, true);
-                    txtMaxMemory.textProperty().bindBidirectional(maxMemory, SafeStringConverter.fromInteger());
+                    FXUtils.bindInt(txtMaxMemory, maxMemory);
                     txtMaxMemory.setValidators(new NumberValidator(i18n("input.number"), false));
 
                     lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label("MB"));
@@ -628,19 +627,19 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         // unbind data fields
         if (lastVersionSetting != null) {
-            FXUtils.unbindInt(txtWidth, lastVersionSetting.widthProperty());
-            FXUtils.unbindInt(txtHeight, lastVersionSetting.heightProperty());
+            FXUtils.unbind(txtWidth, lastVersionSetting.widthProperty());
+            FXUtils.unbind(txtHeight, lastVersionSetting.heightProperty());
             maxMemory.unbindBidirectional(lastVersionSetting.maxMemoryProperty());
             javaCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.javaDirProperty());
             gameDirCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.gameDirProperty());
             nativesDirCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.nativesDirProperty());
-            FXUtils.unbindString(txtJVMArgs, lastVersionSetting.javaArgsProperty());
-            FXUtils.unbindString(txtGameArgs, lastVersionSetting.minecraftArgsProperty());
-            FXUtils.unbindString(txtMetaspace, lastVersionSetting.permSizeProperty());
-            FXUtils.unbindString(txtWrapper, lastVersionSetting.wrapperProperty());
-            FXUtils.unbindString(txtPreLaunchCommand, lastVersionSetting.preLaunchCommandProperty());
-            FXUtils.unbindString(txtPostExitCommand, lastVersionSetting.postExitCommandProperty());
-            FXUtils.unbindString(txtServerIP, lastVersionSetting.serverIpProperty());
+            FXUtils.unbind(txtJVMArgs, lastVersionSetting.javaArgsProperty());
+            FXUtils.unbind(txtGameArgs, lastVersionSetting.minecraftArgsProperty());
+            FXUtils.unbind(txtMetaspace, lastVersionSetting.permSizeProperty());
+            FXUtils.unbind(txtWrapper, lastVersionSetting.wrapperProperty());
+            FXUtils.unbind(txtPreLaunchCommand, lastVersionSetting.preLaunchCommandProperty());
+            FXUtils.unbind(txtPostExitCommand, lastVersionSetting.postExitCommandProperty());
+            FXUtils.unbind(txtServerIP, lastVersionSetting.serverIpProperty());
             FXUtils.unbindBoolean(chkAutoAllocate, lastVersionSetting.autoMemoryProperty());
             FXUtils.unbindBoolean(chkFullscreen, lastVersionSetting.fullscreenProperty());
             noGameCheckPane.selectedProperty().unbindBidirectional(lastVersionSetting.notCheckGameProperty());
