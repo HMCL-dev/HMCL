@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -38,8 +39,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class JavaDownloadTask extends Task<Void> {
     private final GameJavaVersion javaVersion;
@@ -95,6 +99,21 @@ public class JavaDownloadTask extends Task<Void> {
             Path dest = jvmDir.resolve(entry.getKey());
             if (entry.getValue() instanceof RemoteFiles.RemoteFile) {
                 RemoteFiles.RemoteFile file = ((RemoteFiles.RemoteFile) entry.getValue());
+
+                // Use local file if it already exists
+                try {
+                    BasicFileAttributes localFileAttributes = Files.readAttributes(dest, BasicFileAttributes.class);
+                    if (localFileAttributes.isRegularFile() && file.getDownloads().containsKey("raw")) {
+                        DownloadInfo downloadInfo = file.getDownloads().get("raw");
+                        if (localFileAttributes.size() == downloadInfo.getSize()) {
+                            ChecksumMismatchException.verifyChecksum(dest, "SHA-1", downloadInfo.getSha1());
+                            LOG.info("Skip existing file: " + dest);
+                            continue;
+                        }
+                    }
+                } catch (IOException ignored) {
+                }
+
                 if (file.getDownloads().containsKey("lzma")) {
                     DownloadInfo download = file.getDownloads().get("lzma");
                     File tempFile = jvmDir.resolve(entry.getKey() + ".lzma").toFile();
