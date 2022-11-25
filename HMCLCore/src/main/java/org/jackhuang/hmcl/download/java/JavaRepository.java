@@ -78,11 +78,13 @@ public final class JavaRepository {
         try (DirectoryStream<Path> dir = Files.newDirectoryStream(runtimeDir)) {
             // component can be jre-legacy, java-runtime-alpha, java-runtime-beta, java-runtime-gamma or any other being added in the future.
             for (Path component : dir) {
-                Path javaHome = component.resolve(platform).resolve(component.getFileName());
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-                    javaHomes.add(javaHome.resolve("jre.bundle/Contents/Home"));
+                if (Files.isRegularFile(component.resolve(platform).resolve(component.getFileName() + ".sha1"))) {
+                    Path javaHome = component.resolve(platform).resolve(component.getFileName());
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                        javaHomes.add(javaHome.resolve("jre.bundle/Contents/Home"));
+                    }
+                    javaHomes.add(javaHome);
                 }
-                javaHomes.add(javaHome);
             }
         } catch (IOException e) {
             LOG.log(Level.WARNING, "Failed to list java-runtime directory " + runtimeDir, e);
