@@ -709,7 +709,7 @@ public abstract class Task<T> {
             @Override
             public void execute() throws Exception {
                 if (isDependentsSucceeded() != (Task.this.getException() == null))
-                    throw new AssertionError("When whenComplete succeeded, Task.exception must be null.");
+                    throw new AssertionError("When whenComplete succeeded, Task.exception must be null.", Task.this.getException());
 
                 action.execute(Task.this.getException());
 
