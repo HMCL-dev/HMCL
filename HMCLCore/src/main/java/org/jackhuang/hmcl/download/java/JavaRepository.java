@@ -8,6 +8,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,6 +16,7 @@ import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -69,17 +71,23 @@ public final class JavaRepository {
         // Examples:
         // $HOME/Library/Application Support/minecraft/runtime/java-runtime-beta/mac-os/java-runtime-beta/jre.bundle/Contents/Home
         // $HOME/.minecraft/runtime/java-runtime-beta/linux/java-runtime-beta
-        Optional<String> platformOptional = getSystemJavaPlatform();
-        if (!platformOptional.isPresent()) return Stream.empty();
         List<Path> javaHomes = new ArrayList<>();
-        try (DirectoryStream<Path> dir = Files.newDirectoryStream(runtimeDir)) {
-            // component can be jre-legacy, java-runtime-alpha, java-runtime-beta, java-runtime-gamma or any other being added in the future.
-            for (Path component : dir) {
-                findJavaHomeInComponentDir(platformOptional.get(), component).ifPresent(javaHomes::add);
+        Consumer<String> action = platform -> {
+            try (DirectoryStream<Path> dir = Files.newDirectoryStream(runtimeDir)) {
+                // component can be jre-legacy, java-runtime-alpha, java-runtime-beta, java-runtime-gamma or any other being added in the future.
+                for (Path component : dir) {
+                    findJavaHomeInComponentDir(platform, component).ifPresent(javaHomes::add);
+                }
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to list java-runtime directory " + runtimeDir, e);
             }
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to list java-runtime directory " + runtimeDir, e);
-        }
+        };
+        getSystemJavaPlatform().ifPresent(action);
+
+        // Workaround, which will be removed in the future
+        if (Platform.SYSTEM_PLATFORM == Platform.OSX_ARM64)
+            action.accept("mac-os-arm64");
+
         return javaHomes.stream();
     }
 
@@ -120,23 +128,23 @@ public final class JavaRepository {
         }
     }
 
-    public static Optional<String> getSystemJavaPlatform() {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-            if (Architecture.SYSTEM_ARCH == Architecture.X86) {
+    public static Optional<String> getSystemJavaPlatform(Platform platform) {
+        if (platform.getOperatingSystem() == OperatingSystem.LINUX) {
+            if (platform.getArchitecture() == Architecture.X86) {
                 return Optional.of("linux-i386");
-            } else if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
+            } else if (platform.getArchitecture() == Architecture.X86_64) {
                 return Optional.of("linux");
             }
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-            if (Architecture.SYSTEM_ARCH == Architecture.X86_64 || Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+        } else if (platform.getOperatingSystem() == OperatingSystem.OSX) {
+            if (platform.getArchitecture() == Architecture.X86_64 || platform.getArchitecture() == Architecture.ARM64) {
                 return Optional.of("mac-os");
             }
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            if (Architecture.SYSTEM_ARCH == Architecture.X86) {
+        } else if (platform.getOperatingSystem() == OperatingSystem.WINDOWS) {
+            if (platform.getArchitecture() == Architecture.X86) {
                 return Optional.of("windows-x86");
-            } else if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
+            } else if (platform.getArchitecture() == Architecture.X86_64) {
                 return Optional.of("windows-x64");
-            } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+            } else if (platform.getArchitecture() == Architecture.ARM64) {
                 if (OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277) {
                     return Optional.of("windows-x64");
                 } else {
@@ -145,6 +153,10 @@ public final class JavaRepository {
             }
         }
         return Optional.empty();
+    }
+
+    public static Optional<String> getSystemJavaPlatform() {
+        return getSystemJavaPlatform(Platform.SYSTEM_PLATFORM);
     }
 
     public static Path getJavaStoragePath() {
