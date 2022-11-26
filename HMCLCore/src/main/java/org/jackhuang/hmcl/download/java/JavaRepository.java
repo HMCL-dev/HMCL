@@ -128,23 +128,23 @@ public final class JavaRepository {
         }
     }
 
-    public static Optional<String> getSystemJavaPlatform(Platform platform) {
-        if (platform.getOperatingSystem() == OperatingSystem.LINUX) {
-            if (platform.getArchitecture() == Architecture.X86) {
+    public static Optional<String> getSystemJavaPlatform() {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            if (Architecture.SYSTEM_ARCH == Architecture.X86) {
                 return Optional.of("linux-i386");
-            } else if (platform.getArchitecture() == Architecture.X86_64) {
+            } else if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
                 return Optional.of("linux");
             }
-        } else if (platform.getOperatingSystem() == OperatingSystem.OSX) {
-            if (platform.getArchitecture() == Architecture.X86_64 || platform.getArchitecture() == Architecture.ARM64) {
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+            if (Architecture.SYSTEM_ARCH == Architecture.X86_64 || Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                 return Optional.of("mac-os");
             }
-        } else if (platform.getOperatingSystem() == OperatingSystem.WINDOWS) {
-            if (platform.getArchitecture() == Architecture.X86) {
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            if (Architecture.SYSTEM_ARCH == Architecture.X86) {
                 return Optional.of("windows-x86");
-            } else if (platform.getArchitecture() == Architecture.X86_64) {
+            } else if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
                 return Optional.of("windows-x64");
-            } else if (platform.getArchitecture() == Architecture.ARM64) {
+            } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                 if (OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277) {
                     return Optional.of("windows-x64");
                 } else {
@@ -153,10 +153,6 @@ public final class JavaRepository {
             }
         }
         return Optional.empty();
-    }
-
-    public static Optional<String> getSystemJavaPlatform() {
-        return getSystemJavaPlatform(Platform.SYSTEM_PLATFORM);
     }
 
     public static Path getJavaStoragePath() {
