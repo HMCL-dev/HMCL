@@ -120,12 +120,15 @@ public class JavaDownloadTask extends Task<Void> {
                     FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(downloadProvider.injectURL(download.getUrl())), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
+                        Path decompressed = jvmDir.resolve(entry.getKey() + ".tmp");
                         try (LZMAInputStream input = new LZMAInputStream(new FileInputStream(tempFile))) {
-                            Files.copy(input, dest, StandardCopyOption.REPLACE_EXISTING);
+                            Files.copy(input, decompressed, StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {
                             throw new ArtifactMalformedException("File " + entry.getKey() + " is malformed", e);
                         }
+                        tempFile.delete();
 
+                        Files.move(decompressed, dest, StandardCopyOption.REPLACE_EXISTING);
                         if (file.isExecutable()) {
                             dest.toFile().setExecutable(true);
                         }

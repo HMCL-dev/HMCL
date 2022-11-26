@@ -822,7 +822,7 @@ public final class LauncherHelper {
             if (exitType != ExitType.NORMAL) {
                 ArrayList<Pair<String, Log4jLevel>> pairs = new ArrayList<>(logs.size());
                 Lang.forEachZipped(logs, levels,
-                        (log, l) -> pairs.add(pair(log, l instanceof Log4jLevel ? ((Log4jLevel) l) : Log4jLevel.guessLevel(log))));
+                        (log, l) -> pairs.add(pair(log, l instanceof Log4jLevel ? ((Log4jLevel) l) : Optional.ofNullable(Log4jLevel.guessLevel(log)).orElse(Log4jLevel.INFO))));
                 repository.markVersionLaunchedAbnormally(version.getId());
                 Platform.runLater(() -> new GameCrashWindow(process, exitType, repository, version, launchOptions, pairs).show());
             }

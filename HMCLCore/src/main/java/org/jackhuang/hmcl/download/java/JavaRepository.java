@@ -8,14 +8,15 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -58,8 +59,7 @@ public final class JavaRepository {
             case LINUX:
                 return Stream.of(FileUtils.tryGetPath(System.getProperty("user.home", ".minecraft/runtime")));
             case OSX:
-                return Stream.of(FileUtils.tryGetPath("/Library/Application Support/minecraft/runtime"),
-                        FileUtils.tryGetPath(System.getProperty("user.home"), "Library/Application Support/minecraft/runtime"));
+                return Stream.of(FileUtils.tryGetPath(System.getProperty("user.home"), "Library/Application Support/minecraft/runtime"));
             default:
                 return Stream.empty();
         }
@@ -71,23 +71,61 @@ public final class JavaRepository {
         // Examples:
         // $HOME/Library/Application Support/minecraft/runtime/java-runtime-beta/mac-os/java-runtime-beta/jre.bundle/Contents/Home
         // $HOME/.minecraft/runtime/java-runtime-beta/linux/java-runtime-beta
-        Optional<String> platformOptional = getSystemJavaPlatform();
-        if (!platformOptional.isPresent()) return Stream.empty();
-        String platform = platformOptional.get();
         List<Path> javaHomes = new ArrayList<>();
-        try (DirectoryStream<Path> dir = Files.newDirectoryStream(runtimeDir)) {
-            // component can be jre-legacy, java-runtime-alpha, java-runtime-beta, java-runtime-gamma or any other being added in the future.
-            for (Path component : dir) {
-                Path javaHome = component.resolve(platform).resolve(component.getFileName());
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-                    javaHomes.add(javaHome.resolve("jre.bundle/Contents/Home"));
+        Consumer<String> action = platform -> {
+            try (DirectoryStream<Path> dir = Files.newDirectoryStream(runtimeDir)) {
+                // component can be jre-legacy, java-runtime-alpha, java-runtime-beta, java-runtime-gamma or any other being added in the future.
+                for (Path component : dir) {
+                    findJavaHomeInComponentDir(platform, component).ifPresent(javaHomes::add);
                 }
-                javaHomes.add(javaHome);
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to list java-runtime directory " + runtimeDir, e);
             }
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to list java-runtime directory " + runtimeDir, e);
-        }
+        };
+        getSystemJavaPlatform().ifPresent(action);
+
+        // Workaround, which will be removed in the future
+        if (Platform.SYSTEM_PLATFORM == Platform.OSX_ARM64)
+            action.accept("mac-os-arm64");
+
         return javaHomes.stream();
+    }
+
+    private static Optional<Path> findJavaHomeInComponentDir(String platform, Path component) {
+        Path sha1File = component.resolve(platform).resolve(component.getFileName() + ".sha1");
+        if (!Files.isRegularFile(sha1File))
+            return Optional.empty();
+        Path dir = component.resolve(platform).resolve(component.getFileName());
+
+        try (BufferedReader reader = Files.newBufferedReader(sha1File)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.isEmpty()) continue;
+
+                int idx = line.indexOf(" /#//");
+                if (idx <= 0)
+                    throw new IOException("Illegal line: " + line);
+
+                Path file = dir.resolve(line.substring(0, idx));
+
+                // Should we check the sha1 of files? This will take a lot of time.
+                if (Files.notExists(file))
+                    throw new NoSuchFileException(file.toAbsolutePath().toString());
+            }
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                Path macPath = dir.resolve("jre.bundle/Contents/Home");
+                if (Files.exists(macPath))
+                    return Optional.of(macPath);
+                else
+                    LOG.warning("The Java is not in 'jre.bundle/Contents/Home'");
+            }
+
+            return Optional.of(dir);
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to verify Java in " + component, e);
+            return Optional.empty();
+        }
     }
 
     public static Optional<String> getSystemJavaPlatform() {
@@ -122,6 +160,9 @@ public final class JavaRepository {
     }
 
     public static Path getJavaHome(GameJavaVersion javaVersion, String platform) {
-        return getJavaStoragePath().resolve(javaVersion.getComponent()).resolve(platform).resolve(javaVersion.getComponent());
+        Path javaHome = getJavaStoragePath().resolve(javaVersion.getComponent()).resolve(platform).resolve(javaVersion.getComponent());
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+            javaHome = javaHome.resolve("jre.bundle/Contents/Home");
+        return javaHome;
     }
 }
