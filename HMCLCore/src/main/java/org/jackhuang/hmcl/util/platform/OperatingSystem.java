@@ -218,6 +218,7 @@ public enum OperatingSystem {
             return UNKNOWN;
     }
 
+    @SuppressWarnings("deprecation")
     public static Optional<PhysicalMemoryStatus> getPhysicalMemoryStatus() {
         if (CURRENT_OS == LINUX) {
             try {
@@ -246,12 +247,15 @@ public enum OperatingSystem {
             }
         }
 
-        java.lang.management.OperatingSystemMXBean bean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-        if (bean instanceof com.sun.management.OperatingSystemMXBean) {
-            com.sun.management.OperatingSystemMXBean sunBean =
-                    (com.sun.management.OperatingSystemMXBean)
-                            java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-            return Optional.of(new PhysicalMemoryStatus(sunBean.getTotalPhysicalMemorySize(), sunBean.getFreePhysicalMemorySize()));
+        try {
+            java.lang.management.OperatingSystemMXBean bean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+            if (bean instanceof com.sun.management.OperatingSystemMXBean) {
+                com.sun.management.OperatingSystemMXBean sunBean =
+                        (com.sun.management.OperatingSystemMXBean)
+                                java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+                return Optional.of(new PhysicalMemoryStatus(sunBean.getTotalPhysicalMemorySize(), sunBean.getFreePhysicalMemorySize()));
+            }
+        } catch (NoClassDefFoundError ignored) {
         }
         return Optional.empty();
     }
