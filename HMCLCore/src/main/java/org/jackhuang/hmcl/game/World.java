@@ -198,7 +198,7 @@ public class World {
             throw new IOException();
 
         try (Zipper zipper = new Zipper(zip)) {
-            zipper.putDirectory(file, "/" + worldName + "/");
+            zipper.putDirectory(file, worldName);
         }
     }
 
