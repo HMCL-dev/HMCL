@@ -141,10 +141,16 @@ public final class Controllers {
     }
 
     public static void onApplicationStop() {
-        config().setHeight(stageHeight.get());
-        config().setWidth(stageWidth.get());
-        stageHeight = null;
-        stageWidth = null;
+        if (stageHeight != null) {
+            config().setHeight(stageHeight.get());
+            stageHeight.unbind();
+            stageHeight = null;
+        }
+        if (stageWidth != null) {
+            config().setWidth(stageWidth.get());
+            stageWidth.unbind();
+            stageWidth = null;
+        }
     }
 
     public static void initialize(Stage stage) {
@@ -321,5 +327,6 @@ public final class Controllers {
         decorator = null;
         stage = null;
         scene = null;
+        onApplicationStop();
     }
 }
