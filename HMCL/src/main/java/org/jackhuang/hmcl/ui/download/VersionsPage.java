@@ -127,7 +127,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         btnRefresh.setGraphic(wrap(SVG.refresh(Theme.blackFillBinding(), -1, -1)));
 
         MutableObject<RemoteVersionListCell> lastCell = new MutableObject<>();
-        list.setCellFactory(listView -> new RemoteVersionListCell(lastCell));
+        EnumMap<VersionIconType, Image> icons = new EnumMap<>(VersionIconType.class);
+        list.setCellFactory(listView -> new RemoteVersionListCell(lastCell, icons));
 
         list.setOnMouseClicked(e -> {
             if (list.getSelectionModel().getSelectedIndex() < 0)
@@ -218,27 +219,24 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     }
 
     private static class RemoteVersionListCell extends ListCell<RemoteVersion> {
-        private static final EnumMap<VersionIconType, Image> icon = new EnumMap<>(VersionIconType.class);
-
-        private static Image getIcon(VersionIconType type) {
-            assert Platform.isFxApplicationThread();
-            return icon.computeIfAbsent(type, iconType -> new Image(iconType.getResourceUrl(), 32, 32, false, true));
-        }
-
         final IconedTwoLineListItem content = new IconedTwoLineListItem();
         final RipplerContainer ripplerContainer = new RipplerContainer(content);
         final StackPane pane = new StackPane();
 
         private final MutableObject<RemoteVersionListCell> lastCell;
+        private final EnumMap<VersionIconType, Image> icons;
 
-        RemoteVersionListCell(MutableObject<RemoteVersionListCell> lastCell) {
+        RemoteVersionListCell(MutableObject<RemoteVersionListCell> lastCell, EnumMap<VersionIconType, Image> icons) {
             this.lastCell = lastCell;
-        }
+            this.icons = icons;
 
-        {
             pane.getStyleClass().add("md-list-cell");
             StackPane.setMargin(content, new Insets(10, 16, 10, 16));
             pane.getChildren().setAll(ripplerContainer);
+        }
+
+        private Image getIcon(VersionIconType type) {
+            return icons.computeIfAbsent(type, iconType -> new Image(iconType.getResourceUrl(), 32, 32, false, true));
         }
 
         @Override
