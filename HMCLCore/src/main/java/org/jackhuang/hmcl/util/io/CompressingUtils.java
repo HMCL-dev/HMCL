@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.io;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
@@ -43,7 +44,7 @@ public final class CompressingUtils {
     private static final FileSystemProvider ZIPFS_PROVIDER = FileSystemProvider.installedProviders().stream()
             .filter(it -> "jar".equalsIgnoreCase(it.getScheme()))
             .findFirst()
-            .orElseThrow(() -> new IllegalStateException("Zipfs not supported"));
+            .orElse(null);
 
     private CompressingUtils() {
     }
@@ -197,6 +198,9 @@ public final class CompressingUtils {
         if (useTempFile)
             env.put("useTempFile", true);
         try {
+            if (ZIPFS_PROVIDER == null)
+                throw new FileSystemNotFoundException("Module jdk.zipfs does not exist");
+
             return ZIPFS_PROVIDER.newFileSystem(zipFile, env);
         } catch (ZipError error) {
             // Since Java 8 throws ZipError stupidly
@@ -204,7 +208,7 @@ public final class CompressingUtils {
         } catch (UnsupportedOperationException ex) {
             throw new ZipException("Not a zip file");
         } catch (FileSystemNotFoundException ex) {
-            throw new ZipException("Java Environment is broken");
+            throw Lang.apply(new ZipException("Java Environment is broken"), it -> it.initCause(ex));
         }
     }
 
