@@ -138,7 +138,7 @@ public class AboutPage extends StackPane {
 
             IconedTwoLineListItem gson = new IconedTwoLineListItem();
             gson.setTitle("Gson");
-            gson.setSubtitle("Copyright 2008 Google Inc.\nLicensed under the Apache 2.0 License.");
+            gson.setSubtitle("Copyright © 2008 Google Inc.\nLicensed under the Apache 2.0 License.");
             gson.setExternalLink("https://github.com/google/gson");
 
             IconedTwoLineListItem xz = new IconedTwoLineListItem();
