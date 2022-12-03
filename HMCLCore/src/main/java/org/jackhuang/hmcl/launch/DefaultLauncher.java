@@ -139,6 +139,12 @@ public class DefaultLauncher extends Launcher {
         if (options.getMinMemory() != null && options.getMinMemory() > 0)
             res.addDefault("-Xms", options.getMinMemory() + "m");
 
+        if (options.getMetaspace() != null && options.getMetaspace() > 0)
+            if (options.getJava().getParsedVersion() < JavaVersion.JAVA_8)
+                res.addDefault("-XX:PermSize=", options.getMetaspace() + "m");
+            else
+                res.addDefault("-XX:MetaspaceSize=", options.getMetaspace() + "m");
+
         res.addAllDefaultWithoutParsing(options.getJavaArguments());
 
         Charset encoding = OperatingSystem.NATIVE_CHARSET;
@@ -185,20 +191,13 @@ public class DefaultLauncher extends Launcher {
                     res.addUnstableDefault("G1NewSizePercent", "20");
                     res.addUnstableDefault("G1ReservePercent", "20");
                     res.addUnstableDefault("MaxGCPauseMillis", "50");
-                    res.addUnstableDefault("G1HeapRegionSize", "16m");
+                    res.addUnstableDefault("G1HeapRegionSize", "32m");
                 }
             }
-
-            if (options.getMetaspace() != null && options.getMetaspace() > 0)
-                if (options.getJava().getParsedVersion() < JavaVersion.JAVA_8)
-                    res.addDefault("-XX:PermSize=", options.getMetaspace() + "m");
-                else
-                    res.addDefault("-XX:MetaspaceSize=", options.getMetaspace() + "m");
 
             res.addUnstableDefault("UseAdaptiveSizePolicy", false);
             res.addUnstableDefault("OmitStackTraceInFastThrow", false);
             res.addUnstableDefault("DontCompileHugeMethods", false);
-            res.addDefault("-Xmn", "128m");
 
             // As 32-bit JVM allocate 320KB for stack by default rather than 64-bit version allocating 1MB,
             // causing Minecraft 1.13 crashed accounting for java.lang.StackOverflowError.
