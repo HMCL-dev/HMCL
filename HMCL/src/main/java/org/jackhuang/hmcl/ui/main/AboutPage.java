@@ -128,17 +128,17 @@ public class AboutPage extends StackPane {
         {
             IconedTwoLineListItem javafx = new IconedTwoLineListItem();
             javafx.setTitle("JavaFX");
-            javafx.setSubtitle("Copyright (c) 2013, 2021, Oracle and/or its affiliates.\nLicensed under the GPL 2 with Classpath Exception.");
+            javafx.setSubtitle("Copyright © 2013, 2021, Oracle and/or its affiliates.\nLicensed under the GPL 2 with Classpath Exception.");
             javafx.setExternalLink("https://openjfx.io/");
 
             IconedTwoLineListItem jfoenix = new IconedTwoLineListItem();
             jfoenix.setTitle("JFoenix");
-            jfoenix.setSubtitle("Copyright (c) 2016 JFoenix.\nLicensed under the MIT License.");
+            jfoenix.setSubtitle("Copyright © 2016 JFoenix.\nLicensed under the MIT License.");
             jfoenix.setExternalLink("http://www.jfoenix.com/");
 
             IconedTwoLineListItem gson = new IconedTwoLineListItem();
             gson.setTitle("Gson");
-            gson.setSubtitle("Copyright 2008 Google Inc.\nLicensed under the Apache 2.0 License.");
+            gson.setSubtitle("Copyright © 2008 Google Inc.\nLicensed under the Apache 2.0 License.");
             gson.setExternalLink("https://github.com/google/gson");
 
             IconedTwoLineListItem xz = new IconedTwoLineListItem();
@@ -148,27 +148,27 @@ public class AboutPage extends StackPane {
 
             IconedTwoLineListItem fxgson = new IconedTwoLineListItem();
             fxgson.setTitle("fx-gson");
-            fxgson.setSubtitle("Copyright (c) 2016 Joffrey Bion.\nLicensed under the MIT License.");
+            fxgson.setSubtitle("Copyright © 2016 Joffrey Bion.\nLicensed under the MIT License.");
             fxgson.setExternalLink("https://github.com/joffrey-bion/fx-gson");
 
             IconedTwoLineListItem constantPoolScanner = new IconedTwoLineListItem();
             constantPoolScanner.setTitle("Constant Pool Scanner");
-            constantPoolScanner.setSubtitle("Copyright 1997-2010 Oracle and/or its affiliates.\nLicensed under the GPL 2 or the CDDL.");
+            constantPoolScanner.setSubtitle("Copyright © 1997-2010 Oracle and/or its affiliates.\nLicensed under the GPL 2 or the CDDL.");
             constantPoolScanner.setExternalLink("https://github.com/jenkinsci/constant-pool-scanner");
 
             IconedTwoLineListItem openNBT = new IconedTwoLineListItem();
             openNBT.setTitle("OpenNBT");
-            openNBT.setSubtitle("Copyright (C) 2013-2021 Steveice10.\nLicensed under the MIT License.");
+            openNBT.setSubtitle("Copyright © 2013-2021 Steveice10.\nLicensed under the MIT License.");
             openNBT.setExternalLink("https://github.com/Steveice10/OpenNBT");
 
             IconedTwoLineListItem jstun = new IconedTwoLineListItem();
             jstun.setTitle("JSTUN");
-            jstun.setSubtitle("Copyright (c) 2005 Thomas King <king@t-king.de>.\nLicensed under the Apache License 2.0.");
+            jstun.setSubtitle("Copyright © 2005 Thomas King <king@t-king.de>.\nLicensed under the Apache License 2.0.");
             jstun.setExternalLink("https://github.com/tking/JSTUN");
 
             IconedTwoLineListItem minecraftJFXSkin = new IconedTwoLineListItem();
             minecraftJFXSkin.setTitle("minecraft-jfx-skin");
-            minecraftJFXSkin.setSubtitle("Copyright (c) 2016 InfinityStudio.\nLicensed under the GPL 3.");
+            minecraftJFXSkin.setSubtitle("Copyright © 2016 InfinityStudio.\nLicensed under the GPL 3.");
             minecraftJFXSkin.setExternalLink("https://github.com/InfinityStudio/minecraft-jfx-skin");
 
             dep.getContent().setAll(javafx, jfoenix, gson, xz, fxgson, constantPoolScanner, openNBT, jstun, minecraftJFXSkin);
