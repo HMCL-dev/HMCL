@@ -153,7 +153,7 @@ public class AboutPage extends StackPane {
 
             IconedTwoLineListItem constantPoolScanner = new IconedTwoLineListItem();
             constantPoolScanner.setTitle("Constant Pool Scanner");
-            constantPoolScanner.setSubtitle("Copyright 1997-2010 Oracle and/or its affiliates.\nLicensed under the GPL 2 or the CDDL.");
+            constantPoolScanner.setSubtitle("Copyright © 1997-2010 Oracle and/or its affiliates.\nLicensed under the GPL 2 or the CDDL.");
             constantPoolScanner.setExternalLink("https://github.com/jenkinsci/constant-pool-scanner");
 
             IconedTwoLineListItem openNBT = new IconedTwoLineListItem();
