@@ -380,6 +380,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
             }
         }
 
+        if (vs.isAutoMemory() && builder.getJavaArguments().stream().anyMatch(it -> it.startsWith("-Xmx")))
+            builder.setMaxMemory(null);
+
         return builder.create();
     }
 
