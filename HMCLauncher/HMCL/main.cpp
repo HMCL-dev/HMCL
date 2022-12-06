@@ -156,11 +156,11 @@ error:
 
   if (isWin7OrLater) {
     if (isARM64) {
-      downloadLink = L"https://docs.hmcl.net/downloads/windows-aarch64.html";
+      downloadLink = L"https://docs.hmcl.net/downloads/windows/arm64.html";
     } if (isX64) {
-      downloadLink = L"https://docs.hmcl.net/downloads/windows-x64.html";
+      downloadLink = L"https://docs.hmcl.net/downloads/windows/x86_64.html";
     } else {
-      downloadLink = L"https://docs.hmcl.net/downloads/windows-i586.html";
+      downloadLink = L"https://docs.hmcl.net/downloads/windows/x86.html";
     }
   } else {
     downloadLink = L"https://docs.hmcl.net/downloads/java.html";
