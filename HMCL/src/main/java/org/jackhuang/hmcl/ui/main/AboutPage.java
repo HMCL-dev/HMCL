@@ -109,6 +109,12 @@ public class AboutPage extends StackPane {
             users.setSubtitle(i18n("about.thanks_to.users.statement"));
             users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
 
+            IconedTwoLineListItem qq = new IconedTwoLineListItem();
+//            qq.setImage(new Image("/assets/img/qq.png", 32, 32, false, true));
+            qq.setTitle(i18n("about.community.qqchannel"));
+            qq.setSubtitle(i18n("about.community.qqchannel.statement"));
+            qq.setExternalLink("https://pd.qq.com/s/qor74cm6");
+
             IconedTwoLineListItem discord = new IconedTwoLineListItem();
             discord.setImage(new Image("/assets/img/discord.png", 32, 32, false, true));
             discord.setTitle(i18n("about.community.discord"));
@@ -121,7 +127,7 @@ public class AboutPage extends StackPane {
             kookapp.setSubtitle(i18n("about.community.kookapp.statement"));
             kookapp.setExternalLink("https://kook.top/Kx7n3t");
 
-            community.getContent().setAll(users, discord, kookapp);
+            community.getContent().setAll(users, qq, discord, kookapp);
         }
 
         ComponentList dep = new ComponentList();
