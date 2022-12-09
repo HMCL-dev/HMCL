@@ -18,19 +18,26 @@
 package org.jackhuang.hmcl.ui.profile;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.validation.RequiredFieldValidator;
 import com.jfoenix.validation.base.ValidatorBase;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.FileItem;
+import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -40,15 +47,14 @@ import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class ProfilePage extends StackPane implements DecoratorPage {
+public final class ProfilePage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final StringProperty location;
     private final Profile profile;
 
-    @FXML private JFXTextField txtProfileName;
-    @FXML private FileItem gameDir;
-    @FXML private JFXButton btnSave;
-    @FXML private JFXCheckBox toggleUseRelativePath;
+    private final JFXTextField txtProfileName;
+    private final FileItem gameDir;
+    private final OptionToggleButton toggleUseRelativePath;
 
     /**
      * @param profile null if creating a new profile.
@@ -61,37 +67,86 @@ public final class ProfilePage extends StackPane implements DecoratorPage {
         location = new SimpleStringProperty(this, "location",
                 Optional.ofNullable(profile).map(Profile::getGameDir).map(File::getAbsolutePath).orElse(".minecraft"));
 
-        FXUtils.loadFXML(this, "/assets/fxml/profile.fxml");
-
-        txtProfileName.setText(profileDisplayName);
-        txtProfileName.getValidators().add(new ValidatorBase() {
+        ScrollPane scroll = new ScrollPane();
+        this.setCenter(scroll);
+        scroll.setFitToHeight(true);
+        scroll.setFitToWidth(true);
+        {
+            VBox rootPane = new VBox();
+            rootPane.setStyle("-fx-padding: 20;");
             {
-                setMessage(i18n("profile.already_exists"));
+                ComponentList componentList = new ComponentList();
+                componentList.setDepth(1);
+                {
+                    BorderPane profileNamePane = new BorderPane();
+                    {
+                        Label label = new Label(i18n("profile.name"));
+                        profileNamePane.setLeft(label);
+                        BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+
+                        txtProfileName = new JFXTextField();
+                        profileNamePane.setRight(txtProfileName);
+                        RequiredFieldValidator validator = new RequiredFieldValidator();
+                        validator.setMessage(i18n("input.not_empty"));
+                        txtProfileName.getValidators().add(validator);
+                        BorderPane.setMargin(txtProfileName, new Insets(8, 0, 8, 0));
+
+                        txtProfileName.setText(profileDisplayName);
+                        txtProfileName.getValidators().add(new ValidatorBase() {
+                            {
+                                setMessage(i18n("profile.already_exists"));
+                            }
+
+                            @Override
+                            protected void eval() {
+                                JFXTextField control = (JFXTextField) this.getSrcControl();
+                                hasErrors.set(Profiles.getProfiles().stream().anyMatch(profile -> profile.getName().equals(control.getText())));
+                            }
+                        });
+                    }
+
+                    gameDir = new FileItem();
+                    gameDir.setName(i18n("profile.instance_directory"));
+                    gameDir.setTitle(i18n("profile.instance_directory.choose"));
+                    gameDir.pathProperty().bindBidirectional(location);
+
+                    toggleUseRelativePath = new OptionToggleButton();
+                    toggleUseRelativePath.setTitle(i18n("profile.use_relative_path"));
+
+                    gameDir.convertToRelativePathProperty().bind(toggleUseRelativePath.selectedProperty());
+                    if (profile != null) {
+                        toggleUseRelativePath.setSelected(profile.isUseRelativePath());
+                    }
+
+                    componentList.getContent().setAll(profileNamePane, gameDir, toggleUseRelativePath);
+                }
+
+                rootPane.getChildren().setAll(componentList);
             }
 
-            @Override
-            protected void eval() {
-                JFXTextField control = (JFXTextField) this.getSrcControl();
-                if (Profiles.getProfiles().stream().anyMatch(profile -> profile.getName().equals(control.getText())))
-                    hasErrors.set(true);
-                else
-                    hasErrors.set(false);
-            }
-        });
-        FXUtils.onChangeAndOperate(txtProfileName.textProperty(), it -> {
-            btnSave.setDisable(!txtProfileName.validate() || StringUtils.isBlank(getLocation()));
-        });
-        gameDir.pathProperty().bindBidirectional(location);
-        FXUtils.onChangeAndOperate(location, it -> {
-            btnSave.setDisable(!txtProfileName.validate() || StringUtils.isBlank(getLocation()));
-        });
-        gameDir.convertToRelativePathProperty().bind(toggleUseRelativePath.selectedProperty());
-        if (profile != null) {
-            toggleUseRelativePath.setSelected(profile.isUseRelativePath());
+            scroll.setContent(rootPane);
+        }
+
+        BorderPane savePane = new BorderPane();
+        this.setBottom(savePane);
+        savePane.setPickOnBounds(false);
+        savePane.setStyle("-fx-padding: 20;");
+        StackPane.setAlignment(savePane, Pos.BOTTOM_RIGHT);
+        {
+            JFXButton saveButton = new JFXButton(i18n("button.save"));
+            savePane.setRight(saveButton);
+            BorderPane.setAlignment(savePane, Pos.BOTTOM_RIGHT);
+            StackPane.setAlignment(saveButton, Pos.BOTTOM_RIGHT);
+            saveButton.getStyleClass().add("jfx-button-raised");
+            saveButton.setButtonType(JFXButton.ButtonType.RAISED);
+            saveButton.setPrefSize(100, 40);
+            saveButton.setOnAction(e -> onSave());
+            saveButton.disableProperty().bind(Bindings.createBooleanBinding(
+                    () -> !txtProfileName.validate() || StringUtils.isBlank(getLocation()),
+                    txtProfileName.textProperty(), location));
         }
     }
 
-    @FXML
     private void onSave() {
         if (profile != null) {
             profile.setName(txtProfileName.getText());
