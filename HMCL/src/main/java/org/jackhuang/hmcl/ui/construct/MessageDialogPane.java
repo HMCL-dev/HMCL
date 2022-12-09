@@ -44,7 +44,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class MessageDialogPane extends StackPane {
+public final class MessageDialogPane extends HBox {
 
     public enum MessageType {
         ERROR,
@@ -63,64 +63,62 @@ public final class MessageDialogPane extends StackPane {
     private @Nullable ButtonBase cancelButton;
 
     public MessageDialogPane(@NotNull String text, @Nullable String title, @NotNull MessageType type) {
-        HBox layout = new HBox();
-        layout.setSpacing(8);
-        layout.getStyleClass().add("jfx-dialog-layout");
-        {
-            Label graphic = new Label();
-            graphic.setTranslateX(10);
-            graphic.setTranslateY(10);
-            graphic.setMinSize(40, 40);
-            graphic.setMaxSize(40, 40);
-            switch (type) {
-                case INFO:
-                    graphic.setGraphic(SVG.infoCircle(Theme.blackFillBinding(), 40, 40));
-                    break;
-                case ERROR:
-                    graphic.setGraphic(SVG.closeCircle(Theme.blackFillBinding(), 40, 40));
-                    break;
-                case SUCCESS:
-                    graphic.setGraphic(SVG.checkCircle(Theme.blackFillBinding(), 40, 40));
-                    break;
-                case WARNING:
-                    graphic.setGraphic(SVG.alert(Theme.blackFillBinding(), 40, 40));
-                    break;
-                case QUESTION:
-                    graphic.setGraphic(SVG.helpCircle(Theme.blackFillBinding(), 40, 40));
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unrecognized message box message type " + type);
-            }
+        this.setSpacing(8);
+        this.getStyleClass().add("jfx-dialog-layout");
 
-            VBox vbox = new VBox();
-            HBox.setHgrow(vbox, Priority.ALWAYS);
-            {
-                StackPane titlePane = new StackPane();
-                titlePane.getStyleClass().addAll("jfx-layout-heading", "title");
-                titlePane.getChildren().setAll(new Label(title != null ? title : i18n("message.info")));
-
-                StackPane content = new StackPane();
-                content.getStyleClass().add("jfx-layout-body");
-                EnhancedTextFlow textFlow = new EnhancedTextFlow(text);
-                if (textFlow.computePrefHeight(400.0) <= 350.0)
-                    content.getChildren().setAll(textFlow);
-                else {
-                    ScrollPane scrollPane = new ScrollPane(textFlow);
-                    VBox.setVgrow(scrollPane, Priority.ALWAYS);
-                    scrollPane.setFitToWidth(true);
-                    content.getChildren().setAll(scrollPane);
-                }
-
-                actions = new HBox();
-                actions.getStyleClass().add("jfx-layout-actions");
-
-                vbox.getChildren().setAll(titlePane, content, actions);
-            }
-
-            layout.getChildren().setAll(graphic, vbox);
+        Label graphic = new Label();
+        graphic.setTranslateX(10);
+        graphic.setTranslateY(10);
+        graphic.setMinSize(40, 40);
+        graphic.setMaxSize(40, 40);
+        switch (type) {
+            case INFO:
+                graphic.setGraphic(SVG.infoCircle(Theme.blackFillBinding(), 40, 40));
+                break;
+            case ERROR:
+                graphic.setGraphic(SVG.closeCircle(Theme.blackFillBinding(), 40, 40));
+                break;
+            case SUCCESS:
+                graphic.setGraphic(SVG.checkCircle(Theme.blackFillBinding(), 40, 40));
+                break;
+            case WARNING:
+                graphic.setGraphic(SVG.alert(Theme.blackFillBinding(), 40, 40));
+                break;
+            case QUESTION:
+                graphic.setGraphic(SVG.helpCircle(Theme.blackFillBinding(), 40, 40));
+                break;
+            default:
+                throw new IllegalArgumentException("Unrecognized message box message type " + type);
         }
 
-        this.getChildren().setAll(layout);
+        VBox vbox = new VBox();
+        HBox.setHgrow(vbox, Priority.ALWAYS);
+        {
+            StackPane titlePane = new StackPane();
+            titlePane.getStyleClass().addAll("jfx-layout-heading", "title");
+            titlePane.getChildren().setAll(new Label(title != null ? title : i18n("message.info")));
+
+            StackPane content = new StackPane();
+            content.getStyleClass().add("jfx-layout-body");
+            EnhancedTextFlow textFlow = new EnhancedTextFlow(text);
+            textFlow.setStyle("-fx-font-size: 14px;");
+            if (textFlow.computePrefHeight(400.0) <= 350.0)
+                content.getChildren().setAll(textFlow);
+            else {
+                ScrollPane scrollPane = new ScrollPane(textFlow);
+                scrollPane.setPrefHeight(350);
+                VBox.setVgrow(scrollPane, Priority.ALWAYS);
+                scrollPane.setFitToWidth(true);
+                content.getChildren().setAll(scrollPane);
+            }
+
+            actions = new HBox();
+            actions.getStyleClass().add("jfx-layout-actions");
+
+            vbox.getChildren().setAll(titlePane, content, actions);
+        }
+
+        this.getChildren().setAll(graphic, vbox);
 
         onEscPressed(this, () -> {
             if (cancelButton != null) {
