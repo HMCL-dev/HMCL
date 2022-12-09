@@ -41,9 +41,8 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class AddAuthlibInjectorServerPane extends StackPane implements DialogAware {
+public final class AddAuthlibInjectorServerPane extends TransitionPane implements DialogAware {
 
-    private final TransitionPane root;
     private final Label lblServerUrl;
     private final Label lblServerName;
     private final Label lblCreationWarning;
@@ -63,97 +62,92 @@ public class AddAuthlibInjectorServerPane extends StackPane implements DialogAwa
     }
 
     public AddAuthlibInjectorServerPane() {
-        root = new TransitionPane();
+        addServerPane = new JFXDialogLayout();
+        addServerPane.setHeading(new Label(i18n("account.injector.add")));
         {
-            addServerPane = new JFXDialogLayout();
-            addServerPane.setHeading(new Label(i18n("account.injector.add")));
+            txtServerUrl = new JFXTextField();
+            txtServerUrl.setPromptText(i18n("account.injector.server_url"));
+            txtServerUrl.setOnAction(e -> onAddNext());
+
+            lblCreationWarning = new Label();
+            lblCreationWarning.setWrapText(true);
+            HBox actions = new HBox();
             {
-                txtServerUrl = new JFXTextField();
-                txtServerUrl.setPromptText(i18n("account.injector.server_url"));
-                txtServerUrl.setOnAction(e -> onAddNext());
+                JFXButton cancel = new JFXButton(i18n("button.cancel"));
+                cancel.getStyleClass().add("dialog-accept");
+                cancel.setOnAction(e -> onAddCancel());
 
-                lblCreationWarning = new Label();
-                lblCreationWarning.setWrapText(true);
-                HBox actions = new HBox();
-                {
-                    JFXButton cancel = new JFXButton(i18n("button.cancel"));
-                    cancel.getStyleClass().add("dialog-accept");
-                    cancel.setOnAction(e -> onAddCancel());
+                nextPane = new SpinnerPane();
+                nextPane.getStyleClass().add("small-spinner-pane");
+                btnAddNext = new JFXButton(i18n("wizard.next"));
+                btnAddNext.getStyleClass().add("dialog-accept");
+                btnAddNext.setOnAction(e -> onAddNext());
+                nextPane.setContent(btnAddNext);
 
-                    nextPane = new SpinnerPane();
-                    nextPane.getStyleClass().add("small-spinner-pane");
-                    btnAddNext = new JFXButton(i18n("wizard.next"));
-                    btnAddNext.getStyleClass().add("dialog-accept");
-                    btnAddNext.setOnAction(e -> onAddNext());
-                    nextPane.setContent(btnAddNext);
-
-                    actions.getChildren().setAll(cancel, nextPane);
-                }
-
-                addServerPane.setBody(txtServerUrl);
-                addServerPane.setActions(lblCreationWarning, actions);
+                actions.getChildren().setAll(cancel, nextPane);
             }
 
-            confirmServerPane = new JFXDialogLayout();
-            confirmServerPane.setHeading(new Label(i18n("account.injector.add")));
-            {
-                GridPane body = new GridPane();
-                body.setStyle("-fx-padding: 15 0 0 0;");
-                body.setVgap(15);
-                body.setHgap(15);
-                {
-                    body.getColumnConstraints().setAll(
-                            Lang.apply(new ColumnConstraints(), c -> c.setMaxWidth(100)),
-                            new ColumnConstraints()
-                    );
-
-                    lblServerUrl = new Label();
-                    GridPane.setColumnIndex(lblServerUrl, 1);
-                    GridPane.setRowIndex(lblServerUrl, 0);
-
-                    lblServerName = new Label();
-                    GridPane.setColumnIndex(lblServerName, 1);
-                    GridPane.setRowIndex(lblServerName, 1);
-
-                    lblServerWarning = new Label(i18n("account.injector.http"));
-                    lblServerWarning.setStyle("-fx-text-fill: red;");
-                    GridPane.setColumnIndex(lblServerWarning, 0);
-                    GridPane.setRowIndex(lblServerWarning, 2);
-                    GridPane.setColumnSpan(lblServerWarning, 2);
-
-                    body.getChildren().setAll(
-                            Lang.apply(new Label(i18n("account.injector.server_url")), l -> {
-                                GridPane.setColumnIndex(l, 0);
-                                GridPane.setRowIndex(l, 0);
-                            }),
-                            Lang.apply(new Label(i18n("account.injector.server_name")), l -> {
-                                GridPane.setColumnIndex(l, 0);
-                                GridPane.setRowIndex(l, 1);
-                            }),
-                            lblServerUrl, lblServerName, lblServerWarning
-                    );
-                }
-
-                JFXButton prevButton = new JFXButton(i18n("wizard.prev"));
-                prevButton.getStyleClass().add("dialog-cancel");
-                prevButton.setOnAction(e -> onAddPrev());
-
-                JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-                cancelButton.getStyleClass().add("dialog-cancel");
-                cancelButton.setOnAction(e -> onAddCancel());
-
-                JFXButton finishButton = new JFXButton(i18n("wizard.finish"));
-                finishButton.getStyleClass().add("dialog-accept");
-                finishButton.setOnAction(e -> onAddFinish());
-
-                confirmServerPane.setBody(body);
-                confirmServerPane.setActions(prevButton, cancelButton, finishButton);
-            }
-
-            root.setContent(addServerPane, ContainerAnimations.NONE.getAnimationProducer());
+            addServerPane.setBody(txtServerUrl);
+            addServerPane.setActions(lblCreationWarning, actions);
         }
 
-        this.getChildren().setAll(root);
+        confirmServerPane = new JFXDialogLayout();
+        confirmServerPane.setHeading(new Label(i18n("account.injector.add")));
+        {
+            GridPane body = new GridPane();
+            body.setStyle("-fx-padding: 15 0 0 0;");
+            body.setVgap(15);
+            body.setHgap(15);
+            {
+                body.getColumnConstraints().setAll(
+                        Lang.apply(new ColumnConstraints(), c -> c.setMaxWidth(100)),
+                        new ColumnConstraints()
+                );
+
+                lblServerUrl = new Label();
+                GridPane.setColumnIndex(lblServerUrl, 1);
+                GridPane.setRowIndex(lblServerUrl, 0);
+
+                lblServerName = new Label();
+                GridPane.setColumnIndex(lblServerName, 1);
+                GridPane.setRowIndex(lblServerName, 1);
+
+                lblServerWarning = new Label(i18n("account.injector.http"));
+                lblServerWarning.setStyle("-fx-text-fill: red;");
+                GridPane.setColumnIndex(lblServerWarning, 0);
+                GridPane.setRowIndex(lblServerWarning, 2);
+                GridPane.setColumnSpan(lblServerWarning, 2);
+
+                body.getChildren().setAll(
+                        Lang.apply(new Label(i18n("account.injector.server_url")), l -> {
+                            GridPane.setColumnIndex(l, 0);
+                            GridPane.setRowIndex(l, 0);
+                        }),
+                        Lang.apply(new Label(i18n("account.injector.server_name")), l -> {
+                            GridPane.setColumnIndex(l, 0);
+                            GridPane.setRowIndex(l, 1);
+                        }),
+                        lblServerUrl, lblServerName, lblServerWarning
+                );
+            }
+
+            JFXButton prevButton = new JFXButton(i18n("wizard.prev"));
+            prevButton.getStyleClass().add("dialog-cancel");
+            prevButton.setOnAction(e -> onAddPrev());
+
+            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+            cancelButton.getStyleClass().add("dialog-cancel");
+            cancelButton.setOnAction(e -> onAddCancel());
+
+            JFXButton finishButton = new JFXButton(i18n("wizard.finish"));
+            finishButton.getStyleClass().add("dialog-accept");
+            finishButton.setOnAction(e -> onAddFinish());
+
+            confirmServerPane.setBody(body);
+            confirmServerPane.setActions(prevButton, cancelButton, finishButton);
+        }
+
+        this.setContent(addServerPane, ContainerAnimations.NONE.getAnimationProducer());
 
         lblCreationWarning.maxWidthProperty().bind(((FlowPane) lblCreationWarning.getParent()).widthProperty());
         btnAddNext.disableProperty().bind(txtServerUrl.textProperty().isEmpty());
@@ -202,7 +196,7 @@ public class AddAuthlibInjectorServerPane extends StackPane implements DialogAwa
 
                 lblServerWarning.setVisible("http".equals(NetworkUtils.toURL(serverBeingAdded.getUrl()).getProtocol()));
 
-                root.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT.getAnimationProducer());
+                this.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT.getAnimationProducer());
             } else {
                 LOG.log(Level.WARNING, "Failed to resolve auth server: " + url, exception);
                 lblCreationWarning.setText(resolveFetchExceptionMessage(exception));
@@ -212,7 +206,7 @@ public class AddAuthlibInjectorServerPane extends StackPane implements DialogAwa
     }
 
     private void onAddPrev() {
-        root.setContent(addServerPane, ContainerAnimations.SWIPE_RIGHT.getAnimationProducer());
+        this.setContent(addServerPane, ContainerAnimations.SWIPE_RIGHT.getAnimationProducer());
     }
 
     private void onAddFinish() {
