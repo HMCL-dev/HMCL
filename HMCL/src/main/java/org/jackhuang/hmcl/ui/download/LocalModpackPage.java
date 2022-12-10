@@ -44,7 +44,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 
-import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -78,10 +77,6 @@ public final class LocalModpackPage extends ModpackPage {
                             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
                 }
             });
-
-            btnInstall.disableProperty().bind(
-                    createBooleanBinding(txtModpackName::validate, txtModpackName.textProperty())
-                            .not());
         }
 
         File selectedFile;

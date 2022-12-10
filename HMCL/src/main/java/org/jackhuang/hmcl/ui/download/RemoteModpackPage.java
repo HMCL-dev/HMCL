@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
-import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -41,14 +40,6 @@ public final class RemoteModpackPage extends ModpackPage {
 
     public RemoteModpackPage(WizardController controller) {
         super(controller);
-
-        Profile profile = (Profile) controller.getSettings().get("PROFILE");
-
-        Optional<String> name = tryCast(controller.getSettings().get(MODPACK_NAME), String.class);
-        if (name.isPresent()) {
-            txtModpackName.setText(name.get());
-            txtModpackName.setDisable(true);
-        }
 
         manifest = tryCast(controller.getSettings().get(MODPACK_SERVER_MANIFEST), ServerModpackManifest.class)
                 .orElseThrow(() -> new IllegalStateException("MODPACK_SERVER_MANIFEST should exist"));
@@ -66,16 +57,18 @@ public final class RemoteModpackPage extends ModpackPage {
         lblVersion.setText(manifest.getVersion());
         lblAuthor.setText(manifest.getAuthor());
 
-        if (!name.isPresent()) {
+        Profile profile = (Profile) controller.getSettings().get("PROFILE");
+        Optional<String> name = tryCast(controller.getSettings().get(MODPACK_NAME), String.class);
+        if (name.isPresent()) {
+            txtModpackName.setText(name.get());
+            txtModpackName.setDisable(true);
+        } else {
             // trim: https://github.com/huanghongxun/HMCL/issues/962
             txtModpackName.setText(manifest.getName().trim());
             txtModpackName.getValidators().addAll(
                     new RequiredValidator(),
                     new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().versionIdConflicts(str)),
                     new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
-            btnInstall.disableProperty().bind(
-                    createBooleanBinding(txtModpackName::validate, txtModpackName.textProperty())
-                            .not());
         }
     }
 
