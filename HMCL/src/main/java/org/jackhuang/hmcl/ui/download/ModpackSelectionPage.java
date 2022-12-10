@@ -68,8 +68,8 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         this.setSpacing(8);
         this.getChildren().setAll(
                 title,
-                createButton("modpack.choose.local", "modpack.choose.local.detail", this::onChooseLocalFile),
-                createButton("modpack.choose.remote", "modpack.choose.remote.detail", this::onChooseRemoteFile)
+                createButton("local", this::onChooseLocalFile),
+                createButton("remote", this::onChooseRemoteFile)
         );
 
         Optional<File> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), File.class);
@@ -85,7 +85,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         });
     }
 
-    private JFXButton createButton(String titleKey, String detailKey, Runnable action) {
+    private JFXButton createButton(String type, Runnable action) {
         JFXButton button = new JFXButton();
 
         button.getStyleClass().add("card");
@@ -95,7 +95,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
 
         BorderPane graphic = new BorderPane();
         graphic.setMouseTransparent(true);
-        graphic.setLeft(new TwoLineListItem(i18n(titleKey), i18n(detailKey)));
+        graphic.setLeft(new TwoLineListItem(i18n("modpack.choose." + type), i18n("modpack.choose." + type + ".detail")));
 
         SVGPath arrow = new SVGPath();
         arrow.setContent(SVG.ARROW_RIGHT);
