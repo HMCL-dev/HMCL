@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
@@ -61,13 +60,16 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
     public ModpackSelectionPage(WizardController controller) {
         this.controller = controller;
 
+        Label title = new Label(i18n("install.modpack"));
+        title.setPadding(new Insets(8));
+
         this.getStyleClass().add("jfx-list-view");
         this.setMaxSize(400, 150);
         this.setSpacing(8);
         this.getChildren().setAll(
-                Lang.apply(new Label(i18n("install.modpack")), title -> title.setPadding(new Insets(8))),
-                createButton(i18n("modpack.choose.local"), i18n("modpack.choose.local.detail"), this::onChooseLocalFile),
-                createButton(i18n("modpack.choose.remote"), i18n("modpack.choose.remote.detail"), this::onChooseRemoteFile)
+                title,
+                createButton("modpack.choose.local", "modpack.choose.local.detail", this::onChooseLocalFile),
+                createButton("modpack.choose.remote", "modpack.choose.remote.detail", this::onChooseRemoteFile)
         );
 
         Optional<File> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), File.class);
@@ -83,7 +85,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         });
     }
 
-    private JFXButton createButton(String title, String detail, Runnable action) {
+    private JFXButton createButton(String titleKey, String detailKey, Runnable action) {
         JFXButton button = new JFXButton();
 
         button.getStyleClass().add("card");
@@ -93,7 +95,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
 
         BorderPane graphic = new BorderPane();
         graphic.setMouseTransparent(true);
-        graphic.setLeft(new TwoLineListItem(title, detail));
+        graphic.setLeft(new TwoLineListItem(i18n(titleKey), i18n(detailKey)));
 
         SVGPath arrow = new SVGPath();
         arrow.setContent(SVG.ARROW_RIGHT);

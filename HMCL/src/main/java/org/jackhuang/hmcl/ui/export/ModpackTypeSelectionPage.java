@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
-import org.jackhuang.hmcl.util.Lang;
 
 import java.util.Map;
 
@@ -45,10 +44,13 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
     public ModpackTypeSelectionPage(WizardController controller) {
         this.controller = controller;
 
+        Label title = new Label(i18n("modpack.export.as"));
+        title.setPadding(new Insets(8));
+
         this.getStyleClass().add("jfx-list-view");
         this.setMaxSize(300, 150);
         this.getChildren().setAll(
-                Lang.apply(new Label(i18n("modpack.export.as")), title -> title.setPadding(new Insets(8))),
+                title,
                 createButton("modpack.type.mcbbs", "modpack.type.mcbbs.export", MODPACK_TYPE_MCBBS, McbbsModpackExportTask.OPTION),
                 createButton("modpack.type.multimc", "modpack.type.multimc.export", MODPACK_TYPE_MULTIMC, MultiMCModpackExportTask.OPTION),
                 createButton("modpack.type.server", "modpack.type.server.export", MODPACK_TYPE_SERVER, ServerModpackExportTask.OPTION)
