@@ -51,13 +51,13 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
         this.setMaxSize(300, 150);
         this.getChildren().setAll(
                 title,
-                createButton("modpack.type.mcbbs", "modpack.type.mcbbs.export", MODPACK_TYPE_MCBBS, McbbsModpackExportTask.OPTION),
-                createButton("modpack.type.multimc", "modpack.type.multimc.export", MODPACK_TYPE_MULTIMC, MultiMCModpackExportTask.OPTION),
-                createButton("modpack.type.server", "modpack.type.server.export", MODPACK_TYPE_SERVER, ServerModpackExportTask.OPTION)
+                createButton(MODPACK_TYPE_MCBBS, McbbsModpackExportTask.OPTION),
+                createButton(MODPACK_TYPE_MULTIMC, MultiMCModpackExportTask.OPTION),
+                createButton(MODPACK_TYPE_SERVER, ServerModpackExportTask.OPTION)
         );
     }
 
-    private JFXButton createButton(String titleKey, String detailKey, String type, ModpackExportInfo.Options option) {
+    private JFXButton createButton(String type, ModpackExportInfo.Options option) {
         JFXButton button = new JFXButton();
         button.setOnAction(e -> {
             controller.getSettings().put(MODPACK_TYPE, type);
@@ -69,7 +69,7 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
 
         BorderPane graphic = new BorderPane();
         graphic.setMouseTransparent(true);
-        graphic.setLeft(new TwoLineListItem(i18n(titleKey), i18n(detailKey)));
+        graphic.setLeft(new TwoLineListItem(i18n("modpack.type." + type), i18n("modpack.type." + type + ".export")));
 
         SVGPath arrow = new SVGPath();
         arrow.setContent(SVG.ARROW_RIGHT);
