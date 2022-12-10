@@ -86,10 +86,10 @@ public class Theme {
     public String[] getStylesheets(String overrideFontFamily) {
         String css = "/assets/css/blue.css";
 
-        Color textFill = getForegroundColor();
         String fontFamily = System.getProperty("hmcl.font.override", overrideFontFamily);
 
-        if (true) {
+        if (fontFamily != null || !this.color.equalsIgnoreCase(BLUE.color)) {
+            Color textFill = getForegroundColor();
             try {
                 File temp = File.createTempFile("hmcl", ".css");
                 FileUtils.writeText(temp, IOUtils.readFullyAsString(Theme.class.getResourceAsStream("/assets/css/custom.css"))
