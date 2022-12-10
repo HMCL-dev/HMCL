@@ -142,7 +142,7 @@ public class PersonalizationPage extends StackPane {
                         HBox hBox = new HBox();
                         hBox.setSpacing(3);
 
-                        FontComboBox cboLogFont = new FontComboBox(12);
+                        FontComboBox cboLogFont = new FontComboBox();
                         cboLogFont.valueProperty().bindBidirectional(config().fontFamilyProperty());
 
                         JFXTextField txtLogFontSize = new JFXTextField();
@@ -192,7 +192,7 @@ public class PersonalizationPage extends StackPane {
                         HBox hBox = new HBox();
                         hBox.setSpacing(8);
 
-                        FontComboBox cboFont = new FontComboBox(12);
+                        FontComboBox cboFont = new FontComboBox();
                         cboFont.valueProperty().bindBidirectional(config().launcherFontFamilyProperty());
 
                         JFXButton clearButton = new JFXButton();

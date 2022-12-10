@@ -289,9 +289,8 @@ public final class LogWindow extends Stage {
                         listView.scrollTo(listView.getItems().size() - 1);
                 });
 
-                String fontFamily = Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT);
-
-                listView.setStyle("-fx-font-family: " + fontFamily + "; -fx-font-size: " + config().getFontSize() + "px;");
+                listView.setStyle("-fx-font-family: " + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)
+                        + "; -fx-font-size: " + config().getFontSize() + "px;");
                 MutableObject<Object> lastCell = new MutableObject<>();
                 listView.setCellFactory(x -> new ListCell<Log>() {
                     {
