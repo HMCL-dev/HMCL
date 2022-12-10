@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -120,25 +121,35 @@ public class Theme {
     public static Optional<Theme> getTheme(String name) {
         if (name == null)
             return Optional.empty();
-        else if (name.equalsIgnoreCase("blue"))
-            return Optional.of(BLUE);
-        else if (name.equalsIgnoreCase("darker_blue"))
-            return Optional.of(custom("#283593"));
-        else if (name.equalsIgnoreCase("green"))
-            return Optional.of(custom("#43A047"));
-        else if (name.equalsIgnoreCase("orange"))
-            return Optional.of(custom("#E67E22"));
-        else if (name.equalsIgnoreCase("purple"))
-            return Optional.of(custom("#9C27B0"));
-        else if (name.equalsIgnoreCase("red"))
-            return Optional.of(custom("#F44336"));
-
-        if (name.startsWith("#"))
+        else if (name.startsWith("#"))
             try {
                 Color.web(name);
                 return Optional.of(custom(name));
             } catch (IllegalArgumentException ignore) {
             }
+        else {
+            String color = null;
+            switch (name.toLowerCase(Locale.ROOT)) {
+                case "blue":
+                    return Optional.of(BLUE);
+                case "darker_blue":
+                    color = "#283593";
+                    break;
+                case "green":
+                    color = "#43A047";
+                    break;
+                case "orange":
+                    color = "#E67E22";
+                    break;
+                case "purple":
+                    color = "#9C27B0";
+                    break;
+                case "red":
+                    color = "#F44336";
+            }
+            if (color != null)
+                return Optional.of(new Theme(name, color));
+        }
 
         return Optional.empty();
     }
