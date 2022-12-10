@@ -21,7 +21,6 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Control;
@@ -119,7 +118,6 @@ public class InstallersPage extends Control implements WizardPage {
     public void cleanup(Map<String, Object> settings) {
     }
 
-    @FXML
     protected void onInstall() {
         controller.getSettings().put("name", txtName.getText());
         controller.onFinish();

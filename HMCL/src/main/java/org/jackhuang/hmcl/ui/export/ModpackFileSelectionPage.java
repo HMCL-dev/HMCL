@@ -17,17 +17,18 @@
  */
 package org.jackhuang.hmcl.ui.export;
 
+import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTreeView;
-import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.CheckBoxTreeItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
@@ -47,12 +48,10 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /**
  * @author huangyuhui
  */
-public final class ModpackFileSelectionPage extends StackPane implements WizardPage {
+public final class ModpackFileSelectionPage extends BorderPane implements WizardPage {
     private final WizardController controller;
     private final String version;
     private final ModAdviser adviser;
-    @FXML
-    private JFXTreeView<String> treeView;
     private final CheckBoxTreeItem<String> rootNode;
 
     public ModpackFileSelectionPage(WizardController controller, Profile profile, String version, ModAdviser adviser) {
@@ -60,10 +59,26 @@ public final class ModpackFileSelectionPage extends StackPane implements WizardP
         this.version = version;
         this.adviser = adviser;
 
-        FXUtils.loadFXML(this, "/assets/fxml/modpack/selection.fxml");
+        JFXTreeView<String> treeView = new JFXTreeView<>();
         rootNode = getTreeItem(profile.getRepository().getRunDirectory(version), "minecraft");
         treeView.setRoot(rootNode);
         treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
+        this.setCenter(treeView);
+
+        HBox nextPane = new HBox();
+        nextPane.setPadding(new Insets(16, 16, 16, 0));
+        nextPane.setAlignment(Pos.CENTER_RIGHT);
+        {
+            JFXButton btnNext = new JFXButton(i18n("wizard.next"));
+            btnNext.getStyleClass().add("jfx-button-raised");
+            btnNext.setPrefSize(100, 40);
+            btnNext.setButtonType(JFXButton.ButtonType.RAISED);
+            btnNext.setOnAction(e -> onNext());
+
+            nextPane.getChildren().setAll(btnNext);
+        }
+
+        this.setBottom(nextPane);
     }
 
     private CheckBoxTreeItem<String> getTreeItem(File file, String basePath) {
@@ -145,7 +160,6 @@ public final class ModpackFileSelectionPage extends StackPane implements WizardP
         controller.getSettings().remove(MODPACK_FILE_SELECTION);
     }
 
-    @FXML
     private void onNext() {
         ArrayList<String> list = new ArrayList<>();
         getFilesNeeded(rootNode, "minecraft", list);

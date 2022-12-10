@@ -28,7 +28,6 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WeakChangeListener;
 import javafx.beans.value.WritableValue;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -52,7 +51,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
-import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
@@ -277,17 +275,6 @@ public final class FXUtils {
 
     public static void smoothScrolling(ScrollPane scrollPane) {
         JFXScrollPane.smoothScrolling(scrollPane);
-    }
-
-    public static void loadFXML(Node node, String absolutePath) {
-        FXMLLoader loader = new FXMLLoader(node.getClass().getResource(absolutePath), I18n.getResourceBundle());
-        loader.setRoot(node);
-        loader.setController(node);
-        try {
-            loader.load();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     public static void installFastTooltip(Node node, Tooltip tooltip) {
