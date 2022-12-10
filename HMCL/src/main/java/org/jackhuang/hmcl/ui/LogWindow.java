@@ -37,6 +37,7 @@ import javafx.stage.Stage;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -287,7 +288,10 @@ public final class LogWindow extends Stage {
                     if (!listView.getItems().isEmpty() && control.autoScroll.get())
                         listView.scrollTo(listView.getItems().size() - 1);
                 });
-                listView.setStyle("-fx-font-family: " + config().getFontFamily() + "; -fx-font-size: " + config().getFontSize() + "px;");
+
+                String fontFamily = Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT);
+
+                listView.setStyle("-fx-font-family: " + fontFamily + "; -fx-font-size: " + config().getFontSize() + "px;");
                 MutableObject<Object> lastCell = new MutableObject<>();
                 listView.setCellFactory(x -> new ListCell<Log>() {
                     {
