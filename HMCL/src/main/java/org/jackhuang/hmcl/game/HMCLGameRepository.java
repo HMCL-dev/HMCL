@@ -454,7 +454,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public static long getAllocatedMemory(long minimum, long available, boolean auto) {
         if (auto) {
-            available -= 256 * 1024 * 1024; // Reserve 256MB memory for off-heap memory and HMCL itself
+            available -= 384 * 1024 * 1024; // Reserve 384MiB memory for off-heap memory and HMCL itself
             if (available <= 0) {
                 return minimum;
             }
@@ -463,7 +463,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             final long suggested = Math.min(available <= threshold
                             ? (long) (available * 0.8)
                             : (long) (threshold * 0.8 + (available - threshold) * 0.2),
-                    32736L * 1024 * 1024); // Limit the maximum suggested memory to ensure that compressed oops are available
+                    16384L * 1024 * 1024);
             return Math.max(minimum, suggested);
         } else {
             return minimum;
