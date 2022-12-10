@@ -24,10 +24,8 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,6 +47,11 @@ public class Theme {
             Color.web("#9C27B0"), // purple
             Color.web("#B71C1C")  // red
     };
+
+    public static Theme getTheme() {
+        Theme theme = config().getTheme();
+        return theme == null ? BLUE : theme;
+    }
 
     private final Color paint;
     private final String color;
@@ -73,7 +76,7 @@ public class Theme {
     }
 
     public boolean isLight() {
-        return Color.web(color).grayscale().getRed() >= 0.5;
+        return paint.grayscale().getRed() >= 0.5;
     }
 
     public Color getForegroundColor() {
@@ -81,33 +84,31 @@ public class Theme {
     }
 
     public String[] getStylesheets(String overrideFontFamily) {
-        Color textFill = getForegroundColor();
+        String css = "/assets/css/blue.css";
 
+        Color textFill = getForegroundColor();
         String fontFamily = System.getProperty("hmcl.font.override", overrideFontFamily);
 
-        String css;
-        try {
-            File temp = File.createTempFile("hmcl", ".css");
-            FileUtils.writeText(temp, IOUtils.readFullyAsString(ResourceNotFoundError.getResourceAsStream("/assets/css/custom.css"))
-                    .replace("%base-color%", color)
-                    .replace("%base-red%", Integer.toString((int)Math.ceil(paint.getRed() * 256)))
-                    .replace("%base-green%", Integer.toString((int)Math.ceil(paint.getGreen() * 256)))
-                    .replace("%base-blue%", Integer.toString((int)Math.ceil(paint.getBlue() * 256)))
-                    .replace("%base-rippler-color%", String.format("rgba(%d, %d, %d, 0.3)", (int) Math.ceil(paint.getRed() * 256), (int) Math.ceil(paint.getGreen() * 256), (int) Math.ceil(paint.getBlue() * 256)))
-                    .replace("%disabled-font-color%", String.format("rgba(%d, %d, %d, 0.7)", (int) Math.ceil(textFill.getRed() * 256), (int) Math.ceil(textFill.getGreen() * 256), (int) Math.ceil(textFill.getBlue() * 256)))
-                    .replace("%font-color%", getColorDisplayName(getForegroundColor()))
-                    .replace("%font%", Optional.ofNullable(fontFamily).map(f -> "-fx-font-family: \"" + f + "\";").orElse("")));
-            temp.deleteOnExit();
-            css = temp.toURI().toString();
-        } catch (IOException | NullPointerException e) {
-            Logging.LOG.log(Level.SEVERE, "Unable to create theme stylesheet. Fallback to blue theme.", e);
-            css = "/assets/css/blue.css";
+        if (true) {
+            try {
+                File temp = File.createTempFile("hmcl", ".css");
+                FileUtils.writeText(temp, IOUtils.readFullyAsString(Theme.class.getResourceAsStream("/assets/css/custom.css"))
+                        .replace("%base-color%", color)
+                        .replace("%base-red%", Integer.toString((int) Math.ceil(paint.getRed() * 256)))
+                        .replace("%base-green%", Integer.toString((int) Math.ceil(paint.getGreen() * 256)))
+                        .replace("%base-blue%", Integer.toString((int) Math.ceil(paint.getBlue() * 256)))
+                        .replace("%base-rippler-color%", String.format("rgba(%d, %d, %d, 0.3)", (int) Math.ceil(paint.getRed() * 256), (int) Math.ceil(paint.getGreen() * 256), (int) Math.ceil(paint.getBlue() * 256)))
+                        .replace("%disabled-font-color%", String.format("rgba(%d, %d, %d, 0.7)", (int) Math.ceil(textFill.getRed() * 256), (int) Math.ceil(textFill.getGreen() * 256), (int) Math.ceil(textFill.getBlue() * 256)))
+                        .replace("%font-color%", getColorDisplayName(getForegroundColor()))
+                        .replace("%font%", Optional.ofNullable(fontFamily).map(f -> "-fx-font-family: \"" + f + "\";").orElse("")));
+                temp.deleteOnExit();
+                css = temp.toURI().toString();
+            } catch (IOException | NullPointerException e) {
+                Logging.LOG.log(Level.SEVERE, "Unable to create theme stylesheet. Fallback to blue theme.", e);
+            }
         }
 
-        return new String[]{
-                css,
-                "/assets/css/root.css"
-        };
+        return new String[]{css, "/assets/css/root.css"};
     }
 
     public static Theme custom(String color) {
@@ -120,7 +121,7 @@ public class Theme {
         if (name == null)
             return Optional.empty();
         else if (name.equalsIgnoreCase("blue"))
-            return Optional.of(custom("#5C6BC0"));
+            return Optional.of(BLUE);
         else if (name.equalsIgnoreCase("darker_blue"))
             return Optional.of(custom("#283593"));
         else if (name.equalsIgnoreCase("green"))
@@ -146,17 +147,26 @@ public class Theme {
         return c != null ? String.format("#%02x%02x%02x", Math.round(c.getRed() * 255.0D), Math.round(c.getGreen() * 255.0D), Math.round(c.getBlue() * 255.0D)).toUpperCase() : null;
     }
 
+    private static final ObjectBinding<Color> BLACK_FILL = Bindings.createObjectBinding(() -> BLACK);
+    private static final ObjectBinding<Color> WHITE_FILL = Bindings.createObjectBinding(() -> Color.WHITE);
+    private static ObjectBinding<Color> FOREGROUND_FILL;
+
     public static ObjectBinding<Color> foregroundFillBinding() {
-        return BindingMapping.of(config().themeProperty())
-                .map(Theme::getForegroundColor);
+        if (FOREGROUND_FILL == null)
+            FOREGROUND_FILL = Bindings.createObjectBinding(
+                    () -> Theme.getTheme().getForegroundColor(),
+                    config().themeProperty()
+            );
+
+        return FOREGROUND_FILL;
     }
 
     public static ObjectBinding<Color> blackFillBinding() {
-        return Bindings.createObjectBinding(() -> BLACK);
+        return BLACK_FILL;
     }
 
     public static ObjectBinding<Color> whiteFillBinding() {
-        return Bindings.createObjectBinding(() -> Color.WHITE);
+        return WHITE_FILL;
     }
 
     public static class TypeAdapter extends com.google.gson.TypeAdapter<Theme> {

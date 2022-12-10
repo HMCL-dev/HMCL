@@ -72,7 +72,7 @@ public class PersonalizationPage extends StackPane {
             themeColorPickerContainer.setMinHeight(30);
             themePane.setRight(themeColorPickerContainer);
 
-            ColorPicker picker = new ColorPicker(Color.web(config().getTheme().getColor()));
+            ColorPicker picker = new ColorPicker(Color.web(Theme.getTheme().getColor()));
             picker.getCustomColors().setAll(Theme.SUGGESTED_COLORS);
             picker.setOnAction(e -> {
                 Theme theme = Theme.custom(Theme.getColorDisplayName(picker.getValue()));
@@ -210,7 +210,7 @@ public class PersonalizationPage extends StackPane {
                         () -> Font.font(config().getLauncherFontFamily(), 12),
                         config().launcherFontFamilyProperty()));
                 config().launcherFontFamilyProperty().addListener((a, b, newValue) -> {
-                    Controllers.getScene().getStylesheets().setAll(config().getTheme().getStylesheets(newValue));
+                    Controllers.getScene().getStylesheets().setAll(Theme.getTheme().getStylesheets(newValue));
                 });
 
                 vbox.getChildren().add(lblFontDisplay);
