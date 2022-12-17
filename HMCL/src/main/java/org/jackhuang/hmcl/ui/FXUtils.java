@@ -94,6 +94,8 @@ public final class FXUtils {
     private FXUtils() {
     }
 
+    public static String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
+
     public static void runInFX(Runnable runnable) {
         if (Platform.isFxApplicationThread()) {
             runnable.run();

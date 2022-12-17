@@ -36,6 +36,8 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -87,7 +89,7 @@ public final class LogWindow extends Stage {
 
     public LogWindow() {
         setScene(new Scene(impl, 800, 480));
-        getScene().getStylesheets().addAll(config().getTheme().getStylesheets(config().getLauncherFontFamily()));
+        getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("logwindow.title"));
         getIcons().add(newImage("/assets/img/icon.png"));
 
@@ -286,7 +288,9 @@ public final class LogWindow extends Stage {
                     if (!listView.getItems().isEmpty() && control.autoScroll.get())
                         listView.scrollTo(listView.getItems().size() - 1);
                 });
-                listView.setStyle("-fx-font-family: " + config().getFontFamily() + "; -fx-font-size: " + config().getFontSize() + "px;");
+
+                listView.setStyle("-fx-font-family: " + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)
+                        + "; -fx-font-size: " + config().getFontSize() + "px;");
                 MutableObject<Object> lastCell = new MutableObject<>();
                 listView.setCellFactory(x -> new ListCell<Log>() {
                     {
