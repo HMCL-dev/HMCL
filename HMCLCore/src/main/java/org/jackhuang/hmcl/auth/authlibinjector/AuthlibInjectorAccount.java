@@ -163,7 +163,8 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         if (obj == null || obj.getClass() != AuthlibInjectorAccount.class)
             return false;
         AuthlibInjectorAccount another = (AuthlibInjectorAccount) obj;
-        return characterUUID.equals(another.characterUUID) && server.equals(another.server);
+        return isPortable() == another.isPortable()
+                && characterUUID.equals(another.characterUUID) && server.equals(another.server);
     }
 
     @Override

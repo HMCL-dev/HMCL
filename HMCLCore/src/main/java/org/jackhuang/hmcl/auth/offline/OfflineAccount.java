@@ -86,6 +86,11 @@ public class OfflineAccount extends Account {
         return username;
     }
 
+    @Override
+    public String getIdentifier() {
+        return username + ":" + username;
+    }
+
     public Skin getSkin() {
         return skin;
     }
@@ -222,6 +227,6 @@ public class OfflineAccount extends Account {
         if (!(obj instanceof OfflineAccount))
             return false;
         OfflineAccount another = (OfflineAccount) obj;
-        return username.equals(another.username);
+        return isPortable() == another.isPortable() && username.equals(another.username);
     }
 }

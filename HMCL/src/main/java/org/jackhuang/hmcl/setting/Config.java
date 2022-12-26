@@ -51,7 +51,7 @@ public final class Config implements Cloneable, Observable {
 
     public static final int CURRENT_UI_VERSION = 0;
 
-    private static final Gson CONFIG_GSON = new GsonBuilder()
+    public static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
             .registerTypeAdapter(ObservableList.class, new ObservableListCreator())
             .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
@@ -141,6 +141,9 @@ public final class Config implements Cloneable, Observable {
 
     @SerializedName("configurations")
     private SimpleMapProperty<String, Profile> configurations = new SimpleMapProperty<>(FXCollections.observableMap(new TreeMap<>()));
+
+    @SerializedName("selectedAccount")
+    private StringProperty selectedAccount = new SimpleStringProperty();
 
     @SerializedName("accounts")
     private ObservableList<Map<Object, Object>> accountStorages = FXCollections.observableArrayList();
@@ -477,6 +480,18 @@ public final class Config implements Cloneable, Observable {
 
     public MapProperty<String, Profile> getConfigurations() {
         return configurations;
+    }
+
+    public String getSelectedAccount() {
+        return selectedAccount.get();
+    }
+
+    public void setSelectedAccount(String selectedAccount) {
+        this.selectedAccount.set(selectedAccount);
+    }
+
+    public StringProperty selectedAccountProperty() {
+        return selectedAccount;
     }
 
     public ObservableList<Map<Object, Object>> getAccountStorages() {
