@@ -28,6 +28,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.game.TexturesLoader;
@@ -89,6 +90,38 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
+
+        JFXButton btnMove = new JFXButton();
+        SpinnerPane spinnerMove = new SpinnerPane();
+        spinnerMove.getStyleClass().add("small-spinner-pane");
+        btnMove.setOnMouseClicked(e -> {
+            Account account = skinnable.getAccount();
+            Accounts.getAccounts().remove(account);
+            if (account.isPortable()) {
+                account.setPortable(false);
+                Accounts.getAccounts().add(account);
+            } else {
+                account.setPortable(true);
+                int idx = 0;
+                for (int i = Accounts.getAccounts().size() - 1; i >= 0; i--) {
+                    if (Accounts.getAccounts().get(i).isPortable()) {
+                        idx = i + 1;
+                        break;
+                    }
+                }
+                Accounts.getAccounts().add(idx, account);
+            }
+        });
+        btnMove.getStyleClass().add("toggle-icon4");
+        if (skinnable.getAccount().isPortable()) {
+            btnMove.setGraphic(SVG.earth(Theme.blackFillBinding(), -1, -1));
+            runInFX(() -> FXUtils.installFastTooltip(btnMove, i18n("account.move_to_global")));
+        } else {
+            btnMove.setGraphic(SVG.export(Theme.blackFillBinding(), -1, -1));
+            runInFX(() -> FXUtils.installFastTooltip(btnMove, i18n("account.move_to_portable")));
+        }
+        spinnerMove.setContent(btnMove);
+        right.getChildren().add(spinnerMove);
 
         JFXButton btnRefresh = new JFXButton();
         SpinnerPane spinnerRefresh = new SpinnerPane();
