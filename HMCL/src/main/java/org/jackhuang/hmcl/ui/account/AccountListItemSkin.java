@@ -99,17 +99,20 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
             Accounts.getAccounts().remove(account);
             if (account.isPortable()) {
                 account.setPortable(false);
-                Accounts.getAccounts().add(account);
+                if (!Accounts.getAccounts().contains(account))
+                    Accounts.getAccounts().add(account);
             } else {
                 account.setPortable(true);
-                int idx = 0;
-                for (int i = Accounts.getAccounts().size() - 1; i >= 0; i--) {
-                    if (Accounts.getAccounts().get(i).isPortable()) {
-                        idx = i + 1;
-                        break;
+                if (!Accounts.getAccounts().contains(account)) {
+                    int idx = 0;
+                    for (int i = Accounts.getAccounts().size() - 1; i >= 0; i--) {
+                        if (Accounts.getAccounts().get(i).isPortable()) {
+                            idx = i + 1;
+                            break;
+                        }
                     }
+                    Accounts.getAccounts().add(idx, account);
                 }
-                Accounts.getAccounts().add(idx, account);
             }
         });
         btnMove.getStyleClass().add("toggle-icon4");
