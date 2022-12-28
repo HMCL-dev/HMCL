@@ -100,7 +100,7 @@ public class YggdrasilAccount extends ClassicAccount {
 
     @Override
     public String getIdentifier() {
-        return username + ":" + session.getSelectedProfile().getName();
+        return getUsername() + ":" + getUUID();
     }
 
     @Override
