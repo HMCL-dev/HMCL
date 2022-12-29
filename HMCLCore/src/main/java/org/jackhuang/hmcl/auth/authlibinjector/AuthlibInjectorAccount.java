@@ -154,6 +154,11 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     }
 
     @Override
+    public String getIdentifier() {
+        return server.getUrl() + ":" + super.getIdentifier();
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), server.hashCode());
     }
