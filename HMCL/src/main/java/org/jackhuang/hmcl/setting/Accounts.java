@@ -134,6 +134,7 @@ public final class Accounts {
             throw new IllegalArgumentException("Failed to determine account type: " + account);
     }
 
+    private static final String GLOBAL_PREFIX = "$GLOBAL:";
     private static final ObservableList<Map<Object, Object>> globalAccountStorages = FXCollections.observableArrayList();
 
     private static final ObservableList<Account> accounts = observableArrayList(account -> new Observable[] { account });
@@ -250,10 +251,20 @@ public final class Accounts {
 
         String selectedAccountIdentifier = config().getSelectedAccount();
         if (selected == null && selectedAccountIdentifier != null) {
+            boolean portable = true;
+            if (selectedAccountIdentifier.startsWith(GLOBAL_PREFIX)) {
+                portable = false;
+                selectedAccountIdentifier = selectedAccountIdentifier.substring(GLOBAL_PREFIX.length());
+            }
+
             for (Account account : accounts) {
                 if (selectedAccountIdentifier.equals(account.getIdentifier())) {
-                    selected = account;
-                    break;
+                    if (portable == account.isPortable()) {
+                        selected = account;
+                        break;
+                    } else if (selected == null) {
+                        selected = account;
+                    }
                 }
             }
         }
@@ -288,7 +299,10 @@ public final class Accounts {
         selectedAccount.addListener(listener);
         selectedAccount.addListener(onInvalidating(() -> {
             Account account = selectedAccount.get();
-            config().setSelectedAccount(account != null ? account.getIdentifier() : null);
+            if (account != null)
+                config().setSelectedAccount(account.isPortable() ? account.getIdentifier() : GLOBAL_PREFIX + account.getIdentifier());
+            else
+                config().setSelectedAccount(null);
         }));
         accounts.addListener(listener);
         accounts.addListener(onInvalidating(Accounts::updateAccountStorages));
