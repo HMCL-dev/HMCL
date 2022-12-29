@@ -154,6 +154,11 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     }
 
     @Override
+    public String getIdentifier() {
+        return server.getUrl() + ":" + super.getIdentifier();
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), server.hashCode());
     }
@@ -163,7 +168,8 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         if (obj == null || obj.getClass() != AuthlibInjectorAccount.class)
             return false;
         AuthlibInjectorAccount another = (AuthlibInjectorAccount) obj;
-        return characterUUID.equals(another.characterUUID) && server.equals(another.server);
+        return isPortable() == another.isPortable()
+                && characterUUID.equals(another.characterUUID) && server.equals(another.server);
     }
 
     @Override

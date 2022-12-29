@@ -89,7 +89,7 @@ public final class Controllers {
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
         accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
-        accountListPage.accountsProperty().bindContent(Accounts.accountsProperty());
+        accountListPage.accountsProperty().bindContent(Accounts.getAccounts());
         accountListPage.authServersProperty().bindContentBidirectional(config().getAuthlibInjectorServers());
         return accountListPage;
     });
