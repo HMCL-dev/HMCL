@@ -136,7 +136,8 @@ public class DefaultLauncher extends Launcher {
         if (options.getMaxMemory() != null && options.getMaxMemory() > 0)
             res.addDefault("-Xmx", options.getMaxMemory() + "m");
 
-        if (options.getMinMemory() != null && options.getMinMemory() > 0)
+        if (options.getMinMemory() != null && options.getMinMemory() > 0
+                && (options.getMaxMemory() == null || options.getMinMemory() <= options.getMaxMemory()))
             res.addDefault("-Xms", options.getMinMemory() + "m");
 
         if (options.getMetaspace() != null && options.getMetaspace() > 0)
