@@ -218,7 +218,7 @@ public final class JavaVersion {
     public static final JavaVersion CURRENT_JAVA;
 
     static {
-        Path currentExecutable = getExecutable(Paths.get(System.getProperty("java.home")));
+        Path currentExecutable = getExecutable(Paths.get(System.getProperty("java.home")).toAbsolutePath());
         try {
             currentExecutable = currentExecutable.toRealPath();
         } catch (IOException e) {
