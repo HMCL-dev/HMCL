@@ -46,6 +46,7 @@ import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
 
 import javax.swing.*;
@@ -269,7 +270,9 @@ public final class SelfDependencyPatcher {
                 .map(DependencyDescriptor::localPath)
                 .toArray(Path[]::new);
 
-        JavaFXPatcher.patch(modules, jars);
+        String[] addOpens = JarUtils.getManifestAttribute("Add-Opens", "").split(" ");
+
+        JavaFXPatcher.patch(modules, jars, addOpens);
     }
 
     /**

@@ -154,23 +154,15 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
             "Add-Opens" to listOf(
                 "java.base/java.lang",
                 "java.base/java.lang.reflect",
-                "javafx.graphics/javafx.css",
-                "javafx.base/com.sun.javafx.runtime",
-                "javafx.controls/com.sun.javafx.scene.control.behavior",
-                "javafx.controls/javafx.scene.control.skin",
-                "javafx.controls/com.sun.javafx.scene.control",
+                "java.base/jdk.internal.loader",
                 "javafx.base/com.sun.javafx.binding",
                 "javafx.base/com.sun.javafx.event",
-                "javafx.graphics/com.sun.javafx.stage"
-            ).joinToString(" "),
-            "Add-Exports" to listOf(
-                "java.base/jdk.internal.loader",
-                "javafx.controls/com.sun.javafx.scene.control.behavior",
-                "javafx.controls/javafx.scene.control.skin",
-                "javafx.controls/com.sun.javafx.scene.control",
-                "javafx.base/com.sun.javafx.binding",
+                "javafx.base/com.sun.javafx.runtime",
+                "javafx.graphics/javafx.css",
                 "javafx.graphics/com.sun.javafx.stage",
-                "javafx.base/com.sun.javafx.event"
+                "javafx.controls/com.sun.javafx.scene.control",
+                "javafx.controls/com.sun.javafx.scene.control.behavior",
+                "javafx.controls/javafx.scene.control.skin"
             ).joinToString(" ")
         )
     }
