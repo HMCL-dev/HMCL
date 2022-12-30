@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.util.StringUtils;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -276,18 +274,14 @@ public enum OperatingSystem {
         String home = System.getProperty("user.home", ".");
         switch (OperatingSystem.CURRENT_OS) {
             case LINUX:
-                String xdgData = System.getenv("XDG_DATA_HOME");
-                if (StringUtils.isNotBlank(xdgData)) {
-                    return Paths.get(xdgData, folder);
-                }
-                return Paths.get(home, ".local", "share", folder);
+                return Paths.get(home, "." + folder).toAbsolutePath();
             case WINDOWS:
                 String appdata = System.getenv("APPDATA");
-                return Paths.get(appdata == null ? home : appdata, "." + folder);
+                return Paths.get(appdata == null ? home : appdata, "." + folder).toAbsolutePath();
             case OSX:
-                return Paths.get(home, "Library", "Application Support", folder);
+                return Paths.get(home, "Library", "Application Support", folder).toAbsolutePath();
             default:
-                return Paths.get(home, folder);
+                return Paths.get(home, folder).toAbsolutePath();
         }
     }
 
