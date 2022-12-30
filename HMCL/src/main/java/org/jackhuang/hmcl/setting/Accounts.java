@@ -322,9 +322,7 @@ public final class Accounts {
             });
         }
 
-        if (!config().getAuthlibInjectorServers().isEmpty()) {
-            triggerAuthlibInjectorUpdateCheck();
-        }
+        triggerAuthlibInjectorUpdateCheck();
 
         Schedulers.io().execute(() -> {
             try {
@@ -387,6 +385,10 @@ public final class Accounts {
     }
 
     private static AuthlibInjectorServer getOrCreateAuthlibInjectorServer(String url) {
+        if (url.equals(FACTORY_LITTLE_SKIN.getServer().getUrl())) {
+            return FACTORY_LITTLE_SKIN.getServer();
+        }
+
         return config().getAuthlibInjectorServers().stream()
                 .filter(server -> url.equals(server.getUrl()))
                 .findFirst()
