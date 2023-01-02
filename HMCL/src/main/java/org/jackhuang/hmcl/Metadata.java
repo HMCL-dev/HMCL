@@ -45,8 +45,17 @@ public final class Metadata {
 
     public static final String BUILD_CHANNEL = JarUtils.getManifestAttribute("Build-Channel", "nightly");
 
-    public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getMinecraftDirectory();
+    public static final Path MINECRAFT_DIRECTORY;
     public static final Path HMCL_DIRECTORY;
+
+    static {
+        String minecraftDirectory = System.getProperty("hmcl.minecraft");
+        if (minecraftDirectory == null) {
+            MINECRAFT_DIRECTORY = OperatingSystem.getMinecraftDirectory();
+        } else {
+            MINECRAFT_DIRECTORY = Paths.get(minecraftDirectory).toAbsolutePath().normalize();
+        }
+    }
 
     static {
         String hmclHome = System.getProperty("hmcl.home");
