@@ -274,7 +274,7 @@ public enum OperatingSystem {
         String home = System.getProperty("user.home", ".");
         switch (OperatingSystem.CURRENT_OS) {
             case LINUX:
-                return Paths.get(home, "." + folder).toAbsolutePath();
+                return Paths.get(XDGBaseDirectory.getDataDirs(), folder);
             case WINDOWS:
                 String appdata = System.getenv("APPDATA");
                 return Paths.get(appdata == null ? home : appdata, "." + folder).toAbsolutePath();
@@ -282,6 +282,21 @@ public enum OperatingSystem {
                 return Paths.get(home, "Library", "Application Support", folder).toAbsolutePath();
             default:
                 return Paths.get(home, folder).toAbsolutePath();
+        }
+    }
+
+    public static Path getMinecraftDirectory() {
+        String home = System.getProperty("user.home", ".");
+        switch (OperatingSystem.CURRENT_OS) {
+            case LINUX:
+                return Paths.get(home, ".minecraft");
+            case WINDOWS:
+                String appdata = System.getenv("APPDATA");
+                return Paths.get(appdata == null ? home : appdata, ".minecraft").toAbsolutePath();
+            case OSX:
+                return Paths.get(home, "Library", "Application Support", ".minecraft").toAbsolutePath();
+            default:
+                return Paths.get(home, ".minecraft").toAbsolutePath();
         }
     }
 

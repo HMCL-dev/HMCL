@@ -19,7 +19,6 @@ package org.jackhuang.hmcl;
 
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.XDGBaseDirectory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,17 +45,13 @@ public final class Metadata {
 
     public static final String BUILD_CHANNEL = JarUtils.getManifestAttribute("Build-Channel", "nightly");
 
-    public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
+    public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getMinecraftDirectory();
     public static final Path HMCL_DIRECTORY;
 
     static {
         String hmclHome = System.getProperty("hmcl.home");
         if (hmclHome == null) {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                HMCL_DIRECTORY = Paths.get(XDGBaseDirectory.getDataHome(), "hmcl");
-            } else {
-                HMCL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
-            }
+            HMCL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
         } else {
             HMCL_DIRECTORY = Paths.get(hmclHome).toAbsolutePath().normalize();
         }
