@@ -42,7 +42,7 @@ public final class Metadata {
     public static final String HELP_URL = "https://hmcl.huangyuhui.net/help";
     public static final String CHANGELOG_URL = "https://docs.hmcl.net/changelog/";
     public static final String PUBLISH_URL = "https://www.mcbbs.net/thread-142335-1-1.html";
-    public static final String EULA_URL = "https://hmcl.huangyuhui.net/eula";
+    public static final String EULA_URL = "https://docs.hmcl.net/eula/hmcl.html";
 
     public static final String BUILD_CHANNEL = JarUtils.getManifestAttribute("Build-Channel", "nightly");
 
