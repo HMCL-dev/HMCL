@@ -25,7 +25,7 @@ import java.util.Map;
  * For default values and the specification, please refer to the freedesktop XDG
  * Base Directory Specification.
  */
-public class XDGBaseDirectory {
+public final class XDGBaseDirectory {
     private static final String XDG_CACHE_HOME = "XDG_CACHE_HOME";
     private static final String XDG_CONFIG_HOME = "XDG_CONFIG_HOME";
     private static final String XDG_CONFIG_DIRS = "XDG_CONFIG_DIRS";
