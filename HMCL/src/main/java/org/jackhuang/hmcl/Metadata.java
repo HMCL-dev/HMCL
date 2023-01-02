@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl;
 
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.XDGBaseDirectory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -53,12 +53,7 @@ public final class Metadata {
         String hmclHome = System.getProperty("hmcl.home");
         if (hmclHome == null) {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                String xdgData = System.getenv("XDG_DATA_HOME");
-                if (StringUtils.isNotBlank(xdgData)) {
-                    HMCL_DIRECTORY = Paths.get(xdgData, "hmcl").toAbsolutePath();
-                } else {
-                    HMCL_DIRECTORY = Paths.get(System.getProperty("user.home", "."), ".local", "share", "hmcl").toAbsolutePath();
-                }
+                HMCL_DIRECTORY = Paths.get(XDGBaseDirectory.getDataHome(), "hmcl");
             } else {
                 HMCL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
             }
