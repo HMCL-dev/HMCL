@@ -1,4 +1,3 @@
-
 /*
  * Hello Minecraft! Launcher
  * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
@@ -25,8 +24,6 @@ import java.util.Map;
  * Utilize the Base Directory Specification
  * For default values and the specification, please refer to the freedesktop XDG
  * Base Directory Specification.
- *
- * @see https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
  */
 public class XDGBaseDirectory {
     private static final String XDG_CACHE_HOME = "XDG_CACHE_HOME";
@@ -35,6 +32,10 @@ public class XDGBaseDirectory {
     private static final String XDG_DATA_HOME = "XDG_DATA_HOME";
     private static final String XDG_DATA_DIRS = "XDG_DATA_DIRS";
     private static final String XDG_RUNTIME_DIR = "XDG_RUNTIME_DIR";
+
+    private XDGBaseDirectory() {}
+
+
 
     private static Map<String, String> environment = System.getenv();
 
