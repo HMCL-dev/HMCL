@@ -576,7 +576,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         javaItem.setSelectedData(null);
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-            javaCustomOption.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe", "javaw.exe"));
+            javaCustomOption.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe"));
 
         enableSpecificSettings.addListener((a, b, newValue) -> {
             if (versionId == null) return;
