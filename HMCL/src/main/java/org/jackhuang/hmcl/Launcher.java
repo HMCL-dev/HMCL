@@ -107,15 +107,11 @@ public final class Launcher extends Application {
     }
 
     private static boolean isConfigInTempDir() {
-        if (!ConfigHolder.isNewlyCreated())
-            return false;
-
         String configPath = ConfigHolder.configLocation().toString();
 
         String tmpdir = System.getProperty("java.io.tmpdir");
         if (StringUtils.isNotBlank(tmpdir) && configPath.startsWith(tmpdir))
             return true;
-
 
         String[] tempFolderNames = {"Temp", "Cache", "Caches"};
         for (String name : tempFolderNames) {
@@ -133,7 +129,7 @@ public final class Launcher extends Application {
                     || configPath.startsWith("/var/tmp/")
                     || configPath.startsWith("/var/cache/")
                     || configPath.startsWith("/dev/shm/")
-                    || configPath.contains("/.local/share/Trash/");
+                    || configPath.contains("/Trash/");
         } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
             return configPath.startsWith("/var/folders/")
                     || configPath.startsWith("/private/var/folders/")
@@ -148,7 +144,7 @@ public final class Launcher extends Application {
     }
 
     private static void checkConfigInTempDir() {
-        if (isConfigInTempDir()) {
+        if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()) {
             ButtonType res = new Alert(Alert.AlertType.WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO)
                     .showAndWait()
                     .orElse(null);
