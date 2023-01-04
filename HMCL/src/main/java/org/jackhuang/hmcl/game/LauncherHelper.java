@@ -580,9 +580,7 @@ public final class LauncherHelper {
                 .addAction(link)
                 .yesOrNo(() -> {
                     downloadJavaImpl(javaVersion, profile.getDependency().getDownloadProvider())
-                            .thenAcceptAsync(downloadedJava -> {
-                                future.complete(downloadedJava);
-                            })
+                            .thenAcceptAsync(future::complete)
                             .exceptionally(throwable -> {
                                 Throwable resolvedException = resolveException(throwable);
                                 LOG.log(Level.WARNING, "Failed to download java", throwable);
@@ -592,9 +590,7 @@ public final class LauncherHelper {
                                 future.completeExceptionally(new CancellationException());
                                 return null;
                             });
-                }, () -> {
-                    future.completeExceptionally(new CancellationException());
-                }).build());
+                }, () -> future.completeExceptionally(new CancellationException())).build());
 
         return future;
     }
