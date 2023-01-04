@@ -19,17 +19,25 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.management.ManagementFactory;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class LogExporter {
     private LogExporter() {
@@ -66,6 +74,22 @@ public final class LogExporter {
                 zipper.putTextFile(Logging.getLogs(), "hmcl.log");
                 zipper.putTextFile(logs, "minecraft.log");
                 zipper.putTextFile(Logging.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
+
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(runDirectory, "hs_err_*.log")) {
+                    long processStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
+
+                    for (Path file : stream) {
+                        if (Files.isRegularFile(file)) {
+                            FileTime time = Files.readAttributes(file, BasicFileAttributes.class).creationTime();
+                            if (time.toMillis() >= processStartTime) {
+                                String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file));
+                                zipper.putTextFile(crashLog, file.getFileName().toString());
+                            }
+                        }
+                    }
+                } catch (Throwable e) {
+                    LOG.log(Level.WARNING, "Failed to find the vm crash log", e);
+                }
 
                 for (String id : versions) {
                     Path versionJson = baseDirectory.resolve("versions").resolve(id).resolve(id + ".json");
