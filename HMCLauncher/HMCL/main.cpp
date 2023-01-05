@@ -1,8 +1,9 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "main.h"
 #include "os.h"
 #include "java.h"
 #include "lang.h"
+#include "debug.h"
 
 Version J8(TEXT("8"));
 
@@ -17,8 +18,13 @@ LPCWSTR VENDOR_DIRS[] = {
 
 void RawLaunchJVM(const std::wstring &javaPath, const std::wstring &workdir,
                   const std::wstring &jarPath, const std::wstring &jvmOptions) {
-  if (MyCreateProcess(L"\"" + javaPath + L"\" " + jvmOptions + L" -jar \"" + jarPath + L"\"", workdir))
+  DEBUG_LOG("Check the Java path: %ls", javaPath.c_str())
+  std::wstring command = L"\"" + javaPath + L"\" " + jvmOptions + L" -jar \"" + jarPath + L"\"";
+  if (MyCreateProcess(command, workdir)) {
+    DEBUG_LOG("Start Process: %ls", command.c_str())
+    if (debugEnabled) system("pause");
     exit(EXIT_SUCCESS);
+  }
 }
 
 void LaunchJVM(const std::wstring &javaPath, const std::wstring &workdir,
@@ -40,9 +46,9 @@ void FindJavaInDirAndLaunchJVM(const std::wstring &baseDir, const std::wstring &
 
   if (hFind != INVALID_HANDLE_VALUE) {
     do {
-      std::wstring javaw = baseDir + data.cFileName + std::wstring(L"\\bin\\javaw.exe");
-      if (FindFirstFileExists(javaw.c_str(), 0)) {
-        LaunchJVM(javaw, workdir, jarPath, jvmOptions);
+      std::wstring java = baseDir + data.cFileName + std::wstring(L"\\bin\\java.exe");
+      if (FindFirstFileExists(java.c_str(), 0)) {
+        LaunchJVM(java, workdir, jarPath, jvmOptions);
       }
     } while (FindNextFile(hFind, &data));
     FindClose(hFind);
@@ -51,11 +57,22 @@ void FindJavaInDirAndLaunchJVM(const std::wstring &baseDir, const std::wstring &
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                       LPWSTR lpCmdLine, int nCmdShow) {
+  if (__argc == 2 && lstrcmp(L"--debug", __wargv[1]) == 0) {
+    EnableDebug();
+    DEBUG_LOG("Debug Mode: true")
+  }
+
   std::wstring path, exeName, jvmOptions;
 
   // Since Jar file is appended to this executable, we should first get the
   // location of JAR file.
-  if (ERROR_SUCCESS != MyGetModuleFileName(NULL, exeName)) return 1;
+  if (ERROR_SUCCESS != MyGetModuleFileName(NULL, exeName)) {
+    if (debugEnabled) {
+      DEBUG_LOG("Unable to determine the path of exe")
+      system("pause");
+    }
+    return 1;
+  }
 
   std::wstring workdir;
   size_t last_slash = exeName.find_last_of(L"/\\");
@@ -64,8 +81,14 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     exeName = exeName.substr(last_slash + 1);
   }
 
-  if (ERROR_SUCCESS != MyGetEnvironmentVariable(L"HMCL_JAVA_OPTS", jvmOptions)) {
-    jvmOptions = L"-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15"; // Default Options
+  DEBUG_LOG("EXE Path: %ls", exeName.c_str())
+  DEBUG_LOG("Working Directory: %ls", workdir.c_str())
+
+  if (ERROR_SUCCESS == MyGetEnvironmentVariable(L"HMCL_JAVA_OPTS", jvmOptions)) {
+    DEBUG_LOG("HMCL_JAVA_OPTS：%ls", jvmOptions.c_str());
+  } else {
+    jvmOptions = L"-Xmx1G -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15";  // Default Options
+    DEBUG_LOG("HMCL_JAVA_OPTS not set, use default value");
   }
 
   bool useChinese = GetUserDefaultUILanguage() == 2052; // zh-CN
@@ -86,6 +109,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   // Try downloading Java on Windows 7 or later
   bool isWin7OrLater = VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+  DEBUG_LOG("Windows 7 or later: %s", isWin7OrLater ? L"true" : L"false")
 
   SYSTEM_INFO systemInfo;
   GetNativeSystemInfo(&systemInfo);
@@ -93,16 +117,17 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   // First try the Java packaged together.
   bool isX64   = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
   bool isARM64 = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
+  DEBUG_LOG("OS Architecture: %s", isARM64 ? L"ARM64" : isX64 ? L"x64" : L"x86")
 
   if (isARM64) {
-    RawLaunchJVM(L"jre-arm64\\bin\\javaw.exe", workdir, exeName, jvmOptions);
+    RawLaunchJVM(L"jre-arm64\\bin\\java.exe", workdir, exeName, jvmOptions);
   }
   if (isX64) {
-    RawLaunchJVM(L"jre-x64\\bin\\javaw.exe", workdir, exeName, jvmOptions);
+    RawLaunchJVM(L"jre-x64\\bin\\java.exe", workdir, exeName, jvmOptions);
   }
-  RawLaunchJVM(L"jre-x86\\bin\\javaw.exe", workdir, exeName, jvmOptions);
+  RawLaunchJVM(L"jre-x86\\bin\\java.exe", workdir, exeName, jvmOptions);
 
-  if (FindJava(path)) LaunchJVM(path + L"\\bin\\javaw.exe", workdir, exeName, jvmOptions);
+  if (FindJava(path)) LaunchJVM(path + L"\\bin\\java.exe", workdir, exeName, jvmOptions);
 
   std::wstring programFiles;
 
@@ -160,14 +185,17 @@ error:
     } if (isX64) {
       downloadLink = L"https://aka.ms/download-jdk/microsoft-jdk-17-windows-x64.msi";
     } else {
-      downloadLink = L"https://download.bell-sw.com/java/17.0.4.1+1/bellsoft-jre17.0.4.1+1-windows-i586-full.msi";
+      downloadLink = L"https://download.bell-sw.com/java/17.0.5+8/bellsoft-jre17.0.5+8-windows-i586-full.msi";
     }
   } else {
     downloadLink = L"https://www.java.com";
   }
+  DEBUG_LOG("Unable to find Java, guide the user to access %ls", downloadLink)
 
   if (IDOK == MessageBox(NULL, useChinese ? ERROR_PROMPT_ZH : ERROR_PROMPT, useChinese ? ERROR_TITLE_ZH : ERROR_TITLE, MB_ICONWARNING | MB_OKCANCEL)) {
     ShellExecute(0, 0, downloadLink, 0, 0, SW_SHOW);
   }
+
+  if (debugEnabled) system("pause");
   return 1;
 }

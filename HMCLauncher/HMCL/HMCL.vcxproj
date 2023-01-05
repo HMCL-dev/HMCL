@@ -155,6 +155,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="debug.h" />
     <ClInclude Include="java.h" />
     <ClInclude Include="lang.h" />
     <ClInclude Include="main.h" />
@@ -165,6 +166,7 @@
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="debug.cpp" />
     <ClCompile Include="java.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="os.cpp" />
