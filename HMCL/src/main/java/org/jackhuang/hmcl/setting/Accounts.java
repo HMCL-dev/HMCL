@@ -17,11 +17,12 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.gson.reflect.TypeToken;
+import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyListProperty;
-import javafx.beans.property.ReadOnlyListWrapper;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.*;
@@ -36,14 +37,17 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.util.InvocationDispatcher;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Level;
 
 import static java.util.stream.Collectors.toList;
@@ -130,59 +134,20 @@ public final class Accounts {
             throw new IllegalArgumentException("Failed to determine account type: " + account);
     }
 
+    private static final String GLOBAL_PREFIX = "$GLOBAL:";
+    private static final ObservableList<Map<Object, Object>> globalAccountStorages = FXCollections.observableArrayList();
+
     private static final ObservableList<Account> accounts = observableArrayList(account -> new Observable[] { account });
-    private static final ReadOnlyListWrapper<Account> accountsWrapper = new ReadOnlyListWrapper<>(Accounts.class, "accounts", accounts);
-
-    private static final ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<Account>(Accounts.class, "selectedAccount") {
-        {
-            accounts.addListener(onInvalidating(this::invalidated));
-        }
-
-        @Override
-        protected void invalidated() {
-            // this methods first checks whether the current selection is valid
-            // if it's valid, the underlying storage will be updated
-            // otherwise, the first account will be selected as an alternative(or null if accounts is empty)
-            Account selected = get();
-            if (accounts.isEmpty()) {
-                if (selected == null) {
-                    // valid
-                } else {
-                    // the previously selected account is gone, we can only set it to null here
-                    set(null);
-                    return;
-                }
-            } else {
-                if (accounts.contains(selected)) {
-                    // valid
-                } else {
-                    // the previously selected account is gone
-                    set(accounts.get(0));
-                    return;
-                }
-            }
-            // selection is valid, store it
-            if (!initialized)
-                return;
-            updateAccountStorages();
-        }
-    };
+    private static final ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<>(Accounts.class, "selectedAccount");
 
     /**
      * True if {@link #init()} hasn't been called.
      */
     private static boolean initialized = false;
 
-    static {
-        accounts.addListener(onInvalidating(Accounts::updateAccountStorages));
-    }
-
     private static Map<Object, Object> getAccountStorage(Account account) {
         Map<Object, Object> storage = account.toStorage();
         storage.put("type", getLoginType(getAccountFactory(account)));
-        if (account == selectedAccount.get()) {
-            storage.put("selected", true);
-        }
         return storage;
     }
 
@@ -192,7 +157,67 @@ public final class Accounts {
         if (!initialized)
             return;
         // update storage
-        config().getAccountStorages().setAll(accounts.stream().map(Accounts::getAccountStorage).collect(toList()));
+
+        ArrayList<Map<Object, Object>> global = new ArrayList<>();
+        ArrayList<Map<Object, Object>> portable = new ArrayList<>();
+
+        for (Account account : accounts) {
+            Map<Object, Object> storage = getAccountStorage(account);
+            if (account.isPortable())
+                portable.add(storage);
+            else
+                global.add(storage);
+        }
+
+        if (!global.equals(globalAccountStorages))
+            globalAccountStorages.setAll(global);
+        if (!portable.equals(config().getAccountStorages()))
+            config().getAccountStorages().setAll(portable);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void loadGlobalAccountStorages() {
+        Path globalAccountsFile = Metadata.HMCL_DIRECTORY.resolve("accounts.json");
+        if (Files.exists(globalAccountsFile)) {
+            try (Reader reader = Files.newBufferedReader(globalAccountsFile)) {
+                globalAccountStorages.setAll((List<Map<Object, Object>>)
+                        Config.CONFIG_GSON.fromJson(reader, new TypeToken<List<Map<Object, Object>>>() {
+                        }.getType()));
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to load global accounts", e);
+            }
+        }
+
+        InvocationDispatcher<String> dispatcher = InvocationDispatcher.runOn(Lang::thread, json -> {
+            LOG.info("Saving global accounts");
+            synchronized (globalAccountsFile) {
+                try {
+                    synchronized (globalAccountsFile) {
+                        FileUtils.saveSafely(globalAccountsFile, json);
+                    }
+                } catch (IOException e) {
+                    LOG.log(Level.SEVERE, "Failed to save global accounts", e);
+                }
+            }
+        });
+
+        globalAccountStorages.addListener(onInvalidating(() ->
+                dispatcher.accept(Config.CONFIG_GSON.toJson(globalAccountStorages))));
+    }
+
+    private static Account parseAccount(Map<Object, Object> storage) {
+        AccountFactory<?> factory = type2factory.get(storage.get("type"));
+        if (factory == null) {
+            LOG.warning("Unrecognized account type: " + storage);
+            return null;
+        }
+
+        try {
+            return factory.fromStorage(storage);
+        } catch (Exception e) {
+            LOG.log(Level.WARNING, "Failed to load account: " + storage, e);
+            return null;
+        }
     }
 
     /**
@@ -202,45 +227,102 @@ public final class Accounts {
         if (initialized)
             throw new IllegalStateException("Already initialized");
 
-        // load accounts
-        config().getAccountStorages().forEach(storage -> {
-            AccountFactory<?> factory = type2factory.get(storage.get("type"));
-            if (factory == null) {
-                LOG.warning("Unrecognized account type: " + storage);
-                return;
-            }
-            Account account;
-            try {
-                account = factory.fromStorage(storage);
-            } catch (Exception e) {
-                LOG.log(Level.WARNING, "Failed to load account: " + storage, e);
-                return;
-            }
-            accounts.add(account);
+        loadGlobalAccountStorages();
 
-            if (Boolean.TRUE.equals(storage.get("selected"))) {
-                selectedAccount.set(account);
+        // load accounts
+        Account selected = null;
+        for (Map<Object, Object> storage : config().getAccountStorages()) {
+            Account account = parseAccount(storage);
+            if (account != null) {
+                account.setPortable(true);
+                accounts.add(account);
+                if (Boolean.TRUE.equals(storage.get("selected"))) {
+                    selected = account;
+                }
             }
-        });
+        }
+
+        for (Map<Object, Object> storage : globalAccountStorages) {
+            Account account = parseAccount(storage);
+            if (account != null) {
+                accounts.add(account);
+            }
+        }
+
+        String selectedAccountIdentifier = config().getSelectedAccount();
+        if (selected == null && selectedAccountIdentifier != null) {
+            boolean portable = true;
+            if (selectedAccountIdentifier.startsWith(GLOBAL_PREFIX)) {
+                portable = false;
+                selectedAccountIdentifier = selectedAccountIdentifier.substring(GLOBAL_PREFIX.length());
+            }
+
+            for (Account account : accounts) {
+                if (selectedAccountIdentifier.equals(account.getIdentifier())) {
+                    if (portable == account.isPortable()) {
+                        selected = account;
+                        break;
+                    } else if (selected == null) {
+                        selected = account;
+                    }
+                }
+            }
+        }
+
+        if (selected == null && !accounts.isEmpty()) {
+            selected = accounts.get(0);
+        }
+
+        selectedAccount.set(selected);
+
+        InvalidationListener listener = o -> {
+            // this method first checks whether the current selection is valid
+            // if it's valid, the underlying storage will be updated
+            // otherwise, the first account will be selected as an alternative(or null if accounts is empty)
+            Account account = selectedAccount.get();
+            if (accounts.isEmpty()) {
+                if (account == null) {
+                    // valid
+                } else {
+                    // the previously selected account is gone, we can only set it to null here
+                    selectedAccount.set(null);
+                }
+            } else {
+                if (accounts.contains(account)) {
+                    // valid
+                } else {
+                    // the previously selected account is gone
+                    selectedAccount.set(accounts.get(0));
+                }
+            }
+        };
+        selectedAccount.addListener(listener);
+        selectedAccount.addListener(onInvalidating(() -> {
+            Account account = selectedAccount.get();
+            if (account != null)
+                config().setSelectedAccount(account.isPortable() ? account.getIdentifier() : GLOBAL_PREFIX + account.getIdentifier());
+            else
+                config().setSelectedAccount(null);
+        }));
+        accounts.addListener(listener);
+        accounts.addListener(onInvalidating(Accounts::updateAccountStorages));
 
         initialized = true;
 
         config().getAuthlibInjectorServers().addListener(onInvalidating(Accounts::removeDanglingAuthlibInjectorAccounts));
 
-        Account selected = selectedAccount.get();
         if (selected != null) {
+            Account finalSelected = selected;
             Schedulers.io().execute(() -> {
                 try {
-                    selected.logIn();
+                    finalSelected.logIn();
                 } catch (AuthenticationException e) {
-                    LOG.log(Level.WARNING, "Failed to log " + selected + " in", e);
+                    LOG.log(Level.WARNING, "Failed to log " + finalSelected + " in", e);
                 }
             });
         }
 
-        if (!config().getAuthlibInjectorServers().isEmpty()) {
-            triggerAuthlibInjectorUpdateCheck();
-        }
+        triggerAuthlibInjectorUpdateCheck();
 
         Schedulers.io().execute(() -> {
             try {
@@ -265,10 +347,6 @@ public final class Accounts {
 
     public static ObservableList<Account> getAccounts() {
         return accounts;
-    }
-
-    public static ReadOnlyListProperty<Account> accountsProperty() {
-        return accountsWrapper.getReadOnlyProperty();
     }
 
     public static Account getSelectedAccount() {
@@ -307,6 +385,10 @@ public final class Accounts {
     }
 
     private static AuthlibInjectorServer getOrCreateAuthlibInjectorServer(String url) {
+        if (url.equals(FACTORY_LITTLE_SKIN.getServer().getUrl())) {
+            return FACTORY_LITTLE_SKIN.getServer();
+        }
+
         return config().getAuthlibInjectorServers().stream()
                 .filter(server -> url.equals(server.getUrl()))
                 .findFirst()

@@ -20,9 +20,12 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
-import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
@@ -35,23 +38,51 @@ import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class TaskExecutorDialogPane extends StackPane {
+public class TaskExecutorDialogPane extends BorderPane {
     private TaskExecutor executor;
     private TaskCancellationAction onCancel;
     private final Consumer<FileDownloadTask.SpeedEvent> speedEventHandler;
 
-    @FXML
-    private Label lblTitle;
-    @FXML
-    private Label lblProgress;
-    @FXML
-    private JFXButton btnCancel;
-    @FXML
-    private TaskListPane taskListPane;
+    private final Label lblTitle;
+    private final Label lblProgress;
+    private final JFXButton btnCancel;
+    private final TaskListPane taskListPane;
 
     public TaskExecutorDialogPane(@NotNull TaskCancellationAction cancel) {
-        FXUtils.loadFXML(this, "/assets/fxml/task-dialog.fxml");
+        FXUtils.setLimitWidth(this, 500);
+        FXUtils.setLimitHeight(this, 300);
+
+        VBox center = new VBox();
+        this.setCenter(center);
+        center.setPadding(new Insets(16));
+        {
+            lblTitle = new Label();
+            lblTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: BOLD;");
+
+            ScrollPane scrollPane = new ScrollPane();
+            scrollPane.setFitToHeight(true);
+            scrollPane.setFitToWidth(true);
+            VBox.setVgrow(scrollPane, Priority.ALWAYS);
+            {
+                taskListPane = new TaskListPane();
+                scrollPane.setContent(taskListPane);
+            }
+
+            center.getChildren().setAll(lblTitle, scrollPane);
+        }
+
+        BorderPane bottom = new BorderPane();
+        this.setBottom(bottom);
+        bottom.setPadding(new Insets(0, 8, 8, 8));
+        {
+            lblProgress = new Label();
+            bottom.setLeft(lblProgress);
+
+            btnCancel = new JFXButton(i18n("button.cancel"));
+            bottom.setRight(btnCancel);
+        }
 
         setCancel(cancel);
 

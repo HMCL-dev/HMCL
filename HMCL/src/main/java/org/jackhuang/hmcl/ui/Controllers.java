@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
@@ -88,7 +89,7 @@ public final class Controllers {
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
         accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
-        accountListPage.accountsProperty().bindContent(Accounts.accountsProperty());
+        accountListPage.accountsProperty().bindContent(Accounts.getAccounts());
         accountListPage.authServersProperty().bindContentBidirectional(config().getAuthlibInjectorServers());
         return accountListPage;
     });
@@ -141,10 +142,16 @@ public final class Controllers {
     }
 
     public static void onApplicationStop() {
-        config().setHeight(stageHeight.get());
-        config().setWidth(stageWidth.get());
-        stageHeight = null;
-        stageWidth = null;
+        if (stageHeight != null) {
+            config().setHeight(stageHeight.get());
+            stageHeight.unbind();
+            stageHeight = null;
+        }
+        if (stageWidth != null) {
+            config().setWidth(stageWidth.get());
+            stageWidth.unbind();
+            stageWidth = null;
+        }
     }
 
     public static void initialize(Stage stage) {
@@ -175,7 +182,7 @@ public final class Controllers {
         stage.setMinWidth(800 + 2 + 16); // bg width + border width*2 + shadow width*2
         decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
         decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
-        scene.getStylesheets().setAll(config().getTheme().getStylesheets(config().getLauncherFontFamily()));
+        scene.getStylesheets().setAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
 
         stage.getIcons().add(newImage("/assets/img/icon.png"));
         stage.setTitle(Metadata.FULL_TITLE);
@@ -321,5 +328,6 @@ public final class Controllers {
         decorator = null;
         stage = null;
         scene = null;
+        onApplicationStop();
     }
 }

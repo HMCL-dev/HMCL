@@ -108,22 +108,5 @@ final class ConfigUpgrader {
                         }
                     });
         }
-
-        tryCast(rawJson.get("selectedAccount"), String.class)
-                .ifPresent(selected -> {
-                    deserialized.getAccountStorages().stream()
-                            .filter(storage -> {
-                                Object type = storage.get("type");
-                                if ("offline".equals(type)) {
-                                    return selected.equals(storage.get("username") + ":" + storage.get("username"));
-                                } else if ("yggdrasil".equals(type) || "authlibInjector".equals(type)) {
-                                    return selected.equals(storage.get("username") + ":" + storage.get("displayName"));
-                                } else {
-                                    return false;
-                                }
-                            })
-                            .findFirst()
-                            .ifPresent(storage -> storage.put("selected", true));
-                });
     }
 }

@@ -46,6 +46,7 @@ import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
 
 import javax.swing.*;
@@ -61,6 +62,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
@@ -102,14 +104,26 @@ public final class SelfDependencyPatcher {
         private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies").resolve(Platform.getPlatform().toString()).resolve("openjfx");
 
         static List<DependencyDescriptor> readDependencies() {
+            ArrayList<DependencyDescriptor> dependencies;
             //noinspection ConstantConditions
             try (Reader reader = new InputStreamReader(SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE), UTF_8)) {
-                Map<String, List<DependencyDescriptor>> allDependencies =
-                        new Gson().fromJson(reader, new TypeToken<Map<String, List<DependencyDescriptor>>>(){}.getType());
-                return allDependencies.get(Platform.getPlatform().toString());
+                Map<String, ArrayList<DependencyDescriptor>> allDependencies =
+                        new Gson().fromJson(reader, new TypeToken<Map<String, ArrayList<DependencyDescriptor>>>(){}.getType());
+                dependencies = allDependencies.get(Platform.getPlatform().toString());
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
+
+            try {
+                ClassLoader classLoader = SelfDependencyPatcher.class.getClassLoader();
+                Class.forName("netscape.javascript.JSObject", false, classLoader);
+                Class.forName("org.w3c.dom.html.HTMLDocument", false, classLoader);
+            } catch (Throwable e) {
+                LOG.log(Level.WARNING, "Disable javafx.web because JRE is incomplete", e);
+                dependencies.removeIf(it -> "javafx.web".equals(it.module) || "javafx.media".equals(it.module));
+            }
+
+            return dependencies;
         }
 
         public String module;
@@ -256,7 +270,9 @@ public final class SelfDependencyPatcher {
                 .map(DependencyDescriptor::localPath)
                 .toArray(Path[]::new);
 
-        JavaFXPatcher.patch(modules, jars);
+        String[] addOpens = JarUtils.getManifestAttribute("Add-Opens", "").split(" ");
+
+        JavaFXPatcher.patch(modules, jars, addOpens);
     }
 
     /**

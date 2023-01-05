@@ -337,7 +337,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setProfileName(Metadata.TITLE)
                 .setGameArguments(StringUtils.tokenize(vs.getMinecraftArgs()))
                 .setJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
-                .setMaxMemory((int)(getAllocatedMemory(
+                .setMaxMemory(vs.isNoJVMArgs() && vs.isAutoMemory() ? null : (int)(getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,
                         OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID).getAvailable(),
                         vs.isAutoMemory()
@@ -379,6 +379,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 e.printStackTrace();
             }
         }
+
+        if (vs.isAutoMemory() && builder.getJavaArguments().stream().anyMatch(it -> it.startsWith("-Xmx")))
+            builder.setMaxMemory(null);
 
         return builder.create();
     }
@@ -451,7 +454,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public static long getAllocatedMemory(long minimum, long available, boolean auto) {
         if (auto) {
-            available -= 256 * 1024 * 1024; // Reserve 256MB memory for off-heap memory and HMCL itself
+            available -= 384 * 1024 * 1024; // Reserve 384MiB memory for off-heap memory and HMCL itself
             if (available <= 0) {
                 return minimum;
             }
@@ -460,7 +463,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             final long suggested = Math.min(available <= threshold
                             ? (long) (available * 0.8)
                             : (long) (threshold * 0.8 + (available - threshold) * 0.2),
-                    32736L * 1024 * 1024); // Limit the maximum suggested memory to ensure that compressed oops are available
+                    16384L * 1024 * 1024);
             return Math.max(minimum, suggested);
         } else {
             return minimum;

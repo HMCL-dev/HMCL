@@ -118,7 +118,7 @@ public final class Launcher extends Application {
                     return;
             }
 
-            if (Metadata.HMCL_DIRECTORY.toAbsolutePath().toString().indexOf('=') >= 0) {
+            if (Metadata.HMCL_DIRECTORY.toString().indexOf('=') >= 0) {
                 Main.showWarningAndContinue(i18n("fatal.illegal_char"));
             }
 

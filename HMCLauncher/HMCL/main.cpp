@@ -181,14 +181,14 @@ error:
 
   if (isWin7OrLater) {
     if (isARM64) {
-      downloadLink = L"https://aka.ms/download-jdk/microsoft-jdk-17-windows-aarch64.msi";
+      downloadLink = L"https://docs.hmcl.net/downloads/windows/arm64.html";
     } if (isX64) {
-      downloadLink = L"https://aka.ms/download-jdk/microsoft-jdk-17-windows-x64.msi";
+      downloadLink = L"https://docs.hmcl.net/downloads/windows/x86_64.html";
     } else {
-      downloadLink = L"https://download.bell-sw.com/java/17.0.5+8/bellsoft-jre17.0.5+8-windows-i586-full.msi";
+      downloadLink = L"https://docs.hmcl.net/downloads/windows/x86.html";
     }
   } else {
-    downloadLink = L"https://www.java.com";
+    downloadLink = L"https://docs.hmcl.net/downloads/java.html";
   }
   DEBUG_LOG("Unable to find Java, guide the user to access %ls", downloadLink)
 

@@ -73,13 +73,14 @@ public class AccountListItem extends RadioButton {
         setUserData(account);
 
         String loginTypeName = Accounts.getLocalizedLoginTypeName(Accounts.getAccountFactory(account));
+        String portableSuffix = account.isPortable() ? ", " + i18n("account.portable") : "";
         if (account instanceof AuthlibInjectorAccount) {
             AuthlibInjectorServer server = ((AuthlibInjectorAccount) account).getServer();
             subtitle.bind(Bindings.concat(
                     loginTypeName, ", ", i18n("account.injector.server"), ": ",
-                    Bindings.createStringBinding(server::getName, server)));
+                    Bindings.createStringBinding(server::getName, server), portableSuffix));
         } else {
-            subtitle.set(loginTypeName);
+            subtitle.set(loginTypeName + portableSuffix);
         }
 
         StringBinding characterName = Bindings.createStringBinding(account::getCharacter, account);

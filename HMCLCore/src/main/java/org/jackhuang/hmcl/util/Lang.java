@@ -34,6 +34,18 @@ public final class Lang {
     private Lang() {
     }
 
+    public static <T> T requireNonNullElse(T value, T defaultValue) {
+        return value != null ? value : defaultValue;
+    }
+
+    public static <T> T requireNonNullElseGet(T value, Supplier<? extends T> defaultValue) {
+        return value != null ? value : defaultValue.get();
+    }
+
+    public static <T, U> U requireNonNullElseGet(T value, Function<? super T, ? extends U> mapper, Supplier<? extends U> defaultValue) {
+        return value != null ? mapper.apply(value) : defaultValue.get();
+    }
+
     /**
      * Construct a mutable map by given key-value pairs.
      * @param pairs entries in the new map

@@ -40,7 +40,6 @@ import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jackhuang.hmcl.util.javafx.PropertyUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -52,7 +51,7 @@ public final class Config implements Cloneable, Observable {
 
     public static final int CURRENT_UI_VERSION = 0;
 
-    private static final Gson CONFIG_GSON = new GsonBuilder()
+    public static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
             .registerTypeAdapter(ObservableList.class, new ObservableListCreator())
             .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
@@ -120,7 +119,7 @@ public final class Config implements Cloneable, Observable {
     private DoubleProperty height = new SimpleDoubleProperty();
 
     @SerializedName("theme")
-    private ObjectProperty<Theme> theme = new SimpleObjectProperty<>(Theme.BLUE);
+    private ObjectProperty<Theme> theme = new SimpleObjectProperty<>();
 
     @SerializedName("localization")
     private ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
@@ -143,11 +142,14 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("configurations")
     private SimpleMapProperty<String, Profile> configurations = new SimpleMapProperty<>(FXCollections.observableMap(new TreeMap<>()));
 
+    @SerializedName("selectedAccount")
+    private StringProperty selectedAccount = new SimpleStringProperty();
+
     @SerializedName("accounts")
     private ObservableList<Map<Object, Object>> accountStorages = FXCollections.observableArrayList();
 
     @SerializedName("fontFamily")
-    private StringProperty fontFamily = new SimpleStringProperty(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace");
+    private StringProperty fontFamily = new SimpleStringProperty();
 
     @SerializedName("fontSize")
     private DoubleProperty fontSize = new SimpleDoubleProperty(12);
@@ -478,6 +480,18 @@ public final class Config implements Cloneable, Observable {
 
     public MapProperty<String, Profile> getConfigurations() {
         return configurations;
+    }
+
+    public String getSelectedAccount() {
+        return selectedAccount.get();
+    }
+
+    public void setSelectedAccount(String selectedAccount) {
+        this.selectedAccount.set(selectedAccount);
+    }
+
+    public StringProperty selectedAccountProperty() {
+        return selectedAccount;
     }
 
     public ObservableList<Map<Object, Object>> getAccountStorages() {

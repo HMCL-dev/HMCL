@@ -83,28 +83,97 @@ public final class CommandBuilder {
         return this;
     }
 
-    public String addDefault(String opt) {
-        for (Item item : raw) {
-            if (item.arg.equals(opt)) {
-                return item.arg;
+    public void addAllDefault(Collection<String> args) {
+        addAllDefault(args, true);
+    }
+
+    public void addAllDefaultWithoutParsing(Collection<String> args) {
+        addAllDefault(args, false);
+    }
+
+    private void addAllDefault(Collection<String> args, boolean parse) {
+        loop:
+        for (String arg : args) {
+            if (arg.startsWith("-D")) {
+                int idx = arg.indexOf('=');
+                if (idx >= 0) {
+                    addDefault(arg.substring(0, idx + 1), arg.substring(idx + 1), parse);
+                } else {
+                    String opt = arg + "=";
+                    for (Item item : raw) {
+                        if (item.arg.startsWith(opt)) {
+                            LOG.info("Default option '" + arg + "' is suppressed by '" + item.arg + "'");
+                            continue loop;
+                        } else if (item.arg.equals(arg)) {
+                            continue loop;
+                        }
+                    }
+                    raw.add(new Item(arg, parse));
+                }
+                continue;
             }
+
+            if (arg.startsWith("-XX:")) {
+                Matcher matcher = UNSTABLE_OPTION_PATTERN.matcher(arg);
+                if (matcher.matches()) {
+                    addUnstableDefault(matcher.group("key"), matcher.group("value"), parse);
+                    continue;
+                }
+
+                matcher = UNSTABLE_BOOLEAN_OPTION_PATTERN.matcher(arg);
+                if (matcher.matches()) {
+                    addUnstableDefault(matcher.group("key"), "+".equals(matcher.group("value")), parse);
+                    continue;
+                }
+            }
+
+            if (arg.startsWith("-X")) {
+                String opt = null;
+                String value = null;
+
+                for (String prefix : new String[]{"-Xmx", "-Xms", "-Xmn", "-Xss"}) {
+                    if (arg.startsWith(prefix)) {
+                        opt = prefix;
+                        value = arg.substring(prefix.length());
+                        break;
+                    }
+                }
+
+                if (opt != null) {
+                    addDefault(opt, value, parse);
+                    continue;
+                }
+            }
+
+            for (Item item : raw) {
+                if (item.arg.equals(arg)) {
+                    continue loop;
+                }
+            }
+            raw.add(new Item(arg, parse));
         }
-        raw.add(new Item(opt, true));
-        return null;
     }
 
     public String addDefault(String opt, String value) {
+        return addDefault(opt, value, true);
+    }
+
+    private String addDefault(String opt, String value, boolean parse) {
         for (Item item : raw) {
             if (item.arg.startsWith(opt)) {
                 LOG.info("Default option '" + opt + value + "' is suppressed by '" + item.arg + "'");
                 return item.arg;
             }
         }
-        raw.add(new Item(opt + value, true));
+        raw.add(new Item(opt + value, parse));
         return null;
     }
 
     public String addUnstableDefault(String opt, boolean value) {
+        return addUnstableDefault(opt, value, true);
+    }
+
+    private String addUnstableDefault(String opt, boolean value, boolean parse) {
         for (Item item : raw) {
             final Matcher matcher = UNSTABLE_BOOLEAN_OPTION_PATTERN.matcher(item.arg);
             if (matcher.matches()) {
@@ -115,14 +184,18 @@ public final class CommandBuilder {
         }
 
         if (value) {
-            raw.add(new Item("-XX:+" + opt, true));
+            raw.add(new Item("-XX:+" + opt, parse));
         } else {
-            raw.add(new Item("-XX:-" + opt, true));
+            raw.add(new Item("-XX:-" + opt, parse));
         }
         return null;
     }
 
     public String addUnstableDefault(String opt, String value) {
+        return addUnstableDefault(opt, value, true);
+    }
+
+    private String addUnstableDefault(String opt, String value, boolean parse) {
         for (Item item : raw) {
             final Matcher matcher = UNSTABLE_OPTION_PATTERN.matcher(item.arg);
             if (matcher.matches()) {
@@ -132,7 +205,7 @@ public final class CommandBuilder {
             }
         }
 
-        raw.add(new Item("-XX:" + opt + "=" + value, true));
+        raw.add(new Item("-XX:" + opt + "=" + value, parse));
         return null;
     }
 

@@ -23,14 +23,11 @@ import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXSpinner;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
-import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.image.Image;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
@@ -45,11 +42,11 @@ import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.setting.VersionIconType;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.HintPane;
 import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
@@ -75,30 +72,18 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     private final String title;
     private final Navigation navigation;
 
-    @FXML
-    private JFXListView<RemoteVersion> list;
-    @FXML
-    private JFXSpinner spinner;
-    @FXML
-    private StackPane failedPane;
-    @FXML
-    private StackPane emptyPane;
-    @FXML
-    private TransitionPane root;
-    @FXML
-    private JFXCheckBox chkRelease;
-    @FXML
-    private JFXCheckBox chkSnapshot;
-    @FXML
-    private JFXCheckBox chkOld;
-    @FXML
-    private JFXButton btnRefresh;
-    @FXML
-    private HBox checkPane;
-    @FXML
-    private ComponentList centrePane;
-    @FXML
-    private StackPane center;
+    private final JFXListView<RemoteVersion> list;
+    private final JFXSpinner spinner;
+    private final StackPane failedPane;
+    private final StackPane emptyPane;
+    private final TransitionPane root;
+    private final JFXCheckBox chkRelease;
+    private final JFXCheckBox chkSnapshot;
+    private final JFXCheckBox chkOld;
+    private final JFXButton btnRefresh;
+    private final HBox checkPane;
+    private final ComponentList centrePane;
+    private final StackPane center;
 
     private final VersionList<?> versionList;
     private CompletableFuture<?> executor;
@@ -109,7 +94,75 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         this.libraryId = libraryId;
         this.navigation = navigation;
 
-        FXUtils.loadFXML(this, "/assets/fxml/download/versions.fxml");
+        HintPane hintPane = new HintPane();
+        hintPane.setText(i18n("sponsor.bmclapi"));
+        hintPane.getStyleClass().add("sponsor-pane");
+        hintPane.setOnMouseClicked(e -> onSponsor());
+        BorderPane.setMargin(hintPane, new Insets(10, 10, 0, 10));
+        this.setTop(hintPane);
+
+        root = new TransitionPane();
+        {
+            spinner = new JFXSpinner();
+
+            center = new StackPane();
+            center.setStyle("-fx-padding: 10;");
+            {
+                centrePane = new ComponentList();
+                centrePane.getStyleClass().add("no-padding");
+                {
+                    checkPane = new HBox();
+                    checkPane.setSpacing(10);
+                    {
+                        chkRelease = new JFXCheckBox(i18n("version.game.releases"));
+                        chkRelease.setSelected(true);
+                        HBox.setMargin(chkRelease, new Insets(10, 0, 10, 0));
+
+                        chkSnapshot = new JFXCheckBox(i18n("version.game.snapshots"));
+                        HBox.setMargin(chkSnapshot, new Insets(10, 0, 10, 0));
+
+                        chkOld = new JFXCheckBox(i18n("version.game.old"));
+                        HBox.setMargin(chkOld, new Insets(10, 0, 10, 0));
+
+                        HBox pane = new HBox();
+                        HBox.setHgrow(pane, Priority.ALWAYS);
+
+                        btnRefresh = new JFXButton(i18n("button.refresh"));
+                        btnRefresh.getStyleClass().add("jfx-tool-bar-button");
+                        btnRefresh.setOnAction(e -> onRefresh());
+
+                        checkPane.getChildren().setAll(chkRelease, chkSnapshot, chkOld, pane, btnRefresh);
+                    }
+
+                    list = new JFXListView<>();
+                    list.getStyleClass().add("jfx-list-view-float");
+                    VBox.setVgrow(list, Priority.ALWAYS);
+
+                    centrePane.getContent().setAll(checkPane, list);
+                }
+
+                center.getChildren().setAll(centrePane);
+            }
+
+            failedPane = new StackPane();
+            failedPane.getStyleClass().add("notice-pane");
+            {
+                Label label = new Label(i18n("download.failed.refresh"));
+                label.setOnMouseClicked(e -> onRefresh());
+
+                failedPane.getChildren().setAll(label);
+            }
+
+            emptyPane = new StackPane();
+            emptyPane.getStyleClass().add("notice-pane");
+            {
+                Label label = new Label(i18n("download.failed.empty"));
+                label.setOnMouseClicked(e -> onBack());
+
+                emptyPane.getChildren().setAll(label);
+            }
+        }
+        this.setCenter(root);
 
         versionList = downloadProvider.getVersionListById(libraryId);
         if (versionList.hasType()) {
@@ -127,7 +180,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         btnRefresh.setGraphic(wrap(SVG.refresh(Theme.blackFillBinding(), -1, -1)));
 
         MutableObject<RemoteVersionListCell> lastCell = new MutableObject<>();
-        list.setCellFactory(listView -> new RemoteVersionListCell(lastCell));
+        EnumMap<VersionIconType, Image> icons = new EnumMap<>(VersionIconType.class);
+        list.setCellFactory(listView -> new RemoteVersionListCell(lastCell, icons));
 
         list.setOnMouseClicked(e -> {
             if (list.getSelectionModel().getSelectedIndex() < 0)
@@ -204,41 +258,35 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             executor.cancel(true);
     }
 
-    @FXML
     private void onRefresh() {
         refresh();
     }
 
-    @FXML
     private void onBack() { navigation.onPrev(true); }
 
-    @FXML
     private void onSponsor() {
         HMCLService.openRedirectLink("bmclapi_sponsor");
     }
 
     private static class RemoteVersionListCell extends ListCell<RemoteVersion> {
-        private static final EnumMap<VersionIconType, Image> icon = new EnumMap<>(VersionIconType.class);
-
-        private static Image getIcon(VersionIconType type) {
-            assert Platform.isFxApplicationThread();
-            return icon.computeIfAbsent(type, iconType -> new Image(iconType.getResourceUrl(), 32, 32, false, true));
-        }
-
         final IconedTwoLineListItem content = new IconedTwoLineListItem();
         final RipplerContainer ripplerContainer = new RipplerContainer(content);
         final StackPane pane = new StackPane();
 
         private final MutableObject<RemoteVersionListCell> lastCell;
+        private final EnumMap<VersionIconType, Image> icons;
 
-        RemoteVersionListCell(MutableObject<RemoteVersionListCell> lastCell) {
+        RemoteVersionListCell(MutableObject<RemoteVersionListCell> lastCell, EnumMap<VersionIconType, Image> icons) {
             this.lastCell = lastCell;
-        }
+            this.icons = icons;
 
-        {
             pane.getStyleClass().add("md-list-cell");
             StackPane.setMargin(content, new Insets(10, 16, 10, 16));
             pane.getChildren().setAll(ripplerContainer);
+        }
+
+        private Image getIcon(VersionIconType type) {
+            return icons.computeIfAbsent(type, iconType -> new Image(iconType.getResourceUrl(), 32, 32, false, true));
         }
 
         @Override

@@ -28,7 +28,7 @@ data class Platform(
         )
 }
 
-val jfxModules = listOf("base", "graphics", "controls", "fxml", "media", "web")
+val jfxModules = listOf("base", "graphics", "controls", "media", "web")
 val jfxMirrorRepos = listOf("https://maven.aliyun.com/repository/central")
 val jfxDependenciesFile = project("HMCL").buildDir.resolve("openjfx-dependencies.json")
 val jfxPlatforms = listOf(

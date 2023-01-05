@@ -431,12 +431,6 @@
     -fx-wrap-text: true;
 }
 
-.jfx-layout-body > .label {
-    -fx-font-size: 14.0px;
-    -fx-pref-width: 400.0px;
-    -fx-wrap-text: true;
-}
-
 .jfx-layout-actions {
     -fx-pref-width: 400;
     -fx-padding: 10.0px 0.0 0.0 0.0;
