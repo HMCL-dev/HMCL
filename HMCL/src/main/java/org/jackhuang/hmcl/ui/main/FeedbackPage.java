@@ -55,7 +55,7 @@ public class FeedbackPage extends SpinnerPane {
             github.setExternalLink("https://github.com/huanghongxun/HMCL/issues/new/choose");
 
             IconedTwoLineListItem qq = new IconedTwoLineListItem();
-            qq.setImage(new Image("/assets/img/icon.png", 32, 32, false, true));
+            qq.setImage(new Image("/assets/img/icon@2x.png", 32, 32, false, true));
             qq.setTitle(i18n("feedback.qq_channel"));
             qq.setSubtitle(i18n("feedback.qq_channel.statement"));
             qq.setExternalLink("https://pd.qq.com/s/qor74cm6");
