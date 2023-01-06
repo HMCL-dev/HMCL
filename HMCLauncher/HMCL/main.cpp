@@ -30,10 +30,15 @@ void RawLaunchJVM(const std::wstring &javaPath, const std::wstring &workdir,
 void LaunchJVM(const std::wstring &javaPath, const std::wstring &workdir,
                const std::wstring &jarPath, const std::wstring &jvmOptions) {
   Version javaVersion(L"");
-  if (!MyGetFileVersionInfo(javaPath, javaVersion)) return;
+  if (!MyGetFileVersionInfo(javaPath, javaVersion)) {
+    DEBUG_LOG("Failed to get the java version of path %ls", javaPath.c_str());
+    return;
+  }
 
   if (J8 <= javaVersion) {
     RawLaunchJVM(javaPath, workdir, jarPath, jvmOptions);
+  } else {
+    DEBUG_LOG("Ignore %ls because the version is lower than Java 8", javaPath.c_str());
   }
 }
 
@@ -85,7 +90,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   DEBUG_LOG("Working Directory: %ls", workdir.c_str())
 
   if (ERROR_SUCCESS == MyGetEnvironmentVariable(L"HMCL_JAVA_OPTS", jvmOptions)) {
-    DEBUG_LOG("HMCL_JAVA_OPTS：%ls", jvmOptions.c_str());
+    DEBUG_LOG("HMCL_JAVA_OPTS: %ls", jvmOptions.c_str());
   } else {
     jvmOptions = L"-Xmx1G -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15";  // Default Options
     DEBUG_LOG("HMCL_JAVA_OPTS not set, use default value");
@@ -127,7 +132,17 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   }
   RawLaunchJVM(L"jre-x86\\bin\\java.exe", workdir, exeName, jvmOptions);
 
-  if (FindJava(path)) LaunchJVM(path + L"\\bin\\java.exe", workdir, exeName, jvmOptions);
+  if (ERROR_SUCCESS == MyGetEnvironmentVariable(L"HMCL_JAVA_HOME", path)) {
+    RawLaunchJVM(path + L"\\bin\\java.exe", workdir, exeName, jvmOptions);
+  }
+
+  if (ERROR_SUCCESS == MyGetEnvironmentVariable(L"JAVA_HOME", path)) {
+    LaunchJVM(path + L"\\bin\\java.exe", workdir, exeName, jvmOptions);
+  }
+
+  if (FindJavaInRegistry(path)) {
+    LaunchJVM(path + L"\\bin\\java.exe", workdir, exeName, jvmOptions);
+  }
 
   std::wstring programFiles;
 
@@ -181,14 +196,14 @@ error:
 
   if (isWin7OrLater) {
     if (isARM64) {
-      downloadLink = L"https://docs.hmcl.net/downloads/windows/arm64.html";
-    } if (isX64) {
-      downloadLink = L"https://docs.hmcl.net/downloads/windows/x86_64.html";
+      downloadLink = L"https://aka.ms/download-jdk/microsoft-jdk-17-windows-aarch64.msi";
+    } else if (isX64) {
+      downloadLink = L"https://aka.ms/download-jdk/microsoft-jdk-17-windows-x64.msi";
     } else {
-      downloadLink = L"https://docs.hmcl.net/downloads/windows/x86.html";
+      downloadLink = L"https://download.bell-sw.com/java/17.0.5+8/bellsoft-jre17.0.5+8-windows-i586-full.msi";
     }
   } else {
-    downloadLink = L"https://docs.hmcl.net/downloads/java.html";
+    downloadLink = L"https://www.java.com";
   }
   DEBUG_LOG("Unable to find Java, guide the user to access %ls", downloadLink)
 

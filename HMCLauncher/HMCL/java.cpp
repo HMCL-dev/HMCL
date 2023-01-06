@@ -76,9 +76,3 @@ bool FindJavaInRegistry(std::wstring& path) {
          FindJavaByRegistryKey(HKEY_LOCAL_MACHINE, JDK_OLD, path) ||
          FindJavaByRegistryKey(HKEY_LOCAL_MACHINE, JRE_OLD, path);
 }
-
-bool FindJava(std::wstring& path) {
-  return ERROR_SUCCESS == MyGetEnvironmentVariable(L"HMCL_JAVA_HOME", path) ||
-         ERROR_SUCCESS == MyGetEnvironmentVariable(L"JAVA_HOME", path) ||
-         FindJavaInRegistry(path);
-}
