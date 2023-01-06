@@ -51,7 +51,7 @@ void FindJavaInDirAndLaunchJVM(const std::wstring &baseDir, const std::wstring &
 
   if (hFind != INVALID_HANDLE_VALUE) {
     do {
-      std::wstring java = baseDir + data.cFileName + std::wstring(L"\\bin\\java.exe");
+      std::wstring java = baseDir + data.cFileName + std::wstring(L"\\bin\\javaw.exe");
       if (FindFirstFileExists(java.c_str(), 0)) {
         LaunchJVM(java, workdir, jarPath, jvmOptions);
       }
@@ -125,30 +125,30 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   DEBUG_LOG("OS Architecture: %ls", isARM64 ? L"ARM64" : isX64 ? L"x64" : L"x86")
 
   if (isARM64) {
-    RawLaunchJVM(L"jre-arm64\\bin\\java.exe", workdir, exeName, jvmOptions);
+    RawLaunchJVM(L"jre-arm64\\bin\\javaw.exe", workdir, exeName, jvmOptions);
   }
   if (isX64) {
-    RawLaunchJVM(L"jre-x64\\bin\\java.exe", workdir, exeName, jvmOptions);
+    RawLaunchJVM(L"jre-x64\\bin\\javaw.exe", workdir, exeName, jvmOptions);
   }
-  RawLaunchJVM(L"jre-x86\\bin\\java.exe", workdir, exeName, jvmOptions);
+  RawLaunchJVM(L"jre-x86\\bin\\javaw.exe", workdir, exeName, jvmOptions);
 
   if (ERROR_SUCCESS == MyGetEnvironmentVariable(L"HMCL_JAVA_HOME", path)) {
     DEBUG_LOG("HMCL_JAVA_HOME: %ls", path.c_str());
-    RawLaunchJVM(path + L"\\bin\\java.exe", workdir, exeName, jvmOptions);
+    RawLaunchJVM(path + L"\\bin\\javaw.exe", workdir, exeName, jvmOptions);
   } else {
     DEBUG_LOG("HMCL_JAVA_HOME not set");
   }
 
   if (ERROR_SUCCESS == MyGetEnvironmentVariable(L"JAVA_HOME", path)) {
     DEBUG_LOG("JAVA_HOME: %ls", path.c_str());
-    LaunchJVM(path + L"\\bin\\java.exe", workdir, exeName, jvmOptions);
+    LaunchJVM(path + L"\\bin\\javaw.exe", workdir, exeName, jvmOptions);
   } else {
     DEBUG_LOG("JAVA_HOME not set");
   }
 
   if (FindJavaInRegistry(path)) {
     DEBUG_LOG("Found Java in the registry: %ls", path.c_str());
-    LaunchJVM(path + L"\\bin\\java.exe", workdir, exeName, jvmOptions);
+    LaunchJVM(path + L"\\bin\\javaw.exe", workdir, exeName, jvmOptions);
   } else {
     DEBUG_LOG("No Java found in the registry");
   }
@@ -176,7 +176,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   }
 
   // Try java in PATH
-  RawLaunchJVM(L"java", workdir, exeName, jvmOptions);
+  RawLaunchJVM(L"javaw", workdir, exeName, jvmOptions);
 
   std::wstring hmclJavaDir;
   {

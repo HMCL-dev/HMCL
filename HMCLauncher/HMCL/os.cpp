@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "os.h"
-#include "debug.h"
 
 LSTATUS MyRegQueryValue(HKEY hKey, LPCWSTR subKey, DWORD dwType,
                         std::wstring &out) {
@@ -53,23 +52,13 @@ bool MyCreateProcess(const std::wstring &command, const std::wstring &workdir) {
   ZeroMemory(&si, sizeof(si));
   ZeroMemory(&pi, sizeof(pi));
 
-  DWORD creationFlags = NORMAL_PRIORITY_CLASS;
-
-  if (debugEnabled) {
-    
-  } else {
-    creationFlags |= CREATE_NO_WINDOW;
-  }
-  
-  
   if (workdir.empty()) {
     return CreateProcess(NULL, &writable_command[0], NULL, NULL, false,
-                         creationFlags, NULL, NULL,
-                         &si, &pi);
+                         NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
   } else {
     return CreateProcess(NULL, &writable_command[0], NULL, NULL, false,
-                         creationFlags, NULL,
-                         workdir.c_str(), &si, &pi);
+                         NORMAL_PRIORITY_CLASS, NULL, workdir.c_str(), &si,
+                         &pi);
   }
 }
 
