@@ -114,7 +114,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   // Try downloading Java on Windows 7 or later
   bool isWin7OrLater = VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
-  DEBUG_LOG("Windows 7 or later: %s", isWin7OrLater ? L"true" : L"false")
+  DEBUG_LOG("Windows 7 or later: %ls", isWin7OrLater ? L"true" : L"false")
 
   SYSTEM_INFO systemInfo;
   GetNativeSystemInfo(&systemInfo);
@@ -122,7 +122,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   // First try the Java packaged together.
   bool isX64   = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
   bool isARM64 = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
-  DEBUG_LOG("OS Architecture: %s", isARM64 ? L"ARM64" : isX64 ? L"x64" : L"x86")
+  DEBUG_LOG("OS Architecture: %ls", isARM64 ? L"ARM64" : isX64 ? L"x64" : L"x86")
 
   if (isARM64) {
     RawLaunchJVM(L"jre-arm64\\bin\\java.exe", workdir, exeName, jvmOptions);
@@ -133,15 +133,24 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   RawLaunchJVM(L"jre-x86\\bin\\java.exe", workdir, exeName, jvmOptions);
 
   if (ERROR_SUCCESS == MyGetEnvironmentVariable(L"HMCL_JAVA_HOME", path)) {
+    DEBUG_LOG("HMCL_JAVA_HOME: %ls", path.c_str());
     RawLaunchJVM(path + L"\\bin\\java.exe", workdir, exeName, jvmOptions);
+  } else {
+    DEBUG_LOG("HMCL_JAVA_HOME not set");
   }
 
   if (ERROR_SUCCESS == MyGetEnvironmentVariable(L"JAVA_HOME", path)) {
+    DEBUG_LOG("JAVA_HOME: %ls", path.c_str());
     LaunchJVM(path + L"\\bin\\java.exe", workdir, exeName, jvmOptions);
+  } else {
+    DEBUG_LOG("JAVA_HOME not set");
   }
 
   if (FindJavaInRegistry(path)) {
+    DEBUG_LOG("Found Java in the registry: %ls", path.c_str());
     LaunchJVM(path + L"\\bin\\java.exe", workdir, exeName, jvmOptions);
+  } else {
+    DEBUG_LOG("No Java found in the registry");
   }
 
   std::wstring programFiles;
@@ -167,7 +176,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   }
 
   // Try java in PATH
-  RawLaunchJVM(L"javaw", workdir, exeName, jvmOptions);
+  RawLaunchJVM(L"java", workdir, exeName, jvmOptions);
 
   std::wstring hmclJavaDir;
   {
