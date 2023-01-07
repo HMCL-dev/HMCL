@@ -3,7 +3,6 @@ package org.jackhuang.hmcl.mod;
 import com.google.gson.JsonParseException;
 import com.moandjiezana.toml.Toml;
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
@@ -115,29 +114,27 @@ public final class ForgeNewModMetadata {
         }
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile) throws IOException, JsonParseException {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
-            Path modstoml = fs.getPath("META-INF/mods.toml");
-            if (Files.notExists(modstoml))
-                throw new IOException("File " + modFile + " is not a Forge 1.13+ mod.");
-            ForgeNewModMetadata metadata = new Toml().read(FileUtils.readText(modstoml)).to(ForgeNewModMetadata.class);
-            if (metadata == null || metadata.getMods().isEmpty())
-                throw new IOException("Mod " + modFile + " `mods.toml` is malformed..");
-            Mod mod = metadata.getMods().get(0);
-            Path manifestMF = fs.getPath("META-INF/MANIFEST.MF");
-            String jarVersion = "";
-            if (Files.exists(manifestMF)) {
-                try {
-                    Manifest manifest = new Manifest(Files.newInputStream(manifestMF));
-                    jarVersion = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-                } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to parse MANIFEST.MF in file " + modFile);
-                }
+    public static LocalModFile fromFile(ModManager modManager, Path modFile,  FileSystem fs) throws IOException, JsonParseException {
+        Path modstoml = fs.getPath("META-INF/mods.toml");
+        if (Files.notExists(modstoml))
+            throw new IOException("File " + modFile + " is not a Forge 1.13+ mod.");
+        ForgeNewModMetadata metadata = new Toml().read(FileUtils.readText(modstoml)).to(ForgeNewModMetadata.class);
+        if (metadata == null || metadata.getMods().isEmpty())
+            throw new IOException("Mod " + modFile + " `mods.toml` is malformed..");
+        Mod mod = metadata.getMods().get(0);
+        Path manifestMF = fs.getPath("META-INF/MANIFEST.MF");
+        String jarVersion = "";
+        if (Files.exists(manifestMF)) {
+            try {
+                Manifest manifest = new Manifest(Files.newInputStream(manifestMF));
+                jarVersion = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to parse MANIFEST.MF in file " + modFile);
             }
-            return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), ModLoaderType.FORGE), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
-                    mod.getAuthors(), mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
-                    mod.getDisplayURL(),
-                    metadata.getLogoFile());
         }
+        return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), ModLoaderType.FORGE), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
+                mod.getAuthors(), mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
+                mod.getDisplayURL(),
+                metadata.getLogoFile());
     }
 }
