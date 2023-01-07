@@ -112,7 +112,10 @@ public class Texture {
 
     public static Texture loadTexture(InputStream in) throws IOException {
         if (in == null) return null;
-        BufferedImage img = ImageIO.read(in);
+        BufferedImage img;
+        try (InputStream is = in) {
+            img = ImageIO.read(is);
+        }
         if (img == null) {
             throw new IIOException("No image found");
         }
