@@ -261,7 +261,11 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 Label titleLabel = new Label();
                 BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
                 titleLabel.getStyleClass().add("jfx-decorator-title");
-                if (titleNode != null) {
+                if (titleNode == null) {
+                    titleLabel.maxWidthProperty().bind(Bindings.createDoubleBinding(
+                            () -> skinnable.getWidth() - 100 - navLeft.getWidth(),
+                            skinnable.widthProperty(), navLeft.widthProperty()));
+                } else {
                     titleLabel.prefWidthProperty().bind(Bindings.createDoubleBinding(() -> {
                         // 8 (margin-left)
                         return leftPaneWidth - 8 - navLeft.getWidth();
