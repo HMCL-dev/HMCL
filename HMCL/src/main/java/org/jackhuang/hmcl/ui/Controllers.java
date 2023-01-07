@@ -19,7 +19,10 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -61,12 +64,12 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
+import static org.jackhuang.hmcl.setting.ConfigHolder.*;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
+    private static InvalidationListener stageSizeChangeListener;
     private static DoubleProperty stageWidth = new SimpleDoubleProperty();
     private static DoubleProperty stageHeight = new SimpleDoubleProperty();
 
@@ -142,14 +145,13 @@ public final class Controllers {
     }
 
     public static void onApplicationStop() {
+        stageSizeChangeListener = null;
         if (stageHeight != null) {
             config().setHeight(stageHeight.get());
-            stageHeight.unbind();
             stageHeight = null;
         }
         if (stageWidth != null) {
             config().setWidth(stageWidth.get());
-            stageWidth.unbind();
             stageWidth = null;
         }
     }
@@ -159,10 +161,28 @@ public final class Controllers {
 
         Controllers.stage = stage;
 
-        stage.setHeight(config().getHeight());
-        stageHeight.bind(stage.heightProperty());
-        stage.setWidth(config().getWidth());
-        stageWidth.bind(stage.widthProperty());
+        stageSizeChangeListener = o -> {
+            ReadOnlyDoubleProperty sourceProperty = (ReadOnlyDoubleProperty) o;
+            DoubleProperty targetProperty = "width".equals(sourceProperty.getName()) ? stageWidth : stageHeight;
+
+            if (targetProperty != null
+                    && Controllers.stage != null
+                    && !Controllers.stage.isIconified()) {
+                targetProperty.set(sourceProperty.get());
+            }
+        };
+
+        WeakInvalidationListener weakListener = new WeakInvalidationListener(stageSizeChangeListener);
+
+        double initHeight = config().getHeight();
+        double initWidth = config().getWidth();
+
+        stage.setHeight(initHeight);
+        stage.setWidth(initWidth);
+        stageHeight.set(initHeight);
+        stageWidth.set(initWidth);
+        stage.heightProperty().addListener(weakListener);
+        stage.widthProperty().addListener(weakListener);
 
         stage.setOnCloseRequest(e -> Launcher.stopApplication());
 
