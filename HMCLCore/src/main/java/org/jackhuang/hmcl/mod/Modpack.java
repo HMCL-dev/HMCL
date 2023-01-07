@@ -119,9 +119,8 @@ public abstract class Modpack {
     public static boolean acceptFile(String path, List<String> blackList, List<String> whiteList) {
         if (path.isEmpty())
             return true;
-        for (String s : blackList)
-            if (path.equals(s))
-                return false;
+        if (ModAdviser.match(blackList, path, false))
+            return false;
         if (whiteList == null || whiteList.isEmpty())
             return true;
         for (String s : whiteList)
