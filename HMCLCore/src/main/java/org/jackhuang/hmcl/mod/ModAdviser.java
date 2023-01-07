@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.util.Lang;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -61,7 +62,7 @@ public interface ModAdviser {
             "optionsof.txt" /* OptiFine */,
             "journeymap" /* JourneyMap */,
             "optionsshaders.txt",
-            "mods/VoxelMods");
+            "mods" + File.separator + "VoxelMods");
 
     static ModAdviser.ModSuggestion suggestMod(String fileName, boolean isDirectory) {
         if (match(MODPACK_BLACK_LIST, fileName, isDirectory))
@@ -75,7 +76,7 @@ public interface ModAdviser {
     static boolean match(List<String> l, String fileName, boolean isDirectory) {
         for (String s : l)
             if (isDirectory) {
-                if (fileName.startsWith(s + "/"))
+                if (fileName.startsWith(s + File.separator))
                     return true;
             } else {
                 if (s.startsWith("regex:")) {

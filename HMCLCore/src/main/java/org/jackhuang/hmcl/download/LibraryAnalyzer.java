@@ -112,7 +112,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
 
     /**
      * Remove library by library id
-     * @param libraryId patch id or "forge"/"optifine"/"liteloader"/"fabric"
+     * @param libraryId patch id or "forge"/"optifine"/"liteloader"/"fabric"/"quilt"
      * @return this
      */
     public LibraryAnalyzer removeLibrary(String libraryId) {
@@ -155,7 +155,10 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     public static boolean isModded(VersionProvider provider, Version version) {
         Version resolvedVersion = version.resolve(provider);
         String mainClass = resolvedVersion.getMainClass();
-        return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass) || mainClass.startsWith("net.fabricmc") || mainClass.startsWith("cpw.mods"));
+        return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass)
+                || mainClass.startsWith("net.fabricmc")
+                || mainClass.startsWith("org.quiltmc")
+                || mainClass.startsWith("cpw.mods"));
     }
 
     public enum LibraryType {
