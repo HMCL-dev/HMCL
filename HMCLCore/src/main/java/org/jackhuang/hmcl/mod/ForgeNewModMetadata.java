@@ -6,6 +6,7 @@ import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -114,7 +115,7 @@ public final class ForgeNewModMetadata {
         }
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile,  FileSystem fs) throws IOException, JsonParseException {
+    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
         Path modstoml = fs.getPath("META-INF/mods.toml");
         if (Files.notExists(modstoml))
             throw new IOException("File " + modFile + " is not a Forge 1.13+ mod.");
@@ -125,8 +126,8 @@ public final class ForgeNewModMetadata {
         Path manifestMF = fs.getPath("META-INF/MANIFEST.MF");
         String jarVersion = "";
         if (Files.exists(manifestMF)) {
-            try {
-                Manifest manifest = new Manifest(Files.newInputStream(manifestMF));
+            try (InputStream is = Files.newInputStream(manifestMF)) {
+                Manifest manifest = new Manifest(is);
                 jarVersion = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "Failed to parse MANIFEST.MF in file " + modFile);
