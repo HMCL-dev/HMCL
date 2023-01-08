@@ -180,6 +180,7 @@ tasks.processResources {
 }
 
 val makeExecutables = tasks.create("makeExecutables") {
+    dependsOn(tasks.jar)
     doLast {
         createExecutable("exe", "src/main/resources/assets/HMCLauncher.exe")
         createExecutable("sh", "src/main/resources/assets/HMCLauncher.sh")
