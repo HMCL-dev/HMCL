@@ -73,24 +73,27 @@ public final class ModManager {
         String fileName = StringUtils.removeSuffix(FileUtils.getName(modFile), DISABLED_EXTENSION, OLD_EXTENSION);
         String description;
         if (fileName.endsWith(".zip") || fileName.endsWith(".jar")) {
-            try {
-                return ForgeOldModMetadata.fromFile(this, modFile);
-            } catch (Exception ignore) {
-            }
+            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
+                try {
+                    return ForgeOldModMetadata.fromFile(this, modFile, fs);
+                } catch (Exception ignore) {
+                }
 
-            try {
-                return ForgeNewModMetadata.fromFile(this, modFile);
-            } catch (Exception ignore) {
-            }
+                try {
+                    return ForgeNewModMetadata.fromFile(this, modFile, fs);
+                } catch (Exception ignore) {
+                }
 
-            try {
-                return FabricModMetadata.fromFile(this, modFile);
-            } catch (Exception ignore) {
-            }
+                try {
+                    return FabricModMetadata.fromFile(this, modFile, fs);
+                } catch (Exception ignore) {
+                }
 
-            try {
-                return PackMcMeta.fromFile(this, modFile);
-            } catch (Exception ignore) {
+                try {
+                    return PackMcMeta.fromFile(this, modFile, fs);
+                } catch (Exception ignore) {
+                }
+            } catch (Exception ignored) {
             }
 
             description = "";
