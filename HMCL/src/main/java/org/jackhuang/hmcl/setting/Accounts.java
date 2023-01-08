@@ -85,7 +85,6 @@ public final class Accounts {
     public static final YggdrasilAccountFactory FACTORY_MOJANG = YggdrasilAccountFactory.MOJANG;
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
     public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(OAUTH_CALLBACK));
-    public static final BoundAuthlibInjectorAccountFactory FACTORY_LITTLE_SKIN = getAccountFactoryByAuthlibInjectorServer(new AuthlibInjectorServer("https://littleskin.cn/api/yggdrasil/"));
     public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MOJANG, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
 
     // ==== login type / account factory mapping ====
@@ -227,6 +226,17 @@ public final class Accounts {
         if (initialized)
             throw new IllegalStateException("Already initialized");
 
+        if (!config().isAddedLittleSkin()) {
+            AuthlibInjectorServer littleSkin = new AuthlibInjectorServer("https://littleskin.cn/api/yggdrasil/");
+
+            if (config().getAuthlibInjectorServers().stream()
+                    .noneMatch(it -> littleSkin.getUrl().equals(it.getUrl()))) {
+                config().getAuthlibInjectorServers().add(littleSkin);
+            }
+
+            config().setAddedLittleSkin(true);
+        }
+
         loadGlobalAccountStorages();
 
         // load accounts
@@ -324,14 +334,6 @@ public final class Accounts {
 
         triggerAuthlibInjectorUpdateCheck();
 
-        Schedulers.io().execute(() -> {
-            try {
-                FACTORY_LITTLE_SKIN.getServer().fetchMetadataResponse();
-            } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to fetch authlib-injector server metdata: " + FACTORY_LITTLE_SKIN.getServer(), e);
-            }
-        });
-
         for (AuthlibInjectorServer server : config().getAuthlibInjectorServers()) {
             if (selected instanceof AuthlibInjectorAccount && ((AuthlibInjectorAccount) selected).getServer() == server)
                 continue;
@@ -385,10 +387,6 @@ public final class Accounts {
     }
 
     private static AuthlibInjectorServer getOrCreateAuthlibInjectorServer(String url) {
-        if (url.equals(FACTORY_LITTLE_SKIN.getServer().getUrl())) {
-            return FACTORY_LITTLE_SKIN.getServer();
-        }
-
         return config().getAuthlibInjectorServers().stream()
                 .filter(server -> url.equals(server.getUrl()))
                 .findFirst()
