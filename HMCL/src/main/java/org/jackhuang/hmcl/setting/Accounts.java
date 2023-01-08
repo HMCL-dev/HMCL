@@ -227,7 +227,7 @@ public final class Accounts {
             throw new IllegalStateException("Already initialized");
 
         if (!config().isAddedLittleSkin()) {
-            AuthlibInjectorServer littleSkin = new AuthlibInjectorServer("https://littleskin.cn/api/yggdrasil");
+            AuthlibInjectorServer littleSkin = new AuthlibInjectorServer("https://littleskin.cn/api/yggdrasil/");
 
             if (config().getAuthlibInjectorServers().stream()
                     .noneMatch(it -> it.getUrl().startsWith("https://littleskin.cn")
