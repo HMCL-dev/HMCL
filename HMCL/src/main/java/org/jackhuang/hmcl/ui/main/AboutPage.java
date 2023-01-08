@@ -144,17 +144,12 @@ public class AboutPage extends StackPane {
             openNBT.setSubtitle("Copyright © 2013-2021 Steveice10.\nLicensed under the MIT License.");
             openNBT.setExternalLink("https://github.com/Steveice10/OpenNBT");
 
-            IconedTwoLineListItem jstun = new IconedTwoLineListItem();
-            jstun.setTitle("JSTUN");
-            jstun.setSubtitle("Copyright © 2005 Thomas King <king@t-king.de>.\nLicensed under the Apache License 2.0.");
-            jstun.setExternalLink("https://github.com/tking/JSTUN");
-
             IconedTwoLineListItem minecraftJFXSkin = new IconedTwoLineListItem();
             minecraftJFXSkin.setTitle("minecraft-jfx-skin");
             minecraftJFXSkin.setSubtitle("Copyright © 2016 InfinityStudio.\nLicensed under the GPL 3.");
             minecraftJFXSkin.setExternalLink("https://github.com/InfinityStudio/minecraft-jfx-skin");
 
-            dep.getContent().setAll(javafx, jfoenix, gson, xz, fxgson, constantPoolScanner, openNBT, jstun, minecraftJFXSkin);
+            dep.getContent().setAll(javafx, jfoenix, gson, xz, fxgson, constantPoolScanner, openNBT, minecraftJFXSkin);
         }
 
         ComponentList legal = new ComponentList();
