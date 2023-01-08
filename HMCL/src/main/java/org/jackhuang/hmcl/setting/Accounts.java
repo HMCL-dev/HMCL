@@ -227,11 +227,13 @@ public final class Accounts {
             throw new IllegalStateException("Already initialized");
 
         if (!config().isAddedLittleSkin()) {
-            AuthlibInjectorServer littleSkin = new AuthlibInjectorServer("https://littleskin.cn/api/yggdrasil/");
+            AuthlibInjectorServer littleSkin = new AuthlibInjectorServer("https://littleskin.cn/api/yggdrasil");
 
             if (config().getAuthlibInjectorServers().stream()
-                    .noneMatch(it -> littleSkin.getUrl().equals(it.getUrl()))) {
-                config().getAuthlibInjectorServers().add(littleSkin);
+                    .noneMatch(it -> it.getUrl().startsWith("https://littleskin.cn")
+                            || it.getUrl().startsWith("https://mcskin.littleservice.cn")
+                            || it.getUrl().startsWith("https://littlesk.in"))) {
+                config().getAuthlibInjectorServers().add(0, littleSkin);
             }
 
             config().setAddedLittleSkin(true);
