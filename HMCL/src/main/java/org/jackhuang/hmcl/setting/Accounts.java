@@ -229,10 +229,7 @@ public final class Accounts {
         if (!config().isAddedLittleSkin()) {
             AuthlibInjectorServer littleSkin = new AuthlibInjectorServer("https://littleskin.cn/api/yggdrasil/");
 
-            if (config().getAuthlibInjectorServers().stream()
-                    .noneMatch(it -> it.getUrl().startsWith("https://littleskin.cn")
-                            || it.getUrl().startsWith("https://mcskin.littleservice.cn")
-                            || it.getUrl().startsWith("https://littlesk.in"))) {
+            if (config().getAuthlibInjectorServers().stream().noneMatch(it -> littleSkin.getUrl().equals(it.getUrl()))) {
                 config().getAuthlibInjectorServers().add(0, littleSkin);
             }
 
