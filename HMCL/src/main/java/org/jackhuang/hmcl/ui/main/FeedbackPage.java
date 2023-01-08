@@ -43,31 +43,31 @@ public class FeedbackPage extends SpinnerPane {
         ComponentList community = new ComponentList();
         {
             IconedTwoLineListItem users = new IconedTwoLineListItem();
-            users.setImage(new Image("/assets/img/craft_table.png", 32, 32, false, true));
+            users.setImage(new Image("/assets/img/craft_table.png"));
             users.setTitle(i18n("feedback.qq_group"));
             users.setSubtitle(i18n("feedback.qq_group.statement"));
             users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
 
             IconedTwoLineListItem github = new IconedTwoLineListItem();
-            github.setImage(new Image("/assets/img/github.png", 32, 32, false, true));
+            github.setImage(new Image("/assets/img/github.png"));
             github.setTitle(i18n("feedback.github"));
             github.setSubtitle(i18n("feedback.github.statement"));
             github.setExternalLink("https://github.com/huanghongxun/HMCL/issues/new/choose");
 
             IconedTwoLineListItem qq = new IconedTwoLineListItem();
-            qq.setImage(new Image("/assets/img/icon@2x.png", 32, 32, false, true));
+            qq.setImage(new Image("/assets/img/icon.png"));
             qq.setTitle(i18n("feedback.qq_channel"));
             qq.setSubtitle(i18n("feedback.qq_channel.statement"));
             qq.setExternalLink("https://pd.qq.com/s/qor74cm6");
 
             IconedTwoLineListItem discord = new IconedTwoLineListItem();
-            discord.setImage(new Image("/assets/img/discord.png", 32, 32, false, true));
+            discord.setImage(new Image("/assets/img/discord.png"));
             discord.setTitle(i18n("feedback.discord"));
             discord.setSubtitle(i18n("feedback.discord.statement"));
             discord.setExternalLink("https://discord.gg/jVvC7HfM6U");
 
             IconedTwoLineListItem kookapp = new IconedTwoLineListItem();
-            kookapp.setImage(new Image("/assets/img/kookapp.png", 32, 32, false, true));
+            kookapp.setImage(new Image("/assets/img/kookapp.png"));
             kookapp.setTitle(i18n("feedback.kookapp"));
             kookapp.setSubtitle(i18n("feedback.kookapp.statement"));
             kookapp.setExternalLink("https://kook.top/Kx7n3t");
