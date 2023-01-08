@@ -18,12 +18,13 @@
 package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class VersionNumberTest {
 
@@ -32,19 +33,19 @@ public class VersionNumberTest {
         VersionNumber u, v;
 
         v = VersionNumber.asVersion("3.2.0.0");
-        Assert.assertEquals("3.2", v.getCanonical());
+        assertEquals("3.2", v.getCanonical());
 
         v = VersionNumber.asVersion("3.2.0.0-5");
-        Assert.assertEquals("3.2-5", v.getCanonical());
+        assertEquals("3.2-5", v.getCanonical());
 
         v = VersionNumber.asVersion("3.2.0.0-0");
-        Assert.assertEquals("3.2", v.getCanonical());
+        assertEquals("3.2", v.getCanonical());
 
         v = VersionNumber.asVersion("3.2--------");
-        Assert.assertEquals("3.2", v.getCanonical());
+        assertEquals("3.2", v.getCanonical());
 
         v = VersionNumber.asVersion("1.7.2$%%^@&snapshot-3.1.1");
-        Assert.assertEquals("1.7.2$%%^@&snapshot-3.1.1", v.getCanonical());
+        assertEquals("1.7.2$%%^@&snapshot-3.1.1", v.getCanonical());
     }
 
     @Test
@@ -53,27 +54,27 @@ public class VersionNumberTest {
 
         u = VersionNumber.asVersion("1.7.10forge1614_FTBInfinity");
         v = VersionNumber.asVersion("1.12.2");
-        Assert.assertTrue(u.compareTo(v) < 0);
+        assertTrue(u.compareTo(v) < 0);
 
         u = VersionNumber.asVersion("1.8.0_51");
         v = VersionNumber.asVersion("1.8.0.51");
-        Assert.assertTrue(u.compareTo(v) < 0);
+        assertTrue(u.compareTo(v) < 0);
 
         u = VersionNumber.asVersion("1.8.0_151");
         v = VersionNumber.asVersion("1.8.0_77");
-        Assert.assertTrue(u.compareTo(v) > 0);
+        assertTrue(u.compareTo(v) > 0);
 
         u = VersionNumber.asVersion("1.6.0_22");
         v = VersionNumber.asVersion("1.8.0_11");
-        Assert.assertTrue(u.compareTo(v) < 0);
+        assertTrue(u.compareTo(v) < 0);
 
         u = VersionNumber.asVersion("1.7.0_22");
         v = VersionNumber.asVersion("1.7.99");
-        Assert.assertTrue(u.compareTo(v) < 0);
+        assertTrue(u.compareTo(v) < 0);
 
         u = VersionNumber.asVersion("1.12.2-14.23.5.2760");
         v = VersionNumber.asVersion("1.12.2-14.23.4.2739");
-        Assert.assertTrue(u.compareTo(v) > 0);
+        assertTrue(u.compareTo(v) > 0);
     }
 
     @Test
