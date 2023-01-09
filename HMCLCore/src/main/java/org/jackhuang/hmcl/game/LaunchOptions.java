@@ -323,7 +323,6 @@ public class LaunchOptions implements Serializable {
             return options.gameArguments;
         }
 
-
         /**
          * The highest priority JVM arguments (overrides the version setting)
          */
