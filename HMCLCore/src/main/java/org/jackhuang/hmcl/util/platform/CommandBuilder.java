@@ -225,8 +225,8 @@ public final class CommandBuilder {
     }
 
     private static class Item {
-        String arg;
-        boolean parse;
+        final String arg;
+        final boolean parse;
 
         Item(String arg, boolean parse) {
             this.arg = arg;
