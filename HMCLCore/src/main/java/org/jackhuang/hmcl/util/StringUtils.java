@@ -195,13 +195,6 @@ public final class StringUtils {
         return false;
     }
 
-    public static boolean containsOne(String pattern, char... targets) {
-        for (char target : targets)
-            if (pattern.toLowerCase().indexOf(Character.toLowerCase(target)) >= 0)
-                return true;
-        return false;
-    }
-
     public static boolean containsChinese(String str) {
         for (int i = 0; i < str.length(); i++) {
             char ch = str.charAt(i);
