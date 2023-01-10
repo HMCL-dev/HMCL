@@ -299,6 +299,8 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                             if (exception != null) {
                                 // restore state if failed
                                 local.setOld(false);
+                                if (isDisabled)
+                                    local.disable();
                                 failedMods.add(local);
                             }
                         })
