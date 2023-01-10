@@ -193,7 +193,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         public ModUpdateObject(LocalModFile.ModUpdate data) {
             this.data = data;
 
-            enabled.set(true);
+            enabled.set(!data.getLocalMod().getModManager().isDisabled(data.getLocalMod().getFile()));
             fileName.set(data.getLocalMod().getFileName());
             currentVersion.set(data.getCurrentVersion().getVersion());
             targetVersion.set(data.getCandidates().get(0).getVersion());
