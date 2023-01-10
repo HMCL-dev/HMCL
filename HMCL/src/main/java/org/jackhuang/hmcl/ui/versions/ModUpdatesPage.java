@@ -61,6 +61,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
     private final ModManager modManager;
     private final ObservableList<ModUpdateObject> objects;
 
+    @SuppressWarnings("unchecked")
     public ModUpdatesPage(ModManager modManager, List<LocalModFile.ModUpdate> updates) {
         this.modManager = modManager;
 
@@ -138,7 +139,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                     fireEvent(new PageCloseEvent());
                     if (!task.getFailedMods().isEmpty()) {
                         Controllers.dialog(i18n("mods.check_updates.failed") + "\n" +
-                                task.getFailedMods().stream().map(LocalModFile::getFileName).collect(Collectors.joining("\n")),
+                                        task.getFailedMods().stream().map(LocalModFile::getFileName).collect(Collectors.joining("\n")),
                                 i18n("install.failed"),
                                 MessageDialogPane.MessageType.ERROR);
                     }
@@ -274,28 +275,35 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             setStage("mods.check_updates.update");
             getProperties().put("total", mods.size());
 
-            dependents = mods.stream()
-                    .map(mod -> {
-                        return Task
-                                .runAsync(Schedulers.javafx(), () -> mod.getKey().setOld(true))
-                                .thenComposeAsync(() -> {
-                                    FileDownloadTask task = new FileDownloadTask(
-                                            new URL(mod.getValue().getFile().getUrl()),
-                                            modManager.getModsDirectory().resolve(mod.getValue().getFile().getFilename()).toFile());
+            this.dependents = new ArrayList<>();
+            for (Pair<LocalModFile, RemoteMod.Version> mod : mods) {
+                LocalModFile local = mod.getKey();
+                RemoteMod.Version remote = mod.getValue();
+                boolean isDisabled = local.getModManager().isDisabled(local.getFile());
 
-                                    task.setName(mod.getValue().getName());
-                                    return task;
-                                })
-                                .whenComplete(Schedulers.javafx(), exception -> {
-                                    if (exception != null) {
-                                        // restore state if failed
-                                        mod.getKey().setOld(false);
-                                        failedMods.add(mod.getKey());
-                                    }
-                                })
-                                .withCounter("mods.check_updates.update");
-                    })
-                    .collect(Collectors.toList());
+                dependents.add(Task
+                        .runAsync(Schedulers.javafx(), () -> local.setOld(true))
+                        .thenComposeAsync(() -> {
+                            String fileName = remote.getFile().getFilename();
+                            if (isDisabled)
+                                fileName += ModManager.DISABLED_EXTENSION;
+
+                            FileDownloadTask task = new FileDownloadTask(
+                                    new URL(remote.getFile().getUrl()),
+                                    modManager.getModsDirectory().resolve(fileName).toFile());
+
+                            task.setName(remote.getName());
+                            return task;
+                        })
+                        .whenComplete(Schedulers.javafx(), exception -> {
+                            if (exception != null) {
+                                // restore state if failed
+                                local.setOld(false);
+                                failedMods.add(local);
+                            }
+                        })
+                        .withCounter("mods.check_updates.update"));
+            }
         }
 
         public List<LocalModFile> getFailedMods() {
