@@ -38,7 +38,12 @@ subprojects {
     }
 
     dependencies {
-        "testImplementation"("junit:junit:4.12")
+        "testImplementation"("org.junit.jupiter:junit-jupiter:5.9.1")
+    }
+
+    tasks.withType<Test> {
+        useJUnitPlatform()
+        testLogging.showStandardStreams = true
     }
 
     configure<PublishingExtension> {
