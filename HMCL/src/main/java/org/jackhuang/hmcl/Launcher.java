@@ -69,7 +69,7 @@ public final class Launcher extends Application {
             Object pipeline = Class.forName("com.sun.prism.GraphicsPipeline").getMethod("getPipeline").invoke(null);
             LOG.info("Prism pipeline: " + (pipeline == null ? "null" : pipeline.getClass().getName()));
         } catch (Throwable e) {
-            LOG.log(Level.WARNING, "Failed to get pipeline class name", e);
+            LOG.log(Level.WARNING, "Failed to get prism pipeline", e);
         }
 
         try {
