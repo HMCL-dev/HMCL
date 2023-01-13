@@ -38,9 +38,10 @@ public class LaunchOptions implements Serializable {
     private String versionName;
     private String versionType;
     private String profileName;
-    private List<String> gameArguments = new ArrayList<>();
-    private List<String> javaArguments = new ArrayList<>();
-    private List<String> javaAgents = new ArrayList<>(0);
+    private final List<String> gameArguments = new ArrayList<>();
+    private final List<String> overrideJavaArguments = new ArrayList<>();
+    private final List<String> javaArguments = new ArrayList<>();
+    private final List<String> javaAgents = new ArrayList<>(0);
     private Integer minMemory;
     private Integer maxMemory;
     private Integer metaspace;
@@ -106,6 +107,14 @@ public class LaunchOptions implements Serializable {
     @NotNull
     public List<String> getGameArguments() {
         return Collections.unmodifiableList(gameArguments);
+    }
+
+    /**
+     * The highest priority JVM arguments (overrides the version setting)
+     */
+    @NotNull
+    public List<String> getOverrideJavaArguments() {
+        return Collections.unmodifiableList(overrideJavaArguments);
     }
 
     /**
@@ -315,6 +324,13 @@ public class LaunchOptions implements Serializable {
         }
 
         /**
+         * The highest priority JVM arguments (overrides the version setting)
+         */
+        public List<String> getOverrideJavaArguments() {
+            return options.overrideJavaArguments;
+        }
+
+        /**
          * User custom additional java virtual machine command line arguments.
          */
         public List<String> getJavaArguments() {
@@ -470,6 +486,12 @@ public class LaunchOptions implements Serializable {
         public Builder setGameArguments(List<String> gameArguments) {
             options.gameArguments.clear();
             options.gameArguments.addAll(gameArguments);
+            return this;
+        }
+
+        public Builder setOverrideJavaArguments(List<String> overrideJavaArguments) {
+            options.overrideJavaArguments.clear();
+            options.overrideJavaArguments.addAll(overrideJavaArguments);
             return this;
         }
 
