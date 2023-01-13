@@ -234,7 +234,11 @@ public final class ModManager {
 
     public Path disableMod(Path file) throws IOException {
         if (isOld(file)) return file; // no need to disable an old mod.
-        Path disabled = file.resolveSibling(StringUtils.addSuffix(FileUtils.getName(file), DISABLED_EXTENSION));
+
+        String fileName = FileUtils.getName(file);
+        if (fileName.endsWith(DISABLED_EXTENSION)) return file;
+
+        Path disabled = file.resolveSibling(fileName + DISABLED_EXTENSION);
         if (Files.exists(file))
             Files.move(file, disabled, StandardCopyOption.REPLACE_EXISTING);
         return disabled;
