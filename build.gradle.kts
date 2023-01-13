@@ -33,10 +33,6 @@ subprojects {
         sourceSets = setOf()
     }
 
-    tasks.withType<Checkstyle> {
-        exclude("de/javawi/jstun")
-    }
-
     dependencies {
         "testImplementation"("org.junit.jupiter:junit-jupiter:5.9.1")
     }
