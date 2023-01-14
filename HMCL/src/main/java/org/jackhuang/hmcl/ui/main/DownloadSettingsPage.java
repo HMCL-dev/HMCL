@@ -214,7 +214,6 @@ public class DownloadSettingsPage extends StackPane {
                         GridPane.setColumnIndex(txtProxyHost, 1);
                         gridPane.getChildren().add(txtProxyHost);
                         FXUtils.bindString(txtProxyHost, config().proxyHostProperty());
-                        txtProxyHost.getValidators().setAll(new NumberValidator(i18n("input.number"), false));
                     }
 
                     {
