@@ -66,6 +66,13 @@ public final class Launcher extends Application {
         CookieHandler.setDefault(COOKIE_MANAGER);
 
         try {
+            Object pipeline = Class.forName("com.sun.prism.GraphicsPipeline").getMethod("getPipeline").invoke(null);
+            LOG.info("Prism pipeline: " + (pipeline == null ? "null" : pipeline.getClass().getName()));
+        } catch (Throwable e) {
+            LOG.log(Level.WARNING, "Failed to get prism pipeline", e);
+        }
+
+        try {
             try {
                 ConfigHolder.init();
             } catch (SambaException ignored) {
@@ -218,8 +225,11 @@ public final class Launcher extends Application {
             LOG.info("HMCL Directory: " + Metadata.HMCL_DIRECTORY);
             LOG.info("HMCL Jar Path: " + JarUtils.thisJar().map(it -> it.toAbsolutePath().toString()).orElse("Not Found"));
             LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");
-            ManagementFactory.getMemoryPoolMXBeans().stream().filter(bean -> bean.getName().equals("Metaspace")).findAny()
-                    .ifPresent(bean -> LOG.info("Metaspace: " + bean.getUsage().getUsed() / 1024 / 1024 + "MB"));
+            LOG.info("Metaspace: " + ManagementFactory.getMemoryPoolMXBeans().stream()
+                    .filter(bean -> bean.getName().equals("Metaspace"))
+                    .findAny()
+                    .map(bean -> bean.getUsage().getUsed() / 1024 / 1024 + "MB")
+                    .orElse("Unknown"));
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.

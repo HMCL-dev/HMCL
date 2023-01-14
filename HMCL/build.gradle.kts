@@ -125,6 +125,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
                 "javafx.base/com.sun.javafx.runtime",
                 "javafx.graphics/javafx.css",
                 "javafx.graphics/com.sun.javafx.stage",
+                "javafx.graphics/com.sun.prism",
                 "javafx.controls/com.sun.javafx.scene.control",
                 "javafx.controls/com.sun.javafx.scene.control.behavior",
                 "javafx.controls/javafx.scene.control.skin"
