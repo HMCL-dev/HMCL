@@ -17,9 +17,11 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
-import javax.imageio.IIOException;
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
+import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
+import org.glavo.png.PNGWriter;
+import org.glavo.png.image.JavaFXArgbImageWrapper;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -36,10 +38,12 @@ import static java.util.Objects.requireNonNull;
 public class Texture {
     private final String hash;
     private final byte[] data;
+    private final Image image;
 
-    public Texture(String hash, byte[] data) {
+    public Texture(String hash, byte[] data, Image image) {
         this.hash = requireNonNull(hash);
         this.data = requireNonNull(data);
+        this.image = requireNonNull(image);
     }
 
     public byte[] getData() {
@@ -58,6 +62,10 @@ public class Texture {
         return data.length;
     }
 
+    public Image getImage() {
+        return image;
+    }
+
     private static final Map<String, Texture> textures = new HashMap<>();
 
     public static boolean hasTexture(String hash) {
@@ -68,15 +76,16 @@ public class Texture {
         return textures.get(hash);
     }
 
-    private static String computeTextureHash(BufferedImage img) {
+    private static String computeTextureHash(Image img) {
         MessageDigest digest;
         try {
             digest = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-        int width = img.getWidth();
-        int height = img.getHeight();
+        PixelReader reader = img.getPixelReader();
+        int width = (int) img.getWidth();
+        int height = (int) img.getHeight();
         byte[] buf = new byte[4096];
 
         putInt(buf, 0, width);
@@ -84,7 +93,7 @@ public class Texture {
         int pos = 8;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                putInt(buf, pos, img.getRGB(x, y));
+                putInt(buf, pos, reader.getArgb(x, y));
                 if (buf[pos + 0] == 0) {
                     buf[pos + 1] = buf[pos + 2] = buf[pos + 3] = 0;
                 }
@@ -112,12 +121,12 @@ public class Texture {
 
     public static Texture loadTexture(InputStream in) throws IOException {
         if (in == null) return null;
-        BufferedImage img;
+        Image img;
         try (InputStream is = in) {
-            img = ImageIO.read(is);
+            img = new Image(is);
         }
-        if (img == null) {
-            throw new IIOException("No image found");
+        if (img.isError()) {
+            throw new IOException("No image found", img.getException());
         }
 
         String hash = computeTextureHash(img);
@@ -127,9 +136,11 @@ public class Texture {
             return existent;
         }
 
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        ImageIO.write(img, "png", buf);
-        Texture texture = new Texture(hash, buf.toByteArray());
+        ByteArrayOutputStream buf = new ByteArrayOutputStream(4096);
+        try (PNGWriter writer = new PNGWriter(buf)) {
+            writer.write(new JavaFXArgbImageWrapper(img));
+        }
+        Texture texture = new Texture(hash, buf.toByteArray(), img);
 
         existent = textures.putIfAbsent(hash, texture);
 
