@@ -2,6 +2,7 @@ package org.jackhuang.hmcl.util.skin;
 
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.JavaFXLauncher;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Paths;
@@ -15,6 +16,7 @@ public class NormalizedSkinTest {
     }
 
     @Test
+    @Disabled("Cannot run in headless mode")
     public void testIsSlim() throws Exception {
         JavaFXLauncher.start();
         assertFalse(getSkin("steve").isSlim());
