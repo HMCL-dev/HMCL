@@ -54,12 +54,6 @@ public class FeedbackPage extends SpinnerPane {
             github.setSubtitle(i18n("feedback.github.statement"));
             github.setExternalLink("https://github.com/huanghongxun/HMCL/issues/new/choose");
 
-            IconedTwoLineListItem qq = new IconedTwoLineListItem();
-            qq.setImage(new Image("/assets/img/icon.png"));
-            qq.setTitle(i18n("feedback.qq_channel"));
-            qq.setSubtitle(i18n("feedback.qq_channel.statement"));
-            qq.setExternalLink("https://pd.qq.com/s/qor74cm6");
-
             IconedTwoLineListItem discord = new IconedTwoLineListItem();
             discord.setImage(new Image("/assets/img/discord.png"));
             discord.setTitle(i18n("feedback.discord"));
@@ -72,7 +66,7 @@ public class FeedbackPage extends SpinnerPane {
             kookapp.setSubtitle(i18n("feedback.kookapp.statement"));
             kookapp.setExternalLink("https://kook.top/Kx7n3t");
 
-            community.getContent().setAll(users, github, qq, discord, kookapp);
+            community.getContent().setAll(users, github, discord, kookapp);
         }
 
         content.getChildren().addAll(
