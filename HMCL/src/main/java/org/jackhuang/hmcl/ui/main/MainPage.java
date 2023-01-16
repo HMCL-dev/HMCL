@@ -294,7 +294,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
         if (announcementPane != null) {
             config().setHideAnnouncementDevVersion(Metadata.VERSION);
             Pane parent = (Pane) announcementPane.getParent();
-            parent.getChildren().remove(announcementPane);
+            if (parent != null)
+                parent.getChildren().remove(announcementPane);
             announcementPane = null;
         }
     }
