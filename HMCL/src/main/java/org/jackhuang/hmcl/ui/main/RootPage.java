@@ -81,7 +81,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         return new Skin(this);
     }
 
-    private MainPage getMainPage() {
+    public MainPage getMainPage() {
         if (mainPage == null) {
             MainPage mainPage = new MainPage();
             FXUtils.applyDragListener(mainPage, ModpackHelper::isFileModpackByExtension, modpacks -> {

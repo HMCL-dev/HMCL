@@ -33,6 +33,7 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
@@ -82,7 +83,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final ObservableList<Node> versionNodes;
     private Profile profile;
 
-    private final VBox announcementPane;
+    private VBox announcementPane;
     private final StackPane updatePane;
     private final JFXButton menuButton;
 
@@ -111,7 +112,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         setPadding(new Insets(20));
 
-        announcementPane = new VBox(16);
+        if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getHideAnnouncementDevVersion()))) {
+            announcementPane = new VBox(16);
+            if (Metadata.isNightly()) {
+                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint")));
+            } else if (Metadata.isDev()) {
+                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint")));
+            }
+            getChildren().add(announcementPane);
+        }
 
         updatePane = new StackPane();
         updatePane.setVisible(false);
@@ -220,7 +229,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             launchPane.getChildren().setAll(launchButton, separator, menuButton);
         }
 
-        getChildren().setAll(announcementPane, updatePane, launchPane);
+        getChildren().addAll(updatePane, launchPane);
 
         menu.setMaxHeight(365);
         menu.setMaxWidth(545);
@@ -232,14 +241,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
             return node;
         });
         Bindings.bindContent(menu.getContent(), versionNodes);
-    }
-
-    public MainPage() {
-        if (Metadata.isNightly()) {
-            announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint")));
-        } else if (Metadata.isDev()) {
-            announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint")));
-        }
     }
 
     private void showUpdate(boolean show) {
@@ -287,6 +288,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private void closeUpdateBubble() {
         showUpdate.unbind();
         showUpdate.set(false);
+    }
+
+    public void hideAnnouncementPane() {
+        if (announcementPane != null) {
+            config().setHideAnnouncementDevVersion(Metadata.VERSION);
+            Pane parent = (Pane) announcementPane.getParent();
+            parent.getChildren().remove(announcementPane);
+            announcementPane = null;
+        }
     }
 
     @Override

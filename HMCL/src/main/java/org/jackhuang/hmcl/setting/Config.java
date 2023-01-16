@@ -172,6 +172,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("promptedVersion")
     private StringProperty promptedVersion = new SimpleStringProperty();
 
+    @SerializedName("hideAnnouncementDevVersion")
+    private StringProperty hideAnnouncementDevVersion = new SimpleStringProperty();
+
     @SerializedName("_version")
     private IntegerProperty configVersion = new SimpleIntegerProperty(0);
 
@@ -623,5 +626,17 @@ public final class Config implements Cloneable, Observable {
 
     public void setPromptedVersion(String promptedVersion) {
         this.promptedVersion.set(promptedVersion);
+    }
+
+    public String getHideAnnouncementDevVersion() {
+        return hideAnnouncementDevVersion.get();
+    }
+
+    public StringProperty hideAnnouncementDevVersionProperty() {
+        return hideAnnouncementDevVersion;
+    }
+
+    public void setHideAnnouncementDevVersion(String hideAnnouncementDevVersion) {
+        this.hideAnnouncementDevVersion.set(hideAnnouncementDevVersion);
     }
 }
