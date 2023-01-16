@@ -33,12 +33,13 @@ subprojects {
         sourceSets = setOf()
     }
 
-    tasks.withType<Checkstyle> {
-        exclude("de/javawi/jstun")
+    dependencies {
+        "testImplementation"("org.junit.jupiter:junit-jupiter:5.9.1")
     }
 
-    dependencies {
-        "testImplementation"("junit:junit:4.12")
+    tasks.withType<Test> {
+        useJUnitPlatform()
+        testLogging.showStandardStreams = true
     }
 
     configure<PublishingExtension> {

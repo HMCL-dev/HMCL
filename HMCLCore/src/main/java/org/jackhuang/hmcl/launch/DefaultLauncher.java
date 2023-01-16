@@ -105,15 +105,7 @@ public class DefaultLauncher extends Launcher {
 
         res.add(options.getJava().getBinary().toString());
 
-        // Fix RCE vulnerability of log4j2
-        res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
-        res.addDefault("-Dcom.sun.jndi.rmi.object.trustURLCodebase=", "false");
-        res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
-
-        String formatMsgNoLookups = res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
-        if (!"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups) && isUsingLog4j()) {
-            res.addDefault("-Dlog4j.configurationFile=", getLog4jConfigurationFile().getAbsolutePath());
-        }
+        res.addAllWithoutParsing(options.getOverrideJavaArguments());
 
         Proxy proxy = options.getProxy();
         if (proxy != null && StringUtils.isBlank(options.getProxyUser()) && StringUtils.isBlank(options.getProxyPass())) {
@@ -159,6 +151,16 @@ public class DefaultLauncher extends Launcher {
         }
         res.addDefault("-Dsun.stdout.encoding=", encoding.name());
         res.addDefault("-Dsun.stderr.encoding=", encoding.name());
+
+        // Fix RCE vulnerability of log4j2
+        res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
+        res.addDefault("-Dcom.sun.jndi.rmi.object.trustURLCodebase=", "false");
+        res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
+
+        String formatMsgNoLookups = res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
+        if (!"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups) && isUsingLog4j()) {
+            res.addDefault("-Dlog4j.configurationFile=", getLog4jConfigurationFile().getAbsolutePath());
+        }
 
         // Default JVM Args
         if (!options.isNoGeneratedJVMArgs()) {

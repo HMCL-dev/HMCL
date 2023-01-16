@@ -22,16 +22,14 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TaskTest {
     /**
@@ -41,13 +39,13 @@ public class TaskTest {
     public void expectErrorUncaught() {
         AtomicReference<Throwable> throwable = new AtomicReference<>();
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> throwable.set(e));
-        Assert.assertFalse(Task.composeAsync(() -> Task.allOf(
+        assertFalse(Task.composeAsync(() -> Task.allOf(
                 Task.allOf(Task.runAsync(() -> {
                     throw new Error();
                 }))
-        )).whenComplete(Assert::assertNull).test());
+        )).whenComplete(Assertions::assertNull).test());
 
-        Assert.assertTrue("Error has not been thrown to uncaught exception handler", throwable.get() instanceof Error);
+        assertInstanceOf(Error.class, throwable.get(), "Error has not been thrown to uncaught exception handler");
     }
 
     /**
@@ -58,10 +56,10 @@ public class TaskTest {
         boolean result = Task.supplyAsync(() -> {
             throw new IllegalStateException();
         }).whenComplete(exception -> {
-            Assert.assertTrue(exception instanceof IllegalStateException);
+            assertInstanceOf(IllegalStateException.class, exception);
         }).test();
 
-        Assert.assertFalse("Task should fail at this case", result);
+        assertFalse(result, "Task should fail at this case");
     }
 
     @Test
@@ -73,8 +71,8 @@ public class TaskTest {
             bool.set(true);
         }).test();
 
-        Assert.assertTrue("Task should success because withRunAsync will ignore previous exception", success);
-        Assert.assertTrue("withRunAsync should be executed", bool.get());
+        assertTrue(success, "Task should success because withRunAsync will ignore previous exception");
+        assertTrue(bool.get(), "withRunAsync should be executed");
     }
 
     public void testThenAccept() {
@@ -83,12 +81,12 @@ public class TaskTest {
         boolean result = Task.supplyAsync(JavaVersion::fromCurrentEnvironment)
                 .thenAcceptAsync(Schedulers.javafx(), javaVersion -> {
                     flag.set(true);
-                    Assert.assertEquals(javaVersion, JavaVersion.fromCurrentEnvironment());
+                    assertEquals(javaVersion, JavaVersion.fromCurrentEnvironment());
                 })
                 .test();
 
-        Assert.assertTrue("Task does not succeed", result);
-        Assert.assertTrue("ThenAccept has not been executed", flag.get());
+        assertTrue(result, "Task does not succeed");
+        assertTrue(flag.get(), "ThenAccept has not been executed");
     }
 
     @Test
@@ -103,7 +101,7 @@ public class TaskTest {
         }).thenRunAsync(() -> {
             System.out.println("No way!");
             Thread.sleep(200);
-            Assert.fail("Cannot reach here");
+            fail("Cannot reach here");
         });
         TaskExecutor executor = task.executor();
         Lang.thread(() -> {
@@ -114,14 +112,15 @@ public class TaskTest {
                 System.out.println("Cancel");
                 executor.cancel();
             } catch (InterruptedException e) {
-                Assume.assumeNoException(e);
+                fail(e);
             }
         });
-        Assert.assertFalse("Task should fail because we have cancelled it", executor.test());
+        assertFalse(executor.test(), "Task should fail because we have cancelled it");
         Thread.sleep(3000);
-        Assert.assertTrue("CancellationException should not be recorded.", executor.getException() instanceof CancellationException);
-        Assert.assertTrue("CancellationException should not be recorded.", task.getException() instanceof CancellationException);
-        Assert.assertTrue("Thread.sleep cannot be interrupted", flag.get());
+
+        assertInstanceOf(CancellationException.class, executor.getException(), "CancellationException should not be recorded.");
+        assertInstanceOf(CancellationException.class, task.getException(), "CancellationException should not be recorded.");
+        assertTrue(flag.get(), "Thread.sleep cannot be interrupted");
     }
 
     @Test
@@ -148,7 +147,7 @@ public class TaskTest {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                Assert.fail("Cannot reach here");
+                fail("Cannot reach here");
             }));
         });
         Lang.thread(() -> {
@@ -159,7 +158,7 @@ public class TaskTest {
                 System.out.println("Cancel");
                 task.cancel(true);
             } catch (InterruptedException e) {
-                Assume.assumeNoException(e);
+                fail(e);
             }
         });
         System.out.println("Start");
@@ -184,7 +183,7 @@ public class TaskTest {
 
         boolean result = task.test();
 
-        Assert.assertFalse("Task should fail since ExecutorService is shut down and RejectedExecutionException should be thrown", result);
-        Assert.assertTrue("RejectedExecutionException should be recorded", task.getException() instanceof RejectedExecutionException);
+        assertFalse(result, "Task should fail since ExecutorService is shut down and RejectedExecutionException should be thrown");
+        assertInstanceOf(RejectedExecutionException.class, task.getException(), "RejectedExecutionException should be recorded");
     }
 }
