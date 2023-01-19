@@ -20,6 +20,8 @@ import com.sun.javafx.tk.Toolkit;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class JavaFXFontHacker {
+    
+    private JavaFXFontHacker() { }
 
     public static void hack() {
         final List<String> families = Font.getFamilies();
