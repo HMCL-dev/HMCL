@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -93,7 +94,7 @@ public class Theme {
             Color textFill = getForegroundColor();
             try {
                 File temp = File.createTempFile("hmcl", ".css");
-                FileUtils.writeText(temp, IOUtils.readFullyAsString(Theme.class.getResourceAsStream("/assets/css/custom.css"))
+                String themeText = IOUtils.readFullyAsString(Theme.class.getResourceAsStream("/assets/css/custom.css"))
                         .replace("%base-color%", color)
                         .replace("%base-red%", Integer.toString((int) Math.ceil(paint.getRed() * 256)))
                         .replace("%base-green%", Integer.toString((int) Math.ceil(paint.getGreen() * 256)))
@@ -101,7 +102,8 @@ public class Theme {
                         .replace("%base-rippler-color%", String.format("rgba(%d, %d, %d, 0.3)", (int) Math.ceil(paint.getRed() * 256), (int) Math.ceil(paint.getGreen() * 256), (int) Math.ceil(paint.getBlue() * 256)))
                         .replace("%disabled-font-color%", String.format("rgba(%d, %d, %d, 0.7)", (int) Math.ceil(textFill.getRed() * 256), (int) Math.ceil(textFill.getGreen() * 256), (int) Math.ceil(textFill.getBlue() * 256)))
                         .replace("%font-color%", getColorDisplayName(getForegroundColor()))
-                        .replace("%font%", Optional.ofNullable(fontFamily).map(f -> "-fx-font-family: \"" + f + "\";").orElse("")));
+                        .replace("%font%", Optional.ofNullable(fontFamily).map(f -> "-fx-font-family: \"" + f + "\";").orElse(""));
+                FileUtils.writeText(temp, themeText, Charset.defaultCharset());
                 temp.deleteOnExit();
                 css = temp.toURI().toString();
             } catch (IOException | NullPointerException e) {
