@@ -20,6 +20,7 @@ package org.jackhuang.hmcl;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import org.jackhuang.hmcl.ui.AwtUtils;
+import org.jackhuang.hmcl.util.JavaFXFontHacker;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.ui.SwingUtils;
@@ -109,6 +110,7 @@ public final class Main {
             LOG.log(Level.SEVERE, "User cancels downloading JavaFX", e);
             System.exit(0);
         }
+        JavaFXFontHacker.hack();
     }
 
     /**
