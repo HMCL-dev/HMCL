@@ -190,6 +190,8 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception != null) {
                                 Controllers.dialog("Failed to check updates", "failed", MessageDialogPane.MessageType.ERROR);
+                            } else if (result.isEmpty()) {
+                                Controllers.dialog(i18n("mods.check_updates.empty"));
                             } else {
                                 Controllers.navigate(new ModUpdatesPage(modManager, result));
                             }
