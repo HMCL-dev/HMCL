@@ -19,7 +19,7 @@ import com.sun.javafx.tk.Toolkit;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
-public class JavaFXFontHacker {
+public final class JavaFXFontHacker {
     
     private JavaFXFontHacker() { }
 
