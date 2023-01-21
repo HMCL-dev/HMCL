@@ -92,7 +92,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   if (ERROR_SUCCESS == MyGetEnvironmentVariable(L"HMCL_JAVA_OPTS", jvmOptions)) {
     DEBUG_LOG("HMCL_JAVA_OPTS: %ls", jvmOptions.c_str());
   } else {
-    jvmOptions = L"-Xmx1G -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15";  // Default Options
+    jvmOptions = L"-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15";  // Default Options
     DEBUG_LOG("HMCL_JAVA_OPTS not set, use default value");
   }
 
