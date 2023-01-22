@@ -62,6 +62,8 @@ public class Theme {
 
         Charset defaultCharset = Charset.defaultCharset();
         if (defaultCharset != StandardCharsets.UTF_8) {
+            // https://bugs.openjdk.org/browse/JDK-8279328
+            // For JavaFX 17 or earlier, native encoding should be used
             String jfxVersion = System.getProperty("javafx.version");
             if (jfxVersion != null) {
                 Matcher matcher = Pattern.compile("^(?<version>[0-9]+)").matcher(jfxVersion);
