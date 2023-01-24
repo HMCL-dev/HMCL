@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.*;
 import org.jackhuang.hmcl.download.java.JavaRepository;
@@ -408,8 +409,9 @@ public final class LauncherHelper {
             JavaVersionConstraint violatedMandatoryConstraint = null;
             List<JavaVersionConstraint> violatedSuggestedConstraints = null;
 
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
             for (JavaVersionConstraint constraint : JavaVersionConstraint.ALL) {
-                if (constraint.appliesToVersion(gameVersion, version, javaVersion)) {
+                if (constraint.appliesToVersion(gameVersion, version, javaVersion, analyzer)) {
                     if (!constraint.checkJava(gameVersion, version, javaVersion)) {
                         if (constraint.getType() == JavaVersionConstraint.RULE_MANDATORY) {
                             violatedMandatoryConstraint = constraint;

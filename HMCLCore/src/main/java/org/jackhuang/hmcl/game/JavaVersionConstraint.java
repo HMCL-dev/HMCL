@@ -32,7 +32,6 @@ import java.util.Objects;
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LAUNCH_WRAPPER_MAIN;
 
 public enum JavaVersionConstraint {
-
     // Minecraft>=1.17 requires Java 16
     VANILLA_JAVA_16(JavaVersionConstraint.RULE_MANDATORY, versionRange("1.17", JavaVersionConstraint.MAX), versionRange("16", JavaVersionConstraint.MAX)),
     VANILLA_JAVA_17(JavaVersionConstraint.RULE_MANDATORY, versionRange("1.18", JavaVersionConstraint.MAX), versionRange("17", JavaVersionConstraint.MAX)),
@@ -40,10 +39,9 @@ public enum JavaVersionConstraint {
     MODDED_JAVA_16(JavaVersionConstraint.RULE_SUGGESTED, versionIs("1.17.1"), versionRange("16", "16.999")) {
         @Override
         protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
-                                               @Nullable JavaVersion javaVersion) {
-            if (version == null) return false;
-            VersionNumber forgePatchVersion = LibraryAnalyzer.analyze(version)
-                    .getVersion(LibraryAnalyzer.LibraryType.FORGE)
+                                               @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
+            if (version == null || analyzer == null) return false;
+            VersionNumber forgePatchVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE)
                     .map(LibraryAnalyzer.LibraryType.FORGE::patchVersion)
                     .map(VersionNumber::asVersion)
                     .orElse(null);
@@ -58,9 +56,8 @@ public enum JavaVersionConstraint {
     MODDED_JAVA_7(JavaVersionConstraint.RULE_SUGGESTED, versionRange(JavaVersionConstraint.MIN, "1.7.2"), versionRange(JavaVersionConstraint.MIN, "1.7.999")) {
         @Override
         protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
-                                               @Nullable JavaVersion javaVersion) {
-            if (version == null) return false;
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
+                                               @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
+            if (version == null || analyzer == null) return false;
             return analyzer.has(LibraryAnalyzer.LibraryType.FORGE);
         }
     },
@@ -68,7 +65,7 @@ public enum JavaVersionConstraint {
     LAUNCH_WRAPPER(JavaVersionConstraint.RULE_MANDATORY, versionRange("0", "1.12.999"), versionRange("0", "1.8.999")) {
         @Override
         protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
-                                               @Nullable JavaVersion javaVersion) {
+                                               @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
             if (version == null) return false;
             return LAUNCH_WRAPPER_MAIN.equals(version.getMainClass()) &&
                     version.getLibraries().stream()
@@ -82,7 +79,7 @@ public enum JavaVersionConstraint {
     GAME_JSON(JavaVersionConstraint.RULE_MANDATORY, versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX), versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX)) {
         @Override
         protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
-                                               @Nullable JavaVersion javaVersion) {
+                                               @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
             if (version == null) return false;
             // We only checks for 1.7.10 and above, since 1.7.2 with Forge can only run on Java 7, but it is recorded Java 8 in game json, which is not correct.
             return gameVersionNumber.compareTo(VersionNumber.asVersion("1.7.10")) >= 0 && version.getJavaVersion() != null;
@@ -104,7 +101,7 @@ public enum JavaVersionConstraint {
     VANILLA_LINUX_JAVA_8(JavaVersionConstraint.RULE_MANDATORY, versionRange("0", "1.12.999"), versionRange(JavaVersionConstraint.MIN, "1.8.999")) {
         @Override
         protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
-                                               @Nullable JavaVersion javaVersion) {
+                                               @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
             return OperatingSystem.CURRENT_OS == OperatingSystem.LINUX
                     && Architecture.SYSTEM_ARCH == Architecture.X86_64
                     && (javaVersion == null || javaVersion.getArchitecture() == Architecture.X86_64);
@@ -119,7 +116,7 @@ public enum JavaVersionConstraint {
     VANILLA_X86(JavaVersionConstraint.RULE_SUGGESTED, versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX), versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX)) {
         @Override
         protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
-                                               @Nullable JavaVersion javaVersion) {
+                                               @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
             if (javaVersion == null || javaVersion.getArchitecture() != Architecture.ARM64)
                 return false;
 
@@ -138,10 +135,9 @@ public enum JavaVersionConstraint {
     MODLAUNCHER_8(JavaVersionConstraint.RULE_SUGGESTED, versionRange("1.16.3", "1.17.1"), versionRange(JavaVersionConstraint.MIN, JavaVersionConstraint.MAX)) {
         @Override
         protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
-                                               @Nullable JavaVersion javaVersion) {
-            if (version == null || javaVersion == null) return false;
-            VersionNumber forgePatchVersion = LibraryAnalyzer.analyze(version)
-                    .getVersion(LibraryAnalyzer.LibraryType.FORGE)
+                                               @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
+            if (version == null || javaVersion == null || analyzer == null) return false;
+            VersionNumber forgePatchVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE)
                     .map(LibraryAnalyzer.LibraryType.FORGE::patchVersion)
                     .map(VersionNumber::asVersion)
                     .orElse(null);
@@ -204,13 +200,13 @@ public enum JavaVersionConstraint {
     }
 
     public final boolean appliesToVersion(@Nullable VersionNumber gameVersionNumber, @Nullable Version version,
-                                          @Nullable JavaVersion javaVersion) {
+                                          @Nullable JavaVersion javaVersion, LibraryAnalyzer analyzer) {
         return gameVersionRange.contains(gameVersionNumber)
-                && appliesToVersionImpl(gameVersionNumber, version, javaVersion);
+                && appliesToVersionImpl(gameVersionNumber, version, javaVersion, analyzer);
     }
 
     protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
-                                           @Nullable JavaVersion javaVersion) {
+                                           @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
         return true;
     }
 
@@ -224,8 +220,9 @@ public enum JavaVersionConstraint {
     public static VersionRanges findSuitableJavaVersionRange(VersionNumber gameVersion, Version version) {
         Range<VersionNumber> mandatoryJavaRange = versionRange(MIN, MAX);
         Range<VersionNumber> suggestedJavaRange = versionRange(MIN, MAX);
+        LibraryAnalyzer analyzer = version != null ? LibraryAnalyzer.analyze(version) : null;
         for (JavaVersionConstraint java : ALL) {
-            if (java.appliesToVersion(gameVersion, version, null)) {
+            if (java.appliesToVersion(gameVersion, version, null, analyzer)) {
                 Range<VersionNumber> javaVersionRange = java.getJavaVersionRange(version);
                 if (java.type == RULE_MANDATORY) {
                     mandatoryJavaRange = mandatoryJavaRange.intersectionWith(javaVersionRange);
