@@ -32,33 +32,39 @@ import java.util.Objects;
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LAUNCH_WRAPPER_MAIN;
 
 public enum JavaVersionConstraint {
-    // Minecraft>=1.17 requires Java 16
-    VANILLA_JAVA_16(JavaVersionConstraint.RULE_MANDATORY, versionRange("1.17", JavaVersionConstraint.MAX), versionRange("16", JavaVersionConstraint.MAX)),
-    VANILLA_JAVA_17(JavaVersionConstraint.RULE_MANDATORY, versionRange("1.18", JavaVersionConstraint.MAX), versionRange("17", JavaVersionConstraint.MAX)),
-    // Minecraft<=1.17.1+Forge[37.0.0,37.0.60) not compatible with Java 17
-    MODDED_JAVA_16(JavaVersionConstraint.RULE_SUGGESTED, versionIs("1.17.1"), versionRange("16", "16.999")) {
-        @Override
-        protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
-                                               @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
-            if (version == null || analyzer == null) return false;
-            VersionNumber forgePatchVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE)
-                    .map(LibraryAnalyzer.LibraryType.FORGE::patchVersion)
-                    .map(VersionNumber::asVersion)
-                    .orElse(null);
-            return forgePatchVersion != null && forgePatchVersion.compareTo(VersionNumber.asVersion("37.0.60")) < 0;
-        }
-    },
     // Minecraft>=1.13 requires Java 8
     VANILLA_JAVA_8(JavaVersionConstraint.RULE_MANDATORY, versionRange("1.13", JavaVersionConstraint.MAX), versionRange("1.8", JavaVersionConstraint.MAX)),
-    // Minecraft>=1.7.10+Forge accepts Java 8
-    MODDED_JAVA_8(JavaVersionConstraint.RULE_SUGGESTED, versionRange("1.7.10", JavaVersionConstraint.MAX), versionRange("1.8", JavaVersionConstraint.MAX)),
+    // Minecraft  1.17 requires Java 16
+    VANILLA_JAVA_16(JavaVersionConstraint.RULE_MANDATORY, versionRange("1.17", JavaVersionConstraint.MAX), versionRange("16", JavaVersionConstraint.MAX)),
+    // Minecraft>=1.18 requires Java 17
+    VANILLA_JAVA_17(JavaVersionConstraint.RULE_MANDATORY, versionRange("1.18", JavaVersionConstraint.MAX), versionRange("17", JavaVersionConstraint.MAX)),
     // Minecraft<=1.7.2+Forge requires Java<=7, But LegacyModFixer may fix that problem. So only suggest user using Java 7.
     MODDED_JAVA_7(JavaVersionConstraint.RULE_SUGGESTED, versionRange(JavaVersionConstraint.MIN, "1.7.2"), versionRange(JavaVersionConstraint.MIN, "1.7.999")) {
         @Override
         protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
                                                @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
-            if (version == null || analyzer == null) return false;
-            return analyzer.has(LibraryAnalyzer.LibraryType.FORGE);
+            return version != null && analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.FORGE);
+        }
+    },
+    MODDED_JAVA_8(JavaVersionConstraint.RULE_SUGGESTED, versionRange("1.7.10", "1.16.999"), versionRange("1.8", "1.8.999")) {
+        @Override
+        protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
+                                               @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
+            return analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.FORGE);
+        }
+    },
+    MODDED_JAVA_16(JavaVersionConstraint.RULE_SUGGESTED, versionRange("1.17", "1.17.999"), versionRange("16", "16.999")) {
+        @Override
+        protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
+                                               @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
+            return analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.FORGE);
+        }
+    },
+    MODDED_JAVA_17(JavaVersionConstraint.RULE_SUGGESTED, versionRange("1.18", JavaVersionConstraint.MAX), versionRange("17", "17.999")) {
+        @Override
+        protected boolean appliesToVersionImpl(VersionNumber gameVersionNumber, @Nullable Version version,
+                                               @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
+            return analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.FORGE);
         }
     },
     // LaunchWrapper<=1.12 will crash because LaunchWrapper assumes the system class loader is an instance of URLClassLoader (Java 8)
