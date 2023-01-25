@@ -495,6 +495,9 @@ public class DefaultLauncher extends Launcher {
         if (analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE)) {
             env.put("INST_OPTIFINE", "1");
         }
+        if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
+            env.put("INST_QUILT", "1");
+        }
         return env;
     }
 
