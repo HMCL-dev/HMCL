@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -75,6 +76,8 @@ public class TaskTest {
         assertTrue(bool.get(), "withRunAsync should be executed");
     }
 
+    @Test
+    @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
     public void testThenAccept() {
         JavaFXLauncher.start();
         AtomicBoolean flag = new AtomicBoolean();
