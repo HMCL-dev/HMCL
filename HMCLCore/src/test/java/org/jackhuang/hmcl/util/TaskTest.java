@@ -79,7 +79,6 @@ public class TaskTest {
     @Test
     @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
     public void testThenAccept() {
-        JavaFXLauncher.start();
         AtomicBoolean flag = new AtomicBoolean();
         boolean result = Task.supplyAsync(JavaVersion::fromCurrentEnvironment)
                 .thenAcceptAsync(Schedulers.javafx(), javaVersion -> {
