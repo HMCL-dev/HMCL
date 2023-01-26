@@ -37,7 +37,7 @@ public final class CrashReportAnalyzer {
 
         OPENJ9(Pattern.compile("(Open J9 is not supported|OpenJ9 is incompatible|\\.J9VMInternals\\.)")),
         TOO_OLD_JAVA(Pattern.compile("java\\.lang\\.UnsupportedClassVersionError: (.*?) version (?<expected>\\d+)\\.0"), "expected"),
-        JVM_32BIT(Pattern.compile("(Could not reserve enough space for (.*?) object heap|The specified size exceeds the maximum representable size)")),
+        JVM_32BIT(Pattern.compile("(Could not reserve enough space for 1048576KB object heap|The specified size exceeds the maximum representable size)")),
 
         // Some mods/shader packs do incorrect GL operations.
         GL_OPERATION_FAILURE(Pattern.compile("(1282: Invalid operation|Maybe try a lower resolution resourcepack\\?)")),
@@ -46,7 +46,7 @@ public final class CrashReportAnalyzer {
         OPENGL_NOT_SUPPORTED(Pattern.compile("The driver does not appear to support OpenGL")),
         GRAPHICS_DRIVER(Pattern.compile("(Pixel format not accelerated|GLX: Failed to create context: GLXBadFBConfig|Couldn't set pixel format|net\\.minecraftforge\\.fml.client\\.SplashProgress|org\\.lwjgl\\.LWJGLException|EXCEPTION_ACCESS_VIOLATION(.|\\n|\\r)+# C {2}\\[(ig|atio|nvoglv))")),
         // Out of memory
-        OUT_OF_MEMORY(Pattern.compile("(java\\.lang\\.OutOfMemoryError|The system is out of physical RAM or swap space)")),
+        OUT_OF_MEMORY(Pattern.compile("(java\\.lang\\.OutOfMemoryError|The system is out of physical RAM or swap space|Out of Memory Error)")),
         // Memory exceeded
         MEMORY_EXCEEDED(Pattern.compile("There is insufficient memory for the Java Runtime Environment to continue")),
         // Too high resolution
@@ -69,11 +69,6 @@ public final class CrashReportAnalyzer {
         DUPLICATED_MOD(Pattern.compile("Found a duplicate mod (?<name>.*) at (?<path>.*)"), "name", "path"),
         // Fabric mod resolution
         MOD_RESOLUTION(Pattern.compile("ModResolutionException: (?<reason>(.*)[\\n\\r]*( - (.*)[\\n\\r]*)+)"), "reason"),
-        MOD_RESOLUTION2(Pattern.compile("Multiple entries with same key: (?<reason>(.*)[\\n\\r]*( - (.*)[\\n\\r]*)+)"), "reason"),
-        MOD_RESOLUTION3(Pattern.compile("due to errors, provided by (?<reason>(.*)[\\n\\r]*( - (.*)[\\n\\r]*)+)"), "reason"),
-        MOD_RESOLUTION4(Pattern.compile("LoaderExceptionModCrash: Caught exception from (?<reason>(.*)[\\n\\r]*( - (.*)[\\n\\r]*)+)"), "reason"),
-        MOD_RESOLUTION5(Pattern.compile("Failed loading config file .(?<reason>(.*)[\\n\\r]*( - (.*)[\\n\\r]*)+ for modid )"), "reason"),
-
         MOD_RESOLUTION_CONFLICT(Pattern.compile("ModResolutionException: Found conflicting mods: (?<sourcemod>.*) conflicts with (?<destmod>.*)"), "sourcemod", "destmod"),
         MOD_RESOLUTION_MISSING(Pattern.compile("ModResolutionException: Could not find required mod: (?<sourcemod>.*) requires (?<destmod>.*)"), "sourcemod", "destmod"),
         MOD_RESOLUTION_MISSING_MINECRAFT(Pattern.compile("ModResolutionException: Could not find required mod: (?<mod>.*) requires \\{minecraft @ (?<version>.*)}"), "mod", "version"),
@@ -82,7 +77,7 @@ public final class CrashReportAnalyzer {
         FILE_ALREADY_EXISTS(Pattern.compile("java\\.nio\\.file\\.FileAlreadyExistsException: (?<file>.*)"), "file"),
         // Forge found some mod crashed in game loading
         LOADING_CRASHED_FORGE(Pattern.compile("Caught exception from (?<name>.*?) \\((?<id>.*)\\)"), "name", "id"),
-        BOOTSTRAP_FAILED(Pattern.compile("Failed to create mod instance. ModID: (?<id>.*?),"), "id"),
+        BOOTSTRAP_FAILED(Pattern.compile("Failed to create mod instance\\. ModID: (?<id>.*?),"), "id"),
         // Fabric found some mod crashed in game loading
         LOADING_CRASHED_FABRIC(Pattern.compile("Could not execute entrypoint stage '(.*?)' due to errors, provided by '(?<id>.*)'!"), "id"),
         // Fabric may have breaking changes.
@@ -93,17 +88,17 @@ public final class CrashReportAnalyzer {
         MODLAUNCHER_8(Pattern.compile("java\\.lang\\.NoSuchMethodError: ('void sun\\.security\\.util\\.ManifestEntryVerifier\\.<init>\\(java\\.util\\.jar\\.Manifest\\)'|sun\\.security\\.util\\.ManifestEntryVerifier\\.<init>\\(Ljava/util/jar/Manifest;\\)V)")),
         // Manually triggerd debug crash
         DEBUG_CRASH(Pattern.compile("Manually triggered debug crash")),
+
         ////https://github.com/huanghongxun/HMCL/issues/1780
-        //PROCESSING_OF_JAVAAGENT_FAILED(Pattern.compile("processing of -javaagent failed")),
         CONFIG(Pattern.compile("Failed loading config file (?<file>.*?) of type SERVER for modid (?<id>.*)"), "id", "file"),
         // Fabric gives some warnings
-        FABRIC_WARNINGS(Pattern.compile("Warnings were found!(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\["), "reason"),
         // Game crashed when ticking entity
-        ENTITY(Pattern.compile("Entity Type: (?<type>.*)[\\w\\W\\n\\r]*?(Entity's Exact location: |Block location: World: )(?<location>.*)"), "type", "location"),
+        ENTITY(Pattern.compile("Entity Type: (?<type>.*)[\\w\\W\\n\\r]*?Entity's Exact location: (?<location>.*)"), "type", "location"),
         // Game crashed when tesselating block model
         BLOCK(Pattern.compile("Block: (?<type>.*)[\\w\\W\\n\\r]*?Block location: (?<location>.*)"), "type", "location"),
         // Cannot find native libraries
         UNSATISFIED_LINK_ERROR(Pattern.compile("java.lang.UnsatisfiedLinkError: Failed to locate library: (?<name>.*)"), "name"),
+
         //https://github.com/huanghongxun/HMCL/pull/1813
         OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE(Pattern.compile("TRANSFORMER\\/net\\.optifine/net\\.optifine\\.reflect\\.Reflector\\.<clinit>(Reflector\\.java")),
         MOD_FILES_ARE_DECOMPRESSED(Pattern.compile("(The directories below appear to be extracted jar files\\. Fix this before you continue|Extracted mod jars found, loading will NOT continue)")),//Mod文件被解压
@@ -113,9 +108,17 @@ public final class CrashReportAnalyzer {
         // Mod issues
         // TwilightForest is not compatible with OptiFine on Minecraft 1.16
         TWILIGHT_FOREST_OPTIFINE(Pattern.compile("java.lang.IllegalArgumentException: (.*) outside of image bounds (.*)")),
-        //https://github.com/huanghongxun/HMCL/pull/2036
-        MODMIXIN_FAILURE(Pattern.compile("(Mixin prepare failed |Mixin apply failed |mixin\\.injection\\.throwables\\.|\\.mixins\\.json\\] FAILED during \\))(?<reason>(.*)[\\n\\r]*( - (.*)[\\n\\r]*)+ for modid )"), "reason"),//ModMixin失败
-        MOD_REPEAT_INSTALLATION(Pattern.compile(""));
+
+        //https://github.com/huanghongxun/HMCL/pull/2038
+        MODMIXIN_FAILURE(Pattern.compile("(Mixin prepare failed |Mixin apply failed |mixin\\.injection\\.throwables\\.|\\.mixins\\.json\\] FAILED during \\))")),//ModMixin失败
+        MULTIPLE_FORGES_EXIST_IN_VERSION_JSON(Pattern.compile("Found multiple arguments for option fml\\.forgeVersion, but you asked for only one")),//版本Json中存在多个Forge
+        FILE_OR_CONTENT_VERIFICATION_FAILED(Pattern.compile("signer information does not match signer information of other classes in the same package")),//文件或内容校验失败
+        MOD_REPEAT_INSTALLATION(Pattern.compile("(DuplicateModsFoundException|DuplicateModsFoundException|Found a duplicate mod|ModResolutionException: Duplicate)")),//Mod重复安装
+        FORGE_ERROR(Pattern.compile("An exception was thrown, the game will display an error screen and halt.")),//Forge报错，Forge可能已经提供了错误信息
+        MOD_RESOLUTION0(Pattern.compile("(Multiple entries with same key: |Failure message: MISSING)")),//可能是Mod问题
+        MOD_PROFILE_CAUSES_GAME_CRASH(Pattern.compile("Failed loading config file ")),//Mod配置文件导致游戏崩溃
+        FABRIC_REPORTS_AN_ERROR_AND_GIVES_A_SOLUTION(Pattern.compile("A potential solution has been determined:(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\["), "reason"),//Fabric 可能已经提供了解决方案
+        JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)"));//Java版本过高
 
         private final Pattern pattern;
         private final String[] groupNames;
