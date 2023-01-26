@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.util.io.HttpServer;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.security.*;
 import java.util.*;
 import java.util.regex.Pattern;
