@@ -76,7 +76,7 @@ public final class CrashReportAnalyzer {
         // Some mods require a file not existing, asking user to manually delete it
         FILE_ALREADY_EXISTS(Pattern.compile("java\\.nio\\.file\\.FileAlreadyExistsException: (?<file>.*)"), "file"),
         // Forge found some mod crashed in game loading
-        LOADING_CRASHED_FORGE(Pattern.compile("Caught exception from (?<name>.*?) \\((?<id>.*)\\)"), "name", "id"),
+        LOADING_CRASHED_FORGE(Pattern.compile("LoaderExceptionModCrash: Caught exception from (?<name>.*?) \\((?<id>.*)\\)"), "name", "id"),
         BOOTSTRAP_FAILED(Pattern.compile("Failed to create mod instance\\. ModID: (?<id>.*?),"), "id"),
         // Fabric found some mod crashed in game loading
         LOADING_CRASHED_FABRIC(Pattern.compile("Could not execute entrypoint stage '(.*?)' due to errors, provided by '(?<id>.*)'!"), "id"),
@@ -88,8 +88,6 @@ public final class CrashReportAnalyzer {
         MODLAUNCHER_8(Pattern.compile("java\\.lang\\.NoSuchMethodError: ('void sun\\.security\\.util\\.ManifestEntryVerifier\\.<init>\\(java\\.util\\.jar\\.Manifest\\)'|sun\\.security\\.util\\.ManifestEntryVerifier\\.<init>\\(Ljava/util/jar/Manifest;\\)V)")),
         // Manually triggerd debug crash
         DEBUG_CRASH(Pattern.compile("Manually triggered debug crash")),
-
-        ////https://github.com/huanghongxun/HMCL/issues/1780
         CONFIG(Pattern.compile("Failed loading config file (?<file>.*?) of type SERVER for modid (?<id>.*)"), "id", "file"),
         // Fabric gives some warnings
         FABRIC_WARNINGS(Pattern.compile("Warnings were found!(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\["), "reason"),
@@ -101,25 +99,24 @@ public final class CrashReportAnalyzer {
         UNSATISFIED_LINK_ERROR(Pattern.compile("java.lang.UnsatisfiedLinkError: Failed to locate library: (?<name>.*)"), "name"),
 
         //https://github.com/huanghongxun/HMCL/pull/1813
-        OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE(Pattern.compile("TRANSFORMER\\/net\\.optifine/net\\.optifine\\.reflect\\.Reflector\\.<clinit>(Reflector\\.java")),
+        OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE(Pattern.compile("TRANSFORMER/net\\.optifine/net\\.optifine\\.reflect\\.Reflector\\.<clinit>(Reflector\\.java")),
         MOD_FILES_ARE_DECOMPRESSED(Pattern.compile("(The directories below appear to be extracted jar files\\. Fix this before you continue|Extracted mod jars found, loading will NOT continue)")),//Mod文件被解压
-        OPTIFINE_CAUSES_THE_WORLD_TO_FAIL_TO_LOAD(Pattern.compile("(java\\.lang\\.NoSuchMethodError: net\\.minecraft\\.world\\.server\\.ChunkManager$ProxyTicketManager\\.shouldForceTicks\\(J\\)Z+OptiFine)")),//OptiFine导致无法加载世界 https://www.minecraftforum.net/forums/support/java-edition-support/3051132-exception-ticking-world
+        OPTIFINE_CAUSES_THE_WORLD_TO_FAIL_TO_LOAD(Pattern.compile("java\\.lang\\.NoSuchMethodError: net\\.minecraft\\.world\\.server\\.ChunkManager$ProxyTicketManager\\.shouldForceTicks\\(J\\)Z)")),//OptiFine导致无法加载世界 https://www.minecraftforum.net/forums/support/java-edition-support/3051132-exception-ticking-world
         TOO_MANY_MODS_LEAD_TO_EXCEEDING_THE_ID_LIMIT(Pattern.compile("maximum id range exceeded")),//Mod过多导致超出ID限制
 
         // Mod issues
-        // TwilightForest is not compatible with OptiFine on Minecraft 1.16
-        TWILIGHT_FOREST_OPTIFINE(Pattern.compile("java.lang.IllegalArgumentException: (.*) outside of image bounds (.*)")),
-
         //https://github.com/huanghongxun/HMCL/pull/2038
         MODMIXIN_FAILURE(Pattern.compile("(Mixin prepare failed |Mixin apply failed |mixin\\.injection\\.throwables\\.|\\.mixins\\.json\\] FAILED during \\))")),//ModMixin失败
-        MULTIPLE_FORGES_EXIST_IN_VERSION_JSON(Pattern.compile("Found multiple arguments for option fml\\.forgeVersion, but you asked for only one")),//版本Json中存在多个Forge
         FILE_OR_CONTENT_VERIFICATION_FAILED(Pattern.compile("signer information does not match signer information of other classes in the same package")),//文件或内容校验失败
         MOD_REPEAT_INSTALLATION(Pattern.compile("(DuplicateModsFoundException|DuplicateModsFoundException|Found a duplicate mod|ModResolutionException: Duplicate)")),//Mod重复安装
-        FORGE_ERROR(Pattern.compile("An exception was thrown, the game will display an error screen and halt.")),//Forge报错，Forge可能已经提供了错误信息
+        FORGE_ERROR(Pattern.compile("An exception was thrown, the game will display an error screen and halt.")),//Forge报错,Forge可能已经提供了错误信息
         MOD_RESOLUTION0(Pattern.compile("(Multiple entries with same key: |Failure message: MISSING)")),//可能是Mod问题
         MOD_PROFILE_CAUSES_GAME_CRASH(Pattern.compile("Failed loading config file ")),//Mod配置文件导致游戏崩溃
         FABRIC_REPORTS_AN_ERROR_AND_GIVES_A_SOLUTION(Pattern.compile("A potential solution has been determined:(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\["), "reason"),//Fabric 可能已经提供了解决方案
-        JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)"));//Java版本过高
+        JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)")),//Java版本过高
+
+        // TwilightForest is not compatible with OptiFine on Minecraft 1.16
+        TWILIGHT_FOREST_OPTIFINE(Pattern.compile("java.lang.IllegalArgumentException: (.*) outside of image bounds (.*)"));
 
         private final Pattern pattern;
         private final String[] groupNames;
