@@ -92,6 +92,7 @@ public final class CrashReportAnalyzer {
         ////https://github.com/huanghongxun/HMCL/issues/1780
         CONFIG(Pattern.compile("Failed loading config file (?<file>.*?) of type SERVER for modid (?<id>.*)"), "id", "file"),
         // Fabric gives some warnings
+        FABRIC_WARNINGS(Pattern.compile("Warnings were found!(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\["), "reason"),
         // Game crashed when ticking entity
         ENTITY(Pattern.compile("Entity Type: (?<type>.*)[\\w\\W\\n\\r]*?Entity's Exact location: (?<location>.*)"), "type", "location"),
         // Game crashed when tesselating block model
