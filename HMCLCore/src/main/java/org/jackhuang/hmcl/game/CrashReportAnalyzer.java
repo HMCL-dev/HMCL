@@ -69,6 +69,11 @@ public final class CrashReportAnalyzer {
         DUPLICATED_MOD(Pattern.compile("Found a duplicate mod (?<name>.*) at (?<path>.*)"), "name", "path"),
         // Fabric mod resolution
         MOD_RESOLUTION(Pattern.compile("ModResolutionException: (?<reason>(.*)[\\n\\r]*( - (.*)[\\n\\r]*)+)"), "reason"),
+        MOD_RESOLUTION2(Pattern.compile("Multiple entries with same key: (?<reason>(.*)[\\n\\r]*( - (.*)[\\n\\r]*)+)"), "reason"),
+        MOD_RESOLUTION3(Pattern.compile("due to errors, provided by (?<reason>(.*)[\\n\\r]*( - (.*)[\\n\\r]*)+)"), "reason"),
+        MOD_RESOLUTION4(Pattern.compile("LoaderExceptionModCrash: Caught exception from (?<reason>(.*)[\\n\\r]*( - (.*)[\\n\\r]*)+)"), "reason"),
+        MOD_RESOLUTION5(Pattern.compile("Failed loading config file .(?<reason>(.*)[\\n\\r]*( - (.*)[\\n\\r]*)+ for modid )"), "reason"),
+
         MOD_RESOLUTION_CONFLICT(Pattern.compile("ModResolutionException: Found conflicting mods: (?<sourcemod>.*) conflicts with (?<destmod>.*)"), "sourcemod", "destmod"),
         MOD_RESOLUTION_MISSING(Pattern.compile("ModResolutionException: Could not find required mod: (?<sourcemod>.*) requires (?<destmod>.*)"), "sourcemod", "destmod"),
         MOD_RESOLUTION_MISSING_MINECRAFT(Pattern.compile("ModResolutionException: Could not find required mod: (?<mod>.*) requires \\{minecraft @ (?<version>.*)}"), "mod", "version"),
@@ -76,7 +81,7 @@ public final class CrashReportAnalyzer {
         // Some mods require a file not existing, asking user to manually delete it
         FILE_ALREADY_EXISTS(Pattern.compile("java\\.nio\\.file\\.FileAlreadyExistsException: (?<file>.*)"), "file"),
         // Forge found some mod crashed in game loading
-        LOADING_CRASHED_FORGE(Pattern.compile("LoaderExceptionModCrash: Caught exception from (?<name>.*?) \\((?<id>.*)\\)"), "name", "id"),
+        LOADING_CRASHED_FORGE(Pattern.compile("Caught exception from (?<name>.*?) \\((?<id>.*)\\)"), "name", "id"),
         BOOTSTRAP_FAILED(Pattern.compile("Failed to create mod instance. ModID: (?<id>.*?),"), "id"),
         // Fabric found some mod crashed in game loading
         LOADING_CRASHED_FABRIC(Pattern.compile("Could not execute entrypoint stage '(.*?)' due to errors, provided by '(?<id>.*)'!"), "id"),
@@ -88,26 +93,29 @@ public final class CrashReportAnalyzer {
         MODLAUNCHER_8(Pattern.compile("java\\.lang\\.NoSuchMethodError: ('void sun\\.security\\.util\\.ManifestEntryVerifier\\.<init>\\(java\\.util\\.jar\\.Manifest\\)'|sun\\.security\\.util\\.ManifestEntryVerifier\\.<init>\\(Ljava/util/jar/Manifest;\\)V)")),
         // Manually triggerd debug crash
         DEBUG_CRASH(Pattern.compile("Manually triggered debug crash")),
-        //https://github.com/huanghongxun/HMCL/issues/1780
-        PROCESSING_OF_JAVAAGENT_FAILED(Pattern.compile("processing of -javaagent failed")),
+        ////https://github.com/huanghongxun/HMCL/issues/1780
+        //PROCESSING_OF_JAVAAGENT_FAILED(Pattern.compile("processing of -javaagent failed")),
         CONFIG(Pattern.compile("Failed loading config file (?<file>.*?) of type SERVER for modid (?<id>.*)"), "id", "file"),
         // Fabric gives some warnings
         FABRIC_WARNINGS(Pattern.compile("Warnings were found!(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\["), "reason"),
         // Game crashed when ticking entity
-        ENTITY(Pattern.compile("Entity Type: (?<type>.*)[\\w\\W\\n\\r]*?Entity's Exact location: (?<location>.*)"), "type", "location"),
+        ENTITY(Pattern.compile("Entity Type: (?<type>.*)[\\w\\W\\n\\r]*?(Entity's Exact location: |Block location: World: )(?<location>.*)"), "type", "location"),
         // Game crashed when tesselating block model
         BLOCK(Pattern.compile("Block: (?<type>.*)[\\w\\W\\n\\r]*?Block location: (?<location>.*)"), "type", "location"),
         // Cannot find native libraries
         UNSATISFIED_LINK_ERROR(Pattern.compile("java.lang.UnsatisfiedLinkError: Failed to locate library: (?<name>.*)"), "name"),
         //https://github.com/huanghongxun/HMCL/pull/1813
-        //OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE(Pattern.compile("(Cannot read field \"ofTelemetry\" because \"net\\.optifine\\.Config\\.gameSettings\" is null|TRANSFORMER/net\\.optifine/net\\.optifine\\.reflect\\.Reflector\\.<clinit>\\(Reflector\\.java \\)")),
+        OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE(Pattern.compile("TRANSFORMER\\/net\\.optifine/net\\.optifine\\.reflect\\.Reflector\\.<clinit>(Reflector\\.java")),
         MOD_FILES_ARE_DECOMPRESSED(Pattern.compile("(The directories below appear to be extracted jar files\\. Fix this before you continue|Extracted mod jars found, loading will NOT continue)")),//Mod文件被解压
-        OPTIFINE_CAUSES_THE_WORLD_TO_FAIL_TO_LOAD(Pattern.compile("java\\.lang\\.NoSuchMethodError: net\\.minecraft\\.world\\.server\\.ChunkManager$ProxyTicketManager\\.shouldForceTicks\\(J\\)Z\\+OptiFine")),//OptiFine导致无法加载世界 https://www.minecraftforum.net/forums/support/java-edition-support/3051132-exception-ticking-world
+        OPTIFINE_CAUSES_THE_WORLD_TO_FAIL_TO_LOAD(Pattern.compile("(java\\.lang\\.NoSuchMethodError: net\\.minecraft\\.world\\.server\\.ChunkManager$ProxyTicketManager\\.shouldForceTicks\\(J\\)Z+OptiFine)")),//OptiFine导致无法加载世界 https://www.minecraftforum.net/forums/support/java-edition-support/3051132-exception-ticking-world
         TOO_MANY_MODS_LEAD_TO_EXCEEDING_THE_ID_LIMIT(Pattern.compile("maximum id range exceeded")),//Mod过多导致超出ID限制
 
         // Mod issues
-        // TwilightForest is not compatible with OptiFine on Minecraft 1.16.
-        TWILIGHT_FOREST_OPTIFINE(Pattern.compile("java.lang.IllegalArgumentException: (.*) outside of image bounds (.*)"));
+        // TwilightForest is not compatible with OptiFine on Minecraft 1.16
+        TWILIGHT_FOREST_OPTIFINE(Pattern.compile("java.lang.IllegalArgumentException: (.*) outside of image bounds (.*)")),
+        //https://github.com/huanghongxun/HMCL/pull/2036
+        MODMIXIN_FAILURE(Pattern.compile("(Mixin prepare failed |Mixin apply failed |mixin\\.injection\\.throwables\\.|\\.mixins\\.json\\] FAILED during \\))(?<reason>(.*)[\\n\\r]*( - (.*)[\\n\\r]*)+ for modid )"), "reason"),//ModMixin失败
+        MOD_REPEAT_INSTALLATION(Pattern.compile(""));
 
         private final Pattern pattern;
         private final String[] groupNames;
