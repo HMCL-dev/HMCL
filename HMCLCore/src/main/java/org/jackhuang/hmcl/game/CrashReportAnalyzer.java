@@ -112,7 +112,8 @@ public final class CrashReportAnalyzer {
         FORGE_ERROR(Pattern.compile("An exception was thrown, the game will display an error screen and halt.")),//Forge报错,Forge可能已经提供了错误信息
         MOD_RESOLUTION0(Pattern.compile("(Multiple entries with same key: |Failure message: MISSING)")),//可能是Mod问题
         MOD_PROFILE_CAUSES_GAME_CRASH(Pattern.compile("Failed loading config file ")),//Mod配置文件导致游戏崩溃
-        FABRIC_REPORTS_AN_ERROR_AND_GIVES_A_SOLUTION(Pattern.compile("A potential solution has been determined:(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\["), "reason"),//Fabric 可能已经提供了解决方案
+        //FABRIC_REPORTS_AN_ERROR_AND_GIVES_A_SOLUTION(Pattern.compile("A potential solution has been determined:(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\["), "reason"),//Fabric 可能已经提供了解决方案
+        FABRIC_REPORTS_AN_ERROR_AND_GIVES_A_SOLUTION(Pattern.compile("A potential solution has been determined:")),//Fabric 可能已经提供了解决方案
         JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)")),//Java版本过高
 
         // TwilightForest is not compatible with OptiFine on Minecraft 1.16
