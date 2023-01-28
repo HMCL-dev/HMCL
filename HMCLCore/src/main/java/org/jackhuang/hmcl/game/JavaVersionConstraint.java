@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -251,7 +250,7 @@ public enum JavaVersionConstraint {
         JavaVersion suggested = null;
         for (JavaVersion javaVersion : JavaVersion.getJavas()) {
             // Do not automatically select 32-bit Java
-            if (Platform.getPlatform().getArchitecture() == Architecture.X86_64 && javaVersion.getArchitecture().isX86())
+            if (Architecture.SYSTEM_ARCH == Architecture.X86_64 && javaVersion.getArchitecture().isX86())
                 continue;
 
             // select the latest x86 java that this version accepts.
