@@ -250,7 +250,7 @@ public enum JavaVersionConstraint {
         JavaVersion suggested = null;
         for (JavaVersion javaVersion : JavaVersion.getJavas()) {
             // Do not automatically select 32-bit Java
-            if (Architecture.SYSTEM_ARCH == Architecture.X86_64 && javaVersion.getArchitecture().isX86())
+            if (Architecture.SYSTEM_ARCH == Architecture.X86_64 && javaVersion.getArchitecture() == Architecture.X86)
                 continue;
 
             // select the latest x86 java that this version accepts.
