@@ -58,7 +58,7 @@ public final class CrashReportAnalyzer {
         // https://github.com/MinecraftForge/MinecraftForge/issues/7546
         MAC_JDK_8U261(Pattern.compile("Terminating app due to uncaught exception 'NSInternalInconsistencyException', reason: 'NSWindow drag regions should only be invalidated on the Main Thread!'")),
         // user modifies minecraft primary jar without changing hash file
-        FILE_CHANGED(Pattern.compile("java\\.lang\\.SecurityException: SHA1 digest error for (?<file>.*)"), "file"),
+        FILE_CHANGED(Pattern.compile("java\\.lang\\.SecurityException: SHA1 digest error for (?<file>.*)|signer information does not match signer information of other classes in the same package"), "file"),
         // mod loader/coremod injection fault, prompt user to reinstall game.
         NO_SUCH_METHOD_ERROR(Pattern.compile("java\\.lang\\.NoSuchMethodError: (?<class>.*?)"), "class"),
         // mod loader/coremod injection fault, prompt user to reinstall game.
@@ -90,7 +90,7 @@ public final class CrashReportAnalyzer {
         DEBUG_CRASH(Pattern.compile("Manually triggered debug crash")),
         CONFIG(Pattern.compile("Failed loading config file (?<file>.*?) of type SERVER for modid (?<id>.*)"), "id", "file"),
         // Fabric gives some warnings
-        FABRIC_WARNINGS(Pattern.compile("Warnings were found!(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\["), "reason"),
+        FABRIC_WARNINGS(Pattern.compile("(Warnings were found!|A potential solution has been determined:)(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\["), "reason"),
         // Game crashed when ticking entity
         ENTITY(Pattern.compile("Entity Type: (?<type>.*)[\\w\\W\\n\\r]*?Entity's Exact location: (?<location>.*)"), "type", "location"),
         // Game crashed when tesselating block model
@@ -107,13 +107,9 @@ public final class CrashReportAnalyzer {
         // Mod issues
         //https://github.com/huanghongxun/HMCL/pull/2038
         MODMIXIN_FAILURE(Pattern.compile("(Mixin prepare failed |Mixin apply failed |mixin\\.injection\\.throwables\\.|\\.mixins\\.json\\] FAILED during \\))")),//ModMixin失败
-        FILE_OR_CONTENT_VERIFICATION_FAILED(Pattern.compile("signer information does not match signer information of other classes in the same package")),//文件或内容校验失败
         MOD_REPEAT_INSTALLATION(Pattern.compile("(DuplicateModsFoundException|DuplicateModsFoundException|Found a duplicate mod|ModResolutionException: Duplicate)")),//Mod重复安装
         FORGE_ERROR(Pattern.compile("An exception was thrown, the game will display an error screen and halt.")),//Forge报错,Forge可能已经提供了错误信息
         MOD_RESOLUTION0(Pattern.compile("(Multiple entries with same key: |Failure message: MISSING)")),//可能是Mod问题
-        MOD_PROFILE_CAUSES_GAME_CRASH(Pattern.compile("Failed loading config file ")),//Mod配置文件导致游戏崩溃
-        //FABRIC_REPORTS_AN_ERROR_AND_GIVES_A_SOLUTION(Pattern.compile("A potential solution has been determined:(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\["), "reason"),//Fabric 可能已经提供了解决方案
-        FABRIC_REPORTS_AN_ERROR_AND_GIVES_A_SOLUTION(Pattern.compile("A potential solution has been determined:")),//Fabric 可能已经提供了解决方案
         JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)")),//Java版本过高
 
         // TwilightForest is not compatible with OptiFine on Minecraft 1.16
