@@ -107,7 +107,7 @@ public final class CrashReportAnalyzer {
         // Mod issues
         //https://github.com/huanghongxun/HMCL/pull/2038
         MODMIXIN_FAILURE(Pattern.compile("(Mixin prepare failed |Mixin apply failed |mixin\\.injection\\.throwables\\.|\\.mixins\\.json\\] FAILED during \\))")),//ModMixin失败
-        MOD_REPEAT_INSTALLATION(Pattern.compile("(DuplicateModsFoundException|DuplicateModsFoundException|Found a duplicate mod|ModResolutionException: Duplicate)")),//Mod重复安装
+        MOD_REPEAT_INSTALLATION(Pattern.compile("(DuplicateModsFoundException|ModResolutionException: Duplicate)")),//Mod重复安装
         FORGE_ERROR(Pattern.compile("An exception was thrown, the game will display an error screen and halt.")),//Forge报错,Forge可能已经提供了错误信息
         MOD_RESOLUTION0(Pattern.compile("(Multiple entries with same key: |Failure message: MISSING)")),//可能是Mod问题
         JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)")),//Java版本过高
