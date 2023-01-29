@@ -19,14 +19,18 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
+import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -37,6 +41,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Pair;
@@ -62,7 +67,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
     private final ObservableList<ModUpdateObject> objects;
 
     @SuppressWarnings("unchecked")
-    public ModUpdatesPage(ModManager modManager, List<LocalModFile.ModUpdate> updates) {
+    public ModUpdatesPage(ModManager modManager, List<LocalModFile.ModUpdate> updates, Boolean isModpack) {
         this.modManager = modManager;
 
         getStyleClass().add("gray-background");
@@ -106,7 +111,9 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         JFXButton nextButton = new JFXButton(i18n("mods.check_updates.update"));
         nextButton.getStyleClass().add("jfx-button-raised");
         nextButton.setButtonType(JFXButton.ButtonType.RAISED);
-        nextButton.setOnAction(e -> updateMods());
+        nextButton.setOnAction(e -> {
+            if (isModpack) updateModpackModWarningDialog();
+        });
 
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("jfx-button-raised");
@@ -125,6 +132,31 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             else
                 return column.getComputedValue(param);
         });
+    }
+
+    private void updateModpackModWarningDialog() {
+        JFXDialogLayout warningPane = new JFXDialogLayout();
+        warningPane.setHeading(new Label(i18n("message.warning"), SVG.alert(new ObjectBinding<Paint>() {
+            @Override
+            protected Paint computeValue() {
+                return Color.ORANGERED;
+            }
+        }, -1, -1)));
+        warningPane.setBody(new Label(i18n("mods.update_modpack_mod.warning")));
+        JFXButton yesButton = new JFXButton(i18n("button.yes"));
+        yesButton.getStyleClass().add("dialog-accept");
+        yesButton.setOnAction(event -> {
+            warningPane.fireEvent(new DialogCloseEvent());
+            updateMods();
+        });
+        JFXButton noButton = new JFXButton(i18n("button.cancel"));
+        noButton.getStyleClass().add("dialog-cancel");
+        noButton.setOnAction(event -> {
+            // Do nothing.
+            warningPane.fireEvent(new DialogCloseEvent());
+        });
+        warningPane.setActions(yesButton, noButton);
+        Controllers.dialog(warningPane);
     }
 
     private void updateMods() {
