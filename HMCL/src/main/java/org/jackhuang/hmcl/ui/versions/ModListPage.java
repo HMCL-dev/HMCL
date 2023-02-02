@@ -191,7 +191,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             if (exception != null) {
                                 Controllers.dialog("Failed to check updates", "failed", MessageDialogPane.MessageType.ERROR);
                             } else {
-                                Controllers.navigate(new ModUpdatesPage(modManager, result));
+                                Controllers.navigate(new ModUpdatesPage(modManager, result, profile.getRepository().isModpack(versionId)));
                             }
                         })
                         .withStagesHint(Collections.singletonList("mods.check_updates")),
