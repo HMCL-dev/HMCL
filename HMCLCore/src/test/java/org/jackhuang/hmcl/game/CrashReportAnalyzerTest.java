@@ -334,6 +334,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void forgeRepeatInstallation() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/forge_repeat_installation.txt")),
+                CrashReportAnalyzer.Rule.FORGE_REPEAT_INSTALLATION);
+    }
+
+    @Test
     public void customNpc() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/customnpc.txt")),

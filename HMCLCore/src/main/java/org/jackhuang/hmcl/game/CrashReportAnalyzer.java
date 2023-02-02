@@ -110,6 +110,7 @@ public final class CrashReportAnalyzer {
         MOD_REPEAT_INSTALLATION(Pattern.compile("(DuplicateModsFoundException|ModResolutionException: Duplicate)")),//Mod重复安装
         FORGE_ERROR(Pattern.compile("An exception was thrown, the game will display an error screen and halt.")),//Forge报错,Forge可能已经提供了错误信息
         MOD_RESOLUTION0(Pattern.compile("(Multiple entries with same key: |Failure message: MISSING)")),//可能是Mod问题
+        FORGE_REPEAT_INSTALLATION(Pattern.compile("--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W]*?--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W\\n\\r]*?MultipleArgumentsForOptionException: Found multiple arguments for option gameDir, but you asked for only one")),//https://github.com/huanghongxun/HMCL/issues/1880
         OPTIFINE_REPEAT_INSTALLATION(Pattern.compile("ResolutionException: Module optifine reads another module named optifine")),//Optifine 重复安装（及Mod文件夹有，自动安装也有）
         JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)")),//Java版本过高
 
