@@ -31,7 +31,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -44,6 +43,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -192,7 +192,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
     public static class ModUpdateCell extends MDListCell<LocalModFile.ModUpdate> {
         TwoLineListItem content = new TwoLineListItem();
 
-        public ModUpdateCell(JFXListView<LocalModFile.ModUpdate> listView, MutableObject<Object> lastCell) {
+        public ModUpdateCell(JFXListView<LocalModFile.ModUpdate> listView, Holder<Object> lastCell) {
             super(listView, lastCell);
 
             getContainer().getChildren().setAll(content);

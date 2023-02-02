@@ -34,9 +34,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -291,7 +291,7 @@ public final class LogWindow extends Stage {
 
                 listView.setStyle("-fx-font-family: " + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)
                         + "; -fx-font-size: " + config().getFontSize() + "px;");
-                MutableObject<Object> lastCell = new MutableObject<>();
+                Holder<Object> lastCell = new Holder<>();
                 listView.setCellFactory(x -> new ListCell<Log>() {
                     {
                         getStyleClass().add("log-window-list-cell");
@@ -310,9 +310,9 @@ public final class LogWindow extends Stage {
                         super.updateItem(item, empty);
 
                         // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-                        if (this == lastCell.getValue() && !isVisible())
+                        if (this == lastCell.value && !isVisible())
                             return;
-                        lastCell.setValue(this);
+                        lastCell.value = this;
 
                         pseudoClassStateChanged(EMPTY, empty);
                         pseudoClassStateChanged(FATAL, !empty && item.level == Log4jLevel.FATAL);
