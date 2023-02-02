@@ -23,6 +23,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
@@ -93,23 +94,15 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             clearBtn.setOnMouseClicked((event) -> {
                 searchField.textProperty().set("");
             });
-            searchBar.getChildren().setAll(searchField, wrapMargin(clearBtn, new Insets(0, 0, 0, 9)));
+            Node clearBtnWrapped = wrapMargin(clearBtn, new Insets(0, 0, 0, 9));
+            FXUtils.onChangeAndOperate(searchField.textProperty(), (text) -> {
+                if (text.isEmpty() && searchBar.getChildren().contains(clearBtnWrapped))
+                    searchBar.getChildren().remove(clearBtnWrapped);
+                else if (!searchBar.getChildren().contains(clearBtnWrapped))
+                    searchBar.getChildren().add(clearBtnWrapped);
+            });
+            searchBar.getChildren().setAll(searchField);
             root.getContent().add(searchBar);
-        }
-
-        {
-            SpinnerPane center = new SpinnerPane();
-            ComponentList.setVgrow(center, Priority.ALWAYS);
-            center.getStyleClass().add("large-spinner-pane");
-            center.loadingProperty().bind(skinnable.loadingProperty());
-
-            MutableObject<Object> lastCell = new MutableObject<>();
-            listView.setCellFactory(x -> new ModInfoListCell(listView, lastCell));
-            listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-            Bindings.bindContent(listView.getItems(), skinnable.getFilteredItems(searchField.textProperty()));
-
-            center.setContent(listView);
-            root.getContent().add(center);
         }
 
         {
@@ -120,7 +113,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("mods.add"), SVG::plus, skinnable::add),
                     createToolbarButton2(i18n("folder.mod"), SVG::folderOpen, skinnable::openModFolder),
                     createToolbarButton2(i18n("mods.check_updates"), SVG::update, skinnable::checkUpdates),
-                    createToolbarButton2(i18n("download"), SVG::downloadOutline, skinnable::download));
+                    createToolbarButton2(i18n("download"), SVG::downloadOutline, skinnable::download)
+            );
             HBox toolbarSelecting = new HBox();
             toolbarSelecting.getChildren().setAll(
                     createToolbarButton2(i18n("button.remove"), SVG::delete, () -> {
@@ -144,6 +138,21 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 }
             });
             root.getContent().add(toolBarPane);
+        }
+
+        {
+            SpinnerPane center = new SpinnerPane();
+            ComponentList.setVgrow(center, Priority.ALWAYS);
+            center.getStyleClass().add("large-spinner-pane");
+            center.loadingProperty().bind(skinnable.loadingProperty());
+
+            MutableObject<Object> lastCell = new MutableObject<>();
+            listView.setCellFactory(x -> new ModInfoListCell(listView, lastCell));
+            listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+            Bindings.bindContent(listView.getItems(), skinnable.getFilteredItems(searchField.textProperty()));
+
+            center.setContent(listView);
+            root.getContent().add(center);
         }
 
         Label label = new Label(i18n("mods.not_modded"));
