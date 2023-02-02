@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.*;
 import org.jackhuang.hmcl.download.java.JavaRepository;
@@ -408,8 +409,9 @@ public final class LauncherHelper {
             JavaVersionConstraint violatedMandatoryConstraint = null;
             List<JavaVersionConstraint> violatedSuggestedConstraints = null;
 
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
             for (JavaVersionConstraint constraint : JavaVersionConstraint.ALL) {
-                if (constraint.appliesToVersion(gameVersion, version, javaVersion)) {
+                if (constraint.appliesToVersion(gameVersion, version, javaVersion, analyzer)) {
                     if (!constraint.checkJava(gameVersion, version, javaVersion)) {
                         if (constraint.getType() == JavaVersionConstraint.RULE_MANDATORY) {
                             violatedMandatoryConstraint = constraint;
@@ -493,10 +495,24 @@ public final class LauncherHelper {
                             suggestions.add(i18n("launch.advice.java.modded_java_7"));
                             break;
                         case MODDED_JAVA_8:
-                            suggestions.add(i18n("launch.advice.newer_java"));
+                            // Minecraft>=1.7.10+Forge accepts Java 8
+                            if (javaVersion.getParsedVersion() < 8)
+                                suggestions.add(i18n("launch.advice.newer_java"));
+                            else
+                                suggestions.add(i18n("launch.advice.modded_java", 8, gameVersion));
                             break;
                         case MODDED_JAVA_16:
-                            suggestions.add(i18n("launch.advice.forge37_0_60"));
+                            // Minecraft<=1.17.1+Forge[37.0.0,37.0.60) not compatible with Java 17
+                            String forgePatchVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE)
+                                    .map(LibraryAnalyzer.LibraryType.FORGE::patchVersion)
+                                    .orElse(null);
+                            if (forgePatchVersion != null && VersionNumber.VERSION_COMPARATOR.compare(forgePatchVersion, "37.0.60") < 0)
+                                suggestions.add(i18n("launch.advice.forge37_0_60"));
+                            else
+                                suggestions.add(i18n("launch.advice.modded_java", 16, gameVersion));
+                            break;
+                        case MODDED_JAVA_17:
+                            suggestions.add(i18n("launch.advice.modded_java", 17, gameVersion));
                             break;
                         case VANILLA_JAVA_8_51:
                             suggestions.add(i18n("launch.advice.java8_51_1_13"));
